@@ -14,8 +14,6 @@
  */
 
 #include "photo_output_impl.h"
-#include "camera_log.h"
-#include "camera_util.h"
 
 using namespace std;
 using namespace OHOS;
@@ -26,83 +24,6 @@ const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
     {CameraFormat::CAMERA_FORMAT_JPEG, Camera_Format::CAMERA_FORMAT_JPEG},
     {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
     {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
-};
-
-class InnerPhotoOutputCallback : public PhotoStateCallback {
-public:
-    InnerPhotoOutputCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
-        : photoOutput_(photoOutput), callback_(*callback) {}
-    ~InnerPhotoOutputCallback() = default;
-
-// need fix
-    void OnCaptureStarted(const int32_t captureID) const override
-    {
-        MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
-        if (photoOutput_ != nullptr && callback_.onFrameStart != nullptr) {
-            callback_.onFrameStart(photoOutput_);
-        }
-    }
-
-// need fix
-    void OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const override
-    {
-        MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
-        if (photoOutput_ != nullptr && callback_.onFrameStart != nullptr) {
-            callback_.onFrameStart(photoOutput_);
-        }
-    }
-
-// need fix
-    void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
-    {
-        MEDIA_DEBUG_LOG("onFrameShutter is called!, captureId: %{public}d", captureId);
-        Camera_FrameShutterInfo info;
-        info.captureId = captureId;
-        info.timestamp = timestamp;
-        if (photoOutput_ != nullptr && callback_.onFrameShutter != nullptr) {
-            callback_.onFrameShutter(photoOutput_, &info);
-        }
-    }
-
-// need fix
-    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override
-    {
-        MEDIA_DEBUG_LOG("OnFrameShutterEnd is called!, captureId: %{public}d", captureId);
-    }
-
-// need fix
-    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override
-    {
-        MEDIA_DEBUG_LOG("OnCaptureReady is called!, captureId: %{public}d", captureId);
-    }
-
-// need fix
-    void OnEstimatedCaptureDuration(const int32_t duration) const override
-    {
-        MEDIA_DEBUG_LOG("OnEstimatedCaptureDuration is called!, duration: %{public}d", duration);
-    }
-
-// need fix
-    void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override
-    {
-        MEDIA_DEBUG_LOG("OnCaptureEnded is called! captureID: %{public}d", captureID);
-        MEDIA_DEBUG_LOG("OnCaptureEnded is called! framecount: %{public}d", frameCount);
-        if (photoOutput_ != nullptr && callback_.onFrameEnd != nullptr) {
-            callback_.onFrameEnd(photoOutput_, frameCount);
-        }
-    }
-
-    void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override
-    {
-        MEDIA_DEBUG_LOG("OnCaptureError is called!, errorCode: %{public}d", errorCode);
-        if (photoOutput_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(photoOutput_, FrameworkToNdkCameraError(errorCode));
-        }
-    }
-
-private:
-    Camera_PhotoOutput* photoOutput_;
-    PhotoOutput_Callbacks callback_;
 };
 
 Camera_PhotoOutput::Camera_PhotoOutput(sptr<PhotoOutput> &innerPhotoOutput) : innerPhotoOutput_(innerPhotoOutput)
@@ -116,21 +37,144 @@ Camera_PhotoOutput::~Camera_PhotoOutput()
     if (innerPhotoOutput_) {
         innerPhotoOutput_ = nullptr;
     }
+    if (innerCallback_) {
+        innerCallback_ = nullptr;
+    }
 }
 
 Camera_ErrorCode Camera_PhotoOutput::RegisterCallback(PhotoOutput_Callbacks* callback)
 {
-    shared_ptr<InnerPhotoOutputCallback> innerCallback =
-                make_shared<InnerPhotoOutputCallback>(this, callback);
-    innerPhotoOutput_->SetCallback(innerCallback);
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveCallback(callback);
+    }
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PhotoOutput::UnregisterCallback(PhotoOutput_Callbacks* callback)
 {
-    // call to member function 'SetCallback' is ambiguous
-    shared_ptr<InnerPhotoOutputCallback> innerCallback = nullptr;
-    innerPhotoOutput_->SetCallback(innerCallback);
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureStartWithInfoCallback(
+    OH_PhotoOutput_CaptureStartWithInfo callback)
+{
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveCaptureStartWithInfoCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveCaptureStartWithInfoCallback(callback);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::UnregisterCaptureStartWithInfoCallback(
+    OH_PhotoOutput_CaptureStartWithInfo callback)
+{
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveCaptureStartWithInfoCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureEndCallback(OH_PhotoOutput_CaptureEnd callback)
+{
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveCaptureEndCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveCaptureEndCallback(callback);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::UnregisterCaptureEndCallback(OH_PhotoOutput_CaptureEnd callback)
+{
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveCaptureEndCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::RegisterFrameShutterEndCallback(OH_PhotoOutput_OnFrameShutterEnd callback)
+{
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveFrameShutterEndCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveFrameShutterEndCallback(callback);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::UnregisterFrameShutterEndCallback(OH_PhotoOutput_OnFrameShutterEnd callback)
+{
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveFrameShutterEndCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::RegisterCaptureReadyCallback(OH_PhotoOutput_CaptureReady callback)
+{
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveCaptureReadyCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveCaptureReadyCallback(callback);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::UnregisterCaptureReadyCallback(OH_PhotoOutput_CaptureReady callback)
+{
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveCaptureReadyCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::RegisterEstimatedCaptureDurationCallback(
+    OH_PhotoOutput_EstimatedCaptureDuration callback)
+{
+    if (innerCallback_ == nullptr) {
+        innerCallback_ = make_shared<InnerPhotoOutputCallback>(this);
+        CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "create innerCallback_ failed!");
+        innerCallback_->SaveEstimatedCaptureDurationCallback(callback);
+        innerPhotoOutput_->SetCallback(innerCallback_);
+    } else {
+        innerCallback_->SaveEstimatedCaptureDurationCallback(callback);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::UnregisterEstimatedCaptureDurationCallback(
+    OH_PhotoOutput_EstimatedCaptureDuration callback)
+{
+    CHECK_AND_RETURN_RET_LOG(innerCallback_ != nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "innerCallback_ is null! Please RegisterCallback first!");
+    innerCallback_->RemoveEstimatedCaptureDurationCallback(callback);
     return CAMERA_OK;
 }
 

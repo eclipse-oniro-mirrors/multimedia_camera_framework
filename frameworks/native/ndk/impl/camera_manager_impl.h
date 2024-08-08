@@ -35,6 +35,10 @@ public:
 
     Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* callback);
 
+    Camera_ErrorCode RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
+
+    Camera_ErrorCode UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
+
     Camera_ErrorCode GetSupportedCameras(Camera_Device** cameras, uint32_t* size);
 
     Camera_ErrorCode DeleteSupportedCameras(Camera_Device* cameras, uint32_t size);
@@ -73,6 +77,12 @@ public:
 
     Camera_ErrorCode CreateMetadataOutput(const Camera_MetadataObjectType* type,
         Camera_MetadataOutput** metadataOutput);
+
+    Camera_ErrorCode IsTorchSupported(bool* isTorchSupported);
+
+    Camera_ErrorCode IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported);
+
+    Camera_ErrorCode SetTorchMode(Camera_TorchMode torchMode);
 
     static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
 

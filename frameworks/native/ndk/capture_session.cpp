@@ -45,6 +45,26 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* ses
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_CaptureSession_RegisterSmoothZoomInfoCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(smoothZoomInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    session->RegisterSmoothZoomInfoCallback(smoothZoomInfoCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterSmoothZoomInfoCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(smoothZoomInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    session->UnregisterSmoothZoomInfoCallback(smoothZoomInfoCallback);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode)
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
@@ -534,6 +554,114 @@ Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* ses
         "Invaild argument, session is null!");
 
     return session->PreconfigWithRatio(preconfigType, preconfigRatio);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_GetExposureValue(Camera_CaptureSession* session, float* exposureValue)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureValue is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(exposureValue != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, exposureValue is null!");
+
+    return session->GetExposureValue(exposureValue);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_GetFocalLength(Camera_CaptureSession* session, float* focalLength)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetFocalLength is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(focalLength != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, focalLength is null!");
+
+    return session->GetFocalLength(focalLength);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_SetSmoothZoom(Camera_CaptureSession *session, float targetZoom,
+    Camera_SmoothZoomMode smoothZoomMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetSmoothZoom is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->SetSmoothZoom(targetZoom, smoothZoomMode);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_GetSupportedColorSpaces(Camera_CaptureSession* session,
+    OH_NativeBuffer_ColorSpace** colorSpace, uint32_t* size)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedColorSpaces is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(colorSpace != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, colorSpace is null!");
+    CHECK_AND_RETURN_RET_LOG(size != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, size is null!");
+
+    return session->GetSupportedColorSpaces(colorSpace, size);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_DeleteColorSpaces(Camera_CaptureSession* session,
+    OH_NativeBuffer_ColorSpace* colorSpace)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteSupportedColorSpaces is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(colorSpace != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, colorSpace is null!");
+
+    return session->DeleteColorSpaces(colorSpace);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_GetActiveColorSpace(Camera_CaptureSession* session,
+    OH_NativeBuffer_ColorSpace* colorSpace)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetActiveColorSpace is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(colorSpace != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, colorSpace is null!");
+
+    return session->GetActiveColorSpace(colorSpace);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_SetActiveColorSpace(Camera_CaptureSession* session,
+    OH_NativeBuffer_ColorSpace colorSpace)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetActiveColorSpace is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->SetActiveColorSpace(colorSpace);
 }
 
 #ifdef __cplusplus

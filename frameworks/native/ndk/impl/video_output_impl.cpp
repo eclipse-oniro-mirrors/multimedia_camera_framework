@@ -141,3 +141,59 @@ Camera_ErrorCode Camera_VideoOutput::GetVideoProfile(Camera_VideoProfile** profi
     *profile = newProfile;
     return CAMERA_OK;
 }
+
+Camera_ErrorCode Camera_VideoOutput::GetSupportedFrameRates(Camera_FrameRateRange** frameRateRange, uint32_t* size)
+{
+    std::vector<std::vector<int32_t>> frameRate = innerVideoOutput_->GetSupportedFrameRates();
+    if (frameRate.size() == 0) {
+        *size = 0;
+        return CAMERA_OK;
+    }
+
+    Camera_FrameRateRange* newframeRateRange =  new Camera_FrameRateRange[frameRate.size()];
+    CHECK_AND_RETURN_RET_LOG(newframeRateRange != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Failed to allocate memory for Camera_FrameRateRange!");
+
+    for (size_t index = 0; index < frameRate.size(); ++index) {
+        if (frameRate[index].size() <= 1) {
+            MEDIA_ERR_LOG("invalid frameRate size!");
+            delete[] newframeRateRange;
+            newframeRateRange = nullptr;
+            return CAMERA_SERVICE_FATAL_ERROR;
+        }
+        newframeRateRange[index].min = static_cast<uint32_t>(frameRate[index][0]);
+        newframeRateRange[index].max = static_cast<uint32_t>(frameRate[index][1]);
+    }
+
+    *frameRateRange = newframeRateRange;
+    *size = frameRate.size();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_VideoOutput::DeleteFrameRates(Camera_FrameRateRange* frameRateRange)
+{
+    if (frameRateRange != nullptr) {
+        delete[] frameRateRange;
+        frameRateRange = nullptr;
+    }
+
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_VideoOutput::SetFrameRate(int32_t minFps, int32_t maxFps)
+{
+    int32_t ret = innerVideoOutput_->SetFrameRate(minFps, maxFps);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* frameRateRange)
+{
+    std::vector<int32_t> activeFrameRate = innerVideoOutput_->GetFrameRateRange();
+    CHECK_AND_RETURN_RET_LOG(activeFrameRate.size() > 1, CAMERA_SERVICE_FATAL_ERROR,
+        "invalid activeFrameRate size!");
+
+    frameRateRange->min = static_cast<uint32_t>(activeFrameRate[0]);
+    frameRateRange->max = static_cast<uint32_t>(activeFrameRate[1]);
+
+    return CAMERA_OK;
+}

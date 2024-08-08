@@ -64,6 +64,15 @@ extern "C" {
 typedef void (*OH_CameraManager_StatusCallback)(Camera_Manager* cameraManager, Camera_StatusInfo* status);
 
 /**
+ * @brief Camera manager torch status callback.
+ *
+ * @param cameraManager the {@link Camera_Manager} which deliver the callback.
+ * @param status the {@link Camera_TorchStatusInfo} of the torch.
+ * @since 12
+ */
+typedef void (*OH_CameraManager_TorchStatusCallback)(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
+
+/**
  * @brief A listener for camera devices status.
  *
  * @see OH_CameraManager_RegisterCallback
@@ -98,6 +107,30 @@ Camera_ErrorCode OH_CameraManager_RegisterCallback(Camera_Manager* cameraManager
  * @since 11
  */
 Camera_ErrorCode OH_CameraManager_UnregisterCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback);
+
+/**
+ * @brief Register torch status change event callback.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param torchStatusCallback the {@link OH_CameraManager_TorchStatusCallback} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_RegisterTorchStatusCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_TorchStatusCallback torchStatusCallback);
+
+/**
+ * @brief Unregister torch status change event callback.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param torchStatusCallback the {@link OH_CameraManager_TorchStatusCallback} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_UnregisterTorchStatusCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_TorchStatusCallback torchStatusCallback);
 
 /**
  * @brief Gets supported camera descriptions.
@@ -180,7 +213,7 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameraOutputCapability(Camera_M
 Camera_ErrorCode OH_CameraManager_IsCameraMuted(Camera_Manager* cameraManager, bool* isCameraMuted);
 
 /**
- * @brief Create a capture session instance.
+ * @brief Create a capture session instance.The default session mode is photo session.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
  * @param captureSession the {@link Camera_CaptureSession} will be created
@@ -194,7 +227,7 @@ Camera_ErrorCode OH_CameraManager_CreateCaptureSession(Camera_Manager* cameraMan
     Camera_CaptureSession** captureSession);
 
 /**
- * @brief Create a camera input= instance.
+ * @brief Create a camera input instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
  * @param camera the {@link Camera_Device} which use to create {@link Camera_Input}.
@@ -349,6 +382,45 @@ Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
  * @since 12
  */
 Camera_ErrorCode OH_CameraManager_DeleteSceneModes(Camera_Manager* cameraManager, Camera_SceneMode* sceneModes);
+
+/**
+ * @brief Check if the device supports torch.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param isTorchSupported whether the device supports torch.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchSupported(Camera_Manager* cameraManager,
+    bool* isTorchSupported);
+
+/**
+ * @brief Check whether the device supports the torch with the specified torch mode.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param torchMode the {@link Camera_TorchMode} to be checked.
+ * @param isTorchSupported whether device supports the torch mode.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchSupportedByTorchMode(Camera_Manager* cameraManager,
+    Camera_TorchMode torchMode, bool* isTorchSupported);
+
+/**
+ * @brief Set camera torch mode.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param torchMode the {@link Camera_TorchMode} to be set.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager,
+    Camera_TorchMode torchMode);
 
 #ifdef __cplusplus
 }

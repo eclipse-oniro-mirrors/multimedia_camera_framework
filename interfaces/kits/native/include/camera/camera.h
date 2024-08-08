@@ -171,7 +171,7 @@ typedef enum Camera_SceneMode {
     NORMAL_VIDEO = 2,
 
     /**
-     * Secure camera mode.
+     * Secure photo mode.
      */
     SECURE_PHOTO = 12
 } Camera_SceneMode;
@@ -924,7 +924,7 @@ typedef struct Camera_TorchStatusInfo {
     /**
      * the current torch brightness level.
      */
-    int32_t torchLevel;
+    float torchLevel;
 } Camera_TorchStatusInfo;
 
 /**
