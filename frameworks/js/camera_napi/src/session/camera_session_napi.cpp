@@ -1583,7 +1583,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
         int32_t value;
         napi_value getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
         napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsTorchModeSupported call Failed!");
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFlashModeSupported call Failed!");
         FlashMode flashMode = (FlashMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
