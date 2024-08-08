@@ -11952,5 +11952,116 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_panorama, TestSi
     intResult = session->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test dynamic remove preview output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test dynamic remove preview output
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_dynamic_remove_previewoutput, TestSize.Level0)
+{
+    auto previewOutput1 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput1, nullptr);
+
+    auto previewOutput2 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput2, nullptr);
+
+    auto captureOutput = CreatePhotoOutput();
+    ASSERT_NE(captureOutput, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput1);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput2);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->RemoveOutput(previewOutput2);
+    EXPECT_EQ(intResult, 0);
+
+    ((sptr<PreviewOutput>&)previewOutput2)->Release();
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test dynamic add preview output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test dynamic add preview output
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_dynamic_add_previewoutput, TestSize.Level0)
+{
+    auto previewOutput1 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput1, nullptr);
+
+    auto previewOutput2 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput2, nullptr);
+
+    auto captureOutput = CreatePhotoOutput();
+    ASSERT_NE(captureOutput, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput1);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput2);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

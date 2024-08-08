@@ -259,6 +259,7 @@ private:
     string CreateDisplayName();
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
+    int32_t ValidateSession();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
     int32_t LinkInputAndOutputs();
@@ -287,9 +288,10 @@ private:
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
     int32_t GetSensorOritation();
-
     std::string GetSessionState();
 
+    void DynamicConfigStream();
+    bool IsNeedDynamicConfig();
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
@@ -309,6 +311,7 @@ private:
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
     bool enableStreamRotate_ = false;
+    bool isDynamicConfiged_ = false;
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
     sptr<MovingPhotoListener> livephotoListener_;

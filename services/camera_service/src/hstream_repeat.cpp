@@ -266,7 +266,7 @@ int32_t HStreamRepeat::Stop()
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::Stop streamOperator is null");
     auto preparedCaptureId = GetPreparedCaptureId();
-    MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+    MEDIA_INFO_LOG("HStreamRepeat::Stop streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
                    "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId == CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
