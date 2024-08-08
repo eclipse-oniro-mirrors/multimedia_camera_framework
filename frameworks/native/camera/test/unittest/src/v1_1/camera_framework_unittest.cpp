@@ -850,7 +850,13 @@ void CameraFrameworkUnitTest::PortraitSessionBeautyParams(sptr<PortraitSession> 
 
 void CameraFrameworkUnitTest::SetUpTestCase(void) {}
 
-void CameraFrameworkUnitTest::TearDownTestCase(void) {}
+void CameraFrameworkUnitTest::TearDownTestCase(void)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    camSession->Release();
+}
 
 void CameraFrameworkUnitTest::SetUp()
 {
@@ -8195,6 +8201,27 @@ HWTEST_F(CameraFrameworkUnitTest, camera_panorama_unittest_002, TestSize.Level0)
             camInput->Close();
         }
     }
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_CheckFrameRateRangeWithCurrentFps, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(30, 30, 30, 60), false);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(30, 30, 30, 60), false);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(20, 40, 20, 40), true);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(20, 40, 30, 60), false);
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_CanPreconfig, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    PreconfigType preconfigType = PreconfigType::PRECONFIG_720P;
+    ProfileSizeRatio preconfigRatio = ProfileSizeRatio::RATIO_16_9;
+    EXPECT_EQ(session->CanPreconfig(preconfigType, preconfigRatio), true);
+    int32_t result = session->Preconfig(preconfigType, preconfigRatio);
+    EXPECT_EQ(result, 0);
 }
 } // CameraStandard
 } // OHOS

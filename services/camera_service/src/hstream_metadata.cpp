@@ -56,20 +56,14 @@ int32_t HStreamMetadata::Start()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = GetPreparedCaptureId();
-    if (preparedCaptureId != CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamMetadata::Start, Already started with captureID: %{public}d", preparedCaptureId);
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+        "HStreamMetadata::Start, Already started with captureID: %{public}d", preparedCaptureId);
     int32_t ret = PrepareCaptureId();
     preparedCaptureId = GetPreparedCaptureId();
-    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamMetadata::Start Failed to allocate a captureId");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+        "HStreamMetadata::Start Failed to allocate a captureId");
     std::vector<uint8_t> ability;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -82,10 +76,8 @@ int32_t HStreamMetadata::Start()
     MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        if (cameraAbility_ == nullptr) {
-            MEDIA_ERR_LOG("HStreamMetadata::Start cameraAbility_ is null");
-            return CAMERA_INVALID_STATE;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_INVALID_STATE,
+            "HStreamMetadata::Start cameraAbility_ is null");
         HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
     }
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
