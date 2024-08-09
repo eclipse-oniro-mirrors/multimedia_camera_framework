@@ -43,7 +43,7 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
     DisableJeMalloc();
     int errCode = -1;
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
-    CameraXCollie cameraXCollie = CameraXCollie("CameraServiceStub");
+    CameraXCollie cameraXCollie = CameraXCollie("CameraServiceStub " + std::to_string(code));
     switch (code) {
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE):
             errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
