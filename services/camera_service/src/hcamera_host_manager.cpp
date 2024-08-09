@@ -470,10 +470,7 @@ int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& c
 void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (cameraHostProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraHostInfo::Prelaunch cameraHostProxy_ is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraHostProxy_ == nullptr, "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
     MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
         notifyType, deviceState);
     if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {

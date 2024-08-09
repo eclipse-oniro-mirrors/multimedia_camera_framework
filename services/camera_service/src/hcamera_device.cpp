@@ -1272,9 +1272,9 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         for (auto& streamInfo : streamInfos) {
             streamIds.emplace_back(streamInfo.v1_0.streamId_);
         }
-        if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to release streams");
-        }
+        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
+            streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
+            "HCameraDevice::CreateStreams(), Failed to release streams");
     }
     for (auto& info : streamInfos) {
         MEDIA_INFO_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);

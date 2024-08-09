@@ -22,6 +22,7 @@
 #include "input/camera_manager.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
+#include "session/slow_motion_session.h"
 #include "hcamera_service_callback_proxy.h"
 #include "hstream_repeat_proxy.h"
 #include "hstream_capture_callback_proxy.h"
@@ -57,6 +58,7 @@ public:
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
+    sptr<SlowMotionSession> slowMotionSession_;
     sptr<CaptureSession> highResSession_;
     sptr<CaptureSession> videoSession_;
     sptr<CaptureInput> input_;
@@ -101,6 +103,7 @@ public:
     SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void ConfigSlowMotionSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
     void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
                                   Profile previewProfile, Profile photoProfile);
     void ConfigVideoSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
