@@ -2941,7 +2941,7 @@ napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info
     MEDIA_DEBUG_LOG("CanPreconfig is called");
     size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
-    int32_t profileSizeRatio = 0;
+    int32_t profileSizeRatio = ProfileSizeRatio::UNSPECIFIED;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
@@ -2968,7 +2968,7 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     MEDIA_DEBUG_LOG("Preconfig is called");
     size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
-    int32_t profileSizeRatio = 0;
+    int32_t profileSizeRatio = ProfileSizeRatio::UNSPECIFIED;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
