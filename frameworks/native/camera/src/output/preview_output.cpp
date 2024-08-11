@@ -295,9 +295,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
         CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed EnableSketch!, session not config");
 
     if (isEnable) {
-        if (sketchWrapper_ != nullptr) {
-            return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-        }
+        CHECK_ERROR_RETURN_RET(sketchWrapper_ != nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
         auto sketchSize = FindSketchSize();
         CHECK_ERROR_RETURN_RET_LOG(sketchSize == nullptr, ServiceToCameraError(errCode),
             "PreviewOutput EnableSketch FindSketchSize is null");
@@ -307,9 +305,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     }
 
     // Disable sketch branch
-    if (sketchWrapper_ == nullptr) {
-        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-    }
+    CHECK_ERROR_RETURN_RET(sketchWrapper_ == nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
     errCode = sketchWrapper_->Destroy();
     sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
@@ -627,7 +623,6 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
-        MEDIA_ERR_LOG("canSetFrameRateRange item0:%{public}d item1:%{public}d!", item[minIndex], item[maxIndex]);
         if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
             return CameraErrorCode::SUCCESS;
         }

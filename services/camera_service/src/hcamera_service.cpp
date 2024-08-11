@@ -145,20 +145,17 @@ void HCameraService::OnStop()
 int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_INVALID_ARG,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
         "GetMuteModeFromDataShareHelper NULL");
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(PREDICATES_STRING, value);
     MEDIA_INFO_LOG("GetMuteModeFromDataShareHelper Query ret = %{public}d, value = %{public}s", ret, value.c_str());
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_INVALID_ARG, "GetMuteModeFromDataShareHelper QueryOnce fail.");
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_INVALID_ARG, "GetMuteModeFromDataShareHelper QueryOnce fail.");
     value = (value == "0" || value == "1") ? value : "0";
     int32_t muteModeVal = std::stoi(value);
-    if (muteModeVal == 0 || muteModeVal == 1) {
+    CHECK_ERROR_RETURN_RET_LOG(muteModeVal != 0 && muteModeVal != 1, CAMERA_INVALID_ARG,
+        "GetMuteModeFromDataShareHelper Query MuteMode invald, value = %{public}d", muteModeVal);
         muteMode = (muteModeVal == 1) ? true: false;
-    } else {
-        MEDIA_ERR_LOG("GetMuteModeFromDataShareHelper Query MuteMode invald, value = %{public}d", muteModeVal);
-        return CAMERA_INVALID_ARG;
-    }
     this->muteModeStored_ = muteMode;
     return CAMERA_OK;
 }
@@ -166,13 +163,13 @@ int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
 int32_t HCameraService::SetMuteModeByDataShareHelper(bool muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_ALLOC_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
         "GetMuteModeFromDataShareHelper NULL");
     std::string unMuteModeStr = "0";
     std::string muteModeStr = "1";
     std::string value = muteMode? muteModeStr : unMuteModeStr;
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_STRING, value);
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_ALLOC_ERROR, "SetMuteModeByDataShareHelper UpdateOnce fail.");
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR, "SetMuteModeByDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;
 }
 
@@ -1219,9 +1216,7 @@ void HCameraService::SetServiceStatus(CameraServiceStatus serviceStatus)
 int32_t HCameraService::IsCameraMuted(bool& muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    if (GetServiceStatus() != CameraServiceStatus::SERVICE_READY) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE);
     muteMode = muteModeStored_;
 
     MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted success. isMuted: %{public}d", muteMode);
@@ -1516,9 +1511,7 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int ret = GetCameras(cameraIds, cameraAbilityList);
-    if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
-        return OHOS::UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET((ret != CAMERA_OK) || cameraIds.empty() || cameraAbilityList.empty(), OHOS::UNKNOWN_ERROR);
     CameraInfoDumper infoDumper(fd);
     if (args.empty() || argSets.count(u16string(u"summary"))) {
         DumpCameraSummary(cameraIds, infoDumper);
@@ -1576,18 +1569,10 @@ void HCameraService::UnRegisterSensorCallback()
 void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 {
     MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl prepare execute");
-    if (event == nullptr) {
-        MEDIA_INFO_LOG("SensorEvent is nullptr.");
-        return;
-    }
-    if (event[0].data == nullptr) {
-        MEDIA_INFO_LOG("SensorEvent[0].data is nullptr.");
-        return;
-    }
-    if (event[0].dataLen < sizeof(DropDetectionData)) {
-        MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].dataLen < sizeof(DropDetectionData),
+        "less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
     {
         std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
         g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(

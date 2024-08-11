@@ -64,7 +64,7 @@ int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
 void SharedBuffer::Reset()
 {
     auto offset = lseek(GetFd(), 0, SEEK_SET);
-    DP_CHECK_AND_PRINT_LOG(offset == DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
+    DP_CHECK_ERROR_PRINT_LOG(offset != DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
     DP_INFO_LOG("reset success.");
 }
 

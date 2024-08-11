@@ -37,14 +37,10 @@ float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue)
 
 bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float unspecifiedValue)
 {
-    if (srcProfile.size_.height == 0 || srcProfile.size_.width == 0) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(srcProfile.size_.height == 0 || srcProfile.size_.width == 0, false);
     float srcRatio = ((float)srcProfile.size_.width) / srcProfile.size_.height;
     float targetRatio = GetTargetRatio(sizeRatio, unspecifiedValue);
-    if (targetRatio <= 0) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(targetRatio <= 0, false);
     return abs(srcRatio - targetRatio) / targetRatio <= 0.05f; // 0.05f is 5% tolerance
 }
 

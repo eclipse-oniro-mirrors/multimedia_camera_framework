@@ -63,9 +63,9 @@
         }                                                   \
     } while (0)
 
-#define DP_CHECK_AND_PRINT_LOG(cond, fmt, ...)              \
+#define DP_CHECK_ERROR_PRINT_LOG(cond, fmt, ...)            \
     do {                                                    \
-        if (!(cond)) {                                      \
+        if (cond) {                                      \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
         }                                                   \
     } while (0)
@@ -77,4 +77,10 @@
         }                                                   \
     } while (0)
 
+#define DP_CHECK_ERROR_RETURN_RET(cond, ret)                \
+    do {                                                    \
+        if (cond) {                                      \
+            return ret;                                     \
+        }                                                   \
+    } while (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

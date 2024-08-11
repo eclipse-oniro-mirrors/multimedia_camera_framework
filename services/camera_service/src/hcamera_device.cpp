@@ -149,9 +149,7 @@ int32_t HCameraDevice::ResetDeviceSettings()
     MEDIA_INFO_LOG("HCameraDevice::ResetDeviceSettings enter");
     {
         std::lock_guard<std::mutex> lock(opMutex_);
-        if (hdiCameraDevice_ == nullptr) {
-            return CAMERA_OK;
-        }
+        CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_OK);
         hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     }
     if (hdiCameraDeviceV1_2 != nullptr) {
@@ -199,7 +197,7 @@ int32_t HCameraDevice::DispatchDefaultSettingToHdi()
     }
 
     std::lock_guard<std::mutex> lock(opMutex_);
-    CHECK_AND_RETURN_RET(hdiCameraDevice_ != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_INVALID_STATE);
     std::vector<uint8_t> hdiMetadata;
     bool isSuccess = OHOS::Camera::MetadataUtils::ConvertMetadataToVec(lifeCycleSettings, hdiMetadata);
     CHECK_ERROR_RETURN_RET_LOG(!isSuccess, CAMERA_UNKNOWN_ERROR,
@@ -232,7 +230,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetDeviceAbility()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(deviceAbilityMutex_);
-    CHECK_AND_RETURN_RET(deviceAbility_ == nullptr, deviceAbility_);
+    CHECK_ERROR_RETURN_RET(deviceAbility_ != nullptr, deviceAbility_);
     int32_t errCode = cameraHostManager_->GetCameraAbility(cameraID_, deviceAbility_);
     CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, nullptr,
         "HCameraDevice::GetSettings Failed to get Camera Ability: %{public}d", errCode);
@@ -791,7 +789,7 @@ void HCameraDevice::DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Cam
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_TYPE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value=%{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value = %{public}d", item.data.u8[0]);
     }
 }
 
@@ -913,6 +911,22 @@ void HCameraDevice::DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::Cam
     }
 }
 
+void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                              uint32_t tag)
+{
+    // debug log for frame rate range
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES value = %{public}d",
+            item.data.i32[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
+            std::to_string(item.data.i32[0]), caller_);
+    }
+}
+
 void HCameraDevice::DebugLogForLightPaintingType(
     const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
 {
@@ -938,22 +952,6 @@ void HCameraDevice::DebugLogForTriggerLighting(
     } else {
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
             std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                                              uint32_t tag)
-{
-    // debug log for frame rate range
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES value = %{public}d",
-            item.data.i32[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
-            std::to_string(item.data.i32[0]), caller_);
     }
 }
 

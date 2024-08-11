@@ -214,10 +214,8 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
 {
     MEDIA_INFO_LOG("CollectAudioBuffer start with size %{public}zu", audioRecordVec.size());
     bool isEncodeSuccess = false;
-    if (!audioEncoder_ || audioRecordVec.empty() || !muxer) {
-        MEDIA_ERR_LOG("CollectAudioBuffer cannot find useful data");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!audioEncoder_ || audioRecordVec.empty() || !muxer,
+        "CollectAudioBuffer cannot find useful data");
     isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(audioRecordVec);
     MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
     for (size_t index = 0; index < audioRecordVec.size(); index++) {

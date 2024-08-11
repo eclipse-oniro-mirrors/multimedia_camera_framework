@@ -146,9 +146,7 @@ int32_t ProfessionSession::SetMeteringMode(MeteringMode mode)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_METER_MODE, &meteringMode, count);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetMeteringMode Failed to set focus mode");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetMeteringMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -163,10 +161,8 @@ int32_t ProfessionSession::GetMeteringMode(MeteringMode &meteringMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_METER_MODE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetMeteringMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetMeteringMode Failed with return code %{public}d", ret);
     auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[0]));
     if (itr != metaMeteringModeMap_.end()) {
         meteringMode = itr->second;
@@ -189,10 +185,8 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
 
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("ProfessionSession::GetIsoRange Failed with return code %{public}d", ret);
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::INVALID_ARGUMENT,
+        "ProfessionSession::GetIsoRange Failed with return code %{public}d", ret);
     std::vector<std::vector<int32_t> > modeIsoRanges = {};
         std::vector<int32_t> modeRange = {};
     for (uint32_t i = 0; i < item.count; i++) {
@@ -248,9 +242,7 @@ int32_t ProfessionSession::SetISO(int32_t iso)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetISO Failed to set exposure compensation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetISO Failed to set exposure compensation");
     isoValue_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
 }
@@ -266,10 +258,8 @@ int32_t ProfessionSession::GetISO(int32_t &iso)
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ISO_VALUE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetISO Failed with return code %{public}d", ret);
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
+        "ProfessionSession::GetISO Failed with return code %{public}d", ret);
     iso = item.data.i32[0];
     MEDIA_DEBUG_LOG("iso: %{public}d", iso);
     return CameraErrorCode::SUCCESS;
@@ -293,10 +283,8 @@ bool ProfessionSession::IsManualIsoSupported()
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("ProfessionSession::IsMacroSupported Failed with return code %{public}d", ret);
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, false,
+        "ProfessionSession::IsMacroSupported Failed with return code %{public}d", ret);
     return true;
 }
 
@@ -314,10 +302,8 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedFocusModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
         if (itr != g_metaFocusModeMap_.end()) {
@@ -370,9 +356,7 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetFocusMode Failed to set focus mode");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFocusMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -387,10 +371,8 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
     auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFocusModeMap_.end()) {
         focusMode = itr->second;
@@ -412,10 +394,8 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXPOSURE_HINT_SUPPORTED, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedExposureHintModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedExposureHintModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[i]));
         if (itr != metaExposureHintModeMap_.end()) {
@@ -451,9 +431,7 @@ int32_t ProfessionSession::SetExposureHintMode(ExposureHintMode mode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetExposureHintMode Failed to set ExposureHint mode");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetExposureHintMode Failed to set ExposureHint mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -468,10 +446,8 @@ int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetExposureHintMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetExposureHintMode Failed with return code %{public}d", ret);
     auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[0]));
     if (itr != metaExposureHintModeMap_.end()) {
         mode = itr->second;
@@ -493,10 +469,8 @@ int32_t ProfessionSession::GetSupportedFocusAssistFlashModes(
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_ASSIST_FLASH_SUPPORTED_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusAssistFlashModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedFocusAssistFlashModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaFocusAssistFlashModeMap_.find(
             static_cast<camera_focus_assist_flash_mode_enum_t>(item.data.u8[i]));
@@ -550,9 +524,7 @@ int32_t ProfessionSession::SetFocusAssistFlashMode(FocusAssistFlashMode mode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &value, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetFocusAssistFlashMode Failed to set FocusAssistFlash mode");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFocusAssistFlashMode Failed to set FocusAssistFlash mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -567,10 +539,8 @@ int32_t ProfessionSession::GetFocusAssistFlashMode(FocusAssistFlashMode &mode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetFocusAssistFlashMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetFocusAssistFlashMode Failed with return code %{public}d", ret);
     auto itr = metaFocusAssistFlashModeMap_.find(static_cast<camera_focus_assist_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != metaFocusAssistFlashModeMap_.end()) {
         mode = itr->second;
@@ -591,10 +561,8 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
         if (itr != g_metaFlashModeMap_.end()) {
@@ -615,10 +583,8 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetFlashMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetFlashMode Failed with return code %{public}d", ret);
     auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFlashModeMap_.end()) {
         flashMode = itr->second;
@@ -653,10 +619,7 @@ int32_t ProfessionSession::SetFlashMode(FlashMode flashMode)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetFlashMode Failed to set flash mode");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFlashMode Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -701,10 +664,8 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SUPPORTED_COLOR_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
         if (itr != g_metaColorEffectMap_.end()) {
@@ -725,10 +686,8 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
     auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
     if (itr != g_metaColorEffectMap_.end()) {
         colorEffect = itr->second;
@@ -763,9 +722,7 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("ProfessionSession::SetColorEffect Failed to set color effect");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetColorEffect Failed to set color effect");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -892,9 +849,7 @@ void ProfessionSession::ProcessPhysicalCameraSwitch(const std::shared_ptr<OHOS::
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &item);
-    if (ret != CAM_META_SUCCESS) {
-        return;
-    }
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
     if (physicalCameraId_ != item.data.u8[0]) {
         MEDIA_DEBUG_LOG("physicalCameraId: %{public}d", item.data.u8[0]);
         physicalCameraId_ = item.data.u8[0];
@@ -909,9 +864,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
         std::find_if(supportedDevices_.begin(), supportedDevices_.end(), [phyCameraId](const auto& device) -> bool {
             std::string cameraId = device->GetID();
             size_t delimPos = cameraId.find("/");
-            if (delimPos == std::string::npos) {
-                return false;
-            }
+            CHECK_ERROR_RETURN_RET(delimPos == std::string::npos, false);
             string id = cameraId.substr(delimPos + 1);
             return id.compare(phyCameraId) == 0;
         });
@@ -920,22 +873,16 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
         if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
             photoProfile_.GetCameraFormat() != CAMERA_FORMAT_DNG) {
             auto inputDevice = GetInputDevice();
-            if (inputDevice == nullptr) {
-                return nullptr;
-            }
+            CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
             auto info = inputDevice->GetCameraDeviceInfo();
-            if (info == nullptr) {
-                return nullptr;
-            }
+            CHECK_ERROR_RETURN_RET(info == nullptr, nullptr);
             MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata using main sensor: %{public}s", info->GetID().c_str());
             return info->GetMetadata();
         }
         return (*physicalCameraDevice)->GetMetadata();
     }
     auto inputDevice = GetInputDevice();
-    if (inputDevice == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
         inputDevice->GetCameraDeviceInfo()->GetID().c_str());
     return inputDevice->GetCameraDeviceInfo()->GetMetadata();

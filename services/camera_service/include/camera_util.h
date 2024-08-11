@@ -165,8 +165,6 @@ EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerTo
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
-bool IsVerticalDevice();
-
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
     std::string& deviceClass);
 
@@ -215,6 +213,7 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
     stringStream << "]";
     return stringStream.str();
 }
+bool IsVerticalDevice();
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

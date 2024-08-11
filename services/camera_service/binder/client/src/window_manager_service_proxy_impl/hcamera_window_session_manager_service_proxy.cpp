@@ -29,10 +29,8 @@ sptr<IRemoteObject> CameraWindowSessionManagerProxy::GetSceneSessionManager()
     auto error = Remote()->SendRequest(
         static_cast<uint32_t>(SessionManagerServiceMessage::TRANS_ID_GET_SCENE_SESSION_MANAGER),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, nullptr,
+        "HCameraDeviceProxy GetSceneSessionManager failed, error: %{public}d", error);
  
     return reply.ReadRemoteObject();
 }

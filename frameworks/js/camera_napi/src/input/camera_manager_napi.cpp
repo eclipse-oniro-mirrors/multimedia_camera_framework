@@ -561,10 +561,10 @@ std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactor
         return PanoramaSessionNapi::CreateCameraSession(env); }},
     {JsSceneMode::JS_LIGHT_PAINTING, [] (napi_env env) {
         return LightPaintingSessionNapi::CreateCameraSession(env); }},
-    {JsSceneMode::JS_FLUORESCENCE_PHOTO, [] (napi_env env) {
-        return FluorescencePhotoSessionNapi::CreateCameraSession(env); }},
     {JsSceneMode::JS_TIMELAPSE_PHOTO, [] (napi_env env) {
         return TimeLapsePhotoSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_FLUORESCENCE_PHOTO, [] (napi_env env) {
+        return FluorescencePhotoSessionNapi::CreateCameraSession(env); }},
 };
 
 std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactories = {
