@@ -32,12 +32,12 @@ public:
     CameraProcessPriority(int32_t uid, int32_t state, int32_t focusState) : processUid_(uid),
         processState_(state), focusState_(focusState) {}
 
-    bool operator == (const CameraProcessPriority& rhs) const
+    inline bool operator == (const CameraProcessPriority& rhs) const
     {
         return (this->processState_ == rhs.processState_) && (this->focusState_ == rhs.focusState_);
     }
 
-    bool operator < (const CameraProcessPriority& rhs) const
+    inline bool operator < (const CameraProcessPriority& rhs) const
     {
         if (this->processUid_ < maxSysUid_) {
             MEDIA_DEBUG_LOG("this->processUid_ :%{public}d", this->processUid_);
@@ -58,12 +58,12 @@ public:
         }
     }
 
-    bool operator > (const CameraProcessPriority& rhs) const
+    inline bool operator > (const CameraProcessPriority& rhs) const
     {
         return rhs < *this;
     }
 
-    bool operator <= (const CameraProcessPriority& rhs) const
+    inline bool operator <= (const CameraProcessPriority& rhs) const
     {
         if (this->processUid_ < maxSysUid_ && rhs.processUid_ < maxSysUid_) {
             return true;
@@ -71,7 +71,7 @@ public:
         return !(*this > rhs);
     }
 
-    bool operator >= (const CameraProcessPriority& rhs) const
+    inline bool operator >= (const CameraProcessPriority& rhs) const
     {
         if (this->processUid_ < maxSysUid_ && rhs.processUid_ < maxSysUid_) {
             return false;
@@ -79,21 +79,21 @@ public:
         return !(*this < rhs);
     }
 
-    void SetProcessState(int32_t state)
+    inline void SetProcessState(int32_t state)
     {
         processState_ = state;
     }
 
-    void SetProcessFocusState(int32_t focusState)
+    inline void SetProcessFocusState(int32_t focusState)
     {
         focusState_ = focusState;
     }
 
-    int32_t GetUid() const{ return processUid_; }
+    inline int32_t GetUid() const{ return processUid_; }
 
-    int32_t GetState() const { return processState_; }
+    inline int32_t GetState() const { return processState_; }
 
-    int32_t GetFocusState() const { return focusState_; }
+    inline int32_t GetFocusState() const { return focusState_; }
 
 private:
     const int32_t maxSysUid_ = 10000;
@@ -111,36 +111,36 @@ public:
     {
         processPriority_ = new CameraProcessPriority(uid, state, focusState);
     }
-    void SetPid(int32_t pid) { pid_ = pid; }
-    void SetUid(int32_t uid) { uid_ = uid; }
-    void SetState(int32_t state)
+    inline void SetPid(int32_t pid) { pid_ = pid; }
+    inline void SetUid(int32_t uid) { uid_ = uid; }
+    inline void SetState(int32_t state)
     {
         processPriority_->SetProcessState(state);
         state_ = state;
     }
-    void SetFocusState(int32_t focusState)
+    inline void SetFocusState(int32_t focusState)
     {
         processPriority_->SetProcessFocusState(focusState);
         focusState_ = focusState;
     }
 
-    int32_t GetPid() const {return pid_;}
+    inline int32_t GetPid() const {return pid_;}
 
-    int32_t GetUid() const{ return uid_; }
+    inline int32_t GetUid() const{ return uid_; }
 
-    int32_t GetState() const { return state_; }
+    inline int32_t GetState() const { return state_; }
 
-    int32_t GetFocusState() const { return focusState_; }
+    inline int32_t GetFocusState() const { return focusState_; }
 
-    uint32_t GetAccessTokenId() const { return accessTokenId_; }
+    inline uint32_t GetAccessTokenId() const { return accessTokenId_; }
 
-    sptr<HCameraDevice> GetDevice() const { return device_; }
+    inline sptr<HCameraDevice> GetDevice() const { return device_; }
     
-    sptr<CameraProcessPriority> GetPriority() const {return processPriority_;}
+    inline sptr<CameraProcessPriority> GetPriority() const {return processPriority_;}
 
-    int32_t GetCost() const{ return cost_; }
+    inline int32_t GetCost() const{ return cost_; }
 
-    bool IsConflicting(const std::string &cameraId) const
+    inline bool IsConflicting(const std::string &cameraId) const
     {
         std::string curCameraId = device_->GetCameraId();
         if (cameraId == curCameraId) {
@@ -154,7 +154,7 @@ public:
         return false;
     }
 
-    std::set<std::string> GetConflicting() const { return conflicting_; }
+    inline std::set<std::string> GetConflicting() const { return conflicting_; }
 
 private:
     int32_t pid_;
