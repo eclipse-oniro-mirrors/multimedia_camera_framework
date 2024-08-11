@@ -53,12 +53,7 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
         if (HCameraDeviceManager::cameraDeviceManager_ == nullptr) {
             MEDIA_INFO_LOG("Initializing camera device manager instance");
             HCameraDeviceManager::cameraDeviceManager_ = new HCameraDeviceManager();
-            MEDIA_INFO_LOG("RegisterWindowManagerAgent start");
-            int32_t windowRet = CameraWindowManagerClient::GetInstance()->RegisterWindowManagerAgent();
-            if (windowRet != 0) {
-                MEDIA_INFO_LOG("RegisterWindowManagerAgent faild");
-            }
-            MEDIA_INFO_LOG("RegisterWindowManagerAgent end");
+            CameraWindowManagerClient::GetInstance();
         }
     }
     return HCameraDeviceManager::cameraDeviceManager_;
