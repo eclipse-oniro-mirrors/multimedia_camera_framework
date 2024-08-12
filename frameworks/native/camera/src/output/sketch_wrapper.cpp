@@ -48,9 +48,7 @@ int32_t SketchWrapper::Init(
     std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, const SceneFeaturesMode& sceneFeaturesMode)
 {
     sptr<IStreamCommon> hostStream = hostStream_.promote();
-    if (hostStream == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(hostStream == nullptr, CAMERA_INVALID_STATE);
     UpdateSketchStaticInfo(deviceMetadata);
     sketchEnableRatio_ = GetSketchEnableRatio(sceneFeaturesMode);
         SceneFeaturesMode dumpSceneFeaturesMode = sceneFeaturesMode;
@@ -63,12 +61,8 @@ int32_t SketchWrapper::Init(
 
 int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
 {
-    if (sketchStream_ == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
-    if (sketchSurface == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET(sketchStream_ == nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(sketchSurface == nullptr, CAMERA_INVALID_ARG);
     return sketchStream_->AddDeferredSurface(sketchSurface->GetProducer());
 }
 

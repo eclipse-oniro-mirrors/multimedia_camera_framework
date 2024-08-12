@@ -91,7 +91,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
         "SetSlowMotionDetectionArea Session is not Commited");
     this->LockForControl();
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
-        "SetSlowMotionDetectionArea Session is not Commited");
+        "SetSlowMotionDetectionArea changedMetadata is null");
     int32_t retCode = EnableMotionDetection(true);
     CHECK_ERROR_RETURN_LOG(retCode != CameraErrorCode::SUCCESS, "EnableMotionDetection call failed");
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",
@@ -110,9 +110,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
         status = changedMetadata_->addEntry(OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA, rectVec.data(), rectVec.size());
     }
     this->UnlockForControl();
-    if (!status) {
-        MEDIA_ERR_LOG("SetSlowMotionDetectionArea failed to set motion rect");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "SetSlowMotionDetectionArea failed to set motion rect");
     return;
 }
 
@@ -175,9 +173,7 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("EnableMotionDetection Failed to enable motion detection");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "EnableMotionDetection Failed to enable motion detection");
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard

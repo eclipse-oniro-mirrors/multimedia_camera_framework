@@ -32,9 +32,8 @@ int32_t CameraSceneSessionManagerProxy::RegisterWindowManagerAgent(WindowManager
     int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
         SceneSessionManagerMessage::TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("RegisterWindowManagerAgent failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "RegisterWindowManagerAgent failed, error: %{public}d", error);
+
     return reply.ReadInt32();
 }
  
@@ -51,9 +50,7 @@ int32_t CameraSceneSessionManagerProxy::UnregisterWindowManagerAgent(WindowManag
     int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
         SceneSessionManagerMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("UnregisterWindowManagerAgent failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "UnregisterWindowManagerAgent failed, error: %{public}d", error);
  
     return reply.ReadInt32();
 }
@@ -69,10 +66,7 @@ void CameraSceneSessionManagerProxy::GetFocusWindowInfo(OHOS::Rosen::FocusChange
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(SceneSessionManagerMessage::TRANS_ID_GET_FOCUS_SESSION_INFO),
         data, reply, option);
-        if (error != ERR_NONE) {
-            MEDIA_ERR_LOG("HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(error != ERR_NONE, "HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
     sptr<OHOS::Rosen::FocusChangeInfo> info = reply.ReadParcelable<OHOS::Rosen::FocusChangeInfo>();
     if (info) {
         focusInfo = *info;

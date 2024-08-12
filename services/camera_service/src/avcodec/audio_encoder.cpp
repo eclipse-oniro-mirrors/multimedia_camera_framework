@@ -130,10 +130,7 @@ void AudioEncoder::RestartAudioCodec()
 bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
 {
     uint8_t* buffer = audioRecord->GetAudioBuffer();
-    if (buffer == nullptr) {
-        MEDIA_ERR_LOG("Enqueue audio buffer is empty");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(buffer == nullptr, false, "Enqueue audio buffer is empty");
     int enqueueRetryCount = 10;
     while (enqueueRetryCount > 0) {
         enqueueRetryCount--;

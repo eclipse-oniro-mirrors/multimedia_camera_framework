@@ -182,10 +182,9 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 
     if (deviceObj_) {
         retCode = isSupportSecCamera ? (deviceObj_->OpenSecureCamera(secureSeqId)) : (deviceObj_->Open());
-        if (retCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
+        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
+            "Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
                 retCode, isSupportSecCamera);
-        }
     } else {
         MEDIA_ERR_LOG("CameraInput::OpenSecureCamera() deviceObj_ is nullptr");
     }
@@ -265,7 +264,7 @@ void CameraInput::SetOcclusionDetectCallback(
 std::string CameraInput::GetCameraId()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "CameraInput::GetCameraId() cameraObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "CameraInput::GetCameraId cameraObject is null");
     return cameraObject->GetID();
 }
 
@@ -354,10 +353,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
         } else if (ret == CAM_META_SUCCESS) {
             status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
-        if (!status) {
-            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!status, false, "Failed to update metadata item: %{public}d", srcItem.item);
     }
     return true;
 }
@@ -365,7 +361,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
 std::string CameraInput::GetCameraSettings()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings() cameraObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings cameraObject is null");
     return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetMetadata());
 }
 

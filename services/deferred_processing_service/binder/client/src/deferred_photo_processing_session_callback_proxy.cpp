@@ -39,9 +39,8 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_IMAGE_DONE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        DP_ERR_LOG("DeferredPhotoProcessingSessionCallbackProxy OnProcessImageDone failed, error: %{public}d", error);
-    }
+    DP_CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "DeferredPhotoProcessingSessionCallbackProxy OnProcessImageDone failed, error: %{public}d", error);
     return error;
 }
 
@@ -58,9 +57,8 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnError(const std::string &
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_ERROR),
         data, reply, option);
-    if (error != ERR_NONE) {
-        DP_ERR_LOG("DeferredPhotoProcessingSessionCallbackProxy OnError failed, error: %{public}d", error);
-    }
+    DP_CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "DeferredPhotoProcessingSessionCallbackProxy OnError failed, error: %{public}d", error);
     return error;
 }
 
@@ -76,9 +74,8 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnStateChanged(StatusCode s
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_STATE_CHANGED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        DP_ERR_LOG("DeferredPhotoProcessingSessionCallbackProxy OnStateChanged failed, error: %{public}d", error);
-    }
+    DP_CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "DeferredPhotoProcessingSessionCallbackProxy OnStateChanged failed, error: %{public}d", error);
     return error;
 }
 } //namespace DeferredProcessing

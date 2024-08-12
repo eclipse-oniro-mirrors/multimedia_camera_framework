@@ -34,13 +34,9 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
 void CaptureOutput::RegisterStreamBinderDied()
 {
     auto stream = GetStream();
-    if (stream == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(stream == nullptr);
     sptr<IRemoteObject> object = stream->AsObject();
-    if (object == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(object == nullptr);
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) CameraDeathRecipient(0);

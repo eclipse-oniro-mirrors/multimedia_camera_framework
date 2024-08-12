@@ -476,7 +476,7 @@ void PhotoPostProcessor::DisconnectServiceIfNecessary()
     DP_CHECK_AND_RETURN_LOG(session_ != nullptr, "imageProcessSession is nullptr");
     const sptr<IRemoteObject> &remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
-    DP_CHECK_AND_PRINT_LOG(remote->RemoveDeathRecipient(sessionDeathRecipient_),
+    DP_CHECK_ERROR_PRINT_LOG(!remote->RemoveDeathRecipient(sessionDeathRecipient_),
         "RemoveDeathRecipient for ImageProcessSession failed.");
     session_ = nullptr;
 }

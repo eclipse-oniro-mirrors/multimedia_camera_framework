@@ -344,15 +344,12 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     retCode = serviceProxy->CreateCaptureSession(session, opMode);
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, mode %{public}d ret %{public}d",
         mode, retCode);
-    if (retCode == CAMERA_OK && session != nullptr) {
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK || session == nullptr, nullptr,
+        "Failed to get capture session object from hcamera service!, %{public}d", retCode);
         sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
-        CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr,
-            "CreateCaptureSession(mode) failed to new captureSession!");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr, "failed to new captureSession!");
         captureSession->SetMode(mode);
         return captureSession;
-    }
-    MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
-    return nullptr;
 }
 
 int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)

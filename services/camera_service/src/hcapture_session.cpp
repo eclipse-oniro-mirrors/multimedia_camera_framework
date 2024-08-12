@@ -354,10 +354,7 @@ void HCaptureSession::StartMovingPhotoStream()
                 break;
             }
         }
-        if (!isPreviewStarted) {
-            MEDIA_ERR_LOG("EnableMovingPhoto, preview is not streaming");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!isPreviewStarted, "EnableMovingPhoto, preview is not streaming");
         std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
         auto cameraDevice = GetCameraDevice();
         if (cameraDevice != nullptr) {
@@ -1610,9 +1607,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     const static int32_t INVALID_UID = -1;
     const static int32_t BASE_USER_RANGE = 200000;
     int uid = IPCSkeleton::GetCallingUid();
-    if (uid <= INVALID_UID) {
-        MEDIA_ERR_LOG("Get INVALID_UID UID %{public}d", uid);
-    }
+    CHECK_ERROR_PRINT_LOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
     int32_t userId = uid / BASE_USER_RANGE;
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d, tokenId:%{public}d", uid, userId,
         IPCSkeleton::GetCallingTokenID());

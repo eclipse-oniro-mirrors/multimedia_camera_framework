@@ -204,9 +204,7 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result, std::vector<sptr<MetadataObject>>& metaObjects,
     bool isNeedMirror)
 {
-    if (result == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(result == nullptr);
     camera_metadata_item_t metadataItem;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &metadataItem);
@@ -222,18 +220,13 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     }
     MEDIA_INFO_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", metadataItem.item, metadataItem.count);
     constexpr int32_t rectangleUnitLen = 4;
-    if (metadataItem.count % rectangleUnitLen) {
-        MEDIA_ERR_LOG("Metadata item: %{public}d count: %{public}d is invalid", metadataItem.item, metadataItem.count);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(metadataItem.count % rectangleUnitLen,
+        "Metadata item: %{public}d count: %{public}d is invalid", metadataItem.item, metadataItem.count);
     metaObjects.reserve(metadataItem.count / rectangleUnitLen);
 
     ret = ProcessMetaObjects(timestamp, metaObjects, metadataItem, metadata, isNeedMirror);
     reportFaceResults_ = true;
-    if (ret != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("MetadataOutput::ProcessFaceRectangles() is failed.");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(ret != CameraErrorCode::SUCCESS, "MetadataOutput::ProcessFaceRectangles() is failed.");
     MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
     return;
 }
@@ -280,10 +273,8 @@ int32_t MetadataOutput::ProcessMetaObjects(int64_t timestamp, std::vector<sptr<M
         MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
                        "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
                        positionStr.c_str(), topLeftX, topLeftY, width, height);
-        if (!metadataObject) {
-            MEDIA_ERR_LOG("Failed to allocate MetadataFaceObject");
-            return CameraErrorCode::OPERATION_NOT_ALLOWED;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!metadataObject, CameraErrorCode::OPERATION_NOT_ALLOWED,
+            "Failed to allocate MetadataFaceObject");
         metaObjects.emplace_back(metadataObject);
     }
     return CameraErrorCode::SUCCESS;

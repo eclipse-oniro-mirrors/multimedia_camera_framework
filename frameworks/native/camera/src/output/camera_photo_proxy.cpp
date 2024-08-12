@@ -93,10 +93,7 @@ int32_t CameraPhotoProxy::CameraFreeBufferHandle()
 {
     MEDIA_ERR_LOG("CameraFreeBufferHandle start");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (bufferHandle_ == nullptr) {
-        MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(bufferHandle_ == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (bufferHandle_->fd >= 0) {
         close(bufferHandle_->fd);
         bufferHandle_->fd = -1;

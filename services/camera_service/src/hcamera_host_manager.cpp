@@ -215,10 +215,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
 void HCameraHostManager::CameraHostInfo::CameraHostDied()
 {
     auto hostDeadCallback = cameraHostDeadCallback_.lock();
-    if (hostDeadCallback == nullptr) {
-        MEDIA_ERR_LOG("%{public}s CameraHostDied but hostDeadCallback is null.", name_.c_str());
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(hostDeadCallback == nullptr,
+        "%{public}s CameraHostDied but hostDeadCallback is null.", name_.c_str());
     hostDeadCallback->OnCameraHostDied(name_);
 }
 
@@ -740,14 +738,9 @@ void HCameraHostManager::DeInit()
 {
     using namespace OHOS::HDI::ServiceManager::V1_0;
     auto svcMgr = IServiceManager::Get();
-    if (svcMgr == nullptr) {
-        MEDIA_ERR_LOG("%s: IServiceManager failed", __func__);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "HCameraHostManager::DeInit(): IServiceManager failed");
     auto rt = svcMgr->UnregisterServiceStatusListener(registerServStatListener_);
-    if (rt != 0) {
-        MEDIA_ERR_LOG("%s: UnregisterServiceStatusListener failed!", __func__);
-    }
+    CHECK_ERROR_PRINT_LOG(rt != 0, "HCameraHostManager::DeInit(): UnregisterServiceStatusListener failed!");
     registerServStatListener_ = nullptr;
 }
 
@@ -908,10 +901,7 @@ void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceS
 void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam)
 {
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
-    if (cameraRestoreParam == nullptr) {
-        MEDIA_ERR_LOG("HCameraRestoreParam is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraRestoreParam == nullptr, "HCameraRestoreParam is nullptr");
     std::string clientName = cameraRestoreParam->GetClientName();
     if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
         DeleteRestoreParam(clientName, cameraRestoreParam->GetCameraId());
@@ -992,10 +982,7 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string&
 
 void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam)
 {
-    if (cameraRestoreParam == nullptr) {
-        MEDIA_ERR_LOG("HCameraHostManager::UpdateRestoreParam is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraRestoreParam == nullptr, "HCameraHostManager::UpdateRestoreParam is nullptr");
     std::string clientName = cameraRestoreParam->GetClientName();
     std::string cameraId = cameraRestoreParam->GetCameraId();
     std::map<std::string, sptr<HCameraRestoreParam>>::iterator iter = (persistentParamMap_[clientName]).begin();
@@ -1038,8 +1025,8 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetTransitentParam(const std::stri
 
 bool HCameraHostManager::CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId)
 {
-    CHECK_AND_RETURN_RET(cameraRestoreParam != nullptr, false);
-    CHECK_AND_RETURN_RET(cameraRestoreParam->GetCameraId() != cameraId, true);
+    CHECK_ERROR_RETURN_RET(cameraRestoreParam == nullptr, false);
+    CHECK_ERROR_RETURN_RET(cameraRestoreParam->GetCameraId() == cameraId, true);
     return false;
 }
 
@@ -1059,14 +1046,8 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
     auto statusCallback = statusCallback_.lock();
     sptr<HCameraHostManager::CameraHostInfo> cameraHost =
         new (std::nothrow) HCameraHostManager::CameraHostInfo(statusCallback, cameraHostDeadCallback_, svcName);
-    if (cameraHost == nullptr) {
-        MEDIA_ERR_LOG("failed to new cameraHost!");
-        return;
-    }
-    if (!cameraHost->Init()) {
-        MEDIA_ERR_LOG("HCameraHostManager::AddCameraHost failed due to init failure");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraHost == nullptr, "failed to new cameraHost!");
+    CHECK_ERROR_RETURN_LOG(!cameraHost->Init(), "HCameraHostManager::AddCameraHost failed due to init failure");
     cameraHostInfos_.push_back(cameraHost);
     std::vector<std::string> cameraIds;
     if (statusCallback && cameraHost->GetCameras(cameraIds) == CAMERA_OK) {

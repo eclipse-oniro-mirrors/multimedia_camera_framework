@@ -16,8 +16,8 @@
 #ifndef AVCODEC_SAMPLE_SAMPLE_INFO_H
 #define AVCODEC_SAMPLE_SAMPLE_INFO_H
 #include <cstdint>
-#include <string>
 #include <securec.h>
+#include <string>
 #include <condition_variable>
 #include <queue>
 #include "camera_log.h"

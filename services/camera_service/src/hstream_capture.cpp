@@ -171,7 +171,7 @@ void HStreamCapture::ResetBurstKey(int32_t captureId)
         burstNumMap_.erase(captureId) > 0) {
         MEDIA_INFO_LOG("HStreamCapture::ResetBurstKey captureId:%{public}d", captureId);
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::OnFrameShutterEnd captureId not found");
+        MEDIA_DEBUG_LOG("HStreamCapture::ResetBurstKey captureId not found");
     }
 }
 
@@ -274,6 +274,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
+
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
@@ -423,9 +424,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (result != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     }
-    if (!status) {
-        MEDIA_ERR_LOG("set rotation Failed to set Rotation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
 }
 
 int32_t HStreamCapture::CancelCapture()
@@ -452,7 +451,7 @@ int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     int32_t ret = 0;
 
     // end burst capture
@@ -464,7 +463,9 @@ int32_t HStreamCapture::ConfirmCapture()
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
-        CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HStreamCapture::ConfirmCapture end burst faild!");
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture end burst faild!");
+        }
         return ret;
     }
     
