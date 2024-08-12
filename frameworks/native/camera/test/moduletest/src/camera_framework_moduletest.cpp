@@ -12290,5 +12290,55 @@ HWTEST_F(CameraFrameworkModuleTest, test_video_frame_rate, TestSize.Level0)
     intResult = videoOutputTrans->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test burst capture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test burst capture
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_burst_capture, TestSize.Level0)
+{
+    ASSERT_NE(session_, nullptr);
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    photoSetting->SetBurstCaptureState(1);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->ConfirmCapture();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS
