@@ -417,19 +417,23 @@ void PhotoPostProcessor::OnSessionDied()
     session_ = nullptr;
     consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
+    std::vector<std::string> crashJobs;
     imageId2Handle_.Iterate([&](const std::string& imageId, const uint32_t value) {
-        DP_INFO_LOG("failed to process imageId(%{public}s) due to connect service failed", imageId.c_str());
-        if (imageId2CrashCount_.count(imageId) == 0) {
-            imageId2CrashCount_.emplace(imageId, 1);
-        } else {
-            imageId2CrashCount_[imageId] += 1;
-        }
-        if (imageId2CrashCount_[imageId] >= MAX_CONSECUTIVE_CRASH_COUNT) {
-            OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
-        } else {
-            OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
-        }
+        crashJobs.emplace_back(imageId);
     });
+    for (const auto& id : crashJobs) {
+        DP_INFO_LOG("failed to process imageId(%{public}s) due to connect service failed", id.c_str());
+        if (imageId2CrashCount_.count(id) == 0) {
+            imageId2CrashCount_.emplace(id, 1);
+        } else {
+            imageId2CrashCount_[id] += 1;
+        }
+        if (imageId2CrashCount_[id] >= MAX_CONSECUTIVE_CRASH_COUNT) {
+            OnError(id, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+        } else {
+            OnError(id, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+        }
+    }
     ScheduleConnectService();
 }
 
