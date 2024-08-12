@@ -72,8 +72,6 @@ private:
     virtual int32_t CloseCameraForDestory(pid_t pid);
 
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
-
-    typedef int (HCameraServiceStub::* HandlerFunc)(MessageParcel&, MessageParcel&);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -672,11 +672,8 @@ class CameraService {
    */
   isVideoStabilizationModeSupportedFn(videoStabilizationMode: camera.VideoStabilizationMode): boolean {
     // 查询是否支持指定的视频防抖模式
-    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[0]`);
     let session: camera.PortraitPhotoSession | camera.Session | camera.NightPhotoSession = this.getSession();
-    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[1]`);
     let isVideoStabilizationModeSupported: boolean = session.isVideoStabilizationModeSupported(videoStabilizationMode);
-    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[2]`);
     Logger.info(TAG, `isVideoStabilizationModeSupported success: ${JSON.stringify(isVideoStabilizationModeSupported)}`);
     return isVideoStabilizationModeSupported;
   }
@@ -1497,7 +1494,7 @@ class CameraService {
         }
       }
 
-      let isSketchSupported = this.previewOutput.isSketchSupported();;
+      let isSketchSupported = this.previewOutput.isSketchSupported();
       Logger.info(TAG, `isSketchSupported:${isSketchSupported}`);
 
       // 提交配置信息
