@@ -64,7 +64,6 @@ private:
     explicit MovingPhotoSurfaceWrapper() = default;
     ~MovingPhotoSurfaceWrapper() override;
     bool Init(int32_t width, int32_t height);
-    void DeInit();
 
     mutable std::recursive_mutex videoSurfaceMutex_;
     sptr<Surface> videoSurface_ = nullptr;

@@ -51,7 +51,6 @@ sptr<MovingPhotoSurfaceWrapper> MovingPhotoSurfaceWrapper::CreateMovingPhotoSurf
 MovingPhotoSurfaceWrapper::~MovingPhotoSurfaceWrapper()
 {
     MEDIA_INFO_LOG("MovingPhotoSurfaceWrapper::~MovingPhotoSurfaceWrapper");
-    DeInit();
 }
 
 sptr<OHOS::IBufferProducer> MovingPhotoSurfaceWrapper::GetProducer() const
@@ -88,15 +87,6 @@ bool MovingPhotoSurfaceWrapper::Init(int32_t width, int32_t height)
         return false;
     }
     return true;
-}
-
-void MovingPhotoSurfaceWrapper::DeInit()
-{
-    std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    if (videoSurface_ == nullptr) {
-        return;
-    }
-    videoSurface_->UnregisterConsumerListener();
 }
 
 void MovingPhotoSurfaceWrapper::OnBufferArrival()
