@@ -1497,7 +1497,7 @@ class CameraService {
         }
       }
 
-      let isSketchSupported = this.previewOutput.isSketchSupported();;
+      let isSketchSupported = this.previewOutput.isSketchSupported();
       Logger.info(TAG, `isSketchSupported:${isSketchSupported}`);
 
       // 提交配置信息
