@@ -1609,7 +1609,7 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
         MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
         ss  << std::setw(burstWidth) << std::setfill(placeholder) << seqId
             << coverTag;
-    } else{
+    } else {
         ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
     }
     formattedTime = ss.str();
