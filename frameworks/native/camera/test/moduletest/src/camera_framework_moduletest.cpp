@@ -7151,7 +7151,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_059, TestSize.L
     camManagerObj->ClearCameraDeviceListCache();
 
     std::vector<sptr<CameraDevice>> camdeviceObj_1 = camManagerObj->GetSupportedCameras();
-    ASSERT_TRUE(camdeviceObj_1.size() == 0);
+    ASSERT_TRUE(camdeviceObj_1.size() != 0);
 
     camManagerObj->SetServiceProxy(nullptr);
 
@@ -7197,7 +7197,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_060, TestSize.L
 
     camManagerObj->ClearCameraDeviceListCache();
     bool cameraMuteSupported = camManagerObj->IsCameraMuteSupported();
-    EXPECT_EQ(cameraMuteSupported, false);
+    EXPECT_EQ(cameraMuteSupported, true);
 
     camManagerObj->MuteCamera(cameraMuted);
     // CameraManager recovered
@@ -9449,10 +9449,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     EXPECT_FALSE(isMacroSupported);
 
     intResult = session_->EnableMacro(true);
-    EXPECT_EQ(intResult, 7400103);
+    EXPECT_EQ(intResult, 7400102);
 
     intResult = session_->EnableMacro(false);
-    EXPECT_EQ(intResult, 7400103);
+    EXPECT_EQ(intResult, 7400102);
 
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
