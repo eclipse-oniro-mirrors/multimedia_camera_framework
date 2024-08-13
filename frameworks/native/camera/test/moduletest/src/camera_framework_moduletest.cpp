@@ -4272,8 +4272,58 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability001, Test
     auto photoProfiles = cocList[0]->GetPhotoProfiles();
     auto videoProfiles = cocList[0]->GetVideoProfiles();
 
-    auto photoAbilityList = photoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
+    int32_t intResult = photoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    intResult = photoSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    intResult = photoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    auto photoAbilityList = photoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles, true);
+    ASSERT_TRUE(photoAbilityList.size() != 0);
+    auto photoAbility = photoAbilityList[0];
+    photoAbility->HasFlash();
+    photoAbility->GetSupportedFocusModes();
+    photoAbility->GetSupportedBeautyTypes();
+    photoAbility->GetSupportedBeautyRange(BeautyType::AUTO_TYPE);
+    photoAbility->GetSupportedColorEffects();
+    photoAbility->GetSupportedColorSpaces();
+    photoAbility->IsFocusModeSupported(FocusMode::FOCUS_MODE_MANUAL);
     std::vector<sptr<CameraAbility>> photoConflictAbilityList = photoSession->GetSessionConflictAbilities();
+
+    std::vector<float> zoomRatioRange = photoSession->GetZoomRatioRange();
+    ASSERT_NE(zoomRatioRange.size(), 0);
+
+    photoSession->LockForControl();
+    photoSession->EnableMacro(true);
+    photoSession->UnlockForControl();
+
+    zoomRatioRange = photoSession->GetZoomRatioRange();
+    ASSERT_NE(zoomRatioRange.size(), 0);
+
+    photoSession->LockForControl();
+    photoSession->EnableMacro(false);
+    photoSession->UnlockForControl();
+
+    photoSession->IsMacroSupported();
+
+    photoSession->LockForControl();
+    photoSession->SetZoomRatio(zoomRatioRange[1]);
+    photoSession->UnlockForControl();
+
+    photoSession->IsMacroSupported();
 }
 
 /*
@@ -4308,8 +4358,32 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability002, Test
     auto previewProfiles = cocList[0]->GetPreviewProfiles();
     auto photoProfiles = cocList[0]->GetPhotoProfiles();
     auto videoProfiles = cocList[0]->GetVideoProfiles();
-    auto portraitAbilityList = portraitSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
 
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    auto portraitAbilityList = portraitSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles, true);
+    ASSERT_TRUE(portraitAbilityList.size() != 0);
+    auto portraitAbility = portraitAbilityList[0];
+    portraitAbility->GetSupportedPortraitEffects();
+    portraitAbility->GetSupportedVirtualApertures();
+    portraitAbility->GetSupportedPhysicalApertures();
     std::vector<sptr<CameraAbility>> portraitConflictAbilityList = portraitSession->GetSessionConflictAbilities();
 }
 
@@ -4344,8 +4418,31 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability003, Test
     auto previewProfiles = cocList[0]->GetPreviewProfiles();
     auto photoProfiles = cocList[0]->GetPhotoProfiles();
     auto videoProfiles = cocList[0]->GetVideoProfiles();
-    auto videoAbilityList = videoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
 
+    int32_t intResult = videoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    intResult = videoSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    intResult = videoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    auto videoAbilityList = videoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles, true);
+    ASSERT_TRUE(videoAbilityList.size() != 0);
+    auto videoAbility = videoAbilityList[0];
+    videoAbility->GetSupportedStabilizationMode();
+    videoAbility->IsVideoStabilizationModeSupported(VideoStabilizationMode::HIGH);
     std::vector<sptr<CameraAbility>> videoConflictAbilityList = videoSession->GetSessionConflictAbilities();
 }
 

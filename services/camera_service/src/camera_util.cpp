@@ -328,42 +328,6 @@ std::string GetClientBundle(int uid)
     return bundleName;
 }
 
-bool IsValidSize(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
-{
-    bool isExtendConfig = false;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
-    if (ret == CAM_META_SUCCESS && item.count != 0) {
-        isExtendConfig = true;
-    } else {
-        ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, false,
-            "Failed to find stream basic configuration in camera ability with return code %{public}d", ret);
-    }
-    MEDIA_INFO_LOG("Success to find stream configuration isExtendConfig = %{public}d", isExtendConfig);
-    uint32_t param2 = 2;
-    for (uint32_t index = 0; index < item.count; index++) {
-        if (item.data.i32[index] == format) {
-            if (((index + 1) < item.count) && ((index + param2) < item.count) &&
-                item.data.i32[index + 1] == width && item.data.i32[index + param2] == height) {
-                MEDIA_INFO_LOG("Format:%{public}d, width:%{public}d, height:%{public}d found in supported streams",
-                               format, width, height);
-                return true;
-            } else {
-                continue;
-            }
-        } else {
-            continue;
-        }
-    }
-    MEDIA_ERR_LOG("Format:%{public}d, width:%{public}d, height:%{public}d not found in supported streams",
-                  format, width, height);
-    return false;
-}
-
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared)
 {
     return PRIORITY_LEVEL_SAME;
