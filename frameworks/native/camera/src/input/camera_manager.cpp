@@ -810,16 +810,10 @@ void CameraManager::OnCameraServerAlive()
     int32_t ret = RefreshServiceProxy();
     CHECK_ERROR_RETURN_LOG(ret != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
     AddServiceProxyDeathRecipient();
-
-    if (cameraSvcCallback_ != nullptr) {
-        SetCameraServiceCallback(cameraSvcCallback_);
-    }
-    if (cameraMuteSvcCallback_ != nullptr) {
-        SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
-    }
-    if (torchSvcCallback_ != nullptr) {
-        SetTorchServiceCallback(torchSvcCallback_);
-    }
+    CHECK_EXECUTE(cameraSvcCallback_ != nullptr, SetCameraServiceCallback(cameraSvcCallback_));
+    CHECK_EXECUTE(cameraMuteSvcCallback_ != nullptr, SetCameraMuteServiceCallback(cameraMuteSvcCallback_));
+    CHECK_EXECUTE(torchSvcCallback_ != nullptr, SetTorchServiceCallback(torchSvcCallback_));
+    CHECK_EXECUTE(foldSvcCallback_ != nullptr, SetFoldServiceCallback(foldSvcCallback_));
 }
 
 int32_t CameraManager::DestroyStubObj()
@@ -959,9 +953,7 @@ shared_ptr<TorchListener> CameraManager::GetTorchListener()
 
 void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
 {
-    if (foldSvcCallback_ == nullptr) {
-        CreateAndSetFoldServiceCallback();
-    }
+    CHECK_EXECUTE(foldSvcCallback_ == nullptr, CreateAndSetFoldServiceCallback());
     std::thread::id threadId = std::this_thread::get_id();
     foldListenerMap_.EnsureInsert(threadId, listener);
 }
@@ -1674,10 +1666,7 @@ int32_t FoldServiceCallback::OnFoldStatusChanged(const FoldStatus status)
     foldStatusInfo.supportedCameras = cameraManager->GetSupportedCameras();
     auto listenerMap = cameraManager->GetFoldListenerMap();
     MEDIA_DEBUG_LOG("FoldListenerMap size %{public}d", listenerMap.Size());
-    if (listenerMap.IsEmpty()) {
-        return CAMERA_OK;
-    }
-
+    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<FoldListener> foldListener) {
         if (foldListener != nullptr) {
             foldListener->OnFoldStatusChanged(foldStatusInfo);

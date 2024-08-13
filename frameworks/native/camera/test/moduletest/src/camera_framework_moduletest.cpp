@@ -159,6 +159,7 @@ class AppCallback : public CameraManagerCallback,
                     public SlowMotionStateCallback,
                     public MacroStatusCallback,
                     public FeatureDetectionStatusCallback,
+                    public FoldListener,
                     public BrightnessStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
@@ -391,6 +392,11 @@ public:
     {
         MEDIA_DEBUG_LOG("AppCallback::OnSlowMotionState");
         g_slowMotionStatusChanged = true;
+    }
+    void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
+        return;
     }
 };
 
@@ -12339,6 +12345,23 @@ HWTEST_F(CameraFrameworkModuleTest, test_burst_capture, TestSize.Level0)
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Testing folded state callbacks
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Testing folded state callbacks
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_folded_state_callback, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    camManagerObj->OnCameraServerAlive();
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    camManagerObj->RegisterFoldListener(callback);
+    EXPECT_EQ((camManagerObj->GetFoldListenerMap()).Size(), 1);
 }
 } // namespace CameraStandard
 } // namespace OHOS
