@@ -140,8 +140,6 @@ public:
     int32_t ResetAllFreezeStatus() override;
     int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) override;
     bool ShouldSkipStatusUpdates(pid_t pid);
-    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid, const string& bundleName);
-    void CreateAndSaveTask(FoldStatus status, uint32_t pid);
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();

@@ -1075,6 +1075,29 @@ public:
     void ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
+     * @brief This function is called when there is low light detect status change
+     * and process the low light detect status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessLowLightBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
+     * @brief Check current status is support moon capture boost or not.
+     */
+    bool IsLowLightBoostSupported();
+
+    /**
+     * @brief Enable or disable moon capture boost ability.
+     */
+    int32_t EnableLowLightBoost(bool isEnable);
+
+    /**
+     * @brief Enable or disable moon capture boost ability.
+     */
+    int32_t EnableLowLightDetection(bool isEnable);
+
+    /**
      * @brief Verify that the output configuration is legitimate.
      *
      * @param outputProfile The target profile.
@@ -1518,6 +1541,7 @@ private:
     volatile bool isSetMacroEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
+    std::atomic<bool> isSetLowLightBoostEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
 

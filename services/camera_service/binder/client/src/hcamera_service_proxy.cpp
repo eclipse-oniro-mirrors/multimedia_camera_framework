@@ -694,7 +694,7 @@ int32_t HCameraServiceProxy::ProxyForFreeze(const std::set<int32_t>& pidList, bo
     for (auto it = pidList.begin(); it != pidList.end(); it++) {
         data.WriteInt32(*it);
     }
-    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    MEDIA_DEBUG_LOG("isProxy value: %{public}d", isProxy);
     data.WriteBool(isProxy);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PROXY_FOR_FREEZE), data, reply, option);

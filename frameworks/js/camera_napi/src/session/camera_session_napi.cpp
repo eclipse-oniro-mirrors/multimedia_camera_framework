@@ -4038,6 +4038,13 @@ void CameraSessionNapi::RegisterFeatureDetectionStatusListener(
         featureDetectionStatusCallback_ = std::make_shared<FeatureDetectionStatusCallbackListener>(env);
         cameraSession_->SetFeatureDetectionStatusCallback(featureDetectionStatusCallback_);
     }
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(true);
+        cameraSession_->UnlockForControl();
+    }
+
     featureDetectionStatusCallback_->SaveCallbackReference(eventName + std::to_string(featureType), callback, isOnce);
 }
 
@@ -4065,6 +4072,13 @@ void CameraSessionNapi::UnregisterFeatureDetectionStatusListener(
     }
 
     featureDetectionStatusCallback_->RemoveCallbackRef(eventName + std::to_string(featureType), callback);
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST &&
+        !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 
 void CameraSessionNapi::RegisterSessionErrorCallbackListener(
