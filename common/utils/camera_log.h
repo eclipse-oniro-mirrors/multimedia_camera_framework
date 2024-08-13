@@ -130,6 +130,13 @@
         }                                                                   \
     } else void (0)
 
+#define CHECK_EXECUTE(cond, cmd)                                            \
+    do {                                                                    \
+        if (cond) {                                                         \
+            cmd;                                                            \
+        }                                                                   \
+    } while (0)
+
 #define POINTER_MASK 0x00FFFFFF
 
 #define CAMERA_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
