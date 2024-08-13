@@ -15,6 +15,7 @@
 
 #include "camera_device_fuzzer.h"
 #include "camera_log.h"
+#include "camera_xcollie.h"
 #include "input/camera_manager.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
@@ -283,6 +284,28 @@ void Test3(uint8_t *rawData, size_t size)
     camera->GetMaxSizeProfile(profiles2, data.ReadFloat(), format);
 }
 
+void TestXCollie(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_2);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    string tag = data.ReadString();
+    uint32_t flag = data.ReadInt32();
+    uint32_t timeoutSeconds = data.ReadUint32();
+    auto func = [](void*) {};
+#ifndef HICOLLIE_ENABLE
+#define HICOLLIE_ENABLE
+#endif
+    {
+        CameraXCollie collie(tag, flag, timeoutSeconds, func, nullptr);
+        collie.CancelCameraXCollie();
+    }
+#undef HICOLLIE_ENABLE
+    {
+        CameraXCollie collie(tag, flag, timeoutSeconds, func, nullptr);
+        collie.CancelCameraXCollie();
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -294,6 +317,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
     OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(data, size);
     OHOS::CameraStandard::CameraDeviceFuzzTest2(data, size);
     OHOS::CameraStandard::Test3(data, size);
+    OHOS::CameraStandard::TestXCollie(data, size);
     return 0;
 }
 
