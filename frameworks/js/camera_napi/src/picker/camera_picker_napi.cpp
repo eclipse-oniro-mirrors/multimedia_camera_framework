@@ -27,6 +27,7 @@
 #include "camera_log.h"
 #include "int_wrapper.h"
 #include "js_native_api.h"
+#include "napi/native_common.h"
 #include "napi_base_context.h"
 #include "string_wrapper.h"
 
@@ -42,8 +43,6 @@ const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
 constexpr char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
 const char* const PICKER_MEDIA_TYPE[] = { "PHOTO", "VIDEO" };
 const std::vector<std::string> PICKER_MEDIA_TYPE_VALUE = { "photo", "video" };
-const char* const PICKER_PROFILE[] = { "cameraPosition", "saveUri", "videoDuration" };
-const char* const PICKER_RESULT[] = { "resultCode", "resultUri", "mediaType" };
 } // namespace
 
 using namespace std;
@@ -376,8 +375,8 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_picker_static_props[] = {
         DECLARE_NAPI_STATIC_FUNCTION("pick", Pick),
         DECLARE_NAPI_PROPERTY("PickerMediaType", CreatePickerMediaType(env)),
-        DECLARE_NAPI_PROPERTY("PickerProfile", CreatePickerProfile(env)),
-        DECLARE_NAPI_PROPERTY("PickerResult", CreatePickerResult(env)),
+        DECLARE_NAPI_STATIC_PROPERTY("PickerProfile", CreatePickerProfile(env)),
+        DECLARE_NAPI_STATIC_PROPERTY("PickerResult", CreatePickerResult(env)),
     };
 
     status = napi_define_class(env, CAMERA_PICKER_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraPickerNapiConstructor,
@@ -402,11 +401,30 @@ napi_value CameraPickerNapi::CreatePickerProfile(napi_env env)
     MEDIA_DEBUG_LOG("CreatePickerProfile is called");
     napi_value result = nullptr;
     napi_status status;
+    napi_property_descriptor pickerProfileProps[] = {
+        DECLARE_NAPI_PROPERTY("cameraPosition", nullptr),
+        DECLARE_NAPI_PROPERTY("saveUri", nullptr),
+        DECLARE_NAPI_PROPERTY("videoDuration", nullptr),
+    };
 
-    status = CameraNapiUtils::CreateObjectWithPropName(
-        env, &result, sizeof(PICKER_PROFILE) / sizeof(PICKER_PROFILE[0]), const_cast<const char**>(PICKER_PROFILE));
+    status = napi_define_class(
+        env, "PickerProfile", NAPI_AUTO_LENGTH,
+        [](napi_env env, napi_callback_info info) {
+            MEDIA_DEBUG_LOG("PickerProfileConstructor is called");
+            napi_status status;
+            napi_value result = nullptr;
+            napi_value thisVar = nullptr;
+
+            napi_get_undefined(env, &result);
+            CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+            if (status == napi_ok) {
+                return thisVar;
+            }
+            return result;
+        },
+        nullptr, sizeof(pickerProfileProps) / sizeof(pickerProfileProps[PARAM0]), pickerProfileProps, &result);
     if (status != napi_ok) {
-        MEDIA_DEBUG_LOG("CreatePickerProfile call end!");
+        MEDIA_DEBUG_LOG("CreatePickerProfile class fail");
         napi_get_undefined(env, &result);
     }
     return result;
@@ -440,11 +458,30 @@ napi_value CameraPickerNapi::CreatePickerResult(napi_env env)
     MEDIA_DEBUG_LOG("CreatePickerResult is called");
     napi_value result = nullptr;
     napi_status status;
+    napi_property_descriptor pickerResultProps[] = {
+        DECLARE_NAPI_PROPERTY("resultCode", nullptr),
+        DECLARE_NAPI_PROPERTY("resultUri", nullptr),
+        DECLARE_NAPI_PROPERTY("mediaType", nullptr),
+    };
 
-    status = CameraNapiUtils::CreateObjectWithPropName(
-        env, &result, sizeof(PICKER_RESULT) / sizeof(PICKER_RESULT[0]), const_cast<const char**>(PICKER_RESULT));
+    status = napi_define_class(
+        env, "PickerResult", NAPI_AUTO_LENGTH,
+        [](napi_env env, napi_callback_info info) {
+            MEDIA_DEBUG_LOG("PickerResultConstructor is called");
+            napi_status status;
+            napi_value result = nullptr;
+            napi_value thisVar = nullptr;
+
+            napi_get_undefined(env, &result);
+            CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+            if (status == napi_ok) {
+                return thisVar;
+            }
+            return result;
+        },
+        nullptr, sizeof(pickerResultProps) / sizeof(pickerResultProps[PARAM0]), pickerResultProps, &result);
     if (status != napi_ok) {
-        MEDIA_ERR_LOG("CreatePickerResult call Failed!");
+        MEDIA_DEBUG_LOG("CreatePickerResult class fail");
         napi_get_undefined(env, &result);
     }
     return result;
