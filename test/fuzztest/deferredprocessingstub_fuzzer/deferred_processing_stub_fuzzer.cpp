@@ -14,6 +14,7 @@
  */
 
 #include "deferred_processing_stub_fuzzer.h"
+#include "buffer_info.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
@@ -102,6 +103,26 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
         }
     }
 }
+
+void TestBufferInfo(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    const int32_t MAX_BUFF_SIZE = 1024 * 1024;
+    int32_t dataSize = (data.ReadInt32() % MAX_BUFF_SIZE) + 1;
+    auto sharedBuffer = make_shared<SharedBuffer>(dataSize);
+    sharedBuffer->Initialize();
+    sharedBuffer->GetSize();
+    sharedBuffer->CopyFrom(rawData, size);
+    sharedBuffer->GetFd();
+    sharedBuffer->Reset();
+    bool isHighQuality = data.ReadBool();
+    BufferInfo info(sharedBuffer, dataSize, isHighQuality);
+    info.GetDataSize();
+    info.IsHighQuality();
+    info.GetIPCFileDescriptor();
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -110,6 +131,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::DeferredProcessingFuzzTest(data, size);
+    OHOS::CameraStandard::TestBufferInfo(data, size);
     return 0;
 }
 

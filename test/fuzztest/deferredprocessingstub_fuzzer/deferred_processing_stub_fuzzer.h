@@ -46,6 +46,7 @@ public:
     }
 };
 
+void TestBufferInfo(uint8_t *rawData, size_t size);
 }
 }
 #endif
