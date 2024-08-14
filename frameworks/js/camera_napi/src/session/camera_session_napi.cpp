@@ -4275,16 +4275,16 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "slowMotionStatus", {
         &CameraSessionNapi::RegisterSlowMotionStateCb,
         &CameraSessionNapi::UnregisterSlowMotionStateCb } },
-    { "exposureInfo", {
+    { "exposureInfoChange", {
         &CameraSessionNapi::RegisterExposureInfoCallbackListener,
         &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
-    { "isoInfo", {
+    { "isoInfoChange", {
         &CameraSessionNapi::RegisterIsoInfoCallbackListener,
         &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
-    { "apertureInfo", {
+    { "apertureInfoChange", {
         &CameraSessionNapi::RegisterApertureInfoCallbackListener,
         &CameraSessionNapi::UnregisterApertureInfoCallbackListener } },
-    { "luminationInfo", {
+    { "luminationInfoChange", {
         &CameraSessionNapi::RegisterLuminationInfoCallbackListener,
         &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
     { "abilityChange", {
@@ -4293,7 +4293,7 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "effectSuggestionChange", {
         &CameraSessionNapi::RegisterEffectSuggestionCallbackListener,
         &CameraSessionNapi::UnregisterEffectSuggestionCallbackListener } },
-    { "tryAEInfo", {
+    { "tryAEInfoChange", {
         &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
         &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
 };
