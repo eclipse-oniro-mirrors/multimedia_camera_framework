@@ -27,6 +27,7 @@ namespace CameraStandard {
 class MockStreamOperator;
 class MockCameraDevice;
 class MockHCameraHostManager;
+class MockCameraManager;
 class CameraFrameworkUnitTest : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
@@ -64,6 +65,7 @@ public:
     sptr<MockCameraDevice> mockCameraDevice;
     sptr<MockHCameraHostManager> mockCameraHostManager;
     sptr<CameraManager> cameraManager;
+    sptr<MockCameraManager> mockCameraManager;
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 
