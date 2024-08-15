@@ -731,5 +731,21 @@ int32_t HCameraServiceProxy::GetDmDeviceInfo(std::vector<std::string> &deviceInf
 
     return error;
 }
+int32_t HCameraServiceProxy::GetCameraOutputStatus(int32_t pid, int32_t &status)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(pid);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_OUTPUT_STATUS),
+        data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "GetCameraOutputStatus, error: %{public}d", error);
+    status = reply.ReadInt32();
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
