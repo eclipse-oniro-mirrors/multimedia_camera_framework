@@ -231,6 +231,7 @@ public:
     int32_t SetFeatureMode(int32_t featureMode) override;
     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) override;
     void StartRecord(uint64_t timestamp, int32_t rotation);
+    void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);

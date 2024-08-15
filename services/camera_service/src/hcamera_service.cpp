@@ -1853,6 +1853,18 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::GetCameraOutputStatus(int32_t pid, int32_t &status)
+{
+    sptr<HCaptureSession> captureSession = nullptr;
+    captureSessionsManager_.Find(pid,  captureSession);
+    if (captureSession) {
+        captureSession->GetOutputStatus(status);
+    } else {
+        status = 0;
+    }
+    return CAMERA_OK;
+}
+
 std::shared_ptr<DataShare::DataShareHelper> HCameraService::CameraDataShareHelper::CreateCameraDataShareHelper()
 {
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

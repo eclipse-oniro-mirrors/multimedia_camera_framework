@@ -1051,6 +1051,17 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
     return distributedCamInfo;
 }
 
+void CameraManager::GetCameraOutputStatus(int32_t pid, int32_t &status)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(
+        serviceProxy == nullptr, "CameraManager::GetCameraOutputStatus serviceProxy is null");
+
+    int32_t retCode = serviceProxy->GetCameraOutputStatus(pid, status);
+    CHECK_ERROR_RETURN_LOG(
+        retCode != CAMERA_OK, "CameraManager::GetCameraOutputStatus failed!, retCode: %{public}d", retCode);
+}
+
 dmDeviceInfo CameraManager::GetDmDeviceInfo(
     const std::string& cameraId, const std::vector<dmDeviceInfo>& dmDeviceInfoList)
 {

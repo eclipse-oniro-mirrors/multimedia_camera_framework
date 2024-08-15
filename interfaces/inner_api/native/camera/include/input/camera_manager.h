@@ -651,6 +651,8 @@ public:
         std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
         cameraDeviceAbilitySupportMap_.clear();
     }
+    
+    void GetCameraOutputStatus(int32_t pid, int32_t &status);
 
 protected:
     // Only for UT
