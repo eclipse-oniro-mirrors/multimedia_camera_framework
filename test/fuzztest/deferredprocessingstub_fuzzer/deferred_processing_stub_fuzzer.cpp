@@ -112,6 +112,8 @@ void TestBufferInfo(uint8_t *rawData, size_t size)
     const int32_t MAX_BUFF_SIZE = 1024 * 1024;
     int32_t dataSize = (data.ReadInt32() % MAX_BUFF_SIZE) + 1;
     auto sharedBuffer = make_shared<SharedBuffer>(dataSize);
+    sharedBuffer->GetSize();
+    sharedBuffer->GetFd();
     sharedBuffer->Initialize();
     sharedBuffer->GetSize();
     sharedBuffer->CopyFrom(rawData, size);

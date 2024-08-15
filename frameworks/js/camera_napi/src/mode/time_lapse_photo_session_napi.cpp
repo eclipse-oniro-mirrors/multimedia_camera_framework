@@ -1107,7 +1107,7 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(TryAEInfo info) const
         MEDIA_ERR_LOG("%{public}s: Enter, TryAEInfoNapi* is nullptr", __FUNCTION__);
     }
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("tryAEInfo", callbackPara);
+    ExecuteCallback("tryAEInfoChange", callbackPara);
 }
 
 void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) const
