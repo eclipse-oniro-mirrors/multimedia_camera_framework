@@ -112,6 +112,7 @@ void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
 
     session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
+    session->ProcessLcdFlashStatusUpdates(result);
 }
 
 bool NightSession::CanAddOutput(sptr<CaptureOutput>& output)

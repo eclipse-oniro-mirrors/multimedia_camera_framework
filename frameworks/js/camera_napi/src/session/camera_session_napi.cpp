@@ -81,7 +81,9 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::flash_props = {
     DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
     DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
     DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
-    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode)
+    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
+    DECLARE_NAPI_FUNCTION("isLcdFlashSupported", CameraSessionNapi::IsLcdFlashSupported),
+    DECLARE_NAPI_FUNCTION("enableLcdFlash", CameraSessionNapi::EnableLcdFlash)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_props = {
@@ -691,6 +693,64 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestion
 {
     MEDIA_DEBUG_LOG("OnEffectSuggestionChange is called, effectSuggestionType: %{public}d", effectSuggestionType);
     OnEffectSuggestionCallbackAsync(effectSuggestionType);
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_value retVal;
+    napi_value propValue;
+    napi_create_object(env_, &result[PARAM1]);
+    napi_get_boolean(env_, lcdFlashStatusInfo.isLcdFlashNeeded, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isLcdFlashNeeded", propValue);
+    napi_create_int32(env_, lcdFlashStatusInfo.lcdCompensation, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "lcdCompensation", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("lcdFlashStatus", callbackNapiPara);
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusChanged is called, isLcdFlashNeeded: %{public}d, lcdCompensation: %{public}d",
+        lcdFlashStatusInfo.isLcdFlashNeeded, lcdFlashStatusInfo.lcdCompensation);
+    OnLcdFlashStatusCallbackAsync(lcdFlashStatusInfo);
 }
 
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr) {}
@@ -1651,6 +1711,63 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
         napi_create_int32(env, flashMode, &result);
     } else {
         MEDIA_ERR_LOG("GetFlashMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsLcdFlashSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CAMERA_SYNC_TRACE;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi isLcdFlashSupported is called!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("IsLcdFlashSupported parse parameter occur error");
+        return result;
+    }
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsLcdFlashSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsLcdFlashSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableLcdFlash(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("EnableLcdFlash is called");
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi enableLcdFlash is called!");
+        return result;
+    }
+    bool isEnable;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("EnableLcdFlash parse parameter occur error");
+        return result;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("EnableLcdFlash:%{public}d", isEnable);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableLcdFlash(isEnable);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("EnableLcdFlash fail %{public}d", retCode);
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("EnableLcdFlash get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
     }
     return result;
 }
@@ -4296,6 +4413,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "tryAEInfoChange", {
         &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
         &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
+    { "lcdFlashStatus", {
+        &CameraSessionNapi::RegisterLcdFlashStatusCallbackListener,
+        &CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
@@ -4316,6 +4436,42 @@ napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraSessionNapi>::Off(env, info);
+}
+
+void CameraSessionNapi::RegisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi on LcdFlashStatus is called!");
+        return;
+    }
+    if (cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("cameraSession is null!");
+        return;
+    }
+    if (lcdFlashStatusCallback_ == nullptr) {
+        lcdFlashStatusCallback_ = std::make_shared<LcdFlashStatusCallbackListener>(env);
+        cameraSession_->SetLcdFlashStatusCallback(lcdFlashStatusCallback_);
+    }
+    lcdFlashStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    cameraSession_->LockForControl();
+    cameraSession_->EnableLcdFlashDetection(true);
+    cameraSession_->UnlockForControl();
+}
+
+void CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (lcdFlashStatusCallback_ == nullptr) {
+        MEDIA_ERR_LOG("lcdFlashStatusCallback is null");
+        return;
+    }
+    lcdFlashStatusCallback_->RemoveCallbackRef(eventName, callback);
+    if (lcdFlashStatusCallback_->IsEmpty("lcdFlashStatus")) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLcdFlashDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -2203,6 +2203,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessSnapshotDurationUpdates(timestamp, result);
     session->ProcessAREngineUpdates(timestamp, result);
     session->ProcessEffectSuggestionTypeUpdates(result);
+    session->ProcessLcdFlashStatusUpdates(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -5031,6 +5032,96 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
         CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
+}
+
+bool CaptureSession::IsLcdFlashSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
+        "IsLcdFlashSupported Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+        "IsLcdFlashSupported camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LCD_FLASH, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+        "IsLcdFlashSupported Failed with return code %{public}d", ret);
+    MEDIA_INFO_LOG("IsLcdFlashSupported value: %{public}u", item.data.i32[0]);
+    CHECK_AND_RETURN_RET(item.data.i32[0] != 1, true);
+    return false;
+}
+
+int32_t CaptureSession::EnableLcdFlash(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLcdFlash, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "EnableLcdFlash session not commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH, &enableValue, 1)) {
+        MEDIA_ERR_LOG("EnableLcdFlash Failed to enable lcd flash");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableLcdFlashDetection(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLcdFlashDetection, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsLcdFlashSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "EnableLcdFlashDetection IsLcdFlashSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "EnableLcdFlashDetection session not commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH_DETECTION, &enableValue, 1)) {
+        MEDIA_ERR_LOG("EnableLcdFlashDetection Failed to enable lcd flash detection");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+    __attribute__((no_sanitize("cfi")))
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Entry ProcessLcdFlashStatusUpdates");
+
+    auto statusCallback = GetLcdFlashStatusCallback();
+    if (statusCallback == nullptr) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessLcdFlashStatusUpdates statusCallback is null");
+        return;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LCD_FLASH_STATUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Camera not support lcd flash");
+        return;
+    }
+    auto isLcdFlashNeeded = static_cast<bool>(item.data.u8[0]);
+    auto lcdCompensation = item.data.i32[1];
+    LcdFlashStatusInfo preLcdFlashStatusInfo = statusCallback->GetLcdFlashStatusInfo();
+    if (preLcdFlashStatusInfo.isLcdFlashNeeded != isLcdFlashNeeded ||
+        preLcdFlashStatusInfo.lcdCompensation != lcdCompensation) {
+        LcdFlashStatusInfo lcdFlashStatusInfo;
+        lcdFlashStatusInfo.isLcdFlashNeeded = isLcdFlashNeeded;
+        lcdFlashStatusInfo.lcdCompensation = lcdCompensation;
+        statusCallback->SetLcdFlashStatusInfo(lcdFlashStatusInfo);
+        statusCallback->OnLcdFlashStatusChanged(lcdFlashStatusInfo);
+    }
+}
+
+void CaptureSession::SetLcdFlashStatusCallback(std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    lcdFlashStatusCallback_ = lcdFlashStatusCallback;
+}
+
+std::shared_ptr<LcdFlashStatusCallback> CaptureSession::GetLcdFlashStatusCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return lcdFlashStatusCallback_;
 }
 } // namespace CameraStandard
 } // namespace OHOS
