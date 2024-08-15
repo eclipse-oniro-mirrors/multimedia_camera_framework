@@ -141,7 +141,6 @@ void AudioCapturerSession::Stop()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Audio capture stop enter");
-    CHECK_ERROR_RETURN_LOG(!startAudioCapture_, "Audio capturer already stop");
     startAudioCapture_ = false;
     if (audioThread_ && audioThread_->joinable()) {
         audioThread_->join();
