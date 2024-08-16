@@ -669,7 +669,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation is called");
     int32_t sensorOrientation = 0;
     camera_metadata_item_t item;
-    ImageRotation result = ImageRotation::ROTATION_0;
+    ImageRotation result = ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
@@ -691,9 +691,9 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     auto producer = GetBufferProducer();
-        CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, SERVICE_FATL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, producer is nullptr");
-    retcode = producer->SetTransForm((GraphicTransformType)(result % 90));
+    retcode = producer->SetTransForm((GraphicTransformType)(result % ROTATION_90));
     CHECK_AND_PRINT_LOG(retcode == GSERROR_OK, "PreviewOutput SetPreviewRotation sucess!");
     return result;
 }
