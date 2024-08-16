@@ -658,7 +658,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
-    result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE));
+    result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     MEDIA_INFO_LOG("PreviewOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
@@ -693,7 +693,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     auto producer = GetBufferProducer();
     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, producer is nullptr");
-    retcode = producer->SetTransForm((GraphicTransformType)(result % ROTATION_90));
+    int32_t retcode = producer->SetTransform((GraphicTransformType)(result % ROTATION_90));
     CHECK_AND_PRINT_LOG(retcode == GSERROR_OK, "PreviewOutput SetPreviewRotation sucess!");
     return result;
 }
