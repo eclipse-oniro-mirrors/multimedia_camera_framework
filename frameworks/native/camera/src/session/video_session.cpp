@@ -28,7 +28,9 @@ namespace {
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 2304, .height = 2304 } };
+    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+    configs->photoProfile.sizeRatio_ = RATIO_1_1;
+    configs->photoProfile.sizeFollowSensorMax_ = true;
     switch (preconfigType) {
         case PRECONFIG_720P:
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 720, .height = 720 } };
@@ -62,7 +64,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
         default:
             MEDIA_ERR_LOG(
                 "VideoSession::GeneratePreconfigProfiles1_1 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -70,7 +72,9 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 3072, .height = 2304 } };
+    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+    configs->photoProfile.sizeRatio_ = RATIO_4_3;
+    configs->photoProfile.sizeFollowSensorMax_ = true;
     switch (preconfigType) {
         case PRECONFIG_720P:
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 960, .height = 720 } };
@@ -104,7 +108,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
         default:
             MEDIA_ERR_LOG(
                 "VideoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -112,7 +116,9 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 4096, .height = 2304 } };
+    configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
+    configs->photoProfile.sizeRatio_ = RATIO_16_9;
+    configs->photoProfile.sizeFollowSensorMax_ = true;
     switch (preconfigType) {
         case PRECONFIG_720P:
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 1280, .height = 720 } };
@@ -142,14 +148,11 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
 
             configs->videoProfile = { CameraFormat::CAMERA_FORMAT_YCRCB_P010, { .width = 3840, .height = 2160 },
                 { configs->previewProfile.fps_.minFps, configs->previewProfile.fps_.maxFps } };
-            configs->photoProfile.size_ = { 0, 0 };
-            configs->photoProfile.sizeFollowSensorMax_ = true;
-            configs->photoProfile.sizeRatio_ = ProfileSizeRatio::RATIO_16_9;
             break;
         default:
             MEDIA_ERR_LOG(
                 "VideoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -158,8 +161,8 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
 bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
-        "VideoSession::CanAddOutput operation is Not allowed!");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsSessionConfiged() || output == nullptr, false, "VideoSession::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
 
@@ -180,6 +183,43 @@ std::shared_ptr<PreconfigProfiles> VideoSession::GeneratePreconfigProfiles(
             break;
     }
     return nullptr;
+}
+
+bool VideoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs)
+{
+    auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
+    int32_t supportedCameraNum = 0;
+    for (auto& device : cameraList) {
+        MEDIA_INFO_LOG("VideoSession::IsPreconfigProfilesLegal check camera:%{public}s type:%{public}d",
+            device->GetID().c_str(), device->GetCameraType());
+        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
+            continue;
+        }
+        // Check photo
+        bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
+        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
+            "VideoSession::IsPreconfigProfilesLegal check photo profile fail, no matched photo profiles:%{public}d "
+            "%{public}dx%{public}d",
+            configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
+
+        // Check preview
+        bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
+        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
+            "VideoSession::IsPreconfigProfilesLegal check preview profile fail, no matched preview profiles:%{public}d "
+            "%{public}dx%{public}d",
+            configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
+
+        // Check video
+        auto isVideoCanPreconfig = IsVideoProfileLegal(device, configs->videoProfile);
+        CHECK_ERROR_RETURN_RET_LOG(!isVideoCanPreconfig, false,
+            "VideoSession::IsPreconfigProfilesLegal check video profile fail, no matched video profiles:%{public}d "
+            "%{public}dx%{public}d",
+            configs->videoProfile.format_, configs->videoProfile.size_.width, configs->videoProfile.size_.height);
+        supportedCameraNum++;
+    }
+    MEDIA_INFO_LOG(
+        "VideoSession::IsPreconfigProfilesLegal check pass, supportedCameraNum is%{public}d", supportedCameraNum);
+    return supportedCameraNum > 0;
 }
 
 bool VideoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
@@ -212,60 +252,29 @@ bool VideoSession::IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile&
     CHECK_ERROR_RETURN_RET_LOG(videoProfilesIt == device->modeVideoProfiles_.end(), false,
         "VideoSession::CanPreconfig check video profile fail, empty video profiles");
     auto videoProfiles = videoProfilesIt->second;
-    return std::any_of(
-        videoProfiles.begin(), videoProfiles.end(), [&videoProfile](auto& profile) { return profile == videoProfile; });
+    return std::any_of(videoProfiles.begin(), videoProfiles.end(),
+        [&videoProfile](auto& profile) { return profile.IsContains(videoProfile); });
 }
 
-// todo 动态能力查询
 bool VideoSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
     MEDIA_INFO_LOG(
         "VideoSession::CanPreconfig check type:%{public}d, check ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false,
-        "VideoSession::CanPreconfig get configs fail.");
-    auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
-    int32_t supportedCameraNum = 0;
-    for (auto& device : cameraList) {
-        MEDIA_INFO_LOG("VideoSession::CanPreconfig check camera:%{public}s type:%{public}d", device->GetID().c_str(),
-            device->GetCameraType());
-        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
-            continue;
-        }
-        // Check photo
-        bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
-            "VideoSession::CanPreconfig check photo profile fail, no matched photo profiles:%{public}d "
-            "%{public}dx%{public}d",
-            configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
-
-        // Check preview
-        bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
-            "VideoSession::CanPreconfig check preview profile fail, no matched preview profiles:%{public}d "
-            "%{public}dx%{public}d",
-            configs->previewProfile.format_, configs->previewProfile.size_.width,
-            configs->previewProfile.size_.height);
-
-        // Check video
-        auto isVideoCanPreconfig = IsVideoProfileLegal(device, configs->videoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isVideoCanPreconfig, false,
-            "VideoSession::CanPreconfig check video profile fail, no matched video profiles:%{public}d "
-            "%{public}dx%{public}d",
-            configs->videoProfile.format_, configs->videoProfile.size_.width, configs->videoProfile.size_.height);
-        supportedCameraNum++;
-    }
-    MEDIA_INFO_LOG("VideoSession::CanPreconfig check pass, supportedCameraNum is%{public}d", supportedCameraNum);
-    return supportedCameraNum > 0;
+    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false, "VideoSession::CanPreconfig get configs fail.");
+    return IsPreconfigProfilesLegal(configs);
 }
 
 int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    MEDIA_INFO_LOG("VideoSession::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
+    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, SERVICE_FATL_ERROR,
+        "VideoSession::Preconfig not support this type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR, "VideoSession::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, OPERATION_NOT_ALLOWED,
-        "VideoSession::Preconfig not support this config:%{public}d", preconfigType);
-    MEDIA_INFO_LOG("VideoSession::Preconfig type:%{public}d success", preconfigType);
+    MEDIA_INFO_LOG("VideoSession::Preconfig %s", configs->ToString().c_str());
     return SUCCESS;
 }
 
