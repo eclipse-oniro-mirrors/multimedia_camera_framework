@@ -47,6 +47,8 @@ public:
 
     Camera_ErrorCode GetActiveFrameRate(Camera_FrameRateRange* frameRateRange);
 
+    Camera_ErrorCode GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::VideoOutput> innerVideoOutput_;
 };

@@ -926,7 +926,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled),
         DECLARE_NAPI_FUNCTION("isAutoHighQualityPhotoSupported", IsAutoHighQualityPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto),
-        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
+        DECLARE_NAPI_FUNCTION("getPhotoRotation", PhotoRotation)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -1694,6 +1695,41 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
             return result;
         }
         napi_get_boolean(env, isSupported, &result);
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetPhotoRotation is called!");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t value;
+        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &value);
+        if (ret != napi_ok) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
+                "GetPhotoRotation parameter missing or parameter type incorrect.");
+            return result;
+        }
+        int32_t retCode = photoOutputNapi->photoOutput_->GetPhotoRotation(value);
+        if (retCode == SERVICE_FATL_ERROR) {
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
+                "GetPhotoRotation Camera service fatal error.");
+            return result;
+        }
+        napi_create_int32(env, retCode, &result);
+        MEDIA_INFO_LOG("PhotoOutputNapi GetPhotoRotation! %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi GetPhotoRotation! called failed!");
     }
     return result;
 }

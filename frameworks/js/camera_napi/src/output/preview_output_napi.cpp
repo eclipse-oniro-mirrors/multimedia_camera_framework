@@ -249,7 +249,9 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
         DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
         DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
-        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
+        DECLARE_NAPI_FUNCTION("getPreviewRotation", GetPreviewRotation),
+        DECLARE_NAPI_FUNCTION("setPreviewRotation", SetPreviewRotation)       
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -930,6 +932,77 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
     }
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value PreviewOutputNapi::GetPreviewRotation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetPreviewRotation is called!");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status == napi_ok && previewOutputNapi != nullptr) {
+        int32_t value;
+        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &value);
+        if (ret != napi_ok) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
+                "GetPreviewRotation parameter missing or parameter type incorrect.");
+            return result;
+        }
+        int32_t retCode = previewOutputNapi->previewOutput_->GetPhotoRotation(value);
+        if (retCode == SERVICE_FATL_ERROR) {
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
+                "GetPreviewRotation Camera service fatal error.");
+            return result;
+        }
+        napi_create_int32(env, retCode, &result);
+        MEDIA_INFO_LOG("PreviewOutputNapi GetPreviewRotation! %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutputNapi GetPreviewRotation! called failed!");
+    }
+    return result;
+}
+
+napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetPreviewRotation is called!");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status == napi_ok && previewOutputNapi != nullptr) {
+        int32_t imageRotation;
+        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &imageRotation);
+        bool isDisplayLocked;
+        napi_status boolRet = napi_get_value_bool(env, argv[PARAM1], &isDisplayLocked);
+        if (ret != napi_ok || boolRet != napi_ok) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
+                "SetPreviewRotation parameter missing or parameter type incorrect.");
+            return result;
+        }
+        int32_t retCode = previewOutputNapi->previewOutput_->GetPhotoRotation(imageRotation, isDisplayLocked);
+        if (retCode == SERVICE_FATL_ERROR) {
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
+                "SetPreviewRotation Camera service fatal error.");
+            return result;
+        }
+        MEDIA_INFO_LOG("PreviewOutputNapi SetPreviewRotation! %{public}d", imageRotation);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutputNapi SetPreviewRotation! called failed!");
+    }
+    return result;
 }
 
 napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_info info)
