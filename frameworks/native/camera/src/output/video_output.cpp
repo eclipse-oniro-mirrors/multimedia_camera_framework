@@ -436,9 +436,9 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "VideoOutput GetVideoRotation error!, cameraObj is nullptr");
-    camreaPosition = cameraObj->GetPosition();
-    CHECK_ERROR_RETURN_RET_LOG(camreaPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
-        "VideoOutput GetVideoRotation error!, camreaPosition is unspecified");
+    cameraPosition = cameraObj->GetPosition();
+    CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
+        "VideoOutput GetVideoRotation error!, cameraPosition is unspecified");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
