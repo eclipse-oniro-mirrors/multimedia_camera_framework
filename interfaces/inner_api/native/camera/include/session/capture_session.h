@@ -23,7 +23,9 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <sstream>
 #include <stdint.h>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -85,6 +87,36 @@ public:
     Profile photoProfile;
     VideoProfile videoProfile;
     ColorSpace colorSpace;
+
+    std::string ToString()
+    {
+        std::ostringstream oss;
+        oss << "colorSpace:[" << to_string(colorSpace);
+        oss << "]\n";
+
+        oss << "previewProfile:[";
+        oss << " format:" << to_string(previewProfile.format_);
+        oss << " size:" << to_string(previewProfile.size_.width) << "x" << to_string(previewProfile.size_.height);
+        oss << " fps:" << to_string(previewProfile.fps_.minFps) << "," << to_string(previewProfile.fps_.maxFps) << ","
+            << to_string(previewProfile.fps_.fixedFps);
+        oss << "]\n";
+
+        oss << "photoProfile:[";
+        oss << " format:" << to_string(photoProfile.format_);
+        oss << " size:" << to_string(photoProfile.size_.width) << "x" << to_string(photoProfile.size_.height);
+        oss << " dynamic:" << to_string(photoProfile.sizeFollowSensorMax_) << "," << to_string(photoProfile.sizeRatio_);
+        oss << "]\n";
+
+        oss << "videoProfile:[";
+        oss << " format:" << to_string(videoProfile.format_);
+        oss << " size:" << to_string(videoProfile.size_.width) << "x" << to_string(videoProfile.size_.height);
+        oss << " frameRates:";
+        for (auto& fps : videoProfile.framerates_) {
+            oss << to_string(fps) << " ";
+        }
+        oss << "]\n";
+        return oss.str();
+    }
 };
 
 enum EffectSuggestionType {

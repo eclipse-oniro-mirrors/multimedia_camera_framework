@@ -134,6 +134,9 @@ public:
             this->size_.height == profile.size_.height && this->framerates_[0] == profile.framerates_[0] &&
             this->framerates_[1] == profile.framerates_[1];
     }
+
+    bool IsContains(const VideoProfile& videoProfile);
+
     /**
      * @brief Get supported framerates of the profile.
      *

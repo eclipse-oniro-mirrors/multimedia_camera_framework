@@ -11342,17 +11342,54 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_081, TestSize.Le
     if (!IsSupportNow()) {
         return;
     }
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    auto photoSession = static_cast<PhotoSession*>(captureSession.GetRefPtr());
-    ASSERT_NE(photoSession, nullptr);
     PreconfigType preconfigTypes[] = { PRECONFIG_720P, PRECONFIG_1080P, PRECONFIG_4K, PRECONFIG_HIGH_QUALITY };
     ProfileSizeRatio preconfigRatios[] = { UNSPECIFIED, RATIO_1_1, RATIO_4_3, RATIO_16_9 };
+    int ret;
     for (auto type : preconfigTypes) {
         for (auto ratio : preconfigRatios) {
-            if (!photoSession->CanPreconfig(type, ratio)) {
-                int ret = photoSession->Preconfig(type, ratio);
-                ASSERT_EQ(ret, 0);
+            sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+            auto photoSession = static_cast<PhotoSession*>(captureSession.GetRefPtr());
+            ASSERT_NE(photoSession, nullptr);
+            if (photoSession->CanPreconfig(type, ratio)) {
+                ret = photoSession->Preconfig(type, ratio);
+                EXPECT_EQ(ret, 0);
+
+                ret = photoSession->BeginConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = photoSession->AddInput(input_);
+                EXPECT_EQ(ret, 0);
+
+                sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+                sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
+                sptr<Surface> producerPreviewSurface = Surface::CreateSurfaceAsProducer(previewProducer);
+                sptr<PreviewOutput> previewOutput = nullptr;
+                ret = manager_->CreatePreviewOutputWithoutProfile(producerPreviewSurface, &previewOutput);
+                EXPECT_EQ(ret, 0);
+                sptr<CaptureOutput> capturePreviewOutput = previewOutput;
+                ret = photoSession->AddOutput(capturePreviewOutput);
+                EXPECT_EQ(ret, 0);
+
+                sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+                sptr<IBufferProducer> photoProducer = photoSurface->GetProducer();
+                sptr<PhotoOutput> photoOutput = nullptr;
+                ret = manager_->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+                EXPECT_EQ(ret, 0);
+                sptr<CaptureOutput> capturePhotoOutput = photoOutput;
+                ret = photoSession->AddOutput(capturePhotoOutput);
+                EXPECT_EQ(ret, 0);
+
+                ret = photoSession->CommitConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = photoSession->BeginConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = photoSession->RemoveInput(input_);
+                EXPECT_EQ(ret, 0);
             }
+            ret = photoSession->Release();
+            EXPECT_EQ(ret, 0);
         }
     }
 }
@@ -11370,17 +11407,64 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_082, TestSize.Le
     if (!IsSupportNow()) {
         return;
     }
-    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
-    auto videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
-    ASSERT_NE(videoSession, nullptr);
     PreconfigType preconfigTypes[] = { PRECONFIG_720P, PRECONFIG_1080P, PRECONFIG_4K, PRECONFIG_HIGH_QUALITY };
     ProfileSizeRatio preconfigRatios[] = { UNSPECIFIED, RATIO_1_1, RATIO_4_3, RATIO_16_9 };
+    int ret;
     for (auto type : preconfigTypes) {
         for (auto ratio : preconfigRatios) {
-            if (!videoSession->CanPreconfig(type, ratio)) {
-                int ret = videoSession->Preconfig(type, ratio);
+            sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
+            auto videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+            ASSERT_NE(videoSession, nullptr);
+            if (videoSession->CanPreconfig(type, ratio)) {
+                ret = videoSession->Preconfig(type, ratio);
                 ASSERT_EQ(ret, 0);
+
+                ret = videoSession->BeginConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = videoSession->AddInput(input_);
+                EXPECT_EQ(ret, 0);
+
+                sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+                sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
+                sptr<Surface> producerPreviewSurface = Surface::CreateSurfaceAsProducer(previewProducer);
+                sptr<PreviewOutput> previewOutput = nullptr;
+                ret = manager_->CreatePreviewOutputWithoutProfile(producerPreviewSurface, &previewOutput);
+                EXPECT_EQ(ret, 0);
+                sptr<CaptureOutput> capturePreviewOutput = previewOutput;
+                ret = videoSession->AddOutput(capturePreviewOutput);
+                EXPECT_EQ(ret, 0);
+
+                sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+                sptr<IBufferProducer> photoProducer = photoSurface->GetProducer();
+                sptr<PhotoOutput> photoOutput = nullptr;
+                ret = manager_->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+                EXPECT_EQ(ret, 0);
+                sptr<CaptureOutput> capturePhotoOutput = photoOutput;
+                ret = videoSession->AddOutput(capturePhotoOutput);
+                EXPECT_EQ(ret, 0);
+
+                sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
+                sptr<IBufferProducer> videoProducer = previewSurface->GetProducer();
+                sptr<Surface> captureVideoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
+                sptr<VideoOutput> videoOutput = nullptr;
+                ret = manager_->CreateVideoOutputWithoutProfile(captureVideoSurface, &videoOutput);
+                EXPECT_EQ(ret, 0);
+                sptr<CaptureOutput> captureVideoOutput = videoOutput;
+                ret = videoSession->AddOutput(captureVideoOutput);
+                EXPECT_EQ(ret, 0);
+
+                ret = videoSession->CommitConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = videoSession->BeginConfig();
+                EXPECT_EQ(ret, 0);
+
+                ret = videoSession->RemoveInput(input_);
+                EXPECT_EQ(ret, 0);
             }
+            ret = videoSession->Release();
+            EXPECT_EQ(ret, 0);
         }
     }
 }
