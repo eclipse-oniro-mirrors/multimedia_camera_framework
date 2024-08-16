@@ -102,7 +102,7 @@ public:
 
     /**
      * @brief get the preview rotation angle.
-     * 
+     *
      * @return result of the photo rotation angle.
      */
     int32_t GetPriviewRotaion(int32_t imageRotation);

@@ -251,7 +251,7 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
         DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
         DECLARE_NAPI_FUNCTION("getPreviewRotation", GetPreviewRotation),
-        DECLARE_NAPI_FUNCTION("setPreviewRotation", SetPreviewRotation)       
+        DECLARE_NAPI_FUNCTION("setPreviewRotation", SetPreviewRotation)
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
