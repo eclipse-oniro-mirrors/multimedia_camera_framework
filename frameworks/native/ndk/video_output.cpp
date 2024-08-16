@@ -205,7 +205,7 @@ Camera_ErrorCode OH_VideoOutput_GetVideoRotation(Camera_VideoOutput* videoOutput
         "Invaild argument, videoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, imageRotation is null!");
-    return videoOutput->GetPhotoRotation(deviceDegree, imageRotation);
+    return videoOutput->GetVideoRotation(deviceDegree, imageRotation);
 }
 #ifdef __cplusplus
 }
