@@ -87,7 +87,7 @@ public:
     static napi_value EnableMirror(napi_env env, napi_callback_info info);
     static napi_value GetSupportedVideoMetaTypes(napi_env env, napi_callback_info info);
     static napi_value AttachMetaSurface(napi_env env, napi_callback_info info);
-    static napi_value GetVideoRotaion(napi_env env, napi_callback_info info);
+    static napi_value GetVideoRotation(napi_env env, napi_callback_info info);
     VideoOutputNapi();
     ~VideoOutputNapi() override;
     sptr<VideoOutput> GetVideoOutput();

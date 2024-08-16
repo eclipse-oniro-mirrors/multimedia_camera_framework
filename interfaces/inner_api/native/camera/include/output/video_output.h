@@ -90,7 +90,7 @@ public:
     /**
      * @brief get the video rotation angle.
      */
-    int32_t GetVideoRotaion(int32_t imageRotation);
+    int32_t GetVideoRotation(int32_t imageRotation);
 
     /**
      * @brief Pause the video capture.
