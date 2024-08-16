@@ -47,7 +47,7 @@ bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float u
 Profile::Profile(CameraFormat format, Size size) : format_(format), size_(size), specId_(0) {}
 Profile::Profile(CameraFormat format, Size size, int32_t specId) : format_(format), size_(size), specId_(specId) {}
 Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId)
-    : format_(format), size_(size), fps_(fps), abilityId_(abilityId) {}
+    : format_(format), size_(size), fps_(fps), abilityId_(abilityId), specId_(0) {}
 Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId, int32_t specId)
     : format_(format), size_(size), fps_(fps), abilityId_(abilityId), specId_(specId) {}
 CameraFormat Profile::GetCameraFormat()
