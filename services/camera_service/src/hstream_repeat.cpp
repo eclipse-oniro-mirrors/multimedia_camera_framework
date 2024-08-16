@@ -460,6 +460,8 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
     std::vector<uint8_t> ability;
     std::vector<uint8_t> repeatSettings;
+    CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_DEVICE_DISCONNECT,
+        "HStreamRepeat::SetFrameRate cameraAbility_ is null");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
@@ -479,9 +481,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
             status = dynamicSetting->updateEntry(
                 OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         }
-        if (!status) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
-        }
+        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
 
