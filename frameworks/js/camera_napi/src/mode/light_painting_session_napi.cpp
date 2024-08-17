@@ -51,13 +51,12 @@ napi_value LightPaintingSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     std::vector<napi_property_descriptor> light_painting_props = {
-        DECLARE_NAPI_FUNCTION("getSupportedLightPaintings", GetSupportedLightPaintings),
-        DECLARE_NAPI_FUNCTION("getLightPainting", GetLightPainting),
-        DECLARE_NAPI_FUNCTION("setLightPainting", SetLightPainting),
-        DECLARE_NAPI_FUNCTION("triggerLighting", TriggerLighting)
+        DECLARE_NAPI_FUNCTION("getSupportedLightPaintingTypes", GetSupportedLightPaintings),
+        DECLARE_NAPI_FUNCTION("getLightPaintingType", GetLightPainting),
+        DECLARE_NAPI_FUNCTION("setLightPaintingType", SetLightPainting),
     };
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props,
-        color_effect_props, focus_props, manual_focus_props, zoom_props, light_painting_props};
+        color_effect_props, focus_props, manual_focus_props, zoom_props, flash_props, light_painting_props};
     std::vector<napi_property_descriptor> light_painting_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, LIGHT_PAINTING_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

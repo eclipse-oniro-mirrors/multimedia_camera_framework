@@ -2286,6 +2286,26 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    // flash for lightPainting
+    if (GetMode() == SceneMode::LIGHT_PAINTING && flashMode == FlashMode::FLASH_MODE_OPEN) {
+        uint8_t enableTrigger = 1;
+        bool status = false;
+        int32_t ret;
+        uint32_t count = 1;
+        camera_metadata_item_t item;
+        MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting once.");
+        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_FLASH, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
+            status = changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
+        } else if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting success to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
+            status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
+        }
+        CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::TriggerLighting Failed to trigger lighting");
+        return CameraErrorCode::SUCCESS;
+    }
     CHECK_AND_RETURN_RET(IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
