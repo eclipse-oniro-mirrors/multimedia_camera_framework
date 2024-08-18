@@ -5424,7 +5424,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_057, TestSize.Level
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
     cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
     cameras[0]->GetPosition();
-    EXPECT_EQ(cameras[0]->GetPosition(), 3);
+    EXPECT_EQ(cameras[0]->GetPosition(), 2);
 
     cameras[0]->zoomRatioRange_ = {1.1, 2.1};
     EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);

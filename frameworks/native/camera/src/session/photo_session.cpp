@@ -63,16 +63,14 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 1440, .height = 1440 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
-            configs->photoProfile = configs->previewProfile;
-            configs->photoProfile.size_ = { .width = 0, .height = 0 };
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
             configs->photoProfile.sizeRatio_ = RATIO_1_1;
             configs->photoProfile.sizeFollowSensorMax_ = true;
-            configs->photoProfile.format_ = CameraFormat::CAMERA_FORMAT_JPEG;
             break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSession::GeneratePreconfigProfiles1_1 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -107,16 +105,14 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 1920, .height = 1440 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
-            configs->photoProfile = configs->previewProfile;
-            configs->photoProfile.size_ = { .width = 0, .height = 0 };
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
             configs->photoProfile.sizeRatio_ = RATIO_4_3;
             configs->photoProfile.sizeFollowSensorMax_ = true;
-            configs->photoProfile.format_ = CameraFormat::CAMERA_FORMAT_JPEG;
             break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -151,16 +147,14 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             configs->previewProfile = { CameraFormat::CAMERA_FORMAT_YUV_420_SP, { .width = 2560, .height = 1440 } };
             configs->previewProfile.fps_ = { .fixedFps = 30, .minFps = 12, .maxFps = 30 };
 
-            configs->photoProfile = configs->previewProfile;
-            configs->photoProfile.size_ = { .width = 0, .height = 0 };
+            configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 0, .height = 0 } };
             configs->photoProfile.sizeRatio_ = RATIO_16_9;
             configs->photoProfile.sizeFollowSensorMax_ = true;
-            configs->photoProfile.format_ = CameraFormat::CAMERA_FORMAT_JPEG;
             break;
         default:
             MEDIA_ERR_LOG(
                 "PhotoSession::GeneratePreconfigProfiles16_9 not support this config:%{public}d", preconfigType);
-            break;
+            return nullptr;
     }
     return configs;
 }
@@ -192,6 +186,36 @@ std::shared_ptr<PreconfigProfiles> PhotoSession::GeneratePreconfigProfiles(
     return nullptr;
 }
 
+bool PhotoSession::IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs)
+{
+    auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
+    int32_t supportedCameraNum = 0;
+    for (auto& device : cameraList) {
+        MEDIA_INFO_LOG("PhotoSession::IsPreconfigProfilesLegal check camera:%{public}s type:%{public}d",
+            device->GetID().c_str(), device->GetCameraType());
+        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
+            continue;
+        }
+        // Check photo
+        bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
+        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
+            "PhotoSession::IsPreconfigProfilesLegal check photo profile fail, no matched photo profiles:%{public}d "
+            "%{public}dx%{public}d",
+            configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
+
+        // Check preview
+        bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
+        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
+            "PhotoSession::IsPreconfigProfilesLegal check preview profile fail, no matched preview profiles:%{public}d "
+            "%{public}dx%{public}d",
+            configs->previewProfile.format_, configs->previewProfile.size_.width, configs->previewProfile.size_.height);
+        supportedCameraNum++;
+    }
+    MEDIA_INFO_LOG(
+        "PhotoSession::IsPreconfigProfilesLegal check pass, supportedCameraNum is%{public}d", supportedCameraNum);
+    return supportedCameraNum > 0;
+}
+
 bool PhotoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile)
 {
     auto photoProfilesIt = device->modePhotoProfiles_.find(SceneMode::CAPTURE);
@@ -221,43 +245,20 @@ bool PhotoSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     MEDIA_INFO_LOG(
         "PhotoSession::CanPreconfig check type:%{public}d, check ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false,
-        "PhotoSession::CanPreconfig get configs fail.");
-    auto cameraList = CameraManager::GetInstance()->GetSupportedCameras();
-    int32_t supportedCameraNum = 0;
-    for (auto& device : cameraList) {
-        MEDIA_INFO_LOG("PhotoSession::CanPreconfig check camera:%{public}s type:%{public}d", device->GetID().c_str(),
-            device->GetCameraType());
-        if (device->GetCameraType() != CAMERA_TYPE_DEFAULT) {
-            continue;
-        }
-        // Check photo
-        bool isPhotoCanPreconfig = IsPhotoProfileLegal(device, configs->photoProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPhotoCanPreconfig, false,
-            "PhotoSession::CanPreconfig check photo profile fail, no matched photo profiles:%{public}d "
-            "%{public}dx%{public}d",
-            configs->photoProfile.format_, configs->photoProfile.size_.width, configs->photoProfile.size_.height);
-
-        // Check preview
-        bool isPreviewCanPreconfig = IsPreviewProfileLegal(device, configs->previewProfile);
-        CHECK_ERROR_RETURN_RET_LOG(!isPreviewCanPreconfig, false,
-            "PhotoSession::CanPreconfig check preview profile fail, no matched preview profiles:%{public}d "
-            "%{public}dx%{public}d",
-            configs->previewProfile.format_, configs->previewProfile.size_.width,
-            configs->previewProfile.size_.height);
-        supportedCameraNum++;
-    }
-    MEDIA_INFO_LOG("PhotoSession::CanPreconfig check pass, supportedCameraNum is%{public}d", supportedCameraNum);
-    return supportedCameraNum > 0;
+    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, false, "PhotoSession::CanPreconfig get configs fail.");
+    return IsPreconfigProfilesLegal(configs);
 }
 
 int32_t PhotoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
+    MEDIA_INFO_LOG("PhotoSession::Preconfig type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
     std::shared_ptr<PreconfigProfiles> configs = GeneratePreconfigProfiles(preconfigType, preconfigRatio);
+    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, SERVICE_FATL_ERROR,
+        "PhotoSession::Preconfig not support this type:%{public}d ratio:%{public}d", preconfigType, preconfigRatio);
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsPreconfigProfilesLegal(configs), SERVICE_FATL_ERROR, "PhotoSession::Preconfig preconfigProfile is illegal.");
     SetPreconfigProfiles(configs);
-    CHECK_ERROR_RETURN_RET_LOG(configs == nullptr, OPERATION_NOT_ALLOWED,
-        "PhotoSession::Preconfig not support this config:%{public}d", preconfigType);
-    MEDIA_INFO_LOG("PhotoSession::Preconfig type:%{public}d success", preconfigType);
+    MEDIA_INFO_LOG("PhotoSession::Preconfig %s", configs->ToString().c_str());
     return SUCCESS;
 }
 } // namespace CameraStandard

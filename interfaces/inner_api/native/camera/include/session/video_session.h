@@ -67,6 +67,7 @@ protected:
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
 
 private:
+    bool IsPreconfigProfilesLegal(std::shared_ptr<PreconfigProfiles> configs);
     bool IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile);
     bool IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile);
     bool IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile);
