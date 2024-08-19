@@ -192,21 +192,6 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
 
     return videoOutput->GetActiveFrameRate(frameRateRange);
 }
-
-/**
- * @since 12
- * @version 1.0
- */
-Camera_ErrorCode OH_VideoOutput_GetVideoRotation(Camera_VideoOutput* videoOutput, int deviceDegree,
-    Camera_ImageRotation* imageRotation)
-{
-    MEDIA_DEBUG_LOG("OH_VideoOutput_GetVideoRotation is called.");
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, imageRotation is null!");
-    return videoOutput->GetVideoRotation(deviceDegree, imageRotation);
-}
 #ifdef __cplusplus
 }
 #endif

@@ -267,13 +267,6 @@ public:
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
 
     /**
-     * @brief Get the photo rotation.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPhotoRotation(int32_t imageRotation);
-
-    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.

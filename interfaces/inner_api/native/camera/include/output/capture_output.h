@@ -103,12 +103,7 @@ class CaptureSession;
 class CaptureOutput : virtual public RefBase, public MetadataObserver {
 public:
     enum Tag { DYNAMIC_PROFILE };
-    enum ImageRotation {
-        ROTATION_0 = 0,
-        ROTATION_90 = 90,
-        ROTATION_180 = 180,
-        ROTATION_270 = 270
-    };
+
     explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
         sptr<IStreamCommon> stream);
     virtual ~CaptureOutput();

@@ -635,33 +635,5 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
 }
-
-int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
-{
-    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called");
-    int32_t sensorOrientation = 0;
-    camera_metadata_item_t item;
-    ImageRotation result = ImageRotation::ROTATION_0;
-    sptr<CameraDevice> cameraObj;
-    auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, session is nullptr");
-    auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, inputDevice is nullptr");
-    cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
-    result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
-    MEDIA_INFO_LOG("PreviewOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
-        result, sensorOrientation);
-    return result;
-}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -88,11 +88,6 @@ public:
     int32_t Stop();
 
     /**
-     * @brief get the video rotation angle.
-     */
-    int32_t GetVideoRotation(int32_t imageRotation);
-
-    /**
      * @brief Pause the video capture.
      */
     int32_t Pause();

@@ -296,21 +296,6 @@ Camera_ErrorCode OH_PhotoOutput_DeleteProfile(Camera_Profile* profile)
     profile = nullptr;
     return CAMERA_OK;
 }
-
-/**
- * @since 12
- * @version 1.0
- */
-Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int deviceDegree,
-    Camera_ImageRotation* imageRotation)
-{
-    MEDIA_DEBUG_LOG("OH_PhotoOutput_GetPhotoRotation is called.");
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraImageRotation is null!");
-    return photoOutput->GetPhotoRotation(deviceDegree, imageRotation);
-}
 #ifdef __cplusplus
 }
 #endif
