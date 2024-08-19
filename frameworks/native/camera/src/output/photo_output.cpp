@@ -787,6 +787,5 @@ void PhotoOutput::CameraServerDied(pid_t pid)
         appCallback_->OnCaptureError(captureId, serviceErrorType);
     }
 }
-
 } // namespace CameraStandard
 } // namespace OHOS

@@ -296,6 +296,7 @@ Camera_ErrorCode OH_PhotoOutput_DeleteProfile(Camera_Profile* profile)
     profile = nullptr;
     return CAMERA_OK;
 }
+
 #ifdef __cplusplus
 }
 #endif
