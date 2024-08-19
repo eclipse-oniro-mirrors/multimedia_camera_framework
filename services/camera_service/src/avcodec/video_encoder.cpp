@@ -34,12 +34,6 @@
 namespace OHOS {
 namespace CameraStandard {
 
-VideoEncoder::VideoEncoder()
-{
-    MEDIA_INFO_LOG("VideoEncoder enter");
-    keyFrameInterval_ = KEY_FRMAE_INTERVAL;
-}
-
 VideoEncoder::~VideoEncoder()
 {
     MEDIA_INFO_LOG("~VideoEncoder enter");
