@@ -17,6 +17,8 @@
 
 #include <unistd.h>
 
+#include "dp_log.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -25,16 +27,20 @@ BufferInfo::BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_
       dataSize_(dataSize),
       isHighQuality_(isHighQuality)
 {
+    DP_DEBUG_LOG("entered.");
 }
 
 BufferInfo::~BufferInfo()
 {
+    DP_DEBUG_LOG("entered.");
     sharedBuffer_ = nullptr;
 }
 
 sptr<IPCFileDescriptor> BufferInfo::GetIPCFileDescriptor()
 {
-    return sptr<IPCFileDescriptor>::MakeSptr(sharedBuffer_->GetFd());
+    int fd = dup(sharedBuffer_->GetFd());
+    DP_DEBUG_LOG("GetIPCFileDescriptor fd: %{public}d", fd);
+    return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 
 int32_t BufferInfo::GetDataSize()
