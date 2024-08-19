@@ -198,7 +198,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
     if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
     }
-    if (keyFrameInterval == KEY_FRMAE_INTERVAL) {
+    if (keyFrameInterval == KEY_FRAME_INTERVAL) {
         std::lock_guard<std::mutex> lock(encoderMutex_);
         OH_AVFormat *format = OH_AVFormat_Create();
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
@@ -235,11 +235,11 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRMAE_INTERVAL : keyFrameInterval_);
+    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
     if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
-    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRMAE_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
+    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRAME_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
     keyFrameInterval_--;
     int32_t retryCount = 10;
     while (retryCount > 0) {
