@@ -195,21 +195,3 @@ Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange*
 
     return CAMERA_OK;
 }
-
-Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
-    Camera_ImageRotation* cameraImageRotation)
-{
-    int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == SERVICE_FATL_ERROR, SERVICE_FATL_ERROR,
-        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error!");
-    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraImageRotation);
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
-{
-    int32_t ret = innerPreviewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-    CHECK_AND_RETURN_RET_LOG(ret == SERVICE_FATL_ERROR, SERVICE_FATL_ERROR,
-        "Camera_PhotoOutput::GetPhotoRotation camera service fatal error!");
-    return CAMERA_OK;
-}

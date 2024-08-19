@@ -663,39 +663,5 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
         result, sensorOrientation);
     return result;
 }
-
-int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
-{
-    MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation is called");
-    int32_t sensorOrientation = 0;
-    camera_metadata_item_t item;
-    ImageRotation result = ROTATION_0;
-    sptr<CameraDevice> cameraObj;
-    auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, session is nullptr");
-    auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, inputDevice is nullptr");
-    cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
-    result = isDisplayLocked ? ImageRotation((imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE)
-        % CAPTURE_ROTATION_BASE) : ImageRotation(imageRotation);
-    MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
-        result, sensorOrientation);
-    auto producer = GetBufferProducer();
-    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, SERVICE_FATL_ERROR,
-        "PreviewOutput SetPreviewRotation error!, producer is nullptr");
-    int32_t retcode = producer->SetTransform((GraphicTransformType)(result % ROTATION_90));
-    CHECK_AND_PRINT_LOG(retcode == GSERROR_OK, "PreviewOutput SetPreviewRotation sucess!");
-    return result;
-}
 } // namespace CameraStandard
 } // namespace OHOS

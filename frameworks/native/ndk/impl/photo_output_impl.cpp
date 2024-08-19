@@ -247,12 +247,3 @@ Camera_ErrorCode Camera_PhotoOutput::GetActiveProfile(Camera_Profile** profile)
     *profile = newProfile;
     return CAMERA_OK;
 }
-
-Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
-{
-    int32_t cameraOutputRotation = innerPhotoOutput_->GetPhotoRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == SERVICE_FATL_ERROR, SERVICE_FATL_ERROR,
-        "Camera_PhotoOutput::GetPhotoRotation failed to get photo profile!");
-    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraImageRotation);
-    return CAMERA_OK;
-}

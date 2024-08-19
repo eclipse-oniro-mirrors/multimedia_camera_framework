@@ -47,10 +47,6 @@ public:
 
     Camera_ErrorCode GetActiveFrameRate(Camera_FrameRateRange* frameRateRange);
 
-    Camera_ErrorCode GetPreviewRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
-
-    Camera_ErrorCode SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
-
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 };

@@ -245,8 +245,6 @@ public:
 
     Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
 
-    Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
-
 private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_;
     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
