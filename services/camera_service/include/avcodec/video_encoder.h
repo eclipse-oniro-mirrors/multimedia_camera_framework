@@ -26,7 +26,7 @@ namespace CameraStandard {
 using namespace std;
 class VideoEncoder {
 public:
-    VideoEncoder();
+    VideoEncoder() = default;
     ~VideoEncoder();
 
     int32_t Create(const std::string &codecMime);
