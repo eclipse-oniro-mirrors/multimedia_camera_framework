@@ -181,7 +181,7 @@ private:
     GraphicTransformType transformType_;
     std::mutex mutex_;
     std::condition_variable canReleased_;
-    bool isIDRFrame_;
+    bool isIDRFrame_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
