@@ -54,7 +54,7 @@ constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 10;
 constexpr int32_t ROTATION_360 = 360;
 constexpr OH_AVPixelFormat VIDOE_PIXEL_FORMAT = AV_PIXEL_FORMAT_NV21;
 constexpr int32_t IDR_FRAME_COUNT = 2;
-constexpr int32_t KEY_FRMAE_INTERVAL = 10;
+constexpr int32_t KEY_FRAME_INTERVAL = 10;
 
 class CodecAVBufferInfo : public RefBase {
 public:
