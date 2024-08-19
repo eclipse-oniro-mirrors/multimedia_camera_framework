@@ -21,6 +21,7 @@ base_security_path = "//base/security/access_token"
 driver_disply_path = "//drivers/peripheral/display"
 window_manager_path = "//foundation/window/window_manager"
 system_safwk_path = "//utils/system/safwk"
+multimedia_media_library_path = "//foundation/multimedia/media_library"
 
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {

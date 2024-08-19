@@ -136,6 +136,65 @@ Camera_ErrorCode OH_PreviewOutput_DeleteProfile(Camera_Profile* profile)
     return CAMERA_OK;
 }
 
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_GetSupportedFrameRates(Camera_PreviewOutput* previewOutput,
+    Camera_FrameRateRange** frameRateRange, uint32_t* size)
+{
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+    CHECK_AND_RETURN_RET_LOG(size != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, size is null!");
+
+    return previewOutput->GetSupportedFrameRates(frameRateRange, size);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_DeleteFrameRates(Camera_PreviewOutput* previewOutput,
+    Camera_FrameRateRange* frameRateRange)
+{
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+
+    return previewOutput->DeleteFrameRates(frameRateRange);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_SetFrameRate(Camera_PreviewOutput* previewOutput,
+    int32_t minFps, int32_t maxFps)
+{
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+
+    return previewOutput->SetFrameRate(minFps, maxFps);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previewOutput,
+    Camera_FrameRateRange* frameRateRange)
+{
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+
+    return previewOutput->GetActiveFrameRate(frameRateRange);
+}
 #ifdef __cplusplus
 }
 #endif

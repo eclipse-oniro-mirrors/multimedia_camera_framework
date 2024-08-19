@@ -45,6 +45,7 @@
               "image_framework",
               "media_foundation",
               "media_library",
+              "resource_management",
               "napi",
               "os_account",
               "player_framework",
