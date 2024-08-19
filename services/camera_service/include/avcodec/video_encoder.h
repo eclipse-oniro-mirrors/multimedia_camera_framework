@@ -26,7 +26,7 @@ namespace CameraStandard {
 using namespace std;
 class VideoEncoder {
 public:
-    VideoEncoder() = default;
+    VideoEncoder();
     ~VideoEncoder();
 
     int32_t Create(const std::string &codecMime);
@@ -55,6 +55,7 @@ private:
     int32_t rotation_;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
+    int32_t keyFrameInterval_;    
 };
 } // CameraStandard
 } // OHOS

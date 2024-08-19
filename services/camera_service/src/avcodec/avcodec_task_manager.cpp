@@ -190,20 +190,31 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             MEDIA_ERR_LOG("CreateAVMuxer failed");
             return;
         }
-        // CollectAudioBuffer
-        vector<sptr<AudioRecord>> audioRecords;
-        if (thisPtr->audioCapturerSession_) {
-            int64_t startTime = NanosecToMillisec(frameRecords.front()->GetTimeStamp());
-            int64_t endTime = startTime + (int64_t)(frameRecords.size() * VIDEO_FRAME_INTERVAL_MS);
-            thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
-        }
+        bool firstIDRFrame = true;
+        int32_t firstIDRFrameIndex = -1;
+        int32_t discardPCount = 0;
         for (size_t index = 0; index < frameRecords.size(); index++) {
+            if (firstIDRFrame && !frameRecords[index]->IsIDRFrame()) {
+                ++discardPCount;
+                continue;
+            }
+            firstIDRFrame = false;
+            if (firstIDRFrameIndex == -1) {
+                firstIDRFrameIndex = index;
+            }
             OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
             OH_AVBuffer* buffer = frameRecords[index]->encodedBuffer;
             OH_AVBuffer_GetBufferAttr(buffer, &attr);
             attr.pts = index * VIDEO_FRAME_INTERVAL;
             OH_AVBuffer_SetBufferAttr(buffer, &attr);
             muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
+        }
+        // CollectAudioBuffer
+        vector<sptr<AudioRecord>> audioRecords;
+        if (thisPtr->audioCapturerSession_) {
+            int64_t startTime = NanosecToMillisec(frameRecords[firstIDRFrameIndex]->GetTimeStamp());
+            int64_t endTime = startTime + (int64_t)((frameRecords.size() - discardPCount) * VIDEO_FRAME_INTERVAL_MS);
+            thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
         }
         thisPtr->CollectAudioBuffer(audioRecords, muxer);
         thisPtr->FinishMuxer(muxer);

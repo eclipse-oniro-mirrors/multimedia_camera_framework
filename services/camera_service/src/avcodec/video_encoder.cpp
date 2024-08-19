@@ -34,6 +34,12 @@
 namespace OHOS {
 namespace CameraStandard {
 
+VideoEncoder::VideoEncoder()
+{
+    MEDIA_INFO_LOG("VideoEncoder enter");
+    keyFrameInterval_ = KEY_FRMAE_INTERVAL;
+}
+
 VideoEncoder::~VideoEncoder()
 {
     MEDIA_INFO_LOG("~VideoEncoder enter");
@@ -198,7 +204,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
     if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
     }
-    if (keyFrameInterval == 0) {
+    if (keyFrameInterval == KEY_FRMAE_INTERVAL) {
         std::lock_guard<std::mutex> lock(encoderMutex_);
         OH_AVFormat *format = OH_AVFormat_Create();
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
@@ -235,12 +241,12 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    int32_t keyFrameInterval = 0;
-    if (!EnqueueBuffer(frameRecord, keyFrameInterval)) {
+    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRMAE_INTERVAL : keyFrameInterval_);
+    if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
-    // IDR frame is need if keyFrameInterval is 0
-    int32_t needRestoreNumber = 2;
+    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRMAE_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
+    keyFrameInterval_--;
     int32_t retryCount = 10;
     while (retryCount > 0) {
         retryCount--;
@@ -262,13 +268,19 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         if (needRestoreNumber == IDR_FRAME_COUNT && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
-            frameRecord->CacheIDRBuffer(IDRBuffer);
+            frameRecord->CacheBuffer(IDRBuffer);
+            frameRecord->SetIDRProperty(true);
         } else if (needRestoreNumber == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
             OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
             if (tempBuffer != nullptr) {
                 frameRecord->encodedBuffer = tempBuffer;
             }
+        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_NONE) {
+            // return P frame
+            OH_AVBuffer *PBuffer = bufferInfo->GetCopyAVBuffer();
+            frameRecord->CacheBuffer(PBuffer);
+            frameRecord->SetIDRProperty(false);
         } else {
             MEDIA_ERR_LOG("Flag is not acceptted number: %{public}d", needRestoreNumber);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
