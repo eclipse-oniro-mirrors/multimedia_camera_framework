@@ -818,8 +818,6 @@ void HCaptureSession::ClearMovingPhotoRepeatStream()
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
-        taskManager_ = nullptr;
-        audioCapturerSession_ = nullptr;
         MEDIA_DEBUG_LOG("HCaptureSession::ClearLivePhotoRepeatStream() stream id is:%{public}d",
             movingPhotoStream->GetFwkStreamId());
         RemoveOutputStream(repeatStream);
@@ -842,6 +840,7 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
         audioCapturerSession_->Stop();
     }
     if (taskManager_) {
+        taskManager_->ClearTaskResource();
         taskManager_->Stop();
     }
 }
@@ -1428,7 +1427,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
-        taskManager_ = nullptr;
+        if (taskManager_) {
+            taskManager_->ClearTaskResource();
+            taskManager_ = nullptr;
+        }
         audioCapturerSession_ = nullptr;
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");

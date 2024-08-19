@@ -37,6 +37,7 @@ public:
         TaskGroupHandle& handle);
     bool DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle);
     bool SubmitTask(TaskGroupHandle handle, std::any param);
+    void CancelAllTasks(TaskGroupHandle handle);
 
 private:
 
