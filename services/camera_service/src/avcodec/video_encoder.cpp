@@ -339,7 +339,7 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
     OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, BITRATE_30M);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 0);
+    OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, INT_MAX);
 
     int ret = OH_VideoEncoder_Configure(encoder_, format);
     OH_AVFormat_Destroy(format);
