@@ -71,8 +71,6 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
         MEDIA_DEBUG_LOG("OHOS_STATUS_CAMERA_OCCLUSION_DETECTION is not null or zero");
         if (camInputSptr != nullptr && camInputSptr->GetOcclusionDetectCallback() != nullptr) {
             camInputSptr->GetOcclusionDetectCallback()->OnCameraOcclusionDetected(item.data.i32[0]);
-        } else {
-            MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnCameraOcclusionDetected not set!, Discarding callback");
         }
     }
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
