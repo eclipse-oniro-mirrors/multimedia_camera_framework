@@ -53,10 +53,12 @@ public:
             napi_value napiObjValue = nullptr;
             napi_status res = napi_get_named_property(env, napiObject, it.first.c_str(), &napiObjValue);
             if (res != napi_ok) {
-                if (optionalKeys_.find(it.first) != optionalKeys_.end()) {
-                    continue;
-                }
                 return res;
+            }
+            napi_valuetype valueType = napi_undefined;
+            napi_typeof(env, napiObjValue, &valueType);
+            if (valueType == napi_undefined && optionalKeys_.find(it.first) != optionalKeys_.end()) {
+                continue;
             }
             if (std::holds_alternative<bool*>(bindAddr)) {
                 res = GetVariantBoolFromNapiValue(env, napiObjValue, bindAddr);

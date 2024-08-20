@@ -132,19 +132,19 @@ public:
     virtual void OnCaptureError(const int32_t captureId, const int32_t errorCode) const = 0;
 };
 
-typedef struct {
+typedef struct Location {
     /**
      * Latitude.
      */
-    double latitude;
+    double latitude = -1;
     /**
      * Longitude.
      */
-    double longitude;
+    double longitude = -1;
     /**
      * Altitude.
      */
-    double altitude;
+    double altitude = -1;
 } Location;
 
 class PhotoCaptureSetting {

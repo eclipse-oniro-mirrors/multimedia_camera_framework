@@ -17,6 +17,7 @@
 
 #include <uv.h>
 
+#include "camera_log.h"
 #include "camera_napi_metadata_utils.h"
 #include "camera_napi_object_types.h"
 #include "camera_napi_template_utils.h"
@@ -27,6 +28,31 @@
 
 namespace OHOS {
 namespace CameraStandard {
+namespace {
+void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<MetadataOutputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "MetadataOutputNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("MetadataOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d",
+        context->funcName.c_str(), context->status);
+    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
+    jsContext->status = context->status;
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(
+            env, context->errorCode, "No Metadata object Types or create array failed!", jsContext);
+    } else {
+        napi_get_undefined(env, &jsContext->data);
+    }
+    if (!context->funcName.empty()) {
+        jsContext->funcName = context->funcName;
+    }
+    if (context->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
+    }
+    delete context;
+}
+} // namespace
+
 thread_local napi_ref MetadataOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataOutput> MetadataOutputNapi::sMetadataOutput_ = nullptr;
 
@@ -309,41 +335,6 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
     return result;
 }
 
-static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
-{
-    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
-    auto context = static_cast<MetadataOutputAsyncContext*>(data);
-    if (context == nullptr) {
-        MEDIA_ERR_LOG("Async context is null");
-        return;
-    }
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode,
-                                               "No Metadata object Types or create array failed!", jsContext);
-    } else {
-        jsContext->status = true;
-        napi_get_undefined(env, &jsContext->error);
-        if (context->bRetBool) {
-            napi_get_boolean(env, context->isSupported, &jsContext->data);
-        } else {
-            napi_get_undefined(env, &jsContext->data);
-        }
-    }
-
-    if (!context->funcName.empty()) {
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 static int32_t ConvertJSArrayToNative(napi_env env, size_t argc, const napi_value argv[], size_t &i,
     MetadataOutputAsyncContext &asyncContext)
 {
@@ -537,14 +528,13 @@ napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, nap
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::SetCapturingMetadataObjectTypes";
                     context->objectInfo->metadataOutput_->SetCapturingMetadataObjectTypes(
                         context->setSupportedMetadataObjectTypes);
                 }
             },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()),
+            AsyncCompleteCallback, static_cast<void*>(asyncContext.get()),
             &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for "
@@ -590,13 +580,12 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
                     context->funcName = "MetadataOutputNapi::Start";
                     context->errorCode = 0;
                     context->status = context->errorCode == 0;
                 }
             },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataOutputNapi::Start");
             napi_get_undefined(env, &result);
@@ -640,14 +629,13 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
                     context->errorCode = 0;
                     context->status = context->errorCode == 0;
                 }
             },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataOutputNapi::Stop");
             napi_get_undefined(env, &result);
@@ -693,13 +681,12 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 context->funcName = "MetadataOutputNapi::Release";
                 if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
                     context->status = true;
                     context->errorCode = 0;
                     context->status = context->errorCode == 0;
                 }
             },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataOutputNapi::Release");
             napi_get_undefined(env, &result);

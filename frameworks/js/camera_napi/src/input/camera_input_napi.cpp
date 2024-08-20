@@ -324,7 +324,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraInputAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Open async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
                 MEDIA_DEBUG_LOG("CameraInputNapi::Open context->isEnableSecCam %{public}d", context->isEnableSecCam);
                 if (context->isEnableSecCam) {
@@ -342,7 +342,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Open");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Open");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -372,7 +373,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraInputAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Close async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->GetCameraInput()->Close();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 CameraNapiUtils::IsEnableSecureCamera(false);
@@ -383,7 +384,8 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Close");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Close");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -413,7 +415,7 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraInputAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->GetCameraInput()->Release();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
             });
@@ -423,7 +425,8 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Release");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Release");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }

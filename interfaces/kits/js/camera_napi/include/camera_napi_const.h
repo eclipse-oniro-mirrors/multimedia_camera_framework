@@ -16,8 +16,10 @@
 #ifndef CAMERA_NAPI_CONST_UTILS_H
 #define CAMERA_NAPI_CONST_UTILS_H
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "js_native_api.h"
@@ -39,6 +41,19 @@ const int32_t ARGS_THREE = 3;
 const size_t ARGS_MAX_SIZE = 20;
 const int32_t SIZE = 100;
 
+typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> NapiWorkerQueueTaskTimePoint;
+enum NapiWorkerQueueStatus : int32_t { INIT = 0, RUNNING, DONE };
+struct NapiWorkerQueueTask {
+    explicit NapiWorkerQueueTask(std::string taskName) : taskName(taskName)
+    {
+        createTimePoint = std::chrono::steady_clock::now();
+    }
+
+    std::string taskName;
+    NapiWorkerQueueTaskTimePoint createTimePoint;
+    NapiWorkerQueueStatus queueStatus = INIT;
+};
+
 struct AsyncContext {
 public:
     AsyncContext() = default;
@@ -54,10 +69,8 @@ public:
     bool status = false;
 
     int32_t errorCode = 0;
-    uint64_t queueId = 0;
+    std::shared_ptr<NapiWorkerQueueTask> queueTask;
     std::string errorMsg;
-
-    bool isInvalidArgument = false;
 };
 
 struct JSAsyncContextOutput {

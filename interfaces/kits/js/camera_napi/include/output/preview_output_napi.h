@@ -120,8 +120,6 @@ public:
 private:
     static void PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
-    static napi_status CreateAsyncTask(napi_env env, napi_value resource,
-        std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
 
     void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
@@ -150,13 +148,9 @@ private:
 };
 
 struct PreviewOutputAsyncContext : public AsyncContext {
+    PreviewOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     PreviewOutputNapi* objectInfo;
-    bool bRetBool;
     std::string surfaceId;
-    ~PreviewOutputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS
