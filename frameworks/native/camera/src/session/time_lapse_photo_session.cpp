@@ -172,9 +172,7 @@ void TimeLapsePhotoSession::ProcessPhysicalCameraSwitch(const shared_ptr<OHOS::C
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = meta->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &item);
-    if (ret != CAM_META_SUCCESS) {
-        return;
-    }
+    CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
     if (physicalCameraId_ != item.data.u8[0]) {
         MEDIA_DEBUG_LOG("%{public}s: physicalCameraId = %{public}d", __FUNCTION__, item.data.u8[0]);
         physicalCameraId_ = item.data.u8[0];
@@ -209,11 +207,11 @@ int32_t TimeLapsePhotoSession::StartTryAE()
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::StartTryAE camera device is null");
     uint8_t data = 1;
     MEDIA_INFO_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE value = %{public}d", data);
-    if (AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE, &data, 1)) {
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE, &data, 1);
+    if (ret) {
         info_ = TryAEInfo();
-    } else {
-        MEDIA_ERR_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE Failed");
     }
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE Failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -229,11 +227,11 @@ int32_t TimeLapsePhotoSession::StopTryAE()
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::StopTryAE camera device is null");
     uint8_t data = 0;
     MEDIA_INFO_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE value = %{public}d", data);
-    if (AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE, &data, 1)) {
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE, &data, 1);
+    if (ret) {
         info_ = TryAEInfo();
-    } else {
-        MEDIA_ERR_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE Failed");
     }
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE Failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -283,17 +281,9 @@ int32_t TimeLapsePhotoSession::SetTimeLapseInterval(int32_t interval)
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::SetTimeLapseInterval camera device is null");
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_INTERVAL, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_WARNING_LOG("updateEntry OHOS_CONTROL_TIME_LAPSE_INTERVAL: %{public}d", interval);
-        changedMetadata_->updateEntry(OHOS_CONTROL_TIME_LAPSE_INTERVAL, &interval, 1);
-    } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_WARNING_LOG("addEntry OHOS_CONTROL_TIME_LAPSE_INTERVAL: %{public}d", interval);
-        changedMetadata_->addEntry(OHOS_CONTROL_TIME_LAPSE_INTERVAL, &interval, 1);
-    } else {
-        MEDIA_ERR_LOG("%{public}s: Set tag OHOS_CONTROL_TIME_LAPSE_INTERVAL failed", __FUNCTION__);
-    }
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_INTERVAL value = %{public}d", interval);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_INTERVAL, &interval, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_TIME_LAPSE_INTERVAL failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -307,17 +297,9 @@ int32_t TimeLapsePhotoSession::SetTimeLapseRecordState(TimeLapseRecordState stat
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "SetTimeLapseRecordState camera device is null");
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_RECORD_STATE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_WARNING_LOG("updateEntry OHOS_CONTROL_TIME_LAPSE_RECORD_STATE: %{public}d", state);
-        changedMetadata_->updateEntry(OHOS_CONTROL_TIME_LAPSE_RECORD_STATE, &state, 1);
-    } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_WARNING_LOG("addEntry OHOS_CONTROL_TIME_LAPSE_RECORD_STATE: %{public}d", state);
-        changedMetadata_->addEntry(OHOS_CONTROL_TIME_LAPSE_RECORD_STATE, &state, 1);
-    } else {
-        MEDIA_ERR_LOG("%{public}s: Set tag OHOS_CONTROL_TIME_LAPSE_RECORD_STATE failed", __FUNCTION__);
-    }
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_RECORD_STATE value = %{public}d", state);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_RECORD_STATE, &state, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_TIME_LAPSE_RECORD_STATE failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -331,17 +313,9 @@ int32_t TimeLapsePhotoSession::SetTimeLapsePreviewType(TimeLapsePreviewType type
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "SetTimeLapsePreviewType camera device is null");
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_WARNING_LOG("updateEntry OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE: %{public}d", type);
-        changedMetadata_->updateEntry(OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE, &type, 1);
-    } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_WARNING_LOG("addEntry OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE: %{public}d", type);
-        changedMetadata_->addEntry(OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE, &type, 1);
-    } else {
-        MEDIA_ERR_LOG("%{public}s: Set tag OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE failed", __FUNCTION__);
-    }
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE value = %{public}d", type);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE, &type, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_TIME_LAPSE_PREVIEW_TYPE failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -366,18 +340,9 @@ int32_t TimeLapsePhotoSession::SetExposureHintMode(ExposureHintMode mode)
     } else {
         exposureHintMode = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    MEDIA_DEBUG_LOG("%{public}s: ExposureHint mode: %{public}d", __FUNCTION__, exposureHintMode);
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, count);
-    }
-    CHECK_ERROR_PRINT_LOG(!status, "TimeLapsePhotoSession::SetExposureHintMode Failed to set ExposureHint mode");
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_EXPOSURE_HINT_MODE value = %{public}d", exposureHintMode);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_EXPOSURE_HINT_MODE Failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -435,11 +400,8 @@ int32_t TimeLapsePhotoSession::SetExposure(uint32_t exposure)
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::SetExposure camera device is null");
     std::vector<uint32_t> sensorExposureTimeRange;
-    if ((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
-        sensorExposureTimeRange.empty()) {
-        MEDIA_ERR_LOG("range is empty");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
+        sensorExposureTimeRange.empty(), CameraErrorCode::OPERATION_NOT_ALLOWED, "range is empty");
     const uint32_t autoLongExposure = 0;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
@@ -456,8 +418,9 @@ int32_t TimeLapsePhotoSession::SetExposure(uint32_t exposure)
     }
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposure, .denominator = timeUnit};
-    bool res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1);
-    CHECK_ERROR_PRINT_LOG(!res, "TimeLapsePhotoSession::SetExposure Failed to set exposure compensation");
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_SENSOR_EXPOSURE_TIME value = %{public}d, %{public}d", exposure, timeUnit);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_SENSOR_EXPOSURE_TIME Failed");
     exposureDurationValue_ = exposure;
     return CameraErrorCode::SUCCESS;
 }
@@ -529,12 +492,8 @@ int32_t TimeLapsePhotoSession::IsExposureMeteringModeSupported(MeteringMode mode
         "TimeLapsePhotoSession::IsExposureMeteringModeSupported Session is not Commited");
     std::vector<MeteringMode> vecSupportedMeteringModeList;
     (void)this->GetSupportedMeteringModes(vecSupportedMeteringModeList);
-    if (find(vecSupportedMeteringModeList.begin(), vecSupportedMeteringModeList.end(),
-        mode) != vecSupportedMeteringModeList.end()) {
-        result = true;
-        return CameraErrorCode::SUCCESS;
-    }
-    result = false;
+    result = find(vecSupportedMeteringModeList.begin(), vecSupportedMeteringModeList.end(),
+        mode) != vecSupportedMeteringModeList.end();
     return CameraErrorCode::SUCCESS;
 }
 
@@ -554,7 +513,6 @@ int32_t TimeLapsePhotoSession::GetExposureMeteringMode(MeteringMode& result)
     auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[0]));
     if (itr != metaMeteringModeMap_.end()) {
         result = itr->second;
-        return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -580,18 +538,9 @@ int32_t TimeLapsePhotoSession::SetExposureMeteringMode(MeteringMode mode)
     } else {
         meteringMode = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    MEDIA_DEBUG_LOG("metering mode: %{public}d", meteringMode);
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_METER_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_METER_MODE, &meteringMode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_METER_MODE, &meteringMode, count);
-    }
-    CHECK_ERROR_PRINT_LOG(!status, "TimeLapsePhotoSession::SetExposureMeteringMode Failed to set focus mode");
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_METER_MODE value = %{public}d", meteringMode);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_METER_MODE, &meteringMode, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_METER_MODE Failed");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -631,16 +580,9 @@ int32_t TimeLapsePhotoSession::SetIso(int32_t iso)
     const int32_t autoIsoValue = 0;
     CHECK_ERROR_RETURN_RET(iso != autoIsoValue && std::find(isoRange.begin(), isoRange.end(), iso) == isoRange.end(),
         CameraErrorCode::INVALID_ARGUMENT);
-    bool status = false;
-    int32_t count = 1;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ISO_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
-    }
-    CHECK_ERROR_PRINT_LOG(!status, "TimeLapsePhotoSession::SetIso Failed to set iso value");
+    MEDIA_INFO_LOG("Set tag OHOS_CONTROL_ISO_VALUE value = %{public}d", iso);
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_ISO_VALUE, &iso, 1);
+    CHECK_AND_PRINT_LOG(ret, "Set tag OHOS_CONTROL_ISO_VALUE Failed");
     iso_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
 }
@@ -656,11 +598,8 @@ int32_t TimeLapsePhotoSession::IsManualIsoSupported(bool& result)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("%{public}s: Failed with return code %{public}d", __FUNCTION__, ret);
-        result = false;
-    }
-    result = true;
+    result = ret == CAM_META_SUCCESS && item.count != 0;
+    CHECK_AND_PRINT_LOG(result, "Failed find metadata with return code %{public}d", ret);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -710,10 +649,8 @@ int32_t TimeLapsePhotoSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::IsWhiteBalanceModeSupported Session is not Commited");
     std::vector<WhiteBalanceMode> modes;
-    if (GetSupportedWhiteBalanceModes(modes) != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("%{public}s: Get supported white balance modes failed", __FUNCTION__);
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetSupportedWhiteBalanceModes(modes) != CameraErrorCode::SUCCESS,
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "Get supported white balance modes failed");
     result = find(modes.begin(), modes.end(), mode) != modes.end();
     return CameraErrorCode::SUCCESS;
 }
@@ -789,7 +726,6 @@ int32_t TimeLapsePhotoSession::GetWhiteBalanceMode(WhiteBalanceMode& result)
     auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[0]));
     if (itr != metaWhiteBalanceModeMap_.end()) {
         result = itr->second;
-        return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -825,9 +761,8 @@ int32_t TimeLapsePhotoSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     if (mode != AWB_MODE_OFF) {
         SetWhiteBalance(0);
     }
-    if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1)) {
-        MEDIA_ERR_LOG("%{public}s: Failed to set WhiteBalance mode", __FUNCTION__);
-    }
+    bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1);
+    CHECK_AND_PRINT_LOG(ret, "%{public}s: Failed to set WhiteBalance mode", __FUNCTION__);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -865,7 +800,6 @@ int32_t TimeLapsePhotoSession::SetWhiteBalance(int32_t wb)
     CHECK_ERROR_PRINT_LOG(!res, "TimeLapsePhotoSession::SetWhiteBalance Failed");
     return CameraErrorCode::SUCCESS;
 }
-
 }
 }
 
