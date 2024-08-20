@@ -316,6 +316,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manage
     const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
 /**
+ * @brief Create a photo output instance without surfaceId.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param profile the {@link Camera_Profile} to create {@link Camera_PhotoOutput}.
+ * @param photoOutput the {@link Camera_PhotoOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputWithoutSurface(Camera_Manager *cameraManager,
+    const Camera_Profile *profile, Camera_PhotoOutput **photoOutput);
+
+/**
  * @brief Create a video output instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.

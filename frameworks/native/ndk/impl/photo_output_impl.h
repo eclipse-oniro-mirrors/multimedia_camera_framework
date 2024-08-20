@@ -23,6 +23,8 @@
 #include "output/photo_output.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "photo_listener_impl.h"
+#include "photo_native_impl.h"
 
 class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback {
 public:
@@ -232,6 +234,14 @@ public:
     Camera_ErrorCode RegisterEstimatedCaptureDurationCallback(OH_PhotoOutput_EstimatedCaptureDuration callback);
 
     Camera_ErrorCode UnregisterEstimatedCaptureDurationCallback(OH_PhotoOutput_EstimatedCaptureDuration callback);
+	
+    Camera_ErrorCode RegisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
+
+    Camera_ErrorCode UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
+
+    Camera_ErrorCode RegisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback);
+
+    Camera_ErrorCode UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback);
 
     Camera_ErrorCode Capture();
 
@@ -243,10 +253,25 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
+    void SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface);
+
+    OH_PhotoNative* CreateCameraPhotoNative(std::shared_ptr<OHOS::Media::NativeImage> &image, bool isMain);
+
+    Camera_ErrorCode IsMovingPhotoSupported(bool* isSupported);
+
+    Camera_ErrorCode EnableMovingPhoto(bool enableMovingPhoto);
+
     Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
 
 private:
-    OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_;
+    Camera_ErrorCode RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
+
+    OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;
     std::shared_ptr<InnerPhotoOutputCallback> innerCallback_ = nullptr;
+    OHOS::sptr<OHOS::Surface> photoSurface_ = nullptr;
+    OHOS::sptr<OHOS::CameraStandard::PhotoListener> photoListener_ = nullptr;
+    OHOS::sptr<OHOS::CameraStandard::RawPhotoListener> rawPhotoListener_ = nullptr;
+    uint8_t callbackFlag_ = 0;
+    OH_PhotoNative *photoNative_ = nullptr;
 };
 #endif // OHOS_PHOTO_OUTPUT_IMPL_H

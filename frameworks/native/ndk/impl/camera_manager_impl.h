@@ -68,6 +68,9 @@ public:
     Camera_ErrorCode CreatePhotoOutput(const Camera_Profile* profile, const char* surfaceId,
         Camera_PhotoOutput** photoOutput);
 
+    Camera_ErrorCode CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
+        Camera_PhotoOutput** photoOutput);
+
     Camera_ErrorCode CreatePhotoOutputUsedInPreconfig(const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
     Camera_ErrorCode CreateVideoOutput(const Camera_VideoProfile* profile, const char* surfaceId,
@@ -105,5 +108,6 @@ private:
         std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
+    static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;
 };
 #endif // OHOS_CAMERA_CAPTURE_INPUT_H
