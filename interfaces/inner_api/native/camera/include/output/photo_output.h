@@ -405,9 +405,6 @@ public:
 
     sptr<Surface> deferredSurface_;
 
-    std::shared_ptr<CameraReportDfxUtils> dfxInstance_ =
-        std::shared_ptr<CameraReportDfxUtils>(CameraReportDfxUtils::GetInstance());
-
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;

@@ -27,6 +27,20 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
+sptr<CameraReportDfxUtils> CameraReportDfxUtils::cameraReportDfx_;
+std::mutex CameraReportDfxUtils::instanceMutex_;
+ 
+sptr<CameraReportDfxUtils> &CameraReportDfxUtils::GetInstance()
+{
+    if (CameraReportDfxUtils::cameraReportDfx_ == nullptr) {
+        std::unique_lock<std::mutex> lock(instanceMutex_);
+        if (CameraReportDfxUtils::cameraReportDfx_ == nullptr) {
+            MEDIA_INFO_LOG("Initializing camera report dfx instance");
+            CameraReportDfxUtils::cameraReportDfx_ = new CameraReportDfxUtils();
+        }
+    }
+    return CameraReportDfxUtils::cameraReportDfx_;
+}
  
 void CameraReportDfxUtils::SetFirstBufferStartInfo()
 {
