@@ -444,9 +444,7 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
-    if (dfxInstance_ != nullptr) {
-        dfxInstance_->SetFirstBufferStartInfo();
-    }
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo();
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),

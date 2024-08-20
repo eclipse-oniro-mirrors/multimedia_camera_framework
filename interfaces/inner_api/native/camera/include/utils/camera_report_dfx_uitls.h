@@ -17,16 +17,13 @@
 #define OHOS_CAMERA_REPORT_DFX_UITLS_H
  
 #include <map>
+#include "refbase.h"
  
 namespace OHOS {
-namespace CameraStandard {
+namespace CameraStandard : public RefBase {
 class CameraReportDfxUtils {
 public:
-    static CameraReportDfxUtils* GetInstance()
-    {
-        static CameraReportDfxUtils instance;
-        return &instance;
-    }
+    static sptr<CameraReportDfxUtils> &GetInstance();
  
     void SetFirstBufferStartInfo();
     void SetFirstBufferEndInfo();
@@ -51,6 +48,9 @@ private:
     uint64_t setAddProxyStartTime_;
     uint64_t setAddProxyEndTime_;
     bool isAddProxySetting_;
+
+    static sptr<CameraReportDfxUtils> cameraReportDfx_;
+    static std::mutex instanceMutex_;
  
     void ReportPerformanceDeferredPhoto();
 };

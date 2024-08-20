@@ -24,7 +24,6 @@
 #include "capture_output.h"
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
-#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -404,9 +403,6 @@ public:
     sptr<Surface> rawPhotoSurface_;
 
     sptr<Surface> deferredSurface_;
-
-    std::shared_ptr<CameraReportDfxUtils> dfxInstance_ =
-        std::shared_ptr<CameraReportDfxUtils>(CameraReportDfxUtils::GetInstance());
 
 private:
     std::mutex callbackMutex_;

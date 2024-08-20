@@ -27,6 +27,20 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
+sptr<CameraReportDfxUtils> CameraReportDfxUtils::cameraReportDfx_;
+std::mutex CameraReportDfxUtils::instanceMutex_;
+ 
+sptr<CameraReportDfxUtils> &CameraReportDfxUtils::GetInstance()
+{
+    if (CameraReportDfxUtils::cameraReportDfx_ == nullptr) {
+        std::unique_lock<std::mutex> lock(instanceMutex_);
+        if (CameraReportDfxUtils::cameraReportDfx_ == nullptr) {
+            MEDIA_INFO_LOG("Initializing camera report dfx instance");
+            CameraReportDfxUtils::cameraReportDfx_ = new CameraReportDfxUtils();
+        }
+    }
+    return CameraReportDfxUtils::cameraReportDfx_;
+}
  
 void CameraReportDfxUtils::SetFirstBufferStartInfo()
 {
@@ -43,10 +57,7 @@ void CameraReportDfxUtils::SetFirstBufferEndInfo()
     MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetFirstBufferEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
-        if (!isBufferSetting_) {
-            MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetFirstBufferEndInfo cancel report");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!isBufferSetting_, "CameraReportDfxUtils::SetFirstBufferEndInfo cancel report");
         setFirstBufferEndTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
         isBufferSetting_ = false;
     }
@@ -67,10 +78,7 @@ void CameraReportDfxUtils::SetPrepareProxyEndInfo()
     MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetPrepareProxyEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
-        if (!isPrepareProxySetting_) {
-            MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetPrepareProxyEndInfo cancel report");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!isPrepareProxySetting_, "CameraReportDfxUtils::SetPrepareProxyEndInfo cancel report");
         setPrepareProxyEndTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
         isPrepareProxySetting_ = false;
     }
@@ -91,10 +99,7 @@ void CameraReportDfxUtils::SetAddProxyEndInfo()
     MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetAddProxyEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
-        if (!isAddProxySetting_) {
-            MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetAddProxyEndInfo cancel report");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!isAddProxySetting_, "CameraReportDfxUtils::SetAddProxyEndInfo cancel report");
         setAddProxyEndTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
         isAddProxySetting_ = false;
         ReportPerformanceDeferredPhoto();
