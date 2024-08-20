@@ -79,21 +79,22 @@ auto TestProcessor(uint8_t *rawData, size_t size)
         void OnExposureInfoChanged(ExposureInfo info) override {}
     };
     session->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
-    static const camera_rational_t r = {
-        .numerator = 1,
-        .denominator = 1000000,
-    };
+    camera_rational_t r = {1, 1000000};
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     meta->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &r, 1);
- 
+    session->ProcessExposureChange(meta);
+    r.numerator++;
+    meta->updateEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &r, 1);
     class IsoInfoCallbackMock : public IsoInfoCallback {
     public:
         void OnIsoInfoChanged(IsoInfo info) override {}
     };
     session->SetIsoInfoCallback(make_shared<IsoInfoCallbackMock>());
-    static const uint32_t iso = 1;
+    uint32_t iso = 1;
     meta->addEntry(OHOS_STATUS_ISO_VALUE, &iso, 1);
- 
+    session->ProcessIsoInfoChange(meta);
+    iso++;
+    meta->updateEntry(OHOS_STATUS_ISO_VALUE, &iso, 1);
     static const uint32_t lumination = 256;
     class LuminationInfoCallbackMock : public LuminationInfoCallback {
     public:
@@ -135,10 +136,12 @@ auto TestTimeLapsePhoto()
     vector<int32_t> intervalRange;
     session->GetSupportedTimeLapseIntervalRange(intervalRange);
     if (!intervalRange.empty()) {
+        int32_t interval = intervalRange[intervalRange.size() - 1];
         session->LockForControl();
-        session->SetTimeLapseInterval(intervalRange[0]);
+        session->SetTimeLapseInterval(interval);
         session->UnlockForControl();
-        int32_t interval;
+        auto meta = session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+        AddOrUpdateMetadata(meta, OHOS_CONTROL_TIME_LAPSE_INTERVAL, &interval, 1);
         session->GetTimeLapseInterval(interval);
     }
     session->LockForControl();
@@ -149,6 +152,7 @@ auto TestTimeLapsePhoto()
     session->UnlockForControl();
     session->LockForControl();
     session->SetExposureHintMode(ExposureHintMode::EXPOSURE_HINT_MODE_OFF);
+    session->SetExposureHintMode(static_cast<ExposureHintMode>(ExposureHintMode::EXPOSURE_HINT_UNSUPPORTED + 1));
     session->UnlockForControl();
 }
 
@@ -156,26 +160,45 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     data.WriteRawData(rawData, size);
+    auto meta = session->GetMetadata();
+    const camera_rational_t rs[] = {
+        {3, 1000000},
+        {9, 1000000},
+    };
+    uint32_t dataCount = sizeof(rs) / sizeof(rs[0]);
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_SENSOR_EXPOSURE_TIME_RANGE, rs, dataCount);
     vector<uint32_t> exposureRange;
     session->GetSupportedExposureRange(exposureRange);
+    meta = session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
     session->LockForControl();
+    session->SetExposure(0);
+    session->SetExposure(1);
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
-    uint32_t exposure;
+    uint32_t exposure = data.ReadUint32();
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &exposure, 1);
     session->GetExposure(exposure);
     vector<MeteringMode> modes;
     session->GetSupportedMeteringModes(modes);
     bool supported;
     session->IsExposureMeteringModeSupported(METERING_MODE_CENTER_WEIGHTED, supported);
+    session->IsExposureMeteringModeSupported(
+        static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1), supported);
     session->LockForControl();
     session->SetExposureMeteringMode(MeteringMode::METERING_MODE_CENTER_WEIGHTED);
+    session->SetExposureMeteringMode(static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1));
     session->UnlockForControl();
-    MeteringMode mode;
+    MeteringMode mode = MeteringMode::METERING_MODE_OVERALL;
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
+    session->GetExposureMeteringMode(mode);
+    mode = static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1);
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
     session->GetExposureMeteringMode(mode);
 }
 
 void TestManualIso()
 {
+    auto meta = session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
     bool isManualIsoSupported;
     session->IsManualIsoSupported(isManualIsoSupported);
     if (isManualIsoSupported) {
@@ -185,10 +208,13 @@ void TestManualIso()
             session->LockForControl();
             session->SetIso(isoRange[0]);
             session->UnlockForControl();
-            int32_t iso;
+            int32_t iso = 1000;
+            AddOrUpdateMetadata(meta, OHOS_CONTROL_ISO_VALUE, &iso, 1);
             session->GetIso(iso);
         }
     }
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_ISO_VALUES, &isManualIsoSupported, 1);
+    session->IsManualIsoSupported(isManualIsoSupported);
 }
 
 void TestWhiteBalance()
@@ -211,6 +237,55 @@ void TestWhiteBalance()
         int32_t wb;
         session->GetWhiteBalance(wb);
     }
+    auto meta = session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    camera_awb_mode_t awbModes[] = {camera_awb_mode_t::OHOS_CAMERA_AWB_MODE_AUTO};
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_AWB_MODES, awbModes, 1);
+    session->GetSupportedWhiteBalanceModes(wbModes);
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_AWB_MODE, awbModes, 1);
+    session->GetWhiteBalanceMode(wbMode);
+    session->LockForControl();
+    session->SetWhiteBalanceMode(static_cast<WhiteBalanceMode>(WhiteBalanceMode::AWB_MODE_SHADE + 1));
+    int32_t wb = 1;
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_WB_VALUE, &wb, 1);
+    session->GetWhiteBalance(wb);
+}
+
+void TestGetMetadata()
+{
+    auto cameras = manager->GetSupportedCameras();
+    sptr<CameraDevice> phyCam;
+    for (auto item : cameras) {
+        if (item->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE) {
+            phyCam = item;
+        }
+    }
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "TimeLapsePhotoSessionFuzzer: No Wide Angle Camera");
+    string cameraId = phyCam->GetID();
+    MEDIA_INFO_LOG("TimeLapsePhotoSessionFuzzer: Wide Angle Camera Id = %{public}s", cameraId.c_str());
+    auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    size_t delimPos = cameraId.find("/");
+    cameraId = cameraId.substr(delimPos + 1);
+    auto index = atoi(cameraId.c_str());
+    MEDIA_INFO_LOG("TimeLapsePhotoSessionFuzzer: Wide Angle Camera Id = %{public}d", index);
+    AddOrUpdateMetadata(meta, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &index, 1);
+    session->ProcessPhysicalCameraSwitch(meta);
+    session->GetMetadata();
+}
+
+void TestGetMetadata2()
+{
+    sptr<ICaptureSession> iCaptureSession;
+    {
+        sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);
+        iCaptureSession = captureSession->GetCaptureSession();
+    }
+    vector<sptr<CameraDevice>> devices{};
+    sptr<TimeLapsePhotoSession> tlpSession = new TimeLapsePhotoSession(iCaptureSession, devices);
+    tlpSession->BeginConfig();
+    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
+    tlpSession->AddInput(input);
+    tlpSession->GetMetadata();
+    tlpSession->Release();
 }
 
 void Test(uint8_t *rawData, size_t size)
@@ -238,7 +313,9 @@ void Test(uint8_t *rawData, size_t size)
     TestManualExposure(rawData, size);
     TestManualIso();
     TestWhiteBalance();
+    TestGetMetadata();
     session->Release();
+    TestGetMetadata2();
 }
 
 } // namespace StreamRepeatStubFuzzer
