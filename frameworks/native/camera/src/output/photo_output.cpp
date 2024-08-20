@@ -28,7 +28,6 @@
 #include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
-#include "camera_report_dfx_uitls.h"
 
 using namespace std;
 
@@ -444,10 +443,6 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
-    dfxInstance_ = std::shared_ptr<CameraReportDfxUtils>(CameraReportDfxUtils::GetInstance());
-    if (dfxInstance_ != nullptr) {
-        dfxInstance_->SetFirstBufferStartInfo();
-    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
