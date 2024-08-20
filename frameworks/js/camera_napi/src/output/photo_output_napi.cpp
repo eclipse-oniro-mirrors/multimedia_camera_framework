@@ -46,7 +46,6 @@
 #include "pixel_map_napi.h"
 #include "refbase.h"
 #include "video_key_info.h"
-#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -191,10 +190,6 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
-    auto photoOutput = photoOutput_.promote();
-    if (photoOutput != nullptr && photoOutput->dfxInstance_ != nullptr) {
-        photoOutput->dfxInstance_->SetPrepareProxyStartInfo();
-    }
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -287,14 +282,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
                 location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        if (photoOutput->dfxInstance_ != nullptr) {
-            photoOutput->dfxInstance_->SetPrepareProxyEndInfo();
-            photoOutput->dfxInstance_->SetAddProxyStartInfo();
-        }
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        if (photoOutput->dfxInstance_ != nullptr) {
-            photoOutput->dfxInstance_->SetAddProxyEndInfo();
-        }
     }
 }
 
@@ -316,10 +304,6 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
-        auto photoOutput = photoOutput_.promote();
-        if (photoOutput != nullptr && photoOutput->dfxInstance_ != nullptr) {
-            photoOutput->dfxInstance_->SetFirstBufferEndInfo();
-        }
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
