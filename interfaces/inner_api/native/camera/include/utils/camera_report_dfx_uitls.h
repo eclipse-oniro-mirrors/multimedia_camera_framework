@@ -20,8 +20,8 @@
 #include <refbase.h>
  
 namespace OHOS {
-namespace CameraStandard : public RefBase {
-class CameraReportDfxUtils {
+namespace CameraStandard {
+class CameraReportDfxUtils : public RefBase {
 public:
     static sptr<CameraReportDfxUtils> &GetInstance();
  
