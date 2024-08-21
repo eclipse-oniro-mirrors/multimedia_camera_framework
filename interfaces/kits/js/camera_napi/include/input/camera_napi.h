@@ -332,10 +332,10 @@ static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
-    {"CAR", 0},
-    {"STAR", 1},
-    {"WATER", 2},
-    {"LIGHT", 3},
+    {"TRAFFIC_TRAILS", 0},
+    {"STAR_TRAILS", 1},
+    {"SILKY_WATER", 2},
+    {"LIGHT_GRAFFITI", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapTimeLapseRecordState = {
