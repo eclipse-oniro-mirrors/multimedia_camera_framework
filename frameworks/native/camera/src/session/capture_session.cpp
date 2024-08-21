@@ -1399,7 +1399,9 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
-
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为AUTO
+    }
     uint32_t count = 1;
     uint8_t stabilizationMode_ = stabilizationMode;
 
@@ -1435,9 +1437,6 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     isSupported = false;
-    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
-        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为middle
-    }
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
