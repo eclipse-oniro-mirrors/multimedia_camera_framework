@@ -46,6 +46,7 @@
 #include "pixel_map_napi.h"
 #include "refbase.h"
 #include "video_key_info.h"
+#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -190,6 +191,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo();
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -282,7 +284,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
                 location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
+        CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
+        CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo();
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo();
     }
 }
 
@@ -304,6 +309,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
+        CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo();
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
