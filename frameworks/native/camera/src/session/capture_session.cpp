@@ -1436,7 +1436,7 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
     }
     isSupported = false;
     if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
-        stabilizationMode = VideoStabilizationMode::MIDDLE; // 三方应用不支持超级防抖模式，映射为middle
+        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为middle
     }
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
