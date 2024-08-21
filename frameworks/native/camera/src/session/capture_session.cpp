@@ -1393,15 +1393,16 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为AUTO
+    }
     CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
-    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
-        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为AUTO
-    }
+
     uint32_t count = 1;
     uint8_t stabilizationMode_ = stabilizationMode;
 
