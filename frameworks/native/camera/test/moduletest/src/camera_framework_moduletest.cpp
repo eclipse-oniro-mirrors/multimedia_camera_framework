@@ -11894,5 +11894,48 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Le
     EXPECT_EQ(captureSession->SetVirtualAperture(aperture), 0);
 
 }
+
+/*
+ * Feature: Framework
+ * Function: Test time machine dotting
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test time machine dotting
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_time_machine, TestSize.Level0)
+{
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> videoOutput;
+    ConfigVideoSession(previewOutput, videoOutput);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    int32_t intResult = videoSession_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<VideoOutput> videoOutputTrans = ((sptr<VideoOutput>&)videoOutput);
+    std::vector<VideoMetaType> supportedVideoMetaTypes = videoOutputTrans->GetSupportedVideoMetaTypes();
+    ASSERT_NE(supportedVideoMetaTypes.size(), 0);
+
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    ASSERT_NE(surface, nullptr);
+    videoOutputTrans->AttachMetaSurface(surface, supportedVideoMetaTypes[0]);
+
+    intResult = videoSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoOutputTrans->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = videoOutputTrans->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
+
+    sleep(WAIT_TIME_BEFORE_STOP);
+}
 } // namespace CameraStandard
 } // namespace OHOS
