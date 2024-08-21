@@ -19,13 +19,19 @@
 #include "hcamera_mock_session_manager_interface.h"
 #include "hcamera_scene_session_manager_proxy.h"
 #include "hcamera_window_session_manager_service_proxy.h"
+#include "system_ability_status_change_stub.h"
  
 namespace OHOS {
 namespace CameraStandard {
 class CameraWindowManagerClient : public RefBase {
 public:
+    class WMSSaStatusChangeCallback : public SystemAbilityStatusChangeStub {
+    public:
+        void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+        void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    };
     static sptr<CameraWindowManagerClient>& GetInstance();
-    virtual ~CameraWindowManagerClient() = default;
+    virtual ~CameraWindowManagerClient();
     int32_t RegisterWindowManagerAgent();
     int32_t UnregisterWindowManagerAgent();
     sptr<IWindowManagerAgent> GetWindowManagerAgent();
@@ -35,10 +41,13 @@ private:
     CameraWindowManagerClient();
     void InitWindowProxy();
     void InitWindowManagerAgent();
+    int32_t SubscribeSystemAbility();
+    int32_t UnSubscribeSystemAbility();
     sptr<IMockSessionManagerInterface> mockSessionManagerServiceProxy_ = nullptr;
     sptr<ISessionManagerService> sessionManagerServiceProxy_ = nullptr;
     sptr<ISceneSessionManager> sceneSessionManagerProxy_ = nullptr;
     sptr<IWindowManagerAgent> windowManagerAgent_ = nullptr;
+    sptr<WMSSaStatusChangeCallback> saStatusChangeCallback_;
     static std::mutex instanceMutex_;
     static sptr<CameraWindowManagerClient> cameraWindowManagerClient_;
 };

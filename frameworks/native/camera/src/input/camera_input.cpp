@@ -48,6 +48,7 @@ int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int3
 int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                                               const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    CHECK_ERROR_RETURN_RET_LOG(result == nullptr, CAMERA_INVALID_ARG, "OnResult get null meta from server");
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
     auto camInputSptr = camInput_.promote();
     CHECK_ERROR_RETURN_RET_LOG(camInputSptr == nullptr, CAMERA_OK,
@@ -70,8 +71,6 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
         MEDIA_DEBUG_LOG("OHOS_STATUS_CAMERA_OCCLUSION_DETECTION is not null or zero");
         if (camInputSptr != nullptr && camInputSptr->GetOcclusionDetectCallback() != nullptr) {
             camInputSptr->GetOcclusionDetectCallback()->OnCameraOcclusionDetected(item.data.i32[0]);
-        } else {
-            MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnCameraOcclusionDetected not set!, Discarding callback");
         }
     }
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
@@ -181,10 +180,9 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 
     if (deviceObj_) {
         retCode = isSupportSecCamera ? (deviceObj_->OpenSecureCamera(secureSeqId)) : (deviceObj_->Open());
-        if (retCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
+        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
+            "Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
                 retCode, isSupportSecCamera);
-        }
     } else {
         MEDIA_ERR_LOG("CameraInput::OpenSecureCamera() deviceObj_ is nullptr");
     }
@@ -256,6 +254,7 @@ void CameraInput::SetOcclusionDetectCallback(
     CHECK_ERROR_PRINT_LOG(cameraOcclusionDetectCallback == nullptr,
         "SetOcclusionDetectCallback: SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
     MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
+    std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
     cameraOcclusionDetectCallback_ = cameraOcclusionDetectCallback;
     return;
 }
@@ -263,7 +262,7 @@ void CameraInput::SetOcclusionDetectCallback(
 std::string CameraInput::GetCameraId()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "CameraInput::GetCameraId() cameraObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "CameraInput::GetCameraId cameraObject is null");
     return cameraObject->GetID();
 }
 
@@ -287,6 +286,7 @@ std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 
 std::shared_ptr<CameraOcclusionDetectCallback> CameraInput::GetOcclusionDetectCallback()
 {
+    std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
     return cameraOcclusionDetectCallback_;
 }
 
@@ -351,10 +351,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
         } else if (ret == CAM_META_SUCCESS) {
             status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
-        if (!status) {
-            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!status, false, "Failed to update metadata item: %{public}d", srcItem.item);
     }
     return true;
 }
@@ -362,7 +359,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
 std::string CameraInput::GetCameraSettings()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings() cameraObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings cameraObject is null");
     return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetMetadata());
 }
 

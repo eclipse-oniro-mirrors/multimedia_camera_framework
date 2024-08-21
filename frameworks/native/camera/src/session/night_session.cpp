@@ -76,9 +76,7 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("NightSession::SetExposure Failed to set exposure compensation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "NightSession::SetExposure Failed to set exposure compensation");
     return CameraErrorCode::SUCCESS;
 }
 

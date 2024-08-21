@@ -47,25 +47,17 @@ void ForEach(uint32_t iteratorCount, std::function<void(uint32_t)> fun)
 bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
 {
-    if (srcMetadata == nullptr || dstMetadata == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(srcMetadata == nullptr || dstMetadata == nullptr, false);
     auto srcHeader = srcMetadata->get();
-    if (srcHeader == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(srcHeader == nullptr, false);
     auto dstHeader = dstMetadata->get();
-    if (dstHeader == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(dstHeader == nullptr, false);
     auto srcItemCount = srcHeader->item_count;
     camera_metadata_item_t srcItem;
     for (uint32_t index = 0; index < srcItemCount; index++) {
         int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+            "Failed to get metadata item at index: %{public}d", index);
         bool status = false;
         uint32_t currentIndex;
         ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
@@ -74,10 +66,7 @@ bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetada
         } else if (ret == CAM_META_SUCCESS) {
             status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
-        if (!status) {
-            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!status, false, "Failed to update metadata item: %{public}d", srcItem.item);
     }
     return true;
 }
@@ -85,10 +74,7 @@ bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetada
 std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
     const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
 {
-    if (srcMetadata == nullptr) {
-        MEDIA_ERR_LOG("CopyMetadata fail, src is null");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(srcMetadata == nullptr, nullptr, "CopyMetadata fail, src is null");
     auto metadataHeader = srcMetadata->get();
     auto newMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(metadataHeader->item_capacity, metadataHeader->data_capacity);
@@ -98,10 +84,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
 
 bool UpdateMetadataTag(const camera_metadata_item_t& srcItem, std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
 {
-    if (dstMetadata == nullptr) {
-        MEDIA_ERR_LOG("UpdateMetadataTag fail, dstMetadata is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(dstMetadata == nullptr, false, "UpdateMetadataTag fail, dstMetadata is null");
     uint32_t itemIndex;
     int32_t result = OHOS::Camera::FindCameraMetadataItemIndex(dstMetadata->get(), srcItem.item, &itemIndex);
     bool status = false;
@@ -110,19 +93,13 @@ bool UpdateMetadataTag(const camera_metadata_item_t& srcItem, std::shared_ptr<OH
     } else if (result == CAM_META_SUCCESS) {
         status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("UpdateMetadataTag fail, err is %{public}d", result);
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, false, "UpdateMetadataTag fail, err is %{public}d", result);
     return true;
 }
 
 void DumpMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
 {
-    if (srcMetadata == nullptr) {
-        MEDIA_ERR_LOG("DumpMetadataInfo srcMetadata is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(srcMetadata == nullptr, "DumpMetadataInfo srcMetadata is null");
     auto metadataHeader = srcMetadata->get();
     uint32_t version = metadataHeader->version;
     uint32_t itemCount = metadataHeader->item_count;
@@ -208,16 +185,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> RecreateMetadata(
 
 void LogFormatCameraMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    if (metadata == nullptr) {
-        MEDIA_DEBUG_LOG("LogFormatCameraMetadata: Metadata pointer is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(metadata == nullptr, "LogFormatCameraMetadata: Metadata pointer is null");
 
     auto header = metadata->get();
-    if (header == nullptr) {
-        MEDIA_DEBUG_LOG("LogFormatCameraMetadata: Metadata header is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(header == nullptr, "LogFormatCameraMetadata: Metadata header is null");
 
     std::string metaStr = OHOS::Camera::FormatCameraMetadataToString(header);
     MEDIA_DEBUG_LOG("LogFormatCameraMetadata: metaStr %{public}s", metaStr.c_str());

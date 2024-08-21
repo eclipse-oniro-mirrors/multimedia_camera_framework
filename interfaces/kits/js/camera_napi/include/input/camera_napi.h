@@ -161,16 +161,16 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"NIGHT_PHOTO", JS_NIGHT},
     {"PROFESSIONAL_PHOTO", JS_PROFESSIONAL_PHOTO},
     {"PROFESSIONAL_VIDEO", JS_PROFESSIONAL_VIDEO},
-    {"HIGH_RES_PHOTO", JS_HIGH_RES_PHOTO},
     {"SLOW_MOTION_VIDEO", JS_SLOW_MOTION},
     {"MACRO_PHOTO", JS_CAPTURE_MARCO},
     {"MACRO_VIDEO", JS_VIDEO_MARCO},
+    {"LIGHT_PAINTING_PHOTO", JS_LIGHT_PAINTING },
+    {"HIGH_RES_PHOTO", JS_HIGH_RES_PHOTO},
     {"SECURE_PHOTO", JS_SECURE_CAMERA},
     {"QUICK_SHOT_PHOTO", JS_QUICK_SHOT_PHOTO},
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
-    {"LIGHT_PAINTING_PHOTO", JS_LIGHT_PAINTING },
-    {"TIMELAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
+    {"TIME_LAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
     {"FLUORESCENCE_PHOTO", JS_FLUORESCENCE_PHOTO},
 };
 
@@ -321,6 +321,7 @@ static const std::unordered_map<std::string, int32_t> mapPolicyType = {
 static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
     { "MOON_CAPTURE_BOOST", FEATURE_MOON_CAPTURE_BOOST },
     { "TRIPOD_DETECTION", FEATURE_TRIPOD_DETECTION },
+    { "LOW_LIGHT_BOOST", FEATURE_LOW_LIGHT_BOOST },
     { "MACRO", FEATURE_MACRO },
 };
 
@@ -331,10 +332,10 @@ static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
-    {"CAR", 0},
-    {"STAR", 1},
-    {"WATER", 2},
-    {"LIGHT", 3},
+    {"TRAFFIC_TRAILS", 0},
+    {"STAR_TRAILS", 1},
+    {"SILKY_WATER", 2},
+    {"LIGHT_GRAFFITI", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapTimeLapseRecordState = {

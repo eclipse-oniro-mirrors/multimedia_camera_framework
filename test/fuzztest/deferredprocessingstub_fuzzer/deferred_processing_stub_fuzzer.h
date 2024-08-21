@@ -31,11 +31,22 @@ class IDeferredPhotoProcessingSessionCallbackFuzz : public IDeferredPhotoProcess
 public:
     explicit IDeferredPhotoProcessingSessionCallbackFuzz() = default;
     virtual ~IDeferredPhotoProcessingSessionCallbackFuzz() = default;
-    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes) override;
-    int32_t OnError(const std::string &imageId, const ErrorCode errorCode) override;
-    int32_t OnStateChanged(const StatusCode status) override;
+    inline int32_t OnProcessImageDone(const std::string &imageId,
+        sptr<IPCFileDescriptor> ipcFd, const long bytes) override
+    {
+        return 0;
+    }
+    inline int32_t OnError(const std::string &imageId, const ErrorCode errorCode) override
+    {
+        return 0;
+    }
+    inline int32_t OnStateChanged(const StatusCode status) override
+    {
+        return 0;
+    }
 };
 
+void TestBufferInfo(uint8_t *rawData, size_t size);
 }
 }
 #endif

@@ -519,8 +519,9 @@ public:
             uint8_t faceDetectMode = OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE;
             ability->addEntry(OHOS_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, sizeof(uint8_t));
 
+            uint8_t type = 5;
+            ability->addEntry(OHOS_ABILITY_CAMERA_TYPE, &type, sizeof(uint8_t));
             uint8_t value_u8 = 0;
-            ability->addEntry(OHOS_ABILITY_CAMERA_TYPE, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_FLASH_MODES, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_FOCUS_MODES, &value_u8, sizeof(uint8_t));
@@ -597,6 +598,13 @@ public:
         const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
         bool isEnableSecCam));
     sptr<MockCameraDevice> cameraDevice;
+};
+
+class MockCameraManager : public CameraManager {
+public:
+    MOCK_METHOD0(GetIsFoldable, bool());
+    MOCK_METHOD0(GetFoldStatus, FoldStatus());
+    ~MockCameraManager() {}
 };
 
 class FakeHCameraService : public HCameraService {
@@ -735,13 +743,22 @@ void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
     }
 
     FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
-    session->SetFlashMode(flash);
+    bool flashSupported = session->IsFlashModeSupported(flash);
+    if (flashSupported) {
+        session->SetFlashMode(flash);
+    }
 
     FocusMode focus = FOCUS_MODE_AUTO;
-    session->SetFocusMode(focus);
+    bool focusSupported = session->IsFocusModeSupported(focus);
+    if (focusSupported) {
+        session->SetFocusMode(focus);
+    }
 
     ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
+    bool exposureSupported = session->IsExposureModeSupported(exposure);
+    if (exposureSupported) {
+        session->SetExposureMode(exposure);
+    }
 
     session->UnlockForControl();
 
@@ -749,9 +766,17 @@ void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
         EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
     }
 
-    EXPECT_EQ(session->GetFlashMode(), flash);
-    EXPECT_EQ(session->GetFocusMode(), focus);
-    EXPECT_EQ(session->GetExposureMode(), exposure);
+    if (flashSupported) {
+        EXPECT_EQ(session->GetFlashMode(), flash);
+    }
+
+    if (focusSupported) {
+        EXPECT_EQ(session->GetFocusMode(), focus);
+    }
+
+    if (exposureSupported) {
+        EXPECT_EQ(session->GetExposureMode(), exposure);
+    }
 }
 
 void CameraFrameworkUnitTest::PortraitSessionControlParams(sptr<PortraitSession> portraitSession)
@@ -832,7 +857,13 @@ void CameraFrameworkUnitTest::PortraitSessionBeautyParams(sptr<PortraitSession> 
 
 void CameraFrameworkUnitTest::SetUpTestCase(void) {}
 
-void CameraFrameworkUnitTest::TearDownTestCase(void) {}
+void CameraFrameworkUnitTest::TearDownTestCase(void)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    camSession->Release();
+}
 
 void CameraFrameworkUnitTest::SetUp()
 {
@@ -847,6 +878,7 @@ void CameraFrameworkUnitTest::SetUp()
     mockCameraDevice = mockCameraHostManager->cameraDevice;
     mockStreamOperator = mockCameraDevice->streamOperator;
     cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
+    mockCameraManager = new MockCameraManager();
 }
 
 void CameraFrameworkUnitTest::NativeAuthorization()
@@ -877,6 +909,7 @@ void CameraFrameworkUnitTest::TearDown()
     Mock::AllowLeak(mockCameraHostManager);
     Mock::AllowLeak(mockCameraDevice);
     Mock::AllowLeak(mockStreamOperator);
+    Mock::AllowLeak(mockCameraManager);
     MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", g_num);
 }
 
@@ -3051,7 +3084,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
 
     bool isSupported;
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(MIDDLE, isSupported), 0);
-    EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
+    if (isSupported) {
+        EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
+    } else {
+        EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 7400102);
+    }
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
 
@@ -3538,15 +3575,20 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level
     session->SetMeteringPoint(exposurePoint);
 
     ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
+    bool exposureSupported = session->IsExposureModeSupported(exposure);
+    if (exposureSupported) {
+        session->SetExposureMode(exposure);
+    }
 
     ret = session->GetExposureMode(exposure);
     EXPECT_EQ(ret, 0);
 
     ExposureMode exposureMode = session->GetExposureMode();
-    int32_t setExposureMode = session->SetExposureMode(exposureMode);
-    EXPECT_EQ(setExposureMode, 0);
-
+    exposureSupported = session->IsExposureModeSupported(exposureMode);
+    if (exposureSupported) {
+        int32_t setExposureMode = session->SetExposureMode(exposureMode);
+        EXPECT_EQ(setExposureMode, 0);
+    }
     session->UnlockForControl();
     input->Close();
     session->Release();
@@ -5250,7 +5292,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_052, TestSize.Level
     SceneMode mode = PORTRAIT;
     cameraManager->SetServiceProxy(nullptr);
     cameraManager->CreateCaptureSession(mode);
-    cameraManager->InitCameraList();
+    cameraManager->ClearCameraDeviceListCache();
 
     TorchMode mode1 = TorchMode::TORCH_MODE_OFF;
     TorchMode mode2 = TorchMode::TORCH_MODE_ON;
@@ -5275,7 +5317,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_053, TestSize.Level
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    cameraManager->ParseBasicCapability(metadata, item);
+    CameraManager::ProfilesWrapper wrapper = {};
+    cameraManager->ParseBasicCapability(wrapper, metadata, item);
 }
 
 /*
@@ -5308,7 +5351,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level
     ret = cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(ret, 7400201);
-    cameraManager->cameraObjList_ = {};
+    cameraManager->cameraDeviceList_ = {};
     bool isTorchSupported = cameraManager->IsTorchSupported();
     EXPECT_EQ(isTorchSupported, false);
 }
@@ -5337,7 +5380,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
     cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
 
-    cameraManager->cameraObjList_ = {};
+    cameraManager->cameraDeviceList_ = {};
     string cameraId = "";
     cameraManager->GetCameraDeviceFromId(cameraId);
     bool isTorchSupported = cameraManager->IsTorchSupported();
@@ -5381,7 +5424,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_057, TestSize.Level
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
     cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
     cameras[0]->GetPosition();
-    EXPECT_EQ(cameras[0]->GetPosition(), 3);
+    EXPECT_EQ(cameras[0]->GetPosition(), 2);
 
     cameras[0]->zoomRatioRange_ = {1.1, 2.1};
     EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);
@@ -8168,6 +8211,231 @@ HWTEST_F(CameraFrameworkUnitTest, camera_panorama_unittest_002, TestSize.Level0)
             camInput->Close();
         }
     }
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_CheckFrameRateRangeWithCurrentFps, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(30, 30, 30, 60), false);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(30, 30, 30, 60), false);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(20, 40, 20, 40), true);
+    ASSERT_EQ(session->CheckFrameRateRangeWithCurrentFps(20, 40, 30, 60), false);
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_CanPreconfig, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session, nullptr);
+    PreconfigType preconfigType = PreconfigType::PRECONFIG_720P;
+    ProfileSizeRatio preconfigRatio = ProfileSizeRatio::RATIO_16_9;
+    EXPECT_EQ(session->CanPreconfig(preconfigType, preconfigRatio), true);
+    int32_t result = session->Preconfig(preconfigType, preconfigRatio);
+    EXPECT_EQ(result, 0);
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_CreateBurstDisplayName, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode opMode = CAPTURE;
+    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    std::string displayName = session->CreateBurstDisplayName(1);
+    cout << "displayName: " << displayName <<endl;
+    ASSERT_NE(displayName, "");
+    ASSERT_THAT(displayName, testing::EndsWith("_COVER"));
+    displayName = session->CreateBurstDisplayName(2);
+    cout << "displayName: " << displayName <<endl;
+    ASSERT_THAT(displayName, Not(testing::EndsWith("_COVER")));
+    displayName = session->CreateBurstDisplayName(-1);
+    cout << "displayName: " << displayName <<endl;
+}
+
+/*
+ * Feature: Framework
+ * Function: Verify that the method returns the correct list of cameras when the device is not foldable.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Verify that the method returns the correct list of cameras when the device is not foldable.
+ */
+HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_not_foldable, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraManager, GetIsFoldable())
+        .WillRepeatedly(Return(false));
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+    auto camera1 = new CameraDevice("device1", changedMetadata);
+    auto camera2 = new CameraDevice("device2", changedMetadata);
+    expectedCameraList.emplace_back(camera0);
+    expectedCameraList.emplace_back(camera1);
+    expectedCameraList.emplace_back(camera2);
+    mockCameraManager->cameraDeviceList_ = expectedCameraList;
+    auto result = mockCameraManager->GetSupportedCameras();
+    ASSERT_EQ(result.size(), expectedCameraList.size());
+}
+
+/*
+ * Feature: Framework
+ * Function: The goal is to verify that the method correctly returns the list of supported cameras when the device is
+              collapsible and in the "expand" state
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The goal is to verify that the method correctly returns the list of supported cameras when the
+               device is collapsible and in the "expand" state
+ */
+HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_foldable_expand01, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraManager, GetIsFoldable())
+        .WillRepeatedly(Return(true));
+
+    EXPECT_CALL(*mockCameraManager, GetFoldStatus())
+        .WillRepeatedly(Return(FoldStatus::EXPAND));
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    int32_t cameraPosition = CAMERA_POSITION_BACK;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    cameraPosition = CAMERA_POSITION_FRONT;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera1 = new CameraDevice("device1", changedMetadata1);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    expectedCameraList.emplace_back(camera1);
+    mockCameraManager->cameraDeviceList_ = expectedCameraList;
+    auto result = mockCameraManager->GetSupportedCameras();
+
+    ASSERT_EQ(result.size(), 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: The goal is to verify that the method correctly returns the list of supported cameras when the device is
+              collapsible and in the "expand" state
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The goal is to verify that the method correctly returns the list of supported cameras when the
+               device is collapsible and in the "expand" state
+ */
+HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_foldable_expand02, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraManager, GetIsFoldable())
+        .WillRepeatedly(Return(true));
+
+    EXPECT_CALL(*mockCameraManager, GetFoldStatus())
+        .WillRepeatedly(Return(FoldStatus::EXPAND));
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    int32_t cameraPosition = CAMERA_POSITION_BACK;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    cameraPosition = CAMERA_POSITION_FRONT;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera1 = new CameraDevice("device1", changedMetadata1);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    expectedCameraList.emplace_back(camera1);
+    mockCameraManager->cameraDeviceList_ = expectedCameraList;
+    auto result = mockCameraManager->GetSupportedCameras();
+
+    ASSERT_EQ(result.size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: In the scenario where the device is foldable and in a folded state, the goal is to ensure that the method
+             correctly returns the list of cameras that support the current folded state.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: In the scenario where the device is foldable and in a folded state, the goal is to ensure that the
+              method correctly returns the list of cameras that support the current folded state.
+ */
+HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_foldable_fold, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraManager, GetIsFoldable())
+        .WillRepeatedly(Return(true));
+
+    EXPECT_CALL(*mockCameraManager, GetFoldStatus())
+        .WillRepeatedly(Return(FoldStatus::FOLDED));
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    int32_t cameraPosition = CAMERA_POSITION_BACK;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    cameraPosition = CAMERA_POSITION_FRONT;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera1 = new CameraDevice("device1", changedMetadata1);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    expectedCameraList.emplace_back(camera1);
+    mockCameraManager->cameraDeviceList_ = expectedCameraList;
+    auto result = mockCameraManager->GetSupportedCameras();
+
+    ASSERT_EQ(result.size(), 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: The unit test get_supported_cameras_foldable_half_fold checks the behavior of the
+             CameraManager::GetSupportedCameras method when the device is foldable and in a half-folded state.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The unit test get_supported_cameras_foldable_half_fold checks the behavior of the
+             CameraManager::GetSupportedCameras method when the device is foldable and in a half-folded state.
+ */
+HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_foldable_half_fold, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraManager, GetIsFoldable())
+        .WillRepeatedly(Return(true));
+
+    EXPECT_CALL(*mockCameraManager, GetFoldStatus())
+        .WillRepeatedly(Return(FoldStatus::HALF_FOLD));
+
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    int32_t cameraPosition = CAMERA_POSITION_BACK;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera0 = new CameraDevice("device0", changedMetadata);
+
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    cameraPosition = CAMERA_POSITION_FRONT;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
+    changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
+    auto camera1 = new CameraDevice("device1", changedMetadata1);
+
+    std::vector<sptr<CameraDevice>> expectedCameraList;
+    expectedCameraList.emplace_back(camera0);
+    expectedCameraList.emplace_back(camera1);
+    mockCameraManager->cameraDeviceList_ = expectedCameraList;
+    auto result = mockCameraManager->GetSupportedCameras();
+    ASSERT_EQ(result.size(), 1);
 }
 } // CameraStandard
 } // OHOS

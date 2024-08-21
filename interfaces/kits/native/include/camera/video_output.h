@@ -187,6 +187,58 @@ Camera_ErrorCode OH_VideoOutput_GetActiveProfile(Camera_VideoOutput* videoOutput
  */
 Camera_ErrorCode OH_VideoOutput_DeleteProfile(Camera_VideoProfile* profile);
 
+/**
+ * @brief Get supported video output frame rate list.
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance to deliver supported frame rate list.
+ * @param frameRateRange the supported {@link Camera_FrameRateRange} list to be filled if the method call succeeds.
+ * @param size the size of supported {@link Camera_FrameRateRange} list will be filled.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_VideoOutput_GetSupportedFrameRates(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange** frameRateRange, uint32_t* size);
+
+/**
+ * @brief Delete frame rate list.
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance to deliver supported frame rate list.
+ * @param frameRateRange the {@link Camera_FrameRateRange} list to be deleted.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_VideoOutput_DeleteFrameRates(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange* frameRateRange);
+
+/**
+ * @brief Set video output frame rate.
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance to be set frame rate.
+ * @param minFps the minimum to be set.
+ * @param maxFps the maximum to be set.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_VideoOutput_SetFrameRate(Camera_VideoOutput* videoOutput,
+    int32_t minFps, int32_t maxFps);
+
+/**
+ * @brief Get active video output frame rate.
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance to deliver the active frame rate.
+ * @param frameRateRange the active {@link Camera_FrameRateRange} to be filled if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange* frameRateRange);
+
 #ifdef __cplusplus
 }
 #endif

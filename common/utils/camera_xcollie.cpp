@@ -31,7 +31,7 @@ CameraXCollie::CameraXCollie(const std::string& tag, uint32_t flag, uint32_t tim
     id_ = -1;
 #endif
     isCanceled_ = false;
-    MEDIA_INFO_LOG("start CameraXCollie, tag:%{public}s,timeout:%{public}u,flag:%{public}u,id:%{public}d",
+    MEDIA_DEBUG_LOG("start CameraXCollie, tag:%{public}s,timeout:%{public}u,flag:%{public}u,id:%{public}d",
         tag_.c_str(), timeoutSeconds, flag, id_);
 }
 
@@ -47,7 +47,7 @@ void CameraXCollie::CancelCameraXCollie()
         HiviewDFX::XCollie::GetInstance().CancelTimer(id_);
 #endif
         isCanceled_ = true;
-        MEDIA_INFO_LOG("cancel CameraXCollie, tag:%{public}s,id:%{public}d", tag_.c_str(), id_);
+        MEDIA_DEBUG_LOG("cancel CameraXCollie, tag:%{public}s,id:%{public}d", tag_.c_str(), id_);
     }
 }
 }

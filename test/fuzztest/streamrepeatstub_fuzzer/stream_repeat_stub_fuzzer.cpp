@@ -14,6 +14,7 @@
  */
 
 #include "stream_repeat_stub_fuzzer.h"
+#include "hstream_repeat.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
@@ -25,6 +26,10 @@ namespace OHOS {
 namespace CameraStandard {
 namespace StreamRepeatStubFuzzer {
 const int32_t LIMITSIZE = 2;
+const int32_t PHOTO_WIDTH = 1280;
+const int32_t PHOTO_HEIGHT = 960;
+const int32_t PHOTO_FORMAT = 2000;
+const RepeatStreamType REPEAT_STREAM_TYPE = RepeatStreamType::PREVIEW;
 
 bool g_hasPermission = false;
 HStreamRepeatStub *fuzz = nullptr;
@@ -50,9 +55,7 @@ void Test(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    if (fuzz == nullptr) {
-        fuzz = new HStreamRepeatStubMock();
-    }
+    CheckPermission();
     Test_OnRemoteRequest(rawData, size);
 }
 
@@ -60,16 +63,24 @@ void RunCase(MessageParcel &data, uint32_t code)
 {
     MessageParcel reply;
     MessageOption option;
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    if (photoSurface == nullptr) {
+        return;
+    }
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
+        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 {
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
     static const int32_t MAX_CODE = 20;
     for (int32_t i = 0; i < MAX_CODE; i++) {
+        MessageParcel data;
+        data.WriteInterfaceToken(u"IStreamRepeat");
+        data.WriteRawData(rawData, size);
+        data.RewindRead(0);
         RunCase(data, i);
     }
 }

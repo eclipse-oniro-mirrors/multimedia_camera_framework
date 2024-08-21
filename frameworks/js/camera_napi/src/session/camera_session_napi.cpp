@@ -1464,7 +1464,9 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_get_boolean(env, false, &result);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsVideoStabilizationModeSupported call Failed!");
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1523,7 +1525,8 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetVideoStabilizationMode call Failed!");
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         int retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -1578,7 +1581,9 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_get_boolean(env, false, &result);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFlashModeSupported call Failed!");
         FlashMode flashMode = (FlashMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
@@ -1609,7 +1614,8 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFlashMode call Failed!");
         FlashMode flashMode = (FlashMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
@@ -1665,7 +1671,9 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_get_boolean(env, false, &result);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsExposureModeSupported call Failed!");
         ExposureMode exposureMode = (ExposureMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1724,7 +1732,8 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureMode call Failed!");
         ExposureMode exposureMode = (ExposureMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
@@ -1879,7 +1888,8 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double exposureValue;
-        napi_get_value_double(env, argv[0], &exposureValue);
+        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &exposureValue);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureBias call Failed!");
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
@@ -1908,7 +1918,9 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_get_boolean(env, false, &result);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFocusModeSupported call Failed!");
         FocusMode focusMode = (FocusMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode,
@@ -2054,7 +2066,8 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFocusMode call Failed!");
         FocusMode focusMode = (FocusMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->
@@ -2154,7 +2167,8 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double zoomRatio;
-        napi_get_value_double(env, argv[PARAM0], &zoomRatio);
+        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &zoomRatio);
+        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetZoomRatio call Failed!");
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetZoomRatio((float)zoomRatio);
         cameraSessionNapi->cameraSession_->UnlockForControl();
@@ -2393,7 +2407,7 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetSupportedBeautyTypes is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetSupportedBeautyTypes is called");
@@ -2434,7 +2448,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetSupportedBeautyRange is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
@@ -2478,7 +2492,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetBeauty is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetBeauty is called");
@@ -2507,7 +2521,7 @@ napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi SetBeauty is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("SetBeauty is called");
@@ -2941,7 +2955,7 @@ napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info
     MEDIA_DEBUG_LOG("CanPreconfig is called");
     size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
-    int32_t profileSizeRatio = 0;
+    int32_t profileSizeRatio = ProfileSizeRatio::UNSPECIFIED;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
@@ -2968,7 +2982,7 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     MEDIA_DEBUG_LOG("Preconfig is called");
     size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
-    int32_t profileSizeRatio = 0;
+    int32_t profileSizeRatio = ProfileSizeRatio::UNSPECIFIED;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     if (argSize == ARGS_ONE) {
         CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
@@ -4024,6 +4038,13 @@ void CameraSessionNapi::RegisterFeatureDetectionStatusListener(
         featureDetectionStatusCallback_ = std::make_shared<FeatureDetectionStatusCallbackListener>(env);
         cameraSession_->SetFeatureDetectionStatusCallback(featureDetectionStatusCallback_);
     }
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(true);
+        cameraSession_->UnlockForControl();
+    }
+
     featureDetectionStatusCallback_->SaveCallbackReference(eventName + std::to_string(featureType), callback, isOnce);
 }
 
@@ -4051,6 +4072,13 @@ void CameraSessionNapi::UnregisterFeatureDetectionStatusListener(
     }
 
     featureDetectionStatusCallback_->RemoveCallbackRef(eventName + std::to_string(featureType), callback);
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST &&
+        !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 
 void CameraSessionNapi::RegisterSessionErrorCallbackListener(
@@ -4247,16 +4275,16 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "slowMotionStatus", {
         &CameraSessionNapi::RegisterSlowMotionStateCb,
         &CameraSessionNapi::UnregisterSlowMotionStateCb } },
-    { "exposureInfo", {
+    { "exposureInfoChange", {
         &CameraSessionNapi::RegisterExposureInfoCallbackListener,
         &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
-    { "isoInfo", {
+    { "isoInfoChange", {
         &CameraSessionNapi::RegisterIsoInfoCallbackListener,
         &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
-    { "apertureInfo", {
+    { "apertureInfoChange", {
         &CameraSessionNapi::RegisterApertureInfoCallbackListener,
         &CameraSessionNapi::UnregisterApertureInfoCallbackListener } },
-    { "luminationInfo", {
+    { "luminationInfoChange", {
         &CameraSessionNapi::RegisterLuminationInfoCallbackListener,
         &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
     { "abilityChange", {
@@ -4265,7 +4293,7 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "effectSuggestionChange", {
         &CameraSessionNapi::RegisterEffectSuggestionCallbackListener,
         &CameraSessionNapi::UnregisterEffectSuggestionCallbackListener } },
-    { "tryAEInfo", {
+    { "tryAEInfoChange", {
         &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
         &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
 };

@@ -91,54 +91,6 @@ std::vector<int32_t> CameraAbilityBuilder::GetData(
     return itd->second;
 }
 
-std::vector<FlashMode> CameraAbilityBuilder::GetValidFlashModes(const std::vector<int32_t>& data)
-{
-    std::vector<FlashMode> modes;
-    modes.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item));
-        if (it != g_metaFlashModeMap_.end()) {
-            modes.emplace_back(it->second);
-        }
-    }
-    return modes;
-}
-
-std::vector<ExposureMode> CameraAbilityBuilder::GetValidExposureModes(const std::vector<int32_t>& data)
-{
-    std::vector<ExposureMode> modes;
-    modes.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item));
-        if (it != g_metaExposureModeMap_.end()) {
-            modes.emplace_back(it->second);
-        }
-    }
-    return modes;
-}
-
-std::vector<FocusMode> CameraAbilityBuilder::GetValidFocusModes(const std::vector<int32_t>& data)
-{
-    std::vector<FocusMode> modes;
-    modes.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item));
-        if (it != g_metaFocusModeMap_.end()) {
-            modes.emplace_back(it->second);
-        }
-    }
-    return modes;
-}
-
-std::vector<float> CameraAbilityBuilder::GetValidExposureBiasRange(const std::vector<int32_t>& data)
-{
-    size_t validSize = 2;
-    if (data.size() != validSize || data[0] > data[1]) {
-        return {};
-    }
-    return { static_cast<float>(data[0]), static_cast<float>(data[1]) };
-}
-
 std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vector<int32_t>& data)
 {
     constexpr float factor = 100.0;
@@ -151,67 +103,6 @@ std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vecto
     return { minZoom, maxZoom };
 }
 
-std::vector<BeautyType> CameraAbilityBuilder::GetValidBeautyTypes(const std::vector<int32_t>& data)
-{
-    std::vector<BeautyType> types;
-    types.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaBeautyTypeMap_.find(static_cast<camera_beauty_type_t>(item));
-        if (it != g_metaBeautyTypeMap_.end()) {
-            types.emplace_back(it->second);
-        }
-    }
-    return types;
-}
-
-std::vector<int32_t> CameraAbilityBuilder::GetValidBeautyRange(BeautyType beautyType, const std::vector<int32_t>& data)
-{
-    std::vector<int32_t> range;
-    if (beautyType == BeautyType::SKIN_TONE) {
-        constexpr int32_t skinToneOff = -1;
-        range.push_back(skinToneOff);
-    }
-    range.insert(range.end(), data.begin(), data.end());
-    return range;
-}
-
-void CameraAbilityBuilder::ProcessBeautyAbilityTag(
-    sptr<CameraAbility> ability, uint32_t tagId, const std::vector<int32_t>& data)
-{
-    BeautyType beautyType;
-    auto it = g_metaBeautyAbilityMap_.find(static_cast<camera_device_metadata_tag_t>(tagId));
-    if (it != g_metaBeautyAbilityMap_.end()) {
-        beautyType = it->second;
-        ability->supportedBeautyRangeMap_[beautyType] = GetValidBeautyRange(beautyType, data);
-    }
-}
-
-std::vector<ColorEffect> CameraAbilityBuilder::GetValidColorEffects(const std::vector<int32_t>& data)
-{
-    std::vector<ColorEffect> colorEffects;
-    colorEffects.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item));
-        if (it != g_metaColorEffectMap_.end()) {
-            colorEffects.emplace_back(it->second);
-        }
-    }
-    return colorEffects;
-}
-
-std::vector<ColorSpace> CameraAbilityBuilder::GetValidColorSpaces(const std::vector<int32_t>& data)
-{
-    std::vector<ColorSpace> colorSpaces;
-    colorSpaces.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaColorSpaceMap_.find(static_cast<CM_ColorSpaceType>(item));
-        if (it != g_metaColorSpaceMap_.end()) {
-            colorSpaces.emplace_back(it->second);
-        }
-    }
-    return colorSpaces;
-}
-
 bool CameraAbilityBuilder::IsSupportMacro(const std::vector<int32_t>& data)
 {
     if (data.size() != 1) {
@@ -220,72 +111,17 @@ bool CameraAbilityBuilder::IsSupportMacro(const std::vector<int32_t>& data)
     return static_cast<camera_macro_supported_type_t>(data[0]) == OHOS_CAMERA_MACRO_SUPPORTED;
 }
 
-std::vector<VideoStabilizationMode> CameraAbilityBuilder::GetValidVideoStabilizationModes(
-    const std::vector<int32_t>& data)
-{
-    std::vector<VideoStabilizationMode> modes;
-    modes.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaVideoStabModesMap_.find(static_cast<CameraVideoStabilizationMode>(item));
-        if (it != g_metaVideoStabModesMap_.end()) {
-            modes.emplace_back(it->second);
-        }
-    }
-    return modes;
-}
-
-std::vector<PortraitEffect> CameraAbilityBuilder::GetValidPortraitEffects(const std::vector<int32_t>& data)
-{
-    std::vector<PortraitEffect> portraitEffects;
-    portraitEffects.reserve(data.size());
-    for (const auto& item : data) {
-        auto it = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item));
-        if (it != g_metaToFwPortraitEffect_.end()) {
-            portraitEffects.emplace_back(it->second);
-        }
-    }
-    return portraitEffects;
-}
-
 void CameraAbilityBuilder::SetModeSpecTagField(
     sptr<CameraAbility> ability, int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId, int32_t specId)
 {
     std::vector<int32_t> data = GetData(modeName, metadata, tagId, specId);
     switch (tagId) {
-        case OHOS_ABILITY_FLASH_MODES: {
-            ability->supportedFlashModes_ = GetValidFlashModes(data);
-            break;
-        }
-        case OHOS_ABILITY_EXPOSURE_MODES: {
-            ability->supportedExposureModes_ = GetValidExposureModes(data);
-            break;
-        }
-        case OHOS_ABILITY_AE_COMPENSATION_RANGE: {
-            ability->exposureBiasRange_ = GetValidExposureBiasRange(data);
-            break;
-        }
-        case OHOS_ABILITY_FOCUS_MODES: {
-            ability->supportedFocusModes_ = GetValidFocusModes(data);
-            break;
-        }
         case OHOS_ABILITY_SCENE_ZOOM_CAP: {
             ability->zoomRatioRange_ = GetValidZoomRatioRange(data);
             break;
         }
-        case OHOS_ABILITY_SUPPORTED_COLOR_MODES: {
-            ability->supportedColorEffects_ = GetValidColorEffects(data);
-            break;
-        }
-        case OHOS_ABILITY_AVAILABLE_COLOR_SPACES: {
-            ability->supportedColorSpaces_ = GetValidColorSpaces(data);
-            break;
-        }
         case OHOS_ABILITY_SCENE_MACRO_CAP: {
             ability->isMacroSupported_ = IsSupportMacro(data);
-            break;
-        }
-        case OHOS_ABILITY_VIDEO_STABILIZATION_MODES: {
-            ability->supportedVideoStabilizationMode_ = GetValidVideoStabilizationModes(data);
             break;
         }
         default:
@@ -299,9 +135,6 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
     ability->supportedExposureModes_ = session->GetSupportedExposureModes();
     ability->supportedFocusModes_ = session->GetSupportedFocusModes();
     ability->exposureBiasRange_ = session->GetExposureBiasRange();
-    if (!ability->zoomRatioRange_.has_value()) {
-        ability->zoomRatioRange_ = session->GetZoomRatioRange();
-    }
     ability->supportedBeautyTypes_ = session->GetSupportedBeautyTypes();
     for (auto it : g_fwkBeautyTypeMap_) {
         ability->supportedBeautyRangeMap_[it.first] = session->GetSupportedBeautyRange(it.first);
@@ -310,15 +143,9 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
     ability->supportedColorSpaces_ = session->GetSupportedColorSpaces();
     switch (modeName) {
         case SceneMode::CAPTURE: {
-            if (!ability->isMacroSupported_.has_value()) {
-                ability->isMacroSupported_ = session->IsMacroSupported();
-            }
             break;
         }
         case SceneMode::VIDEO: {
-            if (!ability->isMacroSupported_.has_value()) {
-                ability->isMacroSupported_ = session->IsMacroSupported();
-            }
             ability->supportedVideoStabilizationMode_ = session->GetSupportedStabilizationMode();
             break;
         }

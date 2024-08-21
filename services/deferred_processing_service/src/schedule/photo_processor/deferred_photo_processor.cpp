@@ -113,7 +113,7 @@ void DeferredPhotoProcessor::CancelProcessImage(const std::string& imageId)
 void DeferredPhotoProcessor::OnProcessDone(const int32_t userId, const std::string& imageId,
     std::shared_ptr<BufferInfo> bufferInfo)
 {
-    DP_INFO_LOG("entered");
+    DP_INFO_LOG("entered, userId: %{public}d, imageId: %{public}s.", userId, imageId.c_str());
     //如果已经非高优先级，且任务结果不是全质量的图，那么不用返回给上层了，等下次出全质量图再返回
     if (!(bufferInfo->IsHighQuality())) {
         DP_INFO_LOG("not high quality photo");

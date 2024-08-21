@@ -178,13 +178,13 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Exit");
 }
 
-int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings)
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
     CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+    CHECK_ERROR_RETURN_RET_LOG(!isUpdateSeetings && preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
         "HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
     // If current is sketch stream, check parent is start or not.
     if (repeatStreamType_ == RepeatStreamType::SKETCH) {
@@ -192,11 +192,12 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         CHECK_ERROR_RETURN_RET_LOG(parentRepeat == nullptr || parentRepeat->GetPreparedCaptureId() == CAPTURE_ID_UNSET,
             CAMERA_INVALID_STATE, "HStreamRepeat::Start sketch parent state is illegal");
     }
-
-    int32_t ret = PrepareCaptureId();
-    preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
-        "HStreamRepeat::Start Failed to allocate a captureId");
+    if (!isUpdateSeetings) {
+        int32_t ret = PrepareCaptureId();
+        preparedCaptureId = GetPreparedCaptureId();
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+            "HStreamRepeat::Start Failed to allocate a captureId");
+    }
     UpdateSketchStatus(SketchStatus::STARTING);
 
     std::vector<uint8_t> ability;
@@ -231,6 +232,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         const std::string permissionName = "ohos.permission.CAMERA";
         AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     }
+    int32_t ret = 0;
     {
         std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
         HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
@@ -264,7 +266,7 @@ int32_t HStreamRepeat::Stop()
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::Stop streamOperator is null");
     auto preparedCaptureId = GetPreparedCaptureId();
-    MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+    MEDIA_INFO_LOG("HStreamRepeat::Stop streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
                    "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId == CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
@@ -405,9 +407,8 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
     }
     rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetHdiStreamId(), bufferProducerSequenceable));
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
-    }
+    CHECK_ERROR_PRINT_LOG(rc != HDI::Camera::V1_0::NO_ERROR,
+        "HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
     std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
     if (startMovingPhotoCallback_) {
@@ -502,9 +503,8 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         } else {
             MEDIA_INFO_LOG("HStreamRepeat::SetFramRate stream The stream is not started. Save the parameters.");
         }
-        if (rc != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed with error Code:%{public}d", rc);
-        }
+        CHECK_ERROR_PRINT_LOG(rc != HDI::Camera::V1_0::NO_ERROR,
+            "HStreamRepeat::SetFrameRate Failed with error Code:%{public}d", rc);
     }
     return rc;
 }
@@ -522,9 +522,7 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     int32_t res;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        if (cameraAbility_ == nullptr) {
-            return;
-        }
+        CHECK_ERROR_RETURN(cameraAbility_ == nullptr);
         res = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(),
             OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     }
@@ -545,6 +543,7 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     } else {
         MEDIA_ERR_LOG("HStreamRepeat::SetMirrorForLivePhoto not supported mirror with mode:%{public}d", mode);
     }
+    Start(nullptr, true);
 }
 
 int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
@@ -594,18 +593,14 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
             return;
         }
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get sensor orientation failed");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+            "HStreamRepeat::SetStreamTransform get sensor orientation failed");
         sensorOrientation = item.data.i32[0];
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+            "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
     }
@@ -619,11 +614,8 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     if (enableStreamRotate_) {
         if (mOritation == -1) {
             auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-            if (producer_ == nullptr || display == nullptr) {
-                MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed,"
-                    "producer is null or GetDefaultDisplay failed");
-                return;
-            }
+            CHECK_ERROR_RETURN_LOG(producer_ == nullptr || display == nullptr,
+                "HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
             mOritation = static_cast<int>(display->GetRotation());
         }
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
@@ -697,9 +689,8 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
         }
         MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
     }
-    if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessVerticalCameraPosition failed %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
+        "HStreamRepeat::ProcessVerticalCameraPosition failed %{public}d", ret);
 }
 
 void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
@@ -750,9 +741,8 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_positi
             }
         }
     }
-    if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
+        "HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
 }
 
 int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
@@ -780,10 +770,7 @@ void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetad
     bool status = false;
     camera_metadata_item_t item;
     uint8_t dfxSwitch = true;
-    if (settings == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::OpenVideoDfxSwitch fail, setting is null!");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::OpenVideoDfxSwitch fail, setting is null!");
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = settings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &dfxSwitch, 1);
@@ -791,9 +778,7 @@ void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetad
     } else {
         status = true;
     }
-    if (!status) {
-        MEDIA_ERR_LOG("HStreamRepeat::OpenVideoDfxSwitch fail!");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::OpenVideoDfxSwitch fail!");
 }
 
 int32_t HStreamRepeat::EnableSecure(bool isEnabled)
@@ -817,9 +802,7 @@ void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMeta
         } else if (ret == CAM_META_SUCCESS) {
             status = settings->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
         }
-        if (!status) {
-            MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
-        }
+        CHECK_ERROR_PRINT_LOG(!status, "UpdateVideoSettings Failed to set mirroring in VideoSettings");
     }
 }
 
@@ -839,9 +822,7 @@ void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::Camera
             status = settings->updateEntry(
                 OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         }
-        if (!status) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
-        }
+        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
     }
 }
 

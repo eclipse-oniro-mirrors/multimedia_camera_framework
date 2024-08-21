@@ -27,9 +27,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
     DisableJeMalloc();
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING):
             errCode = Start();
@@ -79,58 +79,58 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
 int32_t HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
 
     auto callback = iface_cast<IStreamRepeatCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamRepeatStub HandleSetCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleSetCallback callback is null");
+
     return SetCallback(callback);
 }
 
 int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
-    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
 
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamRepeatStub HandleAddDeferredSurface producer is null");
-    int errCode = AddDeferredSurface(producer);
-    if (errCode != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatStub::HandleAddDeferredSurface add deferred surface failed : %{public}d", errCode);
-        return errCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleAddDeferredSurface producer is null");
 
-    return errCode;
+    int ret = AddDeferredSurface(producer);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+        "HStreamRepeatStub::HandleAddDeferredSurface add deferred surface failed : %{public}d", ret);
+
+    return ret;
 }
 
 int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
+
     sptr<IStreamRepeat> sketchStream = nullptr;
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
     float sketchRatio = data.ReadFloat();
-    int errCode = ForkSketchStreamRepeat(width, height, sketchStream, sketchRatio);
-    if (errCode != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatStub::HandleForkSketchStreamRepeat failed : %{public}d", errCode);
-        return errCode;
-    }
-    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(sketchStream->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+    int ret = ForkSketchStreamRepeat(width, height, sketchStream, sketchRatio);
+    CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
+        "HStreamRepeatStub::HandleForkSketchStreamRepeat failed : %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteRemoteObject(sketchStream->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HStreamRepeatStub HandleForkSketchStreamRepeat Write sketchStream obj failed");
-    return errCode;
+
+    return ret;
 }
 
 int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     float sketchRatio = data.ReadFloat();
     // SketchRatio value could be negative value
-    CHECK_AND_RETURN_RET_LOG(sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(sketchRatio > SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleUpdateSketchRatio sketchRatio value is illegal %{public}f", sketchRatio);
     return UpdateSketchRatio(sketchRatio);
 }
@@ -140,22 +140,18 @@ int32_t HStreamRepeatStub::HandleSetFrameRate(MessageParcel& data)
     int32_t minFrameRate = data.ReadInt32();
     int32_t maxFrameRate = data.ReadInt32();
  
-    int error = SetFrameRate(minFrameRate, maxFrameRate);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
-    }
-    return error;
+    int ret = SetFrameRate(minFrameRate, maxFrameRate);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", ret);
+    return ret;
 }
 
 int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
  
-    int error = SetMirror(isEnable);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
-    }
-    return error;
+    int ret = SetMirror(isEnable);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::HandleSetMirror failed : %{public}d", ret);
+    return ret;
 }
 
 int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)

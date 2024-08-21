@@ -14,6 +14,8 @@
  */
 
 #include "deferred_processing_stub_fuzzer.h"
+#include "buffer_info.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "access_token.h"
@@ -32,22 +34,6 @@ const int32_t LIMITSIZE = 2;
 const int USERID = 1;
 bool g_isDeferredProcessingPermission = false;
 DeferredPhotoProcessingSession *fuzz = nullptr;
-
-int32_t IDeferredPhotoProcessingSessionCallbackFuzz::OnProcessImageDone(
-    const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes)
-{
-    return 0;
-}
-
-int32_t IDeferredPhotoProcessingSessionCallbackFuzz::OnError(const std::string &imageId, const ErrorCode errorCode)
-{
-    return 0;
-}
-
-int32_t IDeferredPhotoProcessingSessionCallbackFuzz::OnStateChanged(const StatusCode status)
-{
-    return 0;
-}
 
 void DeferredProcessingFuzzTestGetPermission()
 {
@@ -96,9 +82,8 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+        "DeferredProcessingFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
@@ -118,6 +103,28 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
         }
     }
 }
+
+void TestBufferInfo(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    const int32_t MAX_BUFF_SIZE = 1024 * 1024;
+    int32_t dataSize = (data.ReadInt32() % MAX_BUFF_SIZE) + 1;
+    auto sharedBuffer = make_shared<SharedBuffer>(dataSize);
+    sharedBuffer->GetSize();
+    sharedBuffer->GetFd();
+    sharedBuffer->Initialize();
+    sharedBuffer->GetSize();
+    sharedBuffer->CopyFrom(rawData, size);
+    sharedBuffer->GetFd();
+    sharedBuffer->Reset();
+    bool isHighQuality = data.ReadBool();
+    BufferInfo info(sharedBuffer, dataSize, isHighQuality);
+    info.GetDataSize();
+    info.IsHighQuality();
+    info.GetIPCFileDescriptor();
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -126,6 +133,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::DeferredProcessingFuzzTest(data, size);
+    OHOS::CameraStandard::TestBufferInfo(data, size);
     return 0;
 }
 

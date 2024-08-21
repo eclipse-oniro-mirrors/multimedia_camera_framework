@@ -56,7 +56,7 @@ public:
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t Start() override;
-    int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings = false);
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
     int32_t OnFrameStarted();

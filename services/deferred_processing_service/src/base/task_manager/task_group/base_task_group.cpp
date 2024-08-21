@@ -69,6 +69,16 @@ bool BaseTaskGroup::SubmitTask(std::any param)
     return true;
 }
 
+void BaseTaskGroup::CancelAllTasks()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_DEBUG_LOG("Cancel all tasks for task group (%s), handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
+    que_.Clear();
+    if (serial_) {
+        inflight_ = false;
+    }
+}
+
 std::function<void()> BaseTaskGroup::GetTaskUnlocked()
 {
     if (que_.Empty()) {

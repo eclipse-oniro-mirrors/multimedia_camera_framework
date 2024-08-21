@@ -233,20 +233,14 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     camera_metadata_item_t item;
 
     ret = Camera::FindCameraMetadataItem(baseAbility_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get zoom ratio range with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom ratio range count: %{public}d", item.count);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get zoom ratio range with return code %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {},
+        "Failed to get zoom ratio range with return code %{public}d", ret);
     range = {item.data.f[minIndex], item.data.f[maxIndex]};
 
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG("Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
     MEDIA_DEBUG_LOG("Zoom range min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
 
     zoomRatioRange_ = range;

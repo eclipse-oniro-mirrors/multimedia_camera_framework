@@ -153,12 +153,15 @@ public:
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
     void RemoveDrainImageManager(sptr<SessionDrainImageCallback> drainImageCallback);
     void StopDrainOut();
-    void ClearCache();
+    void ClearCache(uint64_t timestamp);
+    void SetClearFlag();
 
 private:
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
+    std::atomic<bool> isNeededClear_ { false };
+    int64_t shutterTime_;
 };
 
 class SessionDrainImageCallback : public DrainImageCallback {
@@ -228,6 +231,7 @@ public:
     int32_t SetFeatureMode(int32_t featureMode) override;
     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) override;
     void StartRecord(uint64_t timestamp, int32_t rotation);
+    void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
@@ -237,6 +241,7 @@ public:
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     string lastDisplayName_ = "";
+    string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
     volatile bool isMovingPhotoMirror_ = false;
     volatile bool isSetMotionPhoto_ = false;
@@ -254,8 +259,10 @@ private:
         return cameraDevice_;
     }
     string CreateDisplayName();
+    string CreateBurstDisplayName(int32_t seqId);
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
+    int32_t ValidateSession();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
     int32_t LinkInputAndOutputs();
@@ -284,9 +291,10 @@ private:
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
     int32_t GetSensorOritation();
-
     std::string GetSessionState();
 
+    void DynamicConfigStream();
+    bool IsNeedDynamicConfig();
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
@@ -306,6 +314,7 @@ private:
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
     bool enableStreamRotate_ = false;
+    bool isDynamicConfiged_ = false;
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
     sptr<MovingPhotoListener> livephotoListener_;

@@ -53,12 +53,7 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
         if (HCameraDeviceManager::cameraDeviceManager_ == nullptr) {
             MEDIA_INFO_LOG("Initializing camera device manager instance");
             HCameraDeviceManager::cameraDeviceManager_ = new HCameraDeviceManager();
-            MEDIA_INFO_LOG("RegisterWindowManagerAgent start");
-            int32_t windowRet = CameraWindowManagerClient::GetInstance()->RegisterWindowManagerAgent();
-            if (windowRet != 0) {
-                MEDIA_INFO_LOG("RegisterWindowManagerAgent faild");
-            }
-            MEDIA_INFO_LOG("RegisterWindowManagerAgent end");
+            CameraWindowManagerClient::GetInstance();
         }
     }
     return HCameraDeviceManager::cameraDeviceManager_;
@@ -159,10 +154,7 @@ SafeMap<std::string, int32_t> &HCameraDeviceManager::GetCameraStateOfASide()
 
 void HCameraDeviceManager::SetPeerCallback(sptr<ICameraBroker>& callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraDeviceManager::SetPeerCallback failed to set peer callback");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "HCameraDeviceManager::SetPeerCallback failed to set peer callback");
     std::lock_guard<std::mutex> lock(peerCbMutex_);
     peerCallback_ = callback;
 }
@@ -183,10 +175,8 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     MEDIA_INFO_LOG("GetConflictDevices get active: %{public}d, openRequestPid:%{public}d, openRequestUid:%{public}d",
         pidOfActiveClient, pidOfOpenRequest, uidOfOpenRequest);
     if (stateOfACamera_.Size() != 0) {
-        if (pidOfActiveClient != -1) {
-            MEDIA_ERR_LOG("HCameraDeviceManager::GetConflictDevices rgm and OH camera is turning on in the same time");
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(pidOfActiveClient != -1, false,
+            "HCameraDeviceManager::GetConflictDevices rgm and OH camera is turning on in the same time");
         return IsAllowOpen(pidOfOpenRequest);
     } else {
         MEDIA_INFO_LOG("HCameraDeviceManager::GetConflictDevices no rgm camera active");
@@ -381,20 +371,14 @@ std::string HCameraDeviceManager::GetACameraId()
 bool HCameraDeviceManager::IsAllowOpen(pid_t pidOfOpenRequest)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::isAllowOpen has a client open in A proxy");
-    if (pidOfOpenRequest != -1) {
+    CHECK_ERROR_RETURN_RET_LOG(pidOfOpenRequest == -1, false,
+        "HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
         std::string cameraId = GetACameraId();
-        if (peerCallback_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen falied to close peer device");
-            return false;
-        } else {
+    CHECK_ERROR_RETURN_RET_LOG(peerCallback_ == nullptr, false,
+        "HCameraDeviceManager::isAllowOpen falied to close peer device");
             peerCallback_->NotifyCloseCamera(cameraId);
             MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
-        }
         return true;
-    } else {
-        MEDIA_ERR_LOG("HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
-        return false;
-    }
 }
 
 void HCameraDeviceManager::UpdateProcessState(int32_t& activeState, int32_t& requestState,
@@ -407,21 +391,17 @@ void HCameraDeviceManager::UpdateProcessState(int32_t& activeState, int32_t& req
             static_cast<CameraWindowManagerAgent*>(winMgrAgent.GetRefPtr())->GetAccessTokenId();
         MEDIA_DEBUG_LOG("current pip window accessTokenId is: %{public}d", accessTokenIdInPip);
     }
-    auto it = APP_MGR_STATE_TO_CAMERA_STATE.find(activeState);
-    if (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) {
-        activeState = it->second;
-    } else {
-        activeState = UNKNOW_STATE_OF_PROCESS;
-    }
-    
-    it = APP_MGR_STATE_TO_CAMERA_STATE.find(requestState);
-    if (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) {
-        requestState = it->second;
-    } else {
-        requestState = UNKNOW_STATE_OF_PROCESS;
-    }
-    activeState = activeAccessTokenId == accessTokenIdInPip ? PIP_STATE_OF_PROCESS : activeState;
-    requestState = requestAccessTokenId == accessTokenIdInPip ? PIP_STATE_OF_PROCESS : requestState;
+
+    auto updateState = [accessTokenIdInPip](int32_t& state, uint32_t accessTokenId) {
+        auto it = APP_MGR_STATE_TO_CAMERA_STATE.find(state);
+        state = (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) ? it->second : UNKNOW_STATE_OF_PROCESS;
+        if (accessTokenId == accessTokenIdInPip) {
+            state = PIP_STATE_OF_PROCESS;
+        }
+    };
+
+    updateState(activeState, activeAccessTokenId);
+    updateState(requestState, requestAccessTokenId);
 }
 
 void HCameraDeviceManager::PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder,

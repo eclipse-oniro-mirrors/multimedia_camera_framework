@@ -84,12 +84,9 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
         MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting success to find OHOS_CONTROL_LIGHT_PAINTING_TYPE");
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, count);
     }
-    if (status) {
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+        "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
         currentLightPaintingType_ = type;
-    } else {
-        MEDIA_ERR_LOG("LightPaintingSession::SetLightPainting Failed to set LightPainting type");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
     return CameraErrorCode::SUCCESS;
 }
  
@@ -115,10 +112,8 @@ int32_t LightPaintingSession::TriggerLighting()
         MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting success to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("LightPaintingSession::TriggerLighting Failed to trigger lighting");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+        "LightPaintingSession::TriggerLighting Failed to trigger lighting");
     return CameraErrorCode::SUCCESS;
 }
 } // CameraStandard

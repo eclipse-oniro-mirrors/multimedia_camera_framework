@@ -14,6 +14,7 @@
  */
 
 #include "stream_metadata_stub_fuzzer.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "hstream_metadata.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -91,9 +92,7 @@ void Test(uint8_t *rawData, size_t size)
 
     if (fuzz == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        if (photoSurface == nullptr) {
-            return;
-        }
+        CHECK_AND_RETURN_LOG(photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         fuzz = new HStreamMetadata(producer, PHOTO_FORMAT);
     }
@@ -106,9 +105,8 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteInterfaceToken(fuzz->GetDescriptor());
     auto metadata = MakeMetadata(rawData, size);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data),
+        "StreamMetadataStubFuzzer: EncodeCameraMetadata Error");
     uint32_t code;
     MessageParcel reply;
     MessageOption option;

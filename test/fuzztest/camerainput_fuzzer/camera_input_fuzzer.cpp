@@ -15,6 +15,7 @@
 
 #include "camera_input_fuzzer.h"
 #include "camera_input.h"
+#include "camera_log.h"
 #include "input/camera_device.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
@@ -34,18 +35,23 @@ bool g_isCameraDevicePermission = false;
 
 void GetPermission()
 {
-    if (!g_isCameraDevicePermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        g_isCameraDevicePermission = true;
-    }
+    uint64_t tokenId;
+    const char* perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 void Test(uint8_t *rawData, size_t size)
@@ -55,28 +61,21 @@ void Test(uint8_t *rawData, size_t size)
     }
     GetPermission();
     auto manager = CameraManager::GetInstance();
-    if (manager == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(manager, "CameraInputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    if (cameras.size() < CAM_NUM) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(cameras.size() >= CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    auto camera = cameras[data.ReadUint32() % CAM_NUM];
-    if (camera == nullptr) {
-        return;
-    }
+    auto camera = cameras[data.ReadUint32() % cameras.size()];
+    CHECK_AND_RETURN_LOG(camera, "CameraInputFuzzer: Camera is null Error");
     auto input = manager->CreateCameraInput(camera);
-    if (input == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(input, "CameraInputFuzzer: CreateCameraInput Error");
     TestInput(input, rawData, size);
 }
 
 void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
 {
+    MEDIA_INFO_LOG("CameraInputFuzzer: ENTER");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     input->Open();
@@ -96,8 +95,8 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->GetMetaSetting(data.ReadUint32());
     std::vector<vendorTag_t> infos;
     input->GetCameraAllVendorTags(infos);
-    input->Close();
     input->Release();
+    input->Close();
     uint64_t secureSeqId;
     data.RewindRead(0);
     input->Open(data.ReadBool(), &secureSeqId);

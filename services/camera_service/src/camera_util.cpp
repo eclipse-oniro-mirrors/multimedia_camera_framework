@@ -271,22 +271,14 @@ void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
         return;
     }
     auto srcHeader = cameraSettings->get();
-    if (srcHeader == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(srcHeader == nullptr);
     auto srcItemCount = srcHeader->item_count;
     camera_metadata_item_t item;
     for (uint32_t index = 0; index < srcItemCount; index++) {
         int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &item);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS, "Failed to get metadata item at index: %{public}d", index);
         const char *name = OHOS::Camera::GetCameraMetadataItemName(item.item);
-        if (name == nullptr) {
-            MEDIA_DEBUG_LOG("U8ItemToString: get u8 item name fail!");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(name == nullptr, "U8ItemToString: get u8 item name fail!");
         if (item.data_type == META_TYPE_BYTE) {
             for (size_t k = 0; k < item.count; k++) {
                 MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint8_t)(item.data.u8[k]));
@@ -321,70 +313,19 @@ std::string GetClientBundle(int uid)
 {
     std::string bundleName = "";
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Get ability manager failed");
-        return bundleName;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
 
     sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if (object == nullptr) {
-        MEDIA_DEBUG_LOG("object is NULL.");
-        return bundleName;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, bundleName, "GetClientBundle object is NULL.");
 
     sptr<OHOS::AppExecFwk::IBundleMgr> bms = iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
-    if (bms == nullptr) {
-        MEDIA_DEBUG_LOG("bundle manager service is NULL.");
-        return bundleName;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
 
     auto result = bms->GetNameForUid(uid, bundleName);
-    if (result != ERR_OK) {
-        MEDIA_ERR_LOG("GetBundleNameForUid fail");
-        return "";
-    }
+    CHECK_ERROR_RETURN_RET_LOG(result != ERR_OK, "", "GetClientBundle GetBundleNameForUid fail");
     MEDIA_INFO_LOG("bundle name is %{public}s ", bundleName.c_str());
 
     return bundleName;
-}
-
-bool IsValidSize(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
-{
-    bool isExtendConfig = false;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
-    if (ret == CAM_META_SUCCESS && item.count != 0) {
-        isExtendConfig = true;
-    } else {
-        ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-        if (ret != CAM_META_SUCCESS || item.count == 0) {
-            MEDIA_ERR_LOG("Failed to find stream basic configuration in camera ability with return code %{public}d",
-                          ret);
-            return false;
-        }
-    }
-    MEDIA_INFO_LOG("Success to find stream configuration isExtendConfig = %{public}d", isExtendConfig);
-    uint32_t param2 = 2;
-    for (uint32_t index = 0; index < item.count; index++) {
-        if (item.data.i32[index] == format) {
-            if (((index + 1) < item.count) && ((index + param2) < item.count) &&
-                item.data.i32[index + 1] == width && item.data.i32[index + param2] == height) {
-                MEDIA_INFO_LOG("Format:%{public}d, width:%{public}d, height:%{public}d found in supported streams",
-                               format, width, height);
-                return true;
-            } else {
-                continue;
-            }
-        } else {
-            continue;
-        }
-    }
-    MEDIA_ERR_LOG("Format:%{public}d, width:%{public}d, height:%{public}d not found in supported streams",
-                  format, width, height);
-    return false;
 }
 
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared)
@@ -470,10 +411,8 @@ bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-    if (display == nullptr) {
-        MEDIA_ERR_LOG("IsVerticalDevice GetDefaultDisplay failed");
-        return isVerticalDevice;
-    }
+
+    CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
     MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
                    display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||

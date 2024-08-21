@@ -340,7 +340,7 @@ void CameraAbilityParseUtil::GetConflictConfigInfo(
         for (uint32_t m = 0; m < tagInfoCount; ++m) {
             auto &tagInfo = configInfo.tagInfos[m];
             tagInfo.first = static_cast<uint32_t>(originInfo[i++]);
-            tagInfo.second = originInfo[i++];
+            tagInfo.second = static_cast<uint32_t>(originInfo[i++]);
         }
     }
 }

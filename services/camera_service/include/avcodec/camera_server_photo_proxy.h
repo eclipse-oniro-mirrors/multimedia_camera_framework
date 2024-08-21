@@ -27,9 +27,12 @@ using namespace Media;
 static const std::string prefix = "IMG_";
 static const std::string suffix = "jpg";
 static const std::string connector = "_";
+static const std::string burstTag = "BURST";
+static const std::string coverTag = "_COVER";
 static const char placeholder = '0';
 static const int yearWidth = 4;
 static const int otherWidth = 2;
+static const int burstWidth = 3;
 static const int startYear = 1900;
 
 static const std::map<int32_t, int32_t> modeMap = {

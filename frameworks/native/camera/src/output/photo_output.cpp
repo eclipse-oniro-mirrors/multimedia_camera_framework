@@ -76,9 +76,7 @@ void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLe
         status = captureMetadataSetting_->updateEntry(OHOS_JPEG_QUALITY, &quality, 1);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("PhotoCaptureSetting::SetQuality Failed to set Quality");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetQuality Failed to set Quality");
 }
 
 PhotoCaptureSetting::RotationConfig PhotoCaptureSetting::GetRotation()
@@ -107,9 +105,7 @@ void PhotoCaptureSetting::SetRotation(PhotoCaptureSetting::RotationConfig rotati
         status = captureMetadataSetting_->updateEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("PhotoCaptureSetting::SetRotation Failed to set Rotation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetRotation Failed to set Rotation");
     return;
 }
 
@@ -142,9 +138,7 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
             OHOS_JPEG_GPS_COORDINATES, gpsCoordinates, sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("PhotoCaptureSetting::SetLocation Failed to set GPS co-ordinates");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetLocation Failed to set GPS co-ordinates");
 }
 
 void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
@@ -170,9 +164,7 @@ void PhotoCaptureSetting::SetMirror(bool enable)
         status = captureMetadataSetting_->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
     return;
 }
 
@@ -225,10 +217,8 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     switch (session->GetMode()) {
         case SceneMode::HIGH_RES_PHOTO: {
             auto inputDevice = session->GetInputDevice();
-            if (inputDevice == nullptr) {
-                MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
-                return CAMERA_OK;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CAMERA_OK,
+                "HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
             std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
             camera_metadata_item_t meta;
@@ -340,7 +330,7 @@ PhotoOutput::~PhotoOutput()
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
 {
-    MEDIA_INFO_LOG("Enter Into SetNativeSurface: %{public}d", isNativeSurface);
+    MEDIA_INFO_LOG("Enter Into SetNativeSurface %{public}d", isNativeSurface);
     isNativeSurface_ = isNativeSurface;
 }
 

@@ -54,6 +54,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
     modeName_ = 0;
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
+    burstNum_ = 0;
 }
 
 HStreamCapture::~HStreamCapture()
@@ -171,13 +172,13 @@ void HStreamCapture::ResetBurstKey(int32_t captureId)
         burstNumMap_.erase(captureId) > 0) {
         MEDIA_INFO_LOG("HStreamCapture::ResetBurstKey captureId:%{public}d", captureId);
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::OnFrameShutterEnd captureId not found");
+        MEDIA_DEBUG_LOG("HStreamCapture::ResetBurstKey captureId not found");
     }
 }
 
 std::string HStreamCapture::GetBurstKey(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::GetBurstKey captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::GetBurstKey captureId:%{public}d", captureId);
     std::string burstKey = BURST_UUID_UNSET;
     auto iter = burstkeyMap_.find(captureId);
     if (iter != burstkeyMap_.end()) {
@@ -191,16 +192,26 @@ std::string HStreamCapture::GetBurstKey(int32_t captureId) const
 
 bool HStreamCapture::IsBurstCapture(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::captureId:%{public}d", captureId);
     auto iter = burstkeyMap_.find(captureId);
     return iter != burstkeyMap_.end();
 }
 
 bool HStreamCapture::IsBurstCover(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::IsBurstCover for captureId: %d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::IsBurstCover for captureId: %d", captureId);
     auto iter = burstImagesMap_.find(captureId);
     return (iter != burstImagesMap_.end()) ? (iter->second.size() == 1) : false;
+}
+
+int32_t HStreamCapture::GetCurBurstSeq(int32_t captureId) const
+{
+    MEDIA_DEBUG_LOG("HStreamCapture::GetCurBurstSeq for captureId: %d", captureId);
+    auto iter = burstImagesMap_.find(captureId);
+    if (iter != burstImagesMap_.end()) {
+        return iter->second.size();
+    }
+    return -1;
 }
 
 void HStreamCapture::SetBurstImages(int32_t captureId, std::string imageId)
@@ -214,7 +225,6 @@ void HStreamCapture::SetBurstImages(int32_t captureId, std::string imageId)
     } else {
         MEDIA_ERR_LOG("HStreamCapture::SetBurstImages error");
     }
-    CheckResetBurstKey(captureId);
 }
 
 void HStreamCapture::CheckResetBurstKey(int32_t captureId)
@@ -262,7 +272,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     CHECK_ERROR_RETURN_RET_LOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
         "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();
@@ -274,6 +284,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
+
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
@@ -423,9 +434,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (result != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     }
-    if (!status) {
-        MEDIA_ERR_LOG("set rotation Failed to set Rotation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
 }
 
 int32_t HStreamCapture::CancelCapture()
@@ -452,7 +461,7 @@ int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     int32_t ret = 0;
 
     // end burst capture
@@ -464,7 +473,9 @@ int32_t HStreamCapture::ConfirmCapture()
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
-        CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HStreamCapture::ConfirmCapture end burst faild!");
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture end burst faild!");
+        }
         return ret;
     }
     

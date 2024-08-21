@@ -96,9 +96,7 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
     this->UnlockForControl();
 }
 

@@ -36,6 +36,7 @@ public:
     const std::string& GetName() final;
     TaskGroupHandle GetHandle() final;
     bool SubmitTask(std::any param) override;
+    void CancelAllTasks() override;
 
 protected:
     virtual void Initialize();

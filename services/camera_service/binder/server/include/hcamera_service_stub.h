@@ -62,6 +62,7 @@ private:
     int HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply);
     int HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply);
     int HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply);
+    int HandleGetCameraOutputStatus(MessageParcel& data, MessageParcel& reply);
     int DestroyStubObj() override;
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
@@ -72,8 +73,6 @@ private:
     virtual int32_t CloseCameraForDestory(pid_t pid);
 
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
-
-    typedef int (HCameraServiceStub::* HandlerFunc)(MessageParcel&, MessageParcel&);
 };
 } // namespace CameraStandard
 } // namespace OHOS

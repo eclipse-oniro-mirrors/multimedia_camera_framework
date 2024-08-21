@@ -146,9 +146,6 @@ int32_t GetVersionId(uint32_t major, uint32_t minor);
 
 bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
 
-bool IsValidSize(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
-
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
 
 std::string GetClientBundle(int uid);
@@ -164,8 +161,6 @@ EXPORT_API bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, 
 EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
-
-bool IsVerticalDevice();
 
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
     std::string& deviceClass);
@@ -215,6 +210,7 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
     stringStream << "]";
     return stringStream.str();
 }
+bool IsVerticalDevice();
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H
