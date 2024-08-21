@@ -57,21 +57,23 @@ public:
     void SubmitTask(function<void()> task);
     void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy);
     void Stop();
-    unique_ptr<TaskManager>& GetTaskManager();
-    unique_ptr<TaskManager>& GetEncoderManager();
+    void ClearTaskResource();
+    shared_ptr<TaskManager>& GetTaskManager();
+    shared_ptr<TaskManager>& GetEncoderManager();
 
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
-    unique_ptr<TaskManager> taskManager_ = nullptr;
-    unique_ptr<TaskManager> videoEncoderManager_ = nullptr;
+    shared_ptr<TaskManager> taskManager_ = nullptr;
+    shared_ptr<TaskManager> videoEncoderManager_ = nullptr;
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
     condition_variable cvEmpty_;
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
+    std::atomic<bool> isActive_ { true };
     queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
 };
 } // CameraStandard
