@@ -30,6 +30,7 @@
 #include "camera_util.h"
 #include "capture_output.h"
 #include "capture_scene_const.h"
+#include "camera_security_utils.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
