@@ -330,8 +330,8 @@ public:
 
     static napi_value GetCameraOutputCapabilities(napi_env env, napi_callback_info info);
 
-    static napi_value GetSessionAbilities(napi_env env, napi_callback_info info);
-    static napi_value GetSessionConflictAbilities(napi_env env, napi_callback_info info);
+    static napi_value GetSessionFunctions(napi_env env, napi_callback_info info);
+    static napi_value GetSessionConflictFunctions(napi_env env, napi_callback_info info);
     static napi_value CreateAbilitiesJSArray(
         napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict);
     const EmitterFunctions& GetEmitterFunctions() override;

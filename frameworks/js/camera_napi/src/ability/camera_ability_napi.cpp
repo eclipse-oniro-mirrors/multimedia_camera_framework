@@ -79,6 +79,14 @@ const std::vector<napi_property_descriptor> CameraAbilityNapi::stabilization_que
     DECLARE_NAPI_FUNCTION("isVideoStabilizationModeSupported", CameraAbilityNapi::IsVideoStabilizationModeSupported)
 };
 
+const std::vector<napi_property_descriptor> CameraAbilityNapi::manual_exposure_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedExposureRange", CameraAbilityNapi::GetSupportedExposureRange),
+};
+
+const std::vector<napi_property_descriptor> CameraAbilityNapi::features_props = {
+    DECLARE_NAPI_FUNCTION("isSceneFeatureSupported", CameraAbilityNapi::IsFeatureSupported),
+};
+
 napi_value CameraAbilityNapi::Init(napi_env env, napi_value exports)
 {
     MEDIA_DEBUG_LOG("Init is called");
@@ -404,6 +412,35 @@ napi_value CameraAbilityNapi::IsVideoStabilizationModeSupported(napi_env env, na
     });
 }
 
+napi_value CameraAbilityNapi::GetSupportedExposureRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedExposureRange is called");
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return CameraAbilityProcessor<CameraAbilityNapi>::HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->GetSupportedExposureRange();
+    });
+}
+
+napi_value CameraAbilityNapi::IsFeatureSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsFeatureSupported is called");
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return CameraAbilityProcessor<CameraAbilityNapi>::HandleQuery(env, info, thisVar, [env, argv](auto ability) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        SceneFeature sceneFeature = (SceneFeature)value;
+        return ability->IsFeatureSupported(sceneFeature);
+    });
+}
+
 napi_value PhotoAbilityNapi::CreatePhotoAbility(napi_env env, sptr<CameraAbility> photoAbility)
 {
     MEDIA_DEBUG_LOG("CreatePhotoAbility is called");
@@ -454,7 +491,7 @@ napi_value PhotoAbilityNapi::Init(napi_env env, napi_value exports)
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { flash_query_props, auto_exposure_query_props,
         focus_query_props, zoom_query_props, beauty_query_props, color_effect_query_props, color_management_query_props,
-        macro_query_props };
+        macro_query_props, manual_exposure_props, features_props };
     std::vector<napi_property_descriptor> photo_ability_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
 
     status = napi_define_class(env, PHOTO_ABILITY_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -556,7 +593,7 @@ napi_value PortraitPhotoAbilityNapi::Init(napi_env env, napi_value exports)
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { flash_query_props, auto_exposure_query_props,
         focus_query_props, zoom_query_props, beauty_query_props, color_effect_query_props, color_management_query_props,
-        portrait_query_props, aperture_query_props };
+        portrait_query_props, aperture_query_props, features_props };
     auto portrait_photo_ability_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
 
     status = napi_define_class(env, PORTRAIT_PHOTO_ABILITY_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -648,7 +685,7 @@ napi_value VideoAbilityNapi::Init(napi_env env, napi_value exports)
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { flash_query_props, auto_exposure_query_props,
         focus_query_props, zoom_query_props, stabilization_query_props, beauty_query_props, color_effect_query_props,
-        color_management_query_props, macro_query_props };
+        color_management_query_props, macro_query_props, manual_exposure_props, features_props };
     std::vector<napi_property_descriptor> video_ability_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
 
     status = napi_define_class(env, VIDEO_ABILITY_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

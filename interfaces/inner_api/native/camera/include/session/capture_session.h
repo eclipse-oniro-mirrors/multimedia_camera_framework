@@ -1252,22 +1252,22 @@ public:
     std::shared_ptr<ARCallback> GetARCallback();
 
     /**
-     * @brief Get Session Abilities.
+     * @brief Get Session Functions.
      *
      * @param previewProfiles to be searched.
      * @param photoProfiles to be searched.
      * @param videoProfiles to be searched.
      */
-    std::vector<sptr<CameraAbility>> GetSessionAbilities(std::vector<Profile>& previewProfiles,
+    std::vector<sptr<CameraAbility>> GetSessionFunctions(std::vector<Profile>& previewProfiles,
                                                          std::vector<Profile>& photoProfiles,
                                                          std::vector<VideoProfile>& videoProfiles,
                                                          bool isForApp = true);
 
     /**
-     * @brief Get Session Conflict Abilities.
+     * @brief Get Session Conflict Functions.
      *
      */
-    std::vector<sptr<CameraAbility>> GetSessionConflictAbilities();
+    std::vector<sptr<CameraAbility>> GetSessionConflictFunctions();
 
     /**
      * @brief Get CameraOutput Capabilities.

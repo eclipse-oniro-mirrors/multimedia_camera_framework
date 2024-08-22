@@ -1842,84 +1842,178 @@ class CameraService {
     if (this.cameraMode === CameraMode.PORTRAIT) {
       Logger.info(TAG_AB, `portraitSession ability`);
       let session: camera.PortraitPhotoSession = this.getSession();
-      this.logPortraitSessionAbilities(session);
+      this.logPortraitSession(session);
     } else if (this.cameraMode === CameraMode.VIDEO) {
       Logger.info(TAG_AB, `videoSession ability`);
       let session: camera.VideoSession = this.getSession();
-      this.logVideoSessionAbilities(session);
+      this.logVideoSession(session);
     } else if (this.cameraMode === CameraMode.NORMAL) {
       Logger.info(TAG_AB, `photoSession ability`);
       let session: camera.PhotoSession = this.getSession();
-      this.logPhotoSessionAbilities(session);
+      this.logPhotoSession(session);
     } else {
       Logger.info(TAG, `not support ability`);
     }
   }
   
-  logPortraitSessionAbilities(session: camera.PortraitPhotoSession): void {
-    let list: Array<camera.PortraitPhotoConflictAbility> = session.getSessionConflictAbilities();
-    list.forEach((conflictAbility) => {
-      this.logConflictAbility(conflictAbility);
+  logPortraitSession(session: camera.PortraitPhotoSession): void {
+    let list: Array<camera.PortraitPhotoConflictFunctions> = session.getSessionConflictFunctions();
+    list.forEach((conflictFunctions) => {
+      this.logPortraitPhotoConflictFunctions(conflictFunctions);
     });
     let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
-      let abilities: Array<camera.PortraitPhotoAbility> = session.getSessionAbilities(coc);
-      abilities.forEach((ability) => {
-        this.logPortraitPhotoAbility(ability);
+      let functionsList: Array<camera.PortraitPhotoFunctions> = session.getSessionFunctions(coc);
+      functionsList.forEach((functions) => {
+        this.logPortraitPhotoFunctions(functions);
       });
     }
   }
   
-  logVideoSessionAbilities(session: camera.VideoSession): void {
-    let list: Array<camera.VideoConflictAbility> = session.getSessionConflictAbilities();
-    list.forEach((conflictAbility) => {
-      let zoomRatioRange: Array<number> = conflictAbility.getZoomRatioRange();
-      Logger.info(TAG_AB, `VideoConflictAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-      let isMacroSupported: bool = conflictAbility.isMacroSupported();
-      Logger.info(TAG_AB, `VideoConflictAbility isMacroSupported:${isMacroSupported}`);
+  logVideoSession(session: camera.VideoSession): void {
+    let list: Array<camera.PortraitPhotoFunctions> = session.getSessionConflictFunctions();
+    list.forEach((conflictFunctions) => {
+      let zoomRatioRange: Array<number> = conflictFunctions.getZoomRatioRange();
+      Logger.info(TAG_AB, `VideoConflictFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+      let isMacroSupported: bool = conflictFunctions.isMacroSupported();
+      Logger.info(TAG_AB, `VideoConflictFunctions isMacroSupported:${isMacroSupported}`);
     });
     let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
-      let abilities: Array<camera.VideoAbility> = session.getSessionAbilities(coc);
-      abilities.forEach((ability) => {
-        this.logVideoAbility(ability);
+      let functionsList: Array<camera.VideoFunctions> = session.getSessionFunctions(coc);
+      functionsList.forEach((functions) => {
+        this.logVideoFunctions(functions);
       });
     }
   }
   
-  logPhotoSessionAbilities(session: camera.PhotoSession): void {
-    let list: Array<camera.PhotoConflictAbility> = session.getSessionConflictAbilities();
-    list.forEach((conflictAbility) => {
-      let zoomRatioRange: Array<number> = conflictAbility.getZoomRatioRange();
-      Logger.info(TAG_AB, `PhotoConflictAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-      let isMacroSupported: bool = conflictAbility.isMacroSupported();
-      Logger.info(TAG_AB, `PhotoConflictAbility isMacroSupported:${isMacroSupported}`);
+  logPhotoSession(session: camera.PhotoSession): void {
+    let list: Array<camera.PhotoConflictFunctions> = session.getSessionConflictFunctions();
+    list.forEach((conflictFunctions) => {
+      let zoomRatioRange: Array<number> = conflictFunctions.getZoomRatioRange();
+      Logger.info(TAG_AB, `PhotoConflictFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+      let isMacroSupported: bool = conflictFunctions.isMacroSupported();
+      Logger.info(TAG_AB, `PhotoConflictFunctions isMacroSupported:${isMacroSupported}`);
     });
     let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
-      let abilities: Array<camera.PhotoAbility> = session.getSessionAbilities(coc);
-      abilities.forEach((ability) => {
-        this.logPhotoAbility(ability);
+      let functionsList: Array<camera.PhotoFunctions> = session.getSessionFunctions(coc);
+      functionsList.forEach((functions) => {
+        this.logPhotoFunctions(functions);
       });
     }
   }
   
-  logConflictAbility(conflictAbility: camera.PortraitPhotoConflictAbility): void {
-    let zoomRatioRange: Array<number> = conflictAbility.getZoomRatioRange();
-    Logger.info(TAG_AB, `PortraitPhotoConflictAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-    let portraitEffectsList: Array<camera.PortraitEffect> = conflictAbility.getSupportedPortraitEffects();
-    Logger.info(TAG_AB, `PortraitPhotoConflictAbility getSupportedPortraitEffects:${portraitEffectsList[0]},${portraitEffectsList[1]}`);
-    let virtualAperturesList: Array<number> = conflictAbility.getSupportedVirtualApertures();
-    Logger.info(TAG_AB, `PortraitPhotoConflictAbility getSupportedVirtualApertures:${virtualAperturesList[0]},${virtualAperturesList[1]}`);
-    let physicalAperturesList: Array<camera.PhysicalAperture> = conflictAbility.getSupportedPhysicalApertures();
+  logPortraitPhotoFunctions(functions: camera.PortraitPhotoFunctions): void {
+    let hasFlash: bool = functions.hasFlash();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions hasFlash:${hasFlash}`);
+    let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
+    Logger.info(TAG_AB, `PortraitPhotoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
+    Logger.info(TAG_AB, `PortraitPhotoFunctions isExposureModeSupported:${isExposureModeSupported}`);
+    let exposureBiasRange: Array<number> = functions.getExposureBiasRange();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
+    let isFocusModeSupported: boolean = functions.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
+    Logger.info(TAG_AB, `PortraitPhotoFunctions isFocusModeSupported:${isFocusModeSupported}`);
+    let zoomRatioRange: Array<number> = functions.getZoomRatioRange();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+    let beautyTypeList: Array<camera.BeautyType> = functions.getSupportedBeautyTypes();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
+    let beautyRange: Array<number> = functions.getSupportedBeautyRange(beautyTypeList[0]);
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
+    let colorEffectList: Array<camera.ColorEffectType> = functions.getSupportedColorEffects();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
+    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = functions.getSupportedColorSpaces();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
+    let portraitEffectsList: Array<camera.PortraitEffect> = functions.getSupportedPortraitEffects();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedPortraitEffects:${portraitEffectsList[0]},${portraitEffectsList[1]}`);
+    let virtualAperturesList: Array<number> = functions.getSupportedVirtualApertures();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions getSupportedVirtualApertures:${virtualAperturesList[0]},${virtualAperturesList[1]}`);
+    let physicalAperturesList: Array<camera.PhysicalAperture> = functions.getSupportedPhysicalApertures();
     physicalAperturesList.forEach((physicalAperture) => {
-      Logger.info(TAG_AB, `PortraitPhotoConflictAbility PhysicalAperture: zoomRange${physicalAperture.zoomRange.min},${physicalAperture.zoomRange.max}`);
+      Logger.info(TAG_AB, `PortraitPhotoFunctions PhysicalAperture: zoomRange${physicalAperture.zoomRange.min},${physicalAperture.zoomRange.max}`);
+      physicalAperture.apertures.forEach((aperture) => {
+        Logger.info(TAG_AB, `           with aperture: ${aperture} `);
+      });
+    });
+  }
+  
+  logVideoFunctions(functions: camera.VideoFunctions): void {
+    let hasFlash: bool = functions.hasFlash();
+    Logger.info(TAG_AB, `VideoFunctions hasFlash:${hasFlash}`);
+    let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
+    Logger.info(TAG_AB, `VideoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
+    Logger.info(TAG_AB, `VideoFunctions isExposureModeSupported:${isExposureModeSupported}`);
+    let exposureBiasRange: Array<number> = functions.getExposureBiasRange();
+    Logger.info(TAG_AB, `VideoFunctions getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
+    let isFocusModeSupported: boolean = functions.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
+    Logger.info(TAG_AB, `VideoFunctions isFocusModeSupported:${isFocusModeSupported}`);
+    let zoomRatioRange: Array<number> = functions.getZoomRatioRange();
+    Logger.info(TAG_AB, `VideoFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+    let beautyTypeList: Array<camera.BeautyType> = functions.getSupportedBeautyTypes();
+    Logger.info(TAG_AB, `VideoFunctions getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
+    let beautyRange: Array<number> = functions.getSupportedBeautyRange(beautyTypeList[0]);
+    Logger.info(TAG_AB, `VideoFunctions getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
+    let colorEffectList: Array<camera.ColorEffectType> = functions.getSupportedColorEffects();
+    Logger.info(TAG_AB, `VideoFunctions getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
+    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = functions.getSupportedColorSpaces();
+    Logger.info(TAG_AB, `VideoFunctions getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
+    let isVideoStabilizationModeSupported: bool = functions.isVideoStabilizationModeSupported();
+    Logger.info(TAG_AB, `VideoFunctions isVideoStabilizationModeSupported:${isVideoStabilizationModeSupported}`);
+    let isMacroSupported: bool = functions.isMacroSupported();
+    Logger.info(TAG_AB, `VideoFunctions isMacroSupported:${isMacroSupported}`);
+  }
+  
+  logPhotoFunctions(functions: camera.PhotoFunctions): void {
+    let isMoonSupported: bool = functions.isSceneFeatureSupported(camera.SceneFeatureType.MOON_CAPTURE_BOOST);
+    Logger.info(TAG_AB, `PhotoFunctions isSceneFeatureSupported moon:${isMoonSupported}`);
+    let isTripodDetectionSupported: bool = functions.isSceneFeatureSupported(camera.SceneFeatureType.TRIPOD_DETECTION);
+    Logger.info(TAG_AB, `PhotoFunctions isSceneFeatureSupported tripod:${isTripodDetectionSupported}`);
+    let isLowLightSupported: bool = functions.isSceneFeatureSupported(camera.SceneFeatureType.LOW_LIGHT_BOOTST);
+    Logger.info(TAG_AB, `PhotoFunctions isSceneFeatureSupported lowlight:${isLowLightSupported}`);
+    let exposureRange: Array<number> = functions.getSupportedExposureRange();
+    Logger.info(TAG_AB, `PhotoFunctions getSupportedExposureRange size:${exposureRange.length}`);
+    let hasFlash: bool = functions.hasFlash();
+    Logger.info(TAG_AB, `PhotoFunctions hasFlash:${hasFlash}`);
+    let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
+    Logger.info(TAG_AB, `PhotoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
+    Logger.info(TAG_AB, `PhotoFunctions isExposureModeSupported:${isExposureModeSupported}`);
+    let exposureBiasRange: Array<number> = functions.getExposureBiasRange();
+    Logger.info(TAG_AB, `PhotoFunctions getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
+    let isFocusModeSupported: boolean = functions.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
+    Logger.info(TAG_AB, `PhotoFunctions isFocusModeSupported:${isFocusModeSupported}`);
+    let zoomRatioRange: Array<number> = functions.getZoomRatioRange();
+    Logger.info(TAG_AB, `PhotoFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+    let beautyTypeList: Array<camera.BeautyType> = functions.getSupportedBeautyTypes();
+    Logger.info(TAG_AB, `PhotoFunctions getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
+    let beautyRange: Array<number> = functions.getSupportedBeautyRange(beautyTypeList[0]);
+    Logger.info(TAG_AB, `PhotoFunctions getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
+    let colorEffectList: Array<camera.ColorEffectType> = functions.getSupportedColorEffects();
+    Logger.info(TAG_AB, `PhotoFunctions getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
+    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = functions.getSupportedColorSpaces();
+    Logger.info(TAG_AB, `PhotoFunctions getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
+    let isMacroSupported: bool = functions.isMacroSupported();
+    Logger.info(TAG_AB, `PhotoFunctions isMacroSupported:${isMacroSupported}`);
+  }
+
+  logPortraitPhotoConflictFunctions(conflictFunctions: camera.PortraitPhotoConflictFunctions): void {
+    let zoomRatioRange: Array<number> = conflictFunctions.getZoomRatioRange();
+    Logger.info(TAG_AB, `PortraitPhotoConflictFunctions getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
+    let portraitEffectsList: Array<camera.PortraitEffect> = conflictFunctions.getSupportedPortraitEffects();
+    Logger.info(TAG_AB, `PortraitPhotoConflictFunctions getSupportedPortraitEffects:${portraitEffectsList[0]},${portraitEffectsList[1]}`);
+    let virtualAperturesList: Array<number> = conflictFunctions.getSupportedVirtualApertures();
+    Logger.info(TAG_AB, `PortraitPhotoConflictFunctions getSupportedVirtualApertures:${virtualAperturesList[0]},${virtualAperturesList[1]}`);
+    let physicalAperturesList: Array<camera.PhysicalAperture> = conflictFunctions.getSupportedPhysicalApertures();
+    physicalAperturesList.forEach((physicalAperture) => {
+      Logger.info(TAG_AB, `PortraitPhotoConflictFunctions PhysicalAperture: zoomRange${physicalAperture.zoomRange.min},${physicalAperture.zoomRange.max}`);
       physicalAperture.apertures.forEach((aperture) => {
         Logger.info(TAG_AB, `           with aperture: ${aperture} `);
       });
@@ -1934,93 +2028,6 @@ class CameraService {
     let videoProfiles: Array<camera.VideoProfile> = coc.videoProfiles;
     Logger.info(TAG_AB, `getCameraOutputCapabilities videoProfiles: ${JSON.stringify(videoProfiles)}`);
   }
-  
-  logPortraitPhotoAbility(ability: camera.PortraitPhotoAbility): void {
-    let hasFlash: bool = ability.hasFlash();
-    Logger.info(TAG_AB, `PortraitPhotoAbility hasFlash:${hasFlash}`);
-    let isFlashModeSupported: bool = ability.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
-    Logger.info(TAG_AB, `PortraitPhotoAbility isFlashModeSupported:${isFlashModeSupported}`);
-    let isExposureModeSupported: bool = ability.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
-    Logger.info(TAG_AB, `PortraitPhotoAbility isExposureModeSupported:${isExposureModeSupported}`);
-    let exposureBiasRange: Array<number> = ability.getExposureBiasRange();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
-    let isFocusModeSupported: boolean = ability.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
-    Logger.info(TAG_AB, `PortraitPhotoAbility isFocusModeSupported:${isFocusModeSupported}`);
-    let zoomRatioRange: Array<number> = ability.getZoomRatioRange();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-    let beautyTypeList: Array<camera.BeautyType> = ability.getSupportedBeautyTypes();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
-    let beautyRange: Array<number> = ability.getSupportedBeautyRange(beautyTypeList[0]);
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
-    let colorEffectList: Array<camera.ColorEffectType> = ability.getSupportedColorEffects();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
-    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = ability.getSupportedColorSpaces();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
-    let portraitEffectsList: Array<camera.PortraitEffect> = ability.getSupportedPortraitEffects();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedPortraitEffects:${portraitEffectsList[0]},${portraitEffectsList[1]}`);
-    let virtualAperturesList: Array<number> = ability.getSupportedVirtualApertures();
-    Logger.info(TAG_AB, `PortraitPhotoAbility getSupportedVirtualApertures:${virtualAperturesList[0]},${virtualAperturesList[1]}`);
-    let physicalAperturesList: Array<camera.PhysicalAperture> = ability.getSupportedPhysicalApertures();
-    physicalAperturesList.forEach((physicalAperture) => {
-      Logger.info(TAG_AB, `PortraitPhotoAbility PhysicalAperture: zoomRange${physicalAperture.zoomRange.min},${physicalAperture.zoomRange.max}`);
-      physicalAperture.apertures.forEach((aperture) => {
-        Logger.info(TAG_AB, `           with aperture: ${aperture} `);
-      });
-    });
-  }
-  
-  logVideoAbility(ability: camera.VideoAbility): void {
-    let hasFlash: bool = ability.hasFlash();
-    Logger.info(TAG_AB, `VideoAbility hasFlash:${hasFlash}`);
-    let isFlashModeSupported: bool = ability.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
-    Logger.info(TAG_AB, `VideoAbility isFlashModeSupported:${isFlashModeSupported}`);
-    let isExposureModeSupported: bool = ability.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
-    Logger.info(TAG_AB, `VideoAbility isExposureModeSupported:${isExposureModeSupported}`);
-    let exposureBiasRange: Array<number> = ability.getExposureBiasRange();
-    Logger.info(TAG_AB, `VideoAbility getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
-    let isFocusModeSupported: boolean = ability.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
-    Logger.info(TAG_AB, `VideoAbility isFocusModeSupported:${isFocusModeSupported}`);
-    let zoomRatioRange: Array<number> = ability.getZoomRatioRange();
-    Logger.info(TAG_AB, `VideoAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-    let beautyTypeList: Array<camera.BeautyType> = ability.getSupportedBeautyTypes();
-    Logger.info(TAG_AB, `VideoAbility getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
-    let beautyRange: Array<number> = ability.getSupportedBeautyRange(beautyTypeList[0]);
-    Logger.info(TAG_AB, `VideoAbility getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
-    let colorEffectList: Array<camera.ColorEffectType> = ability.getSupportedColorEffects();
-    Logger.info(TAG_AB, `VideoAbility getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
-    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = ability.getSupportedColorSpaces();
-    Logger.info(TAG_AB, `VideoAbility getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
-    let isVideoStabilizationModeSupported: bool = ability.isVideoStabilizationModeSupported();
-    Logger.info(TAG_AB, `VideoAbility isVideoStabilizationModeSupported:${isVideoStabilizationModeSupported}`);
-    let isMacroSupported: bool = ability.isMacroSupported();
-    Logger.info(TAG_AB, `VideoAbility isMacroSupported:${isMacroSupported}`);
-  }
-  
-  logPhotoAbility(ability: camera.PhotoAbility): void {
-    let hasFlash: bool = ability.hasFlash();
-    Logger.info(TAG_AB, `PhotoAbility hasFlash:${hasFlash}`);
-    let isFlashModeSupported: bool = ability.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
-    Logger.info(TAG_AB, `PhotoAbility isFlashModeSupported:${isFlashModeSupported}`);
-    let isExposureModeSupported: bool = ability.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
-    Logger.info(TAG_AB, `PhotoAbility isExposureModeSupported:${isExposureModeSupported}`);
-    let exposureBiasRange: Array<number> = ability.getExposureBiasRange();
-    Logger.info(TAG_AB, `PhotoAbility getExposureBiasRange:${exposureBiasRange[0]},${exposureBiasRange[1]}`);
-    let isFocusModeSupported: boolean = ability.isFocusModeSupported(camera.FocusMode.FOCUS_MODE_MANUAL);
-    Logger.info(TAG_AB, `PhotoAbility isFocusModeSupported:${isFocusModeSupported}`);
-    let zoomRatioRange: Array<number> = ability.getZoomRatioRange();
-    Logger.info(TAG_AB, `PhotoAbility getZoomRatioRange:${zoomRatioRange[0]},${zoomRatioRange[1]}`);
-    let beautyTypeList: Array<camera.BeautyType> = ability.getSupportedBeautyTypes();
-    Logger.info(TAG_AB, `PhotoAbility getSupportedBeautyTypes:${beautyTypeList[0]},${beautyTypeList[1]}`);
-    let beautyRange: Array<number> = ability.getSupportedBeautyRange(beautyTypeList[0]);
-    Logger.info(TAG_AB, `PhotoAbility getSupportedBeautyRange:${beautyRange[0]},${beautyRange[1]}`);
-    let colorEffectList: Array<camera.ColorEffectType> = ability.getSupportedColorEffects();
-    Logger.info(TAG_AB, `PhotoAbility getSupportedColorEffects:${colorEffectList[0]},${colorEffectList[1]}`);
-    let colorSpacesList: Array<camera.colorSpaceManager.ColorSpace> = ability.getSupportedColorSpaces();
-    Logger.info(TAG_AB, `PhotoAbility getSupportedColorSpaces:${colorSpacesList[0]},${colorSpacesList[1]}`);
-    let isMacroSupported: bool = ability.isMacroSupported();
-    Logger.info(TAG_AB, `PhotoAbility isMacroSupported:${isMacroSupported}`);
-  }
-  
 }
 
 export default new CameraService();
