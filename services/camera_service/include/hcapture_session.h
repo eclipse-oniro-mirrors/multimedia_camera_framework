@@ -237,6 +237,7 @@ public:
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     string lastDisplayName_ = "";
+    string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
     volatile bool isMovingPhotoMirror_ = false;
     volatile bool isSetMotionPhoto_ = false;
@@ -254,6 +255,7 @@ private:
         return cameraDevice_;
     }
     string CreateDisplayName();
+    string CreateBurstDisplayName(int32_t seqId);
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
