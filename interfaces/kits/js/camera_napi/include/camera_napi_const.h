@@ -40,15 +40,23 @@ const size_t ARGS_MAX_SIZE = 20;
 const int32_t SIZE = 100;
 
 struct AsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
-    bool status;
-    int32_t taskId;
-    int32_t errorCode;
-    std::string errorMsg;
+public:
+    AsyncContext() = default;
+    AsyncContext(std::string funcName, int32_t taskId) : funcName(funcName), taskId(taskId) {};
+
+    virtual ~AsyncContext() = default;
+
     std::string funcName;
+    int32_t taskId = 0;
+    napi_async_work work = nullptr;
+    napi_deferred deferred = nullptr;
+    napi_ref callbackRef = nullptr;
+    bool status = false;
+
+    int32_t errorCode = 0;
+    uint64_t queueId = 0;
+    std::string errorMsg;
+    // todo delete this field
     bool isInvalidArgument;
 };
 
@@ -56,7 +64,6 @@ struct JSAsyncContextOutput {
     napi_value error;
     napi_value data;
     bool status;
-    bool bRetBool;
     std::string funcName;
 };
 

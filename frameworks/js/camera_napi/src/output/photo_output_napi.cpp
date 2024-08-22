@@ -1347,7 +1347,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Capture";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 if (context->isInvalidArgument) {
                     return;
                 }
@@ -1449,7 +1449,7 @@ napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
                 PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::BurstCapture";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 if (context->isInvalidArgument) {
                     return;
                 }
@@ -1523,7 +1523,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -1577,7 +1577,7 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::GetDefaultCaptureSetting";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -1767,7 +1767,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::SetMirror";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;

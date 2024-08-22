@@ -72,7 +72,7 @@ void CameraNapiUtils::InvokeJSAsyncMethod(napi_env env, napi_deferred deferred,
     MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod inner end", funcName.c_str());
 }
 
-int32_t CameraNapiUtils::IncreamentAndGet(uint32_t &num)
+int32_t CameraNapiUtils::IncrementAndGet(uint32_t& num)
 {
     int32_t temp = num & 0x00ffffff;
     if (temp >= 0xffff) {

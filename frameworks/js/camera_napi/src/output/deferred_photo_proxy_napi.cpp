@@ -149,7 +149,7 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
                 context->status = false;
                 // Start async trace
                 context->funcName = "DeferredPhotoProxyNapi::GetThumbnail";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(deferredPhotoProxyTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(deferredPhotoProxyTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;
@@ -211,7 +211,7 @@ napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info
                 context->status = false;
                 // Start async trace
                 context->funcName = "DeferredPhotoProxyNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(deferredPhotoProxyTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(deferredPhotoProxyTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;

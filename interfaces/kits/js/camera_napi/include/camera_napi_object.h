@@ -21,6 +21,7 @@
 #include <list>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -30,24 +31,11 @@
 
 namespace OHOS {
 namespace CameraStandard {
-struct CameraNapiObjectField;
 struct CameraNapiObject {
 public:
     typedef std::variant<bool*, int32_t*, uint32_t*, int64_t*, float*, double*, std::string*, CameraNapiObject*,
         napi_value, std::vector<int32_t>*, std::list<CameraNapiObject>*>
         NapiVariantBindAddr;
-
-    struct CameraNapiObjectField {
-    public:
-        CameraNapiObjectField(const std::string key, NapiVariantBindAddr targetAddr) : key_(key), bindAddr_(targetAddr)
-        {}
-        CameraNapiObjectField(const char* key, NapiVariantBindAddr targetAddr) : key_(key), bindAddr_(targetAddr) {}
-
-    private:
-        const std::string key_;
-        NapiVariantBindAddr bindAddr_;
-        friend CameraNapiObject;
-    };
 
     typedef std::unordered_map<std::string, NapiVariantBindAddr> CameraNapiObjFieldMap;
 
@@ -65,6 +53,9 @@ public:
             napi_value napiObjValue = nullptr;
             napi_status res = napi_get_named_property(env, napiObject, it.first.c_str(), &napiObjValue);
             if (res != napi_ok) {
+                if (optionalKeys_.find(it.first) != optionalKeys_.end()) {
+                    continue;
+                }
                 return res;
             }
             if (std::holds_alternative<bool*>(bindAddr)) {
@@ -89,9 +80,20 @@ public:
             if (res != napi_ok) {
                 return res;
             }
+            settedKeys_.emplace(it.first);
         }
         return napi_ok;
     };
+
+    void SetOptionalKeys(std::unordered_set<std::string>& keys)
+    {
+        optionalKeys_ = keys;
+    }
+
+    bool IsKeySetted(const std::string& key)
+    {
+        return settedKeys_.find(key) != settedKeys_.end();
+    }
 
     napi_value CreateNapiObjFromMap(napi_env env)
     {
@@ -323,6 +325,8 @@ private:
     }
 
     CameraNapiObjFieldMap fieldMap_;
+    std::unordered_set<std::string> optionalKeys_;
+    std::unordered_set<std::string> settedKeys_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
