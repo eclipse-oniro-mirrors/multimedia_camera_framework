@@ -22,6 +22,8 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const char* DEFAULT_SURFACEID = "photoOutput";
+thread_local OHOS::sptr<OHOS::Surface> Camera_Manager::photoSurface_ = nullptr;
 const std::unordered_map<SceneMode, Camera_SceneMode> g_fwModeToNdk_ = {
     {SceneMode::CAPTURE, Camera_SceneMode::NORMAL_PHOTO},
     {SceneMode::VIDEO, Camera_SceneMode::NORMAL_VIDEO},
@@ -438,7 +440,7 @@ Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 
 Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** captureSession)
 {
-    sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::CAPTURE);
+    sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::NORMAL);
     CHECK_AND_RETURN_RET_LOG(innerCaptureSession != nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreateCaptureSession create innerCaptureSession fail!");
     Camera_CaptureSession* outSession = new Camera_CaptureSession(innerCaptureSession);
@@ -566,6 +568,38 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
         return CAMERA_SERVICE_FATAL_ERROR;
     }
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+    *photoOutput = out;
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
+    Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_ERR_LOG("Camera_Manager CreatePhotoOutputWithoutSurface is called");
+    sptr<PhotoOutput> innerPhotoOutput = nullptr;
+    Size size;
+    size.width = profile->size.width;
+    size.height = profile->size.height;
+    Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
+    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Failed to get photoOutput surface");
+
+    photoSurface_ = surface;
+    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
+    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+    CHECK_AND_RETURN_RET_LOG(surfaceProducer != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
+
+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile,
+        surfaceProducer, &innerPhotoOutput);
+    CHECK_AND_RETURN_RET_LOG((retCode == CameraErrorCode::SUCCESS && innerPhotoOutput != nullptr),
+        CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
+
+    innerPhotoOutput->SetNativeSurface(true);
+    Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+    CHECK_AND_RETURN_RET_LOG(out != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
+    out->SetPhotoSurface(surface);
     *photoOutput = out;
     return CAMERA_OK;
 }

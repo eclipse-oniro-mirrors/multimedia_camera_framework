@@ -241,6 +241,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
     return cameraManager->CreatePhotoOutput(profile, surfaceId, photoOutput);
 }
 
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputWithoutSurface(Camera_Manager* cameraManager,
+    const Camera_Profile* profile, Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutputWithoutSurface is called");
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, photoOutput is null!");
+
+    return cameraManager->CreatePhotoOutputWithoutSurface(profile, photoOutput);
+}
+
 Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manager* cameraManager,
     const char* surfaceId, Camera_PhotoOutput** photoOutput)
 {
