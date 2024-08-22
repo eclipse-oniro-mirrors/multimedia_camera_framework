@@ -717,42 +717,6 @@ static napi_value CreateCameraJSArray(napi_env env, std::vector<sptr<CameraDevic
     return cameraArray;
 }
 
-void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void* data)
-{
-    MEDIA_INFO_LOG("CameraManagerCommonCompleteCallback is called");
-    auto context = static_cast<CameraManagerContext*>(data);
-
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    MEDIA_INFO_LOG("modeForAsync = %{public}d", context->modeForAsync);
-    napi_get_undefined(env, &jsContext->error);
-    if (context->modeForAsync == CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK) {
-        MEDIA_INFO_LOG("createDeferredPreviewOutput");
-        jsContext->data = PreviewOutputNapi::CreateDeferredPreviewOutput(env, context->profile);
-    }
-
-    if (jsContext->data == nullptr) {
-        context->status = false;
-        context->errString = context->funcName + " failed";
-        MEDIA_ERR_LOG("Failed to create napi, funcName = %{public}s", context->funcName.c_str());
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errString.c_str(), jsContext);
-    } else {
-        jsContext->status = true;
-        MEDIA_INFO_LOG("Success to create napi, funcName = %{public}s", context->funcName.c_str());
-    }
-
-    // Finish async trace
-    if (!context->funcName.empty() && context->taskId > 0) {
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
-    }
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");

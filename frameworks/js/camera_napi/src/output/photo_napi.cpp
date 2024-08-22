@@ -226,7 +226,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;

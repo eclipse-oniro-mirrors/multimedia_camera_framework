@@ -82,6 +82,20 @@ public:
         return status_ == napi_ok;
     }
 
+    void Reset()
+    {
+        if (*callbackRefPtr_ != nullptr) {
+            napi_delete_reference(env_, *callbackRefPtr_);
+            *callbackRefPtr_ = nullptr;
+        }
+        if (*deferred_ != nullptr) {
+            napi_value rejection = nullptr;
+            napi_get_undefined(env_, &rejection);
+            napi_reject_deferred(env_, *deferred_, rejection);
+            *deferred_ = nullptr;
+        }
+    }
+
 private:
     napi_status CreatePromise()
     {
@@ -105,20 +119,6 @@ private:
             asyncFunctionType_ = ASYNC_FUN_TYPE_CALLBACK;
         }
         return status_;
-    }
-
-    void Reset()
-    {
-        if (*callbackRefPtr_ != nullptr) {
-            napi_delete_reference(env_, *callbackRefPtr_);
-            *callbackRefPtr_ = nullptr;
-        }
-        if (*deferred_ != nullptr) {
-            napi_value rejection = nullptr;
-            napi_get_undefined(env_, &rejection);
-            napi_reject_deferred(env_, *deferred_, rejection);
-            *deferred_ = nullptr;
-        }
     }
 
     napi_env env_ = nullptr;
