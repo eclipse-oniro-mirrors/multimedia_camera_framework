@@ -1394,7 +1394,7 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
-        stabilizationMode = VideoStabilizationMode::AUTO; // 三方应用不支持超级防抖模式，映射为AUTO
+        stabilizationMode = VideoStabilizationMode::AUTO;
     }
     CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
