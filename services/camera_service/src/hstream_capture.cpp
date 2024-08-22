@@ -177,7 +177,7 @@ void HStreamCapture::ResetBurstKey(int32_t captureId)
 
 std::string HStreamCapture::GetBurstKey(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::GetBurstKey captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::GetBurstKey captureId:%{public}d", captureId);
     std::string burstKey = BURST_UUID_UNSET;
     auto iter = burstkeyMap_.find(captureId);
     if (iter != burstkeyMap_.end()) {
@@ -191,16 +191,26 @@ std::string HStreamCapture::GetBurstKey(int32_t captureId) const
 
 bool HStreamCapture::IsBurstCapture(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::captureId:%{public}d", captureId);
     auto iter = burstkeyMap_.find(captureId);
     return iter != burstkeyMap_.end();
 }
 
 bool HStreamCapture::IsBurstCover(int32_t captureId) const
 {
-    MEDIA_INFO_LOG("HStreamCapture::IsBurstCover for captureId: %d", captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::IsBurstCover for captureId: %d", captureId);
     auto iter = burstImagesMap_.find(captureId);
     return (iter != burstImagesMap_.end()) ? (iter->second.size() == 1) : false;
+}
+
+int32_t HStreamCapture::GetCurBurstSeq(int32_t captureId) const
+{
+    MEDIA_DEBUG_LOG("HStreamCapture::GetCurBurstSeq for captureId: %d", captureId);
+    auto iter = burstImagesMap_.find(captureId);
+    if (iter != burstImagesMap_.end()) {
+        return iter->second.size();
+    }
+    return -1;
 }
 
 void HStreamCapture::SetBurstImages(int32_t captureId, std::string imageId)
@@ -214,7 +224,6 @@ void HStreamCapture::SetBurstImages(int32_t captureId, std::string imageId)
     } else {
         MEDIA_ERR_LOG("HStreamCapture::SetBurstImages error");
     }
-    CheckResetBurstKey(captureId);
 }
 
 void HStreamCapture::CheckResetBurstKey(int32_t captureId)
@@ -262,7 +271,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     CHECK_ERROR_RETURN_RET_LOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
         "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();

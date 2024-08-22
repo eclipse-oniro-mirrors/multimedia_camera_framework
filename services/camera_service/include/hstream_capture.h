@@ -68,8 +68,10 @@ public:
     SafeMap<int32_t, int32_t> rotationMap_ = {};
     bool IsBurstCapture(int32_t captureId) const;
     bool IsBurstCover(int32_t captureId) const;
+    int32_t GetCurBurstSeq(int32_t captureId) const;
     std::string GetBurstKey(int32_t captureId) const;
     void SetBurstImages(int32_t captureId, std::string imageId);
+    void CheckResetBurstKey(int32_t captureId);
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -77,7 +79,6 @@ private:
     int32_t PrepareBurst(int32_t captureId);
     void ResetBurst();
     void ResetBurstKey(int32_t captureId);
-    void CheckResetBurstKey(int32_t captureId);
     void EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_);
     void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);

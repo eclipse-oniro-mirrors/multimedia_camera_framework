@@ -30,6 +30,7 @@
 #include "camera_util.h"
 #include "capture_output.h"
 #include "capture_scene_const.h"
+#include "camera_security_utils.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
@@ -1391,6 +1392,9 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+        stabilizationMode = VideoStabilizationMode::AUTO;
     }
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
