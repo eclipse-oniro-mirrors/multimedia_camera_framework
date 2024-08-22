@@ -1392,6 +1392,9 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+        stabilizationMode = VideoStabilizationMode::AUTO;
+    }
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
