@@ -60,17 +60,23 @@ void PhotoListener::OnBufferAvailable()
 
     CameraBufferExtraData extraData = GetCameraBufferExtraData(surfaceBuffer);
 
-    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
-    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-    CHECK_AND_RETURN_LOG(newSurfaceBuffer != nullptr, "deep copy buffer failed");
-
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
+        MEDIA_DEBUG_LOG("PhotoListener on capture photo asset callback");
+        sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+        DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        CHECK_AND_RETURN_LOG(newSurfaceBuffer != nullptr, "deep copy buffer failed");
+
         ExecutePhotoAsset(newSurfaceBuffer, extraData, extraData.isDegradedImage == 0, timestamp);
+        MEDIA_DEBUG_LOG("PhotoListener on capture photo asset callback end");
     } else if (extraData.isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
-        ExecutePhoto(newSurfaceBuffer, timestamp);
+        MEDIA_DEBUG_LOG("PhotoListener on capture photo callback");
+        ExecutePhoto(surfaceBuffer, timestamp);
+        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        MEDIA_DEBUG_LOG("PhotoListener on capture photo callback end");
     } else {
         MEDIA_INFO_LOG("PhotoListener on error callback");
+        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
     }
 }
 
