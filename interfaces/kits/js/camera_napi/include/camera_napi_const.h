@@ -56,7 +56,7 @@ public:
     int32_t errorCode = 0;
     uint64_t queueId = 0;
     std::string errorMsg;
-    // todo delete this field
+
     bool isInvalidArgument;
 };
 
