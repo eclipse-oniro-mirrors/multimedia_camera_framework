@@ -119,6 +119,9 @@ ohos_shared_library("camera_napi") {
     debug = false
   }
   cflags = [ "-fPIC" ]
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   cflags_cc = cflags
   relative_install_dir = "module/multimedia"
   part_name = "camera_framework"
@@ -175,6 +178,9 @@ if (gen_camera_picker) {
       debug = false
     }
     cflags = [ "-fPIC" ]
+    if (build_variant == "user") {
+      cflags += [ "-DIS_RELEASE_VERSION" ]
+    }
     cflags_cc = cflags
     relative_install_dir = "module/multimedia"
     part_name = "camera_framework"
