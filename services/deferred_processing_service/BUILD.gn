@@ -91,7 +91,9 @@ ohos_shared_library("deferred_processing_service") {
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
-
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
