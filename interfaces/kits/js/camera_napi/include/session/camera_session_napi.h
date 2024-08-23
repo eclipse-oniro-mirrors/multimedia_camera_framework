@@ -38,13 +38,6 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
-enum SessionAsyncCallbackModes {
-    COMMIT_CONFIG_ASYNC_CALLBACK,
-    SESSION_START_ASYNC_CALLBACK,
-    SESSION_STOP_ASYNC_CALLBACK,
-    SESSION_RELEASE_ASYNC_CALLBACK,
-};
-
 class ExposureCallbackListener : public ExposureCallback, public ListenerBase {
 public:
     ExposureCallbackListener(napi_env env) : ListenerBase(env) {}
@@ -447,15 +440,9 @@ protected:
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {
+    CameraSessionAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     CameraSessionNapi* objectInfo;
-
-    SessionAsyncCallbackModes modeForAsync;
     std::string errorMsg;
-    bool bRetBool;
-    ~CameraSessionAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

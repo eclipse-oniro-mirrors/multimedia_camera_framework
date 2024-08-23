@@ -502,7 +502,7 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "VideoOutputNapi::Start";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
@@ -553,7 +553,7 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "VideoOutputNapi::Stop";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
@@ -821,7 +821,7 @@ void VideoOutputNapi::SetFrameRateRangeAsyncTask(napi_env env, void* data)
     context->status = false;
     // Start async trace
     context->funcName = "VideoOutputNapi::SetFrameRateRange";
-    context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+    context->taskId = CameraNapiUtils::IncrementAndGet(videoOutputTaskId);
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     if (context->objectInfo != nullptr) {
         context->bRetBool = false;
@@ -924,7 +924,7 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "VideoOutputNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
