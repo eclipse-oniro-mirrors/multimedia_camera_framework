@@ -263,6 +263,8 @@ public:
 
     Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
 
+    Camera_ErrorCode GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
+
 private:
     Camera_ErrorCode RegisterRawPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
 

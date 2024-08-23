@@ -246,6 +246,7 @@ private:
 constexpr uint8_t CAPTURE_PHOTO = 1 << 0;
 constexpr uint8_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
 constexpr uint8_t CAPTURE_PHOTO_ASSET = 1 << 2;
+constexpr int32_t CAPTURE_ROTATION_BASE = 360;
 
 class PhotoOutput : public CaptureOutput {
 public:
@@ -265,6 +266,13 @@ public:
      * @param listener set IBufferConsumerListener when on interface is called.
      */
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
+
+    /**
+     * @brief Get the photo rotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation(int32_t imageRotation);
 
     /**
      * @brief Set the Thumbnail profile.
