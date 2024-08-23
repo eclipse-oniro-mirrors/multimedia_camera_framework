@@ -81,6 +81,7 @@ public:
     int32_t SetPreviewRotation(std::string &deviceClass);
     void SetStreamTransform(int disPlayRotation = -1);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -89,6 +90,7 @@ private:
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
+    void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 
@@ -105,6 +107,8 @@ private:
     bool mEnableSecure = false;
     bool enableMirror_ = false;
     bool enableStreamRotate_ = false;
+    bool enableCameraRotation_ = false;
+    int32_t setCameraRotation_ = 0;
     std::string deviceClass_ = "phone";
     sptr<OHOS::IBufferProducer> metaProducer_;
     std::mutex movingPhotoCallbackLock_;

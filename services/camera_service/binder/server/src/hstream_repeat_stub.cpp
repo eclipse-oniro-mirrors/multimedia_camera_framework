@@ -67,6 +67,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE):
             errCode = HandleAttachMetaSurface(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION):
+            errCode = HandleSetCameraRotation(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -174,6 +177,16 @@ int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
         "HStreamRepeatStub::HandleAttachMetaSurface add deferred surface failed : %{public}d", errCode);
 
     return errCode;
+}
+
+int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+    int32_t rotation = data.ReadInt32();
+
+    int ret = SetCameraRotation(isEnable, rotation);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS
