@@ -398,3 +398,12 @@ Camera_ErrorCode Camera_PhotoOutput::EnableMovingPhoto(bool enableMovingPhoto)
 
     return FrameworkToNdkCameraError(ret);
 }
+
+Camera_ErrorCode Camera_PhotoOutput::GetPhotoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
+{
+    int32_t cameraOutputRotation = innerPhotoOutput_->GetPhotoRotation(imageRotation);
+    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetPhotoRotation failed to get photo profile!");
+    *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
+    return CAMERA_OK;
+}

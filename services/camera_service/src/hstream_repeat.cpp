@@ -546,6 +546,15 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     Start(nullptr, true);
 }
 
+int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
+{
+    enableCameraRotation_ = isEnable;
+    CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
+    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
+    SetStreamTransform();
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
 {
     enableStreamRotate_ = true;
@@ -604,7 +613,9 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
     }
-
+    if (enableCameraRotation_) {
+        ProcessCameraSetRotation(sensorOrientation, cameraPosition);
+    }
     std::lock_guard<std::mutex> lock(producerLock_);
     if (producer_ == nullptr || OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay() == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
@@ -622,6 +633,19 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
         ProcessFixedTransform(sensorOrientation, cameraPosition);
+    }
+}
+
+void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+{
+    sensorOrientation = STREAM_ROTATE_360 - setCameraRotation_;
+    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        sensorOrientation = (sensorOrientation == STREAM_ROTATE_180) ? STREAM_ROTATE_0 :
+            (sensorOrientation == STREAM_ROTATE_0) ? STREAM_ROTATE_180 : sensorOrientation;
+    }
+    if (sensorOrientation == STREAM_ROTATE_0) {
+        int ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraSetRotation %{public}d", ret);
     }
 }
 
