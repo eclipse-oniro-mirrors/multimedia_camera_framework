@@ -139,6 +139,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS):
             errCode = HCameraServiceStub::HandleGetDmDeviceInfo(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_OUTPUT_STATUS):
+            errCode = HCameraServiceStub::HandleGetCameraOutputStatus(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -661,6 +664,16 @@ int HCameraServiceStub::HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel
     CHECK_AND_RETURN_RET_LOG(reply.WriteStringVector(deviceInfos), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleGetDmDeviceInfo WriteStringVector failed");
     return errCode;
+}
+
+int HCameraServiceStub::HandleGetCameraOutputStatus(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t pid = data.ReadInt32();
+    int32_t status = 0;
+    int ret = GetCameraOutputStatus(pid, status);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(status), IPC_STUB_WRITE_PARCEL_ERR,
+        "GetCameraOutputStatus failed");
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS
