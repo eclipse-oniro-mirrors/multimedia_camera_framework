@@ -38,6 +38,40 @@ const std::unordered_map<Camera_PreconfigRatio, ProfileSizeRatio> g_ndkToFwPreco
     {Camera_PreconfigRatio::PRECONFIG_RATIO_4_3, ProfileSizeRatio::RATIO_4_3},
     {Camera_PreconfigRatio::PRECONFIG_RATIO_16_9, ProfileSizeRatio::RATIO_16_9}
 };
+const std::unordered_map<ColorSpace, OH_NativeBuffer_ColorSpace> g_fwToNdkColorSpace_ = {
+    {ColorSpace::COLOR_SPACE_UNKNOWN, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE},
+    {ColorSpace::DISPLAY_P3, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL},
+    {ColorSpace::SRGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_FULL},
+    {ColorSpace::BT709, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT709_FULL},
+    {ColorSpace::BT2020_HLG, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_FULL},
+    {ColorSpace::BT2020_PQ, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_FULL},
+    {ColorSpace::P3_HLG, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_FULL},
+    {ColorSpace::P3_PQ, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_FULL},
+    {ColorSpace::DISPLAY_P3_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_LIMIT},
+    {ColorSpace::SRGB_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_LIMIT},
+    {ColorSpace::BT709_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT709_LIMIT},
+    {ColorSpace::BT2020_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT},
+    {ColorSpace::BT2020_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT},
+    {ColorSpace::P3_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_LIMIT},
+    {ColorSpace::P3_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT}
+};
+const std::unordered_map<OH_NativeBuffer_ColorSpace, ColorSpace> g_ndkToFwColorSpace_ = {
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE, ColorSpace::COLOR_SPACE_UNKNOWN},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL, ColorSpace::DISPLAY_P3},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_FULL, ColorSpace::SRGB},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT709_FULL, ColorSpace::BT709},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_FULL, ColorSpace::BT2020_HLG},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_FULL, ColorSpace::BT2020_PQ},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_FULL, ColorSpace::P3_HLG},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_FULL, ColorSpace::P3_PQ},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_LIMIT, ColorSpace::DISPLAY_P3_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_LIMIT, ColorSpace::SRGB_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT709_LIMIT, ColorSpace::BT709_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT, ColorSpace::BT2020_HLG_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT, ColorSpace::BT2020_PQ_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_LIMIT, ColorSpace::P3_HLG_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT, ColorSpace::P3_PQ_LIMIT}
+};
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
@@ -66,6 +100,28 @@ private:
     CaptureSession_Callbacks callback_;
 };
 
+class InnerCaptureSessionSmoothZoomInfoCallback : public SmoothZoomCallback {
+public:
+    InnerCaptureSessionSmoothZoomInfoCallback(Camera_CaptureSession* captureSession,
+        OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
+        : captureSession_(captureSession), smoothZoomInfoCallback_(smoothZoomInfoCallback) {};
+    ~InnerCaptureSessionSmoothZoomInfoCallback() = default;
+
+    void OnSmoothZoom(int32_t duration) override
+    {
+        MEDIA_DEBUG_LOG("OnSmoothZoom is called!");
+        if (captureSession_ != nullptr && smoothZoomInfoCallback_ != nullptr) {
+            Camera_SmoothZoomInfo info;
+            info.duration = duration;
+            smoothZoomInfoCallback_(captureSession_, &info);
+        }
+    }
+
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback_ = nullptr;
+};
+
 Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureSession)
     : innerCaptureSession_(innerCaptureSession)
 {
@@ -84,6 +140,8 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callback
 {
     shared_ptr<InnerCaptureSessionCallback> innerCallback =
         make_shared<InnerCaptureSessionCallback>(this, callback);
+    CHECK_AND_RETURN_RET_LOG(innerCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerCallback failed!");
     if (callback->onError != nullptr) {
         innerCaptureSession_->SetCallback(innerCallback);
     }
@@ -101,6 +159,24 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callba
     if (callback->onFocusStateChange != nullptr) {
         innerCaptureSession_->SetFocusCallback(nullptr);
     }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterSmoothZoomInfoCallback(
+    OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
+{
+    shared_ptr<InnerCaptureSessionSmoothZoomInfoCallback> innerSmoothZoomInfoCallback =
+        make_shared<InnerCaptureSessionSmoothZoomInfoCallback>(this, smoothZoomInfoCallback);
+    CHECK_AND_RETURN_RET_LOG(innerSmoothZoomInfoCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerCallback failed!");
+    innerCaptureSession_->SetSmoothZoomCallback(innerSmoothZoomInfoCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterSmoothZoomInfoCallback(
+    OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback)
+{
+    innerCaptureSession_->SetSmoothZoomCallback(nullptr);
     return CAMERA_OK;
 }
 
@@ -141,7 +217,6 @@ Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* pr
 Camera_ErrorCode Camera_CaptureSession::BeginConfig()
 {
     int32_t ret = innerCaptureSession_->BeginConfig();
-    innerCaptureSession_->EnableDeferredType(DELIVERY_NONE, true);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -584,5 +659,109 @@ Camera_ErrorCode Camera_CaptureSession::PreconfigWithRatio(Camera_PreconfigType 
         "Camera_CaptureSession::PreconfigWithRatio preconfigRatio: [%{public}d] is invalid!", preconfigRatio);
 
     int32_t ret = innerCaptureSession_->Preconfig(type->second, ratio->second);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetExposureValue(float* exposureValue)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureValue is called");
+
+    int32_t ret = innerCaptureSession_->GetExposureValue(*exposureValue);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetFocalLength(float* focalLength)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetFocalLength is called");
+
+    int32_t ret = innerCaptureSession_->GetFocalLength(*focalLength);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::SetSmoothZoom(float targetZoom, Camera_SmoothZoomMode smoothZoomMode)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::SetSmoothZoom is called");
+
+    int32_t ret = innerCaptureSession_->SetSmoothZoom(targetZoom, static_cast<uint32_t>(smoothZoomMode));
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetSupportedColorSpaces(OH_NativeBuffer_ColorSpace** colorSpace,
+    uint32_t* size)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedColorSpaces is called");
+
+    auto colorSpaces = innerCaptureSession_->GetSupportedColorSpaces();
+    if (colorSpaces.empty()) {
+        MEDIA_ERR_LOG("Supported ColorSpace is empty!");
+        *size = 0;
+        return CAMERA_OK;
+    }
+
+    std::vector<OH_NativeBuffer_ColorSpace> cameraColorSpace;
+    for (size_t i = 0; i < colorSpaces.size(); ++i) {
+        auto itr = g_fwToNdkColorSpace_.find(colorSpaces[i]);
+        if (itr != g_fwToNdkColorSpace_.end()) {
+            cameraColorSpace.push_back(itr->second);
+        }
+    }
+
+    if (cameraColorSpace.size() == 0) {
+        MEDIA_ERR_LOG("Supported ColorSpace is empty!");
+        *size = 0;
+        return CAMERA_OK;
+    }
+
+    OH_NativeBuffer_ColorSpace* newColorSpace = new OH_NativeBuffer_ColorSpace[cameraColorSpace.size()];
+    CHECK_AND_RETURN_RET_LOG(newColorSpace != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Failed to allocate memory for color space!");
+    for (size_t index = 0; index < cameraColorSpace.size(); index++) {
+        newColorSpace[index] = cameraColorSpace[index];
+    }
+
+    *size = cameraColorSpace.size();
+    *colorSpace = newColorSpace;
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::DeleteColorSpaces(OH_NativeBuffer_ColorSpace* colorSpace)
+{
+    if (colorSpace != nullptr) {
+        delete[] colorSpace;
+        colorSpace = nullptr;
+    }
+
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_ColorSpace* colorSpace)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetActiveColorSpace is called");
+
+    ColorSpace innerColorSpace;
+    int32_t ret = innerCaptureSession_->GetActiveColorSpace(innerColorSpace);
+    if (ret != SUCCESS) {
+        return FrameworkToNdkCameraError(ret);
+    }
+    auto itr = g_fwToNdkColorSpace_.find(innerColorSpace);
+    if (itr != g_fwToNdkColorSpace_.end()) {
+        *colorSpace = itr->second;
+    } else {
+        MEDIA_ERR_LOG("colorSpace[%{public}d] is invalid", innerColorSpace);
+        return CAMERA_SERVICE_FATAL_ERROR;
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::SetActiveColorSpace is called");
+
+    auto itr = g_ndkToFwColorSpace_.find(colorSpace);
+    if (itr == g_ndkToFwColorSpace_.end()) {
+        MEDIA_ERR_LOG("colorSpace[%{public}d] is invalid", colorSpace);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    int32_t ret = innerCaptureSession_->SetColorSpace(itr->second);
     return FrameworkToNdkCameraError(ret);
 }

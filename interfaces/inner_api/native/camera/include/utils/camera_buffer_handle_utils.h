@@ -21,6 +21,19 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
+struct CameraBufferExtraData {
+    int64_t imageId = 0;
+    int32_t deferredProcessingType;
+    int32_t photoWidth;
+    int32_t photoHeight;
+    int32_t extraDataSize = 0;
+    int32_t deferredImageFormat = 0;
+    int32_t isDegradedImage;
+    uint64_t size;
+    int32_t captureId;
+};
+
 BufferHandle *CameraAllocateBufferHandle(uint32_t reserveInts, uint32_t reserveFds);
 
 int32_t CameraFreeBufferHandle(BufferHandle *handle);
@@ -28,4 +41,4 @@ int32_t CameraFreeBufferHandle(BufferHandle *handle);
 BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle);
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_BUFFER_HANDLE_UTILS_H
+#endif // OHOS_CAMERA_BUFFER_HANDLE_UTILS_H

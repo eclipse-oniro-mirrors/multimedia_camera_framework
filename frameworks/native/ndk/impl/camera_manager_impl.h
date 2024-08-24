@@ -35,6 +35,10 @@ public:
 
     Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* callback);
 
+    Camera_ErrorCode RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
+
+    Camera_ErrorCode UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
+
     Camera_ErrorCode GetSupportedCameras(Camera_Device** cameras, uint32_t* size);
 
     Camera_ErrorCode DeleteSupportedCameras(Camera_Device* cameras, uint32_t size);
@@ -64,6 +68,9 @@ public:
     Camera_ErrorCode CreatePhotoOutput(const Camera_Profile* profile, const char* surfaceId,
         Camera_PhotoOutput** photoOutput);
 
+    Camera_ErrorCode CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
+        Camera_PhotoOutput** photoOutput);
+
     Camera_ErrorCode CreatePhotoOutputUsedInPreconfig(const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
     Camera_ErrorCode CreateVideoOutput(const Camera_VideoProfile* profile, const char* surfaceId,
@@ -73,6 +80,12 @@ public:
 
     Camera_ErrorCode CreateMetadataOutput(const Camera_MetadataObjectType* type,
         Camera_MetadataOutput** metadataOutput);
+
+    Camera_ErrorCode IsTorchSupported(bool* isTorchSupported);
+
+    Camera_ErrorCode IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported);
+
+    Camera_ErrorCode SetTorchMode(Camera_TorchMode torchMode);
 
     static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
 
@@ -95,5 +108,6 @@ private:
         std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
+    static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;
 };
 #endif // OHOS_CAMERA_CAPTURE_INPUT_H

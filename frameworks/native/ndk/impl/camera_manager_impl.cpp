@@ -22,6 +22,8 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const char* DEFAULT_SURFACEID = "photoOutput";
+thread_local OHOS::sptr<OHOS::Surface> Camera_Manager::photoSurface_ = nullptr;
 const std::unordered_map<SceneMode, Camera_SceneMode> g_fwModeToNdk_ = {
     {SceneMode::CAPTURE, Camera_SceneMode::NORMAL_PHOTO},
     {SceneMode::VIDEO, Camera_SceneMode::NORMAL_VIDEO},
@@ -41,6 +43,11 @@ const std::unordered_map<Camera_Position, CameraPosition> g_NdkCameraPositionToF
     {Camera_Position::CAMERA_POSITION_UNSPECIFIED, CameraPosition::CAMERA_POSITION_UNSPECIFIED},
     {Camera_Position::CAMERA_POSITION_BACK, CameraPosition::CAMERA_POSITION_BACK},
     {Camera_Position::CAMERA_POSITION_FRONT, CameraPosition::CAMERA_POSITION_FRONT},
+};
+const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
+    {Camera_TorchMode::OFF, TorchMode::TORCH_MODE_OFF},
+    {Camera_TorchMode::ON, TorchMode::TORCH_MODE_ON},
+    {Camera_TorchMode::AUTO, TorchMode::TORCH_MODE_AUTO}
 };
 
 class InnerCameraManagerCallback : public CameraManagerCallback {
@@ -93,6 +100,29 @@ private:
     Camera_Device* camera_;
 };
 
+class InnerCameraManagerTorchStatusCallback : public TorchListener {
+public:
+    InnerCameraManagerTorchStatusCallback(Camera_Manager* cameraManager,
+        OH_CameraManager_TorchStatusCallback torchStatusCallback)
+        : cameraManager_(cameraManager), torchStatusCallback_(torchStatusCallback) {};
+    ~InnerCameraManagerTorchStatusCallback() = default;
+
+    void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override
+    {
+        MEDIA_DEBUG_LOG("OnTorchStatusChange is called!");
+        if (cameraManager_ != nullptr && torchStatusCallback_ != nullptr) {
+            Camera_TorchStatusInfo statusInfo;
+            statusInfo.isTorchAvailable = torchStatusInfo.isTorchAvailable;
+            statusInfo.isTorchActive = torchStatusInfo.isTorchActive;
+            statusInfo.torchLevel = torchStatusInfo.torchLevel;
+            torchStatusCallback_(cameraManager_, &statusInfo);
+        }
+    }
+private:
+    Camera_Manager* cameraManager_;
+    OH_CameraManager_TorchStatusCallback torchStatusCallback_ = nullptr;
+};
+
 Camera_Manager::Camera_Manager()
 {
     MEDIA_DEBUG_LOG("Camera_Manager Constructor is called");
@@ -118,6 +148,22 @@ Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* callb
 Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* callback)
 {
     cameraManager_->SetCallback(nullptr);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    shared_ptr<InnerCameraManagerTorchStatusCallback> innerTorchStatusCallback =
+                make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
+    CHECK_AND_RETURN_RET_LOG(innerTorchStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerTorchStatusCallback failed!");
+    cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    cameraManager_->RegisterTorchListener(nullptr);
     return CAMERA_OK;
 }
 
@@ -394,7 +440,7 @@ Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 
 Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** captureSession)
 {
-    sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::CAPTURE);
+    sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::NORMAL);
     CHECK_AND_RETURN_RET_LOG(innerCaptureSession != nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreateCaptureSession create innerCaptureSession fail!");
     Camera_CaptureSession* outSession = new Camera_CaptureSession(innerCaptureSession);
@@ -522,6 +568,38 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
         return CAMERA_SERVICE_FATAL_ERROR;
     }
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+    *photoOutput = out;
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Profile* profile,
+    Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_ERR_LOG("Camera_Manager CreatePhotoOutputWithoutSurface is called");
+    sptr<PhotoOutput> innerPhotoOutput = nullptr;
+    Size size;
+    size.width = profile->size.width;
+    size.height = profile->size.height;
+    Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
+    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Failed to get photoOutput surface");
+
+    photoSurface_ = surface;
+    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
+    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+    CHECK_AND_RETURN_RET_LOG(surfaceProducer != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
+
+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile,
+        surfaceProducer, &innerPhotoOutput);
+    CHECK_AND_RETURN_RET_LOG((retCode == CameraErrorCode::SUCCESS && innerPhotoOutput != nullptr),
+        CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
+
+    innerPhotoOutput->SetNativeSurface(true);
+    Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
+    CHECK_AND_RETURN_RET_LOG(out != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
+    out->SetPhotoSurface(surface);
     *photoOutput = out;
     return CAMERA_OK;
 }
@@ -691,4 +769,40 @@ Camera_ErrorCode Camera_Manager::DeleteSceneModes(Camera_SceneMode* sceneModes)
     }
 
     return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::IsTorchSupported(bool* isTorchSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupported is called");
+
+    *isTorchSupported = CameraManager::GetInstance()->IsTorchSupported();
+    MEDIA_DEBUG_LOG("IsTorchSupported[%{public}d]", *isTorchSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupportedByTorchMode is called");
+
+    auto itr = g_ndkToFwTorchMode_.find(torchMode);
+    if (itr == g_ndkToFwTorchMode_.end()) {
+        MEDIA_ERR_LOG("torchMode[%{public}d] is invalid", torchMode);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    *isTorchSupported = CameraManager::GetInstance()->IsTorchModeSupported(itr->second);
+    MEDIA_DEBUG_LOG("IsTorchSupportedByTorchMode[%{public}d]", *isTorchSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::SetTorchMode is called");
+
+    auto itr = g_ndkToFwTorchMode_.find(torchMode);
+    if (itr == g_ndkToFwTorchMode_.end()) {
+        MEDIA_ERR_LOG("torchMode[%{public}d] is invalid", torchMode);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    int32_t ret = CameraManager::GetInstance()->SetTorchMode(itr->second);
+    return FrameworkToNdkCameraError(ret);
 }

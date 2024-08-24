@@ -35,6 +35,10 @@ public:
 
     Camera_ErrorCode UnregisterCallback(CaptureSession_Callbacks* callback);
 
+    Camera_ErrorCode RegisterSmoothZoomInfoCallback(OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback);
+
+    Camera_ErrorCode UnregisterSmoothZoomInfoCallback(OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback);
+
     Camera_ErrorCode SetSessionMode(Camera_SceneMode sceneMode);
 
     Camera_ErrorCode AddSecureOutput(Camera_PreviewOutput* previewOutput);
@@ -75,6 +79,8 @@ public:
 
     Camera_ErrorCode SetZoomRatio(float zoom);
 
+    Camera_ErrorCode SetSmoothZoom(float targetZoom, Camera_SmoothZoomMode smoothZoomMode);
+
     Camera_ErrorCode IsFocusModeSupported(Camera_FocusMode focusMode, bool* isSupported);
 
     Camera_ErrorCode GetFocusMode(Camera_FocusMode* focusMode);
@@ -84,6 +90,8 @@ public:
     Camera_ErrorCode SetFocusPoint(Camera_Point focusPoint);
 
     Camera_ErrorCode GetFocusPoint(Camera_Point* focusPoint);
+
+    Camera_ErrorCode GetFocalLength(float* focalLength);
 
     Camera_ErrorCode HasFlash(bool* hasFlash);
 
@@ -108,6 +116,16 @@ public:
     Camera_ErrorCode SetExposureBias(float exposureBias);
 
     Camera_ErrorCode GetExposureBias(float* exposureBias);
+
+    Camera_ErrorCode GetExposureValue(float* exposureValue);
+
+    Camera_ErrorCode GetSupportedColorSpaces(OH_NativeBuffer_ColorSpace** colorSpace, uint32_t* size);
+
+    Camera_ErrorCode GetActiveColorSpace(OH_NativeBuffer_ColorSpace* colorSpace);
+
+    Camera_ErrorCode DeleteColorSpaces(OH_NativeBuffer_ColorSpace* colorSpace);
+
+    Camera_ErrorCode SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace);
 
     Camera_ErrorCode Start();
 

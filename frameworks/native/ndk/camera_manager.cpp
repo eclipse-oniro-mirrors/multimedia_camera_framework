@@ -44,8 +44,8 @@ Camera_ErrorCode OH_CameraManager_RegisterCallback(Camera_Manager* cameraManager
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onCameraStatus is null!");
+    CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus != nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onCameraStatus is null!");
 
     cameraManager->RegisterCallback(callback);
     return CAMERA_OK;
@@ -57,9 +57,32 @@ Camera_ErrorCode OH_CameraManager_UnregisterCallback(Camera_Manager* cameraManag
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onCameraStatus is null!");
+    CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus != nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onCameraStatus is null!");
+
     cameraManager->UnregisterCallback(callback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CameraManager_RegisterTorchStatusCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(torchStatusCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    cameraManager->RegisterTorchStatusCallback(torchStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CameraManager_UnregisterTorchStatusCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(torchStatusCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    cameraManager->UnregisterTorchStatusCallback(torchStatusCallback);
     return CAMERA_OK;
 }
 
@@ -218,6 +241,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
     return cameraManager->CreatePhotoOutput(profile, surfaceId, photoOutput);
 }
 
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputWithoutSurface(Camera_Manager* cameraManager,
+    const Camera_Profile* profile, Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutputWithoutSurface is called");
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, photoOutput is null!");
+
+    return cameraManager->CreatePhotoOutputWithoutSurface(profile, photoOutput);
+}
+
 Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manager* cameraManager,
     const char* surfaceId, Camera_PhotoOutput** photoOutput)
 {
@@ -306,6 +343,48 @@ Camera_ErrorCode OH_CameraManager_DeleteSceneModes(Camera_Manager* cameraManager
         "Invaild argument, sceneModes is null!");
 
     return cameraManager->DeleteSceneModes(sceneModes);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchSupported(Camera_Manager* cameraManager,
+    bool* isTorchSupported)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(isTorchSupported != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isTorchSupported is null!");
+
+    return cameraManager->IsTorchSupported(isTorchSupported);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchSupportedByTorchMode(Camera_Manager* cameraManager,
+    Camera_TorchMode torchMode, bool* isTorchSupported)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null");
+    CHECK_AND_RETURN_RET_LOG(isTorchSupported != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isTorchSupported is null");
+
+    return cameraManager->IsTorchSupportedByTorchMode(torchMode, isTorchSupported);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager, Camera_TorchMode torchMode)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+
+    return cameraManager->SetTorchMode(torchMode);
 }
 
 #ifdef __cplusplus
