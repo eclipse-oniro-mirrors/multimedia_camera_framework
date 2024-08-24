@@ -1062,6 +1062,17 @@ bool CameraManager::GetDmDeviceInfo()
     return true;
 }
 
+void CameraManager::GetCameraOutputStatus(int32_t pid, int32_t &status)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(
+        serviceProxy == nullptr, "CameraManager::GetCameraOutputStatus serviceProxy is null");
+ 
+    int32_t retCode = serviceProxy->GetCameraOutputStatus(pid, status);
+    CHECK_ERROR_RETURN_LOG(
+        retCode != CAMERA_OK, "CameraManager::GetCameraOutputStatus failed!, retCode: %{public}d", retCode);
+}
+
 bool CameraManager::isDistributeCamera(std::string cameraId, dmDeviceInfo &deviceInfo)
 {
     MEDIA_INFO_LOG("CameraManager::cameraId = %{public}s", cameraId.c_str());
