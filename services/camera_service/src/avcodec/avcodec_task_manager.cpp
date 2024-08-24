@@ -219,8 +219,8 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
         return;
     }
     isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(audioRecordVec);
-    MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
-    for (size_t index = 0; index < audioRecordVec.size(); index++) {
+    size_t maxFrameCount = std::min(audioRecordVec.size(), MAX_AUDIO_FRAME_COUNT);
+    for (size_t index = 0; index < maxFrameCount; index++) {
         OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
         OH_AVBuffer* buffer = audioRecordVec[index]->encodedBuffer;
         OH_AVBuffer_GetBufferAttr(buffer, &attr);

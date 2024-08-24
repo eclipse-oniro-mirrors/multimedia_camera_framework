@@ -645,6 +645,8 @@ public:
 
     virtual FoldStatus GetFoldStatus();
 
+    void GetCameraOutputStatus(int32_t pid, int32_t &status);
+ 
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
