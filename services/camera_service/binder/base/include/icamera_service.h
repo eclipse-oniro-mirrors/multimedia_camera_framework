@@ -129,6 +129,8 @@ public:
     virtual int32_t ResetAllFreezeStatus() = 0;
 
     virtual int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) = 0;
+    
+    virtual int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

@@ -48,6 +48,7 @@ constexpr float VIDEO_FRAME_INTERVAL_MS = 33.33333;
 constexpr int32_t AUDIO_FRAME_INTERVAL = 21333;
 constexpr double VIDOE_FRAME_RATE = 30.0;
 constexpr int32_t CACHE_FRAME_COUNT = 45;
+constexpr size_t MAX_AUDIO_FRAME_COUNT = 140;
 constexpr int32_t BUFFER_RELEASE_EXPIREATION_TIME = 150;
 constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 10;
 constexpr int32_t ROTATION_360 = 360;
