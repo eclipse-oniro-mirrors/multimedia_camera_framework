@@ -199,6 +199,8 @@ Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange*
 Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     Camera_ImageRotation* cameraImageRotation)
 {
+    CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation(imageRotation);
     CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PreviewOutput::GetPreviewRotation camera service fatal error!");
