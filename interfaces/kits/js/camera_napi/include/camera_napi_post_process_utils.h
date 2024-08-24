@@ -42,22 +42,25 @@ public:
             } else if constexpr(std::is_same_v<decltype(queryResult), std::vector<int32_t>>
                             || std::is_enum_v<typename decltype(queryResult)::value_type>) {
                 status = napi_create_array(env, &result);
-                if (status != napi_ok) {
-                    MEDIA_ERR_LOG("napi_create_array call Failed!");
-                    return result;
-                }
+                CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
                 for (size_t i = 0; i < queryResult.size(); i++) {
                     int32_t value = queryResult[i];
                     napi_value element;
                     napi_create_int32(env, value, &element);
                     napi_set_element(env, result, i, element);
                 }
+            } else if constexpr(std::is_same_v<decltype(queryResult), std::vector<uint32_t>>) {
+                status = napi_create_array(env, &result);
+                CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+                for (size_t i = 0; i < queryResult.size(); i++) {
+                    uint32_t value = queryResult[i];
+                    napi_value element;
+                    napi_create_uint32(env, value, &element);
+                    napi_set_element(env, result, i, element);
+                }
             } else if constexpr(std::is_same_v<decltype(queryResult), std::vector<float>>) {
                 status = napi_create_array(env, &result);
-                if (status != napi_ok) {
-                    MEDIA_ERR_LOG("napi_create_array call Failed!");
-                    return result;
-                }
+                CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
                 for (size_t i = 0; i < queryResult.size(); i++) {
                     float value = queryResult[i];
                     napi_value element;

@@ -377,15 +377,15 @@ std::vector<sptr<CameraOutputCapability>> CaptureSession::GetCameraOutputCapabil
     return list;
 }
 
-std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector<Profile>& previewProfiles,
+std::vector<sptr<CameraAbility>> CaptureSession::GetSessionFunctions(std::vector<Profile>& previewProfiles,
                                                                      std::vector<Profile>& photoProfiles,
                                                                      std::vector<VideoProfile>& videoProfiles,
                                                                      bool isForApp)
 {
-    MEDIA_INFO_LOG("CaptureSession::GetSessionAbilities enter");
+    MEDIA_INFO_LOG("CaptureSession::GetSessionFunctions enter");
     auto inputDevice = GetInputDevice();
     if (inputDevice == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::GetSessionAbilities inputDevice is null");
+        MEDIA_ERR_LOG("CaptureSession::GetSessionFunctions inputDevice is null");
         return {};
     }
     auto device = inputDevice->GetCameraDeviceInfo();
@@ -404,12 +404,12 @@ std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector
 
     for (const auto& capability : outputCapabilityList) {
         int32_t specId = capability->specId_;
-        MEDIA_DEBUG_LOG("CaptureSession::GetSessionAbilities specId: %{public}d", specId);
+        MEDIA_DEBUG_LOG("CaptureSession::GetSessionFunctions specId: %{public}d", specId);
         if (capability->IsMatchPreviewProfiles(previewProfiles) &&
             capability->IsMatchPhotoProfiles(photoProfiles) &&
             capability->IsMatchVideoProfiles(videoProfiles)) {
             supportedSpecIds.insert(specId);
-            MEDIA_INFO_LOG("CaptureSession::GetSessionAbilities insert specId: %{public}d", specId);
+            MEDIA_INFO_LOG("CaptureSession::GetSessionFunctions insert specId: %{public}d", specId);
         }
     }
 
@@ -418,7 +418,7 @@ std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector
         GetFeaturesMode().GetFeaturedMode(), GetMetadata()->get(), supportedSpecIds, this, isForApp);
 }
 
-std::vector<sptr<CameraAbility>> CaptureSession::GetSessionConflictAbilities()
+std::vector<sptr<CameraAbility>> CaptureSession::GetSessionConflictFunctions()
 {
     CameraAbilityBuilder builder;
     return builder.GetConflictAbility(GetFeaturesMode().GetFeaturedMode(), GetMetadata()->get());
@@ -436,12 +436,12 @@ void CaptureSession::CreateCameraAbilityContainer()
     std::vector<VideoProfile> videoProfileList;
     PopulateProfileLists(photoProfileList, previewProfileList, videoProfileList);
     std::vector<sptr<CameraAbility>> abilities =
-        GetSessionAbilities(previewProfileList, photoProfileList, videoProfileList, false);
+        GetSessionFunctions(previewProfileList, photoProfileList, videoProfileList, false);
     MEDIA_DEBUG_LOG("CreateCameraAbilityContainer abilities size %{public}zu", abilities.size());
     if (abilities.size() == 0) {
         MEDIA_INFO_LOG("CreateCameraAbilityContainer fail cant find suitable ability");
     }
-    std::vector<sptr<CameraAbility>> conflictAbilities = GetSessionConflictAbilities();
+    std::vector<sptr<CameraAbility>> conflictAbilities = GetSessionConflictFunctions();
     MEDIA_DEBUG_LOG("CreateCameraAbilityContainer conflictAbilities size %{public}zu", conflictAbilities.size());
     std::lock_guard<std::mutex> lock(abilityContainerMutex_);
     cameraAbilityContainer_ = new CameraAbilityContainer(abilities, conflictAbilities, this);
