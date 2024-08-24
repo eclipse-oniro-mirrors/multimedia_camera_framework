@@ -1511,6 +1511,23 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
     return CAMERA_OK;
 }
 
+void HCaptureSession::GetOutputStatus(int32_t &status)
+{
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& stream : repeatStreams) {
+        if (stream == nullptr) {
+            continue;
+        }
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::VIDEO) {
+            if (streamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET) {
+                const int32_t videoStartStatus = 2;
+                status = videoStartStatus;
+            }
+        }
+    }
+}
+
 void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp)
 {
     if (!isSetMotionPhoto_) {
