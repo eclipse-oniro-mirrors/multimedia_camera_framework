@@ -330,7 +330,7 @@ napi_value CameraPickerNapi::Pick(napi_env env, napi_callback_info cbInfo)
 
     std::unique_ptr<CameraPickerAsyncContext> asyncCtx = std::make_unique<CameraPickerAsyncContext>();
     asyncCtx->funcName = "CameraPickerNapi::Pick";
-    asyncCtx->taskId = CameraNapiUtils::IncreamentAndGet(cameraPickerTaskId);
+    asyncCtx->taskId = CameraNapiUtils::IncrementAndGet(cameraPickerTaskId);
     asyncCtx->contextProxy = GetAbilityContext(env, argv[ARGS_ZERO]);
     if (asyncCtx->contextProxy == nullptr) {
         MEDIA_ERR_LOG("GetAbilityContext failed");

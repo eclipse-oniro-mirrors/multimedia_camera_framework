@@ -520,7 +520,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PreviewOutputNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -585,7 +585,7 @@ napi_status PreviewOutputNapi::CreateAsyncTask(
         context->status = false;
         // Start async trace
         context->funcName = "PreviewOutputNapi::AddDeferredSurface";
-        context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+        context->taskId = CameraNapiUtils::IncrementAndGet(previewOutputTaskId);
         CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
         if (context->objectInfo != nullptr) {
             context->bRetBool = false;
@@ -687,7 +687,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PreviewOutputNapi::Start";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -741,7 +741,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PreviewOutputNapi::Stop";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
