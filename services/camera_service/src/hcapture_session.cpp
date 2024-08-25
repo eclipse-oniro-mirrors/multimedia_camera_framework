@@ -840,7 +840,6 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
         audioCapturerSession_->Stop();
     }
     if (taskManager_) {
-        taskManager_->ClearTaskResource();
         taskManager_->Stop();
     }
 }
