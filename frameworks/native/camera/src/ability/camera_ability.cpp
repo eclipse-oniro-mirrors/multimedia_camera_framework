@@ -141,6 +141,11 @@ bool CameraAbility::IsFeatureSupported(SceneFeature sceneFeature)
         supportedSceneFeature_.begin(), supportedSceneFeature_.end(), sceneFeature) != supportedSceneFeature_.end();
 }
 
+bool CameraAbility::IsLcdFlashSupported()
+{
+    return isLcdFlashSupported_;
+}
+
 void CameraAbility::DumpCameraAbilityInfo()
 {
     auto logFunc = [](const std::string& label, const auto& container) {

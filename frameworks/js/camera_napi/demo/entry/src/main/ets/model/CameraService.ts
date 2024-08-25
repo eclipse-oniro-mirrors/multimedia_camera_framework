@@ -1861,7 +1861,7 @@ class CameraService {
     list.forEach((conflictFunctions) => {
       this.logPortraitPhotoConflictFunctions(conflictFunctions);
     });
-    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
+    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[(this.globalContext.getObject('cameraDeviceIndex') as number)]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
@@ -1880,7 +1880,7 @@ class CameraService {
       let isMacroSupported: bool = conflictFunctions.isMacroSupported();
       Logger.info(TAG_AB, `VideoConflictFunctions isMacroSupported:${isMacroSupported}`);
     });
-    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
+    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[(this.globalContext.getObject('cameraDeviceIndex') as number)]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
@@ -1899,7 +1899,7 @@ class CameraService {
       let isMacroSupported: bool = conflictFunctions.isMacroSupported();
       Logger.info(TAG_AB, `PhotoConflictFunctions isMacroSupported:${isMacroSupported}`);
     });
-    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[0]);
+    let cocList: Array<camera.CameraOutputCapability> = session.getCameraOutputCapabilities(this.cameras[(this.globalContext.getObject('cameraDeviceIndex') as number)]);
     let coc: camera.CameraOutputCapability = cocList[0];
     this.logCameraOutputCapabilities(coc);
     if (coc) {
@@ -1915,6 +1915,8 @@ class CameraService {
     Logger.info(TAG_AB, `PortraitPhotoFunctions hasFlash:${hasFlash}`);
     let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
     Logger.info(TAG_AB, `PortraitPhotoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isLcdFlashSupported: bool = functions.isLcdFlashSupported();
+    Logger.info(TAG_AB, `PortraitPhotoFunctions isLcdFlashSupported:${isLcdFlashSupported}`);
     let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
     Logger.info(TAG_AB, `PortraitPhotoFunctions isExposureModeSupported:${isExposureModeSupported}`);
     let exposureBiasRange: Array<number> = functions.getExposureBiasRange();
@@ -1949,6 +1951,8 @@ class CameraService {
     Logger.info(TAG_AB, `VideoFunctions hasFlash:${hasFlash}`);
     let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
     Logger.info(TAG_AB, `VideoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isLcdFlashSupported: bool = functions.isLcdFlashSupported();
+    Logger.info(TAG_AB, `VideoFunctions isLcdFlashSupported:${isLcdFlashSupported}`);
     let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
     Logger.info(TAG_AB, `VideoFunctions isExposureModeSupported:${isExposureModeSupported}`);
     let exposureBiasRange: Array<number> = functions.getExposureBiasRange();
@@ -1984,6 +1988,8 @@ class CameraService {
     Logger.info(TAG_AB, `PhotoFunctions hasFlash:${hasFlash}`);
     let isFlashModeSupported: bool = functions.isFlashModeSupported(camera.FlashMode.FLASH_MODE_CLOSE);
     Logger.info(TAG_AB, `PhotoFunctions isFlashModeSupported:${isFlashModeSupported}`);
+    let isLcdFlashSupported: bool = functions.isLcdFlashSupported();
+    Logger.info(TAG_AB, `PhotoFunctions isLcdFlashSupported:${isLcdFlashSupported}`);
     let isExposureModeSupported: bool = functions.isExposureModeSupported(camera.ExposureMode.EXPOSURE_MODE_LOCKED);
     Logger.info(TAG_AB, `PhotoFunctions isExposureModeSupported:${isExposureModeSupported}`);
     let exposureBiasRange: Array<number> = functions.getExposureBiasRange();

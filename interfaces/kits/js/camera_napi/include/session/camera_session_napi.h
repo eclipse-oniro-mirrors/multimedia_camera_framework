@@ -347,8 +347,8 @@ public:
 
     static napi_value GetSessionFunctions(napi_env env, napi_callback_info info);
     static napi_value GetSessionConflictFunctions(napi_env env, napi_callback_info info);
-    static napi_value CreateAbilitiesJSArray(
-        napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict);
+    static napi_value CreateFunctionsJSArray(
+        napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type);
     const EmitterFunctions& GetEmitterFunctions() override;
 
     napi_env env_;
@@ -367,6 +367,8 @@ public:
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
     static thread_local uint32_t cameraSessionTaskId;
+    static const std::map<SceneMode, FunctionsType> modeToFunctionTypeMap_;
+    static const std::map<SceneMode, FunctionsType> modeToConflictFunctionTypeMap_;
     static const std::vector<napi_property_descriptor> camera_output_capability_props;
     static const std::vector<napi_property_descriptor> camera_ability_props;
     static const std::vector<napi_property_descriptor> camera_process_props;

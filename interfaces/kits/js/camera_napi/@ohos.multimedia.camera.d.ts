@@ -4699,13 +4699,15 @@ declare namespace camera {
     /**
      * Gets session functions.
      *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
      * @returns { Array<PhotoFunctions> } List of session functions.
      * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    getSessionFunctions(): Array<PhotoFunctions>;
+    getSessionFunctions(outputCapability: CameraOutputCapability): Array<PhotoFunctions>;
 
     /**
      * Gets session conflict functions.
@@ -4852,13 +4854,15 @@ declare namespace camera {
     /**
      * Gets session functions.
      *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
      * @returns { Array<VideoFunctions> } List of session functions.
      * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    getSessionFunctions(): Array<VideoFunctions>;
+    getSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
 
     /**
      * Gets session conflict functions.
@@ -5287,13 +5291,15 @@ declare namespace camera {
     /**
      * Gets session functions.
      *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
      * @returns { Array<PortraitPhotoFunctions> } List of session functions.
      * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    getSessionFunctions(): Array<PortraitPhotoFunctions>;
+    getSessionFunctions(outputCapability: CameraOutputCapability): Array<PortraitPhotoFunctions>;
 
     /**
      * Gets session conflict functions.

@@ -132,6 +132,7 @@ void CameraAbilityBuilder::SetModeSpecTagField(
 void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t modeName, sptr<CaptureSession> session)
 {
     ability->supportedFlashModes_ = session->GetSupportedFlashModes();
+    ability->isLcdFlashSupported_ = session->IsLcdFlashSupported();
     ability->supportedExposureModes_ = session->GetSupportedExposureModes();
     ability->supportedFocusModes_ = session->GetSupportedFocusModes();
     ability->exposureBiasRange_ = session->GetExposureBiasRange();
