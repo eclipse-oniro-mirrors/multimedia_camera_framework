@@ -441,7 +441,7 @@ protected:
 
 struct CameraSessionAsyncContext : public AsyncContext {
     CameraSessionAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
-    CameraSessionNapi* objectInfo;
+    CameraSessionNapi* objectInfo = nullptr;
     std::string errorMsg;
 };
 } // namespace CameraStandard
