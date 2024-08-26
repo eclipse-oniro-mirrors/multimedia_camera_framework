@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative* mainImage)
+Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative** mainImage)
 {
     CHECK_AND_RETURN_RET_LOG(photo != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, photo is null!");

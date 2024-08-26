@@ -25,7 +25,7 @@ public:
     explicit OH_PhotoNative();
     ~OH_PhotoNative();
 
-    Camera_ErrorCode GetMainImage(OH_ImageNative* mainImage);
+    Camera_ErrorCode GetMainImage(OH_ImageNative** mainImage);
 
     void SetMainImage(std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
     void SetRawImage(std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
