@@ -256,5 +256,23 @@ int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>&
 
     return error;
 }
+
+int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+ 
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isEnable);
+    data.WriteInt32(rotation);
+ 
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

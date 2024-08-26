@@ -195,6 +195,26 @@ Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previ
 
     return previewOutput->GetActiveFrameRate(frameRateRange);
 }
+
+Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previewOutput, int displayRotation,
+    Camera_ImageRotation* imageRotation)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_GetPreviewRotation is called.");
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, imageRotation is null!");
+    return previewOutput->GetPreviewRotation(displayRotation, imageRotation);
+}
+
+Camera_ErrorCode OH_PreviewOutput_SetPreviewRotation(Camera_PreviewOutput* previewOutput,
+    Camera_ImageRotation previewRotation, bool isDisplayLocked)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_SetPreviewRotation is called.");
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    return previewOutput->SetPreviewRotation(previewRotation, isDisplayLocked);
+}
 #ifdef __cplusplus
 }
 #endif
