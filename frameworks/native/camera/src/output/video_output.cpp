@@ -447,7 +447,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     sensorOrientation = item.data.i32[0];
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
-    } else if (cameraPosition == CAMERA_POSITION_FRONT || CAMERA_POSITION_FOLD_INNER) {
+    } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
         result = (ImageRotation)((imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
     MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d",
