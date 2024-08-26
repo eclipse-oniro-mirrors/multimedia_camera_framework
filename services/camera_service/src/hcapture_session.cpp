@@ -1655,9 +1655,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         }
         MEDIA_INFO_LOG("CreateMediaLibrary not Bursting");
     }
-    
-    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
-        cameraServerPhotoProxy->GetLatitude(), cameraServerPhotoProxy->GetLongitude());
+
     if (cameraServerPhotoProxy->GetPhotoQuality() == Media::PhotoQuality::HIGH) {
         MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoQuality::HIGH");
     }
