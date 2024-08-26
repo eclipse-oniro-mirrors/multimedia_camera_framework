@@ -62,13 +62,13 @@ typedef struct OH_PhotoNative OH_PhotoNative;
  * @brief Get main image.
  *
  * @param photo the {@link OH_PhotoNative} instance.
- * @param main the {@link OH_ImageNative} which use to get main image.
+ * @param mainImage the {@link OH_ImageNative} which use to get main image.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  * @version 1.0
  */
-Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative* mainImage);
+Camera_ErrorCode OH_PhotoNative_GetMainImage(OH_PhotoNative* photo, OH_ImageNative** mainImage);
 
 /**
  * @brief Release camera photo.

@@ -38,9 +38,11 @@ OH_PhotoNative::~OH_PhotoNative()
     }
 }
 
-Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative* mainImage)
+Camera_ErrorCode OH_PhotoNative::GetMainImage(OH_ImageNative** mainImage)
 {
-    mainImage->imgNative = mainImage_.get();
+    OH_ImageNative *imageNative = new OH_ImageNative;
+    imageNative->imgNative = mainImage_.get();
+    *mainImage = imageNative;
     return CAMERA_OK;
 }
 
