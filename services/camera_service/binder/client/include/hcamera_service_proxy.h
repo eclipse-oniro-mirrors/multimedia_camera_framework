@@ -110,6 +110,8 @@ public:
     int32_t ResetAllFreezeStatus() override;
 
     int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) override;
+    
+    int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };
