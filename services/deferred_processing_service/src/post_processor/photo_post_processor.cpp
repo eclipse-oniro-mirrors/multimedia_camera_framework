@@ -17,13 +17,22 @@
 #include <cstdint>
 #include <string>
 #include <sys/mman.h>
-
+#include "foundation/multimedia/camera_framework/services/camera_service/include/camera_util.h"
+#include "foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include/photo_proxy.h"
+#include "image_format.h"
+#include "image_mime_type.h"
+#include "image_type.h"
+#include "v1_3/iimage_process_service.h"
 #include "iproxy_broker.h"
 #include "v1_3/types.h"
+#include "securec.h"
 #include "shared_buffer.h"
 #include "dp_utils.h"
 #include "events_monitor.h"
 #include "dps_event_report.h"
+#include "picture.h"
+#include "steady_clock.h"
+#include "buffer_extra_data_impl.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -106,7 +115,7 @@ OHOS::HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode execu
     return mode;
 }
 
-class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_2::IImageProcessCallback {
+class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_3::IImageProcessCallback {
 public:
     explicit PhotoProcessListener(PhotoPostProcessor* photoPostProcessor) : photoPostProcessor_(photoPostProcessor)
     {
@@ -118,6 +127,10 @@ public:
     }
 
     int32_t OnProcessDone(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer) override;
+
+    int32_t OnProcessDoneExt(const std::string& imageId,
+        const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer) override;
+
     int32_t OnError(const std::string& imageId,  OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override;
     int32_t OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status) override;
 
@@ -125,6 +138,7 @@ private:
     void ReportEvent(const std::string& imageId);
     int32_t processBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
 
+    std::shared_ptr<Media::Picture> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     PhotoPostProcessor* photoPostProcessor_;
 };
 
@@ -160,7 +174,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
     DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
         "failed to initialize shared buffer.");
-    
+
     uint8_t* addr = static_cast<uint8_t*>(
         mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle->fd, 0));
     if (bufferPtr->CopyFrom(addr, dataSize) == DP_OK) {
@@ -172,6 +186,174 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     }
     munmap(addr, dataSize);
     return DP_OK;
+}
+
+BufferHandle *CloneBufferHandle(const BufferHandle *handle)
+{
+    if (handle == nullptr) {
+        DP_ERR_LOG("%{public}s handle is nullptr", __func__);
+        return nullptr;
+    }
+
+    BufferHandle *newHandle = AllocateBufferHandle(handle->reserveFds, handle->reserveInts);
+    if (newHandle == nullptr) {
+        DP_ERR_LOG("%{public}s AllocateBufferHandle failed, newHandle is nullptr", __func__);
+        return nullptr;
+    }
+
+    if (handle->fd == -1) {
+        newHandle->fd = handle->fd;
+    } else {
+        newHandle->fd = dup(handle->fd);
+        if (newHandle->fd == -1) {
+            DP_ERR_LOG("CloneBufferHandle dup failed");
+            FreeBufferHandle(newHandle);
+            return nullptr;
+        }
+    }
+    newHandle->width = handle->width;
+    newHandle->stride = handle->stride;
+    newHandle->height = handle->height;
+    newHandle->size = handle->size;
+    newHandle->format = handle->format;
+    newHandle->usage = handle->usage;
+    newHandle->phyAddr = handle->phyAddr;
+
+    for (uint32_t i = 0; i < newHandle->reserveFds; i++) {
+        newHandle->reserve[i] = dup(handle->reserve[i]);
+        if (newHandle->reserve[i] == -1) {
+            DP_ERR_LOG("CloneBufferHandle dup reserveFds failed");
+            FreeBufferHandle(newHandle);
+            return nullptr;
+        }
+    }
+
+    if (handle->reserveInts == 0) {
+        DP_ERR_LOG("There is no reserved integer value in old handle, no need to copy");
+        return newHandle;
+    }
+
+    if (memcpy_s(&newHandle->reserve[newHandle->reserveFds], sizeof(int32_t) * newHandle->reserveInts,
+        &handle->reserve[handle->reserveFds], sizeof(int32_t) * handle->reserveInts) != EOK) {
+        DP_ERR_LOG("CloneBufferHandle memcpy_s failed");
+        FreeBufferHandle(newHandle);
+        return nullptr;
+    }
+    return newHandle;
+}
+
+sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(BufferHandle *bufferHandle)
+{
+    DP_INFO_LOG("entered");
+    if (bufferHandle == nullptr) {
+        DP_ERR_LOG("bufferHandle is null");
+        return nullptr;
+    }
+    BufferHandle *newBufferHandle = CloneBufferHandle(bufferHandle);
+    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
+    surfaceBuffer->SetBufferHandle(newBufferHandle);
+    DP_INFO_LOG("TransBufferHandleToSurfaceBuffer w=%{public}d, h=%{public}d, f=%{public}d",
+        surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
+    return surfaceBuffer;
+}
+
+std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bufferHandle,
+    Media::AuxiliaryPictureType type)
+{
+    DP_INFO_LOG("entered");
+    if (bufferHandle == nullptr) {
+        DP_ERR_LOG("bufferHandle is null");
+        return nullptr;
+    }
+    auto buffer = TransBufferHandleToSurfaceBuffer(bufferHandle);
+    auto uniquePtr = Media::AuxiliaryPicture::Create(buffer, type, {buffer->GetWidth(), buffer->GetHeight()});
+    auto auxiliaryPicture = std::shared_ptr<Media::AuxiliaryPicture>(uniquePtr.release());
+    return auxiliaryPicture;
+}
+
+std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
+    const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
+{
+    DP_INFO_LOG("entered");
+    int32_t exifDataSize = 0;
+    if (buffer.metadata) {
+        int32_t retExifDataSize = buffer.metadata->Get("exifDataSize", exifDataSize);
+        DP_INFO_LOG("AssemblePicture retExifDataSize: %{public}d, exifDataSize: %{public}d",
+            static_cast<int>(retExifDataSize), static_cast<int>(exifDataSize));
+    }
+    auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
+    if (imageBuffer == nullptr) {
+        DP_ERR_LOG("bufferHandle is null");
+        return 0;
+    }
+    std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
+    if (buffer.isGainMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::GAINMAP);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
+    }
+    if (buffer.isDepthMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::DEPTH_MAP);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
+    }
+    if (buffer.isExifValid) {
+        auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
+        sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
+        extraData->ExtraSet("exifDataSize", exifDataSize);
+        exifBuffer->SetExtraData(extraData);
+        picture->SetExifMetadata(exifBuffer);
+    }
+    if (buffer.isMakerInfoValid) {
+        auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
+        picture->SetMaintenanceData(makerInfoBuffer);
+    }
+    return picture;
+}
+
+int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(const std::string& imageId,
+    const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
+{
+    DP_INFO_LOG("entered");
+    auto imageBufferHandle = buffer.imageHandle->GetBufferHandle();
+    if (imageBufferHandle == nullptr) {
+        DP_ERR_LOG("bufferHandle is null");
+        return 0;
+    }
+    int size = imageBufferHandle->size;
+    int32_t isDegradedImage = 0;
+    int32_t dataSize = size;
+    int32_t deferredImageFormat = 0;
+    if (buffer.metadata) {
+        int32_t retImageQuality = buffer.metadata->Get("isDegradedImage", isDegradedImage);
+        int32_t retDataSize = buffer.metadata->Get("dataSize", dataSize);
+        int32_t retFormat = buffer.metadata->Get("deferredImageFormat", deferredImageFormat);
+        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retFormat: %{public}d", retImageQuality,
+            retDataSize, retFormat);
+    }
+    DP_INFO_LOG("bufferHandle param, bufferHandleSize: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d, "
+        "deferredImageFormat: %{public}d", size, dataSize, isDegradedImage, deferredImageFormat);
+    if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
+        std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
+        std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
+            isDegradedImage == 0);
+        photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
+    } else {
+        auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
+        DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
+            "failed to initialize shared buffer.");
+        uint8_t* addr = static_cast<uint8_t*>(
+            mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, imageBufferHandle->fd, 0));
+        if (bufferPtr->CopyFrom(addr, dataSize) == DP_OK) {
+            DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
+            std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
+                isDegradedImage == 0);
+            photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
+        }
+        munmap(addr, dataSize);
+    }
+    ReportEvent(imageId);
+    return 0;
 }
 
 void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& imageId)
@@ -384,6 +566,19 @@ void PhotoPostProcessor::OnProcessDone(const std::string& imageId, std::shared_p
     }
 }
 
+void PhotoPostProcessor::OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo)
+{
+    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+    consecutiveTimeoutCount_ = 0;
+    StopTimer(imageId);
+    if (processCallacks_) {
+        taskManager_->SubmitTask([this, imageId, bufferInfo = std::move(bufferInfo)]() {
+            processCallacks_->OnProcessDoneExt(userId_, imageId, std::move(bufferInfo));
+        });
+    }
+}
+
 void PhotoPostProcessor::OnError(const std::string& imageId, DpsError errorCode)
 {
     DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
@@ -445,22 +640,36 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         DP_INFO_LOG("connected");
         return true;
     }
-
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessService> imageProcessServiceProxy =
-        OHOS::HDI::Camera::V1_2::IImageProcessService::Get(std::string("camera_image_process_service"));
-    if (imageProcessServiceProxy == nullptr) {
-        DP_INFO_LOG("Failed to get ImageProcessService");
-        ScheduleConnectService();
-        return false;
-    }
-
-    imageProcessServiceProxy->CreateImageProcessSession(userId_, listener_, session_);
-    if (session_ == nullptr) {
+    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSession;
+    sptr<OHOS::HDI::Camera::V1_2::IImageProcessService> imageProcessServiceProxyV1_2;
+    sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> imageProcessServiceProxyV1_3;
+    imageProcessServiceProxyV1_2 = OHOS::HDI::Camera::V1_2::IImageProcessService::Get(
+        std::string("camera_image_process_service"));
+    if (imageProcessServiceProxyV1_2 == nullptr) {
         DP_INFO_LOG("Failed to CreateImageProcessSession");
         ScheduleConnectService();
         return false;
     }
-
+    uint32_t majorVer = 0;
+    uint32_t minorVer = 0;
+    imageProcessServiceProxyV1_2->GetVersion(majorVer, minorVer);
+    int32_t versionId = GetVersionId(majorVer, minorVer);
+    DP_INFO_LOG("CreateImageProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
+    if (imageProcessServiceProxyV1_2 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+        imageProcessServiceProxyV1_3 =
+            OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(imageProcessServiceProxyV1_2);
+        DP_INFO_LOG("CreateImageProcessSession CastFrom imageProcessServiceProxyV1_3 == nullptr %{public}d",
+            imageProcessServiceProxyV1_3 == nullptr);
+    }
+    if (imageProcessServiceProxyV1_3 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+        sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSessionV1_3;
+        imageProcessServiceProxyV1_3->CreateImageProcessSessionExt(userId_, listener_, imageProcessSessionV1_3);
+        DP_INFO_LOG("CreateImageProcessSessionExt");
+        imageProcessSession = imageProcessSessionV1_3;
+    } else if (imageProcessServiceProxyV1_2 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+        imageProcessServiceProxyV1_2->CreateImageProcessSession(userId_, listener_, imageProcessSession);
+    }
+    session_ = imageProcessSession;
     for (const auto& imageId : removeNeededList_) {
         int32_t ret = session_->RemoveImage(imageId);
         DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);

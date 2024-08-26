@@ -20,7 +20,9 @@
 #include "session_manager.h"
 #include "scheduler_manager.h"
 #include "task_manager.h"
-
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -32,6 +34,8 @@ public:
     EXPORT_API void Initialize();
     EXPORT_API void Start();
     EXPORT_API void Stop();
+    EXPORT_API void NotifyLowQualityImage(const int32_t userId, const std::string& imamgeId,
+        std::shared_ptr<Media::Picture> picture);
     ~DeferredProcessingService();
     EXPORT_API sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback> callbacks);

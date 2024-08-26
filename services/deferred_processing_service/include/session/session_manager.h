@@ -36,6 +36,7 @@ public:
         const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callback,
         std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
+    sptr<IDeferredPhotoProcessingSessionCallback> GetCallback(const int32_t userId);
     sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
     void OnCallbackDied(const int32_t userId);
 

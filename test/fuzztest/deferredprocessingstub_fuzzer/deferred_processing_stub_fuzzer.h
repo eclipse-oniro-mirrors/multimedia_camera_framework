@@ -36,6 +36,14 @@ public:
     {
         return 0;
     }
+    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture) override
+    {
+        return 0;
+    }
+    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture) override
+    {
+        return 0;
+    }
     inline int32_t OnError(const std::string &imageId, const ErrorCode errorCode) override
     {
         return 0;

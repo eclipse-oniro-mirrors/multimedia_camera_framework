@@ -15,7 +15,7 @@
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service_ipc_interface_code.h"
 #include "dp_log.h"
-
+#include "picture.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -38,6 +38,16 @@ int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
         }
         case static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_STATE_CHANGED): {
             errCode = DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(data);
+            break;
+        }
+        case static_cast<uint32_t>(
+            DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_LOW_QUALITY_IMAGE): {
+            errCode = DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(data);
+            break;
+        }
+        case static_cast<uint32_t>(
+            DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_PICTURE_DONE): {
+            errCode = DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(data);
             break;
         }
         default:
@@ -77,6 +87,26 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(MessageParc
 
     int32_t ret = OnStateChanged((StatusCode)status);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged result: %{public}d", ret);
+    return ret;
+}
+
+int DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(MessageParcel& data)
+{
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
+    std::string imageId = data.ReadString();
+    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    int32_t ret = OnDeliveryLowQualityImage(imageId, picturePtr);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
+    return ret;
+}
+
+int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(MessageParcel& data)
+{
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
+    std::string imageId = data.ReadString();
+    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    int32_t ret = OnProcessImageDone(imageId, picturePtr);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
     return ret;
 }
 } // namespace DeferredProcessing

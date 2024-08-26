@@ -138,7 +138,8 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     return error;
 }
 
-int32_t HStreamCaptureProxy::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamCaptureProxy::SetBufferProducerInfo(const std::string bufName,
+    const sptr<OHOS::IBufferProducer> &producer)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -148,11 +149,12 @@ int32_t HStreamCaptureProxy::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProdu
         "HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(bufName);
     data.WriteRemoteObject(producer->AsObject());
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetRawPhotoStreamInfo failed, error: %{public}d",
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetBufferProducerInfo failed, error: %{public}d",
         error);
     return error;
 }
@@ -200,6 +202,23 @@ int32_t HStreamCaptureProxy::IsDeferredVideoEnabled()
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO), data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d",
         error);
+    return error;
+}
+
+int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(videoCodecType);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_VIDEO_CODEC_TYPE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d", error);
+    }
     return error;
 }
 } // namespace CameraStandard

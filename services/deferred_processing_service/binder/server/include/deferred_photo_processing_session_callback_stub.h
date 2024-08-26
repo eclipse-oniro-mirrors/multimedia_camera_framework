@@ -29,6 +29,8 @@ public:
 
 private:
     int HandleOnProcessImageDone(MessageParcel& data);
+    int HandleProcessLowQualityImage(MessageParcel& data);
+    int HandleOnProcessPictureDone(MessageParcel& data);
     int HandleOnError(MessageParcel& data);
     int HandleOnStateChanged(MessageParcel& data);
 };

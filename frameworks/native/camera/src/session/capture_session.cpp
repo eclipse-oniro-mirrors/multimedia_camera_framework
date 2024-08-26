@@ -43,6 +43,8 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "ability/camera_ability_builder.h"
+#include "picture.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -132,7 +134,7 @@ const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType>
     {OHOS_CAMERA_EFFECT_SUGGESTION_SKY, EFFECT_SUGGESTION_SKY},
     {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET}
 };
-    
+
 const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
     CaptureSession::fwkEffectSuggestionTypeMap_ = {
     {EFFECT_SUGGESTION_NONE, OHOS_CAMERA_EFFECT_SUGGESTION_NONE},
@@ -907,7 +909,7 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
     if (profilePtr == nullptr) {
         return false;
     }
-    return ValidateOutputProfile(*profilePtr, outputType);
+    return true;
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
@@ -1123,6 +1125,22 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
             errorCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
+    }
+}
+
+void CaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+    std::string &uri, int32_t &cameraShotType)
+{
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CreatePictureForMediaLibrary captureSession is nullptr");
     }
 }
 
@@ -2832,6 +2850,8 @@ void CaptureSession::ProcessProfilesAbilityId(const SceneMode supportModes)
     auto inputDevice = GetInputDevice();
     std::vector<Profile> photoProfiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[supportModes];
     std::vector<Profile> previewProfiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[supportModes];
+    MEDIA_INFO_LOG("photoProfiles size = %{public}zu, photoProfiles size = %{public}zu", photoProfiles.size(),
+        previewProfiles.size());
     for (auto i : photoProfiles) {
         std::vector<uint32_t> ids = i.GetAbilityId();
         std::string abilityIds = Container2String(ids.begin(), ids.end());

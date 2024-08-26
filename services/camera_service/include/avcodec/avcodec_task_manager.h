@@ -36,7 +36,7 @@
 #include "task_manager.h"
 
 #include "media_photo_asset_proxy.h"
-
+#include "camera_util.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -46,9 +46,10 @@ using CacheCbFunc = function<void(sptr<FrameRecord>, bool)>;
 constexpr uint32_t DEFAULT_THREAD_NUMBER = 6;
 constexpr uint32_t DEFAULT_ENCODER_THREAD_NUMBER = 1;
 constexpr uint32_t GET_FD_EXPIREATION_TIME = 500;
+
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
-    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession);
+    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type);
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
@@ -75,6 +76,7 @@ private:
     mutex encoderManagerMutex_;
     std::atomic<bool> isActive_ { true };
     queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
+    VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
 };
 } // CameraStandard
 } // OHOS

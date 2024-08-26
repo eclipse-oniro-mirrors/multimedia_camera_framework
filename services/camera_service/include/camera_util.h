@@ -24,7 +24,6 @@
 #include <sstream>
 
 #include "camera_metadata_info.h"
-#include "display/graphic/common/v1_0/cm_color_space.h"
 #include "safe_map.h"
 #include "surface_type.h"
 #include "v1_0/types.h"
@@ -108,6 +107,11 @@ enum DeviceType {
 
 enum FallingState {
     FALLING_STATE = 1008,
+};
+
+enum VideoCodecType : int32_t {
+    VIDEO_ENCODE_TYPE_AVC = 0,
+    VIDEO_ENCODE_TYPE_HEVC,
 };
 
 extern std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat;

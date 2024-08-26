@@ -43,7 +43,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
-    int32_t SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t DeferImageDeliveryFor(int32_t type) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
@@ -64,7 +64,10 @@ public:
     int32_t GetMode();
     int32_t IsDeferredPhotoEnabled() override;
     int32_t IsDeferredVideoEnabled() override;
+    int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
+    int32_t GetMovingPhotoVideoCodecType();
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    void FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
     SafeMap<int32_t, int32_t> rotationMap_ = {};
     bool IsBurstCapture(int32_t captureId) const;
     bool IsBurstCover(int32_t captureId) const;
@@ -87,6 +90,10 @@ private:
     int32_t thumbnailSwitch_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
     sptr<BufferProducerSequenceable> rawBufferQueue_;
+    sptr<BufferProducerSequenceable> gainmapBufferQueue_;
+    sptr<BufferProducerSequenceable> deepBufferQueue_;
+    sptr<BufferProducerSequenceable> exifBufferQueue_;
+    sptr<BufferProducerSequenceable> debugBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
@@ -97,6 +104,7 @@ private:
     std::map<int32_t, std::string> burstkeyMap_;
     std::map<int32_t, int32_t> burstNumMap_;
     int32_t burstNum_;
+    int32_t videoCodecType_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

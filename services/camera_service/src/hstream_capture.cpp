@@ -65,11 +65,48 @@ HStreamCapture::~HStreamCapture()
         format_, width_, height_, GetFwkStreamId());
 }
 
-int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamCapture::LinkInput(sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     MEDIA_INFO_LOG("HStreamCapture::LinkInput streamId:%{public}d", GetFwkStreamId());
     return HStreamCommon::LinkInput(streamOperator, cameraAbility);
+}
+
+void HStreamCapture::FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format)
+{
+    HDI::Camera::V1_1::ExtendedStreamInfo gainmapExtendedStreamInfo = {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_GAINMAP),
+        .width = width_,
+        .height = height_,
+        .format = format,
+        .bufferQueue = gainmapBufferQueue_,
+    };
+    HDI::Camera::V1_1::ExtendedStreamInfo deepExtendedStreamInfo = {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_DEPTH),
+        .width = width_,
+        .height = height_,
+        .format = format,
+        .bufferQueue = deepBufferQueue_,
+    };
+    HDI::Camera::V1_1::ExtendedStreamInfo exifExtendedStreamInfo = {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_EXIF),
+        .width = width_,
+        .height = height_,
+        .format = format,
+        .bufferQueue = exifBufferQueue_,
+    };
+    HDI::Camera::V1_1::ExtendedStreamInfo debugExtendedStreamInfo = {
+        .type =
+            static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_MAKER_INFO),
+        .width = width_,
+        .height = height_,
+        .format = format,
+        .bufferQueue = debugBufferQueue_,
+    };
+    std::vector<HDI::Camera::V1_1::ExtendedStreamInfo> extendedStreams = { gainmapExtendedStreamInfo,
+        deepExtendedStreamInfo, exifExtendedStreamInfo, debugExtendedStreamInfo };
+    streamInfo.extendedStreamInfos.insert(streamInfo.extendedStreamInfos.end(),
+        extendedStreams.begin(), extendedStreams.end());
 }
 
 void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
@@ -84,7 +121,7 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
                 static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
             .width = width_,
             .height = height_,
-            .format = format_,
+            .format = streamInfo.v1_0.format_,
             .dataspace = 0,
             .bufferQueue = rawBufferQueue_,
         };
@@ -101,6 +138,15 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
+    int32_t timelapseMode = static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO);
+    if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
+        if (GetMode() == timelapseMode) {
+            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
+        } else {
+            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCBCR_420_SP; // NV12
+            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
+        }
+    }
 }
 
 int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)
@@ -115,16 +161,50 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
     return CAMERA_OK;
 }
 
-
-int32_t HStreamCapture::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamCapture::SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer)
 {
-    if (producer != nullptr) {
-        rawBufferQueue_ = new BufferProducerSequenceable(producer);
-    } else {
-        rawBufferQueue_ = nullptr;
+    std::string resStr = "";
+    if (bufName == "rawImage") {
+        if (producer != nullptr) {
+            rawBufferQueue_ = new BufferProducerSequenceable(producer);
+        } else {
+            rawBufferQueue_ = nullptr;
+            resStr += bufName + ",";
+        }
     }
-    MEDIA_DEBUG_LOG("HStreamCapture::SetRawPhotoStreamInfo rawBufferQueue whether is nullptr: %{public}d",
-        rawBufferQueue_ == nullptr);
+    if (bufName == "gainmapImage") {
+        if (producer != nullptr) {
+            gainmapBufferQueue_ = new BufferProducerSequenceable(producer);
+        } else {
+            gainmapBufferQueue_ = nullptr;
+            resStr += bufName + ",";
+        }
+    }
+    if (bufName == "deepImage") {
+        if (producer != nullptr) {
+            deepBufferQueue_ = new BufferProducerSequenceable(producer);
+        } else {
+            deepBufferQueue_ = nullptr;
+            resStr += bufName + ",";
+        }
+    }
+    if (bufName == "exifImage") {
+        if (producer != nullptr) {
+            exifBufferQueue_ = new BufferProducerSequenceable(producer);
+        } else {
+            exifBufferQueue_ = nullptr;
+            resStr += bufName + ",";
+        }
+    }
+    if (bufName == "debugImage") {
+        if (producer != nullptr) {
+            debugBufferQueue_ = new BufferProducerSequenceable(producer);
+        } else {
+            debugBufferQueue_ = nullptr;
+            resStr += bufName + ",";
+        }
+    }
+    MEDIA_INFO_LOG("HStreamCapture::SetBufferProducerInfo bufferQueue whether is nullptr: %{public}s", resStr.c_str());
     return CAMERA_OK;
 }
 
@@ -481,12 +561,12 @@ int32_t HStreamCapture::ConfirmCapture()
     
     auto preparedCaptureId = captureIdForConfirmCapture_;
     MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture with capture ID: %{public}d", preparedCaptureId);
-    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
+    sptr<HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
         OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
     CHECK_ERROR_RETURN_RET_LOG(streamOperatorV1_2 == nullptr, CAMERA_UNKNOWN_ERROR,
         "HStreamCapture::ConfirmCapture streamOperatorV1_2 castFrom failed!");
     OHOS::HDI::Camera::V1_2::CamRetCode rc =
-        (OHOS::HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_2->ConfirmCapture(preparedCaptureId));
+        (HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_2->ConfirmCapture(preparedCaptureId));
     if (rc != HDI::Camera::V1_2::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture failed with error Code: %{public}d", rc);
         ret = HdiToServiceErrorV1_2(rc);
@@ -685,6 +765,19 @@ int32_t HStreamCapture::IsDeferredVideoEnabled()
     if (deferredVideoSwitch_ == 1) {
         return 1;
     }
+    return 0;
+}
+
+int32_t HStreamCapture::GetMovingPhotoVideoCodecType()
+{
+    MEDIA_INFO_LOG("HStreamCapture GetMovingPhotoVideoCodecType videoCodecType_: %{public}d", videoCodecType_);
+    return videoCodecType_;
+}
+
+int32_t HStreamCapture::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
+{
+    MEDIA_INFO_LOG("HStreamCapture SetMovingPhotoVideoCodecType videoCodecType_: %{public}d", videoCodecType);
+    videoCodecType_ = videoCodecType;
     return 0;
 }
 } // namespace CameraStandard

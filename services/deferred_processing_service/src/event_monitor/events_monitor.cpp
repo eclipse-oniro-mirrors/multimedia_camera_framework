@@ -259,7 +259,7 @@ void EventsMonitor::ScheduleRegisterThermalListener()
     DP_INFO_LOG("entered.");
     uint32_t callbackHandle;
     constexpr uint32_t delayMilli = 10 * 1000;
-    GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
+    DeferredProcessing::GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
         DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, handle: %{public}d", static_cast<int>(handle));
         this->RegisterThermalLevel();
     });

@@ -25,6 +25,7 @@
 #include <parameters.h>
 
 #include "aperture_video_session.h"
+#include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_security_utils.h"
@@ -207,7 +208,7 @@ int32_t CameraManager::CreateListenerObject()
 }
 
 int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
-    const std::string& bundleName)
+    const std::string& bundleName) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = cameraManager_.promote();
@@ -248,6 +249,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
 }
 
 int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status)
+    __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = cameraManager_.promote();
@@ -470,8 +472,9 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput invalid fomrat or width or height is zero");
-
-    camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
+    // to adapter yuv photo
+    CameraFormat yuvFormat = profile.GetCameraFormat();
+    camera_format_t metaFormat = GetCameraMetadataFormat(yuvFormat);
     sptr<IStreamCapture> streamCapture = nullptr;
     int32_t retCode = serviceProxy->CreatePhotoOutput(
         surface, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
@@ -564,7 +567,8 @@ int32_t CameraManager::CreatePhotoOutputStream(
     CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (producer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreatePhotoOutputStream serviceProxy is null or producer is null");
 
-    auto metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
+    CameraFormat yuvFormat = profile.GetCameraFormat();
+    auto metaFormat = GetCameraMetadataFormat(yuvFormat);
     auto retCode = serviceProxy->CreatePhotoOutput(
         producer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamPtr);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
@@ -1628,6 +1632,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     camera_metadata_item_t item;
     ProfilesWrapper profilesWrapper = {};
     depthProfiles_.clear();
+    photoFormats_.clear();
+    photoFormats_ = GetSupportPhotoFormat(modeName, metadata);
 
     ParseCapability(profilesWrapper, camera, modeName, item, metadata);
     SceneMode profileMode = static_cast<SceneMode>(modeName);
@@ -1635,6 +1641,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     if (profileMode != fallbackMode) {
         ParseCapability(profilesWrapper, camera, fallbackMode, item, metadata);
     }
+    FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
@@ -1665,6 +1672,47 @@ void CameraManager::GetSupportedMetadataObjectType(common_metadata_header_t* met
             }
         }
     }
+}
+
+vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    if (metadata == nullptr) {
+        return {};
+    }
+    vector<CameraFormat> photoFormats = {};
+    camera_metadata_item_t item;
+    int32_t metadataTag = OHOS_STREAM_AVAILABLE_FORMATS;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
+    if (retCode != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
+            metadataTag, retCode, item.count);
+        return photoFormats;
+    }
+    vector<int32_t> formats = {};
+    std::map<int32_t, vector<int32_t> > modePhotoFormats = {};
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (item.data.i32[i] != -1) {
+            formats.push_back(item.data.i32[i]);
+            continue;
+        } else {
+            modePhotoFormats.insert(std::make_pair(modeName, std::move(formats)));
+            formats.clear();
+        }
+    }
+    if (!modePhotoFormats.count(modeName)) {
+        MEDIA_ERR_LOG("GetSupportPhotoFormat not support mode = %{public}d", modeName);
+        return photoFormats;
+    }
+    for (auto &val : modePhotoFormats[modeName]) {
+        camera_format_t hdiFomart = static_cast<camera_format_t>(val);
+        if (metaToFwCameraFormat_.count(hdiFomart)) {
+            photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart));
+        }
+    }
+    MEDIA_DEBUG_LOG("GetSupportPhotoFormat, mode = %{public}d, formats = %{public}s", modeName,
+        Container2String(photoFormats.begin(), photoFormats.end()).c_str());
+    return photoFormats;
 }
 
 void CameraManager::CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, OutputCapStreamType streamType,
@@ -2127,6 +2175,31 @@ void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
+}
+
+void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
+{
+    if (photoFormats_.size() == 0 || photoProfiles.size() == 0) {
+        return;
+    }
+    std::vector<Profile> extendProfiles = {};
+    // if photo stream support jpeg, it must support yuv.
+    int32_t extendSize = photoProfiles.size() * (photoFormats_.size() - 1);
+    extendProfiles.reserve(extendSize);
+    for (const auto& profile : photoProfiles) {
+        if (std::find(extendProfiles.begin(), extendProfiles.end(), profile) == extendProfiles.end()) {
+            if (profile.format_ != CAMERA_FORMAT_JPEG) {
+                extendProfiles.push_back(profile);
+                continue;
+            }
+            for (const auto& format : photoFormats_) {
+                Profile extendPhotoProfile = profile;
+                extendPhotoProfile.format_ = format;
+                extendProfiles.push_back(extendPhotoProfile);
+            }
+        }
+    }
+    photoProfiles = extendProfiles;
 }
 } // namespace CameraStandard
 } // namespace OHOS
