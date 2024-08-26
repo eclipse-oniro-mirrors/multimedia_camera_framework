@@ -57,7 +57,7 @@ public:
     uint64_t queueId = 0;
     std::string errorMsg;
 
-    bool isInvalidArgument;
+    bool isInvalidArgument = false;
 };
 
 struct JSAsyncContextOutput {
