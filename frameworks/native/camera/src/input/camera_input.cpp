@@ -64,19 +64,31 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     if (camInputSptr->GetResultCallback() != nullptr) {
         camInputSptr->GetResultCallback()->OnResult(timestamp, result);
     }
-    camera_metadata_item item;
-    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(result->get(),
-        OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &item);
-    if (retCode == CAM_META_SUCCESS && item.count != 0) {
-        MEDIA_DEBUG_LOG("OHOS_STATUS_CAMERA_OCCLUSION_DETECTION is not null or zero");
-        if (camInputSptr != nullptr && camInputSptr->GetOcclusionDetectCallback() != nullptr) {
-            camInputSptr->GetOcclusionDetectCallback()->OnCameraOcclusionDetected(item.data.i32[0]);
+
+    auto pfnOcclusionDetectCallback = camInputSptr->GetOcclusionDetectCallback();
+    if (pfnOcclusionDetectCallback != nullptr) {
+        camera_metadata_item itemOcclusion;
+        int32_t retOcclusion = OHOS::Camera::FindCameraMetadataItem(result->get(),
+            OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &itemOcclusion);
+        bool foundOcclusion = (retOcclusion == CAM_META_SUCCESS && itemOcclusion.count != 0);
+        uint8_t occlusion = foundOcclusion ? static_cast<uint8_t>(itemOcclusion.data.i32[0]) : 0;
+
+        camera_metadata_item itemLensDirty;
+        int32_t retLensDirty = OHOS::Camera::FindCameraMetadataItem(result->get(),
+            OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &itemLensDirty);
+        bool foundLensDirty = (retLensDirty == CAM_META_SUCCESS && itemLensDirty.count != 0);
+        uint8_t lensDirty = foundLensDirty ? itemLensDirty.data.u8[0] : 0;
+
+        if (foundOcclusion || foundLensDirty) {
+            MEDIA_INFO_LOG("occlusion found:%{public}d val:%{public}u; lensDirty found:%{public}d val:%{public}u",
+                foundOcclusion, occlusion, foundLensDirty, lensDirty);
+            pfnOcclusionDetectCallback->OnCameraOcclusionDetected(occlusion, lensDirty);
         }
     }
+
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
-
 
 CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
                          sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)

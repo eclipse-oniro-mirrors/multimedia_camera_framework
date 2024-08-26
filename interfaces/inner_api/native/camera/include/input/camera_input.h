@@ -44,7 +44,7 @@ class CameraOcclusionDetectCallback {
 public:
     CameraOcclusionDetectCallback() = default;
     virtual ~CameraOcclusionDetectCallback() = default;
-    virtual void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const = 0;
+    virtual void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const = 0;
 };
 
 class ResultCallback {
