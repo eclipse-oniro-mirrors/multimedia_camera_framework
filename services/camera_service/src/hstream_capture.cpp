@@ -113,8 +113,16 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
-    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
+    if (format_ == OHOS_CAMERA_FORMAT_HEIC) {
+        streamInfo.v1_0.encodeType_ =
+            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
+        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
+    } else {
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
+    }
     if (format_ == OHOS_CAMERA_FORMAT_DNG) {
+        streamInfo.v1_0.encodeType_ =
+            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
             .type =
@@ -368,7 +376,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
-    
+
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
@@ -558,7 +566,7 @@ int32_t HStreamCapture::ConfirmCapture()
         }
         return ret;
     }
-    
+
     auto preparedCaptureId = captureIdForConfirmCapture_;
     MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture with capture ID: %{public}d", preparedCaptureId);
     sptr<HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
