@@ -1,0 +1,1837 @@
+@@ -199,6 +222,20 @@ public:
+      */
+     void SetVideoProfiles(std::vector<VideoProfile> videoProfiles);
+ 
++    /**
++     * @brief Get Depth profiles.
++     *
++     * @return vector of supported depth profiles.
++     */
++    std::vector<DepthProfile> GetDepthProfiles();
++
++    /**
++     * @brief Set depth profiles.
++     *
++     * @param vector of depth profiles.
++     */
++    void SetDepthProfiles(std::vector<DepthProfile> depthProfiles);
++
+     /**
+      * @brief Get supported meta object types.
+      *
+@@ -223,6 +260,7 @@ private:
+     std::vector<Profile> photoProfiles_ = {};
+     std::vector<Profile> previewProfiles_ = {};
+     std::vector<VideoProfile> videoProfiles_ = {};
++    std::vector<DepthProfile> depthProfiles_ = {};
+     std::vector<MetadataObjectType> metadataObjTypes_ = {};
+ 
+     template <typename T>
+diff --git a/interfaces/inner_api/native/camera/include/output/capture_output.h b/interfaces/inner_api/native/camera/include/output/capture_output.h
+index 92ad8cce0..f9e114e73 100644
+--- a/interfaces/inner_api/native/camera/include/output/capture_output.h
++++ b/interfaces/inner_api/native/camera/include/output/capture_output.h
+@@ -45,6 +45,7 @@ enum CaptureOutputType {
+     CAPTURE_OUTPUT_TYPE_PHOTO,
+     CAPTURE_OUTPUT_TYPE_VIDEO,
+     CAPTURE_OUTPUT_TYPE_METADATA,
++    CAPTURE_OUTPUT_TYPE_DEPTH_DATA,
+     CAPTURE_OUTPUT_TYPE_MAX
+ };
+ 
+@@ -134,6 +135,8 @@ public:
+     std::shared_ptr<Profile> GetPreviewProfile();
+     void SetVideoProfile(VideoProfile& videoProfile);
+     std::shared_ptr<VideoProfile> GetVideoProfile();
++    void SetDepthProfile(DepthProfile& depthProfile);
++    std::shared_ptr<DepthProfile> GetDepthProfile();
+     void ClearProfiles();
+     virtual void CameraServerDied(pid_t pid) = 0;
+ 
+@@ -168,6 +171,8 @@ private:
+     std::shared_ptr<Profile> previewProfile_;
+     std::mutex videoProfileMutex_;
+     std::shared_ptr<VideoProfile> videoProfile_;
++    std::mutex depthProfileMutex_;
++    std::shared_ptr<DepthProfile> depthProfile_;
+ 
+     std::mutex bufferProducerMutex_;
+     sptr<IBufferProducer> bufferProducer_;
+diff --git a/interfaces/inner_api/native/camera/include/output/depth_data_output.h b/interfaces/inner_api/native/camera/include/output/depth_data_output.h
+new file mode 100644
+index 000000000..0392f3e7b
+--- /dev/null
++++ b/interfaces/inner_api/native/camera/include/output/depth_data_output.h
+@@ -0,0 +1,113 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_DEPTH_DATA_OUTPUT_H
++#define OHOS_CAMERA_DEPTH_DATA_OUTPUT_H
++
++#include <cstdint>
++#include "camera_output_capability.h"
++#include "capture_output.h"
++#include "hstream_depth_data_callback_stub.h"
++#include "icamera_service.h"
++#include "istream_depth_data.h"
++#include "istream_depth_data_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++class DepthDataStateCallback {
++public:
++    DepthDataStateCallback() = default;
++    virtual ~DepthDataStateCallback() = default;
++
++    /**
++     * @brief Called when error occured during depth data rendering.
++     *
++     * @param errorCode Indicates a {@link ErrorCode} which will give information for depth data callback error.
++     */
++    virtual void OnDepthDataError(const int32_t errorCode) const = 0;
++};
++
++class DepthDataOutput : public CaptureOutput {
++public:
++    explicit DepthDataOutput(sptr<IBufferProducer> bufferProducer);
++    virtual ~DepthDataOutput();
++
++    /**
++     * @brief Start depth data stream.
++     */
++    int32_t Start();
++
++    /**
++     * @brief stop depth data stream.
++     */
++    int32_t Stop();
++
++    /**
++     * @brief set depth data accuracy.
++     */
++    int32_t SetDataAccuracy(int32_t dataAccuracy);
++
++    /**
++     * @brief Create Stream.
++     */
++    int32_t CreateStream() override;
++
++    /**
++     * @brief Releases a instance of the depth data output.
++     */
++    int32_t Release() override;
++
++    /**
++     * @brief Set the depth data callback for the depth data output.
++     *
++     * @param DepthDataStateCallback to be triggered.
++     */
++    void SetCallback(std::shared_ptr<DepthDataStateCallback> callback);
++
++    /**
++     * @brief Get the application callback information.
++     *
++     * @return Returns the pointer application callback.
++     */
++    std::shared_ptr<DepthDataStateCallback> GetApplicationCallback();
++
++    void OnNativeRegisterCallback(const std::string& eventString);
++    void OnNativeUnregisterCallback(const std::string& eventString);
++private:
++    int32_t DepthDataFormat_;
++    Size DepthDataSize_;
++    std::shared_ptr<DepthDataStateCallback> appCallback_;
++    sptr<IStreamDepthDataCallback> svcCallback_;
++    void CameraServerDied(pid_t pid) override;
++};
++
++class DepthDataOutputCallbackImpl : public HStreamDepthDataCallbackStub {
++public:
++    wptr<DepthDataOutput> depthDataOutput_ = nullptr;
++    DepthDataOutputCallbackImpl() : depthDataOutput_(nullptr) {}
++ 
++    explicit DepthDataOutputCallbackImpl(DepthDataOutput* depthDataOutput) : depthDataOutput_(depthDataOutput) {}
++ 
++    /**
++     * @brief Called when error occured during depth data rendering.
++     *
++     * @param errorCode Indicates a {@link ErrorCode} which will give information for depth data callback error.
++     */
++    int32_t OnDepthDataError(int32_t errorCode) override;
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_DEPTH_DATA_OUTPUT_H
+\ No newline at end of file
+diff --git a/interfaces/kits/js/camera_napi/BUILD.gn b/interfaces/kits/js/camera_napi/BUILD.gn
+index 6eef8e1dc..6205cd34c 100644
+--- a/interfaces/kits/js/camera_napi/BUILD.gn
++++ b/interfaces/kits/js/camera_napi/BUILD.gn
+@@ -78,6 +78,8 @@ ohos_shared_library("camera_napi") {
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/deferred_photo_proxy_napi.cpp",
++    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_napi.cpp",
++    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_output_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_output_napi.cpp",
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_const.h b/interfaces/kits/js/camera_napi/include/camera_napi_const.h
+index c54c71ff9..1b86034ae 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_const.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_const.h
+@@ -89,6 +89,8 @@ enum CameraTaskId {
+     CAMERA_PICKER_TASKID = 0x08000000,
+     PHOTO_TASKID = 0x09000000,
+     DEFERRED_PHOTO_PROXY_TASKID = 0x0A000000,
++    CAMERA_DEPTH_DATA_OUTPUT_TASKID = 0x0B000000,
++    DEPTH_DATA_TASKID = 0x0C000000,
+ };
+ 
+ enum JSMetadataObjectType { INVALID = -1, FACE = 0 };
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_object_types.h b/interfaces/kits/js/camera_napi/include/camera_napi_object_types.h
+index 810036f04..69dc0da12 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_object_types.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_object_types.h
+@@ -82,6 +82,15 @@ private:
+     VideoProfile& videoProfile_;
+ };
+ 
++class CameraNapiObjDepthProfile : public CameraNapiObjectTypes {
++public:
++    explicit CameraNapiObjDepthProfile(DepthProfile& depthProfile) : depthProfile_(depthProfile) {}
++    CameraNapiObject& GetCameraNapiObject() override;
++
++private:
++    DepthProfile& depthProfile_;
++};
++
+ class CameraDevice;
+ class CameraNapiObjCameraDevice : public CameraNapiObjectTypes {
+ public:
+diff --git a/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h b/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
+index c0a724eda..099bfae79 100644
+--- a/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
++++ b/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
+@@ -23,6 +23,7 @@
+ #include "listener_base.h"
+ #include "output/camera_output_capability.h"
+ #include "output/capture_output.h"
++#include "output/depth_data_output_napi.h"
+ #include "output/photo_output_napi.h"
+ #include "output/preview_output_napi.h"
+ #include "output/video_output_napi.h"
+@@ -147,6 +148,7 @@ public:
+     static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);
+     static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
+     static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
++    static napi_value CreateDepthDataOutputInstance(napi_env env, napi_callback_info info);
+     static napi_value IsTorchSupported(napi_env env, napi_callback_info info);
+     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
+     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
+@@ -207,6 +209,7 @@ struct CameraManagerContext : public AsyncContext {
+     CameraManagerNapi* managerInstance;
+     Profile profile;
+     VideoProfile videoProfile;
++    DepthProfile depthProfile;
+     CameraManagerAsyncCallbackModes modeForAsync;
+     std::string errString;
+     ~CameraManagerContext()
+diff --git a/interfaces/kits/js/camera_napi/include/output/depth_data_napi.h b/interfaces/kits/js/camera_napi/include/output/depth_data_napi.h
+new file mode 100644
+index 000000000..f7b404bba
+--- /dev/null
++++ b/interfaces/kits/js/camera_napi/include/output/depth_data_napi.h
+@@ -0,0 +1,68 @@
++/*
++ * Copyright (C) 2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef DEPTH_DATA_NAPI_H_
++#define DEPTH_DATA_NAPI_H_
++
++#include "camera_napi_utils.h"
++
++namespace OHOS {
++namespace CameraStandard {
++static const char DEPTH_DATA_NAPI_CLASS_NAME[] = "DepthData";
++
++class DepthDataNapi {
++public:
++    DepthDataNapi();
++    ~DepthDataNapi();
++
++    static napi_value Init(napi_env env, napi_value exports);
++    static napi_value CreateDepthData(napi_env env, napi_value format, napi_value depthMap, napi_value qualityLevel,
++                                      napi_value accuracy);
++
++    static napi_value GetFormat(napi_env env, napi_callback_info info);
++    static napi_value GetDepthMap(napi_env env, napi_callback_info info);
++    static napi_value GetQualityLevel(napi_env env, napi_callback_info info);
++    static napi_value GetAccuracy(napi_env env, napi_callback_info info);
++    static napi_value Release(napi_env env, napi_callback_info info);
++
++private:
++    static napi_value DepthDataNapiConstructor(napi_env env, napi_callback_info info);
++    static void DepthDataNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
++
++    static thread_local napi_ref sConstructor_;
++    static thread_local napi_value sFormat_;
++    static thread_local napi_value sDepthMap_;
++    static thread_local napi_value sQualityLevel_;
++    static thread_local napi_value sAccuracy_;
++    static thread_local uint32_t depthDataTaskId;
++
++    napi_env env_;
++    napi_value format_;
++    napi_value depthMap_;
++    napi_value qualityLevel_;
++    napi_value accuracy_;
++};
++
++struct DepthDataAsyncContext : public AsyncContext {
++    DepthDataNapi* objectInfo;
++
++    ~DepthDataAsyncContext()
++    {
++        objectInfo = nullptr;
++    }
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // DEPTH_DATA_NAPI_H_
+\ No newline at end of file
+diff --git a/interfaces/kits/js/camera_napi/include/output/depth_data_output_napi.h b/interfaces/kits/js/camera_napi/include/output/depth_data_output_napi.h
+new file mode 100644
+index 000000000..6e457e00e
+--- /dev/null
++++ b/interfaces/kits/js/camera_napi/include/output/depth_data_output_napi.h
+@@ -0,0 +1,173 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef DEPTH_DATA_OUTPUT_NAPI_H_
++#define DEPTH_DATA_OUTPUT_NAPI_H_
++
++#include "camera_napi_event_emitter.h"
++#include "camera_napi_template_utils.h"
++#include "camera_napi_utils.h"
++#include "depth_data_napi.h"
++#include "listener_base.h"
++#include "input/camera_manager.h"
++#include "output/camera_output_capability.h"
++#include "output/depth_data_output.h"
++#include "surface_utils.h"
++
++namespace OHOS {
++namespace CameraStandard {
++static const std::string CONST_DEPTH_DATA_AVAILABLE = "depthDataAvailable";
++static const std::string CONST_DEPTH_DATA_ERROR = "error";
++
++static const char CAMERA_DEPTH_DATA_OUTPUT_NAPI_CLASS_NAME[] = "DepthDataOutput";
++
++enum DepthDataOutputEventType {
++    DEPTH_DATA_AVAILABLE,
++    DEPTH_DATA_ERROR,
++    DEPTH_DATA_INVALID_TYPE
++};
++
++static EnumHelper<DepthDataOutputEventType> DepthDataOutputEventTypeHelper({
++        {DEPTH_DATA_AVAILABLE, CONST_DEPTH_DATA_AVAILABLE},
++        {DEPTH_DATA_ERROR, CONST_DEPTH_DATA_ERROR}
++    },
++    DepthDataOutputEventType::DEPTH_DATA_INVALID_TYPE
++);
++
++class DepthDataBufferProcessor {
++public:
++    explicit DepthDataBufferProcessor(sptr<Surface> depthDataSurface) : depthDataSurface_(depthDataSurface) {}
++    ~DepthDataBufferProcessor()
++    {
++        depthDataSurface_ = nullptr;
++    }
++    void Release(sptr<SurfaceBuffer>& buffer)
++    {
++        if (depthDataSurface_ != nullptr) {
++            depthDataSurface_->ReleaseBuffer(buffer, -1);
++        }
++    }
++
++private:
++    sptr<Surface> depthDataSurface_ = nullptr;
++};
++
++class DepthDataListener : public IBufferConsumerListener, public ListenerBase {
++public:
++    explicit DepthDataListener(napi_env env, const sptr<Surface> depthSurface, sptr<DepthDataOutput> depthDataOutput);
++    ~DepthDataListener() = default;
++    void OnBufferAvailable() override;
++    void SaveCallback(const std::string eventName, napi_value callback);
++    void RemoveCallback(const std::string eventName, napi_value callback);
++    void SetDepthProfile(std::shared_ptr<DepthProfile> depthProfile);
++
++private:
++    sptr<Surface> depthDataSurface_;
++    sptr<DepthDataOutput> depthDataOutput_;
++    std::shared_ptr<DepthDataBufferProcessor> bufferProcessor_;
++    std::shared_ptr<DepthProfile> depthProfile_;
++    void UpdateJSCallback(sptr<Surface> depthSurface) const;
++    void UpdateJSCallbackAsync(sptr<Surface> depthSurface) const;
++    void ExecuteDepthData(sptr<SurfaceBuffer> surfaceBfuffer) const;
++};
++
++struct DepthDataListenerInfo {
++    sptr<Surface> depthDataSurface_;
++    const DepthDataListener* listener_;
++    DepthDataListenerInfo(sptr<Surface> depthDataSurface, const DepthDataListener* listener)
++        : depthDataSurface_(depthDataSurface), listener_(listener)
++    {}
++};
++
++class DepthDataOutputCallback : public DepthDataStateCallback,
++                              public ListenerBase,
++                              public std::enable_shared_from_this<DepthDataOutputCallback> {
++public:
++    explicit DepthDataOutputCallback(napi_env env);
++    ~DepthDataOutputCallback() = default;
++
++    void OnDepthDataError(const int32_t errorCode) const override;
++ 
++private:
++    void UpdateJSCallback(DepthDataOutputEventType eventType, const int32_t value) const;
++    void UpdateJSCallbackAsync(DepthDataOutputEventType eventType, const int32_t value) const;
++    void ExecuteDepthData(sptr<SurfaceBuffer> surfaceBuffer) const;
++};
++
++struct DepthDataOutputCallbackInfo {
++    DepthDataOutputEventType eventType_;
++    int32_t value_;
++    weak_ptr<const DepthDataOutputCallback> listener_;
++    DepthDataOutputCallbackInfo(DepthDataOutputEventType eventType, int32_t value,
++        shared_ptr<const DepthDataOutputCallback> listener)
++        : eventType_(eventType), value_(value), listener_(listener) {}
++};
++
++struct DepthDataOutputAsyncContext;
++class DepthDataOutputNapi : public CameraNapiEventEmitter<DepthDataOutputNapi> {
++public:
++    static napi_value Init(napi_env env, napi_value exports);
++    static napi_value CreateDepthDataOutput(napi_env env, DepthProfile& depthProfile);
++    static napi_value Start(napi_env env, napi_callback_info info);
++    static napi_value Stop(napi_env env, napi_callback_info info);
++    static napi_value Release(napi_env env, napi_callback_info info);
++    static napi_value On(napi_env env, napi_callback_info info);
++    static napi_value Once(napi_env env, napi_callback_info info);
++    static napi_value Off(napi_env env, napi_callback_info info);
++    sptr<DepthDataOutput> GetDepthDataOutput();
++    static bool IsDepthDataOutput(napi_env env, napi_value obj);
++
++    const EmitterFunctions& GetEmitterFunctions() override;
++
++    DepthDataOutputNapi();
++    ~DepthDataOutputNapi() override;
++
++private:
++    static void DepthDataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
++    static napi_value DepthDataOutputNapiConstructor(napi_env env, napi_callback_info info);
++
++    void RegisterDepthDataAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
++        const std::vector<napi_value>& args, bool isOnce);
++    void UnregisterDepthDataAvailableCallbackListener(
++        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
++    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
++        const std::vector<napi_value>& args, bool isOnce);
++    void UnregisterErrorCallbackListener(
++        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
++
++    static thread_local napi_ref sConstructor_;
++    static thread_local sptr<DepthDataOutput> sDepthDataOutput_;
++    static thread_local sptr<Surface> sDepthDataSurface_;
++    static thread_local uint32_t depthDataOutputTaskId;
++
++    napi_env env_;
++    sptr<DepthDataOutput> depthDataOutput_;
++    sptr<DepthDataListener> depthDataListener_;
++    std::shared_ptr<DepthDataOutputCallback> depthDataCallback_;
++    static thread_local std::shared_ptr<DepthProfile> depthProfile_;
++};
++
++struct DepthDataOutputAsyncContext : public AsyncContext {
++    DepthDataOutputNapi* objectInfo;
++    bool bRetBool;
++    std::string surfaceId;
++    ~DepthDataOutputAsyncContext()
++    {
++        objectInfo = nullptr;
++    }
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif /* DEPTH_DATA_OUTPUT_NAPI_H_ */
+\ No newline at end of file
+diff --git a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+index 4fdc93b39..42af2331f 100644
+--- a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
++++ b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+@@ -28,6 +28,7 @@
+ #include "input/camera_input_napi.h"
+ #include "input/camera_manager.h"
+ #include "listener_base.h"
++#include "output/depth_data_output_napi.h"
+ #include "output/metadata_output_napi.h"
+ #include "output/preview_output_napi.h"
+ #include "output/video_output_napi.h"
+diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
+index 77a0b502c..a021c8753 100644
+--- a/services/camera_service/BUILD.gn
++++ b/services/camera_service/BUILD.gn
+@@ -26,6 +26,8 @@ ohos_shared_library("camera_service") {
+     "binder/client/src/hcamera_service_proxy.cpp",
+     "binder/client/src/hcapture_session_callback_proxy.cpp",
+     "binder/client/src/hstream_capture_callback_proxy.cpp",
++    "binder/client/src/hstream_depth_data_callback_proxy.cpp",
++    "binder/client/src/hstream_depth_data_proxy.cpp",
+     "binder/client/src/hstream_repeat_callback_proxy.cpp",
+     "binder/client/src/window_manager_service_proxy_impl/hcamera_mock_session_manager_interface_proxy.cpp",
+     "binder/client/src/window_manager_service_proxy_impl/hcamera_scene_session_manager_proxy.cpp",
+@@ -34,6 +36,8 @@ ohos_shared_library("camera_service") {
+     "binder/server/src/hcamera_service_stub.cpp",
+     "binder/server/src/hcapture_session_stub.cpp",
+     "binder/server/src/hstream_capture_stub.cpp",
++    "binder/server/src/hstream_depth_data_callback_stub.cpp",
++    "binder/server/src/hstream_depth_data_stub.cpp",
+     "binder/server/src/hstream_metadata_stub.cpp",
+     "binder/server/src/hstream_repeat_stub.cpp",
+     "binder/server/src/window_manager_service_callback_stub_impl/hcamera_window_manager_callback_stub.cpp",
+@@ -62,6 +66,7 @@ ohos_shared_library("camera_service") {
+     "src/hcapture_session.cpp",
+     "src/hstream_capture.cpp",
+     "src/hstream_common.cpp",
++    "src/hstream_depth_data.cpp",
+     "src/hstream_metadata.cpp",
+     "src/hstream_repeat.cpp",
+     "src/moving_photo/moving_photo_surface_wrapper.cpp",
+diff --git a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
+index fb4fd118a..108f046b2 100644
+--- a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
++++ b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
+@@ -95,6 +95,7 @@ enum CameraServiceInterfaceCode {
+     CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT,
+     CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT,
+     CAMERA_SERVICE_CREATE_VIDEO_OUTPUT,
++    CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT,
+     CAMERA_SERVICE_SET_LISTENER_OBJ,
+     CAMERA_SERVICE_CREATE_METADATA_OUTPUT,
+     CAMERA_SERVICE_MUTE_CAMERA,
+@@ -212,6 +213,20 @@ enum StreamMetadataInterfaceCode {
+     CAMERA_STREAM_META_RELEASE
+ };
+ 
++/**
++ * @brief Stream depth data remote request code for IPC.
++ *
++ * @since 1.0
++ * @version 1.0
++ */
++enum StreamDepthDataInterfaceCode {
++    CAMERA_STREAM_DEPTH_DATA_START = 0,
++    CAMERA_STREAM_DEPTH_DATA_STOP,
++    CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK,
++    CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET,
++    CAMERA_STREAM_DEPTH_DATA_RELEASE
++};
++
+ /**
+  * @brief Camera device callback remote request code for IPC.
+  *
+@@ -236,6 +251,16 @@ enum StreamRepeatCallbackInterfaceCode {
+     CAMERA_STREAM_SKETCH_STATUS_ON_CHANGED
+ };
+ 
++/**
++ * @brief Camera depth stream callback remote request code for IPC.
++ *
++ * @since 1.0
++ * @version 1.0
++ */
++enum StreamDepthDataCallbackInterfaceCode {
++    CAMERA_STREAM_DEPTH_DATA_ON_ERROR = 0
++};
++
+ /**
+  * @brief Camera capture stream callback remote request code for IPC.
+  *
+diff --git a/services/camera_service/binder/base/include/icamera_service.h b/services/camera_service/binder/base/include/icamera_service.h
+index 67f89f6a5..d06896190 100644
+--- a/services/camera_service/binder/base/include/icamera_service.h
++++ b/services/camera_service/binder/base/include/icamera_service.h
+@@ -23,6 +23,7 @@
+ #include "icapture_session.h"
+ #include "iremote_broker.h"
+ #include "istream_capture.h"
++#include "istream_depth_data.h"
+ #include "istream_metadata.h"
+ #include "istream_repeat.h"
+ #include "surface.h"
+@@ -91,6 +92,9 @@ public:
+     virtual int32_t CreateDeferredPreviewOutput(int32_t format, int32_t width, int32_t height,
+                                                 sptr<IStreamRepeat> &previewOutput) = 0;
+ 
++    virtual int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
++                                          int32_t width, int32_t height, sptr<IStreamDepthData> &depthDataOutput) = 0;
++
+     virtual int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                          sptr<IStreamMetadata> &metadataOutput) = 0;
+ 
+diff --git a/services/camera_service/binder/base/include/istream_common.h b/services/camera_service/binder/base/include/istream_common.h
+index fa81f8197..5adffc27b 100644
+--- a/services/camera_service/binder/base/include/istream_common.h
++++ b/services/camera_service/binder/base/include/istream_common.h
+@@ -24,6 +24,7 @@ enum class StreamType : uint32_t {
+     CAPTURE = 1,
+     REPEAT,
+     METADATA,
++    DEPTH,
+ };
+ class IStreamCommon : public IRemoteBroker {
+ public:
+diff --git a/services/camera_service/binder/base/include/istream_depth_data.h b/services/camera_service/binder/base/include/istream_depth_data.h
+new file mode 100644
+index 000000000..b423d899c
+--- /dev/null
++++ b/services/camera_service/binder/base/include/istream_depth_data.h
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_ISTREAM_DEPTH_DATA_H
++#define OHOS_CAMERA_ISTREAM_DEPTH_DATA_H
++
++#include <cstdint>
++#include "istream_common.h"
++#include "istream_depth_data_callback.h"
++#include "surface.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class IStreamDepthData : public IStreamCommon {
++public:
++    virtual int32_t Start() = 0;
++
++    virtual int32_t Stop() = 0;
++
++    virtual int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) = 0;
++
++    virtual int32_t SetDataAccuracy(int32_t dataAccuracy) = 0;
++
++    virtual int32_t Release() = 0;
++
++    DECLARE_INTERFACE_DESCRIPTOR(u"IStreamDepthData");
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/base/include/istream_depth_data_callback.h b/services/camera_service/binder/base/include/istream_depth_data_callback.h
+new file mode 100644
+index 000000000..9cbe314a4
+--- /dev/null
++++ b/services/camera_service/binder/base/include/istream_depth_data_callback.h
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (c) 2021 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_ISTREAM_DEPTH_DATA_CALLBACK_H
++#define OHOS_CAMERA_ISTREAM_DEPTH_DATA_CALLBACK_H
++
++#include <cstdint>
++#include "iremote_broker.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++class IStreamDepthDataCallback : public IRemoteBroker {
++public:
++    virtual int32_t OnDepthDataError(int32_t errorCode) = 0;
++
++    DECLARE_INTERFACE_DESCRIPTOR(u"IStreamDepthDataCallback");
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_CALLBACK_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/client/include/hcamera_service_proxy.h b/services/camera_service/binder/client/include/hcamera_service_proxy.h
+index 32e1471ff..6ca13e222 100644
+--- a/services/camera_service/binder/client/include/hcamera_service_proxy.h
++++ b/services/camera_service/binder/client/include/hcamera_service_proxy.h
+@@ -72,6 +72,9 @@ public:
+     int32_t CreateDeferredPreviewOutput(int32_t format, int32_t width, int32_t height,
+                                         sptr<IStreamRepeat> &previewOutput) override;
+ 
++    int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
++                                  int32_t width, int32_t height, sptr<IStreamDepthData> &depthDataOutput) override;
++                                  
+     int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                  sptr<IStreamMetadata>& metadataOutput) override;
+ 
+diff --git a/services/camera_service/binder/client/include/hstream_depth_data_callback_proxy.h b/services/camera_service/binder/client/include/hstream_depth_data_callback_proxy.h
+new file mode 100644
+index 000000000..7c4afbdd6
+--- /dev/null
++++ b/services/camera_service/binder/client/include/hstream_depth_data_callback_proxy.h
+@@ -0,0 +1,38 @@
++/*
++ * Copyright (c) 2021 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_PROXY_H
++#define OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_PROXY_H
++
++#include <cstdint>
++#include "istream_depth_data_callback.h"
++#include "iremote_proxy.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamDepthDataCallbackProxy : public IRemoteProxy<IStreamDepthDataCallback> {
++public:
++    explicit HStreamDepthDataCallbackProxy(const sptr<IRemoteObject> &impl);
++
++    virtual ~HStreamDepthDataCallbackProxy() = default;
++
++    int32_t OnDepthDataError(int32_t errorCode) override;
++
++private:
++    static inline BrokerDelegator<HStreamDepthDataCallbackProxy> delegator_;
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_PROXY_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/client/include/hstream_depth_data_proxy.h b/services/camera_service/binder/client/include/hstream_depth_data_proxy.h
+new file mode 100644
+index 000000000..86afec31c
+--- /dev/null
++++ b/services/camera_service/binder/client/include/hstream_depth_data_proxy.h
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2021 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++ 
++#ifndef OHOS_CAMERA_HSTREAM_DEPTH_DATA_PROXY_H
++#define OHOS_CAMERA_HSTREAM_DEPTH_DATA_PROXY_H
++
++#include "iremote_proxy.h"
++#include "istream_depth_data.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamDepthDataProxy : public IRemoteProxy<IStreamDepthData> {
++public:
++    explicit HStreamDepthDataProxy(const sptr<IRemoteObject>& impl);
++    virtual ~HStreamDepthDataProxy();
++
++    int32_t Start() override;
++
++    int32_t Stop() override;
++
++    int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) override;
++
++    int32_t SetDataAccuracy(int32_t dataAccuracy) override;
++
++    int32_t Release() override;
++
++private:
++    static inline BrokerDelegator<HStreamDepthDataProxy> delegator_;
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_PROXY_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/client/src/hcamera_service_proxy.cpp b/services/camera_service/binder/client/src/hcamera_service_proxy.cpp
+index 4438a1e6c..97615b3b5 100644
+--- a/services/camera_service/binder/client/src/hcamera_service_proxy.cpp
++++ b/services/camera_service/binder/client/src/hcamera_service_proxy.cpp
+@@ -393,6 +393,41 @@ int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t
+     return error;
+ }
+ 
++int32_t HCameraServiceProxy::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
++                                                   int32_t width, int32_t height,
++                                                   sptr<IStreamDepthData>& depthDataOutput)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    if ((producer == nullptr) || (width == 0) || (height == 0)) {
++        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput producer is null or invalid size is set");
++        return IPC_PROXY_ERR;
++    }
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteRemoteObject(producer->AsObject());
++    data.WriteInt32(format);
++    data.WriteInt32(width);
++    data.WriteInt32(height);
++
++    int error = Remote()->SendRequest(static_cast<uint32_t>(
++        CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput failed, error: %{public}d", error);
++        return error;
++    }
++    auto remoteObject = reply.ReadRemoteObject();
++    if (remoteObject != nullptr) {
++        depthDataOutput = iface_cast<IStreamDepthData>(remoteObject);
++    } else {
++        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput depthDataOutput is null");
++        error = IPC_PROXY_ERR;
++    }
++    return error;
++}
++
+ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                                   sptr<IStreamMetadata>& metadataOutput)
+ {
+diff --git a/services/camera_service/binder/client/src/hstream_depth_data_callback_proxy.cpp b/services/camera_service/binder/client/src/hstream_depth_data_callback_proxy.cpp
+new file mode 100644
+index 000000000..544235d39
+--- /dev/null
++++ b/services/camera_service/binder/client/src/hstream_depth_data_callback_proxy.cpp
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_depth_data_callback_proxy.h"
++#include "camera_log.h"
++#include "camera_service_ipc_interface_code.h"
++#include "istream_depth_data_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++HStreamDepthDataCallbackProxy::HStreamDepthDataCallbackProxy(const sptr<IRemoteObject> &impl)
++    : IRemoteProxy<IStreamDepthDataCallback>(impl) { }
++
++int32_t HStreamDepthDataCallbackProxy::OnDepthDataError(int32_t errorCode)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++    option.SetFlags(option.TF_ASYNC);
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteInt32(errorCode);
++
++    int error = Remote()->SendRequest(static_cast<uint32_t>(
++        StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataCallbackProxy OnDepthDataError failed, error: %{public}d", error);
++    }
++
++    return error;
++}
++
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp b/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp
+new file mode 100644
+index 000000000..abb751b80
+--- /dev/null
++++ b/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp
+@@ -0,0 +1,118 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_depth_data_proxy.h"
++
++#include "camera_log.h"
++#include "camera_service_ipc_interface_code.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++HStreamDepthDataProxy::HStreamDepthDataProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IStreamDepthData>(impl) {}
++
++HStreamDepthDataProxy::~HStreamDepthDataProxy()
++{
++    MEDIA_INFO_LOG("~HStreamDepthDataProxy is called");
++}
++
++int32_t HStreamDepthDataProxy::Start()
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    int error = Remote()->SendRequest(
++        static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy Start failed, error: %{public}d", error);
++    }
++
++    return error;
++}
++
++int32_t HStreamDepthDataProxy::Stop()
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    int error = Remote()->SendRequest(
++        static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_STOP), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy Stop failed, error: %{public}d", error);
++    }
++
++    return error;
++}
++
++int32_t HStreamDepthDataProxy::Release()
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    int error = Remote()->SendRequest(
++        static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_RELEASE), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy Stop failed, error: %{public}d", error);
++    }
++    return error;
++}
++
++int32_t HStreamDepthDataProxy::SetCallback(sptr<IStreamDepthDataCallback>& callback)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    if (callback == nullptr) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy SetCallback callback is null");
++        return IPC_PROXY_ERR;
++    }
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteRemoteObject(callback->AsObject());
++
++    int error = Remote()->SendRequest(static_cast<uint32_t>(
++        StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy SetCallback failed, error: %{public}d", error);
++    }
++
++    return error;
++}
++
++int32_t HStreamDepthDataProxy::SetDataAccuracy(int32_t dataAccuracy)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteInt32(dataAccuracy);
++
++    int error = Remote()->SendRequest(static_cast<uint32_t>(
++        StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataProxy SetDataAccuracy failed, error: %{public}d", error);
++    }
++    return error;
++}
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/include/hcamera_service_stub.h b/services/camera_service/binder/server/include/hcamera_service_stub.h
+index 58d3396be..ae2a79732 100644
+--- a/services/camera_service/binder/server/include/hcamera_service_stub.h
++++ b/services/camera_service/binder/server/include/hcamera_service_stub.h
+@@ -46,6 +46,7 @@ private:
+     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
+     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
+     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);
++    int HandleCreateDepthDataOutput(MessageParcel &data, MessageParcel &reply);
+     int HandleCreateMetadataOutput(MessageParcel &data, MessageParcel &reply);
+     int HandleCreateVideoOutput(MessageParcel &data, MessageParcel &reply);
+     int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);
+diff --git a/services/camera_service/binder/server/include/hcapture_session_stub.h b/services/camera_service/binder/server/include/hcapture_session_stub.h
+index ff3cf84e8..d7b33fb1b 100644
+--- a/services/camera_service/binder/server/include/hcapture_session_stub.h
++++ b/services/camera_service/binder/server/include/hcapture_session_stub.h
+@@ -21,6 +21,7 @@
+ #include "icapture_session.h"
+ #include "iremote_stub.h"
+ #include "istream_capture.h"
++#include "istream_depth_data.h"
+ #include "istream_metadata.h"
+ #include "istream_repeat.h"
+ namespace OHOS {
+diff --git a/services/camera_service/binder/server/include/hstream_depth_data_callback_stub.h b/services/camera_service/binder/server/include/hstream_depth_data_callback_stub.h
+new file mode 100644
+index 000000000..d0277e021
+--- /dev/null
++++ b/services/camera_service/binder/server/include/hstream_depth_data_callback_stub.h
+@@ -0,0 +1,34 @@
++/*
++ * Copyright (c) 2021 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_STUB_H
++#define OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_STUB_H
++
++#include "iremote_stub.h"
++#include "istream_depth_data_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamDepthDataCallbackStub : public IRemoteStub<IStreamDepthDataCallback> {
++public:
++    int OnRemoteRequest(uint32_t code, MessageParcel &data,
++                        MessageParcel &reply, MessageOption &option) override;
++
++private:
++    int HandleOnDepthDataError(MessageParcel& data);
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_STUB_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/include/hstream_depth_data_stub.h b/services/camera_service/binder/server/include/hstream_depth_data_stub.h
+new file mode 100644
+index 000000000..8731fd85a
+--- /dev/null
++++ b/services/camera_service/binder/server/include/hstream_depth_data_stub.h
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (c) 2021 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_HSTREAM_DEPTH_DATA_STUB_H
++#define OHOS_CAMERA_HSTREAM_DEPTH_DATA_STUB_H
++
++#include <cstdint>
++
++#include "icamera_ipc_checker.h"
++#include "iremote_stub.h"
++#include "istream_depth_data.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class HStreamDepthDataStub : public IRemoteStub<IStreamDepthData>, public ICameraIpcChecker {
++public:
++    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
++
++private:
++    int32_t HandleSetCallback(MessageParcel& data);
++    int32_t HandleSetDataAccuracy(MessageParcel& data);
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_STUB_H
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/src/hcamera_service_stub.cpp b/services/camera_service/binder/server/src/hcamera_service_stub.cpp
+index 39c4e425e..174a0d955 100644
+--- a/services/camera_service/binder/server/src/hcamera_service_stub.cpp
++++ b/services/camera_service/binder/server/src/hcamera_service_stub.cpp
+@@ -84,6 +84,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
+         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT):
+             errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
+             break;
++        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT):
++            errCode = HCameraServiceStub::HandleCreateDepthDataOutput(data, reply);
++            break;
+         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_VIDEO_OUTPUT):
+             errCode = HCameraServiceStub::HandleCreateVideoOutput(data, reply);
+             break;
+@@ -456,6 +459,31 @@ int HCameraServiceStub::HandleCreateDeferredPreviewOutput(MessageParcel& data, M
+     return ret;
+ }
+ 
++int HCameraServiceStub::HandleCreateDepthDataOutput(MessageParcel& data, MessageParcel& reply)
++{
++    sptr<IStreamDepthData> depthDataOutput = nullptr;
++
++    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
++    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
++        "HCameraServiceStub HandleCreateDepthDataOutput BufferProducer is null");
++    int32_t format = data.ReadInt32();
++    int32_t width = data.ReadInt32();
++    int32_t height = data.ReadInt32();
++    MEDIA_INFO_LOG(
++        "CreateDepthDataOutput, format: %{public}d, width: %{public}d, height: %{public}d", format, width, height);
++    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
++    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
++                             "HCameraServiceStub HandleCreateDepthDataOutput producer is null");
++    int errCode = CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
++    if (errCode != ERR_NONE) {
++        MEDIA_ERR_LOG("HandleCreateDepthDataOutput CreateDepthDataOutput failed : %{public}d", errCode);
++        return errCode;
++    }
++    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(depthDataOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
++        "HCameraServiceStub HandleCreateDepthDataOutput Write previewOutput obj failed");
++    return errCode;
++}
++
+ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel& data, MessageParcel& reply)
+ {
+     sptr<IStreamMetadata> metadataOutput = nullptr;
+diff --git a/services/camera_service/binder/server/src/hcapture_session_stub.cpp b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
+index 4c8daad0d..6bfb65c15 100644
+--- a/services/camera_service/binder/server/src/hcapture_session_stub.cpp
++++ b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
+@@ -162,6 +162,8 @@ int32_t HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
+         stream = iface_cast<IStreamRepeat>(remoteObj);
+     }  else if (streamType == StreamType::METADATA) {
+         stream = iface_cast<IStreamMetadata>(remoteObj);
++    } else if (streamType == StreamType::DEPTH) {
++        stream = iface_cast<IStreamDepthData>(remoteObj);
+     }
+ 
+     return AddOutput(streamType, stream);
+@@ -178,8 +180,10 @@ int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
+         stream = iface_cast<IStreamCapture>(remoteObj);
+     } else if (streamType == StreamType::REPEAT) {
+         stream = iface_cast<IStreamRepeat>(remoteObj);
+-    }  else if (streamType == StreamType::METADATA) {
++    } else if (streamType == StreamType::METADATA) {
+         stream = iface_cast<IStreamMetadata>(remoteObj);
++    } else if (streamType == StreamType::DEPTH) {
++        stream = iface_cast<IStreamDepthData>(remoteObj);
+     }
+     return RemoveOutput(streamType, stream);
+ }
+diff --git a/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp b/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp
+new file mode 100644
+index 000000000..5979bf870
+--- /dev/null
++++ b/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp
+@@ -0,0 +1,48 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_depth_data_callback_stub.h"
++#include "camera_log.h"
++#include "camera_service_ipc_interface_code.h"
++#include "istream_depth_data_callback.h"
++
++namespace OHOS {
++namespace CameraStandard {
++int HStreamDepthDataCallbackStub::OnRemoteRequest(
++    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
++{
++    int errCode = -1;
++
++    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
++    switch (code) {
++        case static_cast<uint32_t>(StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR):
++            errCode = HStreamDepthDataCallbackStub::HandleOnDepthDataError(data);
++            break;
++        default:
++            MEDIA_ERR_LOG("HStreamDrpthDataCallbackStub request code %{public}u not handled", code);
++            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
++            break;
++    }
++    return errCode;
++}
++
++int HStreamDepthDataCallbackStub::HandleOnDepthDataError(MessageParcel& data)
++{
++    int32_t errorType = static_cast<int32_t>(data.ReadUint64());
++    return OnDepthDataError(errorType);
++}
++
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/binder/server/src/hstream_depth_data_stub.cpp b/services/camera_service/binder/server/src/hstream_depth_data_stub.cpp
+new file mode 100644
+index 000000000..86486a948
+--- /dev/null
++++ b/services/camera_service/binder/server/src/hstream_depth_data_stub.cpp
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_depth_data_stub.h"
++
++#include "camera_log.h"
++#include "camera_service_ipc_interface_code.h"
++#include "camera_util.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++int HStreamDepthDataStub::OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply,
++                                          MessageOption& option)
++{
++    DisableJeMalloc();
++    int errCode = -1;
++
++    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
++    errCode = OperatePermissionCheck(code);
++    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
++    switch (code) {
++        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START):
++            errCode = Start();
++            break;
++        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_STOP):
++            errCode = Stop();
++            break;
++        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK):
++            errCode = HStreamDepthDataStub::HandleSetCallback(data);
++            break;
++        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET):
++            errCode = HStreamDepthDataStub::HandleSetDataAccuracy(data);
++            break;
++        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_RELEASE):
++            errCode = Release();
++            break;
++        default:
++            MEDIA_ERR_LOG("HStreamDepthDataStub request code %{public}u not handled", code);
++            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
++            break;
++    }
++
++    return errCode;
++}
++
++int32_t HStreamDepthDataStub::HandleSetCallback(MessageParcel& data)
++{
++    auto remoteObject = data.ReadRemoteObject();
++    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
++        "HStreamDepthDataStub HandleSetCallback StreamDepthDataCallback is null");
++
++    auto callback = iface_cast<IStreamDepthDataCallback>(remoteObject);
++    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
++                             "HStreamDepthDataStub HandleSetCallback callback is null");
++    return SetCallback(callback);
++}
++
++int32_t HStreamDepthDataStub::HandleSetDataAccuracy(MessageParcel& data)
++{
++    int32_t dataAccuracy = data.ReadInt32();
++
++    int error = SetDataAccuracy(dataAccuracy);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamDepthDataStub::HandleSetDataAccuracy failed : %{public}d", error);
++    }
++    return error;
++}
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+diff --git a/services/camera_service/include/hcamera_service.h b/services/camera_service/include/hcamera_service.h
+index 9d2e2967e..c127fce4d 100644
+--- a/services/camera_service/include/hcamera_service.h
++++ b/services/camera_service/include/hcamera_service.h
+@@ -33,6 +33,7 @@
+ #include "hcamera_service_stub.h"
+ #include "hcapture_session.h"
+ #include "hstream_capture.h"
++#include "hstream_depth_data.h"
+ #include "hstream_metadata.h"
+ #include "hstream_repeat.h"
+ #include "datashare_helper.h"
+@@ -100,6 +101,8 @@ public:
+         int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput) override;
+     int32_t CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
+         int32_t height, sptr<IStreamRepeat>& previewOutput) override;
++    int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
++        int32_t height, sptr<IStreamDepthData>& depthDataOutput) override;
+     int32_t CreateMetadataOutput(
+         const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput) override;
+     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
+diff --git a/services/camera_service/include/hstream_depth_data.h b/services/camera_service/include/hstream_depth_data.h
+new file mode 100644
+index 000000000..6b325548f
+--- /dev/null
++++ b/services/camera_service/include/hstream_depth_data.h
+@@ -0,0 +1,68 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OHOS_CAMERA_H_STREAM_DEPTH_DATA_H
++#define OHOS_CAMERA_H_STREAM_DEPTH_DATA_H
++
++#include <cstdint>
++#include <functional>
++#include <iostream>
++#include <refbase.h>
++
++#include "camera_metadata_info.h"
++#include "hstream_common.h"
++#include "hstream_depth_data_stub.h"
++#include "istream_depth_data_callback.h"
++#include "v1_0/istream_operator.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++enum class DepthDataStreamStatus {
++    STOPED,
++    STARTED
++};
++
++class HStreamDepthData : public HStreamDepthDataStub, public HStreamCommon {
++public:
++    HStreamDepthData(
++        sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
++    ~HStreamDepthData();
++
++    int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
++        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
++    void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
++    int32_t ReleaseStream(bool isDelay) override;
++    int32_t Release() override;
++    int32_t Start() override;
++    int32_t Stop() override;
++    int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) override;
++    int32_t OnDepthDataError(int32_t errorType);
++    int32_t SetDataAccuracy(int32_t accuracy) override;
++    void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
++    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
++
++private:
++    sptr<IStreamDepthDataCallback> streamDepthDataCallback_;
++    std::mutex callbackLock_;
++    std::mutex streamStartStopLock_;
++    wptr<HStreamDepthData> parentStreamDepthData_;
++    DepthDataStreamStatus depthDataStreamStatus_ = DepthDataStreamStatus::STOPED;
++    sptr<OHOS::IBufferProducer> metaProducer_;
++    std::vector<int32_t> streamDepthDataAccuracy_ = {};
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif // OHOS_CAMERA_H_STREAM_DEPTH_DATA_H
+\ No newline at end of file
+diff --git a/services/camera_service/src/camera_util.cpp b/services/camera_service/src/camera_util.cpp
+index 57e683474..241a5572a 100644
+--- a/services/camera_service/src/camera_util.cpp
++++ b/services/camera_service/src/camera_util.cpp
+@@ -41,7 +41,8 @@ std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
+     {OHOS_CAMERA_FORMAT_YCBCR_P010, GRAPHIC_PIXEL_FMT_YCBCR_P010},
+     {OHOS_CAMERA_FORMAT_YCRCB_P010, GRAPHIC_PIXEL_FMT_YCRCB_P010},
+     {OHOS_CAMERA_FORMAT_YCBCR_420_SP, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
+-    {OHOS_CAMERA_FORMAT_422_YUYV, GRAPHIC_PIXEL_FMT_YUYV_422_PKG}
++    {OHOS_CAMERA_FORMAT_422_YUYV, GRAPHIC_PIXEL_FMT_YUYV_422_PKG},
++    {OHOS_CAMERA_FORMAT_DEPTH_16, GRAPHIC_PIXEL_FMT_RGBA16_FLOAT}
+ };
+ 
+ std::map<int, std::string> g_cameraPos = {
+diff --git a/services/camera_service/src/hcamera_service.cpp b/services/camera_service/src/hcamera_service.cpp
+index 2043520b2..057721d6b 100644
+--- a/services/camera_service/src/hcamera_service.cpp
++++ b/services/camera_service/src/hcamera_service.cpp
+@@ -544,6 +544,34 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
+     return rc;
+ }
+ 
++int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
++    int32_t width, int32_t height, sptr<IStreamDepthData>& depthDataOutput)
++{
++    CAMERA_SYNC_TRACE;
++    sptr<HStreamDepthData> streamDepthData;
++    int32_t rc = CAMERA_OK;
++    MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput prepare execute");
++
++    if ((producer == nullptr) || (width == 0) || (height == 0)) {
++        rc = CAMERA_INVALID_ARG;
++        MEDIA_ERR_LOG("HCameraService::CreateDepthDataOutput producer is null");
++        CameraReportUtils::ReportCameraError(
++            "HCameraService::CreateDepthDataOutput", rc, false, CameraReportUtils::GetCallerInfo());
++        return rc;
++    }
++    streamDepthData = new (nothrow) HStreamDepthData(producer, format, width, height);
++    if (streamDepthData == nullptr) {
++        rc = CAMERA_ALLOC_ERROR;
++        MEDIA_ERR_LOG("HCameraService::CreateDepthDataOutput HStreamRepeat allocation failed");
++        CameraReportUtils::ReportCameraError(
++            "HCameraService::CreateDepthDataOutput", rc, false, CameraReportUtils::GetCallerInfo());
++        return rc;
++    }
++    depthDataOutput = streamDepthData;
++    MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput execute success");
++    return rc;
++}
++
+ int32_t HCameraService::CreateMetadataOutput(
+     const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput)
+ {
+@@ -1664,7 +1692,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
+         uint8_t enableValue = item.data.u8[0];
+         defaultSettings->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &enableValue, count);
+     }
+-    
++
+     uint8_t enableValue = true;
+     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
+     return defaultSettings;
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index 50d6bc5a6..b43d2400f 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -47,6 +47,7 @@
+ #include "hcamera_restore_param.h"
+ #include "hstream_capture.h"
+ #include "hstream_common.h"
++#include "hstream_depth_data.h"
+ #include "hstream_metadata.h"
+ #include "hstream_repeat.h"
+ #include "icamera_util.h"
+@@ -478,6 +479,8 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
+             errorCode = AddOutputStream(repeatSteam);
+         } else if (streamType == StreamType::METADATA) {
+             errorCode = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
++        } else if (streamType == StreamType::DEPTH) {
++            errorCode = AddOutputStream(static_cast<HStreamDepthData*>(stream.GetRefPtr()));
+         }
+     });
+     if (errorCode == CAMERA_OK) {
+diff --git a/services/camera_service/src/hstream_depth_data.cpp b/services/camera_service/src/hstream_depth_data.cpp
+new file mode 100644
+index 000000000..2990c5023
+--- /dev/null
++++ b/services/camera_service/src/hstream_depth_data.cpp
+@@ -0,0 +1,267 @@
++/*
++ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_depth_data.h"
++
++#include <cstdint>
++
++#include "camera_device_ability_items.h"
++#include "camera_log.h"
++#include "camera_metadata_operator.h"
++#include "camera_service_ipc_interface_code.h"
++#include "display_manager.h"
++#include "camera_util.h"
++#include "hstream_common.h"
++#include "ipc_skeleton.h"
++#include "istream_depth_data_callback.h"
++#include "metadata_utils.h"
++#include "camera_report_uitls.h"
++
++namespace OHOS {
++namespace CameraStandard {
++using namespace OHOS::HDI::Camera::V1_0;
++HStreamDepthData::HStreamDepthData(
++    sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
++    : HStreamCommon(StreamType::DEPTH, producer, format, width, height)
++{
++    MEDIA_INFO_LOG("HStreamDepthData::HStreamDepthData construct, format:%{public}d, size:%{public}dx%{public}d, "
++        "streamId:%{public}d",
++        format, width, height, GetFwkStreamId());
++}
++
++HStreamDepthData::~HStreamDepthData()
++{
++    MEDIA_INFO_LOG("HStreamDepthData::~HStreamDepthData deconstruct, format:%{public}d size:%{public}dx%{public}d "
++                   "streamId:%{public}d, hdiStreamId:%{public}d",
++        format_, width_, height_, GetFwkStreamId(), GetHdiStreamId());
++}
++
++int32_t HStreamDepthData::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
++    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
++{
++    MEDIA_INFO_LOG("HStreamDepthData::LinkInput streamId:%{public}d", GetFwkStreamId());
++    int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
++    if (ret != CAMERA_OK) {
++        MEDIA_ERR_LOG("HStreamDepthData::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
++        return ret;
++    }
++    return CAMERA_OK;
++}
++
++void HStreamDepthData::SetStreamInfo(StreamInfo_V1_1& streamInfo)
++{
++    HStreamCommon::SetStreamInfo(streamInfo);
++    streamInfo.v1_0.intent_ =
++        static_cast<OHOS::HDI::Camera::V1_0::StreamIntent>(OHOS::HDI::Camera::V1_3::StreamType::STREAM_TYPE_DEPTH);
++    MEDIA_INFO_LOG("HStreamDepthData::SetStreamInfo intent: %d", streamInfo.v1_0.intent_);
++}
++
++int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
++{
++    MEDIA_INFO_LOG("HStreamDepthData::SetDataAccuracy accuracy: %{public}d", accuracy);
++    streamDepthDataAccuracy_ = {accuracy};
++    std::vector<uint8_t> ability;
++    std::vector<uint8_t> depthSettings;
++    {
++        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
++        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
++        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
++        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
++        camera_metadata_item_t item;
++        CHECK_AND_RETURN_RET_LOG(dynamicSetting != nullptr, CAMERA_INVALID_ARG,
++            "HStreamDepthData::SetDataAccuracy dynamicSetting is nullptr.");
++        int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_DEPTH_DATA_ACCURACY, &item);
++        bool status = false;
++        if (ret == CAM_META_ITEM_NOT_FOUND) {
++            MEDIA_DEBUG_LOG("HStreamDepthData::SetDataAccuracy Failed to find data accuracy");
++            status = dynamicSetting->addEntry(
++                OHOS_CONTROL_DEPTH_DATA_ACCURACY, streamDepthDataAccuracy_.data(), streamDepthDataAccuracy_.size());
++        } else if (ret == CAM_META_SUCCESS) {
++            MEDIA_DEBUG_LOG("HStreamDepthData::SetDataAccuracy success to find data accuracy");
++            status = dynamicSetting->updateEntry(
++                OHOS_CONTROL_DEPTH_DATA_ACCURACY, streamDepthDataAccuracy_.data(), streamDepthDataAccuracy_.size());
++        }
++        if (!status) {
++            MEDIA_ERR_LOG("HStreamDepthData::SetDataAccuracy Failed to set data accuracy");
++        }
++        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, depthSettings);
++    }
++
++    auto streamOperator = GetStreamOperator();
++
++    CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;
++    if (streamOperator != nullptr) {
++        std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
++        CaptureInfo captureInfo;
++        captureInfo.streamIds_ = {GetHdiStreamId()};
++        captureInfo.captureSetting_ = depthSettings;
++        captureInfo.enableShutterCallback_ = false;
++        int32_t currentCaptureId = GetPreparedCaptureId();
++        MEDIA_INFO_LOG("HStreamDepthData::SetDataAccuracy stream:%{public}d, with settingCapture ID:%{public}d",
++            GetFwkStreamId(), currentCaptureId);
++        rc = (CamRetCode)(streamOperator->Capture(currentCaptureId, captureInfo, true));
++        if (rc != HDI::Camera::V1_0::NO_ERROR) {
++            MEDIA_ERR_LOG("HStreamDepthData::SetDataAccuracy Failed with error Code:%{public}d", rc);
++        }
++    }
++    return rc;
++}
++
++int32_t HStreamDepthData::Start()
++{
++    CAMERA_SYNC_TRACE;
++    auto streamOperator = GetStreamOperator();
++    if (streamOperator == nullptr) {
++        return CAMERA_INVALID_STATE;
++    }
++
++    auto preparedCaptureId = GetPreparedCaptureId();
++    if (preparedCaptureId != CAPTURE_ID_UNSET) {
++        MEDIA_ERR_LOG("HStreamDepthData::Start, Already started with captureID: %{public}d", preparedCaptureId);
++        return CAMERA_INVALID_STATE;
++    }
++
++    int32_t ret = PrepareCaptureId();
++    preparedCaptureId = GetPreparedCaptureId();
++    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
++        MEDIA_ERR_LOG("HStreamDepthData::Start Failed to allocate a captureId");
++        return ret;
++    }
++
++    std::vector<uint8_t> ability;
++    {
++        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
++        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
++    }
++
++    CaptureInfo captureInfo;
++    captureInfo.streamIds_ = { GetHdiStreamId() };
++    captureInfo.captureSetting_ = ability;
++    captureInfo.enableShutterCallback_ = false;
++    MEDIA_INFO_LOG("HStreamDepthData::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d",
++        GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId);
++
++    std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
++    HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
++    CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
++    if (rc != HDI::Camera::V1_0::NO_ERROR) {
++        ResetCaptureId();
++        MEDIA_ERR_LOG("HStreamDepthData::Start Failed with error Code:%{public}d", rc);
++        CameraReportUtils::ReportCameraError(
++            "HStreamDepthData::Start", rc, true, CameraReportUtils::GetCallerInfo());
++        ret = HdiToServiceError(rc);
++    } else {
++        depthDataStreamStatus_ = DepthDataStreamStatus::STARTED;
++    }
++
++    return ret;
++}
++
++int32_t HStreamDepthData::Stop()
++{
++    CAMERA_SYNC_TRACE;
++    auto streamOperator = GetStreamOperator();
++    if (streamOperator == nullptr) {
++        MEDIA_INFO_LOG("HStreamDepthData::Stop streamOperator is null");
++        return CAMERA_INVALID_STATE;
++    }
++    auto preparedCaptureId = GetPreparedCaptureId();
++    MEDIA_INFO_LOG("HStreamDepthData::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d",
++        GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId);
++    if (preparedCaptureId == CAPTURE_ID_UNSET) {
++        MEDIA_ERR_LOG("HStreamDepthData::Stop, Stream not started yet");
++        return CAMERA_INVALID_STATE;
++    }
++    int32_t ret = CAMERA_OK;
++    {
++        std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
++        ret = StopStream();
++        if (ret != CAMERA_OK) {
++            MEDIA_ERR_LOG("HStreamDepthData::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d",
++                          ret, preparedCaptureId);
++        } else {
++            depthDataStreamStatus_ = DepthDataStreamStatus::STOPED;
++        }
++    }
++    return ret;
++}
++
++int32_t HStreamDepthData::Release()
++{
++    return ReleaseStream(false);
++}
++
++int32_t HStreamDepthData::ReleaseStream(bool isDelay)
++{
++    {
++        std::lock_guard<std::mutex> lock(callbackLock_);
++        streamDepthDataCallback_ = nullptr;
++    }
++    return HStreamCommon::ReleaseStream(isDelay);
++}
++
++int32_t HStreamDepthData::SetCallback(sptr<IStreamDepthDataCallback>& callback)
++{
++    if (callback == nullptr) {
++        MEDIA_ERR_LOG("HStreamDepthData::SetCallback callback is null");
++        return CAMERA_INVALID_ARG;
++    }
++    std::lock_guard<std::mutex> lock(callbackLock_);
++    streamDepthDataCallback_ = callback;
++    return CAMERA_OK;
++}
++
++int32_t HStreamDepthData::OnDepthDataError(int32_t errorType)
++{
++    std::lock_guard<std::mutex> lock(callbackLock_);
++    if (streamDepthDataCallback_ != nullptr) {
++        int32_t depthDataErrorCode;
++        if (errorType == BUFFER_LOST) {
++            depthDataErrorCode = CAMERA_STREAM_BUFFER_LOST;
++        } else {
++            depthDataErrorCode = CAMERA_UNKNOWN_ERROR;
++        }
++        CAMERA_SYSEVENT_FAULT(CreateMsg("Depth OnDepthDataError! errorCode:%d", depthDataErrorCode));
++        streamDepthDataCallback_->OnDepthDataError(depthDataErrorCode);
++    }
++    return CAMERA_OK;
++}
++
++void HStreamDepthData::DumpStreamInfo(CameraInfoDumper& infoDumper)
++{
++    infoDumper.Title("depth stream");
++    HStreamCommon::DumpStreamInfo(infoDumper);
++}
++
++int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
++{
++    switch (static_cast<StreamDepthDataInterfaceCode>(interfaceCode)) {
++        case StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START: {
++            auto callerToken = IPCSkeleton::GetCallingTokenID();
++            if (callerToken_ != callerToken) {
++                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
++                              "is %{public}d",
++                    callerToken_, callerToken);
++                return CAMERA_OPERATION_NOT_ALLOWED;
++            }
++            break;
++        }
++        default:
++            break;
++    }
++    return CAMERA_OK;
++}
++} // namespace CameraStandard
++} // namespace OHOS
+\ No newline at end of file
+-- 
+2.45.2.huawei.5
+
