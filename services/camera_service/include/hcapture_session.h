@@ -161,6 +161,7 @@ private:
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
     std::atomic<bool> isNeededClear_ { false };
+    std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
 };
 
