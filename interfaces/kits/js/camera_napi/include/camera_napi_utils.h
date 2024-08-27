@@ -126,7 +126,7 @@ public:
     static void InvokeJSAsyncMethod(napi_env env, napi_deferred deferred, napi_ref callbackRef, napi_async_work work,
         const JSAsyncContextOutput& asyncContext);
 
-    static int32_t IncreamentAndGet(uint32_t& num);
+    static int32_t IncrementAndGet(uint32_t& num);
 
     static void IsEnableSecureCamera(bool isEnable);
 

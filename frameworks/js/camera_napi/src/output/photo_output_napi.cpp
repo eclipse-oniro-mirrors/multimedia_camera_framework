@@ -46,6 +46,7 @@
 #include "pixel_map_napi.h"
 #include "refbase.h"
 #include "video_key_info.h"
+#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -190,6 +191,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo();
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -282,7 +284,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
                 location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
+        CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
+        CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo();
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo();
     }
 }
 
@@ -304,6 +309,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
+        CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo();
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
@@ -926,7 +932,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled),
         DECLARE_NAPI_FUNCTION("isAutoHighQualityPhotoSupported", IsAutoHighQualityPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto),
-        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
+        DECLARE_NAPI_FUNCTION("getPhotoRotation", GetPhotoRotation)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -1341,7 +1348,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Capture";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 if (context->isInvalidArgument) {
                     return;
                 }
@@ -1443,7 +1450,7 @@ napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
                 PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::BurstCapture";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 if (context->isInvalidArgument) {
                     return;
                 }
@@ -1517,7 +1524,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -1571,7 +1578,7 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::GetDefaultCaptureSetting";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
@@ -1728,6 +1735,41 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliveryEnabled(napi_env env, napi_ca
     return result;
 }
 
+napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetPhotoRotation is called!");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t value;
+        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &value);
+        if (ret != napi_ok) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
+                "GetPhotoRotation parameter missing or parameter type incorrect.");
+            return result;
+        }
+        int32_t retCode = photoOutputNapi->photoOutput_->GetPhotoRotation(value);
+        if (retCode == SERVICE_FATL_ERROR) {
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
+                "GetPhotoRotation Camera service fatal error.");
+            return result;
+        }
+        napi_create_int32(env, retCode, &result);
+        MEDIA_INFO_LOG("PhotoOutputNapi GetPhotoRotation! %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi GetPhotoRotation! called failed!");
+    }
+    return result;
+}
+
 napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetMirror is called");
@@ -1761,7 +1803,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
                 context->status = false;
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::SetMirror";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;

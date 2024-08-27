@@ -243,6 +243,7 @@ public:
     static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
+    static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;

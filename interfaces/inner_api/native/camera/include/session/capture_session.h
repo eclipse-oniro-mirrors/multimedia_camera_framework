@@ -301,6 +301,32 @@ public:
     EffectSuggestionType currentType = EffectSuggestionType::EFFECT_SUGGESTION_NONE;
 };
 
+struct LcdFlashStatusInfo {
+    bool isLcdFlashNeeded;
+    int32_t lcdCompensation;
+};
+
+class LcdFlashStatusCallback {
+public:
+    LcdFlashStatusCallback() = default;
+    virtual ~LcdFlashStatusCallback() = default;
+    virtual void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) = 0;
+    void SetLcdFlashStatusInfo(const LcdFlashStatusInfo lcdFlashStatusInfo)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        lcdFlashStatusInfo_ = lcdFlashStatusInfo;
+    }
+    LcdFlashStatusInfo GetLcdFlashStatusInfo()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return lcdFlashStatusInfo_;
+    }
+
+private:
+    LcdFlashStatusInfo lcdFlashStatusInfo_ = { .isLcdFlashNeeded = true, .lcdCompensation = -1 };
+    std::mutex mutex_;
+};
+
 struct EffectSuggestionStatus {
     EffectSuggestionType type;
     bool status;
@@ -1252,22 +1278,22 @@ public:
     std::shared_ptr<ARCallback> GetARCallback();
 
     /**
-     * @brief Get Session Abilities.
+     * @brief Get Session Functions.
      *
      * @param previewProfiles to be searched.
      * @param photoProfiles to be searched.
      * @param videoProfiles to be searched.
      */
-    std::vector<sptr<CameraAbility>> GetSessionAbilities(std::vector<Profile>& previewProfiles,
+    std::vector<sptr<CameraAbility>> GetSessionFunctions(std::vector<Profile>& previewProfiles,
                                                          std::vector<Profile>& photoProfiles,
                                                          std::vector<VideoProfile>& videoProfiles,
                                                          bool isForApp = true);
 
     /**
-     * @brief Get Session Conflict Abilities.
+     * @brief Get Session Conflict Functions.
      *
      */
-    std::vector<sptr<CameraAbility>> GetSessionConflictAbilities();
+    std::vector<sptr<CameraAbility>> GetSessionConflictFunctions();
 
     /**
      * @brief Get CameraOutput Capabilities.
@@ -1486,6 +1512,65 @@ public:
 
     int32_t SetPreviewRotation(std::string &deviceClass);
 
+    /**
+     * @brief Checks if the LCD flash feature is supported.
+     *
+     * This function determines whether the current system or device supports the LCD flash feature.
+     * It returns `true` if the feature is supported; otherwise, it returns `false`.
+     *
+     * @return `true` if the LCD flash feature is supported; `false` otherwise.
+     */
+    bool IsLcdFlashSupported();
+
+    /**
+     * @brief Enables or disables the LCD flash feature.
+     *
+     * This function enables or disables the LCD flash feature based on the provided `isEnable` flag.
+     *
+     * @param isEnable A boolean flag indicating whether to enable (`true`) or disable (`false`) the LCD flash feature.
+     *
+     * @return Returns an `int32_t` value indicating the result of the operation.
+     *         Typically, a return value of 0 indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableLcdFlash(bool isEnable);
+
+    /**
+     * @brief Enables or disables LCD flash detection.
+     *
+     * This function enables or disables the detection of the LCD flash feature based on the provided `isEnable` flag.
+     *
+     * @param isEnable A boolean flag indicating whether to enable (`true`) or disable (`false`) LCD flash detection.
+     *
+     * @return Returns an `int32_t` value indicating the outcome of the operation.
+     *         A return value of 0 typically signifies success, while a non-zero value indicates an error.
+     */
+    int32_t EnableLcdFlashDetection(bool isEnable);
+
+    void ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+     * @brief Sets the callback for LCD flash status updates.
+     *
+     * This function assigns a callback to be invoked whenever there is a change in the LCD flash status.
+     * The callback is passed as a shared pointer, allowing for shared ownership and automatic memory management.
+     *
+     * @param lcdFlashStatusCallback A shared pointer to an LcdFlashStatusCallback object. This callback will
+     *        be called to handle updates related to the LCD flash status. If the callback is already set,
+     *        it will be overwritten with the new one.
+     */
+    void SetLcdFlashStatusCallback(std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback);
+
+    /**
+     * @brief Retrieves the current LCD flash status callback.
+     *
+     * This function returns a shared pointer to the `LcdFlashStatusCallback` object that is used for receiving
+     * notifications or callbacks related to the LCD flash status.
+     *
+     * @return A `std::shared_ptr<LcdFlashStatusCallback>` pointing to the current LCD flash status callback.
+     *         If no callback is set, it may return a `nullptr`.
+     */
+    std::shared_ptr<LcdFlashStatusCallback> GetLcdFlashStatusCallback();
+
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1562,6 +1647,7 @@ private:
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
     std::shared_ptr<ARCallback> arCallback_;
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
+    std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;

@@ -38,13 +38,6 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
-enum SessionAsyncCallbackModes {
-    COMMIT_CONFIG_ASYNC_CALLBACK,
-    SESSION_START_ASYNC_CALLBACK,
-    SESSION_STOP_ASYNC_CALLBACK,
-    SESSION_RELEASE_ASYNC_CALLBACK,
-};
-
 class ExposureCallbackListener : public ExposureCallback, public ListenerBase {
 public:
     ExposureCallbackListener(napi_env env) : ListenerBase(env) {}
@@ -217,6 +210,25 @@ struct EffectSuggestionCallbackInfo {
         : effectSuggestionType_(effectSuggestionType), listener_(listener) {}
 };
 
+class LcdFlashStatusCallbackListener : public LcdFlashStatusCallback, public ListenerBase {
+public:
+    LcdFlashStatusCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~LcdFlashStatusCallbackListener() = default;
+    void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
+
+private:
+    void OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const;
+    void OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const;
+};
+
+struct LcdFlashStatusStatusCallbackInfo {
+    LcdFlashStatusInfo lcdFlashStatusInfo_;
+    const LcdFlashStatusCallbackListener* listener_;
+    LcdFlashStatusStatusCallbackInfo(LcdFlashStatusInfo lcdFlashStatusInfo,
+    const LcdFlashStatusCallbackListener* listener)
+        : lcdFlashStatusInfo_(lcdFlashStatusInfo), listener_(listener) {}
+};
+
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -231,6 +243,8 @@ public:
     static napi_value IsFlashModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFlashMode(napi_env env, napi_callback_info info);
     static napi_value SetFlashMode(napi_env env, napi_callback_info info);
+    static napi_value IsLcdFlashSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableLcdFlash(napi_env env, napi_callback_info info);
     static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetExposureMode(napi_env env, napi_callback_info info);
     static napi_value SetExposureMode(napi_env env, napi_callback_info info);
@@ -330,8 +344,8 @@ public:
 
     static napi_value GetCameraOutputCapabilities(napi_env env, napi_callback_info info);
 
-    static napi_value GetSessionAbilities(napi_env env, napi_callback_info info);
-    static napi_value GetSessionConflictAbilities(napi_env env, napi_callback_info info);
+    static napi_value GetSessionFunctions(napi_env env, napi_callback_info info);
+    static napi_value GetSessionConflictFunctions(napi_env env, napi_callback_info info);
     static napi_value CreateAbilitiesJSArray(
         napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict);
     const EmitterFunctions& GetEmitterFunctions() override;
@@ -347,6 +361,7 @@ public:
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_;
+    std::shared_ptr<LcdFlashStatusCallbackListener> lcdFlashStatusCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
@@ -444,18 +459,17 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterLcdFlashStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterLcdFlashStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {
+    CameraSessionAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     CameraSessionNapi* objectInfo;
-
-    SessionAsyncCallbackModes modeForAsync;
     std::string errorMsg;
-    bool bRetBool;
-    ~CameraSessionAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

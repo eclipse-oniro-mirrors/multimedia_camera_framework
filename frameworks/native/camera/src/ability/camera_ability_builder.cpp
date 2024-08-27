@@ -141,6 +141,15 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
     }
     ability->supportedColorEffects_ = session->GetSupportedColorEffects();
     ability->supportedColorSpaces_ = session->GetSupportedColorSpaces();
+
+    SceneFeature feature = SceneFeature::FEATURE_MOON_CAPTURE_BOOST;
+    while (feature < SceneFeature::FEATURE_ENUM_MAX) {
+        if (session->IsFeatureSupported(feature)) {
+            ability->supportedSceneFeature_.emplace_back(feature);
+        }
+        feature = static_cast<SceneFeature>(static_cast<int32_t>(feature) + 1);
+    }
+
     switch (modeName) {
         case SceneMode::CAPTURE: {
             break;

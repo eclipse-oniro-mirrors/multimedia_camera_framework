@@ -41,8 +41,33 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace std;
+namespace {
+void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<CameraSessionAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraSessionNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("CameraSessionNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
+        context->status);
+    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
+    jsContext->status = context->status;
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    } else {
+        napi_get_undefined(env, &jsContext->data);
+    }
+    if (!context->funcName.empty() && context->taskId > 0) {
+        // Finish async trace
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
+    }
+    if (context->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
+    }
+    delete context;
+}
+} // namespace
 
+using namespace std;
 thread_local napi_ref CameraSessionNapi::sConstructor_ = nullptr;
 thread_local sptr<CaptureSession> CameraSessionNapi::sCameraSession_ = nullptr;
 thread_local uint32_t CameraSessionNapi::cameraSessionTaskId = CAMERA_SESSION_TASKID;
@@ -81,7 +106,9 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::flash_props = {
     DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
     DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
     DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
-    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode)
+    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
+    DECLARE_NAPI_FUNCTION("isLcdFlashSupported", CameraSessionNapi::IsLcdFlashSupported),
+    DECLARE_NAPI_FUNCTION("enableLcdFlash", CameraSessionNapi::EnableLcdFlash)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_props = {
@@ -169,8 +196,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_output_cap
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_ability_props = {
-    DECLARE_NAPI_FUNCTION("getSessionAbilities", CameraSessionNapi::GetSessionAbilities),
-    DECLARE_NAPI_FUNCTION("getSessionConflictAbilities", CameraSessionNapi::GetSessionConflictAbilities)
+    DECLARE_NAPI_FUNCTION("getSessionFunctions", CameraSessionNapi::GetSessionFunctions),
+    DECLARE_NAPI_FUNCTION("getSessionConflictFunctions", CameraSessionNapi::GetSessionConflictFunctions)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion_props = {
@@ -693,6 +720,64 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestion
     OnEffectSuggestionCallbackAsync(effectSuggestionType);
 }
 
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_value retVal;
+    napi_value propValue;
+    napi_create_object(env_, &result[PARAM1]);
+    napi_get_boolean(env_, lcdFlashStatusInfo.isLcdFlashNeeded, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isLcdFlashNeeded", propValue);
+    napi_create_int32(env_, lcdFlashStatusInfo.lcdCompensation, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "lcdCompensation", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("lcdFlashStatus", callbackNapiPara);
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusChanged is called, isLcdFlashNeeded: %{public}d, lcdCompensation: %{public}d",
+        lcdFlashStatusInfo.isLcdFlashNeeded, lcdFlashStatusInfo.lcdCompensation);
+    OnLcdFlashStatusCallbackAsync(lcdFlashStatusInfo);
+}
+
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr) {}
 
 CameraSessionNapi::~CameraSessionNapi()
@@ -853,78 +938,6 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
     return result;
 }
 
-void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
-    CameraSessionAsyncContext* context, std::unique_ptr<JSAsyncContextOutput> &jsContext)
-{
-    MEDIA_DEBUG_LOG("PopulateRetVal is called");
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-    switch (mode) {
-        case COMMIT_CONFIG_ASYNC_CALLBACK:
-            if (context->objectInfo->cameraSession_ != nullptr) {
-                context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
-                MEDIA_INFO_LOG("commit config return : %{public}d", context->errorCode);
-            }
-            break;
-        case SESSION_START_ASYNC_CALLBACK:
-            if (context->objectInfo->cameraSession_ != nullptr) {
-                context->errorCode = context->objectInfo->cameraSession_->Start();
-                MEDIA_INFO_LOG("Start return : %{public}d", context->errorCode);
-            }
-            break;
-        case SESSION_STOP_ASYNC_CALLBACK:
-            if (context->objectInfo->cameraSession_ != nullptr) {
-                context->errorCode = context->objectInfo->cameraSession_->Stop();
-                MEDIA_INFO_LOG("Stop return : %{public}d", context->errorCode);
-            }
-            break;
-        case SESSION_RELEASE_ASYNC_CALLBACK:
-            if (context->objectInfo->cameraSession_ != nullptr) {
-                context->errorCode = context->objectInfo->cameraSession_->Release();
-                MEDIA_INFO_LOG("Release return : %{public}d", context->errorCode);
-            }
-            break;
-        default:
-            MEDIA_DEBUG_LOG("mode is not support");
-            break;
-    }
-    if (context->errorCode != 0) {
-        context->status = false;
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
-    }
-    napi_get_undefined(env, &jsContext->data);
-}
-
-static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
-{
-    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
-    auto context = static_cast<CameraSessionAsyncContext*>(data);
-    if (context == nullptr) {
-        MEDIA_ERR_LOG("Async context is null");
-        return;
-    }
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
-    } else {
-        PopulateRetVal(env, context->modeForAsync, context, jsContext);
-    }
-
-    if (!context->funcName.empty() && context->taskId > 0) {
-        // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("BeginConfig is called");
@@ -952,54 +965,43 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CommitConfig is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CommitConfig");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::CommitConfig";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = COMMIT_CONFIG_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CommitConfig");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
-    } else {
-        MEDIA_ERR_LOG("CommitConfig call Failed!");
+    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
+        "CameraSessionNapi::CommitConfig", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
+    auto asyncFunction = std::make_shared<CameraNapiAsyncFunction>(
+        env, "CommitConfig", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::CommitConfig invalid argument");
+        return nullptr;
     }
-    return result;
+
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraSessionNapi::CommitConfig running on worker");
+            auto context = static_cast<CameraSessionAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(
+                context->objectInfo == nullptr, "CameraSessionNapi::CommitConfig async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+                context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                MEDIA_INFO_LOG("CameraSessionNapi::CommitConfig errorCode:%{public}d", context->errorCode);
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::CommitConfig");
+        asyncFunction->Reset();
+    } else {
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::LockForControl(napi_env env, napi_callback_info info)
@@ -1293,159 +1295,124 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
 napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Start is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Start");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::Start";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = SESSION_START_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
+    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
+        "CameraSessionNapi::Start", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Start", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::Start invalid argument");
+        return nullptr;
     }
-    return result;
+
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraSessionNapi::Start running on worker");
+            auto context = static_cast<CameraSessionAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Start async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+                context->errorCode = context->objectInfo->cameraSession_->Start();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                MEDIA_INFO_LOG("CameraSessionNapi::Start errorCode:%{public}d", context->errorCode);
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
+        asyncFunction->Reset();
+    } else {
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Stop is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Stop");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::Stop";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = SESSION_STOP_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
-    } else {
-        MEDIA_ERR_LOG("Stop call Failed!");
+    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
+        "CameraSessionNapi::Stop", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Stop", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::Stop invalid argument");
+        return nullptr;
     }
 
-    return result;
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraSessionNapi::Stop running on worker");
+            auto context = static_cast<CameraSessionAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+                context->errorCode = context->objectInfo->cameraSession_->Stop();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                MEDIA_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
+        asyncFunction->Reset();
+    } else {
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Release is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::Release";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = SESSION_RELEASE_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
-    } else {
-        MEDIA_ERR_LOG("Release call Failed!");
+    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>(
+        "CameraSessionNapi::Release", CameraNapiUtils::IncrementAndGet(cameraSessionTaskId));
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::Release invalid argument");
+        return nullptr;
     }
-    return result;
+
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraSessionNapi::Release running on worker");
+            auto context = static_cast<CameraSessionAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+                context->errorCode = context->objectInfo->cameraSession_->Release();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                MEDIA_INFO_LOG("CameraSessionNapi::Release errorCode:%{public}d", context->errorCode);
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
+        asyncFunction->Reset();
+    } else {
+        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info)
@@ -1651,6 +1618,63 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
         napi_create_int32(env, flashMode, &result);
     } else {
         MEDIA_ERR_LOG("GetFlashMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsLcdFlashSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CAMERA_SYNC_TRACE;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi isLcdFlashSupported is called!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("IsLcdFlashSupported parse parameter occur error");
+        return result;
+    }
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsLcdFlashSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsLcdFlashSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableLcdFlash(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("EnableLcdFlash is called");
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi enableLcdFlash is called!");
+        return result;
+    }
+    bool isEnable;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("EnableLcdFlash parse parameter occur error");
+        return result;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("EnableLcdFlash:%{public}d", isEnable);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableLcdFlash(isEnable);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("EnableLcdFlash fail %{public}d", retCode);
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("EnableLcdFlash get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
     }
     return result;
 }
@@ -3168,9 +3192,9 @@ void ParseCameraOutputCapability(napi_env env, napi_value root,
     }
 }
 
-napi_value CameraSessionNapi::GetSessionAbilities(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetSessionFunctions(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("GetSessionAbilities is called");
+    MEDIA_INFO_LOG("GetSessionFunctions is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -3190,15 +3214,15 @@ napi_value CameraSessionNapi::GetSessionAbilities(napi_env env, napi_callback_in
         return nullptr;
     }
     SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionAbilities(
+    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionFunctions(
         previewProfiles, photoProfiles, videoProfiles);
     result = CreateAbilitiesJSArray(env, mode, cameraAbilityList, false);
     return result;
 }
 
-napi_value CameraSessionNapi::GetSessionConflictAbilities(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetSessionConflictFunctions(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("GetSessionConflictAbilities is called");
+    MEDIA_INFO_LOG("GetSessionConflictFunctions is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -3216,7 +3240,7 @@ napi_value CameraSessionNapi::GetSessionConflictAbilities(napi_env env, napi_cal
         return nullptr;
     }
     SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictAbilities();
+    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictFunctions();
     result = CreateAbilitiesJSArray(env, mode, conflictAbilityList, true);
     return result;
 }
@@ -4296,6 +4320,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "tryAEInfoChange", {
         &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
         &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
+    { "lcdFlashStatus", {
+        &CameraSessionNapi::RegisterLcdFlashStatusCallbackListener,
+        &CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
@@ -4316,6 +4343,42 @@ napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraSessionNapi>::Off(env, info);
+}
+
+void CameraSessionNapi::RegisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi on LcdFlashStatus is called!");
+        return;
+    }
+    if (cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("cameraSession is null!");
+        return;
+    }
+    if (lcdFlashStatusCallback_ == nullptr) {
+        lcdFlashStatusCallback_ = std::make_shared<LcdFlashStatusCallbackListener>(env);
+        cameraSession_->SetLcdFlashStatusCallback(lcdFlashStatusCallback_);
+    }
+    lcdFlashStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    cameraSession_->LockForControl();
+    cameraSession_->EnableLcdFlashDetection(true);
+    cameraSession_->UnlockForControl();
+}
+
+void CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (lcdFlashStatusCallback_ == nullptr) {
+        MEDIA_ERR_LOG("lcdFlashStatusCallback is null");
+        return;
+    }
+    lcdFlashStatusCallback_->RemoveCallbackRef(eventName, callback);
+    if (lcdFlashStatusCallback_->IsEmpty("lcdFlashStatus")) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLcdFlashDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

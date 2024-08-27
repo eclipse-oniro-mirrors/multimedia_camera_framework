@@ -377,15 +377,15 @@ std::vector<sptr<CameraOutputCapability>> CaptureSession::GetCameraOutputCapabil
     return list;
 }
 
-std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector<Profile>& previewProfiles,
+std::vector<sptr<CameraAbility>> CaptureSession::GetSessionFunctions(std::vector<Profile>& previewProfiles,
                                                                      std::vector<Profile>& photoProfiles,
                                                                      std::vector<VideoProfile>& videoProfiles,
                                                                      bool isForApp)
 {
-    MEDIA_INFO_LOG("CaptureSession::GetSessionAbilities enter");
+    MEDIA_INFO_LOG("CaptureSession::GetSessionFunctions enter");
     auto inputDevice = GetInputDevice();
     if (inputDevice == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::GetSessionAbilities inputDevice is null");
+        MEDIA_ERR_LOG("CaptureSession::GetSessionFunctions inputDevice is null");
         return {};
     }
     auto device = inputDevice->GetCameraDeviceInfo();
@@ -404,12 +404,12 @@ std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector
 
     for (const auto& capability : outputCapabilityList) {
         int32_t specId = capability->specId_;
-        MEDIA_DEBUG_LOG("CaptureSession::GetSessionAbilities specId: %{public}d", specId);
+        MEDIA_DEBUG_LOG("CaptureSession::GetSessionFunctions specId: %{public}d", specId);
         if (capability->IsMatchPreviewProfiles(previewProfiles) &&
             capability->IsMatchPhotoProfiles(photoProfiles) &&
             capability->IsMatchVideoProfiles(videoProfiles)) {
             supportedSpecIds.insert(specId);
-            MEDIA_INFO_LOG("CaptureSession::GetSessionAbilities insert specId: %{public}d", specId);
+            MEDIA_INFO_LOG("CaptureSession::GetSessionFunctions insert specId: %{public}d", specId);
         }
     }
 
@@ -418,7 +418,7 @@ std::vector<sptr<CameraAbility>> CaptureSession::GetSessionAbilities(std::vector
         GetFeaturesMode().GetFeaturedMode(), GetMetadata()->get(), supportedSpecIds, this, isForApp);
 }
 
-std::vector<sptr<CameraAbility>> CaptureSession::GetSessionConflictAbilities()
+std::vector<sptr<CameraAbility>> CaptureSession::GetSessionConflictFunctions()
 {
     CameraAbilityBuilder builder;
     return builder.GetConflictAbility(GetFeaturesMode().GetFeaturedMode(), GetMetadata()->get());
@@ -436,12 +436,12 @@ void CaptureSession::CreateCameraAbilityContainer()
     std::vector<VideoProfile> videoProfileList;
     PopulateProfileLists(photoProfileList, previewProfileList, videoProfileList);
     std::vector<sptr<CameraAbility>> abilities =
-        GetSessionAbilities(previewProfileList, photoProfileList, videoProfileList, false);
+        GetSessionFunctions(previewProfileList, photoProfileList, videoProfileList, false);
     MEDIA_DEBUG_LOG("CreateCameraAbilityContainer abilities size %{public}zu", abilities.size());
     if (abilities.size() == 0) {
         MEDIA_INFO_LOG("CreateCameraAbilityContainer fail cant find suitable ability");
     }
-    std::vector<sptr<CameraAbility>> conflictAbilities = GetSessionConflictAbilities();
+    std::vector<sptr<CameraAbility>> conflictAbilities = GetSessionConflictFunctions();
     MEDIA_DEBUG_LOG("CreateCameraAbilityContainer conflictAbilities size %{public}zu", conflictAbilities.size());
     std::lock_guard<std::mutex> lock(abilityContainerMutex_);
     cameraAbilityContainer_ = new CameraAbilityContainer(abilities, conflictAbilities, this);
@@ -1355,6 +1355,9 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+        stabilizationMode = VideoStabilizationMode::AUTO;
+    }
     CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end())) {
@@ -1397,8 +1400,6 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     isSupported = false;
-    CHECK_ERROR_RETURN_RET((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH),
-        CameraErrorCode::SUCCESS);
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
@@ -2203,6 +2204,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessSnapshotDurationUpdates(timestamp, result);
     session->ProcessAREngineUpdates(timestamp, result);
     session->ProcessEffectSuggestionTypeUpdates(result);
+    session->ProcessLcdFlashStatusUpdates(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -5051,6 +5053,96 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
         CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
+}
+
+bool CaptureSession::IsLcdFlashSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
+        "IsLcdFlashSupported Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+        "IsLcdFlashSupported camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LCD_FLASH, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+        "IsLcdFlashSupported Failed with return code %{public}d", ret);
+    MEDIA_INFO_LOG("IsLcdFlashSupported value: %{public}u", item.data.i32[0]);
+    CHECK_AND_RETURN_RET(item.data.i32[0] != 1, true);
+    return false;
+}
+
+int32_t CaptureSession::EnableLcdFlash(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLcdFlash, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "EnableLcdFlash session not commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH, &enableValue, 1)) {
+        MEDIA_ERR_LOG("EnableLcdFlash Failed to enable lcd flash");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableLcdFlashDetection(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLcdFlashDetection, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsLcdFlashSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "EnableLcdFlashDetection IsLcdFlashSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "EnableLcdFlashDetection session not commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH_DETECTION, &enableValue, 1)) {
+        MEDIA_ERR_LOG("EnableLcdFlashDetection Failed to enable lcd flash detection");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+    __attribute__((no_sanitize("cfi")))
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Entry ProcessLcdFlashStatusUpdates");
+
+    auto statusCallback = GetLcdFlashStatusCallback();
+    if (statusCallback == nullptr) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessLcdFlashStatusUpdates statusCallback is null");
+        return;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LCD_FLASH_STATUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Camera not support lcd flash");
+        return;
+    }
+    auto isLcdFlashNeeded = static_cast<bool>(item.data.u8[0]);
+    auto lcdCompensation = item.data.i32[1];
+    LcdFlashStatusInfo preLcdFlashStatusInfo = statusCallback->GetLcdFlashStatusInfo();
+    if (preLcdFlashStatusInfo.isLcdFlashNeeded != isLcdFlashNeeded ||
+        preLcdFlashStatusInfo.lcdCompensation != lcdCompensation) {
+        LcdFlashStatusInfo lcdFlashStatusInfo;
+        lcdFlashStatusInfo.isLcdFlashNeeded = isLcdFlashNeeded;
+        lcdFlashStatusInfo.lcdCompensation = lcdCompensation;
+        statusCallback->SetLcdFlashStatusInfo(lcdFlashStatusInfo);
+        statusCallback->OnLcdFlashStatusChanged(lcdFlashStatusInfo);
+    }
+}
+
+void CaptureSession::SetLcdFlashStatusCallback(std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    lcdFlashStatusCallback_ = lcdFlashStatusCallback;
+}
+
+std::shared_ptr<LcdFlashStatusCallback> CaptureSession::GetLcdFlashStatusCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return lcdFlashStatusCallback_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

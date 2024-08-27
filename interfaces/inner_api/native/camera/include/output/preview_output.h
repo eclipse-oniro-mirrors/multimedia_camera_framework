@@ -101,6 +101,18 @@ public:
     int32_t Stop();
 
     /**
+     * @brief get the preview rotation angle.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPreviewRotation(int32_t imageRotation);
+
+    /**
+     * @brief set the preview rotation angle.
+     */
+    int32_t SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
+
+    /**
      * @brief Check whether the current preview mode supports sketch.
      *
      * @return Return the supported result.

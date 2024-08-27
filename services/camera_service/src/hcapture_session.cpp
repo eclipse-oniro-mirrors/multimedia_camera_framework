@@ -818,8 +818,6 @@ void HCaptureSession::ClearMovingPhotoRepeatStream()
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
-        taskManager_ = nullptr;
-        audioCapturerSession_ = nullptr;
         MEDIA_DEBUG_LOG("HCaptureSession::ClearLivePhotoRepeatStream() stream id is:%{public}d",
             movingPhotoStream->GetFwkStreamId());
         RemoveOutputStream(repeatStream);
@@ -1428,7 +1426,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
-        taskManager_ = nullptr;
+        if (taskManager_) {
+            taskManager_->ClearTaskResource();
+            taskManager_ = nullptr;
+        }
         audioCapturerSession_ = nullptr;
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
@@ -1692,9 +1693,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         }
         MEDIA_INFO_LOG("CreateMediaLibrary not Bursting");
     }
-    
-    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
-        cameraServerPhotoProxy->GetLatitude(), cameraServerPhotoProxy->GetLongitude());
+
     if (cameraServerPhotoProxy->GetPhotoQuality() == Media::PhotoQuality::HIGH) {
         MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoQuality::HIGH");
     }

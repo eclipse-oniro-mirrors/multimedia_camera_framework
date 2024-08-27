@@ -16,8 +16,13 @@
 #ifndef CAMERA_INPUT_NAPI_H_
 #define CAMERA_INPUT_NAPI_H_
 
+#include <atomic>
+#include <cstdint>
+#include <mutex>
+
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_utils.h"
+#include "camera_napi_worker_queue_keeper.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
@@ -25,13 +30,6 @@
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_INPUT_NAPI_CLASS_NAME[] = "CameraInput";
-
-enum InputAsyncCallbackModes {
-    DEEAULT_ASYNC_CALLBACK = -1,
-    OPEN_ASYNC_CALLBACK = 1,
-    CLOSE_ASYNC_CALLBACK = 2,
-    RELEASE_ASYNC_CALLBACK = 3,
-};
 
 struct CameraInputAsyncContext;
 
@@ -62,18 +60,23 @@ class OcclusionDetectCallbackListener : public CameraOcclusionDetectCallback,
 public:
     OcclusionDetectCallbackListener(napi_env env) : ListenerBase(env) {}
     ~OcclusionDetectCallbackListener() = default;
-    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const override;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
+                                   const uint8_t isCameraLensDirty) const override;
  
 private:
-    void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusionDetect) const;
-    void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusionDetect) const;
+    void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusion,
+                                           const uint8_t isCameraLensDirty) const;
+    void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusion,
+                                                const uint8_t isCameraLensDirty) const;
 };
  
 struct CameraOcclusionDetectResult {
     uint8_t isCameraOccluded_;
+    uint8_t isCameraLensDirty_;
     weak_ptr<const OcclusionDetectCallbackListener> listener_;
-    CameraOcclusionDetectResult(uint8_t isCameraOccluded, shared_ptr<const OcclusionDetectCallbackListener> listener)
-        : isCameraOccluded_(isCameraOccluded), listener_(listener) {}
+    CameraOcclusionDetectResult(uint8_t isCameraOccluded, uint8_t isCameraLensDirty,
+        shared_ptr<const OcclusionDetectCallbackListener> listener)
+        : isCameraOccluded_(isCameraOccluded), isCameraLensDirty_(isCameraLensDirty), listener_(listener) {}
 };
 
 class CameraInputNapi : public CameraNapiEventEmitter<CameraInputNapi> {
@@ -125,18 +128,10 @@ private:
 };
 
 struct CameraInputAsyncContext :public AsyncContext {
-    CameraInputNapi* objectInfo;
-    bool bRetBool;
-    bool isSupported;
-    InputAsyncCallbackModes modeForAsync;
-    std::string cameraId;
-    std::string enumType;
-    bool isEnableSecCam;
-    std::vector<CameraFormat> vecList;
-    ~CameraInputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
+    CameraInputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
+    CameraInputNapi* objectInfo = nullptr;
+    bool isEnableSecCam = false;
+    uint64_t secureCameraSeqId = 0L;
 };
 } // namespace CameraStandard
 } // namespace OHOS

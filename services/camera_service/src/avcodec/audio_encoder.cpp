@@ -14,15 +14,10 @@
  */
 
 #include "audio_encoder.h"
-#include <mutex>
-#include <unordered_map>
-#include "audio_record.h"
-#include "sample_info.h"
-#include "surface_type.h"
 #include "external_window.h"
+#include "native_avbuffer.h"
 #include "sample_callback.h"
 #include "camera_log.h"
-#include <cinttypes>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -96,11 +91,10 @@ int32_t AudioEncoder::FreeOutputData(uint32_t bufferIndex)
 
 int32_t AudioEncoder::Stop()
 {
+    CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
-    int ret = OH_AudioCodec_Flush(encoder_);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Flush failed, ret: %{public}d", ret);
-    ret = OH_AudioCodec_Stop(encoder_);
+    int ret = OH_AudioCodec_Stop(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     isStarted_ = false;
     return 0;
@@ -108,6 +102,7 @@ int32_t AudioEncoder::Stop()
 
 int32_t AudioEncoder::Release()
 {
+    CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(encoderMutex_);
         if (encoder_ != nullptr) {
@@ -121,6 +116,7 @@ int32_t AudioEncoder::Release()
 
 void AudioEncoder::RestartAudioCodec()
 {
+    CAMERA_SYNC_TRACE;
     Release();
     Create(OH_AVCODEC_MIMETYPE_AUDIO_AAC);
     Config();
@@ -129,9 +125,10 @@ void AudioEncoder::RestartAudioCodec()
 
 bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
 {
+    CAMERA_SYNC_TRACE;
     uint8_t* buffer = audioRecord->GetAudioBuffer();
     CHECK_ERROR_RETURN_RET_LOG(buffer == nullptr, false, "Enqueue audio buffer is empty");
-    int enqueueRetryCount = 10;
+    int enqueueRetryCount = 3;
     while (enqueueRetryCount > 0) {
         enqueueRetryCount--;
         std::unique_lock<std::mutex> contextLock(contextMutex_);
@@ -144,8 +141,6 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         sptr<CodecAVBufferInfo> bufferInfo = context_->inputBufferInfoQueue_.front();
         context_->inputBufferInfoQueue_.pop();
         context_->inputFrameCount_++;
-        lock.unlock();
-        contextLock.unlock();
         bufferInfo->attr.pts = audioRecord->GetTimeStamp();
         bufferInfo->attr.size = DEFAULT_MAX_INPUT_SIZE;
         bufferInfo->attr.flags = AVCODEC_BUFFER_FLAGS_NONE;
@@ -164,23 +159,24 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
 
 bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
 {
-    if (encoder_ == nullptr || !isStarted_) {
-        RestartAudioCodec();
-    }
-    if (encoder_ == nullptr) {
-        return false;
+    CAMERA_SYNC_TRACE;
+    {
+        std::lock_guard<std::mutex> lock(encoderMutex_);
+        if (encoder_ == nullptr) {
+            return false;
+        }
     }
     audioRecord->SetStatusReadyConvertStatus();
     if (!EnqueueBuffer(audioRecord)) {
         return false;
     }
-    int retryCount = 10;
+    int retryCount = 2;
     while (retryCount > 0) {
         retryCount--;
         std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
-        bool condRet = context_->outputCond_.wait_for(lock, std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
+        bool condRet = context_->outputCond_.wait_for(lock, std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
             [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
         CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
@@ -205,8 +201,12 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
 
 bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
 {
+    CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(serialMutex_);
     MEDIA_INFO_LOG("EncodeAudioBuffer enter");
+    if (!isStarted_.load()) {
+        RestartAudioCodec();
+    }
     bool isSuccess = true;
     for (sptr<AudioRecord> audioRecord : audioRecords) {
         if (!audioRecord->IsEncoded() && !EncodeAudioBuffer(audioRecord)) {

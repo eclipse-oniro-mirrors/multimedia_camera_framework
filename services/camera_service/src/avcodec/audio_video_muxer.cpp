@@ -73,6 +73,7 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
 
 int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
 {
+    CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     CHECK_AND_RETURN_RET_LOG(sample != nullptr, AV_ERR_INVALID_VAL, "input sample is nullptr!");
     int32_t ret = AV_ERR_OK;

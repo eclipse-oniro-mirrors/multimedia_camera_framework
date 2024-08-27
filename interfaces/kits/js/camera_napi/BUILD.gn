@@ -52,6 +52,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_object_types.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_worker_queue_keeper.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_input_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_napi.cpp",
@@ -119,6 +120,9 @@ ohos_shared_library("camera_napi") {
     debug = false
   }
   cflags = [ "-fPIC" ]
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   cflags_cc = cflags
   relative_install_dir = "module/multimedia"
   part_name = "camera_framework"
@@ -175,6 +179,9 @@ if (gen_camera_picker) {
       debug = false
     }
     cflags = [ "-fPIC" ]
+    if (build_variant == "user") {
+      cflags += [ "-DIS_RELEASE_VERSION" ]
+    }
     cflags_cc = cflags
     relative_install_dir = "module/multimedia"
     part_name = "camera_framework"
