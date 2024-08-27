@@ -1630,9 +1630,7 @@ napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         int32_t mode;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &mode);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsTorchModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &mode);
         MEDIA_INFO_LOG("CameraManagerNapi::IsTorchModeSupported mode = %{public}d", mode);
         TorchMode torchMode = (TorchMode)mode;
         bool isTorchModeSupported = CameraManager::GetInstance()->IsTorchModeSupported(torchMode);
@@ -1685,8 +1683,7 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         int32_t mode;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &mode);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetTorchMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &mode);
         MEDIA_INFO_LOG("CameraManagerNapi::SetTorchMode mode = %{public}d", mode);
         TorchMode torchMode = (TorchMode)mode;
         int32_t retCode = CameraManager::GetInstance()->SetTorchMode(torchMode);
