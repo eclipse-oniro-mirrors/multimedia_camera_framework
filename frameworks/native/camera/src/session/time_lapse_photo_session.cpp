@@ -434,6 +434,7 @@ int32_t TimeLapsePhotoSession::GetSupportedExposureRange(vector<uint32_t>& resul
         CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedExposureRange camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT);
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_EXPOSURE_TIME_RANGE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::INVALID_ARGUMENT,
         "TimeLapsePhotoSession::GetSupportedExposureRange Failed with return code %{public}d", ret);
@@ -613,6 +614,7 @@ int32_t TimeLapsePhotoSession::GetIsoRange(vector<int32_t>& result)
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetIsoRange camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT);
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::INVALID_ARGUMENT,
         "TimeLapsePhotoSession::GetIsoRange Failed with return code %{public}d", ret);

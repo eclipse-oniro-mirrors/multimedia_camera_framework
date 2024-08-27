@@ -498,6 +498,7 @@ int32_t HStreamCapture::ConfirmCapture()
 
 void HStreamCapture::EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting)
 {
+    CHECK_ERROR_RETURN(captureMetadataSetting == nullptr);
     MEDIA_INFO_LOG("HStreamCapture::EndBurstCapture");
     camera_metadata_item_t item;
     bool status = false;
