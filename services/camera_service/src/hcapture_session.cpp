@@ -46,6 +46,7 @@
 #include "hcamera_restore_param.h"
 #include "hstream_capture.h"
 #include "hstream_common.h"
+#include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "icamera_util.h"
@@ -480,6 +481,8 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
             errorCode = AddOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {
             errorCode = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
+        } else if (streamType == StreamType::DEPTH) {
+            errorCode = AddOutputStream(static_cast<HStreamDepthData*>(stream.GetRefPtr()));
         }
     });
     if (errorCode == CAMERA_OK) {

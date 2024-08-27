@@ -124,6 +124,15 @@ std::vector<int32_t> VideoProfile::GetFrameRates()
     return framerates_;
 }
 
+DepthProfile::DepthProfile(CameraFormat format, DepthDataAccuracy dataAccuracy, Size size) : Profile(format, size)
+{
+    dataAccuracy_ = dataAccuracy;
+}
+DepthDataAccuracy DepthProfile::GetDataAccuracy()
+{
+    return dataAccuracy_;
+}
+
 bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previewProfiles)
 {
     CHECK_ERROR_RETURN_RET(previewProfiles.empty(), true);
@@ -236,6 +245,16 @@ std::vector<VideoProfile> CameraOutputCapability::GetVideoProfiles()
 void CameraOutputCapability::SetVideoProfiles(std::vector<VideoProfile> videoProfiles)
 {
     videoProfiles_ = videoProfiles;
+}
+
+std::vector<DepthProfile> CameraOutputCapability::GetDepthProfiles()
+{
+    return depthProfiles_;
+}
+
+void CameraOutputCapability::SetDepthProfiles(std::vector<DepthProfile> depthProfiles)
+{
+    depthProfiles_ = depthProfiles;
 }
 
 std::vector<MetadataObjectType> CameraOutputCapability::GetSupportedMetadataObjectType()

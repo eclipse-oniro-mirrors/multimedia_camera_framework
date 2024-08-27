@@ -67,6 +67,17 @@ CameraNapiObject& CameraNapiObjVideoProfile::GetCameraNapiObject()
         { "frameRateRange", &frameRateRange->GetCameraNapiObject() } });
 }
 
+CameraNapiObject& CameraNapiObjDepthProfile::GetCameraNapiObject()
+{
+    auto format = Hold<int32_t>(depthProfile_.format_);
+    auto sizeObj = Hold<CameraNapiObjSize>(depthProfile_.size_);
+    auto dataAccuracy = Hold<int32_t>(depthProfile_.dataAccuracy_);
+    return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
+        { "format", format },
+        { "size", &sizeObj->GetCameraNapiObject() },
+        { "dataAccuracy", dataAccuracy } });
+}
+
 CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
 {
     auto cameraId = Hold<std::string>(cameraDevice_.GetID());
@@ -126,6 +137,12 @@ CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
         videoProfiles->emplace_back(std::move(Hold<CameraNapiObjVideoProfile>(profile)->GetCameraNapiObject()));
     }
 
+    auto depthProfiles = Hold<std::list<CameraNapiObject>>();
+    auto nativeDepthProfiles = Hold<std::vector<DepthProfile>>(cameraOutputCapability_.GetDepthProfiles());
+    for (auto& profile : *nativeDepthProfiles) {
+        depthProfiles->emplace_back(std::move(Hold<CameraNapiObjDepthProfile>(profile)->GetCameraNapiObject()));
+    }
+
     auto supportedMetadataObjectTypes = Hold<std::vector<int32_t>>();
     auto nativeSupportedMetadataObjectTypes = cameraOutputCapability_.GetSupportedMetadataObjectType();
     for (auto& type : nativeSupportedMetadataObjectTypes) {
@@ -136,6 +153,7 @@ CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
         { "previewProfiles", previewProfiles },
         { "photoProfiles", photoProfiles },
         { "videoProfiles", videoProfiles },
+        { "depthProfiles", depthProfiles },
         { "supportedMetadataObjectTypes", supportedMetadataObjectTypes } });
 }
 } // namespace CameraStandard

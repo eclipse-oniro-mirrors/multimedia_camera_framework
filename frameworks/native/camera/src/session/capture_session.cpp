@@ -897,6 +897,9 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
             profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigVideoProfile()
                                                                              : output->GetVideoProfile();
             break;
+        case CAPTURE_OUTPUT_TYPE_DEPTH_DATA:
+            profilePtr = output->GetDepthProfile();
+            break;
         default:
             MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
             return false;
@@ -4180,6 +4183,10 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
         "CaptureSession::ValidateOutputProfile Failed inputDevice is nullptr");
     if (outputType == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile MetadataOutput");
+        return true;
+    }
+    if (outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA) {
+        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile DepthDataOutput");
         return true;
     }
     auto modeName = GetMode();
