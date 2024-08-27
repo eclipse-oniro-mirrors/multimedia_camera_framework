@@ -162,6 +162,8 @@ int32_t HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
         stream = iface_cast<IStreamRepeat>(remoteObj);
     }  else if (streamType == StreamType::METADATA) {
         stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
     }
 
     return AddOutput(streamType, stream);
@@ -178,8 +180,10 @@ int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
         stream = iface_cast<IStreamCapture>(remoteObj);
     } else if (streamType == StreamType::REPEAT) {
         stream = iface_cast<IStreamRepeat>(remoteObj);
-    }  else if (streamType == StreamType::METADATA) {
+    } else if (streamType == StreamType::METADATA) {
         stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
     }
     return RemoveOutput(streamType, stream);
 }

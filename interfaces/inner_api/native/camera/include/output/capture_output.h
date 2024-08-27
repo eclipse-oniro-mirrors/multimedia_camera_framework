@@ -45,6 +45,7 @@ enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_PHOTO,
     CAPTURE_OUTPUT_TYPE_VIDEO,
     CAPTURE_OUTPUT_TYPE_METADATA,
+    CAPTURE_OUTPUT_TYPE_DEPTH_DATA,
     CAPTURE_OUTPUT_TYPE_MAX
 };
 
@@ -134,6 +135,8 @@ public:
     std::shared_ptr<Profile> GetPreviewProfile();
     void SetVideoProfile(VideoProfile& videoProfile);
     std::shared_ptr<VideoProfile> GetVideoProfile();
+    void SetDepthProfile(DepthProfile& depthProfile);
+    std::shared_ptr<DepthProfile> GetDepthProfile();
     void ClearProfiles();
     virtual void CameraServerDied(pid_t pid) = 0;
 
@@ -168,6 +171,8 @@ private:
     std::shared_ptr<Profile> previewProfile_;
     std::mutex videoProfileMutex_;
     std::shared_ptr<VideoProfile> videoProfile_;
+    std::mutex depthProfileMutex_;
+    std::shared_ptr<DepthProfile> depthProfile_;
 
     std::mutex bufferProducerMutex_;
     sptr<IBufferProducer> bufferProducer_;

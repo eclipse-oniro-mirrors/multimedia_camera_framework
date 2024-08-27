@@ -176,6 +176,18 @@ std::shared_ptr<VideoProfile> CaptureOutput::GetVideoProfile()
     return videoProfile_;
 }
 
+void CaptureOutput::SetDepthProfile(DepthProfile& depthProfile)
+{
+    std::lock_guard<std::mutex> lock(depthProfileMutex_);
+    depthProfile_ = std::make_shared<DepthProfile>(depthProfile);
+}
+
+std::shared_ptr<DepthProfile> CaptureOutput::GetDepthProfile()
+{
+    std::lock_guard<std::mutex> lock(depthProfileMutex_);
+    return depthProfile_;
+}
+
 void CaptureOutput::ClearProfiles()
 {
     {

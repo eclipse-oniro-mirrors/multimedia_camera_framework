@@ -95,6 +95,7 @@ enum CameraServiceInterfaceCode {
     CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT,
     CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT,
     CAMERA_SERVICE_CREATE_VIDEO_OUTPUT,
+    CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT,
     CAMERA_SERVICE_SET_LISTENER_OBJ,
     CAMERA_SERVICE_CREATE_METADATA_OUTPUT,
     CAMERA_SERVICE_MUTE_CAMERA,
@@ -213,6 +214,20 @@ enum StreamMetadataInterfaceCode {
 };
 
 /**
+ * @brief Stream depth data remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum StreamDepthDataInterfaceCode {
+    CAMERA_STREAM_DEPTH_DATA_START = 0,
+    CAMERA_STREAM_DEPTH_DATA_STOP,
+    CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK,
+    CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET,
+    CAMERA_STREAM_DEPTH_DATA_RELEASE
+};
+
+/**
  * @brief Camera device callback remote request code for IPC.
  *
  * @since 1.0
@@ -234,6 +249,16 @@ enum StreamRepeatCallbackInterfaceCode {
     CAMERA_STREAM_REPEAT_ON_FRAME_ENDED,
     CAMERA_STREAM_REPEAT_ON_ERROR,
     CAMERA_STREAM_SKETCH_STATUS_ON_CHANGED
+};
+
+/**
+ * @brief Camera depth stream callback remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum StreamDepthDataCallbackInterfaceCode {
+    CAMERA_STREAM_DEPTH_DATA_ON_ERROR = 0
 };
 
 /**

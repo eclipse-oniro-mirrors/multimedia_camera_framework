@@ -82,6 +82,15 @@ private:
     VideoProfile& videoProfile_;
 };
 
+class CameraNapiObjDepthProfile : public CameraNapiObjectTypes {
+public:
+    explicit CameraNapiObjDepthProfile(DepthProfile& depthProfile) : depthProfile_(depthProfile) {}
+    CameraNapiObject& GetCameraNapiObject() override;
+
+private:
+    DepthProfile& depthProfile_;
+};
+
 class CameraDevice;
 class CameraNapiObjCameraDevice : public CameraNapiObjectTypes {
 public:

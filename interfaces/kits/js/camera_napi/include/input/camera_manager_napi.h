@@ -23,6 +23,7 @@
 #include "listener_base.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
+#include "output/depth_data_output_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
@@ -147,6 +148,7 @@ public:
     static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateDepthDataOutputInstance(napi_env env, napi_callback_info info);
     static napi_value IsTorchSupported(napi_env env, napi_callback_info info);
     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
@@ -207,6 +209,7 @@ struct CameraManagerContext : public AsyncContext {
     CameraManagerNapi* managerInstance;
     Profile profile;
     VideoProfile videoProfile;
+    DepthProfile depthProfile;
     CameraManagerAsyncCallbackModes modeForAsync;
     std::string errString;
     ~CameraManagerContext()

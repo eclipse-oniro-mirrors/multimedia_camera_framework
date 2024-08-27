@@ -78,6 +78,8 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/deferred_photo_proxy_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/depth_data_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_output_napi.cpp",
