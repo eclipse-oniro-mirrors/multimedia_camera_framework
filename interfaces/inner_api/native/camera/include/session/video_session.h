@@ -35,7 +35,7 @@ public:
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
 
     /**
-     * @brief Only Video-Session can set frame rate range.
+     * @brief Video-Session can set frame rate range.
      *
      * @param minFps Min frame rate of range.
      * @param minFps Max frame rate of range.

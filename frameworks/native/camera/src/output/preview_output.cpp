@@ -389,9 +389,10 @@ std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
     auto inputDevice = session->GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, {});
     sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
+    SceneMode curMode = session->GetMode();
 
     sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->
-                                                          GetSupportedOutputCapability(camera, SceneMode::VIDEO);
+                                                          GetSupportedOutputCapability(camera, curMode);
     CHECK_ERROR_RETURN_RET(cameraOutputCapability == nullptr, {});
     std::vector<Profile> supportedProfiles = cameraOutputCapability->GetPreviewProfiles();
     supportedProfiles.erase(std::remove_if(
