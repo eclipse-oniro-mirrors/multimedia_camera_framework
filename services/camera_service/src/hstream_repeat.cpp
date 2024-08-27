@@ -832,6 +832,7 @@ void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMeta
 
 void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
+    CHECK_ERROR_RETURN(settings == nullptr);
     bool status = false;
     camera_metadata_item_t item;
  
