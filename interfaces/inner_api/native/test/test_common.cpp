@@ -309,6 +309,18 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string&
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
 }
 
+void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
+}
+
 void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnError.");

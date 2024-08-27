@@ -184,7 +184,7 @@ void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleBufferProducerInfo(data);
+    fuzz->HandleSetBufferProducerInfo(data);
 }
 
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
