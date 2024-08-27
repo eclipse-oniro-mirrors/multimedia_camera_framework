@@ -1436,9 +1436,7 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsVideoStabilizationModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1497,8 +1495,7 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetVideoStabilizationMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         int retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -1553,9 +1550,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFlashModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
@@ -1586,8 +1581,7 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFlashMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
@@ -1700,9 +1694,7 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsExposureModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1761,8 +1753,7 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
@@ -1917,8 +1908,7 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double exposureValue;
-        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &exposureValue);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureBias call Failed!");
+        napi_get_value_double(env, argv[PARAM0], &exposureValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
@@ -1947,9 +1937,7 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFocusModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode,
@@ -2095,8 +2083,7 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFocusMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->
@@ -2196,8 +2183,7 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double zoomRatio;
-        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &zoomRatio);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetZoomRatio call Failed!");
+        napi_get_value_double(env, argv[PARAM0], &zoomRatio);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetZoomRatio((float)zoomRatio);
         cameraSessionNapi->cameraSession_->UnlockForControl();
