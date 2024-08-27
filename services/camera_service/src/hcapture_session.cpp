@@ -2141,13 +2141,14 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         MEDIA_ERR_LOG("MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
         return;
     }
-    if (isNeededClear_) {
+    if (isNeededClear_ && isNeededPop_) {
         if (timestamp < shutterTime_) {
             frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
             MEDIA_INFO_LOG("Drop this frame in cache");
             return;
         } else {
             isNeededClear_ = false;
+            isNeededPop_ = false;
             MEDIA_INFO_LOG("ClearCache end");
         }
     }
