@@ -136,6 +136,7 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
+    UnRegisterFoldStatusListener();
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif
