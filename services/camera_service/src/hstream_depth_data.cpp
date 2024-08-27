@@ -65,7 +65,6 @@ void HStreamDepthData::SetStreamInfo(StreamInfo_V1_1& streamInfo)
     HStreamCommon::SetStreamInfo(streamInfo);
     streamInfo.v1_0.intent_ =
         static_cast<OHOS::HDI::Camera::V1_0::StreamIntent>(OHOS::HDI::Camera::V1_3::StreamType::STREAM_TYPE_DEPTH);
-    MEDIA_INFO_LOG("HStreamDepthData::SetStreamInfo intent: %d", streamInfo.v1_0.intent_);
 }
 
 int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
@@ -264,4 +263,4 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
     return CAMERA_OK;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS
