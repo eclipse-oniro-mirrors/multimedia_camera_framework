@@ -857,6 +857,7 @@ int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& outpu
             "videoFrameRates is empty!");
         if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
             captureSession->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
+            SetMode(SceneMode::HIGH_FRAME_RATE);
             return CameraErrorCode::SUCCESS;
         }
     }
