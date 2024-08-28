@@ -197,6 +197,11 @@ public:
         return napiError == napi_ok;
     }
 
+    inline napi_value GetThisVar()
+    {
+        return thisVar_;
+    }
+
 private:
     template<typename T>
     explicit CameraNapiParamParser(napi_env env, napi_callback_info info, size_t napiParamSize, T*& nativeObjPointer,
@@ -206,8 +211,7 @@ private:
         size_t paramSizeIncludeAsyncFun = napiParamSize + (asyncFunction_ == nullptr ? 0 : 1);
         paramSize_ = paramSizeIncludeAsyncFun;
         paramValue_.resize(paramSize_, nullptr);
-        napi_value thisVar = nullptr;
-        napiError = napi_get_cb_info(env_, info, &paramSize_, paramValue_.data(), &thisVar, nullptr);
+        napiError = napi_get_cb_info(env_, info, &paramSize_, paramValue_.data(), &thisVar_, nullptr);
         if (napiError != napi_ok) {
             return;
         }
@@ -234,7 +238,7 @@ private:
             napiError = napi_status::napi_invalid_arg;
             return;
         }
-        UnwrapThisVarToAddr(thisVar, nativeObjPointer);
+        UnwrapThisVarToAddr(thisVar_, nativeObjPointer);
     }
 
     template<typename T>
@@ -348,6 +352,7 @@ private:
     }
 
     napi_env env_ = nullptr;
+    napi_value thisVar_ = nullptr;
     size_t paramSize_ = 0;
 
     size_t paraIndex_ = 0;

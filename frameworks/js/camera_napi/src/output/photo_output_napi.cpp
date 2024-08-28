@@ -85,6 +85,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 
@@ -1777,6 +1778,7 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
         MEDIA_ERR_LOG("ParseCaptureSettings invalid argument");
         return false;
     }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     return true;
 }
 
@@ -1892,6 +1894,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PhotoOutputNapi::Release invalid argument");
         return nullptr;
     }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
