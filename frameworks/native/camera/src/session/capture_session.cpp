@@ -751,6 +751,10 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     if (frameRateRange.size() >= minFpsRangeSize) {
         SetFrameRateRange(frameRateRange);
     }
+    if (output != nullptr) {
+        sptr<VideoOutput> videoOutput = static_cast<VideoOutput*>(output.GetRefPtr());
+        videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]);
+    }
     SetGuessMode(SceneMode::VIDEO);
     return CameraErrorCode::SUCCESS;
 }
@@ -5143,6 +5147,23 @@ std::shared_ptr<LcdFlashStatusCallback> CaptureSession::GetLcdFlashStatusCallbac
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return lcdFlashStatusCallback_;
+}
+
+void CaptureSession::EnableFaceDetection(bool enable)
+{
+    MEDIA_INFO_LOG("EnableFaceDetection enable: %{public}d", enable);
+    CHECK_ERROR_RETURN_LOG(GetMetaOutput() == nullptr, "MetaOutput is null");
+    if (!enable) {
+        std::set<camera_face_detect_mode_t> objectTypes;
+        SetCaptureMetadataObjectTypes(objectTypes);
+        return;
+    }
+    sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
+    CHECK_ERROR_RETURN_LOG(!metaOutput, "MetaOutput is null");
+    std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+    MEDIA_INFO_LOG("EnableFaceDetection SetCapturingMetadataObjectTypes objectTypes size = %{public}zu",
+        metadataObjectTypes.size());
+    metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
 }
 } // namespace CameraStandard
 } // namespace OHOS

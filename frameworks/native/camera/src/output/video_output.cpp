@@ -25,6 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t FRAMERATE_120 = 120;
 VideoOutput::VideoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -120,6 +121,10 @@ int32_t VideoOutput::Start()
         CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
+    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+        MEDIA_INFO_LOG("EnableFaceDetection is call");
+        session->EnableFaceDetection(false);
+    }
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -144,6 +149,13 @@ int32_t VideoOutput::Stop()
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
+    }
+    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+        auto session = GetSession();
+        CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+            CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
+        MEDIA_INFO_LOG("EnableFaceDetection is call");
+        session->EnableFaceDetection(true);
     }
     return ServiceToCameraError(errCode);
 }
