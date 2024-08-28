@@ -30,12 +30,7 @@ static const std::string CONST_VIDEO_FRAME_START = "frameStart";
 static const std::string CONST_VIDEO_FRAME_END = "frameEnd";
 static const std::string CONST_VIDEO_FRAME_ERROR = "error";
 
-enum VideoOutputEventType {
-    VIDEO_FRAME_START,
-    VIDEO_FRAME_END,
-    VIDEO_FRAME_ERROR,
-    VIDEO_INVALID_TYPE
-};
+enum VideoOutputEventType { VIDEO_FRAME_START, VIDEO_FRAME_END, VIDEO_FRAME_ERROR, VIDEO_INVALID_TYPE };
 
 static EnumHelper<VideoOutputEventType> VideoOutputEventTypeHelper({
         {VIDEO_FRAME_START, CONST_VIDEO_FRAME_START},
@@ -65,9 +60,10 @@ struct VideoOutputCallbackInfo {
     VideoOutputEventType eventType_;
     int32_t value_;
     weak_ptr<const VideoCallbackListener> listener_;
-    VideoOutputCallbackInfo(VideoOutputEventType eventType, int32_t value,
-        shared_ptr<const VideoCallbackListener> listener)
-        : eventType_(eventType), value_(value), listener_(listener) {}
+    VideoOutputCallbackInfo(
+        VideoOutputEventType eventType, int32_t value, shared_ptr<const VideoCallbackListener> listener)
+        : eventType_(eventType), value_(value), listener_(listener)
+    {}
 };
 
 class VideoOutputNapi : public CameraNapiEventEmitter<VideoOutputNapi> {
@@ -99,10 +95,7 @@ private:
 
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
-    static napi_value GetFrameRateRange(napi_env env, napi_callback_info info);
-    static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
-    static void SetFrameRateRangeAsyncTask(napi_env env, void* data);
 
     void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
@@ -127,16 +120,12 @@ private:
 };
 
 struct VideoOutputAsyncContext : public AsyncContext {
+    VideoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     VideoOutputNapi* objectInfo;
     std::string errorMsg;
-    bool bRetBool;
     std::vector<int32_t> vecFrameRateRangeList;
     int32_t minFrameRate;
     int32_t maxFrameRate;
-    ~VideoOutputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

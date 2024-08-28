@@ -82,8 +82,6 @@ private:
     static void MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value MetadataOutputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value GetSupportedMetadataObjectTypes(napi_env env, napi_callback_info info);
-    static napi_value SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
@@ -108,15 +106,9 @@ private:
 
 struct MetadataOutputAsyncContext : public AsyncContext {
     MetadataOutputNapi* objectInfo;
-    bool bRetBool;
-    bool isSupported = false;
     std::string errorMsg;
     std::vector<MetadataObjectType> SupportedMetadataObjectTypes;
     std::vector<MetadataObjectType> setSupportedMetadataObjectTypes;
-    ~MetadataOutputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <memory>
+
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
 #include "input/camera_device.h"
@@ -285,14 +286,12 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
     static napi_value CreatePhotoOutput(napi_env env, std::string surfaceId);
-    static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
     static napi_value BurstCapture(napi_env env, napi_callback_info info);
     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
-    static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static napi_value DeferImageDeliveryFor(napi_env env, napi_callback_info info);
@@ -307,8 +306,6 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
-    static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
-    static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
@@ -324,9 +321,6 @@ private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static void ProcessContext(PhotoOutputAsyncContext* context);
-    static void ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
-        unique_ptr<PhotoOutputAsyncContext> asyncContext);
     void CreateMultiChannelPictureLisenter(napi_env env);
     void CreateSingleChannelPhotoLisenter(napi_env env);
     void RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
@@ -394,22 +388,21 @@ private:
     static thread_local uint32_t photoOutputTaskId;
 };
 
+
+struct PhotoOutputNapiCaptureSetting {
+    int32_t quality = -1;
+};
+
 struct PhotoOutputAsyncContext : public AsyncContext {
+    PhotoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     int32_t quality = -1;
     int32_t rotation = -1;
-    double latitude = -1.0;
-    double longitude = -1.0;
     bool isMirror = false;
     bool hasPhotoSettings = false;
-    bool bRetBool;
     bool isSupported = false;
-    std::shared_ptr<Location> location;
+    shared_ptr<Location> location;
     PhotoOutputNapi* objectInfo;
     std::string surfaceId;
-    ~PhotoOutputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

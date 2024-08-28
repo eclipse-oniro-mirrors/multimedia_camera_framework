@@ -63,6 +63,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -974,7 +975,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("CameraSessionNapi::CommitConfig invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -983,7 +984,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             CHECK_ERROR_RETURN_LOG(
                 context->objectInfo == nullptr, "CameraSessionNapi::CommitConfig async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::CommitConfig errorCode:%{public}d", context->errorCode);
@@ -994,7 +995,8 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::CommitConfig");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::CommitConfig");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1309,7 +1311,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Start invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1317,7 +1319,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Start async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Start();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Start errorCode:%{public}d", context->errorCode);
@@ -1328,7 +1330,8 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Start");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1350,7 +1353,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Stop invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1358,7 +1361,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
@@ -1369,7 +1372,8 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Stop");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1391,7 +1395,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Release invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1399,7 +1403,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Release();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Release errorCode:%{public}d", context->errorCode);
@@ -1410,7 +1414,8 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Release");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }

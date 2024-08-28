@@ -16,8 +16,11 @@
 #ifndef CAMERA_NAPI_CONST_UTILS_H
 #define CAMERA_NAPI_CONST_UTILS_H
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <list>
+#include <memory>
 #include <string>
 
 #include "js_native_api.h"
@@ -39,12 +42,48 @@ const int32_t ARGS_THREE = 3;
 const size_t ARGS_MAX_SIZE = 20;
 const int32_t SIZE = 100;
 
+typedef std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> NapiWorkerQueueTaskTimePoint;
+enum NapiWorkerQueueStatus : int32_t { INIT = 0, RUNNING, DONE };
+struct NapiWorkerQueueTask {
+    explicit NapiWorkerQueueTask(std::string taskName) : taskName(taskName)
+    {
+        createTimePoint = std::chrono::steady_clock::now();
+    }
+
+    std::string taskName;
+    NapiWorkerQueueTaskTimePoint createTimePoint;
+    NapiWorkerQueueStatus queueStatus = INIT;
+};
+
 struct AsyncContext {
 public:
     AsyncContext() = default;
     AsyncContext(std::string funcName, int32_t taskId) : funcName(funcName), taskId(taskId) {};
 
     virtual ~AsyncContext() = default;
+
+    void HoldNapiValue(napi_env env, napi_value napiValue)
+    {
+        if (env == nullptr || napiValue == nullptr) {
+            return;
+        }
+        napi_ref ref = nullptr;
+        napi_status status = napi_create_reference(env, napiValue, 1, &ref);
+        if (status == napi_ok && ref != nullptr) {
+            heldRefs.emplace_back(ref);
+        }
+    }
+
+    void FreeHeldNapiValue(napi_env env)
+    {
+        if (env == nullptr) {
+            return;
+        }
+        for (auto& ref : heldRefs) {
+            napi_delete_reference(env, ref);
+        }
+        heldRefs.clear();
+    }
 
     std::string funcName;
     int32_t taskId = 0;
@@ -54,10 +93,11 @@ public:
     bool status = false;
 
     int32_t errorCode = 0;
-    uint64_t queueId = 0;
+    std::shared_ptr<NapiWorkerQueueTask> queueTask;
     std::string errorMsg;
 
-    bool isInvalidArgument = false;
+private:
+    std::list<napi_ref> heldRefs;
 };
 
 struct JSAsyncContextOutput {
