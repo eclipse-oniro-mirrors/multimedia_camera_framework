@@ -21,6 +21,7 @@
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_manager.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
@@ -29,7 +30,7 @@
 #include "session/capture_session.h"
 #include "session/night_session.h"
 #include "camera_report_dfx_uitls.h"
-
+#include "picture.h"
 using namespace std;
 
 namespace OHOS {
@@ -127,7 +128,7 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
     double gpsCoordinates[3] = {location->latitude, location->longitude, location->altitude};
     bool status = false;
     camera_metadata_item_t item;
-    
+
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
         location_->latitude, location_->longitude, location_->altitude);
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_GPS_COORDINATES, &item);
@@ -321,6 +322,8 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
+    picture_ = nullptr;
+    photoProxy_ = nullptr;
 }
 
 PhotoOutput::~PhotoOutput()
@@ -356,6 +359,66 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
             session->CommitConfig();
         }
     }
+}
+
+bool PhotoOutput::IsYuvOrHeifPhoto()
+{
+    if (!GetPhotoProfile()) {
+        return false;
+    }
+    bool ret = GetPhotoProfile()->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP;
+    MEDIA_INFO_LOG("IsYuvOrHeifPhoto res = %{public}d", ret);
+    return ret;
+}
+
+void PhotoOutput::SetAuxiliaryPhotoHandle(uint32_t handle)
+{
+    std::lock_guard<std::mutex> lock(watchDogHandleMutex_);
+    watchDogHandle_ = handle;
+}
+
+
+uint32_t PhotoOutput::GetAuxiliaryPhotoHandle()
+{
+    std::lock_guard<std::mutex> lock(watchDogHandleMutex_);
+    return watchDogHandle_;
+}
+
+void PhotoOutput::CreateMultiChannel()
+{
+    CAMERA_SYNC_TRACE;
+    auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    if (streamCapturePtr == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput::CreateMultiChannel Failed!streamCapturePtr is nullptr");
+        return;
+    }
+    std::string retStr = "";
+    int32_t ret = 0;
+    if (gainmapSurface_ == nullptr) {
+        std::string bufferName = "gainmapImage";
+        gainmapSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
+        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, gainmapSurface_->GetProducer());
+        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+    }
+    if (deepSurface_ == nullptr) {
+        std::string bufferName = "deepImage";
+        deepSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
+        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, deepSurface_->GetProducer());
+        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+    }
+    if (exifSurface_ == nullptr) {
+        std::string bufferName = "exifImage";
+        exifSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
+        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, exifSurface_->GetProducer());
+        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+    }
+    if (debugSurface_ == nullptr) {
+        std::string bufferName = "debugImage";
+        debugSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
+        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, debugSurface_->GetProducer());
+        retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+    }
+    MEDIA_INFO_LOG("PhotoOutput::CreateMultiChannel! failed channel is = %{public}s", retStr.c_str());
 }
 
 bool PhotoOutput::IsEnableDeferred()
@@ -433,7 +496,7 @@ int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)
     CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::SetRawPhotoInfo Failed to create surface");
     rawPhotoSurface_ = surface;
-    return streamCapturePtr->SetRawPhotoStreamInfo(rawPhotoSurface_->GetProducer());
+    return streamCapturePtr->SetBufferProducerInfo("rawImage", rawPhotoSurface_->GetProducer());
 }
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
@@ -588,7 +651,7 @@ bool PhotoOutput::IsMirrorSupported()
         "PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
-    
+
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
@@ -766,6 +829,24 @@ void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration) __att
 std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 {
     return defaultCaptureSetting_;
+}
+
+int32_t PhotoOutput::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
+{
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutput::SetMovingPhotoVideoCodecType");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, GetStream is nullptr");
+    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->SetMovingPhotoVideoCodecType(videoCodecType);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::SetMovingPhotoVideoCodecType() itemStream is nullptr");
+    }
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to SetMovingPhotoVideoCodecType!, "
+        "errCode: %{public}d", errCode);
+    return ServiceToCameraError(errCode);
 }
 
 void PhotoOutput::CameraServerDied(pid_t pid)

@@ -748,6 +748,9 @@ private:
     int32_t RefreshServiceProxy();
     std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
 
+    vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    void FillSupportPhotoFormats(std::vector<Profile>& profiles);
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
@@ -821,6 +824,7 @@ private:
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
     std::vector<DepthProfile> depthProfiles_ = {};
 
+    std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;

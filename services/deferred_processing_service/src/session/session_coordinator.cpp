@@ -19,6 +19,7 @@
 #include "buffer_info.h"
 #include "dps_event_report.h"
 #include "steady_clock.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -99,7 +100,17 @@ public:
         }
     }
 
-    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override
+    void OnProcessDoneExt(int userId, const std::string& imageId,
+        std::shared_ptr<BufferInfoExt> bufferInfo) override
+    {
+        // std::shared_ptr<Media::Picture> picture = std::make_shared<Media::Picture>();
+        // std::shared_ptr<Media::Picture> picture = AssemblePicture(bufferInfo);
+        if (coordinator_ && bufferInfo) {
+            coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture());
+        }
+    }
+
+    void OnError(const int userId, const std::string& imageId, DpsError errorCode) override
     {
         if (coordinator_) {
             coordinator_->OnError(userId, imageId, errorCode);
@@ -168,7 +179,22 @@ void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& 
     return;
 }
 
-void SessionCoordinator::OnError(const int32_t userId, const std::string& imageId, DpsError errorCode)
+void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    auto iter = remoteImageCallbacksMap_.find(userId);
+    if (iter != remoteImageCallbacksMap_.end()) {
+        auto wpCallback = iter->second;
+        sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
+        DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+        spCallback->OnProcessImageDone(imageId, picture);
+    } else {
+        DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
+    }
+    return;
+}
+
+void SessionCoordinator::OnError(const int userId, const std::string& imageId, DpsError errorCode)
 {
     auto iter = remoteImageCallbacksMap_.find(userId);
     if (iter != remoteImageCallbacksMap_.end()) {

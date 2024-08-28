@@ -98,11 +98,11 @@ void Test(uint8_t *rawData, size_t size)
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         fuzz = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
-    
+
     Test_OnRemoteRequest(rawData, size);
     Test_HandleCapture(rawData, size);
     Test_HandleSetThumbnail(rawData, size);
-    Test_HandleSetRawPhotoInfo(rawData, size);
+    Test_HandleSetBufferProducerInfo(rawData, size);
     Test_HandleEnableDeferredType(rawData, size);
     Test_HandleSetCallback(rawData, size);
     fuzz->Release();
@@ -134,7 +134,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE);
     Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_PHOTO);
     Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO);
-    Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO);
+    Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO);
     uint32_t code = INVALID_CODE;
     data.RewindRead(0);
     fuzz->OnRemoteRequest(code, data, reply, option);
@@ -175,7 +175,7 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
     fuzz->HandleSetThumbnail(data);
 }
 
-void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size)
+void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
@@ -184,7 +184,7 @@ void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleSetRawPhotoInfo(data);
+    fuzz->HandleSetBufferProducerInfo(data);
 }
 
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)

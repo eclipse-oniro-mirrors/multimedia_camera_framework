@@ -54,6 +54,12 @@ std::unique_ptr<T> CreateUnique(Args&&... args)
     return std::move(std::make_unique<MakeUniqueHelper<T, Args &&...>>(std::forward<Args>(args)...));
 }
 
+inline int32_t GetVersionId(uint32_t major, uint32_t minor)
+{
+    const uint32_t offset = 8;
+    return static_cast<int32_t>((major << offset) | minor);
+}
+
 Watchdog& GetGlobalWatchdog();
 } // namespace DeferredProcessing
 } // namespace CameraStandard

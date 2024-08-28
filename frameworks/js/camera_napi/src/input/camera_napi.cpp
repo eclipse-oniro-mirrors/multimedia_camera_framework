@@ -154,6 +154,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "TimeLapseRecordState", mapTimeLapseRecordState, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("TimeLapsePreviewType",
             CreateObjectWithMap(env, "TimeLapsePreviewType", mapTimeLapsePreviewType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("VideoCodecType",
+            CreateObjectWithMap(env, "VideoCodecType", mapVideoCodecType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

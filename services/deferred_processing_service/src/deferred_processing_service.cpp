@@ -72,6 +72,17 @@ void DeferredProcessingService::Stop()
     DP_INFO_LOG("entered.");
 }
 
+void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    DP_INFO_LOG("entered.");
+    if (sessionManager_ != nullptr && sessionManager_->GetCallback(userId) != nullptr) {
+        sessionManager_->GetCallback(userId)->OnDeliveryLowQualityImage(imageId, picture);
+    } else {
+        DP_INFO_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityImage not set!, Discarding callback");
+    }
+}
+
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
     const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
 {
@@ -85,7 +96,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
     return session;
 }
 
-TaskManager* DeferredProcessingService::GetPhotoTaskManager(const int32_t userId)
+TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 {
     std::lock_guard<std::mutex> lock(taskManagerMutex_);
     DP_INFO_LOG("entered, userId: %{public}d", userId);

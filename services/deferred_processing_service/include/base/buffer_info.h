@@ -19,6 +19,9 @@
 #include "ipc_file_descriptor.h"
 #include "shared_buffer.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -35,7 +38,20 @@ private:
     const int32_t dataSize_;
     const bool isHighQuality_;
 };
-} // namespace DeferredProcessing
+class BufferInfoExt {
+public:
+    explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality);
+    ~BufferInfoExt();
+    std::shared_ptr<Media::Picture> GetPicture();
+    long GetDataSize();
+    bool IsHighQuality();
+
+private:
+    std::shared_ptr<Media::Picture> picture_;
+    long dataSize_;
+    bool isHighQuality_;
+};
+} //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_INFO_H

@@ -17,6 +17,7 @@
 #define CAMERA_NAPI_H_
 
 #include "camera_napi_utils.h"
+#include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hilog/log.h"
 #include "input/camera_input_napi.h"
@@ -104,6 +105,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_DNG", CameraFormat::CAMERA_FORMAT_DNG},
     {"CAMERA_FORMAT_YCBCR_P010", CameraFormat::CAMERA_FORMAT_YCBCR_P010},
     {"CAMERA_FORMAT_YCRCB_P010", CameraFormat::CAMERA_FORMAT_YCRCB_P010},
+    {"CAMERA_FORMAT_HEIC", CameraFormat::CAMERA_FORMAT_HEIC},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraStatus = {
@@ -346,6 +348,11 @@ static const std::unordered_map<std::string, int32_t> mapTimeLapseRecordState = 
 static const std::unordered_map<std::string, int32_t> mapTimeLapsePreviewType = {
     {"DARK", 1},
     {"LIGHT", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapVideoCodecType = {
+    {"AVC", VideoCodecType::VIDEO_ENCODE_TYPE_AVC},
+    {"HEVC", VideoCodecType::VIDEO_ENCODE_TYPE_HEVC},
 };
 
 static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {

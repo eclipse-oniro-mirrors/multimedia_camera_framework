@@ -43,13 +43,13 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
     switch (cameraFormat) {
         case CAMERA_FORMAT_YCBCR_420_888:
             return OHOS_CAMERA_FORMAT_YCBCR_420_888;
-        case CAMERA_FORMAT_YUV_420_SP:
+        case CAMERA_FORMAT_YUV_420_SP: // nv21
             return OHOS_CAMERA_FORMAT_YCRCB_420_SP;
         case CAMERA_FORMAT_YCBCR_P010:
             return OHOS_CAMERA_FORMAT_YCBCR_P010;
         case CAMERA_FORMAT_YCRCB_P010:
             return OHOS_CAMERA_FORMAT_YCRCB_P010;
-        case CAMERA_FORMAT_NV12:
+        case CAMERA_FORMAT_NV12: // nv12
             return OHOS_CAMERA_FORMAT_YCBCR_420_SP;
         case CAMERA_FORMAT_YUV_422_YUYV:
             return OHOS_CAMERA_FORMAT_422_YUYV;
