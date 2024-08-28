@@ -280,8 +280,6 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         if (settings) {
             auto location = make_shared<Location>();
             settings->GetLocation(location);
-            MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f", location->latitude,
-                location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
         CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
