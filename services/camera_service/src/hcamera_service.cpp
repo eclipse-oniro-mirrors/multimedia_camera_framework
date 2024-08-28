@@ -95,10 +95,7 @@ HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
     : cameraHostManager_(cameraHostManager), muteModeStored_(false), isRegisterSensorSuccess(false)
 {}
 
-HCameraService::~HCameraService()
-{
-    UnRegisterFoldStatusListener();
-}
+HCameraService::~HCameraService() {}
 
 #ifdef DEVICE_MANAGER
 class HCameraService::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
@@ -142,6 +139,7 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
+    UnRegisterFoldStatusListener();
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif
