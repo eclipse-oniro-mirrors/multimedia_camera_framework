@@ -19,6 +19,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <list>
 #include <memory>
 #include <string>
 
@@ -61,6 +62,29 @@ public:
 
     virtual ~AsyncContext() = default;
 
+    void HoldNapiValue(napi_env env, napi_value napiValue)
+    {
+        if (env == nullptr || napiValue == nullptr) {
+            return;
+        }
+        napi_ref ref = nullptr;
+        napi_status status = napi_create_reference(env, napiValue, 1, &ref);
+        if (status == napi_ok && ref != nullptr) {
+            heldRefs.emplace_back(ref);
+        }
+    }
+
+    void FreeHeldNapiValue(napi_env env)
+    {
+        if (env == nullptr) {
+            return;
+        }
+        for (auto& ref : heldRefs) {
+            napi_delete_reference(env, ref);
+        }
+        heldRefs.clear();
+    }
+
     std::string funcName;
     int32_t taskId = 0;
     napi_async_work work = nullptr;
@@ -71,6 +95,9 @@ public:
     int32_t errorCode = 0;
     std::shared_ptr<NapiWorkerQueueTask> queueTask;
     std::string errorMsg;
+
+private:
+    std::list<napi_ref> heldRefs;
 };
 
 struct JSAsyncContextOutput {

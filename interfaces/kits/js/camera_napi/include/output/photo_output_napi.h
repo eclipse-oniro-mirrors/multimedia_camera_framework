@@ -17,6 +17,7 @@
 #define PHOTO_OUTPUT_NAPI_H_
 
 #include <memory>
+
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
 #include "input/camera_device.h"

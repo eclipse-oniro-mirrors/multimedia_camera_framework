@@ -74,6 +74,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -495,7 +496,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PreviewOutputNapi::Release invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -572,7 +573,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PreviewOutputNapi::Start invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -614,7 +615,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PreviewOutputNapi::Stop invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {

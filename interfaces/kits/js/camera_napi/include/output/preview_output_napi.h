@@ -25,7 +25,6 @@
 #include "output/camera_output_capability.h"
 #include "output/preview_output.h"
 #include "surface_utils.h"
-
 namespace OHOS {
 namespace CameraStandard {
 struct PreviewOutputAsyncContext;

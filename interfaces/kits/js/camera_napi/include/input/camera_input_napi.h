@@ -122,7 +122,7 @@ private:
     static thread_local uint32_t cameraInputTaskId;
 };
 
-struct CameraInputAsyncContext :public AsyncContext {
+struct CameraInputAsyncContext : public AsyncContext {
     CameraInputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     CameraInputNapi* objectInfo = nullptr;
     bool isEnableSecCam = false;

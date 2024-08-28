@@ -63,6 +63,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -914,7 +915,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("CameraSessionNapi::CommitConfig invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1245,7 +1246,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Start invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1287,7 +1288,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Stop invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1329,7 +1330,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Release invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
