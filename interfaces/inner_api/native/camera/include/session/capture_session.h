@@ -1573,7 +1573,7 @@ public:
      *         If no callback is set, it may return a `nullptr`.
      */
     std::shared_ptr<LcdFlashStatusCallback> GetLcdFlashStatusCallback();
-
+    void EnableFaceDetection(bool enable);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
