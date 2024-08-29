@@ -124,6 +124,7 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
+        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
             .type =
                 static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
