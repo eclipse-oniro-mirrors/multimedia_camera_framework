@@ -3228,7 +3228,6 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
     }
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates meta=%{public}f", item.data.f[0]);
     if (FloatIsEqual(GetMinimumFocusDistance(), 0.0)) {
-        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
         return;
     }
     focusDistance_ = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
