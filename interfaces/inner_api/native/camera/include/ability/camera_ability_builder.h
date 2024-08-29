@@ -47,19 +47,8 @@ public:
 private:
     std::vector<int32_t> GetData(int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId, int32_t specId);
 
-    std::vector<FlashMode> GetValidFlashModes(const std::vector<int32_t>& data);
-    std::vector<ExposureMode> GetValidExposureModes(const std::vector<int32_t>& data);
-    std::vector<FocusMode> GetValidFocusModes(const std::vector<int32_t>& data);
-    std::vector<float> GetValidExposureBiasRange(const std::vector<int32_t>& data);
     std::vector<float> GetValidZoomRatioRange(const std::vector<int32_t>& data);
-    std::vector<BeautyType> GetValidBeautyTypes(const std::vector<int32_t>& data);
-    std::vector<int32_t> GetValidBeautyRange(BeautyType beautyType, const std::vector<int32_t>& data);
-    void ProcessBeautyAbilityTag(sptr<CameraAbility> ability, uint32_t tagId, const std::vector<int32_t>& data);
-    std::vector<ColorEffect> GetValidColorEffects(const std::vector<int32_t>& data);
-    std::vector<ColorSpace> GetValidColorSpaces(const std::vector<int32_t>& data);
     bool IsSupportMacro(const std::vector<int32_t>& data);
-    std::vector<VideoStabilizationMode> GetValidVideoStabilizationModes(const std::vector<int32_t>& data);
-    std::vector<PortraitEffect> GetValidPortraitEffects(const std::vector<int32_t>& data);
 
     void SetModeSpecTagField(sptr<CameraAbility> ability, int32_t modeName, common_metadata_header_t* metadata,
         uint32_t tagId, int32_t specId);

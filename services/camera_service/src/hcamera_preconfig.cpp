@@ -21,6 +21,8 @@
 #include <string>
 #include <utility>
 
+#include "ability/camera_ability_parse_util.h"
+#include "camera_stream_info_parse.h"
 #include "camera_device_ability_items.h"
 #include "camera_metadata_info.h"
 #include "hcamera_host_manager.h"
@@ -30,11 +32,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-static constexpr int32_t MODE_FINISH = -1;
-static constexpr int32_t STREAM_FINISH = -1;
-static constexpr int32_t ABILITY_FINISH = -1;
-static constexpr int32_t ONE_STEP = 1;
-static constexpr int32_t TWO_STEP = 2;
 
 static constexpr float RATIO_VALUE_1_1 = 1.0f;
 static constexpr float RATIO_VALUE_4_3 = 4.0f / 3;
@@ -58,45 +55,13 @@ struct CameraInfo {
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
 };
 
-typedef struct DetailInfo {
-    int32_t format;
-    int32_t width;
-    int32_t height;
-    int32_t fixedFps;
-    int32_t minFps;
-    int32_t maxFps;
-    std::vector<uint32_t> abilityId;
-} DetailInfo;
-
-typedef struct StreamRelatedInfo {
-    int32_t streamType;
-    uint32_t detailInfoCount;
-    std::vector<DetailInfo> detailInfo;
-} StreamRelatedInfo;
-
-typedef struct ModeInfo {
-    int32_t modeName;
-    uint32_t streamTypeCount;
-    std::vector<StreamRelatedInfo> streamInfo;
-} ModeInfo;
-
-typedef struct ExtendInfo {
-    uint32_t modeCount;
-    std::vector<ModeInfo> modeInfo;
-} ExtendInfo;
-
-std::shared_ptr<DetailInfo> GetMaxSizeDetailInfo(
-    std::vector<DetailInfo>& detailInfos, float targetRatioValue, camera_format_t format)
+template<typename T>
+std::shared_ptr<T> GetMaxSizeDetailInfo(std::vector<T>& detailInfos, float targetRatioValue, camera_format_t format)
 {
-    if (targetRatioValue <= 0) {
-        return nullptr;
-    }
-    std::shared_ptr<DetailInfo> maxSizeProfile = nullptr;
+    CHECK_ERROR_RETURN_RET(targetRatioValue <= 0, nullptr);
+    std::shared_ptr<T> maxSizeProfile = nullptr;
     for (auto& detailInfo : detailInfos) {
-        if (detailInfo.width == 0 || detailInfo.height == 0) {
-            continue;
-        }
-        if (detailInfo.format != format) {
+        if (detailInfo.width == 0 || detailInfo.height == 0 || detailInfo.format != format) {
             continue;
         }
         float ratio = ((float)detailInfo.width) / detailInfo.height;
@@ -104,136 +69,11 @@ std::shared_ptr<DetailInfo> GetMaxSizeDetailInfo(
             continue;
         }
         if (maxSizeProfile == nullptr || detailInfo.width > maxSizeProfile->width) {
-            maxSizeProfile = std::make_shared<DetailInfo>(detailInfo);
+            maxSizeProfile = std::make_shared<T>(detailInfo);
         }
     }
     return maxSizeProfile;
 }
-
-class CameraStreamInfoParse {
-public:
-    void getModeInfo(int32_t* originInfo, uint32_t count, ExtendInfo& transferedInfo)
-    {
-        modeStartIndex_.push_back(0);
-        for (uint32_t i = TWO_STEP; i < count; i++) {
-            if (originInfo[i - TWO_STEP] == ABILITY_FINISH && originInfo[i - ONE_STEP] == STREAM_FINISH &&
-                originInfo[i] == MODE_FINISH) { // 判断mode的-1 结束符位置
-                modeEndIndex_.push_back(i);
-                if (i + ONE_STEP < count) {
-                    modeStartIndex_.push_back(i + ONE_STEP);
-                }
-                transferedInfo.modeCount++;
-            }
-        }
-        modeCount_ = transferedInfo.modeCount;
-        transferedInfo.modeInfo.resize(transferedInfo.modeCount);
-
-        getStreamCount(originInfo, transferedInfo);
-        for (uint32_t i = 0; i < modeCount_; i++) {
-            transferedInfo.modeInfo[i].modeName = originInfo[modeStartIndex_[i]];
-            streamTypeCount_.push(transferedInfo.modeInfo[i].streamTypeCount);
-        }
-        for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
-            getStreamInfo(originInfo, transferedInfo.modeInfo[i]);
-        }
-        for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
-            getDetailStreamInfo(originInfo, transferedInfo.modeInfo[i]);
-        }
-    }
-
-private:
-    void getStreamCount(const int32_t* originInfo, ExtendInfo& transferedInfo)
-    {
-        for (uint32_t i = 0; i < modeCount_; i++) {
-            for (uint32_t j = modeStartIndex_[i]; j < modeEndIndex_[i]; j++) {
-                if (j == modeStartIndex_[i]) {
-                    streamStartIndex_.push(modeStartIndex_[i] + ONE_STEP);
-                }
-                if (originInfo[j] == STREAM_FINISH && originInfo[j - ONE_STEP] == ABILITY_FINISH) {
-                    streamEndIndex_.push(j);
-                    transferedInfo.modeInfo[i].streamTypeCount++;
-                }
-                if ((originInfo[j] == STREAM_FINISH) && (originInfo[j - ONE_STEP] == ABILITY_FINISH) &&
-                    ((j + ONE_STEP) < modeEndIndex_[i])) {
-                    streamStartIndex_.push(j + ONE_STEP);
-                }
-            }
-        }
-        modeStartIndex_.clear();
-        modeEndIndex_.clear();
-        return;
-    }
-
-    void getStreamInfo(const int32_t* originInfo, ModeInfo& modeInfo)
-    {
-        modeInfo.streamInfo.resize(modeInfo.streamTypeCount);
-        for (uint32_t j = 0; j < modeInfo.streamTypeCount; j++) {
-            modeInfo.streamInfo[j].streamType = originInfo[streamStartIndex_.front()];
-            for (uint32_t k = streamStartIndex_.front(); k < streamEndIndex_.front(); k++) {
-                if (k == streamStartIndex_.front()) {
-                    abilityStartIndex_.push(k + ONE_STEP);
-                }
-                if (originInfo[k] == ABILITY_FINISH) {
-                    abilityEndIndex_.push(k);
-                    modeInfo.streamInfo[j].detailInfoCount++;
-                }
-                if (originInfo[k] == ABILITY_FINISH && originInfo[k + ONE_STEP] != STREAM_FINISH) {
-                    abilityStartIndex_.push(k + ONE_STEP);
-                }
-            }
-            deatiInfoCount_.push(modeInfo.streamInfo[j].detailInfoCount);
-            streamStartIndex_.pop();
-            streamEndIndex_.pop();
-        }
-        return;
-    }
-
-    void getDetailStreamInfo(int32_t* originInfo, ModeInfo& modeInfo)
-    {
-        for (uint32_t j = 0; j < streamTypeCount_.front(); j++) {
-            modeInfo.streamInfo[j].detailInfo.resize(deatiInfoCount_.front());
-            getDetailAbilityInfo(originInfo, modeInfo.streamInfo[j]);
-        }
-        streamTypeCount_.pop();
-    }
-
-    void getDetailAbilityInfo(int32_t* originInfo, StreamRelatedInfo& streamInfo)
-    {
-        uint32_t allOffset = 6;
-        uint32_t formatOffset = 0;
-        uint32_t widthOffset = 1;
-        uint32_t heightOffset = 2;
-        uint32_t fixedFpsOffset = 3;
-        uint32_t minFpsOffset = 4;
-        uint32_t maxFpsOffset = 5;
-        for (uint32_t k = 0; k < deatiInfoCount_.front(); k++) {
-            for (uint32_t m = abilityStartIndex_.front(); m < abilityEndIndex_.front(); m++) {
-                streamInfo.detailInfo[k].format = originInfo[m + formatOffset];
-                streamInfo.detailInfo[k].width = originInfo[m + widthOffset];
-                streamInfo.detailInfo[k].height = originInfo[m + heightOffset];
-                streamInfo.detailInfo[k].fixedFps = originInfo[m + fixedFpsOffset];
-                streamInfo.detailInfo[k].minFps = originInfo[m + minFpsOffset];
-                streamInfo.detailInfo[k].maxFps = originInfo[m + maxFpsOffset];
-                for (uint32_t n = m + allOffset; n < abilityEndIndex_.front(); n++) {
-                    streamInfo.detailInfo[k].abilityId.push_back(originInfo[n]);
-                }
-                m += abilityEndIndex_.front();
-            }
-            abilityStartIndex_.pop();
-            abilityEndIndex_.pop();
-        }
-        deatiInfoCount_.pop();
-    }
-    uint32_t modeCount_ = 0;
-    std::vector<uint32_t> modeStartIndex_ = {};
-    std::vector<uint32_t> modeEndIndex_ = {};
-    std::queue<uint32_t> streamStartIndex_;
-    std::queue<uint32_t> streamEndIndex_;
-    std::queue<uint32_t> streamTypeCount_;
-    std::queue<uint32_t> deatiInfoCount_;
-    std::queue<uint32_t> abilityEndIndex_;
-    std::queue<uint32_t> abilityStartIndex_;
-};
 
 struct PreconfigProfile {
     std::string format;
@@ -252,7 +92,51 @@ struct PreconfigProfile {
                ",prefer:" + std::to_string(fpsPrefer);
     }
 
-    std::shared_ptr<DetailInfo> FindMaxDetailInfo(CameraInfo& cameraInfo, HDI::Camera::V1_3::OperationMode modeName)
+    float GetRatioValue(PreconfigRatio preconfigRatio)
+    {
+        float ratioValue = RATIO_VALUE_4_3;
+        switch (preconfigRatio) {
+            case RATIO_1_1:
+                ratioValue = RATIO_VALUE_1_1;
+                break;
+            case RATIO_4_3:
+                ratioValue = RATIO_VALUE_4_3;
+                break;
+            case RATIO_16_9:
+                ratioValue = RATIO_VALUE_16_9;
+                break;
+            default:
+                // Do nothing
+                break;
+        }
+        return ratioValue;
+    }
+
+    std::shared_ptr<ProfileDetailInfo> FindMaxDetailInfoFromProfileLevel(
+        CameraInfo& cameraInfo, HDI::Camera::V1_3::OperationMode modeName)
+    {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
+            cameraInfo.ability->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
+        CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
+        std::vector<SpecInfo> specInfos;
+        ProfileLevelInfo modeInfo = {};
+        CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
+        specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+        for (SpecInfo& specInfo : specInfos) {
+            for (StreamInfo& streamInfo : specInfo.streamInfos) {
+                if (streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE) {
+                    continue;
+                }
+                float ratioValue = GetRatioValue(followSensorMaxRatio);
+                return GetMaxSizeDetailInfo(streamInfo.detailInfos, ratioValue, OHOS_CAMERA_FORMAT_JPEG);
+            }
+        }
+        return nullptr;
+    }
+
+    std::shared_ptr<DetailInfo> FindMaxDetailInfoFromExtendConfig(
+        CameraInfo& cameraInfo, HDI::Camera::V1_3::OperationMode modeName)
     {
         camera_metadata_item_t item;
         int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
@@ -271,21 +155,7 @@ struct PreconfigProfile {
                 if (streamInfo.streamType != HDI::Camera::V1_3::StreamType::STREAM_TYPE_STILL_CAPTURE) {
                     continue;
                 }
-                float ratioValue = RATIO_VALUE_4_3;
-                switch (followSensorMaxRatio) {
-                    case RATIO_1_1:
-                        ratioValue = RATIO_VALUE_1_1;
-                        break;
-                    case RATIO_4_3:
-                        ratioValue = RATIO_VALUE_4_3;
-                        break;
-                    case RATIO_16_9:
-                        ratioValue = RATIO_VALUE_16_9;
-                        break;
-                    default:
-                        // Do nothing
-                        break;
-                }
+                float ratioValue = GetRatioValue(followSensorMaxRatio);
                 return GetMaxSizeDetailInfo(streamInfo.detailInfo, ratioValue, OHOS_CAMERA_FORMAT_JPEG);
             }
         }
@@ -309,8 +179,13 @@ struct PreconfigProfile {
             if (cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED) {
                 continue;
             }
-
-            auto maxDetailInfo = FindMaxDetailInfo(cameraInfo, modeName);
+            auto maxDetail = FindMaxDetailInfoFromProfileLevel(cameraInfo, modeName);
+            if (maxDetail) {
+                maxSizeInfo += std::to_string(maxDetail->width) + "x" + std::to_string(maxDetail->height) + "(" +
+                    cameraInfo.cameraId + ") ";
+                continue;
+            }
+            auto maxDetailInfo = FindMaxDetailInfoFromExtendConfig(cameraInfo, modeName);
             if (maxDetailInfo == nullptr) {
                 continue;
             }

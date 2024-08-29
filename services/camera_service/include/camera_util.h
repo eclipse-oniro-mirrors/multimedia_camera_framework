@@ -146,9 +146,6 @@ int32_t GetVersionId(uint32_t major, uint32_t minor);
 
 bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
 
-bool IsValidSize(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
-
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
 
 std::string GetClientBundle(int uid);

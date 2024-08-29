@@ -113,14 +113,8 @@ std::vector<int32_t> VideoProfile::GetFrameRates()
 
 bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previewProfiles)
 {
-    if (previewProfiles.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchPreviewProfiles previewProfiles is empty, can match");
-        return true;
-    }
-    if (previewProfiles_.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchPreviewProfiles OutputCapability previewProfiles_ is empty, cant match");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(previewProfiles.empty(), true);
+    CHECK_ERROR_RETURN_RET_LOG(previewProfiles_.empty(), false, "previewProfiles_ is empty, cant match");
     for (auto& profile : previewProfiles) {
         auto it = std::find(previewProfiles_.begin(), previewProfiles_.end(), profile);
         if (it == previewProfiles_.end()) {
@@ -136,14 +130,8 @@ bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previe
 
 bool CameraOutputCapability::IsMatchPhotoProfiles(std::vector<Profile>& photoProfiles)
 {
-    if (photoProfiles.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchPhotoProfiles photoProfiles is empty, can match");
-        return true;
-    }
-    if (photoProfiles_.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchPhotoProfiles OutputCapability photoProfiles_ is empty, cant match");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(photoProfiles.empty(), true);
+    CHECK_ERROR_RETURN_RET_LOG(photoProfiles_.empty(), false, "photoProfiles_ is empty, cant match");
     for (auto& profile : photoProfiles) {
         auto it = std::find(photoProfiles_.begin(), photoProfiles_.end(), profile);
         if (it == photoProfiles_.end()) {
@@ -159,14 +147,8 @@ bool CameraOutputCapability::IsMatchPhotoProfiles(std::vector<Profile>& photoPro
 
 bool CameraOutputCapability::IsMatchVideoProfiles(std::vector<VideoProfile>& videoProfiles)
 {
-    if (videoProfiles.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchVideoProfiles videoProfiles is empty, can match");
-        return true;
-    }
-    if (videoProfiles_.empty()) {
-        MEDIA_DEBUG_LOG("IsMatchVideoProfiles OutputCapability videoProfiles_ is empty, cant match");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(videoProfiles.empty(), true);
+    CHECK_ERROR_RETURN_RET_LOG(videoProfiles_.empty(), false, "videoProfiles_ is empty, cant match");
     for (auto& profile : videoProfiles) {
         auto it = std::find_if(videoProfiles_.begin(), videoProfiles_.end(), [&profile](VideoProfile& profile_) {
             return profile_.GetCameraFormat() == profile.GetCameraFormat() &&
