@@ -11586,7 +11586,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_084, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test preview/capture with night session's beauty
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, test_night_mode_beauty, TestSize.Level0)
 {
     SceneMode nightMode = SceneMode::NIGHT;
     if (!IsSupportMode(nightMode)) {
@@ -12639,6 +12639,73 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_time_machine, Te
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test moon capture boost and sketch function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test moon capture boost and sketch function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto previewOutput = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    auto photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    auto videoOutput = CreateVideoOutput();
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(SceneMode::NORMAL);
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
+    int32_t previewRotation = previewOutput_1->GetPreviewRotation(PhotoCaptureSetting::RotationConfig::Rotation_0);
+    EXPECT_EQ(previewRotation, PhotoCaptureSetting::RotationConfig::Rotation_90);
+
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
+    int32_t videoRotation = videoOutput_1->GetVideoRotation(PhotoCaptureSetting::RotationConfig::Rotation_90);
+    EXPECT_EQ(videoRotation, PhotoCaptureSetting::RotationConfig::Rotation_180);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)previewOutput;
+    int32_t photoRotation = photoOutput_1->GetPhotoRotation(PhotoCaptureSetting::RotationConfig::Rotation_180);
+    EXPECT_EQ(photoRotation, PhotoCaptureSetting::RotationConfig::Rotation_270);
+
+    intResult = previewOutput_1->SetPreviewRotation(previewRotation, false);
+    EXPECT_EQ(intResult, previewRotation);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS
