@@ -12661,7 +12661,7 @@ HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
     auto photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     auto videoOutput = CreateVideoOutput();
-    ASSERT_NE(output, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
 
     session_->SetMode(SceneMode::NORMAL);
     int32_t intResult = session_->BeginConfig();
