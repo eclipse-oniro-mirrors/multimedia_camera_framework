@@ -77,6 +77,7 @@ public:
             statusInfo.camera->cameraPosition = itr->second;
         } else {
             MEDIA_ERR_LOG("OnCameraStatusChanged cameraPosition not found!");
+            return;
         }
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
@@ -194,6 +195,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
             outCameras[index].cameraPosition = itr->second;
         } else {
             MEDIA_ERR_LOG("Camera_Manager::GetSupportedCameras cameraPosition not found!");
+            continue;
         }
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
@@ -476,6 +478,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
         innerPosition = itr->second;
     } else {
         MEDIA_ERR_LOG("Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
+        return CAMERA_INVALID_ARGUMENT;
     }
     CameraType innerType = static_cast<CameraType>(type);
 
