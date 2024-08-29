@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstdint>
 #include "ability/camera_ability_const.h"
+#include "session/capture_scene_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -50,6 +51,8 @@ public:
     std::vector<std::vector<float>> GetSupportedPhysicalApertures();
     std::vector<VideoStabilizationMode> GetSupportedStabilizationMode();
     bool IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode);
+    std::vector<uint32_t> GetSupportedExposureRange();
+    bool IsFeatureSupported(SceneFeature sceneFeature);
 
     std::vector<FlashMode> supportedFlashModes_;
     std::vector<ExposureMode> supportedExposureModes_;
@@ -63,6 +66,8 @@ public:
     std::vector<float> supportedVirtualApertures_;
     std::vector<std::vector<float>> supportedPhysicalApertures_;
     std::vector<VideoStabilizationMode> supportedVideoStabilizationMode_;
+    std::vector<uint32_t> supportedExposureRange_;
+    std::vector<SceneFeature> supportedSceneFeature_;
 
     std::optional<std::vector<float>> zoomRatioRange_;
     std::optional<bool> isMacroSupported_;

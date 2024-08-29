@@ -194,8 +194,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_output_cap
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_ability_props = {
-    DECLARE_NAPI_FUNCTION("getSessionAbilities", CameraSessionNapi::GetSessionAbilities),
-    DECLARE_NAPI_FUNCTION("getSessionConflictAbilities", CameraSessionNapi::GetSessionConflictAbilities)
+    DECLARE_NAPI_FUNCTION("getSessionFunctions", CameraSessionNapi::GetSessionFunctions),
+    DECLARE_NAPI_FUNCTION("getSessionConflictFunctions", CameraSessionNapi::GetSessionConflictFunctions)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion_props = {
@@ -3061,9 +3061,9 @@ void ParseCameraOutputCapability(napi_env env, napi_value root,
     }
 }
 
-napi_value CameraSessionNapi::GetSessionAbilities(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetSessionFunctions(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("GetSessionAbilities is called");
+    MEDIA_INFO_LOG("GetSessionFunctions is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -3083,15 +3083,15 @@ napi_value CameraSessionNapi::GetSessionAbilities(napi_env env, napi_callback_in
         return nullptr;
     }
     SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionAbilities(
+    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionFunctions(
         previewProfiles, photoProfiles, videoProfiles);
     result = CreateAbilitiesJSArray(env, mode, cameraAbilityList, false);
     return result;
 }
 
-napi_value CameraSessionNapi::GetSessionConflictAbilities(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetSessionConflictFunctions(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("GetSessionConflictAbilities is called");
+    MEDIA_INFO_LOG("GetSessionConflictFunctions is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -3109,7 +3109,7 @@ napi_value CameraSessionNapi::GetSessionConflictAbilities(napi_env env, napi_cal
         return nullptr;
     }
     SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictAbilities();
+    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictFunctions();
     result = CreateAbilitiesJSArray(env, mode, conflictAbilityList, true);
     return result;
 }

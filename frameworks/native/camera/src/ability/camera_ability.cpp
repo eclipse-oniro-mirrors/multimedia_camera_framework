@@ -130,6 +130,17 @@ bool CameraAbility::IsVideoStabilizationModeSupported(VideoStabilizationMode sta
     return it != supportedVideoStabilizationMode_.end();
 }
 
+std::vector<uint32_t> CameraAbility::GetSupportedExposureRange()
+{
+    return supportedExposureRange_;
+}
+
+bool CameraAbility::IsFeatureSupported(SceneFeature sceneFeature)
+{
+    return std::find(
+        supportedSceneFeature_.begin(), supportedSceneFeature_.end(), sceneFeature) != supportedSceneFeature_.end();
+}
+
 void CameraAbility::DumpCameraAbilityInfo()
 {
     auto logFunc = [](const std::string& label, const auto& container) {
@@ -146,6 +157,8 @@ void CameraAbility::DumpCameraAbilityInfo()
     logFunc("Supported Portrait Effects", supportedPortraitEffects_);
     logFunc("Supported Video Stabilization Modes", supportedVideoStabilizationMode_);
     logFunc("Supported Beauty Types", supportedBeautyTypes_);
+    logFunc("Supported Exposure Range", supportedExposureRange_);
+    logFunc("Supported Scene Feature", supportedSceneFeature_);
 
     for (const auto& [type, range] : supportedBeautyRangeMap_) {
         std::string vecStr = Container2String(range.begin(), range.end());

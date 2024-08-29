@@ -18,6 +18,7 @@ ohos_shared_library("camera_service") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/ability/camera_ability_parse_util.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
     "binder/client/src/hcamera_device_callback_proxy.cpp",
     "binder/client/src/hcamera_listener_proxy.cpp",

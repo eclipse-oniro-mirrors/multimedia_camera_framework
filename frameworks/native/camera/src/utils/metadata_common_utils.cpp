@@ -26,18 +26,59 @@ namespace OHOS {
 namespace CameraStandard {
 namespace {
 void FillSizeListFromStreamInfo(
-    vector<Size>& sizeList, const StreamRelatedInfo& streamInfo, const camera_format_t targetFormat)
+    vector<Size>& sizeList, const StreamInfo& streamInfo, const camera_format_t targetFormat)
 {
-    for (uint32_t detailIndex = 0; detailIndex < streamInfo.detailInfoCount; detailIndex++) {
-        auto detailInfo = std::move(streamInfo.detailInfo[detailIndex]);
-        camera_format_t hdi_format = static_cast<camera_format_t>(detailInfo.format);
+    for (const auto &detail : streamInfo.detailInfos) {
+        camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
         if (hdi_format != targetFormat) {
             continue;
         }
-        Size size { .width = detailInfo.width, .height = detailInfo.height };
+        Size size { .width = detail.width, .height = detail.height };
         sizeList.emplace_back(size);
     }
 }
+
+void FillSizeListFromStreamInfo(
+    vector<Size>& sizeList, const StreamRelatedInfo& streamInfo, const camera_format_t targetFormat)
+{
+    for (const auto &detail : streamInfo.detailInfo) {
+        camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
+        if (hdi_format != targetFormat) {
+            continue;
+        }
+        Size size{.width = detail.width, .height = detail.height};
+        sizeList.emplace_back(size);
+    }
+}
+
+std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromProfileLevel(
+    const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    if (metadata == nullptr) {
+        return nullptr;
+    }
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
+    if (retCode != CAM_META_SUCCESS || item.count == 0) {
+        return nullptr;
+    }
+    std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
+    std::vector<SpecInfo> specInfos;
+    ProfileLevelInfo modeInfo = {};
+    CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
+    specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+    for (SpecInfo& specInfo : specInfos) {
+        for (StreamInfo& streamInfo : specInfo.streamInfos) {
+            if (streamInfo.streamType == 0) {
+                FillSizeListFromStreamInfo(*sizeList.get(), streamInfo, targetFormat);
+            }
+        }
+    }
+    MEDIA_INFO_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRangeFromProfileLevel listSize: %{public}d",
+        static_cast<int>(sizeList->size()));
+    return sizeList;
+}
+
 std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
@@ -123,6 +164,19 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
     MEDIA_DEBUG_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRange modeName: %{public}d, targetFormat:%{public}d",
         modeName, targetFormat);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
+    auto levelList = GetSupportedPreviewSizeRangeFromProfileLevel(modeName, targetFormat, metadata);
+    if (levelList && levelList->empty() && (modeName == SceneMode::CAPTURE || modeName == SceneMode::VIDEO)) {
+        levelList = GetSupportedPreviewSizeRangeFromProfileLevel(SceneMode::NORMAL, targetFormat, metadata);
+    }
+    if (levelList && !levelList->empty()) {
+        for (auto& size : *levelList) {
+            MEDIA_DEBUG_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRange level info:%{public}dx%{public}d",
+                size.width, size.height);
+        }
+        sizeList->insert(sizeList->end(), levelList->begin(), levelList->end());
+        return sizeList;
+    }
+
     auto extendList = GetSupportedPreviewSizeRangeFromExtendConfig(modeName, targetFormat, metadata);
     if (extendList != nullptr && extendList->empty() &&
         (modeName == SceneMode::CAPTURE || modeName == SceneMode::VIDEO)) {

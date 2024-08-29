@@ -21,13 +21,13 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static const char CAMERA_ABILITY_NAPI_CLASS_NAME[] = "CameraAbility";
-static const char PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PhotoAbility";
-static const char PORTRAIT_PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoAbility";
-static const char VIDEO_ABILITY_NAPI_CLASS_NAME[] = "VideoAbility";
-static const char PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PhotoConflictAbility";
-static const char PORTRAIT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoConflictAbility";
-static const char VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "VideoConflictAbility";
+static const char CAMERA_ABILITY_NAPI_CLASS_NAME[] = "CameraFunctions";
+static const char PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PhotoFunctions";
+static const char PORTRAIT_PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoFunctions";
+static const char VIDEO_ABILITY_NAPI_CLASS_NAME[] = "VideoFunctions";
+static const char PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PhotoConflictFunctions";
+static const char PORTRAIT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoConflictFunctions";
+static const char VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "VideoConflictFunctions";
 
 class CameraAbilityNapi {
 public:
@@ -66,6 +66,10 @@ public:
     static napi_value GetSupportedPhysicalApertures(napi_env env, napi_callback_info info);
     // StabilizationQuery
     static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info);
+    // ManualExposureQuery
+    static napi_value GetSupportedExposureRange(napi_env env, napi_callback_info info);
+    // SceneDetectionQuery
+    static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
 
     sptr<CameraAbility> GetNativeObj() { return cameraAbility_; }
     napi_env env_;
@@ -85,6 +89,8 @@ public:
     static const std::vector<napi_property_descriptor> portrait_query_props;
     static const std::vector<napi_property_descriptor> aperture_query_props;
     static const std::vector<napi_property_descriptor> stabilization_query_props;
+    static const std::vector<napi_property_descriptor> manual_exposure_props;
+    static const std::vector<napi_property_descriptor> features_props;
 };
 
 class PhotoAbilityNapi : public CameraAbilityNapi {
