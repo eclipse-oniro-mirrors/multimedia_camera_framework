@@ -35,8 +35,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<VideoOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr,
-        "PreviewOutputNapi AsyncCompleteCallback event %{public}s context is null", context->funcName.c_str());
+    CHECK_ERROR_PRINT_LOG(context == nullptr, "VideoOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("PreviewOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
@@ -597,32 +596,6 @@ napi_value VideoOutputNapi::GetSupportedFrameRates(napi_env env, napi_callback_i
         MEDIA_ERR_LOG("GetSupportedFrameRates call failed!");
     }
     return result;
-}
-
-bool isFrameRateRangeAvailable(napi_env env, void* data)
-{
-    MEDIA_DEBUG_LOG("isFrameRateRangeAvailable is called");
-    bool invalidFrameRate = true;
-    const int32_t FRAME_RATE_RANGE_STEP = 2;
-    auto context = static_cast<VideoOutputAsyncContext*>(data);
-    if (context == nullptr) {
-        MEDIA_ERR_LOG("Async context is null");
-        return invalidFrameRate;
-    }
-
-    if (!context->vecFrameRateRangeList.empty()) {
-        for (size_t i = 0; i < (context->vecFrameRateRangeList.size() - 1); i += FRAME_RATE_RANGE_STEP) {
-            int32_t minVal = context->vecFrameRateRangeList[i];
-            int32_t maxVal = context->vecFrameRateRangeList[i + 1];
-            if ((context->minFrameRate == minVal) && (context->maxFrameRate == maxVal)) {
-                invalidFrameRate = false;
-                break;
-            }
-        }
-    } else {
-        MEDIA_ERR_LOG("isFrameRateRangeAvailable: vecFrameRateRangeList is empty!");
-    }
-    return invalidFrameRate;
 }
 
 napi_value VideoOutputNapi::GetVideoRotation(napi_env env, napi_callback_info info)

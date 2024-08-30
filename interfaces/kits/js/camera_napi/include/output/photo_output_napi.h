@@ -401,7 +401,7 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     bool hasPhotoSettings = false;
     bool isSupported = false;
     shared_ptr<Location> location;
-    PhotoOutputNapi* objectInfo;
+    PhotoOutputNapi* objectInfo = nullptr;
     std::string surfaceId;
 };
 } // namespace CameraStandard
