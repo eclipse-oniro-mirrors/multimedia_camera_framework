@@ -55,8 +55,7 @@ sptr<Surface> GetSurfaceFromSurfaceId(napi_env env, std::string& surfaceId)
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<PreviewOutputAsyncContext*>(data);
-    CHECK_ERROR_RETURN_LOG(context == nullptr,
-        "PreviewOutputNapi AsyncCompleteCallback event %{public}s context is null", context->funcName.c_str());
+    CHECK_ERROR_PRINT_LOG(context == nullptr, "PreviewOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("PreviewOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
