@@ -106,6 +106,23 @@ VideoProfile::VideoProfile(
     framerates_ = framerates;
 }
 
+bool VideoProfile::IsContains(const VideoProfile& videoProfile)
+{
+    bool isFormatSizeEqual = format_ == videoProfile.format_ && size_.width == videoProfile.size_.width &&
+                             size_.height == videoProfile.size_.height;
+    if (!isFormatSizeEqual) {
+        return false;
+    }
+    if (framerates_.empty()) {
+        return false;
+    }
+    if (videoProfile.framerates_.empty()) {
+        return true;
+    }
+    return *framerates_.begin() <= *videoProfile.framerates_.begin() &&
+           *(framerates_.end() - 1) >= *(videoProfile.framerates_.end() - 1);
+}
+
 std::vector<int32_t> VideoProfile::GetFrameRates()
 {
     return framerates_;

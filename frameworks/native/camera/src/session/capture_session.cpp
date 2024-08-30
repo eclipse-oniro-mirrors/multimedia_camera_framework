@@ -1091,7 +1091,6 @@ int32_t CaptureSession::Release()
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
-    changedMetadata_ = nullptr;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     captureSessionCallback_ = nullptr;
     appCallback_ = nullptr;
