@@ -70,6 +70,7 @@ void TimeLapsePhotoSessionMetadataResultProcessor::ProcessCallbacks(
         MEDIA_ERR_LOG("%{public}s: session is nullptr", __FUNCTION__);
         return;
     }
+    session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessIsoInfoChange(result);
     session->ProcessExposureChange(result);
     session->ProcessLuminationChange(result);
