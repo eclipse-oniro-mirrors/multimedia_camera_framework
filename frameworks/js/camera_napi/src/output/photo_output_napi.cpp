@@ -49,6 +49,7 @@
 #include "listener_base.h"
 #include "media_library_comm_napi.h"
 #include "media_library_manager.h"
+#include "metadata.h"
 #include "output/deferred_photo_proxy_napi.h"
 #include "output/photo_napi.h"
 #include "output/photo_output_napi.h"
@@ -429,6 +430,16 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     return photoProxy;
 }
 
+inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
+{
+    float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
+    if (pixelMap) {
+        MEDIA_INFO_LOG("RotatePicture degree is %{public}f", degree);
+    } else {
+        MEDIA_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
+    }
+}
+
 void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
 {
     auto photoOutput = photoOutput_.promote();
@@ -648,9 +659,27 @@ void PhotoListener::AssembleAuxiliaryPhoto()
                 location->latitude, location->longitude);
             photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
         }
+        std::string orientation = "";
+        if (photoOutput->exifSurfaceBuffer_ && photoOutput->picture_) {
+            LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
+            photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
+            OHOS::Media::ImageMetadata* exifData =
+                reinterpret_cast<OHOS::Media::ImageMetadata*>(photoOutput->picture_->GetExifMetadata().get());
+            if (!exifData) {
+                MEDIA_ERR_LOG("PhotoListener::AssembleAuxiliaryPhoto exifData is nullptr");
+                return;
+            }
+            exifData->GetValue("Orientation", orientation);
+            std::string defalutExifOrientation = "1";
+            exifData->GetValue("Orientation", defalutExifOrientation);
+            MEDIA_INFO_LOG("PhotoListener::AssembleAuxiliaryPhoto GetExifMetadata orientation:%{public}s",
+                orientation.c_str());
+            RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
+        }
         if (photoOutput->gainmapSurfaceBuffer_ && photoOutput->picture_) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);
+            RotatePicture(uniptr->GetContentPixel(), orientation);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
             LoggingSurfaceBufferInfo(photoOutput->gainmapSurfaceBuffer_, "gainmapSurfaceBuffer");
             photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
@@ -658,13 +687,10 @@ void PhotoListener::AssembleAuxiliaryPhoto()
         if (photoOutput->deepSurfaceBuffer_ && photoOutput->picture_) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->deepSurfaceBuffer_, Media::AuxiliaryPictureType::DEPTH_MAP);
+            RotatePicture(uniptr->GetContentPixel(), orientation);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
             LoggingSurfaceBufferInfo(photoOutput->deepSurfaceBuffer_, "deepSurfaceBuffer");
             photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
-        }
-        if (photoOutput->exifSurfaceBuffer_ && photoOutput->picture_) {
-            LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
-            photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
         }
         if (photoOutput->debugSurfaceBuffer_ && photoOutput->picture_) {
             LoggingSurfaceBufferInfo(photoOutput->debugSurfaceBuffer_, "debugSurfaceBuffer");

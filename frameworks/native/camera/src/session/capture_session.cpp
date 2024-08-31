@@ -176,7 +176,7 @@ const std::unordered_map<LightPaintingType, CameraLightPaintingType>
     {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
     {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
 };
- 
+
 const std::unordered_map<CameraLightPaintingType, LightPaintingType>
     CaptureSession::metaLightPaintingTypeMap_ = {
     {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
@@ -914,7 +914,7 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
     if (profilePtr == nullptr) {
         return false;
     }
-    return true;
+    return ValidateOutputProfile(*profilePtr, outputType);
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)

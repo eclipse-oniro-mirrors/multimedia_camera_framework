@@ -33,7 +33,7 @@
 #include "picture.h"
 #include "steady_clock.h"
 #include "buffer_extra_data_impl.h"
-
+#include "metadata.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -271,6 +271,16 @@ std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bu
     return auxiliaryPicture;
 }
 
+inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
+{
+    float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
+    if (pixelMap) {
+        DP_INFO_LOG("RotatePicture degree is %{public}f", degree);
+    } else {
+        DP_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
+    }
+}
+
 std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
     const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
@@ -286,23 +296,38 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
         DP_ERR_LOG("bufferHandle is null");
         return 0;
     }
+    std::string orientation = "";
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
-    if (buffer.isGainMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::GAINMAP);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
-    }
-    if (buffer.isDepthMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::DEPTH_MAP);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
-    }
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
         extraData->ExtraSet("exifDataSize", exifDataSize);
         exifBuffer->SetExtraData(extraData);
         picture->SetExifMetadata(exifBuffer);
+        OHOS::Media::ImageMetadata* exifData =
+            reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get());
+        if (!exifData) {
+            DP_ERR_LOG("PhotoProcessListener::AssemblePicture exifData is nullptr");
+            return nullptr;
+        }
+        exifData->GetValue("Orientation", orientation);
+        std::string defalutExifOrientation = "1";
+        exifData->GetValue("Orientation", defalutExifOrientation);
+        DP_INFO_LOG("PhotoProcessListener::AssemblePicture GetExifMetadata orientation:%{public}s",
+            orientation.c_str());
+    }
+    RotatePicture(picture->GetMainPixel(), orientation);
+    if (buffer.isGainMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::GAINMAP);
+        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
+    }
+    if (buffer.isDepthMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::DEPTH_MAP);
+        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
     }
     if (buffer.isMakerInfoValid) {
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
