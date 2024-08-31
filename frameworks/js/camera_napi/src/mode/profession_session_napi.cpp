@@ -914,7 +914,7 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(ExposureInfo in
     napi_set_named_property(env_, result[PARAM1], "exposureTimeValue", value);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("exposureInfo", callbackNapiPara);
+    ExecuteCallback("exposureInfoChange", callbackNapiPara);
 }
 
 void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
@@ -967,7 +967,7 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallback(IsoInfo info) const
     napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
     napi_set_named_property(env_, result[PARAM1], "iso", value);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("isoInfo", callbackNapiPara);
+    ExecuteCallback("isoInfoChange", callbackNapiPara);
 }
 
 void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
@@ -1020,7 +1020,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(ApertureInfo in
     napi_create_double(env_, info.apertureValue, &value);
     napi_set_named_property(env_, result[PARAM1], "aperture", value);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("apertureInfo", callbackNapiPara);
+    ExecuteCallback("apertureInfoChange", callbackNapiPara);
 }
 
 void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
@@ -1075,7 +1075,7 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallback(LuminationI
     napi_set_named_property(env_, result[PARAM1], "lumination", isoValue);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("luminationInfo", callbackNapiPara);
+    ExecuteCallback("luminationInfoChange", callbackNapiPara);
 }
 
 void LuminationInfoCallbackListener::OnLuminationInfoChanged(LuminationInfo info)
