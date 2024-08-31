@@ -220,6 +220,9 @@ void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
         rangeFov = std::move(it->second);
     }
     rangeFov.emplace_back(sketchReferenceFovRange);
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE && sceneFeaturesMode.GetFeatures().empty()) {
+        g_sketchReferenceFovRatioMap_[{ CAPTURE, { FEATURE_TRIPOD_DETECTION } }] = rangeFov;
+    }
     g_sketchReferenceFovRatioMap_[sceneFeaturesMode] = rangeFov;
     if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
         g_sketchReferenceFovRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = rangeFov;
@@ -235,6 +238,9 @@ void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeat
     MEDIA_DEBUG_LOG("SketchWrapper::InsertSketchEnableRatioMapValue %{public}s : %{public}f",
         sceneFeaturesMode.Dump().c_str(), ratioValue);
     std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE && sceneFeaturesMode.GetFeatures().empty()) {
+        g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_TRIPOD_DETECTION } }] = ratioValue;
+    }
     g_sketchEnableRatioMap_[sceneFeaturesMode] = ratioValue;
     if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
         g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = ratioValue;

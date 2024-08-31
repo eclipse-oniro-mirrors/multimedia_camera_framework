@@ -359,6 +359,13 @@ static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {
     {"VIDEO_META_DEBUG_INFO", 0},
 };
 
+static const std::unordered_map<std::string, int32_t> mapTripodStatus = {
+    { "INVALID", 0 },
+    { "ACTIVE", 1 },
+    { "ENTER", 2 },
+    { "EXITING", 3 },
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
