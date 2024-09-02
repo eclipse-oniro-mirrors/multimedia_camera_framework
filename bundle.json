@@ -150,7 +150,6 @@
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
-            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
             "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
