@@ -16,7 +16,7 @@
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
-#include <cstdint>
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -380,6 +380,30 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     uri = reply.ReadString();
     cameraShotType = reply.ReadInt32();
     burstKey = reply.ReadString();
+    return error;
+}
+
+int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (picture == nullptr || photoProxy == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
+        return IPC_PROXY_ERR;
+    }
+    data.WriteInterfaceToken(GetDescriptor());
+    picture->Marshalling(data);
+    photoProxy->WriteToParcel(data);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    }
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
     return error;
 }
 

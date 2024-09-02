@@ -24,7 +24,11 @@
 #include "capture_output.h"
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
+#include "camera_photo_proxy.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 
@@ -132,19 +136,19 @@ public:
     virtual void OnCaptureError(const int32_t captureId, const int32_t errorCode) const = 0;
 };
 
-typedef struct {
+typedef struct Location {
     /**
      * Latitude.
      */
-    double latitude;
+    double latitude = -1;
     /**
      * Longitude.
      */
-    double longitude;
+    double longitude = -1;
     /**
      * Altitude.
      */
-    double altitude;
+    double altitude = -1;
 } Location;
 
 class PhotoCaptureSetting {
@@ -203,7 +207,7 @@ public:
      * @param location value to be set.
      */
     void SetLocation(std::shared_ptr<Location>& location);
-    
+
     /**
      * @brief Get the GPS Location for the photo capture settings.
      *
@@ -217,7 +221,7 @@ public:
      * @param boolean true/false to set/unset mirror respectively.
      */
     void SetMirror(bool enable);
-        
+
     /**
      * @brief Get mirror information for the photo capture settings.
      *
@@ -405,13 +409,32 @@ public:
      * @return default photo capture setting.
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
-
+    int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType);
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;
 
     sptr<Surface> deferredSurface_;
 
+    sptr<Surface> gainmapSurface_;
+    sptr<Surface> deepSurface_;
+    sptr<Surface> exifSurface_;
+    sptr<Surface> debugSurface_;
+    sptr<SurfaceBuffer> gainmapSurfaceBuffer_;
+    sptr<SurfaceBuffer> deepSurfaceBuffer_;
+    sptr<SurfaceBuffer> exifSurfaceBuffer_;
+    sptr<SurfaceBuffer> debugSurfaceBuffer_;
+    bool IsYuvOrHeifPhoto();
+    void CreateMultiChannel();
+
+    void SetAuxiliaryPhotoHandle(uint32_t handle);
+    uint32_t GetAuxiliaryPhotoHandle();
+    std::unique_ptr<Media::Picture> picture_;
+    sptr<CameraPhotoProxy> photoProxy_;
+    uint32_t watchDogHandle_;
+    std::mutex watchDogHandleMutex_;
+    std::map<int32_t, int32_t> caputreIdAuxiliaryCountMap_;
+    std::map<int32_t, int32_t> caputreIdCountMap_;
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;

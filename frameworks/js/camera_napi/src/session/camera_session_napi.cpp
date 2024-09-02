@@ -63,6 +63,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -974,7 +975,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("CameraSessionNapi::CommitConfig invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -983,7 +984,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             CHECK_ERROR_RETURN_LOG(
                 context->objectInfo == nullptr, "CameraSessionNapi::CommitConfig async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::CommitConfig errorCode:%{public}d", context->errorCode);
@@ -994,7 +995,8 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::CommitConfig");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::CommitConfig");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1170,6 +1172,7 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
     PhotoOutputNapi* photoOutputNapiObj = nullptr;
     VideoOutputNapi* videoOutputNapiObj = nullptr;
     MetadataOutputNapi* metadataOutputNapiObj = nullptr;
+    DepthDataOutputNapi* depthDataOutputNapiObj = nullptr;
 
     NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
 
@@ -1194,6 +1197,10 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
                 MEDIA_INFO_LOG("metadata output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
                 cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
+            } else if (DepthDataOutputNapi::IsDepthDataOutput(env, argv[i])) {
+                MEDIA_INFO_LOG("depth data output adding..");
+                napi_unwrap(env, argv[i], reinterpret_cast<void**>(&depthDataOutputNapiObj));
+                cameraOutput = depthDataOutputNapiObj->GetDepthDataOutput();
             } else {
                 MEDIA_INFO_LOG("invalid output ..");
                 NAPI_ASSERT(env, false, "type mismatch");
@@ -1304,7 +1311,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Start invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1312,7 +1319,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Start async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Start();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Start errorCode:%{public}d", context->errorCode);
@@ -1323,7 +1330,8 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Start");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1345,7 +1353,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Stop invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1353,7 +1361,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Stop();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Stop errorCode:%{public}d", context->errorCode);
@@ -1364,7 +1372,8 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Stop");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1386,7 +1395,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::Release invalid argument");
         return nullptr;
     }
-
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
@@ -1394,7 +1403,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
             auto context = static_cast<CameraSessionAsyncContext*>(data);
             CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraSessionNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueId(context->queueId, [&context]() {
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->cameraSession_->Release();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 MEDIA_INFO_LOG("CameraSessionNapi::Release errorCode:%{public}d", context->errorCode);
@@ -1405,7 +1414,8 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
         asyncFunction->Reset();
     } else {
-        CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueId(asyncContext->queueId);
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraSessionNapi::Release");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -1431,9 +1441,7 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsVideoStabilizationModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1492,8 +1500,7 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetVideoStabilizationMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
         int retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -1548,9 +1555,7 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFlashModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
@@ -1581,8 +1586,7 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFlashMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
@@ -1695,9 +1699,7 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsExposureModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->
@@ -1756,8 +1758,7 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
@@ -1912,8 +1913,7 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double exposureValue;
-        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &exposureValue);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetExposureBias call Failed!");
+        napi_get_value_double(env, argv[PARAM0], &exposureValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
@@ -1942,9 +1942,7 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsFocusModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode,
@@ -2090,8 +2088,7 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &value);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetFocusMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->
@@ -2191,8 +2188,7 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double zoomRatio;
-        napi_status getValueRet = napi_get_value_double(env, argv[PARAM0], &zoomRatio);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetZoomRatio call Failed!");
+        napi_get_value_double(env, argv[PARAM0], &zoomRatio);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetZoomRatio((float)zoomRatio);
         cameraSessionNapi->cameraSession_->UnlockForControl();

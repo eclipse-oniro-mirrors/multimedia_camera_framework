@@ -73,6 +73,7 @@ public:
     {
         MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
         OH_AVBuffer *destBuffer = OH_AVBuffer_Create(attr.size);
+        CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
         auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
         auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
         errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), attr.size,
@@ -98,6 +99,7 @@ public:
         OH_AVBuffer_GetBufferAttr(IDRBuffer, &IDRAttr);
         int32_t destBufferSize = IDRAttr.size + attr.size;
         OH_AVBuffer *destBuffer = OH_AVBuffer_Create(destBufferSize);
+        CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
         auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
         auto sourceIDRAddr = OH_AVBuffer_GetAddr(IDRBuffer);
         

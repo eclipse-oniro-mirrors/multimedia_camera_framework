@@ -22,17 +22,18 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ability/camera_ability_napi.h"
 #include "camera_napi_utils.h"
 #include "capture_scene_const.h"
 #include "input/camera_device.h"
 #include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
+#include "output/depth_data_output_napi.h"
 #include "output/metadata_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/capture_session.h"
-#include "ability/camera_ability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -468,7 +469,7 @@ protected:
 
 struct CameraSessionAsyncContext : public AsyncContext {
     CameraSessionAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
-    CameraSessionNapi* objectInfo;
+    CameraSessionNapi* objectInfo = nullptr;
     std::string errorMsg;
 };
 } // namespace CameraStandard

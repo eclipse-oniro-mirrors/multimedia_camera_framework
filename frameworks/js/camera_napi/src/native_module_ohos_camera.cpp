@@ -38,6 +38,8 @@
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
 #include "output/deferred_photo_proxy_napi.h"
+#include "output/depth_data_napi.h"
+#include "output/depth_data_output_napi.h"
 #include "output/photo_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
@@ -57,6 +59,8 @@ static napi_value Export(napi_env env, napi_value exports)
     PreviewOutputNapi::Init(env, exports);
     PhotoOutputNapi::Init(env, exports);
     VideoOutputNapi::Init(env, exports);
+    DepthDataOutputNapi::Init(env, exports);
+    DepthDataNapi::Init(env, exports);
     CameraSessionNapi::Init(env, exports);
     CameraManagerNapi::Init(env, exports);
     CameraNapi::Init(env, exports);

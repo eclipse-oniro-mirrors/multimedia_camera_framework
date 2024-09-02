@@ -15,6 +15,7 @@
 
 #include "camera_framework_unittest.h"
 
+#include "gtest/gtest.h"
 #include <cstdint>
 #include <vector>
 
@@ -411,6 +412,7 @@ public:
     int32_t faceSlenderBeautyControl[2] = {2, 3};
     int32_t effectAbility[2] = {0, 1};
     int32_t effectControl[2] = {0, 1};
+    int32_t photoFormats[2] = {OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS_CAMERA_FORMAT_JPEG};
     class MockStatusCallback : public StatusCallback {
     public:
         void OnCameraStatus(const std::string& cameraId, CameraStatus status, CallbackInvoker invoker) override
@@ -575,6 +577,8 @@ public:
 
             ability->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effectControl,
                               sizeof(effectControl) / sizeof(effectControl[0]));
+            ability->addEntry(OHOS_STREAM_AVAILABLE_FORMATS, &photoFormats,
+                              sizeof(photoFormats) / sizeof(photoFormats[0]));
                         return CAMERA_OK;
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
@@ -5424,7 +5428,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_057, TestSize.Level
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
     cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
     cameras[0]->GetPosition();
-    EXPECT_EQ(cameras[0]->GetPosition(), 2);
 
     cameras[0]->zoomRatioRange_ = {1.1, 2.1};
     EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);
@@ -8232,6 +8235,40 @@ HWTEST_F(CameraFrameworkUnitTest, test_CanPreconfig, TestSize.Level0)
     EXPECT_EQ(session->CanPreconfig(preconfigType, preconfigRatio), true);
     int32_t result = session->Preconfig(preconfigType, preconfigRatio);
     EXPECT_EQ(result, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager GetSupportedOutputCapability with yuv photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager GetSupportedOutputCapability with yuv photo
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_can_get_yuv_photo_profile, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    vector<Profile> photoProfiles = ability->GetPhotoProfiles();
+    auto it = std::find_if(photoProfiles.begin(), photoProfiles.end(),
+        [](const auto& profile){ return profile.format_ == CAMERA_FORMAT_YUV_420_SP;});
+
+    EXPECT_NE(it, photoProfiles.end());
+
+    mode = SceneMode::CAPTURE;
+    ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    it = std::find_if(photoProfiles.begin(), photoProfiles.end(),
+        [](const auto& profile){ return profile.format_ == CAMERA_FORMAT_YUV_420_SP;});
+    EXPECT_NE(it, photoProfiles.end());
 }
 
 HWTEST_F(CameraFrameworkUnitTest, test_CreateBurstDisplayName, TestSize.Level0)

@@ -50,7 +50,16 @@ enum CameraFormat {
     CAMERA_FORMAT_YUV_422_YUYV = 1005,
     CAMERA_FORMAT_JPEG = 2000,
     CAMERA_FORMAT_YCBCR_P010 = 2001,
-    CAMERA_FORMAT_YCRCB_P010 = 2002
+    CAMERA_FORMAT_YCRCB_P010 = 2002,
+    CAMERA_FORMAT_HEIC = 2003,
+    CAMERA_FORMAT_DEPTH_16 = 3000,
+    CAMERA_FORMAT_DEPTH_32 = 3001,
+};
+
+enum DepthDataAccuracy {
+    DEPTH_DATA_ACCURACY_INVALID = -1,
+    DEPTH_DATA_ACCURACY_RELATIVE = 0,
+    DEPTH_DATA_ACCURACY_ABSOLUTE = 1,
 };
 
 enum ProfileSizeRatio : int32_t {
@@ -149,6 +158,21 @@ public:
     void DumpVideoProfile(std::string name) const;
 };
 
+class DepthProfile : public Profile {
+public:
+    DepthProfile(CameraFormat format, DepthDataAccuracy dataAccuracy, Size size);
+    DepthProfile() = default;
+    virtual ~DepthProfile() = default;
+    DepthProfile& operator=(const DepthProfile& rhs)
+    {
+        Profile::operator=(rhs);
+        this->dataAccuracy_ = rhs.dataAccuracy_;
+        return *this;
+    }
+    DepthDataAccuracy GetDataAccuracy();
+    DepthDataAccuracy dataAccuracy_;
+};
+
 float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue);
 bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float unspecifiedValue);
 
@@ -200,6 +224,20 @@ public:
     void SetVideoProfiles(std::vector<VideoProfile> videoProfiles);
 
     /**
+     * @brief Get Depth profiles.
+     *
+     * @return vector of supported depth profiles.
+     */
+    std::vector<DepthProfile> GetDepthProfiles();
+
+    /**
+     * @brief Set depth profiles.
+     *
+     * @param vector of depth profiles.
+     */
+    void SetDepthProfiles(std::vector<DepthProfile> depthProfiles);
+
+    /**
      * @brief Get supported meta object types.
      *
      * @return vector of supported metadata object types.
@@ -223,6 +261,7 @@ private:
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> videoProfiles_ = {};
+    std::vector<DepthProfile> depthProfiles_ = {};
     std::vector<MetadataObjectType> metadataObjTypes_ = {};
 
     template <typename T>

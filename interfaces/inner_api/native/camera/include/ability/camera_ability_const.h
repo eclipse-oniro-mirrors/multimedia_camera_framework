@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <map>
 #include "camera_metadata_operator.h"
-
 namespace OHOS {
 namespace HDI {
 namespace Display {

@@ -43,6 +43,8 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "ability/camera_ability_builder.h"
+#include "picture.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -132,7 +134,7 @@ const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType>
     {OHOS_CAMERA_EFFECT_SUGGESTION_SKY, EFFECT_SUGGESTION_SKY},
     {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET}
 };
-    
+
 const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
     CaptureSession::fwkEffectSuggestionTypeMap_ = {
     {EFFECT_SUGGESTION_NONE, OHOS_CAMERA_EFFECT_SUGGESTION_NONE},
@@ -751,6 +753,10 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     if (frameRateRange.size() >= minFpsRangeSize) {
         SetFrameRateRange(frameRateRange);
     }
+    if (output != nullptr) {
+        sptr<VideoOutput> videoOutput = static_cast<VideoOutput*>(output.GetRefPtr());
+        videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]);
+    }
     SetGuessMode(SceneMode::VIDEO);
     return CameraErrorCode::SUCCESS;
 }
@@ -851,6 +857,7 @@ int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& outpu
             "videoFrameRates is empty!");
         if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
             captureSession->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
+            SetMode(SceneMode::HIGH_FRAME_RATE);
             return CameraErrorCode::SUCCESS;
         }
     }
@@ -897,6 +904,9 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
             profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigVideoProfile()
                                                                              : output->GetVideoProfile();
             break;
+        case CAPTURE_OUTPUT_TYPE_DEPTH_DATA:
+            profilePtr = output->GetDepthProfile();
+            break;
         default:
             MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
             return false;
@@ -904,7 +914,7 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
     if (profilePtr == nullptr) {
         return false;
     }
-    return ValidateOutputProfile(*profilePtr, outputType);
+    return true;
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
@@ -1062,7 +1072,6 @@ int32_t CaptureSession::Release()
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
-    changedMetadata_ = nullptr;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     captureSessionCallback_ = nullptr;
     appCallback_ = nullptr;
@@ -1120,6 +1129,22 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
             errorCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
+    }
+}
+
+void CaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+    std::string &uri, int32_t &cameraShotType)
+{
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CreatePictureForMediaLibrary captureSession is nullptr");
     }
 }
 
@@ -2387,7 +2412,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
 {
     MEDIA_INFO_LOG("CaptureSession::GetZoomRatioRange is Called");
     zoomRatioRange.clear();
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
+    if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
@@ -2829,6 +2854,8 @@ void CaptureSession::ProcessProfilesAbilityId(const SceneMode supportModes)
     auto inputDevice = GetInputDevice();
     std::vector<Profile> photoProfiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[supportModes];
     std::vector<Profile> previewProfiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[supportModes];
+    MEDIA_INFO_LOG("photoProfiles size = %{public}zu, photoProfiles size = %{public}zu", photoProfiles.size(),
+        previewProfiles.size());
     for (auto i : photoProfiles) {
         std::vector<uint32_t> ids = i.GetAbilityId();
         std::string abilityIds = Container2String(ids.begin(), ids.end());
@@ -3200,7 +3227,6 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
     }
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates meta=%{public}f", item.data.f[0]);
     if (FloatIsEqual(GetMinimumFocusDistance(), 0.0)) {
-        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
         return;
     }
     focusDistance_ = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
@@ -4182,6 +4208,10 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile MetadataOutput");
         return true;
     }
+    if (outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA) {
+        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile DepthDataOutput");
+        return true;
+    }
     auto modeName = GetMode();
     auto validateOutputProfileFunc = [modeName](auto validateProfile, auto& profiles) -> bool {
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile in mode(%{public}d): "
@@ -5143,6 +5173,23 @@ std::shared_ptr<LcdFlashStatusCallback> CaptureSession::GetLcdFlashStatusCallbac
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return lcdFlashStatusCallback_;
+}
+
+void CaptureSession::EnableFaceDetection(bool enable)
+{
+    MEDIA_INFO_LOG("EnableFaceDetection enable: %{public}d", enable);
+    CHECK_ERROR_RETURN_LOG(GetMetaOutput() == nullptr, "MetaOutput is null");
+    if (!enable) {
+        std::set<camera_face_detect_mode_t> objectTypes;
+        SetCaptureMetadataObjectTypes(objectTypes);
+        return;
+    }
+    sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
+    CHECK_ERROR_RETURN_LOG(!metaOutput, "MetaOutput is null");
+    std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+    MEDIA_INFO_LOG("EnableFaceDetection SetCapturingMetadataObjectTypes objectTypes size = %{public}zu",
+        metadataObjectTypes.size());
+    metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
 }
 } // namespace CameraStandard
 } // namespace OHOS

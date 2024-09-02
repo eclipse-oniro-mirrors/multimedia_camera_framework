@@ -21,6 +21,8 @@
 #include "ipc_skeleton.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_photo_proxy.h"
+#include "picture.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -94,6 +96,10 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
             errCode = HandleCreateMediaLibrary(data, reply);
             break;
+        case static_cast<uint32_t>(
+            CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE):
+            errCode = HandleCreateMediaLibraryForPicture(data, reply);
+            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
             {
                 std::string deviceClass = data.ReadString();
@@ -162,6 +168,8 @@ int32_t HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
         stream = iface_cast<IStreamRepeat>(remoteObj);
     }  else if (streamType == StreamType::METADATA) {
         stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
     }
 
     return AddOutput(streamType, stream);
@@ -178,8 +186,10 @@ int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
         stream = iface_cast<IStreamCapture>(remoteObj);
     } else if (streamType == StreamType::REPEAT) {
         stream = iface_cast<IStreamRepeat>(remoteObj);
-    }  else if (streamType == StreamType::METADATA) {
+    } else if (streamType == StreamType::METADATA) {
         stream = iface_cast<IStreamMetadata>(remoteObj);
+    } else if (streamType == StreamType::DEPTH) {
+        stream = iface_cast<IStreamDepthData>(remoteObj);
     }
     return RemoveOutput(streamType, stream);
 }
@@ -270,5 +280,22 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, Messa
     return ret;
 }
 
+int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
+{
+    Picture *picturePtr = Media::Picture::Unmarshalling(data);
+    CHECK_AND_RETURN_RET_LOG(picturePtr != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
+    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    photoProxy->ReadFromParcel(data);
+    CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
+    std::string uri;
+    int32_t cameraShotType = 0;
+    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
+    return ret;
+}
 } // namespace CameraStandard
 } // namespace OHOS

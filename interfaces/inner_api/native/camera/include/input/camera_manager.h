@@ -37,6 +37,7 @@
 #include "istream_common.h"
 #include "istream_repeat.h"
 #include "output/camera_output_capability.h"
+#include "output/depth_data_output.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
@@ -92,7 +93,8 @@ typedef enum OutputCapStreamType {
     STILL_CAPTURE = 2,
     POST_VIEW = 3,
     ANALYZE = 4,
-    CUSTOM = 5
+    CUSTOM = 5,
+    DEPTH = 6
 } OutputCapStreamType;
 
 class CameraManagerCallback {
@@ -439,6 +441,26 @@ public:
     int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput);
 
     /**
+     * @brief Create depth output instance.
+     *
+     * @param depthProfile depth profile.
+     * @param surface depth data buffer surface.
+     * @return pointer to depth data output instance.
+     */
+    sptr<DepthDataOutput> CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface);
+
+    /**
+     * @brief Create depth output instance.
+     *
+     * @param depthProfile depth profile.
+     * @param surface depth data buffer surface.
+     * @param pDepthDataOutput pointer to depth data output instance.
+     * @return Returns error code.
+     */
+    int CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
+                              sptr<DepthDataOutput>* pDepthDataOutput);
+
+    /**
      * @brief Set camera manager callback.
      *
      * @param CameraManagerCallback pointer.
@@ -651,7 +673,7 @@ public:
         std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
         cameraDeviceAbilitySupportMap_.clear();
     }
-    
+
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
 
 protected:
@@ -697,10 +719,19 @@ private:
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
+    static const std::unordered_map<DepthDataAccuracyType, DepthDataAccuracy> metaToFwDepthDataAccuracy_;
     void ParseExtendCapability(
         ProfilesWrapper& profilesWrapper, const int32_t modeName, const camera_metadata_item_t& item);
     void ParseBasicCapability(ProfilesWrapper& profilesWrapper, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
         const camera_metadata_item_t& item);
+    void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
+    void ParseExtendCapability(const int32_t modeName, const camera_metadata_item_t& item);
+    void ParseBasicCapability(
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
+    void ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     void SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     SceneMode GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper);
@@ -717,6 +748,9 @@ private:
     int32_t RefreshServiceProxy();
     std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
 
+    vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    void FillSupportPhotoFormats(std::vector<Profile>& profiles);
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
@@ -788,7 +822,9 @@ private:
 
     std::map<std::string, std::vector<Profile>> modePhotoProfiles_ = {};
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
+    std::vector<DepthProfile> depthProfiles_ = {};
 
+    std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;

@@ -114,6 +114,8 @@ ohos_shared_library("deferred_processing_service") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",

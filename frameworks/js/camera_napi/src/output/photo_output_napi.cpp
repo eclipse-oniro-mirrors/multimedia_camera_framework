@@ -15,12 +15,16 @@
 
 #include "output/photo_output_napi.h"
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unistd.h>
+#include <unordered_set>
 #include <uv.h>
 
+#include "buffer_extra_data_impl.h"
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -30,27 +34,126 @@
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_napi_worker_queue_keeper.h"
 #include "camera_output_capability.h"
 #include "camera_photo_proxy.h"
+#include "camera_report_dfx_uitls.h"
+#include "camera_util.h"
+#include "dp_utils.h"
 #include "image_napi.h"
 #include "image_packer.h"
 #include "image_receiver.h"
 #include "ipc_skeleton.h"
 #include "js_native_api.h"
+#include "js_native_api_types.h"
 #include "listener_base.h"
 #include "media_library_comm_napi.h"
 #include "media_library_manager.h"
 #include "output/deferred_photo_proxy_napi.h"
 #include "output/photo_napi.h"
 #include "output/photo_output_napi.h"
+#include "photo_output.h"
+#include "picture.h"
 #include "pixel_map_napi.h"
 #include "refbase.h"
+#include "securec.h"
 #include "video_key_info.h"
-#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
+namespace {
+void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<PhotoOutputAsyncContext*>(data);
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "CameraInputNapi AsyncCompleteCallback context is null");
+    MEDIA_INFO_LOG("CameraInputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
+        context->status);
+    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
+    jsContext->status = context->status;
+
+    if (!context->status) {
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    } else {
+        napi_get_undefined(env, &jsContext->data);
+    }
+    if (!context->funcName.empty() && context->taskId > 0) {
+        // Finish async trace
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
+    }
+    if (context->work != nullptr) {
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
+    }
+    context->FreeHeldNapiValue(env);
+    delete context;
+}
+
+void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
+{
+    context->status = true;
+    sptr<PhotoOutput> photoOutput = context->objectInfo->GetPhotoOutput();
+    if (context->hasPhotoSettings) {
+        std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+        if (context->quality != -1) {
+            capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
+        }
+        if (context->rotation != -1) {
+            capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
+        }
+        capSettings->SetMirror(context->isMirror);
+        if (context->location != nullptr) {
+            capSettings->SetLocation(context->location);
+        }
+        if (isBurst) {
+            MEDIA_ERR_LOG("ProcessContext BurstCapture");
+            uint8_t burstState = 1; // 0:end 1:start
+            capSettings->SetBurstCaptureState(burstState);
+        }
+        context->errorCode = photoOutput->Capture(capSettings);
+    } else {
+        context->errorCode = photoOutput->Capture();
+    }
+    context->status = context->errorCode == 0;
+}
+
+bool ValidQualityLevelFromJs(int32_t jsQuality)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::ValidQualityLevelFromJs quality level = %{public}d", jsQuality);
+    switch (jsQuality) {
+        case QUALITY_LEVEL_HIGH:
+        // Fallthrough
+        case QUALITY_LEVEL_MEDIUM:
+        // Fallthrough
+        case QUALITY_LEVEL_LOW:
+            return true;
+        default:
+            MEDIA_ERR_LOG("Invalid quality value received from application");
+            return false;
+    }
+    return false;
+}
+
+bool ValidImageRotationFromJs(int32_t jsRotation)
+{
+    MEDIA_INFO_LOG("js rotation = %{public}d", jsRotation);
+    switch (jsRotation) {
+        case ROTATION_0:
+            // Fallthrough
+        case ROTATION_90:
+            // Fallthrough
+        case ROTATION_180:
+            // Fallthrough
+        case ROTATION_270:
+            return true;
+        default:
+            MEDIA_ERR_LOG("Invalid rotation value received from application");
+            return false;
+    }
+    return false;
+}
+} // namespace
+
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
@@ -66,6 +169,11 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wpt
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(photoSurface);
     }
+    if (taskManager_ == nullptr) {
+        constexpr int32_t numThreads = 1;
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
+            numThreads, true);
+    }
 }
 
 RawPhotoListener::RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface)
@@ -76,16 +184,503 @@ RawPhotoListener::RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSur
     }
 }
 
+AuxiliaryPhotoListener::AuxiliaryPhotoListener(const std::string surfaceName, const sptr<Surface> surface,
+    wptr<PhotoOutput> photoOutput) : surfaceName_(surfaceName), surface_(surface), photoOutput_(photoOutput)
+{
+    if (bufferProcessor_ == nullptr && surface != nullptr) {
+        bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(surface);
+    }
+    if (taskManager_ == nullptr) {
+        constexpr int32_t numThreads = 1;
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxiliaryPhotoListener_" + surfaceName,
+            numThreads, true);
+    }
+}
+
+int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
+{
+    int32_t captureId;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    MEDIA_INFO_LOG("PhotoListener captureId:%{public}d", captureId);
+    return captureId;
+}
+
+void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput)
+{
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("photoOutput is null");
+        return;
+    }
+    SurfaceError ret;
+    string retStr = "";
+    std::string surfaceName = "";
+    if (photoOutput->gainmapSurface_ != nullptr) {
+        surfaceName = CONST_GAINMAP_SURFACE;
+        gainmapImageListener = new (std::nothrow) AuxiliaryPhotoListener(surfaceName, photoOutput->gainmapSurface_,
+            photoOutput);
+        ret = photoOutput->gainmapSurface_->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener>&)gainmapImageListener);
+        retStr = ret != SURFACE_ERROR_OK ? retStr + "[gainmap]" : retStr;
+    }
+    if (photoOutput->deepSurface_ != nullptr) {
+        surfaceName = CONST_DEEP_SURFACE;
+        deepImageListener = new (std::nothrow) AuxiliaryPhotoListener(surfaceName, photoOutput->deepSurface_,
+            photoOutput);
+        ret = photoOutput->deepSurface_->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener>&)deepImageListener);
+        retStr = ret != SURFACE_ERROR_OK ? retStr + "[deep]" : retStr;
+    }
+    if (photoOutput->exifSurface_ != nullptr) {
+        surfaceName = CONST_EXIF_SURFACE;
+        exifImageListener = new (std::nothrow) AuxiliaryPhotoListener(surfaceName, photoOutput->exifSurface_,
+            photoOutput);
+        ret = photoOutput->exifSurface_->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener>&)exifImageListener);
+        retStr = ret != SURFACE_ERROR_OK ? retStr + "[exif]" : retStr;
+    }
+    if (photoOutput->debugSurface_ != nullptr) {
+        surfaceName = CONST_DEBUG_SURFACE;
+        debugImageListener = new (std::nothrow) AuxiliaryPhotoListener(surfaceName, photoOutput->debugSurface_,
+            photoOutput);
+        ret = photoOutput->debugSurface_->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener>&)debugImageListener);
+        retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;
+    }
+    if (retStr != "") {
+        MEDIA_ERR_LOG("register surface consumer listener failed! type = %{public}s", retStr.c_str());
+    }
+}
+
+void AuxiliaryPhotoListener::DeepCopyBuffer(
+    sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
+{
+    MEDIA_INFO_LOG("PhotoListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d",
+        surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
+    BufferRequestConfig requestConfig = {
+        .width = surfaceBuffer->GetWidth(),
+        .height = surfaceBuffer->GetHeight(),
+        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .format = surfaceBuffer->GetFormat(),
+        .usage = surfaceBuffer->GetUsage(),
+        .timeout = 0,
+        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+    };
+    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
+    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
+    }
+}
+
+void AuxiliaryPhotoListener::ExecuteDeepyCopySurfaceBuffer()
+{
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepyCopySurfaceBuffer surfaceName = %{public}s",
+        surfaceName_.c_str());
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    SurfaceError surfaceRet = surface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("AuxiliaryPhotoListener Failed to acquire surface buffer");
+        return;
+    }
+    // deep copy buffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+    BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
+    if (bufferHandle == nullptr) {
+        MEDIA_ERR_LOG("invalid bufferHandle");
+    }
+    newSurfaceBuffer->Map();
+    if (surfaceName_ == CONST_EXIF_SURFACE) {
+        int32_t dataSize = 0;
+        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
+        sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
+        extraData->ExtraSet("exifDataSize", dataSize);
+        newSurfaceBuffer->SetExtraData(extraData);
+        MEDIA_INFO_LOG("AuxiliaryPhotoListener exifDataSize = %{public}d", dataSize);
+    }
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    MEDIA_INFO_LOG("AuxiliaryPhotoListener surfaceName_ = %{public}s w=%{public}d, h=%{public}d, f=%{public}d"
+                   "captureId=%{public}d", surfaceName_.c_str(), newSurfaceBuffer->GetWidth(),
+                   newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat(), captureId);
+    surface_->ReleaseBuffer(surfaceBuffer, -1);
+    {
+        std::lock_guard<std::mutex> lock(g_photoImageMutex);
+        auto photoOutput = photoOutput_.promote();
+        int32_t maxAuxiliaryCount = photoOutput->caputreIdAuxiliaryCountMap_.count(captureId);
+        if (maxAuxiliaryCount) {
+            int32_t auxiliaryCount = photoOutput->caputreIdAuxiliaryCountMap_[captureId];
+            int32_t expectCount = photoOutput->caputreIdCountMap_[captureId];
+            if (auxiliaryCount == -1 || (expectCount != 0 && auxiliaryCount == expectCount)) {
+                MEDIA_INFO_LOG("AuxiliaryPhotoListener ReleaseBuffer, captureId=%{public}d", captureId);
+                return;
+            }
+        }
+        photoOutput->caputreIdAuxiliaryCountMap_[captureId]++;
+        switch (SurfaceTypeHelper.ToEnum(surfaceName_)) {
+            case SurfaceType::GAINMAP_SURFACE: {
+                    photoOutput->gainmapSurfaceBuffer_ = newSurfaceBuffer;
+                    MEDIA_INFO_LOG("AuxiliaryPhotoListener gainmapSurfaceBuffer_, captureId=%{public}d", captureId);
+                } break;
+            case SurfaceType::DEEP_SURFACE: {
+                    photoOutput->deepSurfaceBuffer_ = newSurfaceBuffer;
+                    MEDIA_INFO_LOG("AuxiliaryPhotoListener deepSurfaceBuffer_, captureId=%{public}d", captureId);
+                } break;
+            case SurfaceType::EXIF_SURFACE: {
+                    photoOutput->exifSurfaceBuffer_ = newSurfaceBuffer;
+                    MEDIA_INFO_LOG("AuxiliaryPhotoListener exifSurfaceBuffer_, captureId=%{public}d", captureId);
+                } break;
+            case SurfaceType::DEBUG_SURFACE: {
+                    photoOutput->debugSurfaceBuffer_ = newSurfaceBuffer;
+                    MEDIA_INFO_LOG("AuxiliaryPhotoListener debugSurfaceBuffer_, captureId=%{public}d", captureId);
+                } break;
+            default:
+                break;
+        }
+        MEDIA_INFO_LOG("AuxiliaryPhotoListener auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
+                       "surfaceName=%{public}s, captureId=%{public}d",
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId], photoOutput->caputreIdCountMap_[captureId],
+            surfaceName_.c_str(), captureId);
+        if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
+            uint32_t handle = photoOutput->GetAuxiliaryPhotoHandle();
+            MEDIA_INFO_LOG("AuxiliaryPhotoListener StopMonitor, surfaceName=%{public}s, handle = %{public}d, "
+                           "captureId = %{public}d",
+                surfaceName_.c_str(), handle, captureId);
+            DeferredProcessing::GetGlobalWatchdog().DoTimeout(handle);
+            DeferredProcessing::GetGlobalWatchdog().StopMonitor(handle);
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId] = -1;
+            MEDIA_INFO_LOG("AuxiliaryPhotoListener caputreIdAuxiliaryCountMap_ = -1");
+        }
+        MEDIA_INFO_LOG("AuxiliaryPhotoListener auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
+                       "surfaceName=%{public}s, captureId=%{public}d",
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId], photoOutput->caputreIdCountMap_[captureId],
+            surfaceName_.c_str(), captureId);
+    }
+}
+
+void AuxiliaryPhotoListener::OnBufferAvailable()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AuxiliaryPhotoListener::OnBufferAvailable is called, surfaceName=%{public}s", surfaceName_.c_str());
+    if (!surface_) {
+        MEDIA_ERR_LOG("AuxiliaryPhotoListener napi photoSurface_ is null");
+        return;
+    }
+    taskManager_->SubmitTask([this]() {
+        this->ExecuteDeepyCopySurfaceBuffer();
+    });
+    MEDIA_INFO_LOG("AuxiliaryPhotoListener::OnBufferAvailable is end, surfaceName=%{public}s", surfaceName_.c_str());
+}
+
+int32_t PhotoListener::GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer)
+{
+    int32_t auxiliaryCount;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageCount, auxiliaryCount);
+    MEDIA_INFO_LOG("PhotoListener auxiliaryCount:%{public}d", auxiliaryCount);
+    return auxiliaryCount;
+}
+
+sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
+{
+    int32_t isDegradedImage;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
+    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy isDegradedImage:%{public}d", isDegradedImage);
+    int64_t imageId = 0;
+    int32_t deferredProcessingType;
+    int32_t captureId;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy imageId:%{public}" PRId64 ", "
+        "deferredProcessingType:%{public}d, captureId = %{public}d", imageId, deferredProcessingType, captureId);
+    // get buffer handle and photo info
+    int32_t photoWidth;
+    int32_t photoHeight;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, photoHeight);
+    uint64_t size = static_cast<uint64_t>(surfaceBuffer->GetSize());
+    int32_t extraDataSize = 0;
+    auto res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, extraDataSize);
+    if (res != 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize error %{public}d", res);
+    } else if (extraDataSize <= 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+    } else if (static_cast<uint64_t>(extraDataSize) > size) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
+            extraDataSize, size);
+    } else {
+        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        size = static_cast<uint64_t>(extraDataSize);
+    }
+    int32_t deferredImageFormat = 0;
+    res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
+    bool isHighQuality = (isDegradedImage == 0);
+    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
+        "size:%{public}" PRId64, deferredImageFormat, isHighQuality, size);
+    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
+        nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId);
+    std::string imageIdStr = std::to_string(imageId);
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
+    return photoProxy;
+}
+
+void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
+{
+    auto photoOutput = photoOutput_.promote();
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    SurfaceError surfaceRet = photoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 0");
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("PhotoListener Failed to acquire surface buffer");
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(g_photoImageMutex);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
+        int32_t auxiliaryCount = GetAuxiliaryPhotoCount(surfaceBuffer);
+        int32_t captureId = GetCaptureId(surfaceBuffer);
+        photoOutput->caputreIdCountMap_[captureId] = auxiliaryCount;
+        photoOutput->caputreIdAuxiliaryCountMap_[captureId]++;
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 2 captureId = %{public}d", captureId);
+        sptr<CameraPhotoProxy> photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 3");
+        if (!photoProxy) {
+            MEDIA_ERR_LOG("photoProxy is nullptr");
+            return;
+        }
+        // deep copy buffer
+        sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 4");
+        DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 5");
+        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 6");
+        if (bufferHandle == nullptr) {
+            MEDIA_ERR_LOG("invalid bufferHandle");
+            return;
+        }
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 7");
+        newSurfaceBuffer->Map();
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 8");
+        if (photoProxy->isHighQuality_ && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
+            UpdateMainPictureStageOneJSCallback(surfaceBuffer, timestamp);
+            return;
+        }
+        photoProxy->bufferHandle_ = bufferHandle;
+        std::unique_ptr<Media::Picture> picture = Media::Picture::Create(newSurfaceBuffer);
+        Media::ImageInfo imageInfo;
+        picture->GetMainPixel()->GetImageInfo(imageInfo);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetMainPixel w=%{public}d, h=%{public}d, f=%{public}d",
+            imageInfo.size.width, imageInfo.size.height, imageInfo.pixelFormat);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
+            newSurfaceBuffer->GetWidth(), newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat());
+        if (!picture) {
+            MEDIA_ERR_LOG("picture is nullptr");
+            return;
+        }
+        photoOutput->picture_ = std::move(picture);
+        photoOutput->photoProxy_ = photoProxy;
+        uint32_t pictureHandle;
+        constexpr uint32_t delayMilli = 1 * 1000;
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetGlobalWatchdog StartMonitor, captureId=%{public}d",
+            captureId);
+        DeferredProcessing::GetGlobalWatchdog().StartMonitor(pictureHandle, delayMilli,
+            [this, captureId](uint32_t handle) {
+                MEDIA_INFO_LOG("PhotoListener PhotoListener-Watchdog executed, handle: %{public}d, "
+                    "captureId=%{public}d", static_cast<int>(handle), captureId);
+                AssembleAuxiliaryPhoto();
+                auto photoOutput = photoOutput_.promote();
+                if (photoOutput) {
+                    photoOutput->caputreIdAuxiliaryCountMap_[captureId] = -1;
+                    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto caputreIdAuxiliaryCountMap_ = -1, "
+                        "captureId=%{public}d", captureId);
+                }
+        });
+        photoOutput->SetAuxiliaryPhotoHandle(pictureHandle);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto, pictureHandle: %{public}d, captureId=%{public}d",
+            pictureHandle, captureId);
+        if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
+            MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto auxiliaryCount is complete, StopMonitor DoTimeout "
+                "handle = %{public}d, captureId = %{public}d", pictureHandle, captureId);
+            DeferredProcessing::GetGlobalWatchdog().DoTimeout(pictureHandle);
+            DeferredProcessing::GetGlobalWatchdog().StopMonitor(pictureHandle);
+        }
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto end");
+    }
+}
 void PhotoListener::OnBufferAvailable()
 {
-    std::lock_guard<std::mutex> lock(g_photoImageMutex);
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
     if (!photoSurface_) {
         MEDIA_ERR_LOG("photoOutput napi photoSurface_ is null");
         return;
     }
-    UpdateJSCallbackAsync(photoSurface_);
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput->IsYuvOrHeifPhoto()) {
+        taskManager_->SubmitTask([this]() {
+            ExecuteDeepyCopySurfaceBuffer();
+        });
+    } else {
+        UpdateJSCallbackAsync(photoSurface_);
+    }
+    MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
+}
+
+void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType) const
+{
+    MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, this);
+    callbackInfo->uri = uri;
+    callbackInfo->cameraShotType = cameraShotType;
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
+            if (callbackInfo && callbackInfo->listener_) {
+                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
+                napi_value result[ARGS_TWO] = { nullptr, nullptr };
+                napi_value retVal;
+                napi_get_undefined(callbackInfo->listener_->env_, &result[PARAM0]);
+                napi_get_undefined(callbackInfo->listener_->env_, &result[PARAM1]);
+                result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(callbackInfo->listener_->env_,
+                    callbackInfo->uri, callbackInfo->cameraShotType);
+                MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteCallback result %{public}s, type %{public}d",
+                    callbackInfo->uri.c_str(), callbackInfo->cameraShotType);
+                ExecuteCallbackNapiPara callbackPara {
+                    .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+                callbackInfo->listener_->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
+                MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
+                callbackInfo->listener_ = nullptr;
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void PhotoListener::UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const
+{
+    MEDIA_INFO_LOG("PhotoListener:UpdateMainPictureStageOneJSCallback called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateMainPictureStageOneJSCallback() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateMainPictureStageOneJSCallback() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, this);
+    callbackInfo->surfaceBuffer = surfaceBuffer;
+    callbackInfo->timestamp = timestamp;
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
+            if (callbackInfo && callbackInfo->listener_) {
+                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
+                sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
+                int64_t timestamp = callbackInfo->timestamp;
+                callbackInfo->listener_->ExecutePhoto(surfaceBuffer, timestamp);
+                callbackInfo->listener_ = nullptr;
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string bufName)
+{
+    if (buffer) {
+        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto %{public}s w=%{public}d, h=%{public}d, f=%{public}d", bufName.c_str(),
+            buffer->GetWidth(), buffer->GetHeight(), buffer->GetFormat());
+    }
+};
+
+void PhotoListener::AssembleAuxiliaryPhoto()
+{
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput && photoOutput->GetSession()) {
+        auto settings = photoOutput->GetDefaultCaptureSetting();
+        if (settings) {
+            auto location = make_shared<Location>();
+            settings->GetLocation(location);
+            MEDIA_INFO_LOG("AssembleAuxiliaryPhoto GetLocation latitude:%{public}f, longitude:%{public}f",
+                location->latitude, location->longitude);
+            photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
+        }
+        if (photoOutput->gainmapSurfaceBuffer_ && photoOutput->picture_) {
+            std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
+                photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);
+            std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
+            LoggingSurfaceBufferInfo(photoOutput->gainmapSurfaceBuffer_, "gainmapSurfaceBuffer");
+            photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
+        }
+        if (photoOutput->deepSurfaceBuffer_ && photoOutput->picture_) {
+            std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
+                photoOutput->deepSurfaceBuffer_, Media::AuxiliaryPictureType::DEPTH_MAP);
+            std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
+            LoggingSurfaceBufferInfo(photoOutput->deepSurfaceBuffer_, "deepSurfaceBuffer");
+            photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
+        }
+        if (photoOutput->exifSurfaceBuffer_ && photoOutput->picture_) {
+            LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
+            photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
+        }
+        if (photoOutput->debugSurfaceBuffer_ && photoOutput->picture_) {
+            LoggingSurfaceBufferInfo(photoOutput->debugSurfaceBuffer_, "debugSurfaceBuffer");
+            photoOutput->picture_->SetMaintenanceData(photoOutput->debugSurfaceBuffer_);
+        }
+        if (photoOutput->picture_) {
+            std::string uri;
+            int32_t cameraShotType;
+            photoOutput->GetSession()->CreateMediaLibrary(std::move(photoOutput->picture_), photoOutput->photoProxy_,
+                uri, cameraShotType);
+            MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+            UpdatePictureJSCallback(uri, cameraShotType);
+        } else {
+            MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
+        }
+    }
 }
 
 void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const
@@ -209,6 +804,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
         MEDIA_ERR_LOG("invalid bufferHandle");
     }
     newSurfaceBuffer->Map();
+    auto photoOutput = photoOutput_.promote();
     string uri = "";
     int32_t cameraShotType = 0;
 
@@ -280,8 +876,6 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         if (settings) {
             auto location = make_shared<Location>();
             settings->GetLocation(location);
-            MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f", location->latitude,
-                location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
         CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
@@ -747,7 +1341,7 @@ void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo& info) const
     ExecuteCallbackNapiPara callbackNapiPara {
         .recv = nullptr, .argc = ARGS_ONE, .argv = errJsResult, .result = &retVal
     };
-    ExecuteCallback(CONST_CAPTURE_READY, callbackNapiPara);
+    ExecuteCallback(CONST_CAPTURE_ERROR, callbackNapiPara);
 }
 
 void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const
@@ -892,6 +1486,13 @@ PhotoOutputNapi::PhotoOutputNapi() {}
 
 PhotoOutputNapi::~PhotoOutputNapi()
 {
+    if (pictureListener_) {
+        pictureListener_->gainmapImageListener = nullptr;
+        pictureListener_->deepImageListener = nullptr;
+        pictureListener_->exifImageListener = nullptr;
+        pictureListener_->debugImageListener = nullptr;
+    }
+    pictureListener_ = nullptr;
     MEDIA_DEBUG_LOG("~PhotoOutputNapi is called");
 }
 
@@ -914,15 +1515,15 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor photo_output_props[] = {
         DECLARE_NAPI_FUNCTION("isMovingPhotoSupported", IsMovingPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableMovingPhoto", EnableMovingPhoto),
-        DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
         DECLARE_NAPI_FUNCTION("capture", Capture),
         DECLARE_NAPI_FUNCTION("burstCapture", BurstCapture),
         DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
-        DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
+        DECLARE_NAPI_FUNCTION("getSupportedMovingPhotoVideoCodecTypes", GetSupportedMovingPhotoVideoCodecTypes),
+        DECLARE_NAPI_FUNCTION("setMovingPhotoVideoCodecType", SetMovingPhotoVideoCodecType),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
@@ -1001,15 +1602,45 @@ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
     return result;
 }
 
+void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
+{
+    if (pictureListener_ == nullptr) {
+        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
+        sptr<PictureListener> pictureListener = new (std::nothrow) PictureListener();
+        pictureListener->InitPictureListeners(env, photoOutput_);
+        if (photoListener_ == nullptr) {
+            sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+            if (ret != SURFACE_ERROR_OK) {
+                MEDIA_ERR_LOG("register surface consumer listener failed!");
+            }
+            photoListener_ = photoListener;
+            pictureListener_ = pictureListener;
+        }
+    }
+}
+
+void PhotoOutputNapi::CreateSingleChannelPhotoLisenter(napi_env env)
+{
+    if (photoListener_ == nullptr) {
+        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        if (ret != SURFACE_ERROR_OK) {
+            MEDIA_ERR_LOG("register surface consumer listener failed!");
+        }
+        photoListener_ = photoListener;
+    }
+}
+
 napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId)
 {
     MEDIA_DEBUG_LOG("CreatePhotoOutput is called, profile CameraFormat= %{public}d", profile.GetCameraFormat());
     CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
-    napi_value constructor;
     napi_get_undefined(env, &result);
-    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    napi_value constructor;
+    napi_status status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
         sptr<Surface> photoSurface;
@@ -1036,13 +1667,15 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
         }
-        // imageReciver register
         if (surfaceId == "") {
             sPhotoOutput_->SetNativeSurface(true);
         }
         if (profile.GetCameraFormat() == CAMERA_FORMAT_DNG) {
             sptr<Surface> rawPhotoSurface = Surface::CreateSurfaceAsConsumer("rawPhotoOutput");
             sPhotoOutput_->SetRawPhotoInfo(rawPhotoSurface);
+        }
+        if (sPhotoOutput_->IsYuvOrHeifPhoto()) {
+            sPhotoOutput_->CreateMultiChannel();
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
@@ -1100,373 +1733,130 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
     return result;
 }
 
-int32_t PhotoOutputNapi::MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality)
+bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyncContext* asyncContext,
+    std::shared_ptr<CameraNapiAsyncFunction>& asyncFunction, bool isSettingOptional)
 {
-    MEDIA_INFO_LOG("js quality level = %{public}d", jsQuality);
-    switch (jsQuality) {
-        case QUALITY_LEVEL_HIGH:
-            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
-            break;
-        case QUALITY_LEVEL_MEDIUM:
-            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM;
-            break;
-        case QUALITY_LEVEL_LOW:
-            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_LOW;
-            break;
-        default:
-            MEDIA_ERR_LOG("Invalid quality value received from application");
-            return -1;
-    }
+    Location settingsLocation;
+    CameraNapiObject settingsLocationNapiOjbect { {
+        { "latitude", &settingsLocation.latitude },
+        { "longitude", &settingsLocation.longitude },
+        { "altitude", &settingsLocation.altitude },
+    } };
+    CameraNapiObject settingsNapiOjbect { {
+        { "quality", &asyncContext->quality },
+        { "rotation", &asyncContext->rotation },
+        { "location", &settingsLocationNapiOjbect },
+        { "mirror", &asyncContext->isMirror },
+    } };
+    unordered_set<std::string> optionalKeys = { "quality", "rotation", "location", "mirror" };
+    settingsNapiOjbect.SetOptionalKeys(optionalKeys);
 
-    return 0;
-}
-
-int32_t PhotoOutputNapi::MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation)
-{
-    MEDIA_INFO_LOG("js rotation = %{public}d", jsRotation);
-    switch (jsRotation) {
-        case ROTATION_0:
-            nativeRotation = PhotoCaptureSetting::Rotation_0;
-            break;
-        case ROTATION_90:
-            nativeRotation = PhotoCaptureSetting::Rotation_90;
-            break;
-        case ROTATION_180:
-            nativeRotation = PhotoCaptureSetting::Rotation_180;
-            break;
-        case ROTATION_270:
-            nativeRotation = PhotoCaptureSetting::Rotation_270;
-            break;
-        default:
-            MEDIA_ERR_LOG("Invalid rotation value received from application");
-            return -1;
-    }
-
-    return 0;
-}
-
-static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
-{
-    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
-    auto context = static_cast<PhotoOutputAsyncContext*>(data);
-    if (context == nullptr) {
-        MEDIA_ERR_LOG("Async context is null");
-        return;
-    }
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-
-    if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
+    asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Capture", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction, settingsNapiOjbect);
+    if (jsParamParser.IsStatusOk()) {
+        if (settingsNapiOjbect.IsKeySetted("quality") && !ValidQualityLevelFromJs(asyncContext->quality)) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "quality field not legal");
+            return false;
+        }
+        if (settingsNapiOjbect.IsKeySetted("rotation") && !ValidImageRotationFromJs(asyncContext->rotation)) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "rotation field not legal");
+            return false;
+        }
+        MEDIA_INFO_LOG("ParseCaptureSettings with capture settings pass");
+        asyncContext->hasPhotoSettings = true;
+        if (settingsNapiOjbect.IsKeySetted("location")) {
+            asyncContext->location = std::make_shared<Location>(settingsLocation);
+        }
+    } else if (isSettingOptional) {
+        MEDIA_WARNING_LOG("ParseCaptureSettings check capture settings fail, try capture without settings");
+        jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
     } else {
-        jsContext->status = true;
-        napi_get_undefined(env, &jsContext->error);
-        if (context->bRetBool) {
-            napi_get_boolean(env, context->isSupported, &jsContext->data);
-        } else {
-            napi_get_undefined(env, &jsContext->data);
-        }
+        // Do nothing.
     }
-
-    if (!context->funcName.empty() && context->taskId > 0) {
-        // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("ParseCaptureSettings invalid argument");
+        return false;
     }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
-    }
-    delete context;
-}
-
-int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string& propertyName, napi_value& property)
-{
-    MEDIA_DEBUG_LOG("QueryAndGetProperty is called");
-    bool present = false;
-    int32_t retval = 0;
-    if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok) || (!present) ||
-        (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
-        MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
-        retval = -1;
-    }
-
-    return retval;
-}
-
-int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoOutputAsyncContext& context)
-{
-    MEDIA_DEBUG_LOG("GetLocationProperties is called");
-    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext*>(&context);
-    napi_value latproperty = nullptr;
-    napi_value lonproperty = nullptr;
-    napi_value altproperty = nullptr;
-    double latitude = -1.0;
-    double longitude = -1.0;
-    double altitude = -1.0;
-
-    if ((QueryAndGetProperty(env, locationObj, "latitude", latproperty) == 0) &&
-        (QueryAndGetProperty(env, locationObj, "longitude", lonproperty) == 0) &&
-        (QueryAndGetProperty(env, locationObj, "altitude", altproperty) == 0)) {
-        if ((napi_get_value_double(env, latproperty, &latitude) != napi_ok) ||
-            (napi_get_value_double(env, lonproperty, &longitude) != napi_ok) ||
-            (napi_get_value_double(env, altproperty, &altitude) != napi_ok)) {
-            return -1;
-        } else {
-            asyncContext->location = std::make_unique<Location>();
-            asyncContext->location->latitude = latitude;
-            asyncContext->location->longitude = longitude;
-            asyncContext->location->altitude = altitude;
-        }
-    } else {
-        return -1;
-    }
-
-    return 0;
-}
-
-static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutputAsyncContext& context, bool& err)
-{
-    MEDIA_DEBUG_LOG("GetFetchOptionsParam is called");
-    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext*>(&context);
-    int32_t intValue;
-    std::string strValue;
-    napi_value property = nullptr;
-    PhotoCaptureSetting::QualityLevel quality;
-    PhotoCaptureSetting::RotationConfig rotation;
-
-    if (QueryAndGetProperty(env, arg, "quality", property) == 0) {
-        if (napi_get_value_int32(env, property, &intValue) != napi_ok ||
-            PhotoOutputNapi::MapQualityLevelFromJs(intValue, quality) == -1) {
-            err = true;
-            return;
-        } else {
-            asyncContext->quality = quality;
-        }
-    }
-
-    if (QueryAndGetProperty(env, arg, "rotation", property) == 0) {
-        if (napi_get_value_int32(env, property, &intValue) != napi_ok ||
-            PhotoOutputNapi::MapImageRotationFromJs(intValue, rotation) == -1) {
-            err = true;
-            return;
-        } else {
-            asyncContext->rotation = rotation;
-        }
-    }
-
-    if (QueryAndGetProperty(env, arg, "location", property) == 0) {
-        if (GetLocationProperties(env, property, context) == -1) {
-            err = true;
-            return;
-        }
-    }
-
-    if (QueryAndGetProperty(env, arg, "mirror", property) == 0) {
-        bool isMirror = false;
-        if (napi_get_value_bool(env, property, &isMirror) != napi_ok) {
-            err = true;
-            return;
-        } else {
-            asyncContext->isMirror = isMirror;
-        }
-    }
-}
-
-static napi_value ConvertJSArgsToNative(
-    napi_env env, size_t argc, const napi_value argv[], PhotoOutputAsyncContext& asyncContext)
-{
-    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
-    const int32_t refCount = 1;
-    napi_value result = nullptr;
-    auto context = &asyncContext;
-    bool err = false;
-
-    NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
-
-    for (size_t i = PARAM0; i < argc; i++) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[i], &valueType);
-        if (i == PARAM0 && valueType == napi_object) {
-            GetFetchOptionsParam(env, argv[PARAM0], asyncContext, err);
-            if (err) {
-                MEDIA_ERR_LOG("fetch options retrieval failed");
-                NAPI_ASSERT(env, false, "type mismatch");
-            }
-            asyncContext.hasPhotoSettings = true;
-        } else if ((i == PARAM0) && (valueType == napi_function)) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else if ((i == PARAM1) && (valueType == napi_function)) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else if ((i == PARAM0) && (valueType == napi_boolean)) {
-            napi_get_value_bool(env, argv[i], &context->isSupported);
-            break;
-        } else if ((i == PARAM0) && (valueType == napi_undefined)) {
-            break;
-        } else {
-            NAPI_ASSERT(env, false, "type mismatch");
-        }
-    }
-
-    // Return true napi_value if params are successfully obtained
-    napi_get_boolean(env, true, &result);
-    return result;
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
+    return true;
 }
 
 napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Capture is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = { 0 };
-    napi_value thisVar = nullptr;
-    napi_value resource = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, PHOTO_OUT_CAPTURE)) {
-        asyncContext->isInvalidArgument = true;
-        asyncContext->status = false;
-        asyncContext->errorCode = INVALID_ARGUMENT;
+    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
+        "PhotoOutputNapi::Capture", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
+    std::shared_ptr<CameraNapiAsyncFunction> asyncFunction;
+    if (!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, true)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::Capture parse parameters fail.");
+        return nullptr;
     }
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (!asyncContext->isInvalidArgument) {
-            result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        }
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Capture");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
-                // Start async trace
-                context->funcName = "PhotoOutputNapi::Capture";
-                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
-                if (context->isInvalidArgument) {
-                    return;
-                }
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo == nullptr) {
-                    context->status = false;
-                    return;
-                }
-
-                ProcessContext(context);
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        ProcessAsyncContext(status, env, result, std::move(asyncContext));
-    } else {
-        MEDIA_ERR_LOG("Capture call Failed!");
-    }
-    return result;
-}
-
-void PhotoOutputNapi::ProcessContext(PhotoOutputAsyncContext* context)
-{
-    context->bRetBool = false;
-    context->status = true;
-    sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_));
-    if ((context->hasPhotoSettings)) {
-        std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
-
-        if (context->quality != -1) {
-            capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
-        }
-
-        if (context->rotation != -1) {
-            capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
-        }
-
-        capSettings->SetMirror(context->isMirror);
-
-        if (context->location != nullptr) {
-            capSettings->SetLocation(context->location);
-        }
-
-        if (context->funcName == "PhotoOutputNapi::BurstCapture") {
-            MEDIA_ERR_LOG("ProcessContext BurstCapture");
-            uint8_t burstState = 1; // 0:end 1:start
-            capSettings->SetBurstCaptureState(burstState);
-        }
-        context->errorCode = photoOutput->Capture(capSettings);
-    } else {
-        context->errorCode = photoOutput->Capture();
-    }
-    context->status = context->errorCode == 0;
-}
-
-void PhotoOutputNapi::ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
-    unique_ptr<PhotoOutputAsyncContext> asyncContext)
-{
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("PhotoOutputNapi::Capture running on worker");
+            auto context = static_cast<PhotoOutputAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PhotoOutputNapi::Capture async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(
+                context->queueTask, [&context]() { ProcessCapture(context, false); });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
-        napi_get_undefined(env, &result);
+        asyncFunction->Reset();
     } else {
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PhotoOutputNapi::Capture");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
 {
-    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("BurstCapture is called");
-    napi_value result = nullptr;
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi EnableAutoHighQualityPhoto is called!");
-        return result;
+        return nullptr;
     }
-    napi_status status;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-    napi_value resource = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    napi_get_undefined(env, &result);
-    unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, PHOTO_OUT_BURST_CAPTURE)) {
-        asyncContext->isInvalidArgument = true;
-        asyncContext->status = false;
-        asyncContext->errorCode = INVALID_ARGUMENT;
+    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
+        "PhotoOutputNapi::BurstCapture", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
+    std::shared_ptr<CameraNapiAsyncFunction> asyncFunction;
+    if (!ParseCaptureSettings(env, info, asyncContext.get(), asyncFunction, false)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::BurstCapture parse parameters fail.");
+        return nullptr;
     }
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (!asyncContext->isInvalidArgument) {
-            result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        }
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "BurstCapture");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
-                // Start async trace
-                context->funcName = "PhotoOutputNapi::BurstCapture";
-                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
-                if (context->isInvalidArgument) {
-                    return;
-                }
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo == nullptr) {
-                    context->status = false;
-                    return;
-                }
-                ProcessContext(context);
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        ProcessAsyncContext(status, env, result, std::move(asyncContext));
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("PhotoOutputNapi::BurstCapture running on worker");
+            auto context = static_cast<PhotoOutputAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(
+                context->objectInfo == nullptr, "PhotoOutputNapi::BurstCapture async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(
+                context->queueTask, [&context]() { ProcessCapture(context, true); });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::BurstCapture");
+        asyncFunction->Reset();
     } else {
-        MEDIA_ERR_LOG("BurstCapture call Failed!");
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PhotoOutputNapi::BurstCapture");
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
     }
-    return result;
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info)
@@ -1495,108 +1885,42 @@ napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info
 napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Release is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
-
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<PhotoOutputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "PhotoOutputNapi::Release";
-                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_))->Release();
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Release");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
-    } else {
-        MEDIA_ERR_LOG("Release call Failed!");
+    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
+        "PhotoOutputNapi::Release", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::Release invalid argument");
+        return nullptr;
     }
-    return result;
-}
-
-napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("GetDefaultCaptureSetting is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetDefaultCaptureSetting");
-
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<PhotoOutputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "PhotoOutputNapi::GetDefaultCaptureSetting";
-                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::GetDefaultCaptureSetting");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("PhotoOutputNapi::Release running on worker");
+            auto context = static_cast<PhotoOutputAsyncContext*>(data);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PhotoOutputNapi::Release async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                context->errorCode = context->objectInfo->photoOutput_->Release();
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Release");
+        asyncFunction->Reset();
     } else {
-        MEDIA_ERR_LOG("GetDefaultCaptureSetting call Failed!");
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PhotoOutputNapi::Release");
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
     }
-    return result;
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info info)
@@ -1770,60 +2094,6 @@ napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info in
     return result;
 }
 
-napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("SetMirror is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = { 0 };
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
-
-    napi_get_undefined(env, &result);
-    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_TWO) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM1], refCount, asyncContext->callbackRef);
-        }
-
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        asyncContext->isMirror = asyncContext->isSupported;
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetMirror");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<PhotoOutputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "PhotoOutputNapi::SetMirror";
-                context->taskId = CameraNapiUtils::IncrementAndGet(photoOutputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetMirror");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
-    } else {
-        MEDIA_ERR_LOG("SetMirror call Failed!");
-    }
-    return result;
-}
-
 napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
@@ -1882,6 +2152,65 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
         session->LockForControl();
         int32_t retCode = session->EnableMovingPhoto(isEnableMovingPhoto);
         session->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::GetSupportedMovingPhotoVideoCodecTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("IsMotionPhotoSupported photoOutputNapi is null!");
+        return result;
+    }
+    vector<int32_t> videoCodecTypes = {VideoCodecType::VIDEO_ENCODE_TYPE_AVC, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC};
+    result = CameraNapiUtils::CreateJSArray(env, status, videoCodecTypes);
+    if (status != napi_ok) {
+        result = CameraNapiUtils::CreateJSArray(env, status, {});
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::SetMovingPhotoVideoCodecType(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetMovingPhotoVideoCodecType is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("SetMovingPhotoVideoCodecType photoOutputNapi is null!");
+        return result;
+    }
+    if (photoOutputNapi->GetPhotoOutput() != nullptr) {
+        int32_t codecType;
+        napi_get_value_int32(env, argv[PARAM0], &codecType);
+        int32_t retCode = photoOutputNapi->GetPhotoOutput()->SetMovingPhotoVideoCodecType(codecType);
         if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
             return result;
         }
@@ -1999,26 +2328,30 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     photoListener_->SaveCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
 
     // Preconfig can't support rawPhotoListener.
-    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_ != nullptr &&
-        profile_->GetCameraFormat() == CAMERA_FORMAT_DNG) {
-        MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
-        if (photoOutput_->rawPhotoSurface_ == nullptr) {
-            MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
-            return;
+    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_ != nullptr) {
+        if (profile_->GetCameraFormat() == CAMERA_FORMAT_DNG) {
+            MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
+            if (photoOutput_->rawPhotoSurface_ == nullptr) {
+                MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
+                return;
+            }
+            sptr<RawPhotoListener> rawPhotoListener =
+                new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
+            if (rawPhotoListener == nullptr) {
+                MEDIA_ERR_LOG("failed to new rawPhotoListener");
+                return;
+            }
+            SurfaceError ret = photoOutput_->rawPhotoSurface_->RegisterConsumerListener(
+                (sptr<IBufferConsumerListener>&)rawPhotoListener);
+            if (ret != SURFACE_ERROR_OK) {
+                MEDIA_ERR_LOG("register surface consumer listener failed!");
+            }
+            rawPhotoListener_ = rawPhotoListener;
+            rawPhotoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback, false);
         }
-        sptr<RawPhotoListener> rawPhotoListener =
-            new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
-        if (rawPhotoListener == nullptr) {
-            MEDIA_ERR_LOG("failed to new rawPhotoListener");
-            return;
+        if (profile_->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP) {
+            CreateMultiChannelPictureLisenter(env);
         }
-        SurfaceError ret =
-            photoOutput_->rawPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)rawPhotoListener);
-        if (ret != SURFACE_ERROR_OK) {
-            MEDIA_ERR_LOG("register surface consumer listener failed!");
-        }
-        rawPhotoListener_ = rawPhotoListener;
-        rawPhotoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback, false);
     }
 }
 
@@ -2071,18 +2404,14 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
         MEDIA_ERR_LOG("sPhotoSurface_ is null!");
         return;
     }
-    if (photoListener_ == nullptr) {
-        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
-        if (photoListener == nullptr) {
-            MEDIA_ERR_LOG("failed to new photoListener!");
-            return;
-        }
-        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
-        if (ret != SURFACE_ERROR_OK) {
-            MEDIA_ERR_LOG("register surface consumer listener failed!");
-        }
-        photoListener_ = photoListener;
+    if (photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutput_ is null!");
+        return;
+    }
+    if (photoOutput_->IsYuvOrHeifPhoto()) {
+        CreateMultiChannelPictureLisenter(env);
+    } else {
+        CreateSingleChannelPhotoLisenter(env);
     }
     photoListener_->SaveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
 }

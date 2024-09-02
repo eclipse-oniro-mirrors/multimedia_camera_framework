@@ -102,7 +102,18 @@ std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
     return coordinator_->GetImageProcCallbacks();
 }
 
-void SessionManager::OnCallbackDied(const int32_t userId)
+sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const int32_t userId)
+{
+    auto iter = photoSessionInfos_.find(userId);
+    if (iter != photoSessionInfos_.end()) {
+        DP_INFO_LOG("SessionManager::GetCallback");
+        sptr<SessionInfo> sessionInfo = iter->second;
+        return sessionInfo->GetRemoteCallback();
+    }
+    return nullptr;
+}
+
+void SessionManager::OnCallbackDied(const int userId)
 {
     if (photoSessionInfos_.count(userId) != 0) {
         coordinator_->NotifyCallbackDestroyed(userId);

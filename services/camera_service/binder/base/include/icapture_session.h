@@ -24,6 +24,9 @@
 #include "camera_photo_proxy.h"
 #include "ability/camera_ability.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 enum class CaptureSessionState : uint32_t {
@@ -77,6 +80,8 @@ public:
     virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
 
+    virtual int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType) = 0;
     virtual int32_t SetPreviewRotation(std::string &deviceClass) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");

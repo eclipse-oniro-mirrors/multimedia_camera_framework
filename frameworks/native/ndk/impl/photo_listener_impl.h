@@ -65,8 +65,8 @@ private:
 
     Camera_PhotoOutput* photoOutput_;
     sptr<Surface> photoSurface_;
-    OH_PhotoOutput_PhotoAvailable photoCallback_;
-    OH_PhotoOutput_PhotoAssetAvailable photoAssetCallback_;
+    OH_PhotoOutput_PhotoAvailable photoCallback_ = nullptr;
+    OH_PhotoOutput_PhotoAssetAvailable photoAssetCallback_ = nullptr;
     uint8_t callbackFlag_ = 0;
     std::shared_ptr<PhotoBufferProcessor> bufferProcessor_;
 };
@@ -84,7 +84,7 @@ private:
 
     Camera_PhotoOutput* photoOutput_;
     sptr<Surface> rawPhotoSurface_;
-    OH_PhotoOutput_PhotoAvailable callback_;
+    OH_PhotoOutput_PhotoAvailable callback_ = nullptr;
     std::shared_ptr<PhotoBufferProcessor> bufferProcessor_;
 };
 

@@ -84,6 +84,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT):
             errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT):
+            errCode = HCameraServiceStub::HandleCreateDepthDataOutput(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_VIDEO_OUTPUT):
             errCode = HCameraServiceStub::HandleCreateVideoOutput(data, reply);
             break;
@@ -454,6 +457,31 @@ int HCameraServiceStub::HandleCreateDeferredPreviewOutput(MessageParcel& data, M
         "HCameraServiceStub HandleCreateDeferredPreviewOutput Write previewOutput obj failed");
 
     return ret;
+}
+
+int HCameraServiceStub::HandleCreateDepthDataOutput(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<IStreamDepthData> depthDataOutput = nullptr;
+
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleCreateDepthDataOutput BufferProducer is null");
+    int32_t format = data.ReadInt32();
+    int32_t width = data.ReadInt32();
+    int32_t height = data.ReadInt32();
+    MEDIA_INFO_LOG(
+        "CreateDepthDataOutput, format: %{public}d, width: %{public}d, height: %{public}d", format, width, height);
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateDepthDataOutput producer is null");
+    int errCode = CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HandleCreateDepthDataOutput CreateDepthDataOutput failed : %{public}d", errCode);
+        return errCode;
+    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(depthDataOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleCreateDepthDataOutput Write previewOutput obj failed");
+    return errCode;
 }
 
 int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel& data, MessageParcel& reply)

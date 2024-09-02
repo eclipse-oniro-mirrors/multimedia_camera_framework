@@ -36,6 +36,10 @@ public:
     {
         return 0;
     }
+    int32_t SetCameraRotation(bool isEnable = false, int32_t rotation = 0) override
+    {
+        return 0;
+    }
     int32_t SetMirror(bool isEnable) override
     {
         return 0;

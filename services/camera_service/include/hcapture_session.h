@@ -52,12 +52,13 @@
 #include "drain_manager.h"
 #include "audio_capturer_session.h"
 #include "safe_map.h"
-
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
-using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 using namespace AudioStandard;
 using namespace std::chrono;
 using namespace DeferredProcessing;
@@ -138,7 +139,7 @@ public:
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
-    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) = 0;
+    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format) = 0;
 
 private:
     std::mutex cbMutex_;
@@ -161,6 +162,7 @@ private:
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
     std::atomic<bool> isNeededClear_ { false };
+    std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
 };
 
@@ -226,10 +228,12 @@ public:
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy,
         std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp) override;
+    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
+        std::string& uri, int32_t& cameraShotType) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
-    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) override;
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format) override;
     void StartRecord(uint64_t timestamp, int32_t rotation);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
@@ -258,7 +262,7 @@ private:
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);
         return cameraDevice_;
     }
-    string CreateDisplayName();
+    string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t seqId);
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();

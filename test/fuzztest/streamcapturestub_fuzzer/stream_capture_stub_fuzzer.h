@@ -26,7 +26,7 @@ void Test(uint8_t *rawData, size_t size);
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
 void Test_HandleCapture(uint8_t *rawData, size_t size);
 void Test_HandleSetThumbnail(uint8_t *rawData, size_t size);
-void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size);
+void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size);
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size);
 void Test_HandleSetCallback(uint8_t *rawData, size_t size);
 

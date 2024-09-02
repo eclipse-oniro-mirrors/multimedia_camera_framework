@@ -136,6 +136,7 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
+    UnRegisterFoldStatusListener();
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif
@@ -541,6 +542,34 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     }
     previewOutput = streamRepeatPreview;
     MEDIA_INFO_LOG("HCameraService::CreatePreviewOutput execute success");
+    return rc;
+}
+
+int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
+    int32_t width, int32_t height, sptr<IStreamDepthData>& depthDataOutput)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<HStreamDepthData> streamDepthData;
+    int32_t rc = CAMERA_OK;
+    MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput prepare execute");
+
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
+        rc = CAMERA_INVALID_ARG;
+        MEDIA_ERR_LOG("HCameraService::CreateDepthDataOutput producer is null");
+        CameraReportUtils::ReportCameraError(
+            "HCameraService::CreateDepthDataOutput", rc, false, CameraReportUtils::GetCallerInfo());
+        return rc;
+    }
+    streamDepthData = new (nothrow) HStreamDepthData(producer, format, width, height);
+    if (streamDepthData == nullptr) {
+        rc = CAMERA_ALLOC_ERROR;
+        MEDIA_ERR_LOG("HCameraService::CreateDepthDataOutput HStreamRepeat allocation failed");
+        CameraReportUtils::ReportCameraError(
+            "HCameraService::CreateDepthDataOutput", rc, false, CameraReportUtils::GetCallerInfo());
+        return rc;
+    }
+    depthDataOutput = streamDepthData;
+    MEDIA_INFO_LOG("HCameraService::CreateDepthDataOutput execute success");
     return rc;
 }
 

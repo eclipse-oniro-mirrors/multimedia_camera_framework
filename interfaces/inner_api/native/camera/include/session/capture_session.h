@@ -439,6 +439,9 @@ public:
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
                             std::string &burstKey, int64_t timestamp);
 
+    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+        std::string &uri, int32_t &cameraShotType);
+
     /**
      * @brief Get the application callback information.
      *
@@ -1570,7 +1573,7 @@ public:
      *         If no callback is set, it may return a `nullptr`.
      */
     std::shared_ptr<LcdFlashStatusCallback> GetLcdFlashStatusCallback();
-
+    void EnableFaceDetection(bool enable);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

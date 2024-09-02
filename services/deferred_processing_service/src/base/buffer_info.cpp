@@ -52,6 +52,33 @@ bool BufferInfo::IsHighQuality()
 {
     return isHighQuality_;
 }
-} // namespace DeferredProcessing
+
+BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality)
+    : picture_(picture),
+      dataSize_(dataSize),
+      isHighQuality_(isHighQuality)
+{
+}
+
+BufferInfoExt::~BufferInfoExt()
+{
+    picture_ = nullptr;
+}
+
+std::shared_ptr<Media::Picture> BufferInfoExt::GetPicture()
+{
+    return picture_;
+}
+
+long BufferInfoExt::GetDataSize()
+{
+    return dataSize_;
+}
+
+bool BufferInfoExt::IsHighQuality()
+{
+    return isHighQuality_;
+}
+} //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

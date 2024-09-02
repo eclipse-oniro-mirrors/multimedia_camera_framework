@@ -16,7 +16,9 @@
 #ifndef PHOTO_OUTPUT_NAPI_H_
 #define PHOTO_OUTPUT_NAPI_H_
 
+#include <cstdint>
 #include <memory>
+
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
 #include "input/camera_device.h"
@@ -25,7 +27,7 @@
 #include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
-
+#include "task_manager.h"
 namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
@@ -44,6 +46,12 @@ static const std::string CONST_CAPTURE_START_WITH_INFO = "captureStartWithInfo";
 
 static const std::string CONST_CAPTURE_QUICK_THUMBNAIL = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
+
+static const std::string CONST_GAINMAP_SURFACE = "gainmap";
+static const std::string CONST_DEEP_SURFACE = "deep";
+static const std::string CONST_EXIF_SURFACE = "exif";
+static const std::string CONST_DEBUG_SURFACE = "debug";
+
 struct CallbackInfo {
     int32_t captureID;
     uint64_t timestamp = 0;
@@ -82,6 +90,22 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
+enum SurfaceType {
+    GAINMAP_SURFACE = 0,
+    DEEP_SURFACE = 1,
+    EXIF_SURFACE = 2,
+    DEBUG_SURFACE = 3,
+    INVALID_SURFACE = -1,
+};
+
+static EnumHelper<SurfaceType> SurfaceTypeHelper({
+        {GAINMAP_SURFACE, CONST_GAINMAP_SURFACE},
+        {DEEP_SURFACE, CONST_DEEP_SURFACE},
+        {EXIF_SURFACE, CONST_EXIF_SURFACE},
+        {DEBUG_SURFACE, CONST_DEBUG_SURFACE},
+    },
+    SurfaceType::INVALID_SURFACE
+);
 
 class PhotoBufferProcessor : public Media::IBufferProcessor {
 public:
@@ -100,6 +124,13 @@ public:
 private:
     sptr<Surface> photoSurface_ = nullptr;
 };
+// enum class PhotoType : int32_t{
+//     MAIN_PHOTO = 0,
+//     GAINMAP_PHOTO = 1,
+//     DEEP_PHOTO = 2,
+//     EXIF_PHOTO = 3,
+//     DEBUG_PHOTO = 4,
+// };
 
 class PhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
@@ -108,21 +139,26 @@ public:
     void OnBufferAvailable() override;
     void SaveCallback(const std::string eventName, napi_value callback);
     void RemoveCallback(const std::string eventName, napi_value callback);
-
+    void ExecuteDeepyCopySurfaceBuffer();
 private:
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
+    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType) const;
+    void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
-
+    void AssembleAuxiliaryPhoto();
+    int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
+    sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer);
     uint8_t callbackFlag_ = 0;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
@@ -137,6 +173,33 @@ private:
     void UpdateJSCallback(sptr<Surface> rawPhotoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const;
     void ExecuteRawPhoto(sptr<SurfaceBuffer> rawPhotoSurface) const;
+};
+
+class AuxiliaryPhotoListener : public IBufferConsumerListener {
+public:
+    explicit AuxiliaryPhotoListener(const std::string surfaceName, const sptr<Surface> surface,
+        wptr<PhotoOutput> photoOutput);
+    ~AuxiliaryPhotoListener() = default;
+    void OnBufferAvailable() override;
+    void ExecuteDeepyCopySurfaceBuffer();
+private:
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    std::string surfaceName_;
+    sptr<Surface> surface_;
+    wptr<PhotoOutput> photoOutput_;
+    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
+};
+
+class PictureListener : public RefBase {
+public:
+    explicit PictureListener() = default;
+    ~PictureListener() = default;
+    void InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput);
+    sptr<AuxiliaryPhotoListener> gainmapImageListener;
+    sptr<AuxiliaryPhotoListener> deepImageListener;
+    sptr<AuxiliaryPhotoListener> exifImageListener;
+    sptr<AuxiliaryPhotoListener> debugImageListener;
 };
 
 class PhotoOutputCallback : public PhotoStateCallback,
@@ -203,6 +266,10 @@ struct PhotoListenerInfo {
     PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
+    std::string uri = "";
+    int32_t cameraShotType = 0;
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int64_t timestamp;
 };
 
 struct RawPhotoListenerInfo {
@@ -219,19 +286,19 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
     static napi_value CreatePhotoOutput(napi_env env, std::string surfaceId);
-    static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
     static napi_value BurstCapture(napi_env env, napi_callback_info info);
     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
-    static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static napi_value DeferImageDeliveryFor(napi_env env, napi_callback_info info);
     static napi_value IsDeferredImageDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedMovingPhotoVideoCodecTypes(napi_env env, napi_callback_info info);
+    static napi_value SetMovingPhotoVideoCodecType(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
     static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
@@ -239,8 +306,6 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
-    static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
-    static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
@@ -256,10 +321,8 @@ private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static void ProcessContext(PhotoOutputAsyncContext* context);
-    static void ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
-        unique_ptr<PhotoOutputAsyncContext> asyncContext);
-
+    void CreateMultiChannelPictureLisenter(napi_env env);
+    void CreateSingleChannelPhotoLisenter(napi_env env);
     void RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterQuickThumbnailCallbackListener(
@@ -320,26 +383,26 @@ private:
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
     sptr<RawPhotoListener> rawPhotoListener_;
+    sptr<PictureListener> pictureListener_;
     std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
     static thread_local uint32_t photoOutputTaskId;
 };
 
+
+struct PhotoOutputNapiCaptureSetting {
+    int32_t quality = -1;
+};
+
 struct PhotoOutputAsyncContext : public AsyncContext {
+    PhotoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     int32_t quality = -1;
     int32_t rotation = -1;
-    double latitude = -1.0;
-    double longitude = -1.0;
     bool isMirror = false;
     bool hasPhotoSettings = false;
-    bool bRetBool;
     bool isSupported = false;
-    std::shared_ptr<Location> location;
-    PhotoOutputNapi* objectInfo;
+    shared_ptr<Location> location;
+    PhotoOutputNapi* objectInfo = nullptr;
     std::string surfaceId;
-    ~PhotoOutputAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

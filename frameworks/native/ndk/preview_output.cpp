@@ -203,7 +203,7 @@ Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previ
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, previewOutput is null!");
     CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, frameRateRange is null!");
+        "Invaild argument, imageRotation is null!");
     return previewOutput->GetPreviewRotation(displayRotation, imageRotation);
 }
 

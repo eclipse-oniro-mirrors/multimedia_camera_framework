@@ -397,7 +397,7 @@ std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t met
     return item;
 }
 
-int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos)
+int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __attribute__((no_sanitize("cfi")))
 {
     infos.clear();
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags called!");

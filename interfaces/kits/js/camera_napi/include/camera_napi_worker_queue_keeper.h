@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 
+#include "camera_napi_const.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "napi/native_api.h"
@@ -34,17 +35,18 @@ public:
     virtual ~CameraNapiWorkerQueueKeeper() = default;
     static std::shared_ptr<CameraNapiWorkerQueueKeeper> GetInstance();
 
-    void AcquireWorkerQueueId(uint64_t& queueId);
-    bool ConsumeWorkerQueueId(uint64_t queueId, std::function<void(void)> func);
+    std::shared_ptr<NapiWorkerQueueTask> AcquireWorkerQueueTask(const std::string& taskName);
+    bool ConsumeWorkerQueueTask(std::shared_ptr<NapiWorkerQueueTask> queueTask, std::function<void(void)> func);
 
 private:
+    void WorkerQueueTasksResetCreateTimeNoLock(NapiWorkerQueueTaskTimePoint timePoint);
+    bool WorkerLockCondition(std::shared_ptr<NapiWorkerQueueTask> queueTask, bool& isError);
 
     std::mutex workerQueueMutex_;
     std::condition_variable workerCond_;
 
-    std::mutex workerQueueIdMutex_;
-    uint64_t workerQueueId_ = 0;
-    std::list<uint64_t> workerQueueIds_;
+    std::mutex workerQueueTaskMutex_;
+    std::list<std::shared_ptr<NapiWorkerQueueTask>> workerQueueTasks_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

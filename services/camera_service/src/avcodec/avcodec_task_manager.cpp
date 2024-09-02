@@ -24,7 +24,9 @@
 #include <mutex>
 #include <unistd.h>
 #include <utility>
-
+#include "datetime_ex.h"
+#include "camera_util.h"
+#include "datetime_ex.h"
 #include "audio_capturer_session.h"
 #include "audio_record.h"
 #include "audio_video_muxer.h"
@@ -50,12 +52,13 @@ AvcodecTaskManager::~AvcodecTaskManager()
     Release();
 }
 
-AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession)
+AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession,
+    VideoCodecType type) : videoCodecType_(type)
 {
     CAMERA_SYNC_TRACE;
     audioCapturerSession_ = audioCaptureSession;
     // Create Task Manager
-    videoEncoder_ = make_unique<VideoEncoder>();
+    videoEncoder_ = make_unique<VideoEncoder>(type);
     audioEncoder_ = make_unique<AudioEncoder>();
 }
 
@@ -150,8 +153,13 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         }
     }
     muxer->Create(format, photoAssetProxy);
-    OH_AVFormat* formatVideo = OH_AVFormat_Create();
-    OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    OH_AVFormat *formatVideo = OH_AVFormat_Create();
+    MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
+    if (videoCodecType_ == VIDEO_ENCODE_TYPE_AVC) {
+        OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    } else if (videoCodecType_ == VIDEO_ENCODE_TYPE_HEVC) {
+        OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_HEVC);
+    }
     muxer->SetRotation(captureRotation);
     muxer->SetCoverTime(coverTime);
     OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);

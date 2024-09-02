@@ -84,6 +84,17 @@ void TimeBroker::DeregisterCallback(uint32_t handle)
     timerInfos_.erase(handle);
 }
 
+std::function<void(uint32_t handle)> TimeBroker::GetExpiredFunc(uint32_t handle)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (timerInfos_.count(handle)) {
+        return timerInfos_[handle]->timerCallback;
+    }
+    return [](uint32_t handle) {
+        DP_ERR_LOG("GetExpiredFunc invalid ExpiredFunc (%{public}d).", static_cast<int>(handle));
+    };
+}
+
 bool TimeBroker::GetNextHandle(uint32_t& handle)
 {
     do {

@@ -40,6 +40,11 @@ VideoEncoder::~VideoEncoder()
     Release();
 }
 
+VideoEncoder::VideoEncoder(VideoCodecType type) : videoCodecType_(type)
+{
+    MEDIA_INFO_LOG("VideoEncoder enter");
+}
+
 int32_t VideoEncoder::Create(const std::string &codecMime)
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
@@ -187,7 +192,12 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Release();
     size_ = size;
     rotation_ = rotation;
-    Create(MIME_VIDEO_AVC.data());
+    MEDIA_INFO_LOG("VideoEncoder videoCodecType_ = %{public}d", videoCodecType_);
+    if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC) {
+        Create(MIME_VIDEO_AVC.data());
+    } else if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC) {
+        Create(MIME_VIDEO_HEVC.data());
+    }
     Config();
     GetSurface();
     Start();

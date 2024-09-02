@@ -655,6 +655,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createPhotoOutput", CreatePhotoOutputInstance),
         DECLARE_NAPI_FUNCTION("createVideoOutput", CreateVideoOutputInstance),
         DECLARE_NAPI_FUNCTION("createMetadataOutput", CreateMetadataOutputInstance),
+        DECLARE_NAPI_FUNCTION("createDepthDataOutput", CreateDepthDataOutputInstance),
         DECLARE_NAPI_FUNCTION("isTorchSupported", IsTorchSupported),
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
@@ -1000,6 +1001,35 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
     return VideoOutputNapi::CreateVideoOutput(env, surfaceId);
 }
 
+napi_value CameraManagerNapi::CreateDepthDataOutputInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CreateDepthDataOutputInstance is called");
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateDepthDataOutputInstance napi args size is %{public}zu", napiArgsSize);
+
+    DepthProfile depthProfile;
+    CameraNapiObject profileSizeObj {{
+        { "width", &depthProfile.size_.width },
+        { "height", &depthProfile.size_.height }
+    }};
+    CameraNapiObject profileNapiOjbect {{
+        { "size", &profileSizeObj },
+        { "dataAccuracy", reinterpret_cast<int32_t*>(&depthProfile.dataAccuracy_) },
+        { "format", reinterpret_cast<int32_t*>(&depthProfile.format_) }
+    }};
+
+    if (!CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect)
+            .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreateDepthDataOutputInstance 1 args parse error")) {
+        return nullptr;
+    }
+    MEDIA_INFO_LOG(
+        "CameraManagerNapi::CreateDepthDataOutputInstance ParseDepthProfile "
+        "size.width = %{public}d, size.height = %{public}d, format = %{public}d, dataAccuracy = %{public}d,",
+        depthProfile.size_.width, depthProfile.size_.height, depthProfile.format_, depthProfile.dataAccuracy_);
+    return DepthDataOutputNapi::CreateDepthDataOutput(env, depthProfile);
+}
+
 napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
                                     std::vector<MetadataObjectType> &metadataObjectTypes)
 {
@@ -1069,9 +1099,9 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     return result;
 }
 
-static napi_value CreateJSArray(napi_env env, std::vector<SceneMode> nativeArray)
+static napi_value CreateSceneModeJSArray(napi_env env, std::vector<SceneMode> nativeArray)
 {
-    MEDIA_DEBUG_LOG("CreateJSArray is called");
+    MEDIA_DEBUG_LOG("CreateSceneModeJSArray is called");
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
 
@@ -1127,7 +1157,7 @@ napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info
         modeObjList.emplace_back(VIDEO);
     }
     MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
-    return CreateJSArray(env, modeObjList);
+    return CreateSceneModeJSArray(env, modeObjList);
 }
 
 void CameraManagerNapi::GetSupportedOutputCapabilityAdaptNormalMode(
@@ -1630,9 +1660,7 @@ napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         int32_t mode;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &mode);
-        napi_get_boolean(env, false, &result);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "IsTorchModeSupported call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &mode);
         MEDIA_INFO_LOG("CameraManagerNapi::IsTorchModeSupported mode = %{public}d", mode);
         TorchMode torchMode = (TorchMode)mode;
         bool isTorchModeSupported = CameraManager::GetInstance()->IsTorchModeSupported(torchMode);
@@ -1685,8 +1713,7 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         int32_t mode;
-        napi_status getValueRet = napi_get_value_int32(env, argv[PARAM0], &mode);
-        CHECK_ERROR_RETURN_RET_LOG(getValueRet != napi_ok, result, "SetTorchMode call Failed!");
+        napi_get_value_int32(env, argv[PARAM0], &mode);
         MEDIA_INFO_LOG("CameraManagerNapi::SetTorchMode mode = %{public}d", mode);
         TorchMode torchMode = (TorchMode)mode;
         int32_t retCode = CameraManager::GetInstance()->SetTorchMode(torchMode);
