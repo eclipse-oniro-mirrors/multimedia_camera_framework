@@ -61,6 +61,7 @@ inline int32_t GetVersionId(uint32_t major, uint32_t minor)
 }
 
 Watchdog& GetGlobalWatchdog();
+float TransExifOrientationToDegree(const std::string& orientation);
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

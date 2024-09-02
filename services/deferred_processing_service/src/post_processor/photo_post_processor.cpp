@@ -33,7 +33,7 @@
 #include "picture.h"
 #include "steady_clock.h"
 #include "buffer_extra_data_impl.h"
-
+#include "metadata.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -271,6 +271,31 @@ std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bu
     return auxiliaryPicture;
 }
 
+inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
+{
+    float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
+    if (pixelMap) {
+        DP_INFO_LOG("RotatePicture degree is %{public}f", degree);
+        pixelMap->rotate(degree);
+    } else {
+        DP_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
+    }
+}
+
+std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
+{
+    std::string orientation = "";
+    if (exifData != nullptr) {
+        exifData->GetValue("Orientation", orientation);
+        std::string defalutExifOrientation = "1";
+        exifData->SetValue("Orientation", defalutExifOrientation);
+        DP_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
+    } else {
+        DP_ERR_LOG("GetExifOrientation exifData is nullptr");
+    }
+    return orientation;
+}
+
 std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
     const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
@@ -279,30 +304,33 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     if (buffer.metadata) {
         int32_t retExifDataSize = buffer.metadata->Get("exifDataSize", exifDataSize);
         DP_INFO_LOG("AssemblePicture retExifDataSize: %{public}d, exifDataSize: %{public}d",
-            static_cast<int>(retExifDataSize), static_cast<int>(exifDataSize));
+            retExifDataSize, exifDataSize);
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
-    if (imageBuffer == nullptr) {
-        DP_ERR_LOG("bufferHandle is null");
-        return 0;
-    }
+    DP_CHECK_AND_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
+    std::string orientation = "";
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
-    if (buffer.isGainMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::GAINMAP);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
-    }
-    if (buffer.isDepthMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::DEPTH_MAP);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
-    }
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
         extraData->ExtraSet("exifDataSize", exifDataSize);
         exifBuffer->SetExtraData(extraData);
         picture->SetExifMetadata(exifBuffer);
+        orientation = GetExifOrientation(
+            reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
+    }
+    RotatePicture(picture->GetMainPixel(), orientation);
+    if (buffer.isGainMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::GAINMAP);
+        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
+    }
+    if (buffer.isDepthMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::DEPTH_MAP);
+        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+        picture->SetAuxiliaryPicture(auxiliaryPicture);
     }
     if (buffer.isMakerInfoValid) {
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
