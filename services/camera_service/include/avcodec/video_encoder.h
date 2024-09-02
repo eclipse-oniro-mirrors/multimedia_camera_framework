@@ -57,7 +57,7 @@ private:
     int32_t rotation_;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
-    int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;    
+    int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
     VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
 };
 } // CameraStandard
