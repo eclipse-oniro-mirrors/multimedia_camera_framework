@@ -121,11 +121,9 @@ private:
 
 struct VideoOutputAsyncContext : public AsyncContext {
     VideoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
-    VideoOutputNapi* objectInfo;
+    VideoOutputNapi* objectInfo = nullptr;
     std::string errorMsg;
     std::vector<int32_t> vecFrameRateRangeList;
-    int32_t minFrameRate;
-    int32_t maxFrameRate;
 };
 } // namespace CameraStandard
 } // namespace OHOS

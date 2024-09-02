@@ -148,7 +148,7 @@ private:
 
 struct PreviewOutputAsyncContext : public AsyncContext {
     PreviewOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
-    PreviewOutputNapi* objectInfo;
+    PreviewOutputNapi* objectInfo = nullptr;
     std::string surfaceId;
 };
 } // namespace CameraStandard
