@@ -435,6 +435,7 @@ inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::
     float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
     if (pixelMap) {
         MEDIA_INFO_LOG("RotatePicture degree is %{public}f", degree);
+        pixelMap->rotate(degree);
     } else {
         MEDIA_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
     }
@@ -647,35 +648,49 @@ inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string buf
     }
 };
 
+std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSetting> settings)
+{
+    auto location = make_shared<Location>();
+    if (settings) {
+        settings->GetLocation(location);
+        MEDIA_INFO_LOG("GetLocationBySettings latitude:%{private}f, longitude:%{private}f",
+            location->latitude, location->longitude);
+    } else {
+        MEDIA_ERR_LOG("GetLocationBySettings failed!");
+    }
+    return location;
+}
+
+std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
+{
+    std::string orientation = "";
+    if (exifData != nullptr) {
+        exifData->GetValue("Orientation", orientation);
+        std::string defalutExifOrientation = "1";
+        exifData->SetValue("Orientation", defalutExifOrientation);
+        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
+    } else {
+        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
+    }
+    return orientation;
+}
+
 void PhotoListener::AssembleAuxiliaryPhoto()
 {
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
-        auto settings = photoOutput->GetDefaultCaptureSetting();
-        if (settings) {
-            auto location = make_shared<Location>();
-            settings->GetLocation(location);
-            MEDIA_INFO_LOG("AssembleAuxiliaryPhoto GetLocation latitude:%{public}f, longitude:%{public}f",
-                location->latitude, location->longitude);
+        auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
+        if (location) {
             photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
         }
         std::string orientation = "";
         if (photoOutput->exifSurfaceBuffer_ && photoOutput->picture_) {
             LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
             photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
-            OHOS::Media::ImageMetadata* exifData =
-                reinterpret_cast<OHOS::Media::ImageMetadata*>(photoOutput->picture_->GetExifMetadata().get());
-            if (!exifData) {
-                MEDIA_ERR_LOG("PhotoListener::AssembleAuxiliaryPhoto exifData is nullptr");
-                return;
-            }
-            exifData->GetValue("Orientation", orientation);
-            std::string defalutExifOrientation = "1";
-            exifData->GetValue("Orientation", defalutExifOrientation);
-            MEDIA_INFO_LOG("PhotoListener::AssembleAuxiliaryPhoto GetExifMetadata orientation:%{public}s",
-                orientation.c_str());
-            RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
+            orientation = GetExifOrientation(
+                reinterpret_cast<OHOS::Media::ImageMetadata*>(photoOutput->picture_->GetExifMetadata().get()));
         }
+        RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
         if (photoOutput->gainmapSurfaceBuffer_ && photoOutput->picture_) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);

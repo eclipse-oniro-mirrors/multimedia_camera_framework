@@ -276,9 +276,24 @@ inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::
     float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
     if (pixelMap) {
         DP_INFO_LOG("RotatePicture degree is %{public}f", degree);
+        pixelMap->rotate(degree);
     } else {
         DP_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
     }
+}
+
+std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
+{
+    std::string orientation = "";
+    if (exifData != nullptr) {
+        exifData->GetValue("Orientation", orientation);
+        std::string defalutExifOrientation = "1";
+        exifData->SetValue("Orientation", defalutExifOrientation);
+        DP_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
+    } else {
+        DP_ERR_LOG("GetExifOrientation exifData is nullptr");
+    }
+    return orientation;
 }
 
 std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
@@ -289,13 +304,10 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     if (buffer.metadata) {
         int32_t retExifDataSize = buffer.metadata->Get("exifDataSize", exifDataSize);
         DP_INFO_LOG("AssemblePicture retExifDataSize: %{public}d, exifDataSize: %{public}d",
-            static_cast<int>(retExifDataSize), static_cast<int>(exifDataSize));
+            retExifDataSize, exifDataSize);
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
-    if (imageBuffer == nullptr) {
-        DP_ERR_LOG("bufferHandle is null");
-        return 0;
-    }
+    DP_CHECK_AND_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
     std::string orientation = "";
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
     if (buffer.isExifValid) {
@@ -304,17 +316,8 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
         extraData->ExtraSet("exifDataSize", exifDataSize);
         exifBuffer->SetExtraData(extraData);
         picture->SetExifMetadata(exifBuffer);
-        OHOS::Media::ImageMetadata* exifData =
-            reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get());
-        if (!exifData) {
-            DP_ERR_LOG("PhotoProcessListener::AssemblePicture exifData is nullptr");
-            return nullptr;
-        }
-        exifData->GetValue("Orientation", orientation);
-        std::string defalutExifOrientation = "1";
-        exifData->GetValue("Orientation", defalutExifOrientation);
-        DP_INFO_LOG("PhotoProcessListener::AssemblePicture GetExifMetadata orientation:%{public}s",
-            orientation.c_str());
+        orientation = GetExifOrientation(
+            reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     }
     RotatePicture(picture->GetMainPixel(), orientation);
     if (buffer.isGainMapValid) {
