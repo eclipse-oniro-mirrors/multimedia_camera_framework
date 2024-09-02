@@ -252,7 +252,7 @@ Camera_ErrorCode OH_PreviewOutput_GetActiveFrameRate(Camera_PreviewOutput* previ
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 12
  */
-Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previewOutput, int32_t displayRotation,
+Camera_ErrorCode OH_PreviewOutput_GetPreviewRotation(Camera_PreviewOutput* previewOutput, int displayRotation,
     Camera_ImageRotation* imageRotation);
 
 /**

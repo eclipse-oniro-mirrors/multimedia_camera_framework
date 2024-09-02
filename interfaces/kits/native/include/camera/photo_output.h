@@ -486,7 +486,7 @@ Camera_ErrorCode OH_PhotoOutput_EnableMovingPhoto(Camera_PhotoOutput* photoOutpu
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 12
  */
-Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int32_t deviceDegree,
+Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput, int deviceDegree,
     Camera_ImageRotation* imageRotation);
 
 #ifdef __cplusplus
