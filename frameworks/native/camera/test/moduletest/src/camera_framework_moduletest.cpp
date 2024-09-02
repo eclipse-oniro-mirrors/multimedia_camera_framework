@@ -11927,8 +11927,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_089, TestSize.Le
 
     std::vector<int32_t> activeFrameRateRange = videoOutputTrans->GetFrameRateRange();
     ASSERT_NE(activeFrameRateRange.size(), 0);
-    EXPECT_EQ(activeFrameRateRange[0], 0);
-    EXPECT_EQ(activeFrameRateRange[1], 0);
+    EXPECT_EQ(activeFrameRateRange[0], 1);
+    EXPECT_EQ(activeFrameRateRange[1], 30);
 
     intResult = videoOutputTrans->SetFrameRate(maxFpsTobeSet, maxFpsTobeSet);
     EXPECT_EQ(intResult, 0);
@@ -12506,8 +12506,8 @@ HWTEST_F(CameraFrameworkModuleTest, test_video_frame_rate, TestSize.Level0)
 
     std::vector<int32_t> activeFrameRateRange = videoOutputTrans->GetFrameRateRange();
     ASSERT_NE(activeFrameRateRange.size(), 0);
-    EXPECT_EQ(activeFrameRateRange[0], 0);
-    EXPECT_EQ(activeFrameRateRange[1], 0);
+    EXPECT_EQ(activeFrameRateRange[0], 1);
+    EXPECT_EQ(activeFrameRateRange[1], 30);
 
     intResult = videoOutputTrans->SetFrameRate(maxFpsTobeSet, maxFpsTobeSet);
     EXPECT_EQ(intResult, 0);
