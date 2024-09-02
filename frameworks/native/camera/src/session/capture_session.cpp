@@ -185,6 +185,14 @@ const std::unordered_map<CameraLightPaintingType, LightPaintingType>
     {OHOS_CAMERA_LIGHT_PAINTING_LIGHT, LIGHT}
 };
 
+const std::unordered_map<TripodStatus, FwkTripodStatus>
+    CaptureSession::metaTripodStatusMap_ = {
+    {TRIPOD_STATUS_INVALID, FwkTripodStatus::INVALID},
+    {TRIPOD_STATUS_ACTIVE, FwkTripodStatus::ACTIVE},
+    {TRIPOD_STATUS_ENTER, FwkTripodStatus::ENTER},
+    {TRIPOD_STATUS_EXITING, FwkTripodStatus::EXITING}
+};
+
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);
@@ -2230,6 +2238,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessAREngineUpdates(timestamp, result);
     session->ProcessEffectSuggestionTypeUpdates(result);
     session->ProcessLcdFlashStatusUpdates(result);
+    session->ProcessTripodStatusChange(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -2799,6 +2808,7 @@ SceneFeaturesMode CaptureSession::GetFeaturesMode()
     sceneFeaturesMode.SwitchFeature(FEATURE_MACRO, isSetMacroEnable_);
     sceneFeaturesMode.SwitchFeature(FEATURE_MOON_CAPTURE_BOOST, isSetMoonCaptureBoostEnable_);
     sceneFeaturesMode.SwitchFeature(FEATURE_LOW_LIGHT_BOOST, isSetLowLightBoostEnable_);
+    sceneFeaturesMode.SwitchFeature(FEATURE_TRIPOD_DETECTION, isSetTripodDetectionEnable_);
     return sceneFeaturesMode;
 }
 
@@ -3954,6 +3964,9 @@ bool CaptureSession::IsFeatureSupported(SceneFeature feature)
         case FEATURE_MOON_CAPTURE_BOOST:
             return IsMoonCaptureBoostSupported();
             break;
+        case FEATURE_TRIPOD_DETECTION:
+            return IsTripodDetectionSupported();
+            break;
         case FEATURE_LOW_LIGHT_BOOST:
             return IsLowLightBoostSupported();
             break;
@@ -3974,6 +3987,9 @@ int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
             break;
         case FEATURE_MOON_CAPTURE_BOOST:
             retCode = EnableMoonCaptureBoost(isEnable);
+            break;
+        case FEATURE_TRIPOD_DETECTION:
+            retCode = EnableTripodDetection(isEnable);
             break;
         case FEATURE_LOW_LIGHT_BOOST:
             retCode = EnableLowLightBoost(isEnable);
@@ -5190,6 +5206,98 @@ void CaptureSession::EnableFaceDetection(bool enable)
     MEDIA_INFO_LOG("EnableFaceDetection SetCapturingMetadataObjectTypes objectTypes size = %{public}zu",
         metadataObjectTypes.size());
     metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
+}
+
+bool CaptureSession::IsTripodDetectionSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter IsTripodDetectionSupported");
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), false,
+        "CaptureSession::IsTripodDetectionSupported Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+        "CaptureSession::IsTripodDetectionSupported camera device is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
+        "CaptureSession::IsTripodDetectionSupported camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_TRIPOD_DETECTION, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_ERR_LOG("CaptureSession::IsTripodDetectionSupported Failed with return code %{public}d", ret);
+        return false;
+    }
+    auto supportResult = static_cast<bool>(item.data.i32[0]);
+    return supportResult;
+}
+
+int32_t CaptureSession::EnableTripodStabilization(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter EnableTripodStabilization, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsTripodDetectionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "EnableTripodStabilization IsTripodDetectionSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_STABLITATION, &enableValue, 1)) {
+        MEDIA_ERR_LOG("EnableTripodStabilization failed to enable tripod detection");
+    } else {
+        isSetTripodDetectionEnable_ = isEnable;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableTripodDetection(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableTripodDetection, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsTripodDetectionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "EnableTripodDetection IsTripodDetectionSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::EnableTripodDetection Session is not Commited");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_DETECTION, &enableValue, 1)) {
+        MEDIA_ERR_LOG("CaptureSession::EnableTripodDetection failed to enable tripod detection");
+    }
+    isSetTripodDetectionEnable_ = isEnable;
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+    __attribute__((no_sanitize("cfi")))
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Entry ProcessTripodStatusChange");
+    auto featureStatusCallback = GetFeatureDetectionStatusCallback();
+    if (featureStatusCallback == nullptr ||
+            !featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_TRIPOD_DETECTION)) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessTripodStatusChange"
+                        "featureDetectionStatusChangedCallback are null");
+        return;
+    }
+
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_TRIPOD_DETECTION_STATUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Camera not support tripod detection");
+        return;
+    }
+    FwkTripodStatus tripodStatus = FwkTripodStatus::INVALID;
+    auto itr = metaTripodStatusMap_.find(static_cast<TripodStatus>(item.data.u8[0]));
+    if (itr == metaTripodStatusMap_.end()) {
+        MEDIA_DEBUG_LOG("Tripod status not found");
+        return;
+    }
+    tripodStatus = itr->second;
+    MEDIA_DEBUG_LOG("Tripod status: %{public}d", tripodStatus);
+    if (featureStatusCallback != nullptr &&
+        featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_TRIPOD_DETECTION) &&
+        (static_cast<int>(featureStatusCallback->GetFeatureStatus()) != static_cast<int>(tripodStatus))) {
+        auto detectStatus = FeatureDetectionStatusCallback::FeatureDetectionStatus::ACTIVE;
+        featureStatusCallback->SetFeatureStatus(static_cast<int8_t>(tripodStatus));
+        featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_TRIPOD_DETECTION, detectStatus);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

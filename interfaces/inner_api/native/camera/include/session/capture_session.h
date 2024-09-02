@@ -152,6 +152,13 @@ typedef struct {
     float y;
 } Point;
 
+enum class FwkTripodStatus {
+    INVALID = 0,
+    ACTIVE,
+    ENTER,
+    EXITING
+};
+
 typedef struct {
     float zoomRatio;
     int32_t equivalentFocalLength;
@@ -243,7 +250,17 @@ public:
         return false;
     }
 
+    inline void SetFeatureStatus(int8_t featureStatus)
+    {
+        featureStatus_ = featureStatus;
+    }
+
+    inline int8_t GetFeatureStatus() const
+    {
+        return featureStatus_;
+    }
 private:
+    std::atomic<int8_t> featureStatus_ = -1;
     std::mutex featureStatusMapMutex_;
     std::unordered_map<SceneFeature, FeatureDetectionStatus> featureStatusMap_;
 };
@@ -1574,6 +1591,42 @@ public:
      */
     std::shared_ptr<LcdFlashStatusCallback> GetLcdFlashStatusCallback();
     void EnableFaceDetection(bool enable);
+    /**
+     * @brief Checks if tripod detection is supported.
+     *
+     * This function determines whether the current system or device supports tripod detection functionality.
+     * It returns `true` if the feature is supported, otherwise `false`.
+     *
+     * @return `true` if tripod detection is supported; `false` otherwise.
+     */
+    bool IsTripodDetectionSupported();
+
+    /**
+     * @brief Enables or disables tripod stabilization.
+     *
+     * This function enables or disables the tripod stabilization feature based on the provided `enabled` flag.
+     *
+     * @param enabled A boolean flag that indicates whether to enable or disable tripod stabilization.
+     *
+     * @return Returns an `int32_t` value indicating the success or failure of the operation.
+     *         Typically, a return value of 0 indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableTripodStabilization(bool enabled);
+
+    /**
+     * @brief Enables or disables tripod detection.
+     *
+     * This function enables or disables the tripod detection feature based on the provided `enabled` flag.
+     *
+     * @param enabled A boolean flag that specifies whether to enable or disable tripod detection.
+     *
+     * @return Returns an `int32_t` value indicating the outcome of the operation.
+     *         A return value of 0 typically indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableTripodDetection(bool enabled);
+
+    void ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1581,6 +1634,7 @@ protected:
 
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
+    static const std::unordered_map<TripodStatus, FwkTripodStatus> metaTripodStatusMap_;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
@@ -1661,6 +1715,7 @@ private:
     sptr<CaptureInput> innerInputDevice_ = nullptr;
     volatile bool isSetMacroEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
+    volatile bool isSetTripodDetectionEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
     std::atomic<bool> isSetLowLightBoostEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;

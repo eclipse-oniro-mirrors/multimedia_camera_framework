@@ -494,6 +494,12 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     napi_get_boolean(env_, status == FeatureDetectionStatus::ACTIVE, &statusValue);
     napi_set_named_property(env_, result[PARAM1], "detected", statusValue);
 
+    if (feature == SceneFeature::FEATURE_TRIPOD_DETECTION) {
+        napi_value tripodStatusValue;
+        auto fwkTripodStatus = GetFeatureStatus();
+        napi_create_int32(env_, fwkTripodStatus, &tripodStatusValue);
+        napi_set_named_property(env_, result[PARAM1], "tripodStatus", tripodStatusValue);
+    }
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(eventName, callbackNapiPara);
     ExecuteCallback(eventNameOld, callbackNapiPara);
@@ -4064,7 +4070,11 @@ void CameraSessionNapi::RegisterFeatureDetectionStatusListener(
         cameraSession_->EnableLowLightDetection(true);
         cameraSession_->UnlockForControl();
     }
-
+    if (featureType == SceneFeature::FEATURE_TRIPOD_DETECTION) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableTripodDetection(true);
+        cameraSession_->UnlockForControl();
+    }
     featureDetectionStatusCallback_->SaveCallbackReference(eventName + std::to_string(featureType), callback, isOnce);
 }
 
@@ -4097,6 +4107,12 @@ void CameraSessionNapi::UnregisterFeatureDetectionStatusListener(
         !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
         cameraSession_->LockForControl();
         cameraSession_->EnableLowLightDetection(false);
+        cameraSession_->UnlockForControl();
+    }
+    if (featureType == SceneFeature::FEATURE_TRIPOD_DETECTION &&
+        !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_TRIPOD_DETECTION)) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableTripodDetection(false);
         cameraSession_->UnlockForControl();
     }
 }
