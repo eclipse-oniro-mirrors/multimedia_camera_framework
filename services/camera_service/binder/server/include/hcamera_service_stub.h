@@ -46,6 +46,7 @@ private:
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);
+    int HandleCreateDepthDataOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateMetadataOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateVideoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);

@@ -23,6 +23,7 @@
 #include "icapture_session.h"
 #include "iremote_broker.h"
 #include "istream_capture.h"
+#include "istream_depth_data.h"
 #include "istream_metadata.h"
 #include "istream_repeat.h"
 #include "surface.h"
@@ -90,6 +91,9 @@ public:
 
     virtual int32_t CreateDeferredPreviewOutput(int32_t format, int32_t width, int32_t height,
                                                 sptr<IStreamRepeat> &previewOutput) = 0;
+
+    virtual int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                          int32_t width, int32_t height, sptr<IStreamDepthData> &depthDataOutput) = 0;
 
     virtual int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                          sptr<IStreamMetadata> &metadataOutput) = 0;
