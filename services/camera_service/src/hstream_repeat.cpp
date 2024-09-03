@@ -831,20 +831,16 @@ void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMeta
     CHECK_AND_RETURN_LOG(settings != nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
     bool status = false;
     camera_metadata_item_t item;
- 
-    if (enableMirror_) {
-        uint8_t mirror = enableMirror_;
-        MEDIA_DEBUG_LOG("HStreamRepeat::UpdateVideoSettings set Mirror");
-        int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = settings->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = settings->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-        }
-        if (!status) {
-            MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
-        }
+
+    uint8_t mirror = enableMirror_;
+    MEDIA_DEBUG_LOG("HStreamRepeat::UpdateVideoSettings set Mirror %{public}d", mirror);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = settings->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = settings->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
     }
+    CHECK_ERROR_PRINT_LOG(!status, "UpdateVideoSettings Failed to set mirroring in VideoSettings");
 }
 
 void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
