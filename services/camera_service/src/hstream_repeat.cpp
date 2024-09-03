@@ -360,6 +360,10 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
 int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
+    MEDIA_DEBUG_LOG("HStreamRepeat::OnFrameError %{public}d  %{public}d", errorType, streamRepeatCallback_ == nullptr);
+    if (errorType == HDI::Camera::V1_3::HIGH_TEMPERATURE_ERROR) {
+        UpdateSketchStatus(SketchStatus::STOPED);
+    }
     if (streamRepeatCallback_ != nullptr) {
         int32_t repeatErrorCode;
         if (errorType == BUFFER_LOST) {
