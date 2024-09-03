@@ -43,6 +43,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t EnableRawDelivery(bool enabled) override;
     int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t DeferImageDeliveryFor(int32_t type) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
@@ -88,6 +89,7 @@ private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
+    int32_t rawDeliverySwitch_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
     sptr<BufferProducerSequenceable> rawBufferQueue_;
     sptr<BufferProducerSequenceable> gainmapBufferQueue_;

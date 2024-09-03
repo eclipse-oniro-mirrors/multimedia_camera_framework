@@ -1563,6 +1563,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
+        DECLARE_NAPI_FUNCTION("enableRawDelivery", EnableRawDelivery),
+        DECLARE_NAPI_FUNCTION("isRawDeliverySupported", IsRawDeliverySupported),
         DECLARE_NAPI_FUNCTION("getSupportedMovingPhotoVideoCodecTypes", GetSupportedMovingPhotoVideoCodecTypes),
         DECLARE_NAPI_FUNCTION("setMovingPhotoVideoCodecType", SetMovingPhotoVideoCodecType),
         DECLARE_NAPI_FUNCTION("on", On),
@@ -2285,6 +2287,64 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
         napi_get_value_bool(env, argv[PARAM0], &thumbnailSwitch);
         photoOutputNapi->isQuickThumbnailEnabled_ = thumbnailSwitch;
         int32_t retCode = photoOutputNapi->photoOutput_->SetThumbnail(thumbnailSwitch);
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsRawDeliverySupported is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    bool isSupported = false;
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->IsRawDeliverySupported();
+        isSupported = (retCode == 1);
+    }
+    napi_get_boolean(env, isSupported, &result);
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableRawDelivery is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    bool rawDeliverySwitch;
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        napi_get_value_bool(env, argv[PARAM0], &rawDeliverySwitch);
+        int32_t retCode = photoOutputNapi->photoOutput_->EnableRawDelivery(rawDeliverySwitch);
         if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
             return result;
         }

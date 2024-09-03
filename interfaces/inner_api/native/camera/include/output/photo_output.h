@@ -286,6 +286,13 @@ public:
     int32_t SetThumbnail(bool isEnabled);
 
     /**
+     * @brief To enable the raw imgage delivery.
+     *
+     * @return Returns the result of the raw imgage delivery enable.
+     */
+    int32_t EnableRawDelivery(bool enabled);
+
+    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.
@@ -349,6 +356,13 @@ public:
      * @return Returns true/false if the quick thumbnail is supported/not-supported respectively.
      */
     int32_t IsQuickThumbnailSupported();
+
+    /**
+     * @brief To check the raw image devlivery is supported or not.
+     *
+     * @return Returns true/false if the raw image devlivery is supported/not-supported respectively.
+     */
+    int32_t IsRawDeliverySupported();
 
     /**
      * @brief Set the deferredImageDelivery type.
