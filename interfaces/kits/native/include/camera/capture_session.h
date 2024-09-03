@@ -31,6 +31,7 @@
  * @brief Declare the capture Session concepts.
  *
  * @library libohcamera.so
+ * @kit CameraKit
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
