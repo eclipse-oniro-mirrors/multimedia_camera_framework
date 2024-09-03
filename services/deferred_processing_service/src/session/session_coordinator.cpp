@@ -103,8 +103,6 @@ public:
     void OnProcessDoneExt(int userId, const std::string& imageId,
         std::shared_ptr<BufferInfoExt> bufferInfo) override
     {
-        // std::shared_ptr<Media::Picture> picture = std::make_shared<Media::Picture>();
-        // std::shared_ptr<Media::Picture> picture = AssemblePicture(bufferInfo);
         if (coordinator_ && bufferInfo) {
             coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture());
         }

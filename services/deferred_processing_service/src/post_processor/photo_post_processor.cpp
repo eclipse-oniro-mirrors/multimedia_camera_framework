@@ -307,7 +307,7 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
             retExifDataSize, exifDataSize);
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
-    DP_CHECK_AND_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
+    DP_CHECK_AND_RETURN_RET_LOG(imageBuffer != nullptr, nullptr, "bufferHandle is nullptr.");
     std::string orientation = "";
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
     if (buffer.isExifValid) {
