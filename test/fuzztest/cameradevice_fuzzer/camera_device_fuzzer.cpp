@@ -306,6 +306,48 @@ void TestXCollie(uint8_t *rawData, size_t size)
         collie.CancelCameraXCollie();
     }
 }
+
+void TestCameraDeviceServiceCallback(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_2);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    int val = 1;
+    AddOrUpdateMetadata(meta, OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &val, 1);
+
+    CameraDeviceServiceCallback callback;
+    callback.OnError(data.ReadInt32(), data.ReadInt32());
+    callback.OnResult(data.ReadUint64(), meta);
+
+    auto manager = CameraManager::GetInstance();
+    auto cameras = manager->GetSupportedCameras();
+    auto input = manager->CreateCameraInput(cameras[0]);
+    class ErrorCallbackMock : public ErrorCallback {
+    public:
+        void OnError(const int32_t errorType, const int32_t errorMsg) const override {}
+    };
+    input->SetErrorCallback(make_shared<ErrorCallbackMock>());
+    class ResultCallbackMock : public ResultCallback {
+    public:
+        void OnResult(const uint64_t timestamp,
+            const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override {}
+    };
+    input->SetResultCallback(make_shared<ResultCallbackMock>());
+    class CameraOcclusionDetectCallbackMock : public CameraOcclusionDetectCallback {
+    public:
+        void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
+            const uint8_t isCameraLensDirty) const override {}
+    };
+    input->SetOcclusionDetectCallback(make_shared<CameraOcclusionDetectCallbackMock>());
+    CameraDeviceServiceCallback callback2(input);
+    callback2.OnError(data.ReadInt32(), data.ReadInt32());
+    callback2.OnResult(data.ReadUint64(), meta);
+    input->GetCameraDeviceInfo().clear();
+    callback2.OnError(data.ReadInt32(), data.ReadInt32());
+    callback2.OnResult(data.ReadUint64(), meta);
+    input->Release();
+}
 } // namespace CameraStandard
 } // namespace OHOS
 

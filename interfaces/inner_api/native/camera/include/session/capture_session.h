@@ -1693,7 +1693,6 @@ private:
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
     std::mutex captureSessionMutex_;
-    shared_mutex releaseSharedMutex_;
     sptr<ICaptureSession> innerCaptureSession_ = nullptr;
     std::shared_ptr<SessionCallback> appCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;

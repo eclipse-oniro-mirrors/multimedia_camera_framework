@@ -1070,7 +1070,6 @@ int32_t CaptureSession::Release()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::Release");
-    unique_lock<shared_mutex> uLock(releaseSharedMutex_);
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
@@ -2315,7 +2314,6 @@ int32_t CaptureSession::GetFlashMode(FlashMode& flashMode)
 int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
 {
     CAMERA_SYNC_TRACE;
-    shared_lock<shared_mutex> sLock(releaseSharedMutex_);
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;

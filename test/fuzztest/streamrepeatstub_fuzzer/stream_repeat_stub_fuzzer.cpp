@@ -14,8 +14,11 @@
  */
 
 #include "stream_repeat_stub_fuzzer.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "hstream_repeat.h"
+#include "iservice_registry.h"
 #include "nativetoken_kit.h"
+#include "system_ability_definition.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
 #include "iconsumer_surface.h"
@@ -50,6 +53,66 @@ void CheckPermission()
     }
 }
 
+void TestHandleAddDeferredSurface(uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
+        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteRawData(rawData, size);
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE;
+    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+}
+
+void TestHandleAttachMetaSurface(uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
+        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteRawData(rawData, size);
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE;
+    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+}
+
+void TestHandleSetCallback(uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
+        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    sptr<IStreamRepeatCallback> repeatCallback = iface_cast<IStreamRepeatCallback>(object);
+
+    data.WriteRemoteObject(repeatCallback->AsObject());
+    data.WriteRawData(rawData, size);
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK;
+    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+}
+
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
@@ -57,6 +120,9 @@ void Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
     Test_OnRemoteRequest(rawData, size);
+    TestHandleSetCallback(rawData, size);
+    TestHandleAddDeferredSurface(rawData, size);
+    TestHandleAttachMetaSurface(rawData, size);
 }
 
 void RunCase(MessageParcel &data, uint32_t code)
