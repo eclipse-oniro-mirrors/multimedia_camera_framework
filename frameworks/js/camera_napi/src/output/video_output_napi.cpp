@@ -35,7 +35,7 @@ namespace {
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<VideoOutputAsyncContext*>(data);
-    CHECK_ERROR_PRINT_LOG(context == nullptr, "VideoOutputNapi AsyncCompleteCallback context is null");
+    CHECK_ERROR_RETURN_LOG(context == nullptr, "VideoOutputNapi AsyncCompleteCallback context is null");
     MEDIA_INFO_LOG("PreviewOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();

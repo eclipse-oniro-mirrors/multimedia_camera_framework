@@ -108,6 +108,8 @@ int32_t HStreamCaptureStub::HandleSetBufferProducerInfo(MessageParcel &data)
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleSetBufferProducerInfo BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamCaptureStub HandleSetBufferProducerInfo producer is null");
     int32_t ret = SetBufferProducerInfo(bufferName, producer);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetBufferProducerInfo result: %{public}d", ret);
     return ret;

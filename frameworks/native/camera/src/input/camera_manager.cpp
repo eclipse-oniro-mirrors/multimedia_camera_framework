@@ -2186,7 +2186,7 @@ void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
     }
     std::vector<Profile> extendProfiles = {};
     // if photo stream support jpeg, it must support yuv.
-    int32_t extendSize = photoProfiles.size() * (photoFormats_.size() - 1);
+    uint32_t extendSize = photoProfiles.size() * (photoFormats_.size() - 1);
     extendProfiles.reserve(extendSize);
     for (const auto& profile : photoProfiles) {
         if (std::find(extendProfiles.begin(), extendProfiles.end(), profile) == extendProfiles.end()) {

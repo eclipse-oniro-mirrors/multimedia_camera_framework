@@ -431,7 +431,7 @@ public:
     uint32_t GetAuxiliaryPhotoHandle();
     std::unique_ptr<Media::Picture> picture_;
     sptr<CameraPhotoProxy> photoProxy_;
-    uint32_t watchDogHandle_;
+    uint32_t watchDogHandle_ = 0;
     std::mutex watchDogHandleMutex_;
     std::map<int32_t, int32_t> caputreIdAuxiliaryCountMap_;
     std::map<int32_t, int32_t> caputreIdCountMap_;
