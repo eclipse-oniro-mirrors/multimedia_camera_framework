@@ -59,6 +59,8 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
@@ -69,7 +71,6 @@ ohos_shared_library("camera_framework") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_capture_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_metadata_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_device_callback_stub.cpp",
@@ -77,7 +78,6 @@ ohos_shared_library("camera_framework") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
     "src/ability/camera_ability.cpp",
     "src/ability/camera_ability_builder.cpp",
