@@ -1626,6 +1626,8 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
     sptr<HCameraDevice> activeDevice)
 {
+    CHECK_ERROR_RETURN_RET_LOG(activeDevice == nullptr, nullptr,
+        "HCameraService::CreateDefaultSettingForRestore activeDevice is null.");
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);

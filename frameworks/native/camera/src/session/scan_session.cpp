@@ -34,6 +34,8 @@ ScanSession::~ScanSession()
  
 int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 {
+    CHECK_ERROR_RETURN_RET_LOG(output == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "ScanSession::AddOutput output is nullptr");
     int32_t result = CAMERA_UNKNOWN_ERROR;
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
@@ -118,6 +120,7 @@ void ScanSession::UnRegisterBrightnessStatusCallback()
 
 void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    CHECK_ERROR_RETURN_LOG(result == nullptr, "ScanSession::ProcessBrightnessStatusChange result is null.");
     MEDIA_DEBUG_LOG("Entry ProcessBrightnessStatusChange");
     auto callback = GetBrightnessStatusCallback();
     if (callback != nullptr) {
@@ -148,6 +151,8 @@ void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Came
 void ScanSession::ScanSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
+    CHECK_ERROR_RETURN_LOG(result == nullptr,
+        "ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks result is null.");
     MEDIA_DEBUG_LOG("ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
     CHECK_ERROR_RETURN_LOG(session == nullptr,

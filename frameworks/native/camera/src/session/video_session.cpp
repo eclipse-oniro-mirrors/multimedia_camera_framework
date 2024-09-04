@@ -151,7 +151,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
             break;
         default:
             MEDIA_ERR_LOG(
-                "VideoSession::GeneratePreconfigProfiles4_3 not support this config:%{public}d", preconfigType);
+                "VideoSession::GeneratePreconfigProfiles16_9 not support this config:%{public}d", preconfigType);
             return nullptr;
     }
     return configs;

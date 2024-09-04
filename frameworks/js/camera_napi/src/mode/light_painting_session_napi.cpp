@@ -251,6 +251,10 @@ napi_value LightPaintingSessionNapi::TriggerLighting(napi_env env, napi_callback
  
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("TriggerLighting parse parameter occur error");
+        return result;
+    }
     if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("TriggerLighting get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
