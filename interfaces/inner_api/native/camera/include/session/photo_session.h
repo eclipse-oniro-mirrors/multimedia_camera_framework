@@ -54,6 +54,14 @@ public:
      */
     int32_t Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
 
+    /**
+     * @brief Photo-Session can set frame rate range.
+     *
+     * @param minFps Min frame rate of range.
+     * @param minFps Max frame rate of range.
+     */
+    bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput) override;
+
 protected:
     std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;

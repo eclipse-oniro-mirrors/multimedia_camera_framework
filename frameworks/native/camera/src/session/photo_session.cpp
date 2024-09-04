@@ -261,5 +261,10 @@ int32_t PhotoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
     MEDIA_INFO_LOG("PhotoSession::Preconfig %s", configs->ToString().c_str());
     return SUCCESS;
 }
+
+bool PhotoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
+{
+    return CanSetFrameRateRangeForOutput(minFps, maxFps, curOutput) ? true : false;
+}
 } // namespace CameraStandard
 } // namespace OHOS
