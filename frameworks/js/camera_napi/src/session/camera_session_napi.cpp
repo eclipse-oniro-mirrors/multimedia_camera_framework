@@ -1112,6 +1112,7 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
     PhotoOutputNapi* photoOutputNapiObj = nullptr;
     VideoOutputNapi* videoOutputNapiObj = nullptr;
     MetadataOutputNapi* metadataOutputNapiObj = nullptr;
+    DepthDataOutputNapi* depthDataOutputNapiObj = nullptr;
 
     NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
 
@@ -1136,6 +1137,10 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
                 MEDIA_INFO_LOG("metadata output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
                 cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
+            } else if (DepthDataOutputNapi::IsDepthDataOutput(env, argv[i])) {
+                MEDIA_INFO_LOG("depth data output adding..");
+                napi_unwrap(env, argv[i], reinterpret_cast<void**>(&depthDataOutputNapiObj));
+                cameraOutput = depthDataOutputNapiObj->GetDepthDataOutput();
             } else {
                 MEDIA_INFO_LOG("invalid output ..");
                 NAPI_ASSERT(env, false, "type mismatch");

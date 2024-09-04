@@ -36,6 +36,7 @@
 #include "istream_common.h"
 #include "istream_repeat.h"
 #include "output/camera_output_capability.h"
+#include "output/depth_data_output.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
@@ -91,7 +92,8 @@ typedef enum OutputCapStreamType {
     STILL_CAPTURE = 2,
     POST_VIEW = 3,
     ANALYZE = 4,
-    CUSTOM = 5
+    CUSTOM = 5,
+    DEPTH = 6
 } OutputCapStreamType;
 
 class CameraManagerCallback {
@@ -438,6 +440,26 @@ public:
     int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput);
 
     /**
+     * @brief Create depth output instance.
+     *
+     * @param depthProfile depth profile.
+     * @param surface depth data buffer surface.
+     * @return pointer to depth data output instance.
+     */
+    sptr<DepthDataOutput> CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface);
+
+    /**
+     * @brief Create depth output instance.
+     *
+     * @param depthProfile depth profile.
+     * @param surface depth data buffer surface.
+     * @param pDepthDataOutput pointer to depth data output instance.
+     * @return Returns error code.
+     */
+    int CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
+                              sptr<DepthDataOutput>* pDepthDataOutput);
+
+    /**
      * @brief Set camera manager callback.
      *
      * @param CameraManagerCallback pointer.
@@ -680,11 +702,17 @@ private:
         common_metadata_header_t* metadata, std::vector<MetadataObjectType> objectTypes);
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
+    void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
+    static const std::unordered_map<DepthDataAccuracyType, DepthDataAccuracy> metaToFwDepthDataAccuracy_;
+
     void ParseExtendCapability(const int32_t modeName, const camera_metadata_item_t& item);
     void ParseBasicCapability(
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
+    void ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item);
+
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     void SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     SceneMode GetFallbackConfigMode(SceneMode profileMode);
@@ -741,6 +769,7 @@ private:
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> vidProfiles_ = {};
+    std::vector<DepthProfile> depthProfiles_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;

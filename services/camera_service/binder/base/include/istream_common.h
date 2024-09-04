@@ -24,6 +24,7 @@ enum class StreamType : uint32_t {
     CAPTURE = 1,
     REPEAT,
     METADATA,
+    DEPTH,
 };
 class IStreamCommon : public IRemoteBroker {
 public:

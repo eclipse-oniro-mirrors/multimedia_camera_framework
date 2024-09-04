@@ -422,6 +422,41 @@ int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t
     return error;
 }
 
+int32_t HCameraServiceProxy::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                                   int32_t width, int32_t height,
+                                                   sptr<IStreamDepthData>& depthDataOutput)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput producer is null or invalid size is set");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteInt32(format);
+    data.WriteInt32(width);
+    data.WriteInt32(height);
+
+    int error = Remote()->SendRequest(static_cast<uint32_t>(
+        CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput failed, error: %{public}d", error);
+        return error;
+    }
+    auto remoteObject = reply.ReadRemoteObject();
+    if (remoteObject != nullptr) {
+        depthDataOutput = iface_cast<IStreamDepthData>(remoteObject);
+    } else {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput depthDataOutput is null");
+        error = IPC_PROXY_ERR;
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                                   sptr<IStreamMetadata>& metadataOutput)
 {

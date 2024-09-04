@@ -29,6 +29,7 @@
 #include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
+#include "output/depth_data_output_napi.h"
 #include "output/metadata_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"

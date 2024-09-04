@@ -132,7 +132,7 @@ const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType>
     {OHOS_CAMERA_EFFECT_SUGGESTION_SKY, EFFECT_SUGGESTION_SKY},
     {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET}
 };
-    
+
 const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
     CaptureSession::fwkEffectSuggestionTypeMap_ = {
     {EFFECT_SUGGESTION_NONE, OHOS_CAMERA_EFFECT_SUGGESTION_NONE},
@@ -174,7 +174,7 @@ const std::unordered_map<LightPaintingType, CameraLightPaintingType>
     {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
     {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
 };
- 
+
 const std::unordered_map<CameraLightPaintingType, LightPaintingType>
     CaptureSession::metaLightPaintingTypeMap_ = {
     {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
@@ -920,6 +920,9 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
         case CAPTURE_OUTPUT_TYPE_VIDEO:
             profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigVideoProfile()
                                                                              : output->GetVideoProfile();
+            break;
+        case CAPTURE_OUTPUT_TYPE_DEPTH_DATA:
+            profilePtr = output->GetDepthProfile();
             break;
         default:
             MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
@@ -4249,6 +4252,7 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile MetadataOutput");
         return true;
     }
+    CHECK_ERROR_RETURN_RET(outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA, true);
     auto modeName = GetMode();
     auto validateOutputProfileFunc = [modeName](auto validateProfile, auto& profiles) -> bool {
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile in mode(%{public}d): "

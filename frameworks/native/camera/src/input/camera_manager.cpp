@@ -75,6 +75,13 @@ const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwC
     {OHOS_CAMERA_FORMAT_YCBCR_420_SP, CAMERA_FORMAT_NV12},
     {OHOS_CAMERA_FORMAT_422_YUYV, CAMERA_FORMAT_YUV_422_YUYV},
     {OHOS_CAMERA_FORMAT_DNG, CAMERA_FORMAT_DNG},
+    {OHOS_CAMERA_FORMAT_DEPTH_16, CAMERA_FORMAT_DEPTH_16},
+    {OHOS_CAMERA_FORMAT_DEPTH_32, CAMERA_FORMAT_DEPTH_32}
+};
+
+const std::unordered_map<DepthDataAccuracyType, DepthDataAccuracy> CameraManager::metaToFwDepthDataAccuracy_ = {
+    {OHOS_DEPTH_DATA_ACCURACY_RELATIVE, DEPTH_DATA_ACCURACY_RELATIVE},
+    {OHOS_DEPTH_DATA_ACCURACY_ABSOLUTE, DEPTH_DATA_ACCURACY_ABSOLUTE},
 };
 
 const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaCameraFormat_ = {
@@ -86,7 +93,8 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_NV12, OHOS_CAMERA_FORMAT_YCBCR_420_SP},
     {CAMERA_FORMAT_YUV_422_YUYV, OHOS_CAMERA_FORMAT_422_YUYV},
     {CAMERA_FORMAT_DNG, OHOS_CAMERA_FORMAT_DNG},
-
+    {CAMERA_FORMAT_DEPTH_16, OHOS_CAMERA_FORMAT_DEPTH_16},
+    {CAMERA_FORMAT_DEPTH_32, OHOS_CAMERA_FORMAT_DEPTH_32}
 };
 
 const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
@@ -663,6 +671,58 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput)
     SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
     CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
         "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
+    return CameraErrorCode::SUCCESS;
+}
+
+sptr<DepthDataOutput> CameraManager::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    int ret = CreateDepthDataOutput(depthProfile, surface, &depthDataOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateDepthDataOutput with error code:%{public}d", ret);
+        return nullptr;
+    }
+    return depthDataOutput;
+}
+
+int CameraManager::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface,
+    sptr<DepthDataOutput>* pDepthDataOutput)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<IStreamDepthData> streamDepthData = nullptr;
+    sptr<DepthDataOutput> depthDataOutput = nullptr;
+    int32_t retCode = CAMERA_OK;
+    camera_format_t metaFormat;
+
+    auto serviceProxy = GetServiceProxy();
+    if ((serviceProxy == nullptr) || (surface == nullptr)) {
+        MEDIA_ERR_LOG("serviceProxy is null or DepthDataOutputSurface/profile is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    if ((depthProfile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
+        (depthProfile.GetSize().width == 0) ||
+        (depthProfile.GetSize().height == 0)) {
+        MEDIA_ERR_LOG("invalid fomrat or width or height is zero");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    metaFormat = GetCameraMetadataFormat(depthProfile.GetCameraFormat());
+    retCode = serviceProxy->CreateDepthDataOutput(
+        surface, metaFormat, depthProfile.GetSize().width, depthProfile.GetSize().height, streamDepthData);
+    if (retCode == CAMERA_OK) {
+        depthDataOutput = new(std::nothrow) DepthDataOutput(surface);
+        if (depthDataOutput == nullptr) {
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        depthDataOutput->SetStream(streamDepthData);
+    } else {
+        MEDIA_ERR_LOG("Failed to get stream depth data object from hcamera service!, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
+    }
+    depthDataOutput->SetDepthProfile(depthProfile);
+    *pDepthDataOutput = depthDataOutput;
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1452,6 +1512,24 @@ void CameraManager::ParseProfileLevel(const int32_t modeName, const camera_metad
     }
 }
 
+void CameraManager::ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item)
+    __attribute__((no_sanitize("cfi")))
+{
+    ExtendInfo extendInfo = {};
+    std::shared_ptr<CameraDepthInfoParse> depthStreamParse = std::make_shared<CameraDepthInfoParse>();
+    depthStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
+    for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
+        if (modeName == extendInfo.modeInfo[i].modeName) {
+            for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
+                OutputCapStreamType streamType =
+                    static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
+                CreateDepthProfile4StreamType(streamType, i, j, extendInfo);
+            }
+            break;
+        }
+    }
+}
+
 void CameraManager::CreateProfileLevel4StreamType(
     int32_t specId, StreamInfo &streamInfo) __attribute__((no_sanitize("cfi")))
 {
@@ -1493,6 +1571,42 @@ void CameraManager::CreateProfileLevel4StreamType(
     }
 }
 
+void CameraManager::CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+    uint32_t streamIndex, ExtendInfo extendInfo) __attribute__((no_sanitize("cfi")))
+{
+    for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
+        const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
+        CameraFormat format = CAMERA_FORMAT_INVALID;
+        auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(detailInfo.format));
+        if (itr != metaToFwCameraFormat_.end()) {
+            format = itr->second;
+        } else {
+            MEDIA_ERR_LOG("CreateDepthProfile4StreamType failed format = %{public}d",
+                extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format);
+            format = CAMERA_FORMAT_INVALID;
+            continue;
+        }
+        Size size{static_cast<uint32_t>(detailInfo.width), static_cast<uint32_t>(detailInfo.height)};
+        DepthDataAccuracy dataAccuracy = DEPTH_DATA_ACCURACY_INVALID;
+        auto it = metaToFwDepthDataAccuracy_.find(static_cast<DepthDataAccuracyType>(detailInfo.dataAccuracy));
+        if (it != metaToFwDepthDataAccuracy_.end()) {
+            dataAccuracy = it->second;
+        } else {
+            MEDIA_ERR_LOG("CreateDepthProfile4StreamType failed dataAccuracy = %{public}d",
+                extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].dataAccuracy);
+            dataAccuracy = DEPTH_DATA_ACCURACY_INVALID;
+            continue;
+        }
+        MEDIA_DEBUG_LOG("streamType: %{public}d, OutputCapStreamType::DEPTH: %{public}d", streamType,
+            OutputCapStreamType::DEPTH);
+        DepthProfile depthProfile = DepthProfile(format, dataAccuracy, size);
+        MEDIA_DEBUG_LOG("depthdata format : %{public}d, data accuracy: %{public}d, width: %{public}d,"
+            "height: %{public}d", depthProfile.GetCameraFormat(), depthProfile.GetDataAccuracy(),
+            depthProfile.GetSize().width, depthProfile.GetSize().height);
+        depthProfiles_.push_back(depthProfile);
+    }
+}
+
 void CameraManager::ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
@@ -1511,6 +1625,17 @@ void CameraManager::ParseCapability(sptr<CameraDevice>& camera, const int32_t mo
     } else {
         MEDIA_ERR_LOG("Failed get stream info");
     }
+    // 解析深度流信息
+    if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_DEPTH_DATA_PROFILES)) {
+        std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
+        int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
+        MEDIA_INFO_LOG("Depth g_isCapabilitySupported by device = %{public}s, mode = %{public}d, tag = %{public}d",
+            camera->GetID().c_str(), mode, OHOS_ABILITY_DEPTH_DATA_PROFILES);
+        ParseDepthCapability(mode, item);
+    } else {
+        MEDIA_INFO_LOG("Depth GetSupportedOutputCapability is not supported by device = %{public}s,"
+            "tag = %{public}d", camera->GetID().c_str(), OHOS_ABILITY_DEPTH_DATA_PROFILES);
+    }
 }
 
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera,
@@ -1527,6 +1652,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     photoProfiles_.clear();
     previewProfiles_.clear();
     vidProfiles_.clear();
+    depthProfiles_.clear();
 
     ParseCapability(camera, modeName, item, metadata);
 
@@ -1543,7 +1669,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         cameraOutputCapability->SetVideoProfiles(vidProfiles_);
     }
     MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", vidProfiles_.size());
-
+    cameraOutputCapability->SetDepthProfiles(depthProfiles_);
+    MEDIA_INFO_LOG("SetDepthProfiles size = %{public}zu", depthProfiles_.size());
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
     cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);

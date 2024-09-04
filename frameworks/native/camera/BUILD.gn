@@ -59,6 +59,8 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
@@ -90,6 +92,7 @@ ohos_shared_library("camera_framework") {
     "src/output/camera_photo_proxy.cpp",
     "src/output/capture_output.cpp",
     "src/output/deferred_photo_proxy.cpp",
+    "src/output/depth_data_output.cpp",
     "src/output/metadata_output.cpp",
     "src/output/photo_output.cpp",
     "src/output/preview_output.cpp",
@@ -172,6 +175,7 @@ ohos_shared_library("camera_framework") {
     "ipc:ipc_core",
     "media_library:media_library",
     "media_library:media_library_manager",
+    "napi:ace_napi",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
