@@ -138,6 +138,23 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     return error;
 }
 
+int32_t HStreamCaptureProxy::EnableRawDelivery(bool enabled)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(enabled);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy EnableRawDelivery failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamCaptureProxy::SetBufferProducerInfo(const std::string bufName,
     const sptr<OHOS::IBufferProducer> &producer)
 {

@@ -39,6 +39,8 @@ public:
 
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
 
+    int32_t EnableRawDelivery(bool enabled) override;
+
     int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
 
     int32_t DeferImageDeliveryFor(int32_t type) override;
@@ -46,7 +48,7 @@ public:
     int32_t IsDeferredPhotoEnabled() override;
 
     int32_t IsDeferredVideoEnabled() override;
-    
+
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
 
 private:

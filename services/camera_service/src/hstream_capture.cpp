@@ -51,6 +51,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
         "HStreamCapture::HStreamCapture construct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
         format, width, height, GetFwkStreamId());
     thumbnailSwitch_ = 0;
+    rawDeliverySwitch_ = 0;
     modeName_ = 0;
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
@@ -117,14 +118,19 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
+    } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+        if (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
+            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
+        } else {
+            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCBCR_420_SP; // NV12
+            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
+        }
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     }
-    if (format_ == OHOS_CAMERA_FORMAT_DNG) {
-        streamInfo.v1_0.encodeType_ =
-            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
+    if (rawDeliverySwitch_) {
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
-        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
             .type =
                 static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
@@ -147,15 +153,6 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
-    int32_t timelapseMode = static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO);
-    if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
-        if (GetMode() == timelapseMode) {
-            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
-        } else {
-            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCBCR_420_SP; // NV12
-            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
-        }
-    }
 }
 
 int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)
@@ -166,6 +163,16 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
     } else {
         thumbnailSwitch_ = 0;
         thumbnailBufferQueue_ = nullptr;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::EnableRawDelivery(bool enabled)
+{
+    if (enabled) {
+        rawDeliverySwitch_ = 1;
+    } else {
+        rawDeliverySwitch_ = 0;
     }
     return CAMERA_OK;
 }
@@ -733,6 +740,7 @@ void HStreamCapture::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
     infoDumper.Title("capture stream");
     infoDumper.Msg("ThumbnailSwitch:[" + std::to_string(thumbnailSwitch_) + "]");
+    infoDumper.Msg("RawDeliverSwitch:[" + std::to_string(rawDeliverySwitch_) + "]");
     if (thumbnailBufferQueue_) {
         infoDumper.Msg(
             "ThumbnailBuffer producer Id:[" + std::to_string(thumbnailBufferQueue_->producer_->GetUniqueId()) + "]");

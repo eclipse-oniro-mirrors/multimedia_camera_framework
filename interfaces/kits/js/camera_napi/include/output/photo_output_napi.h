@@ -294,6 +294,8 @@ public:
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableRawDelivery(napi_env env, napi_callback_info info);
+    static napi_value IsRawDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value DeferImageDeliveryFor(napi_env env, napi_callback_info info);
     static napi_value IsDeferredImageDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info);

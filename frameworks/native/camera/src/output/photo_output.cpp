@@ -489,6 +489,15 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
 }
 
+int32_t PhotoOutput::EnableRawDelivery(bool enabled)
+{
+    CAMERA_SYNC_TRACE;
+    auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput::EnableRawDelivery Failed to GetStream");
+    return streamCapturePtr->EnableRawDelivery(enabled);
+}
+
 int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)
 {
     CAMERA_SYNC_TRACE;
@@ -699,6 +708,19 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
         isQuickThumbnailEnabled = -1;
     }
     return isQuickThumbnailEnabled;
+}
+
+int32_t PhotoOutput::IsRawDeliverySupported()
+{
+    int32_t isRawDevliveryEnabled = -1;
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+        "PhotoOutput IsRawDeliverySupported error!, session is nullptr");
+    const int32_t professionalPhotoMode = 11;
+    if ((session->GetMode() == professionalPhotoMode)) {
+        isRawDevliveryEnabled = 1;
+    }
+    return isRawDevliveryEnabled;
 }
 
 int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)

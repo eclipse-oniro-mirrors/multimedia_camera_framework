@@ -49,6 +49,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL):
             errCode = HandleSetThumbnail(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY):
+            errCode = HandleEnableRawDelivery(data);
+            break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE):
             errCode = HandleEnableDeferredType(data);
             break;
@@ -98,6 +101,14 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamCaptureStub::HandleEnableRawDelivery(MessageParcel &data)
+{
+    bool enabled = data.ReadBool();
+    int32_t ret = EnableRawDelivery(enabled);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);
     return ret;
 }
 
