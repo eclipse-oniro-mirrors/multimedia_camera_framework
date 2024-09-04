@@ -288,6 +288,132 @@ void TestGetMetadata2()
     tlpSession->Release();
 }
 
+void Test2()
+{
+    CaptureSessionCallback callback(session);
+    callback.OnError(1);
+    auto s = manager->CreateCaptureSession(SceneMode::VIDEO);
+    s->BeginConfig();
+    auto cap = s->GetCameraOutputCapabilities(camera)[0];
+    auto vp = cap->GetVideoProfiles()[0];
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    auto vo = manager->CreateVideoOutput(vp, surface);
+    sptr<CaptureOutput> output = static_cast<CaptureOutput*>(vo.GetRefPtr());
+    s->AddOutput(output);
+    const int32_t N_30 = 30;
+    const int32_t N_60 = 60;
+    const int32_t N_200 = 200;
+    vo->SetFrameRateRange(N_30, N_30);
+    s->CanSetFrameRateRangeForOutput(N_30, N_30, output);
+    vo->SetFrameRateRange(N_30, N_60);
+    s->CanSetFrameRateRangeForOutput(N_30, N_60, output);
+    s->CanSetFrameRateRangeForOutput(1, N_200, output);
+
+    Profile p = cap->GetPreviewProfiles()[0];
+    output = manager->CreatePreviewOutput(p, Surface::CreateSurfaceAsConsumer());
+    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    s->AddOutput(output);
+    surface = Surface::CreateSurfaceAsConsumer();
+    output = manager->CreateVideoOutput(vp, surface);
+    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    s->AddOutput(output);
+    s->Release();
+
+    s = manager->CreateCaptureSession(SceneMode::CAPTURE);
+    s->BeginConfig();
+    sptr<IConsumerSurface> cs = IConsumerSurface::Create();
+    sptr<IBufferProducer> bp = cs->GetProducer();
+    p = cap->GetPhotoProfiles()[0];
+    output = manager->CreatePhotoOutput(p, bp);
+    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    s->AddOutput(output);
+
+    output = manager->CreateMetadataOutput();
+    s->AddOutput(output);
+    output = manager->CreateMetadataOutput();
+    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    s->AddOutput(output);
+    s->Release();
+}
+
+void Test3()
+{
+    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
+    input->Open();
+    auto s = manager->CreateCaptureSession(SceneMode::SECURE);
+    s->BeginConfig();
+    auto cap = manager->GetSupportedOutputCapability(camera, SceneMode::CAPTURE);
+    if (!cap->GetDepthProfiles().empty()) {
+        DepthProfile dp = cap->GetDepthProfiles()[0];
+        sptr<IConsumerSurface> cs = IConsumerSurface::Create();
+        sptr<IBufferProducer> bp = cs->GetProducer();
+        sptr<CaptureOutput> output = manager->CreateDepthDataOutput(dp, bp);
+        s->AddSecureOutput(output);
+    }
+    sptr<CaptureOutput> output = manager->CreateMetadataOutput();
+    s->AddOutput(output);
+    s->AddInput(input);
+    s->CommitConfig();
+    s->Start();
+    string deviceClass{"device/0"};
+    s->SetPreviewRotation(deviceClass);
+    uint32_t value = 1;
+    auto meta = s->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &value, 1);
+    s->GetActiveVideoStabilizationMode();
+    s->UnlockForControl();
+    s->SetExposureMode(ExposureMode::EXPOSURE_MODE_AUTO);
+    s->LockForControl();
+    s->SetExposureMode(ExposureMode::EXPOSURE_MODE_AUTO);
+    s->GetSupportedFlashModes();
+    vector<FlashMode> flashModes;
+    s->GetSupportedFlashModes(flashModes);
+    s->GetFlashMode();
+    FlashMode flashMode;
+    s->GetFlashMode(flashMode);
+    s->SetFlashMode(flashMode);
+    s->IsFlashModeSupported(flashMode);
+    bool supported;
+    s->IsFlashModeSupported(flashMode, supported);
+    s->HasFlash();
+    s->HasFlash(supported);
+    meta = camera->GetMetadata();
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &value, 0);
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_SCENE_ZOOM_CAP, &value, 1);
+    vector<float> zoomRatioRange;
+    s->GetZoomRatioRange(zoomRatioRange);
+    s->Stop();
+    s->Release();
+}
+
+void TestMetadataResultProcessor()
+{
+    auto s = manager->CreateCaptureSession(SceneMode::CAPTURE);
+    s->BeginConfig();
+    sptr<CaptureOutput> output = manager->CreateMetadataOutput();
+    s->AddOutput(output);
+    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
+    input->Open();
+    s->AddInput(input);
+    CaptureSession::CaptureSessionMetadataResultProcessor processor(s);
+    auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    uint64_t data = 1;
+    AddOrUpdateMetadata(metadata, OHOS_CONTROL_EXPOSURE_STATE, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_CONTROL_FOCUS_MODE, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_CONTROL_FOCUS_STATE, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_CAMERA_MACRO_STATUS, &data, 1);
+    AddOrUpdateMetadata(metadata, FEATURE_MOON_CAPTURE_BOOST, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_STATUS_MOON_CAPTURE_DETECTION, &data, 1);
+    AddOrUpdateMetadata(metadata, FEATURE_LOW_LIGHT_BOOST, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_STATUS_LOW_LIGHT_DETECTION, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_CAMERA_CUSTOM_SNAPSHOT_DURATION, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_CAMERA_EFFECT_SUGGESTION_TYPE, &data, 1);
+    AddOrUpdateMetadata(metadata, OHOS_STATUS_LCD_FLASH_STATUS, &data, 1);
+    processor.ProcessCallbacks(1, metadata);
+    s->Release();
+}
+
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
@@ -316,6 +442,9 @@ void Test(uint8_t *rawData, size_t size)
     TestGetMetadata();
     session->Release();
     TestGetMetadata2();
+    Test2();
+    Test3();
+    TestMetadataResultProcessor();
 }
 
 } // namespace StreamRepeatStubFuzzer

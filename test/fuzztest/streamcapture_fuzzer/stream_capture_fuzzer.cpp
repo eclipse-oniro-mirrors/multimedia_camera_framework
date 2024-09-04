@@ -34,7 +34,6 @@ const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 bool g_isStreamCapturePermission = false;
-HStreamCapture *fuzzStreamcapture = nullptr;
 void StreamCaptureFuzzTestGetPermission()
 {
     if (!g_isStreamCapturePermission) {
@@ -91,11 +90,11 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    if (fuzzStreamcapture == nullptr) {
-        fuzzStreamcapture = new(std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    }
+    sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    CHECK_ERROR_RETURN(streamcapture == nullptr);
     uint32_t code = 0;
-    fuzzStreamcapture->OnRemoteRequest(code, data, reply, option);
+    streamcapture->OnRemoteRequest(code, data, reply, option);
+    streamcapture->Release();
 }
 } // namespace CameraStandard
 } // namespace OHOS
