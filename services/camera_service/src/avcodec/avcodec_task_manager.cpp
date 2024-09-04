@@ -237,6 +237,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
         if (thisPtr->audioCapturerSession_) {
+            firstIDRFrameIndex = (firstIDRFrameIndex == -1 ? 0 : firstIDRFrameIndex);
             int64_t startTime = NanosecToMillisec(frameRecords[firstIDRFrameIndex]->GetTimeStamp());
             int64_t endTime = startTime + (int64_t)((frameRecords.size() - discardPCount) * VIDEO_FRAME_INTERVAL_MS);
             thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
