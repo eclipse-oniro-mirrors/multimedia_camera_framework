@@ -51,8 +51,8 @@ private:
 
 class CameraPrivacy : public RefBase {
 public:
-    explicit CameraPrivacy(wptr<HCameraDevice> device, uint32_t callingTokenId)
-        : callerToken_(callingTokenId), cameraDevice_(device) {}
+    explicit CameraPrivacy(wptr<HCameraDevice> device, uint32_t callingTokenId, int32_t pid)
+        : pid_(pid), callerToken_(callingTokenId), cameraDevice_(device) {}
     ~CameraPrivacy();
     void RegisterPermissionCallback();
     void UnregisterPermissionCallback();
@@ -62,6 +62,7 @@ public:
     bool IsAllowUsingCamera();
 
 private:
+    int32_t pid_;
     uint32_t callerToken_;
     wptr<HCameraDevice> cameraDevice_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
