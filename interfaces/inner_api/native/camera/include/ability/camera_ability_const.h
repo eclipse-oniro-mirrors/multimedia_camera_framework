@@ -120,6 +120,17 @@ extern const std::unordered_map<FlashMode, camera_flash_mode_enum_t> g_fwkFlashM
 extern const std::unordered_map<BeautyType, camera_beauty_type_t> g_fwkBeautyTypeMap_;
 extern const std::unordered_map<BeautyType, camera_device_metadata_tag_t> g_fwkBeautyAbilityMap_;
 
+template <typename S, typename T>
+void g_transformValidData(
+    const camera_metadata_item_t& item, const std::unordered_map<S, T>& map, std::vector<T>& validModes)
+{
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto it = map.find(static_cast<S>(item.data.u8[i]));
+        if (it != map.end()) {
+            validModes.emplace_back(it->second);
+        }
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
 #endif
