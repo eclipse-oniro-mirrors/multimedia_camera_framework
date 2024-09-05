@@ -132,6 +132,22 @@ public:
         cvFull_.notify_one();
         return el;
     }
+    std::optional<T> GetBackElement(int timeoutMs)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!isActive_) {
+            return std::nullopt;
+        }
+        if (que_.empty()) {
+            cvEmpty_.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+                [this] { return !isActive_ || !que_.empty(); });
+        }
+        if (!isActive_ || que_.empty()) {
+            return std::nullopt;
+        }
+        T el = que_.back();
+        return el;
+    }
     void Clear()
     {
         std::unique_lock<std::mutex> lock(mutex_);

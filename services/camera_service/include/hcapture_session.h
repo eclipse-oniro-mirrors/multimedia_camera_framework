@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "camera_util.h"
+#include "fixed_size_list.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
@@ -146,9 +147,11 @@ private:
 };
 
 class SessionDrainImageCallback;
+using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
 public:
-    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper);
+    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
+        shared_ptr<FixedSizeList<MetaElementType>> metaCache);
     ~MovingPhotoListener() override;
     void OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform) override;
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
@@ -159,11 +162,23 @@ public:
 
 private:
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
+    sptr<Surface> metaSurface_;
+    shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
     std::atomic<bool> isNeededClear_ { false };
     std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
+};
+
+class MovingPhotoMetaListener : public IBufferConsumerListener {
+public:
+    explicit MovingPhotoMetaListener(sptr<Surface> surface, shared_ptr<FixedSizeList<MetaElementType>> metaCache);
+    ~MovingPhotoMetaListener();
+    void OnBufferAvailable() override;
+private:
+    sptr<Surface> surface_;
+    shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
 };
 
 class SessionDrainImageCallback : public DrainImageCallback {
@@ -322,7 +337,9 @@ private:
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
     sptr<MovingPhotoListener> livephotoListener_;
+    sptr<MovingPhotoMetaListener> livephotoMetaListener_;
     sptr<AudioCapturerSession> audioCapturerSession_;
+    sptr<Surface> metaSurface_ = nullptr;
     sptr<MovingPhotoVideoCache> videoCache_;
     sptr<AvcodecTaskManager> taskManager_;
     std::mutex displayListenerLock_;

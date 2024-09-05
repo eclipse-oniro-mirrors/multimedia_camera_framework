@@ -81,9 +81,10 @@ void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
+    auto metaProducerSequenceable = metaProducer_ == nullptr ? nullptr : new BufferProducerSequenceable(metaProducer_);
     HDI::Camera::V1_1::ExtendedStreamInfo metaExtendedStreamInfo {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(4), .width = 0, .height = 0, .format = 0,
-        .dataspace = 0, .bufferQueue = nullptr
+        .dataspace = 0, .bufferQueue = metaProducerSequenceable
     };
     switch (repeatStreamType_) {
         case RepeatStreamType::LIVEPHOTO:

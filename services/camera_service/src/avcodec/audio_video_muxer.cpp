@@ -71,7 +71,15 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
     return 0;
 }
 
-int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
+int32_t AudioVideoMuxer::SetTimedMetadata()
+{
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    std::shared_ptr<Meta> param = std::make_shared<Meta>();
+    param->SetData("use_timed_meta_track", 1);
+    return muxer_->SetParameter(param);
+}
+
+int32_t AudioVideoMuxer::WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type)
 {
     CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
@@ -91,7 +99,7 @@ int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
-    ret = muxer_->WriteSample(trackId, sample->buffer_);
+    ret = muxer_->WriteSample(trackId, sample);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "WriteSampleBuffer failed, ret: %{public}d", ret);
     return 0;
 }
@@ -107,11 +115,11 @@ std::shared_ptr<Media::PhotoAssetProxy> AudioVideoMuxer::GetPhotoAssetProxy()
 }
 
 
-int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType type)
+int32_t AudioVideoMuxer::AddTrack(int &trackId, std::shared_ptr<Format> format, TrackType type)
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     CHECK_AND_RETURN_RET_LOG(format != nullptr, AV_ERR_INVALID_VAL, "input track format is nullptr!");
-    int32_t ret = muxer_->AddTrack(trackId, format->format_.GetMeta());
+    int32_t ret = muxer_->AddTrack(trackId, format->GetMeta());
     switch (type) {
         case TrackType::AUDIO_TRACK:
             audioTrackId_ = trackId;
@@ -125,7 +133,6 @@ int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType t
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
-    OH_AVFormat_Destroy(format);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK || trackId < 0, 1, "AddTrack failed, ret: %{public}d", ret);
     return 0;
 }
