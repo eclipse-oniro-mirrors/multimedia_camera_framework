@@ -34,9 +34,14 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     }
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    uint8_t* addr_ = static_cast<uint8_t *>(addr);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
-        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, addr_, bytes);
+        if (addr == MAP_FAILED) {
+            MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() mmap failed");
+            deferredPhotoProcSession_->GetCallback()->OnError(imageId, ERROR_IMAGE_PROC_FAILED);
+            return 0;
+        } else {
+            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes);
+        }
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
