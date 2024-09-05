@@ -2404,7 +2404,7 @@ int32_t CaptureSession::HasFlash(bool& hasFlash)
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     std::vector<FlashMode> supportedFlashModeList = GetSupportedFlashModes();
-    if (!supportedFlashModeList.empty()) {
+    if (!supportedFlashModeList.empty() && !(supportedFlashModeList.size() == 1 && supportedFlashModeList[0] == 0) {
         hasFlash = true;
     }
     return CameraErrorCode::SUCCESS;
