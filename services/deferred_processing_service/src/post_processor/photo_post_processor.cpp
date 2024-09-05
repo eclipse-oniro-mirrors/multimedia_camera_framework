@@ -175,9 +175,10 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
         "failed to initialize shared buffer.");
 
-    uint8_t* addr = static_cast<uint8_t*>(
-        mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle->fd, 0));
-    if (bufferPtr->CopyFrom(addr, dataSize) == DP_OK) {
+    auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle->fd, 0);
+    DP_CHECK_AND_RETURN_RET_LOG(addr != MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
+
+    if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
         DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
         std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
             isDegradedImage == 0);
@@ -339,8 +340,8 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     return picture;
 }
 
-int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(const std::string& imageId,
-    const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
+int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
+    const std::string& imageId, const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
     DP_INFO_LOG("entered");
     auto imageBufferHandle = buffer.imageHandle->GetBufferHandle();
@@ -370,9 +371,12 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(const std::st
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
         DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
             "failed to initialize shared buffer.");
-        uint8_t* addr = static_cast<uint8_t*>(
-            mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, imageBufferHandle->fd, 0));
-        if (bufferPtr->CopyFrom(addr, dataSize) == DP_OK) {
+
+        auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, imageBufferHandle->fd, 0);
+        DP_CHECK_AND_RETURN_RET_LOG(
+            addr != MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
+
+        if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
             DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
             std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
                 isDegradedImage == 0);

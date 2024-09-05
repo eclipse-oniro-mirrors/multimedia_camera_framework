@@ -156,6 +156,11 @@ void* DeferredPhotoProxy::GetFileDataAddr()
     if (!isMmaped_) {
         MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle_->fd, 0);
+        CHECK_ERROR_RETURN_RET_LOG(
+            fileDataAddr_ == MAP_FAILED, fileDataAddr_, "DeferredPhotoProxy::GetFileDataAddr mmap failed");
+        isMmaped_ = true;
+    } else {
+        MEDIA_ERR_LOG("DeferredPhotoProxy::GetFileDataAddr mmap failed");
     }
     return fileDataAddr_;
 }
