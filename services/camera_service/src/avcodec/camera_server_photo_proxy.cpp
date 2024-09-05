@@ -129,11 +129,13 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_ERROR_RETURN_RET_LOG(bufferHandle_ == nullptr, fileDataAddr_,
-        "PhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(
+        bufferHandle_ == nullptr, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
     if (!isMmaped_) {
         MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ, MAP_SHARED, bufferHandle_->fd, 0);
+        CHECK_ERROR_RETURN_RET_LOG(
+            fileDataAddr_ == MAP_FAILED, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr mmap failed");
         isMmaped_ = true;
     } else {
         MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap failed");
