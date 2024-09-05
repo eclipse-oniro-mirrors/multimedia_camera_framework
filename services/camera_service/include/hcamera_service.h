@@ -68,6 +68,11 @@ struct CameraMetaInfo {
         foldStatus(foldStatus), supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
+struct CameraStatusCallbacksInfo {
+    CameraStatus status;
+    string bundleName;
+};
+
 enum class CameraServiceStatus : int32_t {
     SERVICE_READY = 0,
     SERVICE_NOT_READY,
@@ -257,6 +262,7 @@ private:
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    map<string, CameraStatusCallbacksInfo> cameraStatusCallbacks_;
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;

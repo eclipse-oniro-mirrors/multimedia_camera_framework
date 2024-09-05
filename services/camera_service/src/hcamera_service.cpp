@@ -650,6 +650,7 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
             continue;
         }
         it.second->OnCameraStatusChanged(cameraId, status, bundleName);
+        cameraStatusCallbacks_[cameraId] = CameraStatusCallbacksInfo{status, bundleName};
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
             cameraId.c_str(), status));
     }
@@ -770,6 +771,9 @@ int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(make_pair(pid, callback));
+    for (auto it : cameraStatusCallbacks_) {
+        callback->OnCameraStatusChanged(it.first, it.second.status, it.second.bundleName);
+    }
     return CAMERA_OK;
 }
 
