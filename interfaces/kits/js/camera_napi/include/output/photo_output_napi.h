@@ -269,7 +269,7 @@ struct PhotoListenerInfo {
     std::string uri = "";
     int32_t cameraShotType = 0;
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
-    int64_t timestamp;
+    int64_t timestamp = 0;
 };
 
 struct RawPhotoListenerInfo {

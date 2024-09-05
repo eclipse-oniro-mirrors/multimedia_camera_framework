@@ -54,7 +54,7 @@ private:
     std::mutex contextMutex_;
     CodecUserData *context_ = nullptr;
     shared_ptr<Size> size_;
-    int32_t rotation_;
+    int32_t rotation_ = 0;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
