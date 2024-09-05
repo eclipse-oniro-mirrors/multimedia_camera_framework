@@ -54,7 +54,33 @@ void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWr
             surfaceWrapper->RecycleBuffer(videoBuffer_);
         }
         videoBuffer_ = nullptr;
-        MEDIA_INFO_LOG("release buffer end %{public}s", frameId_.c_str());
+        MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
+    }
+}
+
+void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
+{
+    std::unique_lock<std::mutex> lock(metaBufferMutex_);
+    sptr<SurfaceBuffer> buffer = nullptr;
+    if (status != STATUS_NONE && metaBuffer_) {
+        buffer = SurfaceBuffer::Create();
+        DeepCopyBuffer(buffer, metaBuffer_);
+    }
+    if (metaBuffer_) {
+        if (reuse) {
+            SurfaceError surfaceRet = surface->AttachBufferToQueue(metaBuffer_);
+            if (surfaceRet != SURFACE_ERROR_OK) {
+                MEDIA_ERR_LOG("Failed to attach meta buffer %{public}d", surfaceRet);
+                return;
+            }
+            surfaceRet = surface->ReleaseBuffer(metaBuffer_, -1);
+            if (surfaceRet != SURFACE_ERROR_OK) {
+                MEDIA_ERR_LOG("Failed to Release meta Buffer %{public}d", surfaceRet);
+                return;
+            }
+        }
+        metaBuffer_ = buffer;
+        MEDIA_DEBUG_LOG("release meta buffer end %{public}s", frameId_.c_str());
     }
 }
 
@@ -63,6 +89,29 @@ void FrameRecord::NotifyBufferRelease()
     MEDIA_DEBUG_LOG("notifyBufferRelease");
     status = STATUS_FINISH_ENCODE;
     canReleased_.notify_one();
+}
+
+void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
+{
+    BufferRequestConfig requestConfig = {
+        .width = surfaceBuffer->GetWidth(),
+        .height = surfaceBuffer->GetHeight(),
+        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .format = surfaceBuffer->GetFormat(),
+        .usage = surfaceBuffer->GetUsage(),
+        .timeout = 0,
+        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+    };
+    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
+    if (allocErrorCode != GSERROR_OK) {
+        MEDIA_ERR_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+        return;
+    }
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

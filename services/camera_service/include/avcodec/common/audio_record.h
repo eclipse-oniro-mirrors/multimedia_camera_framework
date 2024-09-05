@@ -15,7 +15,6 @@
 
 #ifndef CAMERA_FRAMEWORK_AUDIO_RECORD_H
 #define CAMERA_FRAMEWORK_AUDIO_RECORD_H
-#include <memory>
 #include <string>
 #include <condition_variable>
 #include "native_avcodec_base.h"
@@ -23,7 +22,6 @@
 #include <refbase.h>
 #include "camera_log.h"
 #include "sample_info.h"
-
 
 namespace OHOS {
 namespace CameraStandard {

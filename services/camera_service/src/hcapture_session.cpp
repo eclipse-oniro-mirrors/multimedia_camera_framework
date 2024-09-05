@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "avcodec_task_manager.h"
+#include "blocking_queue.h"
 #include "bundle_mgr_interface.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
@@ -68,6 +69,7 @@
 #include "parameters.h"
 #include "deferred_processing_service.h"
 #include "picture.h"
+#include "fixed_size_list.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -731,16 +733,16 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
                 continue;
             }
             auto producer = movingPhotoSurfaceWrapper->GetProducer();
-            if (producer == nullptr) {
-                MEDIA_ERR_LOG("HCaptureSession::ExpandMovingPhotoRepeatStream get producer fail.");
-                continue;
-            }
-            livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper);
-            if (livephotoListener_ == nullptr) {
-                MEDIA_ERR_LOG("failed to new livephotoListener_!");
-                continue;
-            }
+            metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
+            auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(3);
+            CHECK_AND_CONTINUE_LOG(producer != nullptr, "get producer fail.");
+            livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper,
+                metaSurface_, metaCache);
+            CHECK_AND_CONTINUE_LOG(livephotoListener_ != nullptr, "failed to new livephotoListener_!");
             movingPhotoSurfaceWrapper->SetSurfaceBufferListener(livephotoListener_);
+            livephotoMetaListener_ = new(std::nothrow) MovingPhotoMetaListener(metaSurface_, metaCache);
+            CHECK_AND_CONTINUE_LOG(livephotoMetaListener_ != nullptr, "failed to new livephotoMetaListener_!");
+            metaSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)livephotoMetaListener_);
             CreateMovingPhotoStreamRepeat(streamRepeat->format_, streamRepeat->width_, streamRepeat->height_, producer);
             std::lock_guard<std::mutex> streamLock(livePhotoStreamLock_);
             AddOutputStream(livePhotoStreamRepeat_);
@@ -773,6 +775,7 @@ int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
     CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
     MEDIA_DEBUG_LOG("para is:%{public}dx%{public}d,%{public}d", width, height, format);
     livePhotoStreamRepeat_ = streamRepeat;
+    streamRepeat->SetMetaProducer(metaSurface_->GetProducer());
     MEDIA_INFO_LOG("HCameraService::CreateLivePhotoStreamRepeat end");
     return CAMERA_OK;
 }
@@ -2141,14 +2144,20 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
     return totalOrderedStreams;
 }
 
-MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper)
-    : movingPhotoSurfaceWrapper_(surfaceWrapper), recorderBufferQueue_("videoBuffer", CACHE_FRAME_COUNT),
-    shutterTime_(0)
-{}
+MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
+    shared_ptr<FixedSizeList<MetaElementType>> metaCache)
+    : movingPhotoSurfaceWrapper_(surfaceWrapper),
+      metaSurface_(metaSurface),
+      metaCache_(metaCache),
+      recorderBufferQueue_("videoBuffer", CACHE_FRAME_COUNT)
+{
+    shutterTime_ = 0;
+}
 
 MovingPhotoListener::~MovingPhotoListener()
 {
     recorderBufferQueue_.SetActive(false);
+    metaCache_->clear();
     recorderBufferQueue_.Clear();
     MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
 }
@@ -2177,6 +2186,7 @@ void MovingPhotoListener::ClearCache(uint64_t timestamp)
         }
         recorderBufferQueue_.Pop();
         popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
+        popFrame->ReleaseMetaBuffer(metaSurface_, true);
     }
 }
 
@@ -2202,16 +2212,14 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         MEDIA_DEBUG_LOG("surface_ release surface buffer");
         sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
         popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
+        popFrame->ReleaseMetaBuffer(metaSurface_, true);
         MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
             popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
     }
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
-    if (frameRecord == nullptr) {
-        MEDIA_ERR_LOG("MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
-        return;
-    }
+    CHECK_AND_RETURN_LOG(frameRecord != nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
     if (isNeededClear_ && isNeededPop_) {
         if (timestamp < shutterTime_) {
             frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
@@ -2224,6 +2232,13 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         }
     }
     recorderBufferQueue_.Push(frameRecord);
+    auto metaPair = metaCache_->find_if([timestamp](const MetaElementType& value) {
+        return value.first == timestamp;
+    });
+    if (metaPair.has_value()) {
+        MEDIA_DEBUG_LOG("frame has meta");
+        frameRecord->SetMetaBuffer(metaPair.value().second);
+    }
     vector<sptr<SessionDrainImageCallback>> callbacks;
     callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
         sptr<DrainImageManager> manager) {
@@ -2254,6 +2269,40 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
         drainImageManager->DrainImage(frame);
     }
+}
+void MovingPhotoMetaListener::OnBufferAvailable()
+{
+    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
+    if (!surface_) {
+        MEDIA_ERR_LOG("streamRepeat surface is null");
+        return;
+    }
+    int64_t timestamp;
+    OHOS::Rect damage;
+    sptr<SurfaceBuffer> buffer;
+    sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+    SurfaceError surfaceRet = surface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("Failed to acquire meta surface buffer");
+        return;
+    }
+    surfaceRet = surface_->DetachBufferFromQueue(buffer);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("Failed to detach meta buffer. %{public}d", surfaceRet);
+        return;
+    }
+    metaCache_->add({timestamp, buffer});
+}
+
+MovingPhotoMetaListener::MovingPhotoMetaListener(sptr<Surface> surface,
+    shared_ptr<FixedSizeList<MetaElementType>> metaCache)
+    : surface_(surface), metaCache_(metaCache)
+{
+}
+
+MovingPhotoMetaListener::~MovingPhotoMetaListener()
+{
+    MEDIA_ERR_LOG("HStreamRepeat::MovingPhotoMetaListener ~ end");
 }
 } // namespace CameraStandard
 } // namespace OHOS

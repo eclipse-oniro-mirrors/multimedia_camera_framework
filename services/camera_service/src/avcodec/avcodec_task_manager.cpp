@@ -38,6 +38,7 @@
 #include "native_avbuffer_info.h"
 #include "native_buffer_inner.h"
 #include "sample_info.h"
+#include "native_mfmagic.h"
 
 namespace {
 using namespace std::string_literals;
@@ -135,9 +136,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         auto thisPtr = sptr<AvcodecTaskManager>(this);
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
             [thisPtr] { return !thisPtr->videoFdQueue_.empty(); });
-        if (!waitResult || videoFdQueue_.empty()) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!waitResult || videoFdQueue_.empty(), nullptr);
     }
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -146,34 +145,37 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     videoFdQueue_.pop();
     float coverTime = 0.0f;
     for (size_t index = 0; index < frameRecords.size(); index++) {
-        int64_t frameIdInt = std::stoll(frameRecords[index]->frameId_);
-        if (frameIdInt == timestamp) {
+        if (timestamp == frameRecords[index]->GetTimeStamp()) {
             MEDIA_INFO_LOG("CreateAVMuxer this frame is cover frame %{public}s", frameRecords[index]->frameId_.c_str());
             coverTime = index * VIDEO_FRAME_INTERVAL_MS;
         }
     }
     muxer->Create(format, photoAssetProxy);
-    OH_AVFormat *formatVideo = OH_AVFormat_Create();
-    MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
-    if (videoCodecType_ == VIDEO_ENCODE_TYPE_AVC) {
-        OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    } else if (videoCodecType_ == VIDEO_ENCODE_TYPE_HEVC) {
-        OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_HEVC);
-    }
     muxer->SetRotation(captureRotation);
     muxer->SetCoverTime(coverTime);
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
+    auto formatVideo = make_shared<Format>();
+    MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
+    formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
+        == VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
+    formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     int videoTrackId = -1;
     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
-    MEDIA_INFO_LOG("Succeed create videoTrackId %{public}d", videoTrackId);
-    OH_AVFormat* formatAudio = OH_AVFormat_Create();
-    OH_AVFormat_SetStringValue(formatAudio, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
-    OH_AVFormat_SetIntValue(formatAudio, OH_MD_KEY_AUD_SAMPLE_RATE, DEFAULT_SAMPLERATE);
-    OH_AVFormat_SetIntValue(formatAudio, OH_MD_KEY_AUD_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
+    auto formatAudio = make_shared<Format>();
+    formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
+    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, DEFAULT_SAMPLERATE);
+    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
     int audioTrackId = -1;
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
-    MEDIA_INFO_LOG("Succeed create audioTrackId %{public}d", audioTrackId);
+    int metaTrackId = -1;
+    auto formatMeta = make_shared<Format>();
+    formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, TIMED_METADATA_TRACK_MIMETYPE);
+    formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY, TIMED_METADATA_KEY);
+    formatMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
+    muxer->AddTrack(metaTrackId, formatMeta, META_TRACK);
+    MEDIA_INFO_LOG("CreateMuxer vId:%{public}d,aid:%{public}d,mid:%{public}d", videoTrackId, audioTrackId, metaTrackId);
+    muxer->SetTimedMetadata();
     muxer->Start();
     return muxer;
 }
@@ -209,7 +211,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     }
     GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation]() {
         CAMERA_SYNC_TRACE;
-        MEDIA_INFO_LOG("CreateAVMuxer with %{public}s", frameRecords.front()->GetFrameId().c_str());
+        MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu", frameRecords.size());
         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation);
         if (muxer == nullptr) {
             MEDIA_ERR_LOG("CreateAVMuxer failed");
@@ -227,12 +229,24 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             if (firstIDRFrameIndex == -1) {
                 firstIDRFrameIndex = index;
             }
-            OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
-            OH_AVBuffer* buffer = frameRecords[index]->encodedBuffer;
+            MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
+            OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
+            OH_AVBuffer *buffer = frameRecords[index]->encodedBuffer;
+            CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
             OH_AVBuffer_GetBufferAttr(buffer, &attr);
             attr.pts = index * VIDEO_FRAME_INTERVAL;
             OH_AVBuffer_SetBufferAttr(buffer, &attr);
-            muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
+            muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
+            sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
+            if (metaSurfaceBuffer) {
+                shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
+                metaAvBuffer->pts_ = attr.pts;
+                MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
+                    (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
+                muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
+            } else {
+                MEDIA_ERR_LOG("metaSurfaceBuffer is nullptr");
+            }
         }
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
@@ -260,6 +274,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
     for (size_t index = 0; index < maxFrameCount; index++) {
         OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
         OH_AVBuffer* buffer = audioRecordVec[index]->encodedBuffer;
+        CHECK_AND_CONTINUE_LOG(buffer != nullptr, "audio encodedBuffer is null");
         OH_AVBuffer_GetBufferAttr(buffer, &attr);
         attr.pts = static_cast<int64_t>(index * AUDIO_FRAME_INTERVAL);
         if (audioRecordVec.size() > 0) {
@@ -268,7 +283,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
             }
         }
         OH_AVBuffer_SetBufferAttr(buffer, &attr);
-        muxer->WriteSampleBuffer(buffer, AUDIO_TRACK);
+        muxer->WriteSampleBuffer(buffer->buffer_, AUDIO_TRACK);
     }
     MEDIA_INFO_LOG("CollectAudioBuffer finished");
 }
