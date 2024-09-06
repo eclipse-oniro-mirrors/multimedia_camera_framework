@@ -173,6 +173,8 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
     session->LockForControl();
     session->SetExposure(0);
     session->SetExposure(1);
+    const uint32_t MAX_UINT = 0xFFFFFFFF;
+    session->SetExposure(MAX_UINT);
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
     uint32_t exposure = data.ReadUint32();
@@ -336,6 +338,56 @@ void Test2()
     s->Release();
 }
 
+void Test31(sptr<CaptureSession> s)
+{
+    s->UnlockForControl();
+    bool supported = true;
+    set<camera_face_detect_mode_t> metadataObjectTypes{};
+    s->SetCaptureMetadataObjectTypes(metadataObjectTypes);
+    metadataObjectTypes.emplace(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
+    s->SetCaptureMetadataObjectTypes(metadataObjectTypes);
+    s->EnableFaceDetection(supported);
+    const float distance = 1.0f;
+    s->IsSessionStarted();
+    s->StartMovingPhotoCapture(supported, 0);
+    vector<WhiteBalanceMode> modes;
+    s->GetSupportedWhiteBalanceModes(modes);
+    s->IsWhiteBalanceModeSupported(WhiteBalanceMode::AWB_MODE_AUTO, supported);
+    s->LockForControl();
+    s->SetFocusDistance(distance);
+    
+    s->EnableLowLightDetection(supported);
+    s->EnableMovingPhoto(supported);
+    s->SetSensorSensitivity(1);
+    s->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_AUTO);
+    WhiteBalanceMode mode;
+    s->GetWhiteBalanceMode(mode);
+    vector<int32_t> whiteBalanceRange;
+    s->GetManualWhiteBalanceRange(whiteBalanceRange);
+    s->IsManualWhiteBalanceSupported(supported);
+    int32_t wbValue;
+    s->GetManualWhiteBalance(wbValue);
+    s->SetManualWhiteBalance(wbValue);
+    vector<std::vector<float>> supportedPhysicalApertures;
+    s->GetSupportedPhysicalApertures(supportedPhysicalApertures);
+    vector<float> apertures;
+    s->GetSupportedVirtualApertures(apertures);
+    s->GetSupportedPortraitEffects();
+    float aperture;
+    s->GetVirtualAperture(aperture);
+    s->SetVirtualAperture(aperture);
+    s->GetPhysicalAperture(aperture);
+    s->SetPhysicalAperture(aperture);
+    s->IsLcdFlashSupported();
+    s->EnableLcdFlash(supported);
+    s->EnableLcdFlashDetection(supported);
+    auto callback = s->GetLcdFlashStatusCallback();
+    s->SetLcdFlashStatusCallback(callback);
+    s->IsTripodDetectionSupported();
+    s->EnableTripodStabilization(supported);
+    s->EnableTripodDetection(supported);
+}
+
 void Test3()
 {
     sptr<CaptureInput> input = manager->CreateCameraInput(camera);
@@ -382,6 +434,7 @@ void Test3()
     AddOrUpdateMetadata(meta, OHOS_ABILITY_SCENE_ZOOM_CAP, &value, 1);
     vector<float> zoomRatioRange;
     s->GetZoomRatioRange(zoomRatioRange);
+    Test31(s);
     s->Stop();
     s->Release();
 }
