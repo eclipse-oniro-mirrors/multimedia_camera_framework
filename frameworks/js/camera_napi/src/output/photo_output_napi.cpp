@@ -680,7 +680,7 @@ void PhotoListener::AssembleAuxiliaryPhoto()
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
         auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
-        if (location) {
+        if (location && photoOutput->photoProxy_) {
             photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
         }
         std::string orientation = "";
@@ -689,8 +689,8 @@ void PhotoListener::AssembleAuxiliaryPhoto()
             photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
             orientation = GetExifOrientation(
                 reinterpret_cast<OHOS::Media::ImageMetadata*>(photoOutput->picture_->GetExifMetadata().get()));
+            RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
         }
-        RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
         if (photoOutput->gainmapSurfaceBuffer_ && photoOutput->picture_) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);
