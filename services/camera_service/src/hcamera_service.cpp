@@ -1700,6 +1700,13 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t enableValue = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &enableValue, count);
     }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CAMERA_USER_ID, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t enableValue = item.data.i32[0];
+        defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
+    }
+
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_MOVING_PHOTO, &item);
     if (ret == CAM_META_SUCCESS) {
         uint8_t enableValue = item.data.u8[0];
