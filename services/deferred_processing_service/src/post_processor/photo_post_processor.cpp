@@ -311,11 +311,14 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     DP_CHECK_AND_RETURN_RET_LOG(imageBuffer != nullptr, nullptr, "bufferHandle is nullptr.");
     std::string orientation = "";
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
+    DP_CHECK_AND_RETURN_RET_LOG(picture != nullptr, nullptr, "picture is nullptr.");
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
         extraData->ExtraSet("exifDataSize", exifDataSize);
-        exifBuffer->SetExtraData(extraData);
+        if (exifBuffer) {
+            exifBuffer->SetExtraData(extraData);
+        }
         picture->SetExifMetadata(exifBuffer);
         orientation = GetExifOrientation(
             reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
@@ -324,14 +327,18 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     if (buffer.isGainMapValid) {
         auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
             Media::AuxiliaryPictureType::GAINMAP);
-        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
+        if (auxiliaryPicture) {
+            RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
     }
     if (buffer.isDepthMapValid) {
         auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
             Media::AuxiliaryPictureType::DEPTH_MAP);
-        RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
-        picture->SetAuxiliaryPicture(auxiliaryPicture);
+        if (auxiliaryPicture) {
+            RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
     }
     if (buffer.isMakerInfoValid) {
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
