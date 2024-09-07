@@ -1745,6 +1745,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         defaultSettings->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &enableValue, count);
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CAMERA_USER_ID, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t enableValue = item.data.i32[0];
+        defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
+    }
+
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
     return defaultSettings;
