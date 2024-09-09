@@ -763,7 +763,9 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     }
     if (output != nullptr) {
         sptr<VideoOutput> videoOutput = static_cast<VideoOutput*>(output.GetRefPtr());
-        videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]);
+        if (videoOutput) {
+            videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]);
+        }
     }
     SetGuessMode(SceneMode::VIDEO);
     return CameraErrorCode::SUCCESS;
