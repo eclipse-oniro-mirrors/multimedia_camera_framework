@@ -74,12 +74,12 @@ static napi_value Export(napi_env env, napi_value exports)
     PhotoSessionForSysNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     VideoSessionForSysNapi::Init(env, exports);
-    PhotoAbilityNapi::Init(env, exports);
-    VideoAbilityNapi::Init(env, exports);
-    PortraitPhotoAbilityNapi::Init(env, exports);
-    PhotoConflictAbilityNapi::Init(env, exports);
-    VideoConflictAbilityNapi::Init(env, exports);
-    PortraitPhotoConflictAbilityNapi::Init(env, exports);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_CONFLICT_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_CONFLICT_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS);
     SlowMotionSessionNapi::Init(env, exports);
     MacroPhotoSessionNapi::Init(env, exports);
     MacroVideoSessionNapi::Init(env, exports);

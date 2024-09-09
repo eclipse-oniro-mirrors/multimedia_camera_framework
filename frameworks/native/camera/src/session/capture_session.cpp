@@ -5101,7 +5101,8 @@ bool CaptureSession::IsLcdFlashSupported()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false, "IsLcdFlashSupported Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), false,
+        "IsLcdFlashSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
         "IsLcdFlashSupported camera device is null");

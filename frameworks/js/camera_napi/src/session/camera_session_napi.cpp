@@ -73,6 +73,18 @@ thread_local napi_ref CameraSessionNapi::sConstructor_ = nullptr;
 thread_local sptr<CaptureSession> CameraSessionNapi::sCameraSession_ = nullptr;
 thread_local uint32_t CameraSessionNapi::cameraSessionTaskId = CAMERA_SESSION_TASKID;
 
+const std::map<SceneMode, FunctionsType> CameraSessionNapi::modeToFunctionTypeMap_ = {
+    {SceneMode::CAPTURE, FunctionsType::PHOTO_FUNCTIONS},
+    {SceneMode::VIDEO, FunctionsType::VIDEO_FUNCTIONS},
+    {SceneMode::PORTRAIT, FunctionsType::PORTRAIT_PHOTO_FUNCTIONS}
+};
+
+const std::map<SceneMode, FunctionsType> CameraSessionNapi::modeToConflictFunctionTypeMap_ = {
+    {SceneMode::CAPTURE, FunctionsType::PHOTO_CONFLICT_FUNCTIONS},
+    {SceneMode::VIDEO, FunctionsType::VIDEO_CONFLICT_FUNCTIONS},
+    {SceneMode::PORTRAIT, FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS}
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_props = {
     DECLARE_NAPI_FUNCTION("beginConfig", CameraSessionNapi::BeginConfig),
     DECLARE_NAPI_FUNCTION("commitConfig", CameraSessionNapi::CommitConfig),
@@ -3215,10 +3227,16 @@ napi_value CameraSessionNapi::GetSessionFunctions(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("napi_unwrap failure!");
         return nullptr;
     }
-    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionFunctions(
-        previewProfiles, photoProfiles, videoProfiles);
-    result = CreateAbilitiesJSArray(env, mode, cameraAbilityList, false);
+
+    auto session = cameraSessionNapi->cameraSession_;
+    SceneMode mode = session->GetMode();
+    auto cameraFunctionsList = session->GetSessionFunctions(previewProfiles, photoProfiles, videoProfiles);
+    auto it = modeToFunctionTypeMap_.find(mode);
+    if (it != modeToFunctionTypeMap_.end()) {
+        result = CreateFunctionsJSArray(env, cameraFunctionsList, it->second);
+    } else {
+        MEDIA_ERR_LOG("GetSessionFunctions failed due to unsupported mode: %{public}d", mode);
+    }
     return result;
 }
 
@@ -3241,56 +3259,47 @@ napi_value CameraSessionNapi::GetSessionConflictFunctions(napi_env env, napi_cal
         MEDIA_ERR_LOG("napi_unwrap failure!");
         return nullptr;
     }
-    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictFunctions();
-    result = CreateAbilitiesJSArray(env, mode, conflictAbilityList, true);
+
+    auto session = cameraSessionNapi->cameraSession_;
+    SceneMode mode = session->GetMode();
+    auto conflictFunctionsList = session->GetSessionConflictFunctions();
+    auto it = modeToConflictFunctionTypeMap_.find(mode);
+    if (it != modeToConflictFunctionTypeMap_.end()) {
+        result = CreateFunctionsJSArray(env, conflictFunctionsList, it->second);
+    } else {
+        MEDIA_ERR_LOG("GetSessionConflictFunctions failed due to unsupported mode: %{public}d", mode);
+    }
     return result;
 }
 
-napi_value CameraSessionNapi::CreateAbilitiesJSArray(
-    napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict)
+napi_value CameraSessionNapi::CreateFunctionsJSArray(
+    napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type)
 {
-    MEDIA_DEBUG_LOG("create conflict ability is called");
-    napi_value abilityArray = nullptr;
-    napi_value ability = nullptr;
+    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    napi_value functionsArray = nullptr;
+    napi_value functions = nullptr;
     napi_status status;
 
-    if (abilityList.empty()) {
-        MEDIA_ERR_LOG("abilityArray is empty");
+    if (functionsList.empty()) {
+        MEDIA_ERR_LOG("functionsList is empty");
     }
 
-    status = napi_create_array(env, &abilityArray);
+    status = napi_create_array(env, &functionsArray);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("napi_create_array failed");
-        return abilityArray;
-    }
-
-    using CreateFunc = std::function<napi_value(napi_env, sptr<CameraAbility>)>;
-    CreateFunc createFunc;
-    if (mode == SceneMode::PORTRAIT) {
-        createFunc = isConflict ? PortraitPhotoConflictAbilityNapi::CreatePortraitPhotoConflictAbility
-                                : PortraitPhotoAbilityNapi::CreatePortraitPhotoAbility;
-    } else if (mode == SceneMode::CAPTURE) {
-        createFunc = isConflict ? PhotoConflictAbilityNapi::CreatePhotoConflictAbility
-                                : PhotoAbilityNapi::CreatePhotoAbility;
-    } else if (mode == SceneMode::VIDEO) {
-        createFunc = isConflict ? VideoConflictAbilityNapi::CreateVideoConflictAbility
-                                : VideoAbilityNapi::CreateVideoAbility;
-    } else {
-        MEDIA_ERR_LOG("mode: %{public}d not suppport", static_cast<int32_t>(mode));
-        return nullptr;
+        return functionsArray;
     }
 
     size_t j = 0;
-    for (size_t i = 0; i < abilityList.size(); i++) {
-        ability = createFunc(env, abilityList[i]);
-        if ((ability == nullptr) || napi_set_element(env, abilityArray, j++, ability) != napi_ok) {
-            MEDIA_ERR_LOG("failed to create conflict ability object napi wrapper object");
+    for (size_t i = 0; i < functionsList.size(); i++) {
+        functions = CameraFunctionsNapi::CreateCameraFunctions(env, functionsList[i], type);
+        if ((functions == nullptr) || napi_set_element(env, functionsArray, j++, functions) != napi_ok) {
+            MEDIA_ERR_LOG("failed to create functions object napi wrapper object");
             return nullptr;
         }
     }
-    MEDIA_INFO_LOG("create conflict ability count = %{public}zu", j);
-    return abilityArray;
+    MEDIA_INFO_LOG("create functions count = %{public}zu", j);
+    return functionsArray;
 }
 
 napi_value CameraSessionNapi::IsEffectSuggestionSupported(napi_env env, napi_callback_info info)
