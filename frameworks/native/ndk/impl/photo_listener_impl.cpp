@@ -196,7 +196,10 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
         uri, cameraShotType, burstKey, timestamp);
     CHECK_AND_RETURN_LOG(!uri.empty(), "uri is empty");
 
-    auto mediaAsset = Media::MediaAssetHelper::GetInstance()->GetMediaAsset(uri, cameraShotType, burstKey);
+    auto mediaAssetHelper = Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
+    CHECK_AND_RETURN_LOG(mediaAssetHelper != nullptr, "create media asset helper failed");
+
+    auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
     CHECK_AND_RETURN_LOG(mediaAsset != nullptr, "Create photo asset failed");
 
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {
