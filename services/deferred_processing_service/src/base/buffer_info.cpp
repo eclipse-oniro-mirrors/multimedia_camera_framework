@@ -22,10 +22,12 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-BufferInfo::BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality)
+BufferInfo::BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
+    bool isCloudImageEnhanceSupported)
     : sharedBuffer_(sharedBuffer),
       dataSize_(dataSize),
-      isHighQuality_(isHighQuality)
+      isHighQuality_(isHighQuality),
+      isCloudImageEnhanceSupported_(isCloudImageEnhanceSupported)
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -51,6 +53,11 @@ int32_t BufferInfo::GetDataSize()
 bool BufferInfo::IsHighQuality()
 {
     return isHighQuality_;
+}
+
+bool BufferInfo::IsCloudImageEnhanceSupported()
+{
+    return isCloudImageEnhanceSupported_;
 }
 
 BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality)

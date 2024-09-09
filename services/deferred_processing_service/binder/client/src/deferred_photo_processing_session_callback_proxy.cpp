@@ -25,7 +25,7 @@ DeferredPhotoProcessingSessionCallbackProxy::DeferredPhotoProcessingSessionCallb
     : IRemoteProxy<IDeferredPhotoProcessingSessionCallback>(impl) { }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const std::string &imageId,
-    sptr<IPCFileDescriptor> ipcFd, long bytes)
+    sptr<IPCFileDescriptor> ipcFd, long bytes, bool isCloudEnhancementAvailable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -35,6 +35,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
     data.WriteString(imageId);
     data.WriteObject<IPCFileDescriptor>(ipcFd);
     data.WriteInt64(bytes);
+    data.WriteBool(isCloudEnhancementAvailable);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_IMAGE_DONE),

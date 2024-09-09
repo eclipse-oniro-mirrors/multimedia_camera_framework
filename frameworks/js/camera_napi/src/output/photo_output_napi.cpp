@@ -1577,7 +1577,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isAutoHighQualityPhotoSupported", IsAutoHighQualityPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto),
         DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
-        DECLARE_NAPI_FUNCTION("getPhotoRotation", GetPhotoRotation)
+        DECLARE_NAPI_FUNCTION("getPhotoRotation", GetPhotoRotation),
+        DECLARE_NAPI_FUNCTION("isAutoCloudImageEnhanceSupported", IsAutoCloudImageEnhanceSupported),
+        DECLARE_NAPI_FUNCTION("enableAutoCloudImageEnhance", EnableAutoCloudImageEnhance)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2797,6 +2799,68 @@ napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callba
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoHighQualityPhoto(isEnable);
     if (CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsAutoCloudImageEnhanceSupported(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoCloudImageEnhanceSupported is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoCloudImageEnhanceSupported is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoCloudImageEnhanceSupported parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoCloudImageEnhanceSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+
+    bool isAutoCloudImageEnhanceSupported = false;
+    int32_t retCode = photoOutputNapi->photoOutput_->IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+    if (retCode == 0 && isAutoCloudImageEnhanceSupported != false) {
+        napi_get_boolean(env, true, &result);
+        return result;
+    }
+    MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoCloudImageEnhanceSupported is not supported");
+    napi_get_boolean(env, false, &result);
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableAutoCloudImageEnhance(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoCloudImageEnhance is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhance is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhance parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhance get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoCloudImageEnhance(isEnable);
+    if (CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhance fail %{public}d", retCode);
     }
     return result;
 }

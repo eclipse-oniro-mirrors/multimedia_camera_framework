@@ -4379,6 +4379,33 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
     return res;
 }
 
+int32_t CaptureSession::EnableAutoCloudImageEnhance(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoCloudImageEnhance enabled:%{public}d", enabled);
+
+    LockForControl();
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, INVALID_ARGUMENT,
+        "CaptureSession::EnableAutoCloudImageEnhance changedMetadata_ is NULL");
+
+    int32_t res = CameraErrorCode::SUCCESS;
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t enableAutoCloudImageEnhance = static_cast<uint8_t>(enabled);
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableAutoCloudImageEnhance Failed to set type!");
+        res = INVALID_ARGUMENT;
+    }
+    UnlockForControl();
+    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoCloudImageEnhance Failed");
+    return res;
+}
+
 void CaptureSession::ExecuteAbilityChangeCallback() __attribute__((no_sanitize("cfi")))
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
