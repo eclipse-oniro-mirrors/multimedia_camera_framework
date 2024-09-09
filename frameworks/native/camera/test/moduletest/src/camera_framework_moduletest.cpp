@@ -160,6 +160,7 @@ class AppCallback : public CameraManagerCallback,
                     public MacroStatusCallback,
                     public FeatureDetectionStatusCallback,
                     public FoldListener,
+                    public LcdFlashStatusCallback,
                     public BrightnessStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
@@ -397,6 +398,10 @@ public:
     {
         MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
         return;
+    }
+    void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
     }
 };
 
@@ -12692,6 +12697,146 @@ HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test lcd flash
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test lcd flash
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_lcd_flash01, TestSize.Level0)
+{
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session_, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isSupported = session_->IsLcdFlashSupported();
+    EXPECT_EQ(isSupported, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test lcd flash
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test lcd flash
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_lcd_flash02, TestSize.Level0)
+{
+    if (session_) {
+        session_->Release();
+        session_.clear();
+        input_->Close();
+    }
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session_, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    input_ = manager_->CreateCameraInput(cameras_[1]);
+    ASSERT_NE(input_, nullptr);
+    EXPECT_EQ(input_->Open(), 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isSupported = session_->IsLcdFlashSupported();
+    EXPECT_EQ(isSupported, true);
+
+    if (isSupported) {
+        session_->SetLcdFlashStatusCallback(std::make_shared<AppCallback>());
+        session_->LockForControl();
+        intResult = session_->EnableLcdFlashDetection(true);
+        session_->UnlockForControl();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test tripod
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test tripod
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_tripod_01, TestSize.Level0)
+{
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session_, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isSupported = session_->IsTripodDetectionSupported();
+    EXPECT_EQ(isSupported, true);
+
+    if (isSupported) {
+        session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+        session_->EnableFeature(FEATURE_TRIPOD_DETECTION, true);
+        EXPECT_EQ(intResult, 0);
+    }
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
