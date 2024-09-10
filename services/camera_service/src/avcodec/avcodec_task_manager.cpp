@@ -301,7 +301,10 @@ void AvcodecTaskManager::Release()
     }
     unique_lock<mutex> lock(videoFdMutex_);
     while (!videoFdQueue_.empty()) {
+        int32_t fd = videoFdQueue_.front().first;
         PhotoAssetIntf* photoAssetProxy = videoFdQueue_.front().second;
+        MEDIA_INFO_LOG("close with videoFd: %{public}d", fd);
+        close(fd);
         if (photoAssetProxy) {
             delete photoAssetProxy;
         }

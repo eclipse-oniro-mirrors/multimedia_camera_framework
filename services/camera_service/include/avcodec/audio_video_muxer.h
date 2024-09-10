@@ -24,8 +24,8 @@
 #include <cstdint>
 #include <refbase.h>
 #include "avmuxer.h"
-#include "media_library/photo_asset_interface.h"
 #include "media_description.h"
+#include "media_library/photo_asset_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {

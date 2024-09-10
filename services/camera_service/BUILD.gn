@@ -135,7 +135,6 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "${multimedia_media_library_path}/interfaces/inner_api/media_library_helper/include",
   ]
 
   if (target_cpu == "arm") {
@@ -191,6 +190,7 @@ ohos_shared_library("camera_service") {
     "ipc:ipc_single",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
+    "media_library:media_library",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
@@ -267,6 +267,7 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_single",
     "media_library:media_library",

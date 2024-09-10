@@ -72,6 +72,7 @@
 #include "picture.h"
 #include "camera_timer.h"
 #include "fixed_size_list.h"
+#include "camera_timer.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -354,7 +355,6 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
         captureStream->SetColorSpace(currCaptureColorSpace_);
-        isNeedMediaLib = true;
         HCaptureSession::OpenMediaLib();
     } else {
         stream->SetColorSpace(currColorSpace_);
@@ -366,7 +366,6 @@ void HCaptureSession::OpenMediaLib()
 {
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
     if (closeTimerId_.has_value()) {
-        MEDIA_INFO_LOG("cancel closeDynamicHandle task id: %{public}d", closeTimerId_.value());
         CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
         closeTimerId_.reset();
     }
@@ -599,10 +598,8 @@ void HCaptureSession::DelayCloseMediaLib()
     constexpr uint32_t waitMs = 30 * 1000;
     if (!closeTimerId_.has_value()) {
         closeTimerId_ = CameraTimer::GetInstance()->Register([]() {
-            CHECK_ERROR_RETURN_LOG(IsExistSessionsNeedMediaLib(), "exist session need media lib, directly return");
             dynamicLoader_->CloseDynamicHandle(MEDIA_LIB_SO);
         }, waitMs, true);
-        MEDIA_INFO_LOG("create closeDynamicHandle task id: %{public}d", closeTimerId_.value());
     }
 }
 
@@ -624,7 +621,6 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         }
         if (streamType == StreamType::CAPTURE) {
             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
-            isNeedMediaLib = false;
             HCaptureSession::DelayCloseMediaLib();
         } else if (streamType == StreamType::REPEAT) {
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
@@ -1475,7 +1471,6 @@ void HCaptureSession::ReleaseStreams()
     if ((cameraDevice != nullptr) && !hdiStreamIds.empty()) {
         cameraDevice->ReleaseStreams(hdiStreamIds);
     }
-    isNeedMediaLib = false;
     HCaptureSession::DelayCloseMediaLib();
 }
 
@@ -1531,6 +1526,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             taskManager_->ClearTaskResource();
             taskManager_ = nullptr;
         }
+        HCaptureSession::DelayCloseMediaLib();
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
     return errorCode;
@@ -1824,13 +1820,23 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
 
 typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t);
 
-void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy,
-    int32_t &cameraShotType, bool &isBursting, std::string &burstKey)
+int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
+    CAMERA_SYNC_TRACE;
+    constexpr int32_t movingPhotoShotType = 2;
+    constexpr int32_t imageShotType = 0;
+    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
+    MessageParcel data;
+    photoProxy->WriteToParcel(data);
+    photoProxy->CameraFreeBufferHandle();
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->ReadFromParcel(data);
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     cameraPhotoProxy->SetShootingMode(opMode_);
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     std::string imageId = cameraPhotoProxy->GetPhotoId();
-    isBursting = false;
+    bool isBursting = false;
     bool isCoverPhoto = false;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
@@ -1852,25 +1858,8 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
             break;
         }
     }
-    MEDIA_INFO_LOG("GetLocation latitude:%{private}f, quality:%{public}d, format:%{public}d,",
+    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, quality:%{public}d, format:%{public}d,",
         cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
-}
-
-int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
-{
-    CAMERA_SYNC_TRACE;
-    constexpr int32_t movingPhotoShotType = 2;
-    constexpr int32_t imageShotType = 0;
-    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
-    MessageParcel data;
-    photoProxy->WriteToParcel(data);
-    photoProxy->CameraFreeBufferHandle();
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    cameraPhotoProxy->ReadFromParcel(data);
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
-    bool isBursting = false;
-    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)dynamicLoader_->GetFuntion(
         MEDIA_LIB_SO, "createPhotoAssetIntf");
     PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
@@ -1883,63 +1872,6 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         delete photoAssetProxy;
     }
     return CAMERA_OK;
-}
-
-std::unordered_map<std::string, float> exifOrientationDegree = {
-    {"Top-left", 0},
-    {"Top-right", 90},
-    {"Bottom-right", 180},
-    {"Right-top", 90},
-    {"Left-bottom", 270},
-};
-
-inline float TransExifOrientationToDegree(const std::string& orientation)
-{
-    float degree = .0;
-    if (exifOrientationDegree.count(orientation)) {
-        degree = exifOrientationDegree[orientation];
-    }
-    return degree;
-}
-
-inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
-{
-    float degree = TransExifOrientationToDegree(exifOrientation);
-    if (pixelMap) {
-        MEDIA_INFO_LOG("RotatePicture degree is %{public}f", degree);
-        pixelMap->rotate(degree);
-    } else {
-        MEDIA_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
-    }
-}
-
-std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
-{
-    std::string orientation = "";
-    if (exifData != nullptr) {
-        exifData->GetValue("Orientation", orientation);
-        std::string defalutExifOrientation = "1";
-        exifData->SetValue("Orientation", defalutExifOrientation);
-        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
-    } else {
-        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
-    }
-    return orientation;
-}
-
-void RotatePicture(std::shared_ptr<Media::Picture> picture)
-{
-    std::string orientation = GetAndSetExifOrientation(
-        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
-    RotatePixelMap(picture->GetMainPixel(), orientation);
-    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
-    if (gainMap) {
-        RotatePixelMap(gainMap->GetContentPixel(), orientation);
-    }
-    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
-    if (depthMap) {
-        RotatePixelMap(depthMap->GetContentPixel(), orientation);
-    }
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
@@ -1956,12 +1888,17 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     PhotoFormat photoFormat = cameraPhotoProxy->GetFormat();
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
-    bool isBursting = false;
-    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    cameraPhotoProxy->SetShootingMode(opMode_);
+    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
+        cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetLongitude());
+
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)dynamicLoader_->GetFuntion(
         MEDIA_LIB_SO, "createPhotoAssetIntf");
     PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+    std::shared_ptr<Media::Picture> picturePtr(picture.release());
+    DeferredProcessing::DeferredProcessingService::GetInstance().
+        NotifyLowQualityImage(photoAssetProxy->GetUserId(), cameraPhotoProxy->GetPhotoId(), picturePtr);
     uri = photoAssetProxy->GetPhotoAssetUri();
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
     if (!isBursting && picturePtr) {

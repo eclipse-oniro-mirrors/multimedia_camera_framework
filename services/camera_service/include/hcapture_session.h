@@ -30,6 +30,7 @@
 #include "camera_util.h"
 #include "camera_dynamic_loader.h"
 #include "fixed_size_list.h"
+#include "camera_dynamic_loader.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
@@ -274,7 +275,6 @@ public:
     static shared_ptr<CameraDynamicLoader> dynamicLoader_;
     static std::optional<uint32_t> closeTimerId_;
     static std::mutex g_mediaTaskLock_;
-    std::atomic<bool> isNeedMediaLib = false;
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
