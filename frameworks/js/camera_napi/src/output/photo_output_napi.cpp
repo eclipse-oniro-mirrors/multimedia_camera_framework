@@ -201,8 +201,17 @@ AuxiliaryPhotoListener::AuxiliaryPhotoListener(const std::string surfaceName, co
 int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
 {
     int32_t captureId;
+    int32_t burstSeqId;
+    int32_t invalidSeqenceId = -1;
+    int32_t captureIdMask = 0x0000FFFF;
+    int32_t captureIdShit = 16;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
-    MEDIA_INFO_LOG("PhotoListener captureId:%{public}d", captureId);
+    if (burstSeqId != invalidSeqenceId) {
+        burstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
+        MEDIA_INFO_LOG("PhotoListener burstSeqId captureId:%{public}d", burstSeqId);
+        return burstSeqId;
+    }
     return captureId;
 }
 
@@ -348,7 +357,7 @@ void AuxiliaryPhotoListener::ExecuteDeepyCopySurfaceBuffer()
             surfaceName_.c_str(), captureId);
         if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
             photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
-            uint32_t handle = photoOutput->GetAuxiliaryPhotoHandle();
+            uint32_t handle = photoOutput->caputreIdHandleMap_[captureId];
             MEDIA_INFO_LOG("AuxiliaryPhotoListener StopMonitor, surfaceName=%{public}s, handle = %{public}d, "
                            "captureId = %{public}d",
                 surfaceName_.c_str(), handle, captureId);
@@ -430,17 +439,6 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     return photoProxy;
 }
 
-inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
-{
-    float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
-    if (pixelMap) {
-        MEDIA_INFO_LOG("RotatePicture degree is %{public}f", degree);
-        pixelMap->rotate(degree);
-    } else {
-        MEDIA_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
-    }
-}
-
 void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
 {
     auto photoOutput = photoOutput_.promote();
@@ -489,27 +487,29 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
         }
         photoProxy->bufferHandle_ = bufferHandle;
         std::unique_ptr<Media::Picture> picture = Media::Picture::Create(newSurfaceBuffer);
-        Media::ImageInfo imageInfo;
-        picture->GetMainPixel()->GetImageInfo(imageInfo);
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetMainPixel w=%{public}d, h=%{public}d, f=%{public}d",
-            imageInfo.size.width, imageInfo.size.height, imageInfo.pixelFormat);
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
-            newSurfaceBuffer->GetWidth(), newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat());
         if (!picture) {
             MEDIA_ERR_LOG("picture is nullptr");
             return;
         }
-        photoOutput->picture_ = std::move(picture);
+        Media::ImageInfo imageInfo;
+        if (picture->GetMainPixel()) {
+            picture->GetMainPixel()->GetImageInfo(imageInfo);
+        }
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetMainPixel w=%{public}d, h=%{public}d, f=%{public}d",
+            imageInfo.size.width, imageInfo.size.height, imageInfo.pixelFormat);
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
+            newSurfaceBuffer->GetWidth(), newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat());
+        photoOutput->caputreIdPictureMap_[captureId] = std::move(picture);
         photoOutput->photoProxy_ = photoProxy;
         uint32_t pictureHandle;
         constexpr uint32_t delayMilli = 1 * 1000;
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetGlobalWatchdog StartMonitor, captureId=%{public}d",
             captureId);
         DeferredProcessing::GetGlobalWatchdog().StartMonitor(pictureHandle, delayMilli,
-            [this, captureId](uint32_t handle) {
+            [this, captureId, timestamp](uint32_t handle) {
                 MEDIA_INFO_LOG("PhotoListener PhotoListener-Watchdog executed, handle: %{public}d, "
                     "captureId=%{public}d", static_cast<int>(handle), captureId);
-                AssembleAuxiliaryPhoto();
+                AssembleAuxiliaryPhoto(timestamp, captureId);
                 auto photoOutput = photoOutput_.promote();
                 if (photoOutput) {
                     photoOutput->caputreIdAuxiliaryCountMap_[captureId] = -1;
@@ -517,9 +517,11 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
                         "captureId=%{public}d", captureId);
                 }
         });
-        photoOutput->SetAuxiliaryPhotoHandle(pictureHandle);
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto, pictureHandle: %{public}d, captureId=%{public}d",
-            pictureHandle, captureId);
+        photoOutput->caputreIdHandleMap_[captureId] = pictureHandle;
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto, pictureHandle: %{public}d, captureId=%{public}d "
+            "caputreIdCountMap = %{public}d, caputreIdAuxiliaryCountMap = %{public}d",
+            pictureHandle, captureId, photoOutput->caputreIdCountMap_[captureId],
+            photoOutput->caputreIdAuxiliaryCountMap_[captureId]);
         if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
             photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
             MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto auxiliaryCount is complete, StopMonitor DoTimeout "
@@ -549,7 +551,7 @@ void PhotoListener::OnBufferAvailable()
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
 }
 
-void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType) const
+void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const
 {
     MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
     uv_loop_s* loop = nullptr;
@@ -566,6 +568,7 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, this);
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
+    callbackInfo->burstKey = burstKey;
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
@@ -578,9 +581,9 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
                 napi_get_undefined(callbackInfo->listener_->env_, &result[PARAM0]);
                 napi_get_undefined(callbackInfo->listener_->env_, &result[PARAM1]);
                 result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(callbackInfo->listener_->env_,
-                    callbackInfo->uri, callbackInfo->cameraShotType);
-                MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteCallback result %{public}s, type %{public}d",
-                    callbackInfo->uri.c_str(), callbackInfo->cameraShotType);
+                    callbackInfo->uri, callbackInfo->cameraShotType, callbackInfo->burstKey);
+                MEDIA_INFO_LOG("UpdatePictureJSCallback result %{public}s, type %{public}d, burstKey %{public}s",
+                    callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
                 ExecuteCallbackNapiPara callbackPara {
                     .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
                 callbackInfo->listener_->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
@@ -661,21 +664,7 @@ std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSett
     return location;
 }
 
-std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
-{
-    std::string orientation = "";
-    if (exifData != nullptr) {
-        exifData->GetValue("Orientation", orientation);
-        std::string defalutExifOrientation = "1";
-        exifData->SetValue("Orientation", defalutExifOrientation);
-        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
-    } else {
-        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
-    }
-    return orientation;
-}
-
-void PhotoListener::AssembleAuxiliaryPhoto()
+void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
 {
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
@@ -683,41 +672,40 @@ void PhotoListener::AssembleAuxiliaryPhoto()
         if (location && photoOutput->photoProxy_) {
             photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
         }
-        std::string orientation = "";
-        if (photoOutput->exifSurfaceBuffer_ && photoOutput->picture_) {
+        std::unique_ptr<Media::Picture> picture = std::move(photoOutput->caputreIdPictureMap_[captureId]);
+        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto picture %{public}d", picture != nullptr);
+        if (photoOutput->exifSurfaceBuffer_ && picture) {
             LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
-            photoOutput->picture_->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
-            orientation = GetExifOrientation(
-                reinterpret_cast<OHOS::Media::ImageMetadata*>(photoOutput->picture_->GetExifMetadata().get()));
-            RotatePicture(photoOutput->picture_->GetMainPixel(), orientation);
+            picture->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
         }
-        if (photoOutput->gainmapSurfaceBuffer_ && photoOutput->picture_) {
+        if (photoOutput->gainmapSurfaceBuffer_ && picture) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);
-            RotatePicture(uniptr->GetContentPixel(), orientation);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
             LoggingSurfaceBufferInfo(photoOutput->gainmapSurfaceBuffer_, "gainmapSurfaceBuffer");
-            photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
+            picture->SetAuxiliaryPicture(picturePtr);
+            photoOutput->gainmapSurfaceBuffer_ = nullptr;
         }
-        if (photoOutput->deepSurfaceBuffer_ && photoOutput->picture_) {
+        if (photoOutput->deepSurfaceBuffer_ && picture) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
                 photoOutput->deepSurfaceBuffer_, Media::AuxiliaryPictureType::DEPTH_MAP);
-            RotatePicture(uniptr->GetContentPixel(), orientation);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
             LoggingSurfaceBufferInfo(photoOutput->deepSurfaceBuffer_, "deepSurfaceBuffer");
-            photoOutput->picture_->SetAuxiliaryPicture(picturePtr);
+            picture->SetAuxiliaryPicture(picturePtr);
         }
-        if (photoOutput->debugSurfaceBuffer_ && photoOutput->picture_) {
+        if (photoOutput->debugSurfaceBuffer_ && picture) {
             LoggingSurfaceBufferInfo(photoOutput->debugSurfaceBuffer_, "debugSurfaceBuffer");
-            photoOutput->picture_->SetMaintenanceData(photoOutput->debugSurfaceBuffer_);
+            picture->SetMaintenanceData(photoOutput->debugSurfaceBuffer_);
         }
-        if (photoOutput->picture_) {
+        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto captureId %{public}d", captureId);
+        if (picture) {
             std::string uri;
             int32_t cameraShotType;
-            photoOutput->GetSession()->CreateMediaLibrary(std::move(photoOutput->picture_), photoOutput->photoProxy_,
-                uri, cameraShotType);
+            std::string burstKey = "";
+            photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxy_,
+                uri, cameraShotType, burstKey, timestamp);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-            UpdatePictureJSCallback(uri, cameraShotType);
+            UpdatePictureJSCallback(uri, cameraShotType, burstKey);
         } else {
             MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
         }

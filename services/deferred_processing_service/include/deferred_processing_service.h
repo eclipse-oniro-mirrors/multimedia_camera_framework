@@ -34,7 +34,7 @@ public:
     EXPORT_API void Initialize();
     EXPORT_API void Start();
     EXPORT_API void Stop();
-    EXPORT_API void NotifyLowQualityImage(const int32_t userId, const std::string& imamgeId,
+    EXPORT_API void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
         std::shared_ptr<Media::Picture> picture);
     ~DeferredProcessingService();
     EXPORT_API sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
