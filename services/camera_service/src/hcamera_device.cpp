@@ -96,7 +96,7 @@ HCameraDevice::HCameraDevice(
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
     CameraTimer::GetInstance()->IncreaseUserCount();
-    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId);
+    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
 }
 
