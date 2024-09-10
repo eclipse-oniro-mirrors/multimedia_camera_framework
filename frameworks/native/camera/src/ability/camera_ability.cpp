@@ -264,20 +264,24 @@ void CameraAbilityContainer::FilterByMacro(bool enableMacro)
 std::vector<float> CameraAbilityContainer::GetZoomRatioRange()
 {
     bool enableMacro = enableMacroSet_.value_or(false);
-    const auto& zoomSpec = zoomRatioRangeInSpec_;
+    if (!g_isValidZoomRaioRange(zoomRatioRangeInSpec_)) {
+        MEDIA_ERR_LOG("zoomRatioRangeInSpec_ invalid data");
+        return std::vector<float>{1.0f, 1.0f};
+    }
     for (const auto& ability : conflictAbilities_) {
         if (ability == nullptr) {
             continue;
         }
-        if (enableMacro == ability->IsMacroSupported()) {
-            float min = std::max(zoomSpec[0], ability->GetZoomRatioRange()[0]);
-            float max = std::min(zoomSpec[1], ability->GetZoomRatioRange()[1]);
+        std::vector<float> range = ability->GetZoomRatioRange();
+        if (enableMacro == ability->IsMacroSupported() && g_isValidZoomRaioRange(range)) {
+            float min = std::max(zoomRatioRangeInSpec_[0], range[0]);
+            float max = std::min(zoomRatioRangeInSpec_[1], range[1]);
             lastGetZoomRatioRange_ = {min, max};
             return {min, max};
         }
     }
-    lastGetZoomRatioRange_ = zoomSpec;
-    return zoomSpec;
+    lastGetZoomRatioRange_ = zoomRatioRangeInSpec_;
+    return zoomRatioRangeInSpec_;
 }
 
 bool CameraAbilityContainer::IsMacroSupported()
