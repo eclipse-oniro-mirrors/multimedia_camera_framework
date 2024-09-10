@@ -2262,7 +2262,7 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode>& supported
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
