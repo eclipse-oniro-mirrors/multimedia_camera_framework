@@ -763,7 +763,7 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     }
     if (output != nullptr) {
         sptr<VideoOutput> videoOutput = static_cast<VideoOutput*>(output.GetRefPtr());
-        if (videoOutput) {
+        if (videoOutput && (frameRateRange.size() >= minFpsRangeSize)) {
             videoOutput->SetFrameRateRange(frameRateRange[0], frameRateRange[1]);
         }
     }
