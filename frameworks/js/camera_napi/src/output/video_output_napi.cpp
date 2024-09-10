@@ -36,7 +36,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<VideoOutputAsyncContext*>(data);
     CHECK_ERROR_RETURN_LOG(context == nullptr, "VideoOutputNapi AsyncCompleteCallback context is null");
-    MEDIA_INFO_LOG("PreviewOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
+    MEDIA_INFO_LOG("VideoOutputNapi AsyncCompleteCallback %{public}s, status = %{public}d", context->funcName.c_str(),
         context->status);
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
     jsContext->status = context->status;
@@ -453,7 +453,7 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->videoOutput_->Start();
-                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+                context->status = true;
                 MEDIA_INFO_LOG("VideoOutputNapi::Start errorCode:%{public}d", context->errorCode);
             });
         },
@@ -489,23 +489,23 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
         [](napi_env env, void* data) {
-            MEDIA_INFO_LOG("PreviewOutputNapi::Stop running on worker");
+            MEDIA_INFO_LOG("VideoOutputNapi::Stop running on worker");
             auto context = static_cast<VideoOutputAsyncContext*>(data);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "PreviewOutputNapi::Stop async info is nullptr");
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "VideoOutputNapi::Stop async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->errorCode = context->objectInfo->videoOutput_->Stop();
-                context->status = context->errorCode == CameraErrorCode::SUCCESS;
-                MEDIA_INFO_LOG("PreviewOutputNapi::Stop errorCode:%{public}d", context->errorCode);
+                context->status = true;
+                MEDIA_INFO_LOG("VideoOutputNapi::Stop errorCode:%{public}d", context->errorCode);
             });
         },
         AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
     if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Stop");
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for VideoOutputNapi::Stop");
         asyncFunction->Reset();
     } else {
         asyncContext->queueTask =
-            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("PreviewOutputNapi::Stop");
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("VideoOutputNapi::Stop");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
@@ -538,7 +538,7 @@ napi_value VideoOutputNapi::SetFrameRate(napi_env env, napi_callback_info info)
         napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
         int32_t retCode = videoOutputNapi->videoOutput_->SetFrameRate(minFrameRate, maxFrameRate);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
-            MEDIA_ERR_LOG("PreviewOutputNapi::SetFrameRate! %{public}d", retCode);
+            MEDIA_ERR_LOG("VideoOutputNapi::SetFrameRate! %{public}d", retCode);
             return result;
         }
     } else {
