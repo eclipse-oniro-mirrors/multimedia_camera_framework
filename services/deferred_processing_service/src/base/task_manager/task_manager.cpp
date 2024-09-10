@@ -144,6 +144,15 @@ void TaskManager::CancelAllTasks()
     taskRegistry_->CancelAllTasks(defaultTaskHandle_);
 }
 
+bool TaskManager::IsEmpty()
+{
+    DP_INFO_LOG("Get tasks count: %{public}d", static_cast<int>(defaultTaskHandle_));
+    if (taskRegistry_ == nullptr) {
+        return true;
+    }
+    return taskRegistry_->GetTaskCount(defaultTaskHandle_) == 0;
+}
+
 bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, bool delayTask,
     TaskGroupHandle& handle)
 {

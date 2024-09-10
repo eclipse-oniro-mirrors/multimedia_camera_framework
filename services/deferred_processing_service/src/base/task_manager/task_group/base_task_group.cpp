@@ -79,6 +79,13 @@ void BaseTaskGroup::CancelAllTasks()
     }
 }
 
+size_t BaseTaskGroup::GetTaskCount()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_DEBUG_LOG("Get task count for task group (%s), handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
+    return que_.Size();
+}
+
 std::function<void()> BaseTaskGroup::GetTaskUnlocked()
 {
     if (que_.Empty()) {
