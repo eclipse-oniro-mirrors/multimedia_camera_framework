@@ -32,7 +32,7 @@ public:
     explicit IDeferredPhotoProcessingSessionCallbackFuzz() = default;
     virtual ~IDeferredPhotoProcessingSessionCallbackFuzz() = default;
     inline int32_t OnProcessImageDone(const std::string &imageId,
-        sptr<IPCFileDescriptor> ipcFd, const long bytes) override
+        sptr<IPCFileDescriptor> ipcFd, const long bytes, bool isCloudImageEnhanceSupported) override
     {
         return 0;
     }
