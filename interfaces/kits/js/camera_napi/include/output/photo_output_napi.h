@@ -146,7 +146,7 @@ private:
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
-    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType) const;
+    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const;
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
@@ -154,7 +154,7 @@ private:
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
-    void AssembleAuxiliaryPhoto();
+    void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
     sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer);
     uint8_t callbackFlag_ = 0;
@@ -268,6 +268,7 @@ struct PhotoListenerInfo {
     {}
     std::string uri = "";
     int32_t cameraShotType = 0;
+    std::string burstKey = "";
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int64_t timestamp = 0;
 };

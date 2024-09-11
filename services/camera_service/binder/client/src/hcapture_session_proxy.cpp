@@ -384,7 +384,8 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
 }
 
 int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
-    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType)
+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
+    std::string &burstKey, int64_t timestamp)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -396,6 +397,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
     data.WriteInterfaceToken(GetDescriptor());
     picture->Marshalling(data);
     photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
         data, reply, option);
@@ -404,6 +406,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
     }
     uri = reply.ReadString();
     cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
     return error;
 }
 

@@ -81,7 +81,7 @@ public:
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
 
     virtual int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-        std::string &uri, int32_t &cameraShotType) = 0;
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
     virtual int32_t SetPreviewRotation(std::string &deviceClass) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");

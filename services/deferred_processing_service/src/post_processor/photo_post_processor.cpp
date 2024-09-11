@@ -261,7 +261,7 @@ sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(BufferHandle *bufferHandle)
 std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bufferHandle,
     Media::AuxiliaryPictureType type)
 {
-    DP_INFO_LOG("entered");
+    DP_INFO_LOG("entered, AuxiliaryPictureType type = %{public}d", static_cast<int32_t>(type));
     if (bufferHandle == nullptr) {
         DP_ERR_LOG("bufferHandle is null");
         return nullptr;
@@ -272,7 +272,7 @@ std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bu
     return auxiliaryPicture;
 }
 
-inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
+inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
 {
     float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
     if (pixelMap) {
@@ -283,7 +283,7 @@ inline void RotatePicture(std::shared_ptr<Media::PixelMap> pixelMap, const std::
     }
 }
 
-std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
+std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
 {
     std::string orientation = "";
     if (exifData != nullptr) {
@@ -295,6 +295,66 @@ std::string GetExifOrientation(OHOS::Media::ImageMetadata* exifData)
         DP_ERR_LOG("GetExifOrientation exifData is nullptr");
     }
     return orientation;
+}
+
+void RotatePicture(std::shared_ptr<Media::Picture> picture)
+{
+    std::string orientation = GetAndSetExifOrientation(
+        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
+    RotatePixelMap(picture->GetMainPixel(), orientation);
+    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
+    if (gainMap) {
+        RotatePixelMap(gainMap->GetContentPixel(), orientation);
+    }
+    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
+    if (depthMap) {
+        RotatePixelMap(depthMap->GetContentPixel(), orientation);
+    }
+    auto unrefocusMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::UNREFOCUS_MAP);
+    if (unrefocusMap) {
+        RotatePixelMap(unrefocusMap->GetContentPixel(), orientation);
+    }
+    auto linearMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::LINEAR_MAP);
+    if (linearMap) {
+        RotatePixelMap(linearMap->GetContentPixel(), orientation);
+    }
+}
+
+void AssemleAuxilaryPicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer,
+    std::shared_ptr<Media::Picture>& picture)
+{
+    if (buffer.isGainMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::GAINMAP);
+        if (auxiliaryPicture) {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
+    }
+    if (buffer.isDepthMapValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::DEPTH_MAP);
+        if (auxiliaryPicture) {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
+    }
+    if (buffer.isUnrefocusImageValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.unrefocusImageHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::UNREFOCUS_MAP);
+        if (auxiliaryPicture) {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
+    }
+    if (buffer.isHighBitDepthLinearImageValid) {
+        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.highBitDepthLinearImageHandle->GetBufferHandle(),
+            Media::AuxiliaryPictureType::LINEAR_MAP);
+        if (auxiliaryPicture) {
+            picture->SetAuxiliaryPicture(auxiliaryPicture);
+        }
+    }
+    if (buffer.isMakerInfoValid) {
+        auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
+        picture->SetMaintenanceData(makerInfoBuffer);
+    }
 }
 
 std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
@@ -309,7 +369,10 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
     DP_CHECK_AND_RETURN_RET_LOG(imageBuffer != nullptr, nullptr, "bufferHandle is nullptr.");
-    std::string orientation = "";
+    DP_INFO_LOG("AssemblePicture ImageBufferInfoExt valid: gainMap(%{public}d), depthMap(%{public}d), "
+        "unrefocusMap(%{public}d), linearMap(%{public}d), exif(%{public}d), makeInfo(%{public}d)",
+        buffer.isGainMapValid, buffer.isDepthMapValid, buffer.isUnrefocusImageValid,
+        buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid);
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
     DP_CHECK_AND_RETURN_RET_LOG(picture != nullptr, nullptr, "picture is nullptr.");
     if (buffer.isExifValid) {
@@ -320,29 +383,10 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
             exifBuffer->SetExtraData(extraData);
         }
         picture->SetExifMetadata(exifBuffer);
-        orientation = GetExifOrientation(
-            reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     }
-    RotatePicture(picture->GetMainPixel(), orientation);
-    if (buffer.isGainMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::GAINMAP);
-        if (auxiliaryPicture) {
-            RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
-    }
-    if (buffer.isDepthMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::DEPTH_MAP);
-        if (auxiliaryPicture) {
-            RotatePicture(auxiliaryPicture->GetContentPixel(), orientation);
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
-    }
-    if (buffer.isMakerInfoValid) {
-        auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
-        picture->SetMaintenanceData(makerInfoBuffer);
+    if (picture) {
+        AssemleAuxilaryPicture(buffer, picture);
+        RotatePicture(picture);
     }
     return picture;
 }

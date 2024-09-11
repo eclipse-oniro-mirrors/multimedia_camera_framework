@@ -322,7 +322,6 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
-    picture_ = nullptr;
     photoProxy_ = nullptr;
 }
 
