@@ -571,7 +571,10 @@ void CaptureSession::UpdateDeviceDeferredability()
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_LOG(inputDevice == nullptr,
         "CaptureSession::UpdateDeviceDeferredability inputDevice is nullptr");
-    inputDevice->GetCameraDeviceInfo()->modeDeferredType_ = {};
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_LOG(deviceInfo == nullptr,
+        "CaptureSession::UpdateDeviceDeferredability deviceInfo is nullptr");
+    deviceInfo->modeDeferredType_ = {};
     camera_metadata_item_t item;
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_DEFERRED_IMAGE_DELIVERY, &item);
@@ -581,7 +584,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
                 item.data.u8[i], item.data.u8[i + 1]);
-            inputDevice->GetCameraDeviceInfo()->modeDeferredType_[item.data.u8[i]] =
+            deviceInfo->modeDeferredType_[item.data.u8[i]] =
                 static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
         }
     }
