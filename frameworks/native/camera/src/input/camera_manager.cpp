@@ -228,8 +228,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     }
     cameraStatusInfo.cameraDevice = cameraManager->GetCameraDeviceFromId(cameraId);
     if (status == CAMERA_STATUS_DISAPPEAR) {
-        cameraManager->ClearCameraDeviceListCache();
-        cameraManager->ClearCameraDeviceAbilitySupportMap();
+        cameraManager->RemoveCameraDeviceFromCache(cameraId);
     }
     cameraStatusInfo.cameraStatus = status;
     cameraStatusInfo.bundleName = bundleName;
