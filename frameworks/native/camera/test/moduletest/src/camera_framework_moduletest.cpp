@@ -12686,7 +12686,7 @@ HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
     sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
     int32_t videoRotation = videoOutput_1->GetVideoRotation(PhotoCaptureSetting::RotationConfig::Rotation_90);
     EXPECT_EQ(videoRotation, PhotoCaptureSetting::RotationConfig::Rotation_180);
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)previewOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
     int32_t photoRotation = photoOutput_1->GetPhotoRotation(PhotoCaptureSetting::RotationConfig::Rotation_180);
     EXPECT_EQ(photoRotation, PhotoCaptureSetting::RotationConfig::Rotation_270);
     intResult = previewOutput_1->SetPreviewRotation(previewRotation, false);
