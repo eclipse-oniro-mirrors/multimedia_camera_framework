@@ -892,7 +892,7 @@ int32_t PhotoOutput::IsAutoCloudImageEnhanceSupported(bool &isAutoCloudImageEnha
     auto inputDevice = session->GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhanceSupported error!, inputDevice is nullptr");
-    cameraObj = inputDevice->GetCameraDeviceInfo();
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhanceSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
