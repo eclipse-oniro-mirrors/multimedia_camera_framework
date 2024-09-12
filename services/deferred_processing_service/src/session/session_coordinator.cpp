@@ -242,7 +242,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
     while (!pendingImageResults_.empty()) {
         auto result = pendingImageResults_.front();
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
-            callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize.
+            callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize,
                 result.isCloudImageEnhanceSupported);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
             DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
