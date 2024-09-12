@@ -373,7 +373,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
             isCloudImageEnhanceSupported);
         DP_DEBUG_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retFormat: %{public}d, "
             "retCloudImageEnhanceSupported: %{public}d", static_cast<int>(retImageQuality),
-            static_cast<int>(retDataSize),static_cast<int>(retFormat),
+            static_cast<int>(retDataSize), static_cast<int>(retFormat),
             static_cast<int>(retCloudImageEnhanceSupported));
     }
     DP_INFO_LOG("bufferHandle param, bufferHandleSize: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d, "
