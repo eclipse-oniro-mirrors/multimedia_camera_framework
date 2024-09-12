@@ -304,7 +304,7 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
                                                               const uint8_t* addr,
-                                                              const long bytes)
+                                                              const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
 }
