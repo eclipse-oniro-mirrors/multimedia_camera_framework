@@ -674,6 +674,14 @@ public:
         cameraDeviceAbilitySupportMap_.clear();
     }
 
+    inline void RemoveCameraDeviceFromCache(const std::string& cameraId)
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        cameraDeviceList_.erase(std::remove_if(cameraDeviceList_.begin(), cameraDeviceList_.end(),
+            [&cameraId](const auto& cameraDevice) { return cameraDevice->GetID() == cameraId; }),
+            cameraDeviceList_.end());
+    }
+
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
 
 protected:
