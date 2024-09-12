@@ -381,7 +381,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
         std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
         std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
-            isDegradedImage == 0, isCloudImageEnhanceSupported);
+            isDegradedImage == 0);
         photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
     } else {
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
@@ -395,7 +395,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
         if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
             DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
             std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
-                isDegradedImage == 0);
+                isDegradedImage == 0, isCloudImageEnhanceSupported);
             photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
         }
         munmap(addr, dataSize);
