@@ -1359,6 +1359,8 @@ int32_t HCaptureSession::Stop()
                 CastStream<HStreamMetadata>(item)->Stop();
             } else if (item->GetStreamType() == StreamType::CAPTURE) {
                 CastStream<HStreamCapture>(item)->CancelCapture();
+            } else if (item->GetStreamType() == StreamType::DEPTH) {
+                CastStream<HStreamDepthData>(item)->Stop();
             } else {
                 MEDIA_ERR_LOG("HCaptureSession::Stop(), get unknow stream, streamType: %{public}d, streamId:%{public}d",
                     item->GetStreamType(), item->GetFwkStreamId());
