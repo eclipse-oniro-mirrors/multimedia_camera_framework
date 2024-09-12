@@ -159,6 +159,7 @@ thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
+thread_local napi_ref PhotoOutputNapi::rawCallback_ = nullptr;
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
@@ -209,9 +210,10 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
     if (burstSeqId != invalidSeqenceId) {
         burstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
-        MEDIA_INFO_LOG("PhotoListener burstSeqId captureId:%{public}d", burstSeqId);
+        MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
         return burstSeqId;
     }
+    MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
     return captureId;
 }
 
@@ -1701,10 +1703,6 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
         if (surfaceId == "") {
             sPhotoOutput_->SetNativeSurface(true);
         }
-        if (profile.GetCameraFormat() == CAMERA_FORMAT_DNG) {
-            sptr<Surface> rawPhotoSurface = Surface::CreateSurfaceAsConsumer("rawPhotoOutput");
-            sPhotoOutput_->SetRawPhotoInfo(rawPhotoSurface);
-        }
         if (sPhotoOutput_->IsYuvOrHeifPhoto()) {
             sPhotoOutput_->CreateMultiChannel();
         }
@@ -2337,6 +2335,25 @@ napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info i
             return result;
         }
     }
+    MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
+    auto rawSurface = photoOutputNapi->photoOutput_->rawPhotoSurface_;
+    if (rawSurface == nullptr) {
+        MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
+        return result;
+    }
+    sptr<RawPhotoListener> rawPhotoListener = new (std::nothrow) RawPhotoListener(env, rawSurface);
+    if (rawPhotoListener == nullptr) {
+        MEDIA_ERR_LOG("failed to new rawPhotoListener");
+        return result;
+    }
+    SurfaceError ret = rawSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)rawPhotoListener);
+    if (ret != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("register surface consumer listener failed!");
+    }
+    photoOutputNapi->rawPhotoListener_ = rawPhotoListener;
+    napi_value callback;
+    napi_get_reference_value(env, rawCallback_, &callback);
+    photoOutputNapi->rawPhotoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback, false);
     return result;
 }
 
@@ -2417,27 +2434,10 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     photoListener_->SaveCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
 
     // Preconfig can't support rawPhotoListener.
-    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_ != nullptr) {
-        if (profile_->GetCameraFormat() == CAMERA_FORMAT_DNG) {
-            MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
-            if (photoOutput_->rawPhotoSurface_ == nullptr) {
-                MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
-                return;
-            }
-            sptr<RawPhotoListener> rawPhotoListener =
-                new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
-            if (rawPhotoListener == nullptr) {
-                MEDIA_ERR_LOG("failed to new rawPhotoListener");
-                return;
-            }
-            SurfaceError ret = photoOutput_->rawPhotoSurface_->RegisterConsumerListener(
-                (sptr<IBufferConsumerListener>&)rawPhotoListener);
-            if (ret != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("register surface consumer listener failed!");
-            }
-            rawPhotoListener_ = rawPhotoListener;
-            rawPhotoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback, false);
-        }
+    if (photoOutput_ != nullptr && profile_ != nullptr) {
+        napi_ref rawCallback;
+        napi_create_reference(env, callback, 1, &rawCallback);
+        rawCallback_ = rawCallback;
         if (profile_->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP) {
             CreateMultiChannelPictureLisenter(env);
         }

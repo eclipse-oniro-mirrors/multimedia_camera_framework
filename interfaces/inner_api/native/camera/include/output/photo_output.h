@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_PHOTO_OUTPUT_H
 #define OHOS_CAMERA_PHOTO_OUTPUT_H
 
+#include <atomic>
 #include <cstdint>
 #include <iostream>
 #include <mutex>
@@ -450,6 +451,7 @@ public:
     std::map<int32_t, int32_t> caputreIdCountMap_;
     std::map<int32_t, uint32_t> caputreIdHandleMap_;
     std::map<int32_t, std::unique_ptr<Media::Picture>> caputreIdPictureMap_;
+    std::atomic<bool> isRawImageDelivery_ = false;
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
