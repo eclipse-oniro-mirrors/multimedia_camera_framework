@@ -327,9 +327,8 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     int32_t errorCode = CheckPermissionBeforeOpenDevice();
     CHECK_AND_RETURN_RET(errorCode == CAMERA_OK, errorCode);
     bool canOpenDevice = CanOpenCamera();
-    CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT,
-        "HCameraDevice::Refuse to turning on the camera");
-    HandlePrivacyBeforeOpenDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT, "HCameraDevice::Refuse to turn on the camera");
+    CHECK_ERROR_RETURN_RET_LOG(!HandlePrivacyBeforeOpenDevice(), CAMERA_OPERATION_NOT_ALLOWED, "privacy not allow!");
     CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
@@ -378,15 +377,16 @@ int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
     return CAMERA_OK;
 }
 
-void HCameraDevice::HandlePrivacyBeforeOpenDevice()
+bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
     MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    CHECK_ERROR_RETURN_RET_LOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     auto cameraPrivacy = GetCameraPrivacy();
-    if (cameraPrivacy != nullptr) {
-        cameraPrivacy->AddCameraPermissionUsedRecord();
-        cameraPrivacy->StartUsingPermissionCallback();
-        cameraPrivacy->RegisterPermissionCallback();
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->StartUsingPermissionCallback(), false, "start using permission failed");
+    cameraPrivacy->AddCameraPermissionUsedRecord();
+    cameraPrivacy->RegisterPermissionCallback();
+    return true;
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
