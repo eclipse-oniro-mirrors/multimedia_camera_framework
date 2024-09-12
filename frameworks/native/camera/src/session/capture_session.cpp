@@ -273,6 +273,14 @@ int32_t CaptureSession::BeginConfig()
     return ServiceToCameraError(errCode);
 }
 
+int32_t CaptureSession::EnableRawDelivery(bool enabled)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter EnableRawDelivery, isEnable:%{public}d", enabled);
+    isRawImageDelivery_ = enabled;
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t CaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;

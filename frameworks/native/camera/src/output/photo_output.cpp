@@ -491,10 +491,27 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 int32_t PhotoOutput::EnableRawDelivery(bool enabled)
 {
     CAMERA_SYNC_TRACE;
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
+        "PhotoOutput EnableRawDelivery error!, session is nullptr");
     auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     CHECK_ERROR_RETURN_RET_LOG(streamCapturePtr == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput::EnableRawDelivery Failed to GetStream");
-    return streamCapturePtr->EnableRawDelivery(enabled);
+    int32_t ret = CAMERA_OK;
+    if (rawPhotoSurface_ == nullptr) {
+        std::string bufferName = "rawImage";
+        rawPhotoSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
+        ret = streamCapturePtr->SetBufferProducerInfo(bufferName, rawPhotoSurface_->GetProducer());
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+            "PhotoOutput::EnableRawDelivery Failed to SetBufferProducerInfo");
+    }
+    if (session->EnableRawDelivery(enabled) == CameraErrorCode::SUCCESS) {
+        ret = streamCapturePtr->EnableRawDelivery(enabled);
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+            "PhotoOutput::EnableRawDelivery session EnableRawDelivery Failed");
+    }
+    isRawImageDelivery_ = enabled;
+    return ret;
 }
 
 int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)

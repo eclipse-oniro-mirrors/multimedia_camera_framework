@@ -389,6 +389,7 @@ private:
     sptr<PictureListener> pictureListener_;
     std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
     static thread_local uint32_t photoOutputTaskId;
+    static thread_local napi_ref rawCallback_;
 };
 
 

@@ -1627,6 +1627,7 @@ public:
 
     void ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
+    int32_t EnableRawDelivery(bool enabled);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1643,6 +1644,7 @@ protected:
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
     bool isImageDeferred_ = false;
+    std::atomic<bool> isRawImageDelivery_ { false };
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;

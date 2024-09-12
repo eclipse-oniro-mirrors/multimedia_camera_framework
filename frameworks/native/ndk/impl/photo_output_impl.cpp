@@ -101,7 +101,7 @@ Camera_ErrorCode Camera_PhotoOutput::RegisterRawPhotoAvailableCallback(OH_PhotoO
 {
     std::shared_ptr<Profile> profile = innerPhotoOutput_->GetPhotoProfile();
     if (rawPhotoListener_ == nullptr && profile != nullptr &&
-        profile->GetCameraFormat() == CAMERA_FORMAT_DNG &&
+        innerPhotoOutput_->isRawImageDelivery_ &&
         innerPhotoOutput_->rawPhotoSurface_ != nullptr) {
         rawPhotoListener_ =
             new (std::nothrow) RawPhotoListener(this, innerPhotoOutput_->rawPhotoSurface_);

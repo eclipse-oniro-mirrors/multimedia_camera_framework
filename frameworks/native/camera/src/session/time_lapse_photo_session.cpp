@@ -36,8 +36,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
         });
     if (physicalCameraDevice != supportedDevices_.end()) {
         MEDIA_DEBUG_LOG("%{public}s: physicalCameraId: device/%{public}s", __FUNCTION__, phyCameraId.c_str());
-        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
-            photoProfile_.GetCameraFormat() != CAMERA_FORMAT_DNG) {
+        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE && isRawImageDelivery_) {
             auto inputDevice = GetInputDevice();
             CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
             auto info = inputDevice->GetCameraDeviceInfo();

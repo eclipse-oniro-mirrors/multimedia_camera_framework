@@ -867,10 +867,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
             string id = cameraId.substr(delimPos + 1);
             return id.compare(phyCameraId) == 0;
         });
+    // DELIVERY_PHOTO for default when commit
     if (physicalCameraDevice != supportedDevices_.end()) {
         MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata physicalCameraId: device/%{public}s", phyCameraId.c_str());
-        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
-            photoProfile_.GetCameraFormat() != CAMERA_FORMAT_DNG) {
+        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE && !isRawImageDelivery_) {
             auto inputDevice = GetInputDevice();
             CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
             auto info = inputDevice->GetCameraDeviceInfo();
