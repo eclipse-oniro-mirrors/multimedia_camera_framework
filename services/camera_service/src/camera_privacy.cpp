@@ -92,18 +92,14 @@ void CameraPrivacy::AddCameraPermissionUsedRecord()
     }
 }
 
-void CameraPrivacy::StartUsingPermissionCallback()
+bool CameraPrivacy::StartUsingPermissionCallback()
 {
-    if (cameraUseCallbackPtr_) {
-        MEDIA_ERR_LOG("has StartUsingPermissionCallback!");
-        return;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>(cameraDevice_);
     int32_t res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
     MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callerToken_);
-    if (res != CAMERA_OK) {
-        MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
-    }
+    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StartUsingPermissionCallback failed.");
+    return res == CAMERA_OK;
 }
 
 void CameraPrivacy::StopUsingPermissionCallback()
