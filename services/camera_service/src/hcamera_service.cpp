@@ -1712,6 +1712,11 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t enableValue = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, count);
     }
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t enableValue = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableValue, count);
+    }
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
     return defaultSettings;

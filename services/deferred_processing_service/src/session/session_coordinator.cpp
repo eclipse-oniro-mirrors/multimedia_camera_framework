@@ -95,8 +95,9 @@ public:
     {
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
+        int32_t isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
         if (coordinator_) {
-            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize);
+            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
         }
     }
 
@@ -160,7 +161,7 @@ std::shared_ptr<IImageProcessCallbacks> SessionCoordinator::GetImageProcCallback
 }
 
 void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
-    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize)
+    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported)
 {
     DP_INFO_LOG("entered, userId: %{public}d, map size: %{public}d.",
         userId, static_cast<int32_t>(remoteImageCallbacksMap_.size()));
@@ -169,10 +170,12 @@ void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& 
         auto wpCallback = iter->second;
         sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
         DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-        spCallback->OnProcessImageDone(imageId, ipcFd, dataSize);
+        spCallback->OnProcessImageDone(imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
     } else {
         DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
-        pendingImageResults_.push_back({CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize});
+        pendingImageResults_.push_back({CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
+            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE,
+            isCloudImageEnhanceSupported});
     }
     return;
 }
@@ -239,7 +242,8 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
     while (!pendingImageResults_.empty()) {
         auto result = pendingImageResults_.front();
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
-            callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize);
+            callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize,
+                result.isCloudImageEnhanceSupported);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
             DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
         }

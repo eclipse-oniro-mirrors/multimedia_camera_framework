@@ -412,6 +412,20 @@ public:
     int32_t EnableAutoHighQualityPhoto(bool enabled);
 
     /**
+     * @brief To check the auto cloud image enhance is supported or not.
+     *
+     * @return Returns the support result.
+     */
+    int32_t IsAutoCloudImageEnhanceSupported(bool& isAutoCloudImageEnhanceSupported);
+
+    /**
+     * @brief To enable the auto cloud image enhance.
+     *
+     * @return Returns the result of the auto cloud image enhance enable.
+     */
+    int32_t EnableAutoCloudImageEnhance(bool enabled);
+
+    /**
      * @brief To get status by callbackFlags.
      *
      * @return Returns the result to check enable deferred.

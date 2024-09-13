@@ -27,16 +27,19 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class BufferInfo {
 public:
-    BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality);
+    BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
+        bool isCloudImageEnhanceSupported);
     ~BufferInfo();
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
     int32_t GetDataSize();
     bool IsHighQuality();
+    bool IsCloudImageEnhanceSupported();
 
 private:
     std::shared_ptr<SharedBuffer> sharedBuffer_;
     const int32_t dataSize_;
     const bool isHighQuality_;
+    bool isCloudImageEnhanceSupported_;
 };
 class BufferInfoExt {
 public:

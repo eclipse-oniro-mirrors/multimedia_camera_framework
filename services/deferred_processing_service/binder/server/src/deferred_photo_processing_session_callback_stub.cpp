@@ -64,7 +64,8 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessImageDone(Message
     std::string imageId = data.ReadString();
     sptr<IPCFileDescriptor> ipcFd = data.ReadObject<IPCFileDescriptor>();
     long bytes = data.ReadInt64();
-    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes);
+    bool isCloudImageEnhanceSupported = data.ReadBool();
+    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes, isCloudImageEnhanceSupported);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone result: %{public}d", ret);
     return ret;
 }

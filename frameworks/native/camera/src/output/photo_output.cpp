@@ -899,6 +899,59 @@ void PhotoOutput::CameraServerDied(pid_t pid)
     }
 }
 
+int32_t PhotoOutput::IsAutoCloudImageEnhanceSupported(bool &isAutoCloudImageEnhanceSupported)
+{
+    MEDIA_DEBUG_LOG("PhotoOutput IsAutoCloudImageEnhanceSupported is called");
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput IsAutoCloudImageEnhanceSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput IsAutoCloudImageEnhanceSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput IsAutoCloudImageEnhanceSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_CLOUD_IMAGE_ENHANCE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        if (item.count == 0) {
+            MEDIA_WARNING_LOG("isAutoCloudImageEnhanceSupported item is nullptr");
+            return CAMERA_OK;
+        }
+        SceneMode currentScenemode = session->GetMode();
+        for (int i = 0; i < static_cast<int>(item.count);i++) {
+            if (currentScenemode == static_cast<int>(item.data.i32[i])) {
+                isAutoCloudImageEnhanceSupported = true;
+                return CAMERA_OK;
+            }
+        }
+    }
+    MEDIA_DEBUG_LOG("Judge Auto Cloud Image Enhancement Supported result %{public}d",
+        isAutoCloudImageEnhanceSupported);
+    return CAMERA_OK;
+}
+
+int32_t PhotoOutput::EnableAutoCloudImageEnhance(bool enabled)
+{
+    MEDIA_DEBUG_LOG("PhotoOutput EnableAutoCloudImageEnhance is called");
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput EnableAutoCloudImageEnhance error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput EnableAutoCloudImageEnhance error!, inputDevice is nullptr");
+    bool isAutoCloudImageEnhanceSupported = false;
+    int32_t ret = IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
+        "PhotoOutput EnableAutoCloudImageEnhance error");
+    CHECK_ERROR_RETURN_RET_LOG(isAutoCloudImageEnhanceSupported == false, SERVICE_FATL_ERROR,
+        "PhotoOutput EnableAutoCloudImageEnhance not supported");
+    int32_t res = session->EnableAutoCloudImageEnhance(enabled);
+    return res;
+}
+
 int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
 {
     MEDIA_DEBUG_LOG("PhotoOutput GetPhotoRotation is called");

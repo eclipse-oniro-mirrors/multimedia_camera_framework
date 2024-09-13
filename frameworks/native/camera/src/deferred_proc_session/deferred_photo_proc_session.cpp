@@ -27,7 +27,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes)
+    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
     if (ipcFileDescriptor == nullptr) {
@@ -41,7 +41,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
             deferredPhotoProcSession_->GetCallback()->OnError(imageId, ERROR_IMAGE_PROC_FAILED);
             return 0;
         } else {
-            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes);
+            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
+                isCloudImageEnhanceSupported);
         }
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");

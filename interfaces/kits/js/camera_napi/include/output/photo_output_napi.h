@@ -309,6 +309,8 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
+    static napi_value IsAutoCloudImageEnhanceSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoCloudImageEnhance(napi_env env, napi_callback_info info);
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
