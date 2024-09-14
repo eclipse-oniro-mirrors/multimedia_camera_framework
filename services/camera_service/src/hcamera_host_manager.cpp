@@ -872,6 +872,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         return CAMERA_OK;
     }
     // 使用后删除存储的动态数据
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     auto it = transitentParamMap_.find(clientName);
     if (it != transitentParamMap_.end() && CheckCameraId(it->second, cameraId)) {
         transitentParamMap_.erase(clientName);
@@ -924,6 +925,7 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
     MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime enter");
     timeval closeTime;
     gettimeofday(&closeTime, nullptr);
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     auto itPersistent = persistentParamMap_.find(clientName);
     if (itPersistent != persistentParamMap_.end()) {
         MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime find persistentParam");
