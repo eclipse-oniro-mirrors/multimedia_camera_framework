@@ -153,6 +153,11 @@ void HCameraDevice::SetDeviceMuteMode(bool muteMode)
     deviceMuteMode_ = muteMode;
 }
 
+bool HCameraDevice::GetDeviceMuteMode()
+{
+    return deviceMuteMode_;
+}
+
 void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
