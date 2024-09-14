@@ -253,7 +253,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
         if (result.callbackType == CallbackType::ON_STATE_CHANGED) {
             callback->OnStateChanged(MapDpsStatus(result.statusCode));
         }
-        pendingImageResults_.pop_back();
+        pendingImageResults_.pop_front();
     }
 }
 
