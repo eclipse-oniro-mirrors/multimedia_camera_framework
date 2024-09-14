@@ -93,6 +93,8 @@ private:
     void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                 std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;

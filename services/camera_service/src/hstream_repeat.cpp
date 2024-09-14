@@ -218,6 +218,10 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateFrameRateSettings(dynamicSetting);
     }
+    if (settings != nullptr) {
+        UpdateFrameMuteSettings(settings, dynamicSetting);
+    }
+    
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -852,6 +856,27 @@ void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::Camera
         }
         CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
     }
+}
+
+void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                            std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting)
+{
+    CHECK_ERROR_RETURN(settings == nullptr);
+    bool status = false;
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        return;
+    }
+    auto mode = item.data.u8[0];
+    int32_t count = 1;
+    ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_MUTE_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        status = dynamicSetting->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
+    } else {
+        status = dynamicSetting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::UpdateFrameMuteSettings Failed to set frame mute");
 }
 
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
