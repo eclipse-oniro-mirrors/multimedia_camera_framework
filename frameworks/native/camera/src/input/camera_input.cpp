@@ -137,9 +137,10 @@ void CameraInput::CameraServerDied(pid_t pid)
 
 void CameraInput::InputRemoveDeathRecipient()
 {
-    if (deviceObj_ != nullptr) {
-        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        deviceObj_ = nullptr;
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj != nullptr) {
+        (void)deviceObj->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        SetCameraDevice(nullptr);
     }
     deathRecipient_ = nullptr;
 }
@@ -159,11 +160,12 @@ int CameraInput::Open()
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Open");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
-    if (deviceObj_) {
-        retCode = deviceObj_->Open();
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        retCode = deviceObj->Open();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
-        MEDIA_ERR_LOG("CameraInput::Open() deviceObj_ is nullptr");
+        MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
     }
     return ServiceToCameraError(retCode);
 }
@@ -190,13 +192,14 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
         }
     }
 
-    if (deviceObj_) {
-        retCode = isSupportSecCamera ? (deviceObj_->OpenSecureCamera(secureSeqId)) : (deviceObj_->Open());
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        retCode = isSupportSecCamera ? (deviceObj->OpenSecureCamera(secureSeqId)) : (deviceObj->Open());
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
             "Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
                 retCode, isSupportSecCamera);
     } else {
-        MEDIA_ERR_LOG("CameraInput::OpenSecureCamera() deviceObj_ is nullptr");
+        MEDIA_ERR_LOG("CameraInput::OpenSecureCamera() deviceObj is nullptr");
     }
     MEDIA_INFO_LOG("Enter Into CameraInput::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
     return ServiceToCameraError(retCode);
@@ -207,11 +210,12 @@ int CameraInput::Close()
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Close");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
-    if (deviceObj_) {
-        retCode = deviceObj_->Close();
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        retCode = deviceObj->Close();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
     } else {
-        MEDIA_ERR_LOG("CameraInput::Close() deviceObj_ is nullptr");
+        MEDIA_ERR_LOG("CameraInput::Close() deviceObj is nullptr");
     }
     SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
@@ -224,11 +228,12 @@ int CameraInput::Release()
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Release");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
-    if (deviceObj_) {
-        retCode = deviceObj_->Release();
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        retCode = deviceObj->Release();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
-        MEDIA_ERR_LOG("CameraInput::Release() deviceObj_ is nullptr");
+        MEDIA_ERR_LOG("CameraInput::Release() deviceObj is nullptr");
     }
     SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
@@ -280,7 +285,15 @@ std::string CameraInput::GetCameraId()
 
 sptr<ICameraDeviceService> CameraInput::GetCameraDevice()
 {
+    std::lock_guard<std::mutex> lock(deviceObjMutex_);
     return deviceObj_;
+}
+
+void CameraInput::SetCameraDevice(sptr<ICameraDeviceService> deviceObj)
+{
+    std::lock_guard<std::mutex> lock(deviceObjMutex_);
+    deviceObj_ = deviceObj;
+    return;
 }
 
 std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
@@ -324,9 +337,10 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
         "CameraInput::UpdateSetting No configuration to update");
 
     std::lock_guard<std::mutex> lock(interfaceMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(!deviceObj_, ServiceToCameraError(CAMERA_INVALID_ARG),
-        "CameraInput::UpdateSetting() deviceObj_ is nullptr");
-    int32_t ret = deviceObj_->UpdateSetting(changedMetadata);
+    auto deviceObj = GetCameraDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!deviceObj, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "CameraInput::UpdateSetting() deviceObj is nullptr");
+    int32_t ret = deviceObj->UpdateSetting(changedMetadata);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "CameraInput::UpdateSetting Failed to update settings");
 
     auto cameraObject = GetCameraDeviceInfo();
