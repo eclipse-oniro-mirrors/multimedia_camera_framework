@@ -50,9 +50,11 @@ bool AudioCapturerSession::CreateAudioCapturer()
         MEDIA_ERR_LOG("AudioCapturerSession::Create AudioCapturer failed");
         return false;
     }
-    AudioSessionStrategy sessionStrategy;
-    sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
-    audioSessionManager_->ActivateAudioSession(sessionStrategy);
+    if (audioSessionManager_ != nullptr) {
+        AudioSessionStrategy sessionStrategy;
+        sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
+        audioSessionManager_->ActivateAudioSession(sessionStrategy);
+    }
     return true;
 }
 
@@ -62,7 +64,9 @@ AudioCapturerSession::~AudioCapturerSession()
     audioBufferQueue_.SetActive(false);
     audioBufferQueue_.Clear();
     Stop();
-    delete audioSessionManager_;
+    if (audioSessionManager_ != nullptr) {
+        delete audioSessionManager_;
+    }
 }
 
 bool AudioCapturerSession::StartAudioCapture()
@@ -151,7 +155,9 @@ void AudioCapturerSession::Stop()
         audioThread_->join();
         audioThread_.reset();
     }
-    audioSessionManager_->DeactivateAudioSession();
+    if (audioSessionManager_ != nullptr) {
+        audioSessionManager_->DeactivateAudioSession();
+    }
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();
 }
