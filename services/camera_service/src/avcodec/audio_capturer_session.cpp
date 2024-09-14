@@ -31,6 +31,7 @@ namespace CameraStandard {
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
+    audioSessionManager_ = AudioSessionManager::GetInstance();
 }
 
 bool AudioCapturerSession::CreateAudioCapturer()
@@ -49,6 +50,9 @@ bool AudioCapturerSession::CreateAudioCapturer()
         MEDIA_ERR_LOG("AudioCapturerSession::Create AudioCapturer failed");
         return false;
     }
+    AudioSessionStrategy sessionStrategy;
+    sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
+    audioSessionManager_->ActivateAudioSession(sessionStrategy);
     return true;
 }
 
@@ -58,6 +62,7 @@ AudioCapturerSession::~AudioCapturerSession()
     audioBufferQueue_.SetActive(false);
     audioBufferQueue_.Clear();
     Stop();
+    delete audioSessionManager_;
 }
 
 bool AudioCapturerSession::StartAudioCapture()
@@ -146,6 +151,7 @@ void AudioCapturerSession::Stop()
         audioThread_->join();
         audioThread_.reset();
     }
+    audioSessionManager_->DeactivateAudioSession();
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();
 }

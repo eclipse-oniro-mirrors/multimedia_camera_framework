@@ -17,6 +17,7 @@
 #define AUDIO_CAPTURER_SESSION_H
 
 #include "audio_capturer.h"
+#include "audio_session_manager.h"
 #include "blocking_queue.h"
 #include "refbase.h"
 #include "audio_record.h"
@@ -46,6 +47,7 @@ private:
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
+    AudioSessionManager* audioSessionManager_ = nullptr;
 };
 } // CameraStandard
 } // OHOS
