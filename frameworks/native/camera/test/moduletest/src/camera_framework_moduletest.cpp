@@ -12840,5 +12840,65 @@ HWTEST_F(CameraFrameworkModuleTest, test_tripod_01, TestSize.Level0)
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cloud enhance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CloudImageEnhance enable
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_cloud_image_enhance_enable, TestSize.Level0)
+{
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    bool isEnabled = false;
+    int32_t intResult = camSession->EnableAutoCloudImageEnhance(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
+    ASSERT_NE(input, nullptr);
+
+    intResult = camSession->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isAutoCloudImageEnhanceSupported;
+    intResult = photoOutput_1->IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    EXPECT_EQ(isAutoCloudImageEnhanceSupported, true);
+
+    intResult = photoOutput_1->EnableAutoCloudImageEnhance(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = photoOutput_1->EnableAutoCloudImageEnhance(isEnabled);
+    EXPECT_EQ(intResult, 7400201);
+}
 } // namespace CameraStandard
 } // namespace OHOS
