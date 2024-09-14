@@ -1172,7 +1172,7 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
         MEDIA_ERR_LOG("GetCameraResourceCost failed");
         return false;
     }
-    cost = resourceCost.resourceCost_;
+    cost = static_cast<int32_t>(resourceCost.resourceCost_);
     for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
         conflicting.emplace(resourceCost.conflictingDevices_[i]);
     }
