@@ -202,8 +202,8 @@ Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetPreviewRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;
 }
@@ -211,7 +211,7 @@ Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
 Camera_ErrorCode Camera_PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
     int32_t ret = innerPreviewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PhotoOutput::GetPhotoRotation camera service fatal error!");
+    CHECK_AND_RETURN_RET_LOG(ret != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetPhotoRotation camera service fatal error! ret: %{public}d", ret);
     return CAMERA_OK;
 }
