@@ -212,6 +212,6 @@ Camera_ErrorCode Camera_PreviewOutput::SetPreviewRotation(int32_t imageRotation,
 {
     int32_t ret = innerPreviewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
     CHECK_AND_RETURN_RET_LOG(ret != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_PhotoOutput::GetPhotoRotation camera service fatal error! ret: %{public}d", ret);
+        "Camera_PhotoOutput::SetPreviewRotation camera service fatal error! ret: %{public}d", ret);
     return CAMERA_OK;
 }
