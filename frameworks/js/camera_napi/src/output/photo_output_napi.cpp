@@ -666,7 +666,7 @@ std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSett
     return location;
 }
 
-void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
+void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {

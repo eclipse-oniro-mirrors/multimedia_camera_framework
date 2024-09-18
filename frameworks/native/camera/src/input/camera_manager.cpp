@@ -826,6 +826,8 @@ void CameraManager::InitCameraManager()
     retCode = CreateListenerObject();
     CHECK_ERROR_RETURN_LOG(retCode != CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", retCode);
     foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
+    isSystemApp_ = CameraSecurity::CheckSystemApp();
+    MEDIA_DEBUG_LOG("IsSystemApp = %{public}d", isSystemApp_);
 }
 
 int32_t CameraManager::RefreshServiceProxy()
@@ -1535,7 +1537,7 @@ void CameraManager::ParseProfileLevel(ProfilesWrapper& profilesWrapper, const in
 {
     std::vector<SpecInfo> specInfos;
     ProfileLevelInfo modeInfo = {};
-    if (CameraSecurity::CheckSystemApp() && modeName == SceneMode::VIDEO) {
+    if (IsSystemApp() && modeName == SceneMode::VIDEO) {
         CameraAbilityParseUtil::GetModeInfo(SceneMode::HIGH_FRAME_RATE, item, modeInfo);
         specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
     }
@@ -1642,7 +1644,9 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     if (profileMode != fallbackMode) {
         ParseCapability(profilesWrapper, camera, fallbackMode, item, metadata);
     }
-    FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    if (IsSystemApp()) {
+        FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    }
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
@@ -1716,17 +1720,21 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
     return photoFormats;
 }
 
+bool CameraManager::IsSystemApp()
+{
+    return isSystemApp_;
+}
+
 void CameraManager::CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, OutputCapStreamType streamType,
     uint32_t modeIndex, uint32_t streamIndex, ExtendInfo extendInfo) __attribute__((no_sanitize("cfi")))
 {
     const int frameRate120 = 120;
     const int frameRate240 = 240;
-    bool isSystemApp = CameraSecurity::CheckSystemApp();
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
         // Skip profiles with unsupported frame rates for non-system apps
         if ((detailInfo.minFps == frameRate120 || detailInfo.minFps == frameRate240) &&
-            streamType == OutputCapStreamType::VIDEO_STREAM && !isSystemApp) {
+            streamType == OutputCapStreamType::VIDEO_STREAM && !IsSystemApp()) {
             continue;
         }
         CameraFormat format = CAMERA_FORMAT_INVALID;
