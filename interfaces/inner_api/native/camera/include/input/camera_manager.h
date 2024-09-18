@@ -755,7 +755,7 @@ private:
     int32_t UnSubscribeSystemAbility();
     int32_t RefreshServiceProxy();
     std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
-
+    bool IsSystemApp();
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
@@ -837,6 +837,7 @@ private:
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
     std::string foldScreenType_;
+    bool isSystemApp_ = false;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {

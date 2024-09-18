@@ -41,7 +41,13 @@ void TaskManager::Initialize()
     pool_ = ThreadPool::Create(name_, numThreads_);
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     auto ret = RegisterTaskGroup("defaultTaskGroup",
-        [this](std::any param) { DoDefaultWorks(std::move(param)); }, serial_, false, defaultTaskHandle_);
+        [this](std::any param) {
+            if (param.has_value()) {
+                DoDefaultWorks(std::move(param));
+            } else {
+                DP_ERR_LOG("register default task group: failed, param has no value");
+            }
+        }, serial_, false, defaultTaskHandle_);
     DP_INFO_LOG("register default task group: %{public}d, handle: %{public}d", ret,
         static_cast<int>(defaultTaskHandle_));
     (void)(ret);
@@ -68,7 +74,13 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
         return;
     } else {
         RegisterTaskGroup("delayedTaskGroup",
-            [this](std::any param) { DoDefaultWorks(std::move(param)); }, true, true, delayedTaskHandle_);
+            [this](std::any param) {
+                if (param.has_value()) {
+                    DoDefaultWorks(std::move(param));
+                } else {
+                    DP_ERR_LOG("CreateDelayedTaskGroupIfNeed register default task group: failed, param has no value");
+                }
+            }, true, true, delayedTaskHandle_);
     }
     return;
 }
