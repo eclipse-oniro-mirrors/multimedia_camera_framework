@@ -4245,25 +4245,26 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
             static_cast<int32_t>(modeName), validateProfile.size_.width, validateProfile.size_.height,
             validateProfile.format_, profiles.size());
         bool result = std::any_of(profiles.begin(), profiles.end(), [&validateProfile](const auto& profile) {
-            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile outType iterator "
-                            "profile::w(%{public}d),h(%{public}d),f(%{public}d)",
-                profile.size_.width, profile.size_.height, profile.format_);
             return validateProfile == profile;
         });
-        CHECK_ERROR_PRINT_LOG(!result, "CaptureSession::ValidateOutputProfile fail!");
+        CHECK_EXECUTE(result, MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile fail!"));
+        CHECK_ERROR_PRINT_LOG(!result, "CaptureSession::ValidateOutputProfile fail! Not in the profiles set.");
         return result;
     };
     switch (outputType) {
         case CAPTURE_OUTPUT_TYPE_PREVIEW: {
             auto profiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
+            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Preview");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_PHOTO: {
             auto profiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
+            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Photo");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_VIDEO: {
             auto profiles = inputDevice->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
+            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Video");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         default:
