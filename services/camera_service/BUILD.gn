@@ -172,6 +172,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.2",
     "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hdf_core:libhdi",
     "hilog:libhilog",
