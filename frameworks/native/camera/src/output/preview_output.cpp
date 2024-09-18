@@ -655,7 +655,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
     result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
-    MEDIA_INFO_LOG("PreviewOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
+    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
 }
