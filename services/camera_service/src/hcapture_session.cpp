@@ -1211,6 +1211,7 @@ int32_t HCaptureSession::Start()
         if (cameraDevice != nullptr) {
             settings = cameraDevice->CloneCachedSettings();
             DumpMetadata(settings);
+            UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
         }
         errorCode = StartPreviewStream(settings);
         if (errorCode == CAMERA_OK) {
@@ -1220,6 +1221,13 @@ int32_t HCaptureSession::Start()
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success");
     return errorCode;
+}
+
+void HCaptureSession::UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
+    int32_t count = 1;
+    uint8_t mode = muteMode? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK:OHOS_CAMERA_MUTE_MODE_OFF;
+    settings->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
 }
 
 void HCaptureSession::StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat)
