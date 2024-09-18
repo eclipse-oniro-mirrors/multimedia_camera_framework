@@ -56,7 +56,7 @@ public:
     ~CameraPrivacy();
     void RegisterPermissionCallback();
     void UnregisterPermissionCallback();
-    void StartUsingPermissionCallback();
+    bool StartUsingPermissionCallback();
     void StopUsingPermissionCallback();
     void AddCameraPermissionUsedRecord();
     bool IsAllowUsingCamera();
