@@ -45,10 +45,9 @@
               "image_framework",
               "media_foundation",
               "media_library",
-              "resource_management",
               "napi",
               "os_account",
-              "player_framework",
+              "resource_management",
               "safwk",
               "samgr",
               "sensor",
@@ -75,7 +74,8 @@
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
               "//foundation/multimedia/camera_framework/services/etc:camera_service.rc",
               "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
-              "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
+              "//foundation/multimedia/camera_framework/services/camera_service:camera_dynamic_medialibrary",
+	          "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
             ]
           },
 
@@ -150,6 +150,7 @@
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
             "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
             "//foundation/multimedia/camera_framework/test:camera_fuzz_test"

@@ -29,6 +29,7 @@ TaskRegistry::TaskRegistry(const std::string& name, const ThreadPool* threadPool
 
 TaskRegistry::~TaskRegistry()
 {
+    CAMERA_DP_SYNC_TRACE;
     DP_DEBUG_LOG("name: %s.", name_.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
     registry_.clear();
@@ -59,6 +60,7 @@ bool TaskRegistry::RegisterTaskGroup(const std::string& name, TaskFunc func, boo
 
 bool TaskRegistry::DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle)
 {
+    CAMERA_DP_SYNC_TRACE;
     DP_DEBUG_LOG("name: %s.", name.c_str());
     if (!IsTaskGroupAlreadyRegistered(name)) {
         DP_DEBUG_LOG("name: %s, with handle:%{public}d, failed due to non exist task group!",
@@ -86,6 +88,30 @@ bool TaskRegistry::SubmitTask(TaskGroupHandle handle, std::any param)
         return false;
     }
     return it->second->SubmitTask(std::move(param));
+}
+
+void TaskRegistry::CancelAllTasks(TaskGroupHandle handle)
+{
+    DP_DEBUG_LOG("Cancel all tasks to %{public}d", static_cast<int>(handle));
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = registry_.find(handle);
+    if (it == registry_.end()) {
+        DP_DEBUG_LOG("failed due to task group %{public}d non-exist!", static_cast<int>(handle));
+        return;
+    }
+    it->second->CancelAllTasks();
+}
+
+size_t TaskRegistry::GetTaskCount(TaskGroupHandle handle)
+{
+    DP_DEBUG_LOG("Get task count %{public}d", static_cast<int>(handle));
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = registry_.find(handle);
+    if (it == registry_.end()) {
+        DP_DEBUG_LOG("failed due to task group %{public}d non-exist!", static_cast<int>(handle));
+        return 0;
+    }
+    return it->second->GetTaskCount();
 }
 
 bool TaskRegistry::IsTaskGroupAlreadyRegistered(const std::string& name)

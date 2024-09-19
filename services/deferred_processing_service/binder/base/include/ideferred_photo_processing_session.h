@@ -17,7 +17,7 @@
 #define OHOS_IDEFERRED_PHOTO_PROCESSING_SESSION_H
 
 #include "iremote_broker.h"
-#include "dps_metadata_info.h"
+#include "foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils/dps_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {

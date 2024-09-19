@@ -163,10 +163,8 @@ int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, Me
     if (data.ReadBool()) {
         uint64_t secureSeqId = 0L;
         errorCode = OpenSecureCamera(&secureSeqId);
-        if (errorCode != ERR_NONE) {
-            MEDIA_ERR_LOG("CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", errorCode);
-            return errorCode;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(errorCode != ERR_NONE, errorCode,
+            "CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", errorCode);
         CHECK_AND_RETURN_RET_LOG(reply.WriteInt64(secureSeqId), IPC_STUB_WRITE_PARCEL_ERR,
             "HCameraDeviceStub::openSecureCamera write results failed");
     } else {

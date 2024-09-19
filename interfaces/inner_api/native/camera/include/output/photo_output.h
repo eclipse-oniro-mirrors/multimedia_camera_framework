@@ -268,18 +268,18 @@ public:
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
 
     /**
-     * @brief Get the photo rotation.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPhotoRotation(int32_t imageRotation);
-
-    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.
      */
     int32_t SetThumbnail(bool isEnabled);
+
+    /**
+     * @brief Get the photo rotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation(int32_t imageRotation);
 
     /**
      * @brief Set the Thumbnail profile.
@@ -363,11 +363,11 @@ public:
      * @brief Set the callbackFlag when on photoAssetAvailable.
      */
     void SetCallbackFlag(uint8_t callbackFlag);
-
+    
     /**
-     * @brief Set the flag when on native surface.
-     */
-    void SetNativeSurface(bool isNativeSurface);
+    * @brief Set the flag when on native surface.
+    */
+    void SetNativeSurface(bool SetNativeSurface);
 
     /**
      * @brief To check the deferredImageDelivery capability is enable or not.

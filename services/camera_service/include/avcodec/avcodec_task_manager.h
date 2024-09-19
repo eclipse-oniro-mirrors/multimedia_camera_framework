@@ -35,8 +35,6 @@
 #include "blocking_queue.h"
 #include "task_manager.h"
 
-#include "media_photo_asset_proxy.h"
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -55,24 +53,25 @@ public:
     void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation);
     sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation);
     void SubmitTask(function<void()> task);
-    void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy);
+    void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy);
     void Stop();
-    unique_ptr<TaskManager>& GetTaskManager();
-    unique_ptr<TaskManager>& GetEncoderManager();
-
+    void ClearTaskResource();
+    shared_ptr<TaskManager>& GetTaskManager();
+    shared_ptr<TaskManager>& GetEncoderManager();
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
-    unique_ptr<TaskManager> taskManager_ = nullptr;
-    unique_ptr<TaskManager> videoEncoderManager_ = nullptr;
+    shared_ptr<TaskManager> taskManager_ = nullptr;
+    shared_ptr<TaskManager> videoEncoderManager_ = nullptr;
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
     condition_variable cvEmpty_;
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
-    queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
+    std::atomic<bool> isActive_ { true };
+    queue<std::pair<int64_t, PhotoAssetIntf*>> videoFdQueue_;
 };
 } // CameraStandard
 } // OHOS

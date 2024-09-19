@@ -16,6 +16,7 @@
 #include "camera_privacy.h"
 #include "camera_log.h"
 #include "hcamera_device.h"
+#include "hcapture_session.h"
 #include "types.h"
 
 namespace OHOS {
@@ -23,12 +24,25 @@ namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
 
+sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
+{
+    if (streamOpCb == nullptr) {
+        return nullptr;
+    }
+    return static_cast<HCaptureSession*>(streamOpCb.GetRefPtr());
+}
+
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify permStateChangeType:%{public}d tokenId:%{public}d"
+    MEDIA_INFO_LOG("enter PermissionStatusChangeNotify permStateChangeType:%{public}d tokenId:%{public}d"
         " permissionName:%{public}s", result.permStateChangeType, result.tokenID, result.permissionName.c_str());
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
+        auto session = CastToSession(device->GetStreamOperatorCallback());
+        if (session) {
+            session->ReleaseStreams();
+            session->StopMovingPhoto();
+        }
         device->CloseDevice();
         device->OnError(DEVICE_PREEMPT, 0);
     }
@@ -39,6 +53,11 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
+        auto session = CastToSession(device->GetStreamOperatorCallback());
+        if (session) {
+            session->ReleaseStreams();
+            session->StopMovingPhoto();
+        }
         device->CloseDevice();
     }
 }

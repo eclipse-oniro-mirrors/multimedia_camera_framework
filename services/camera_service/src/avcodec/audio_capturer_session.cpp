@@ -99,18 +99,12 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 
 void AudioCapturerSession::ProcessAudioBuffer()
 {
-    if (audioCapturer_ == nullptr) {
-        MEDIA_ERR_LOG("AudioCapturer_ is not init");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
     size_t bufferLen = DEFAULT_MAX_INPUT_SIZE;
     while (true) {
         CHECK_AND_BREAK_LOG(startAudioCapture_, "Audio capture work done, thread out");
         auto buffer = std::make_unique<uint8_t[]>(bufferLen);
-        if (buffer == nullptr) {
-            MEDIA_ERR_LOG("Failed to allocate buffer");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(buffer == nullptr, "Failed to allocate buffer");
         size_t bytesRead = 0;
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
@@ -147,10 +141,6 @@ void AudioCapturerSession::Stop()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Audio capture stop enter");
-    if (!startAudioCapture_) {
-        MEDIA_INFO_LOG("Audio capturer already stop");
-        return;
-    }
     startAudioCapture_ = false;
     if (audioThread_ && audioThread_->joinable()) {
         audioThread_->join();

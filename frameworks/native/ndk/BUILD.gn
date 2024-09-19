@@ -40,6 +40,9 @@ ohos_shared_library("ohcamera") {
     "${multimedia_camera_framework_path}/interfaces",
     "${multimedia_camera_framework_path}/interfaces/kits/native/include/camera",
     "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_image_framework_path}/interfaces/kits/native/include/image",
+    "${multimedia_media_library_path}/interfaces",
+    "${multimedia_media_library_path}/interfaces/kits/c",
   ]
 
   configs = [ ":camera_ndk_config" ]
@@ -79,12 +82,10 @@ ohos_shared_library("ohcamera") {
     "hitrace:hitrace_meter",
     "image_framework:image",
     "image_framework:image_native",
-    "image_framework:image_source",
     "image_framework:ohimage",
     "ipc:ipc_core",
     "media_library:media_library",
     "media_library:media_library_manager",
-    "media_library:native_media_asset_manager",
     "media_library:native_media_library_ndk",
     "napi:ace_napi",
     "resource_management:librawfile",
