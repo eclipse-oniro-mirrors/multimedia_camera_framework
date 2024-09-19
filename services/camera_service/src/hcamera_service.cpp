@@ -55,7 +55,9 @@ constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 #endif
 constexpr uint8_t POSITION_FOLD_INNER = 3;
+constexpr uint32_t ROOT_UID = 0;
 constexpr uint32_t FACE_CLIENT_UID = 1088;
+constexpr uint32_t RSS_UID = 1096;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
@@ -278,8 +280,8 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    if (IPCSkeleton::GetCallingUid() == 0 ||
-        IPCSkeleton::GetCallingUid() == FACE_CLIENT_UID ||
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (uid == ROOT_UID || uid == FACE_CLIENT_UID || uid == RSS_UID ||
         OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
         vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
         for (const auto& camera: physicalCameras) {
@@ -758,8 +760,22 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
+void HCameraService::ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds)
+{
+    for (const auto& cameraId : cameraIds) {
+        auto it = cameraStatusCallbacks_.find(cameraId);
+        if (it != cameraStatusCallbacks_.end()) {
+            MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = %{public}d, bundleName = %{public}s",
+                cameraId.c_str(), it->second.status, it->second.bundleName.c_str());
+            callback->OnCameraStatusChanged(cameraId, it->second.status, it->second.bundleName);
+        }
+    }
+}
+
 int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback)
 {
+    std::vector<std::string> cameraIds;
+    GetCameraIds(cameraIds);
     lock_guard<mutex> lock(cameraCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetCameraCallback pid = %{public}d", pid);
@@ -771,9 +787,7 @@ int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(make_pair(pid, callback));
-    for (auto it : cameraStatusCallbacks_) {
-        callback->OnCameraStatusChanged(it.first, it.second.status, it.second.bundleName);
-    }
+    ExecutePidSetCallback(callback, cameraIds);
     return CAMERA_OK;
 }
 
