@@ -38,12 +38,8 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
         });
     if (physicalCameraDevice != supportedDevices_.end()) {
         MEDIA_DEBUG_LOG("%{public}s: physicalCameraId: device/%{public}s", __FUNCTION__, phyCameraId.c_str());
-<<<<<<< HEAD
         if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
             photoProfile_.GetCameraFormat() != CAMERA_FORMAT_DNG) {
-=======
-        if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE && isRawImageDelivery_) {
->>>>>>> 35d35b7b (get接口对于deviceinfo调用导致crash问题解决)
             auto inputDevice = GetInputDevice();
             if (inputDevice == nullptr) {
                 return nullptr;
