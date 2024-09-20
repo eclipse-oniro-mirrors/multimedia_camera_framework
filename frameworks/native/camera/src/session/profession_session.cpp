@@ -479,14 +479,16 @@ int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
     CHECK_AND_RETURN_RET_LOG(IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetExposureHintMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_AND_RETURN_RET_LOG(inputDevice != nullptr && inputDevice->GetCameraDeviceInfo() != nullptr,
+    CHECK_AND_RETURN_RET_LOG(inputDevice != nullptr,
         CameraErrorCode::SUCCESS, "ProfessionSession::GetExposureHintMode camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetExposureHintMode camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("ProfessionSession::GetExposureHintMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
     auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[0]));
@@ -724,12 +726,18 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
     CHECK_AND_RETURN_RET_LOG((IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetSupportedColorEffects Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
+    CHECK_AND_RETURN_RET_LOG(inputDevice != nullptr,
+        CameraErrorCode::SUCCESS, "ProfessionSession::GetSupportedColorEffects camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedColorEffects camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SUPPORTED_COLOR_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
+    }
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
         if (itr != g_metaColorEffectMap_.end()) {
