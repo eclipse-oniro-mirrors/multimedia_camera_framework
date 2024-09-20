@@ -43,16 +43,19 @@ private:
 };
 class BufferInfoExt {
 public:
-    explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality);
+    explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
+        bool isCloudImageEnhanceSupported);
     ~BufferInfoExt();
     std::shared_ptr<Media::Picture> GetPicture();
     long GetDataSize();
     bool IsHighQuality();
+    bool IsCloudImageEnhanceSupported();
 
 private:
     std::shared_ptr<Media::Picture> picture_;
     long dataSize_;
     bool isHighQuality_;
+    bool isCloudImageEnhanceSupported_;
 };
 } //namespace DeferredProcessing
 } // namespace CameraStandard

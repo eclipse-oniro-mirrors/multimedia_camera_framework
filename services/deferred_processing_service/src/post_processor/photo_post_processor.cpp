@@ -425,7 +425,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
         std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
         std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
-            isDegradedImage == 0);
+            isDegradedImage == 0, isCloudImageEnhanceSupported);
         photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
     } else {
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);

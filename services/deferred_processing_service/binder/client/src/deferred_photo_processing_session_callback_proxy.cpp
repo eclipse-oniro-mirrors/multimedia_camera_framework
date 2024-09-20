@@ -46,7 +46,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<Media::Picture> picture, bool isCloudEnhancementAvailable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -54,6 +54,8 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(imageId);
+    data.WriteBool(isCloudEnhancementAvailable);
+
     if (picture && !picture->Marshalling(data)) {
         DP_ERR_LOG("OnProcessImageDone Marshalling failed");
         return -1;
