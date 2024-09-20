@@ -19,6 +19,7 @@
 #include <functional>
 #include <thread>
 #include "audio_record.h"
+#include "audio_session_manager.h"
 #include "camera_log.h"
 #include "datetime_ex.h"
 #include "ipc_skeleton.h"
@@ -49,6 +50,9 @@ bool AudioCapturerSession::CreateAudioCapturer()
         MEDIA_ERR_LOG("AudioCapturerSession::Create AudioCapturer failed");
         return false;
     }
+    AudioSessionStrategy sessionStrategy;
+    sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
+    AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
     return true;
 }
 
@@ -146,6 +150,7 @@ void AudioCapturerSession::Stop()
         audioThread_->join();
         audioThread_.reset();
     }
+    AudioSessionManager::GetInstance()->DeactivateAudioSession();
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();
 }
