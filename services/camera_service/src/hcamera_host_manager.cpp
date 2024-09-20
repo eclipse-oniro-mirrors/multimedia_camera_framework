@@ -94,9 +94,6 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
-    int32_t GetCameraResourceCost(const std::string& cameraId,
-        OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
-
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
@@ -132,11 +129,13 @@ HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
+
     if (cameraHostProxy_ && cameraHostDeathRecipient_) {
-        const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
+        const sptr <IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
         remote->RemoveDeathRecipient(cameraHostDeathRecipient_);
         cameraHostDeathRecipient_ = nullptr;
     }
+
     cameraHostProxy_ = nullptr;
     cameraHostProxyV1_1_ = nullptr;
     cameraHostProxyV1_2_ = nullptr;
@@ -485,18 +484,6 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
     }
 }
 
-int32_t HCameraHostManager::CameraHostInfo::GetCameraResourceCost(const std::string& cameraId,
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (cameraHostProxyV1_3_ != nullptr &&
-        cameraHostProxyV1_3_->GetResourceCost(cameraId, resourceCost) ==
-        HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
-        return CAMERA_OK;
-    }
-    return CAMERA_UNSUPPORTED;
-}
-
 int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(
     const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status)
 {
@@ -538,7 +525,7 @@ void HCameraHostManager::CameraHostInfo::NotifyCameraHostDied()
     std::vector<std::string> cameraIds;
     if (statusCallback && this->GetCameras(cameraIds) == CAMERA_OK) {
         for (const auto& cameraId : cameraIds) {
-            statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE);
+            statusCallback->OnCameraStatus(cameraId, CAMERA_SERVER_UNAVAILABLE);
         }
     }
 }
@@ -904,7 +891,7 @@ void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceS
         MEDIA_ERR_LOG("HCameraHostManager::NotifyDeviceStateChangeInfo failed with not exist support device info");
         return;
     }
-    
+
     cameraHostInfo->NotifyDeviceStateChangeInfo(notifyType, deviceState);
 }
 
@@ -1145,15 +1132,6 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 void HCameraHostManager::SetMuteMode(bool muteMode)
 {
     muteMode_ = muteMode;
-}
-
-int32_t HCameraHostManager::GetCameraResourceCost(const std::string& cameraId,
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
-{
-    auto cameraHostInfo = FindCameraHostInfo(cameraId);
-    CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
-        "HCameraHostManager::GetCameraResourceCost failed with invalid device info");
-    return cameraHostInfo->GetCameraResourceCost(cameraId, resourceCost);
 }
 
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)

@@ -19,6 +19,7 @@
 #include "kits/native/include/camera/photo_output.h"
 #include "surface.h"
 #include "native_image.h"
+#include "inner_api/media_library_helper/include/file_asset.h"
 #include "inner_api/native/camera/include/utils/camera_buffer_handle_utils.h"
 
 namespace OHOS {

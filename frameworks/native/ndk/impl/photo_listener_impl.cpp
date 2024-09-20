@@ -23,9 +23,9 @@
 #include "photo_output_impl.h"
 #include "inner_api/native/camera/include/camera_photo_proxy.h"
 #include "inner_api/native/camera/include/session/capture_session.h"
-#include "media_photo_asset_proxy.h"
-#include "userfile_manager_types.h"
-#include "media_asset_helper.h"
+#include "inner_api/media_library_helper/include/media_photo_asset_proxy.h"
+#include "inner_api/media_library_helper/include/userfile_manager_types.h"
+#include "inner_api/media_library_helper/include/media_asset_helper.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -46,6 +46,7 @@ PhotoListener::~PhotoListener()
 
 void PhotoListener::OnBufferAvailable()
 {
+    MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
@@ -132,7 +133,9 @@ void PhotoListener::SetCallbackFlag(uint8_t callbackFlag)
 
 void PhotoListener::SetPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
+    MEDIA_DEBUG_LOG("PhotoListener::SetPhotoAvailableCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("PhotoListener::SetPhotoAvailableCallback is called");
     if (callback != nullptr) {
         photoCallback_ = callback;
     }
@@ -141,7 +144,9 @@ void PhotoListener::SetPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable call
 
 void PhotoListener::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
+    MEDIA_DEBUG_LOG("PhotoListener::UnregisterPhotoAvailableCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("PhotoListener::UnregisterPhotoAvailableCallback is called");
     if (photoCallback_ != nullptr && callback != nullptr) {
         photoCallback_ = nullptr;
     }
@@ -150,7 +155,9 @@ void PhotoListener::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailab
 
 void PhotoListener::SetPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
 {
+    MEDIA_DEBUG_LOG("PhotoListener::SetPhotoAssetAvailableCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("PhotoListener::SetPhotoAssetAvailableCallback is called");
     if (callback != nullptr) {
         photoAssetCallback_ = callback;
     }
@@ -159,7 +166,9 @@ void PhotoListener::SetPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvai
 
 void PhotoListener::UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
 {
+    MEDIA_DEBUG_LOG("PhotoListener::UnregisterPhotoAssetAvailableCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("PhotoListener::UnregisterPhotoAssetAvailableCallback is called");
     if (photoAssetCallback_ != nullptr && callback != nullptr) {
         photoAssetCallback_ = nullptr;
     }
@@ -275,6 +284,7 @@ RawPhotoListener::~RawPhotoListener()
 
 void RawPhotoListener::OnBufferAvailable()
 {
+    MEDIA_DEBUG_LOG("RawPhotoListener::OnBufferAvailable");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     MEDIA_INFO_LOG("RawPhotoListener::OnBufferAvailable is called");
     CHECK_AND_RETURN_LOG(rawPhotoSurface_ != nullptr, "rawPhotoSurface_ is null");
@@ -311,7 +321,9 @@ void RawPhotoListener::ExecuteRawPhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_
 
 void RawPhotoListener::SetCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
+    MEDIA_DEBUG_LOG("RawPhotoListener::SetCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("RawPhotoListener::SetCallback is called");
     if (callback != nullptr) {
         callback_ = callback;
     }
@@ -319,11 +331,12 @@ void RawPhotoListener::SetCallback(OH_PhotoOutput_PhotoAvailable callback)
 
 void RawPhotoListener::UnregisterCallback(OH_PhotoOutput_PhotoAvailable callback)
 {
+    MEDIA_DEBUG_LOG("RawPhotoListener::UnregisterCallback");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
+    MEDIA_INFO_LOG("RawPhotoListener::UnregisterCallback is called");
     if (callback != nullptr && callback_ != nullptr) {
         callback_ = nullptr;
     }
 }
-
 }
 }

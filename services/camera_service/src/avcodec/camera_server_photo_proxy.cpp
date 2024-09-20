@@ -41,8 +41,8 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     isDeferredPhoto_ = 0;
     isHighQuality_ = false;
     mode_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = 0;
     burstKey_ = "";
     isCoverPhoto_ = false;
@@ -60,10 +60,7 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 
 int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
 {
-    if (handle == nullptr) {
-        MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (handle->fd >= 0) {
         close(handle->fd);
         handle->fd = -1;
@@ -132,10 +129,8 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (bufferHandle_ == nullptr) {
-        MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
-        return fileDataAddr_;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        bufferHandle_ == nullptr, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
     if (!isMmaped_) {
         MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ, MAP_SHARED, bufferHandle_->fd, 0);
@@ -193,7 +188,7 @@ void CameraServerPhotoProxy::Release()
     if (isMmaped_ && bufferHandle_ != nullptr) {
         munmap(fileDataAddr_, bufferHandle_->size);
     } else {
-        MEDIA_ERR_LOG("~CameraServerPhotoProxy munmap failed");
+        MEDIA_ERR_LOG("CameraServerPhotoProxy munmap failed");
     }
 }
 

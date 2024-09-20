@@ -54,6 +54,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
     modeName_ = 0;
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
+    burstNum_ = 0;
 }
 
 HStreamCapture::~HStreamCapture()
@@ -171,7 +172,7 @@ void HStreamCapture::ResetBurstKey(int32_t captureId)
         burstNumMap_.erase(captureId) > 0) {
         MEDIA_INFO_LOG("HStreamCapture::ResetBurstKey captureId:%{public}d", captureId);
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::OnFrameShutterEnd captureId not found");
+        MEDIA_DEBUG_LOG("HStreamCapture::ResetBurstKey captureId not found");
     }
 }
 
@@ -271,7 +272,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
-    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
     CHECK_ERROR_RETURN_RET_LOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
         "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();
@@ -282,11 +283,14 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HStreamCapture::Capture Failed with burst state error");
+        return ret;
+    }
+
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
-    
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
@@ -323,7 +327,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
             cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         }
     }
-
+    
     int32_t NightMode = 4;
     if (GetMode() == NightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         return ret;
@@ -461,7 +465,7 @@ int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     int32_t ret = 0;
 
     // end burst capture
@@ -473,7 +477,9 @@ int32_t HStreamCapture::ConfirmCapture()
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
-        CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HStreamCapture::ConfirmCapture end burst faild!");
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture end burst faild!");
+        }
         return ret;
     }
     

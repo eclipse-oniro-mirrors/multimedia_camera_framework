@@ -464,10 +464,6 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
         Profile previewprofile_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize_);
         previewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PREVIEW,
                                                                     fd_, previewSurface_);
-        if (previewSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("fail to create new SurfaceListener");
-            return result;
-        }
         previewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)previewSurfaceListener_);
         sptr<IBufferProducer> bp = previewSurface_->GetProducer();
         sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
@@ -504,10 +500,6 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
         Profile previewprofile2_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize2_);
         secondPreviewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_,
             SurfaceType::SECOND_PREVIEW, fd_, secondPreviewSurface_);
-        if (secondPreviewSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("failed to create new SurfaceListener!");
-            return result;
-        }
         secondPreviewSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)secondPreviewSurfaceListener_);
         sptr<IBufferProducer> bp = secondPreviewSurface_->GetProducer();

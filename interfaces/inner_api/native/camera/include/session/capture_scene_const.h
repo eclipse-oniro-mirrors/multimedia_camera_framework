@@ -40,7 +40,6 @@ enum JsSceneMode : int32_t {
     JS_APERTURE_VIDEO = 14,
     JS_PANORAMA_PHOTO = 15,
     JS_TIMELAPSE_PHOTO = 16,
-    JS_FLUORESCENCE_PHOTO = 17,
 };
 
 enum SceneMode : int32_t {
@@ -64,7 +63,6 @@ enum SceneMode : int32_t {
     PANORAMA_PHOTO = 18,
     TIMELAPSE_PHOTO = 19,
     APERTURE_VIDEO = 20,
-    FLUORESCENCE_PHOTO = 21,
 };
 
 enum SceneFeature : int32_t {

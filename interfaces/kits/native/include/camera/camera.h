@@ -171,7 +171,7 @@ typedef enum Camera_SceneMode {
     NORMAL_VIDEO = 2,
 
     /**
-     * Secure photo mode.
+     * Secure camera mode.
      */
     SECURE_PHOTO = 12
 } Camera_SceneMode;
@@ -728,6 +728,11 @@ typedef struct Camera_Device {
      * Camera connection type attribute.
      */
     Camera_Connection connectionType;
+
+    /**
+     * Camera orientation.
+     */
+    uint32_t cameraOrientation;
 } Camera_Device;
 
 /**

@@ -44,7 +44,6 @@
 #include "common_event_support.h"
 #include "common_event_data.h"
 #include "want.h"
-#include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -254,6 +253,7 @@ int32_t HCameraDevice::Open()
 int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     CHECK_ERROR_PRINT_LOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
@@ -418,7 +418,7 @@ int32_t HCameraDevice::CloseDevice()
             hdiCameraDevice_->Close();
             ResetCachedSettings();
             ResetDeviceOpenLifeCycleSettings();
-            HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
+            HCameraDeviceManager::GetInstance()->RemoveDevice();
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
             HandlePrivacyAfterCloseDevice();
@@ -785,13 +785,14 @@ void HCameraDevice::DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera
 void HCameraDevice::DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
     uint32_t tag)
 {
-    // debug log for beauty control type
+    // debug log for beauty control
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_TYPE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value=%{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value = %{public}d",
+            item.data.u8[0]);
     }
 }
 
@@ -913,34 +914,6 @@ void HCameraDevice::DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::Cam
     }
 }
 
-void HCameraDevice::DebugLogForLightPaintingType(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for flash mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
- 
-void HCameraDevice::DebugLogForTriggerLighting(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for flash mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
 void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                               uint32_t tag)
 {
@@ -954,6 +927,34 @@ void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera
             item.data.i32[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
             std::to_string(item.data.i32[0]), caller_);
+    }
+}
+
+void HCameraDevice::DebugLogForLightPaintingType(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for flash mode
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE tag");
+    } else {
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
+            std::to_string(item.data.u8[0]), caller_);
+    }
+}
+
+void HCameraDevice::DebugLogForTriggerLighting(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for flash mode
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH tag");
+    } else {
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
+            std::to_string(item.data.u8[0]), caller_);
     }
 }
 
@@ -1205,6 +1206,7 @@ void HCameraDevice::CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetada
 
 int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint8_t>& result)
 {
+    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
     if (IsCameraDebugOn()) {
@@ -1337,26 +1339,6 @@ int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::Str
 
 bool HCameraDevice::CanOpenCamera()
 {
-    int32_t cost;
-    std::set<std::string> conflicting;
-    if (GetCameraResourceCost(cost, conflicting)) {
-        int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
-        int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
-        uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
-
-        sptr<HCameraDeviceHolder> cameraRequestOpen = new HCameraDeviceHolder(
-            pidOfRequestProcess, uidOfRequestProcess, 0, 0, this, accessTokenIdOfRequestProc, cost, conflicting);
-
-        std::vector<sptr<HCameraDeviceHolder>> evictedClients;
-        bool ret = HCameraDeviceManager::GetInstance()->HandleCameraEvictions(evictedClients, cameraRequestOpen);
-        // close evicted clients
-        for (auto &camera : evictedClients) {
-            MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close");
-            camera->GetDevice()->OnError(DEVICE_PREEMPT, 0);
-            camera->GetDevice()->CloseDevice();
-        }
-        return ret;
-    }
     sptr<HCameraDevice> cameraNeedEvict;
     bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
     if (cameraNeedEvict != nullptr) {
@@ -1365,21 +1347,6 @@ bool HCameraDevice::CanOpenCamera()
         cameraNeedEvict->CloseDevice();
     }
     return ret;
-}
-
-bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting)
-{
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
-    int32_t errorCode = cameraHostManager_->GetCameraResourceCost(cameraID_, resourceCost);
-    if (errorCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("GetCameraResourceCost failed");
-        return false;
-    }
-    cost = resourceCost.resourceCost_;
-    for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
-        conflicting.emplace(resourceCost.conflictingDevices_[i]);
-    }
-    return true;
 }
 
 int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
@@ -1515,7 +1482,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }
-    HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
+    HCameraDeviceManager::GetInstance()->RemoveDevice();
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
