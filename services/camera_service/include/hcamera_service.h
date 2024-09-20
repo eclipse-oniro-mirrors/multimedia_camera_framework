@@ -211,6 +211,7 @@ private:
     shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
         shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility);
     void OnMute(bool muteMode);
+    void ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds);
 
     void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
     void DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
