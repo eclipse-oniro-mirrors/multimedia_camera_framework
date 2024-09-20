@@ -596,9 +596,9 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_LOG(display == nullptr,
-                "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
+        "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         if (cameraAbility_ == nullptr) {
