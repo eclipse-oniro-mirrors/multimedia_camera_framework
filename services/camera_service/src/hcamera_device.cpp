@@ -363,8 +363,8 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
     CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->StartUsingPermissionCallback(), false, "start using permission failed");
-    cameraPrivacy->AddCameraPermissionUsedRecord();
-    cameraPrivacy->RegisterPermissionCallback();
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
     return true;
 }
 
