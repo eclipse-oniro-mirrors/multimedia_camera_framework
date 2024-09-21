@@ -2785,7 +2785,7 @@ napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callba
     }
 
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoHighQualityPhoto(isEnable);
-    if (CameraNapiUtils::CheckError(env, retCode)) {
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
     }
     return result;

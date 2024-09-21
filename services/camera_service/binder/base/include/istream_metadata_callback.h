@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,24 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_HSTREAM_METADATA_STUB_H
-#define OHOS_CAMERA_HSTREAM_METADATA_STUB_H
+#ifndef OHOS_CAMERA_ISTREAM_METADATA_CALLBACK_H
+#define OHOS_CAMERA_ISTREAM_METADATA_CALLBACK_H
 
-#include "icamera_ipc_checker.h"
-#include "iremote_stub.h"
-#include "istream_metadata.h"
+#include "iremote_broker.h"
+#include "camera_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamMetadataStub : public IRemoteStub<IStreamMetadata>, public ICameraIpcChecker {
+class IStreamMetadataCallback : public IRemoteBroker {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
+    virtual int32_t OnMetadataResult(const int32_t streamId,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) = 0;
 
-private:
-    int32_t HandleSetCallback(MessageParcel& data);
-    int32_t HandleEnableMetadataType(MessageParcel& data);
-    int32_t HandleDisableMetadataType(MessageParcel& data);
+    DECLARE_INTERFACE_DESCRIPTOR(u"IStreamMetadataCallback");
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_HSTREAM_METADATA_STUB_H
+#endif // OHOS_CAMERA_ISTREAM_METADATA_CALLBACK_H

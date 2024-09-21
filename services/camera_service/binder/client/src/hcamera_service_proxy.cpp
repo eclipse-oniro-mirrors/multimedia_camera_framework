@@ -426,6 +426,7 @@ int32_t HCameraServiceProxy::CreateDepthDataOutput(const sptr<OHOS::IBufferProdu
 }
 
 int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                                  std::vector<int32_t> metadataTypes,
                                                   sptr<IStreamMetadata>& metadataOutput)
 {
     MessageParcel data;
@@ -440,6 +441,7 @@ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProduc
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
     data.WriteInt32(format);
+    data.WriteInt32Vector(metadataTypes);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_METADATA_OUTPUT), data, reply, option);

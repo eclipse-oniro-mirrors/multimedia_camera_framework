@@ -138,6 +138,7 @@ public:
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;

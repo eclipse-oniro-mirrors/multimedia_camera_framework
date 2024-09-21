@@ -158,6 +158,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "VideoCodecType", mapVideoCodecType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("TripodStatus",
             CreateObjectWithMap(env, "TripodStatus", mapTripodStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("Emotion",
+            CreateObjectWithMap(env, "Emotion", mapMetaFaceEmotion, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

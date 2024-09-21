@@ -2844,7 +2844,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     sptr<IStreamMetadata> output_2 = nullptr;
-    intResult = cameraService->CreateMetadataOutput(Producer, 0, output_2);
+    intResult = cameraService->CreateMetadataOutput(Producer, 0, {1}, output_2);
     EXPECT_EQ(intResult, 2);
 
     input->Close();
@@ -3505,7 +3505,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
     ASSERT_NE(streamRepeat, nullptr);
-    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0);
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0, {1});
     ASSERT_NE(streamMetadata, nullptr);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
     EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
@@ -4024,7 +4024,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_027, TestSize.Level
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format, {1});
     ASSERT_NE(streamMetadata, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
@@ -4054,7 +4054,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_028, TestSize.Level
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format, {1});
     ASSERT_NE(streamMetadata, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     streamMetadata->Start();

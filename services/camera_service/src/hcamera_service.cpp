@@ -575,8 +575,8 @@ int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>&
     return rc;
 }
 
-int32_t HCameraService::CreateMetadataOutput(
-    const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput)
+int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
+    std::vector<int32_t> metadataTypes, sptr<IStreamMetadata>& metadataOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamMetadata> streamMetadata;
@@ -584,7 +584,7 @@ int32_t HCameraService::CreateMetadataOutput(
 
     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMetadataOutput producer is null");
-    streamMetadata = new (nothrow) HStreamMetadata(producer, format);
+    streamMetadata = new (nothrow) HStreamMetadata(producer, format, metadataTypes);
     CHECK_ERROR_RETURN_RET_LOG(streamMetadata == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 

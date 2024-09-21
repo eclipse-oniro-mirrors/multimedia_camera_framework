@@ -1030,29 +1030,6 @@ napi_value CameraManagerNapi::CreateDepthDataOutputInstance(napi_env env, napi_c
     return DepthDataOutputNapi::CreateDepthDataOutput(env, depthProfile);
 }
 
-napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
-                                    std::vector<MetadataObjectType> &metadataObjectTypes)
-{
-    MEDIA_DEBUG_LOG("ParseMetadataObjectTypes is called");
-    napi_value result;
-    uint32_t length = 0;
-    napi_value value;
-    int32_t metadataType;
-    napi_get_array_length(env, arrayParam, &length);
-    napi_valuetype type = napi_undefined;
-    for (uint32_t i = 0; i < length; i++) {
-        napi_get_element(env, arrayParam, i, &value);
-        napi_typeof(env, value, &type);
-        if (type != napi_number) {
-            return nullptr;
-        }
-        napi_get_value_int32(env, value, &metadataType);
-        metadataObjectTypes.push_back(static_cast<MetadataObjectType>(metadataType));
-    }
-    napi_get_boolean(env, true, &result);
-    return result;
-}
-
 napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateMetadataOutputInstance is called");
@@ -1075,8 +1052,8 @@ napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_ca
         return nullptr;
     }
     std::vector<MetadataObjectType> metadataObjectTypes;
-    ParseMetadataObjectTypes(env, argv[PARAM0], metadataObjectTypes);
-    result = MetadataOutputNapi::CreateMetadataOutput(env);
+    CameraNapiUtils::ParseMetadataObjectTypes(env, argv[PARAM0], metadataObjectTypes);
+    result = MetadataOutputNapi::CreateMetadataOutput(env, metadataObjectTypes);
     return result;
 }
 
