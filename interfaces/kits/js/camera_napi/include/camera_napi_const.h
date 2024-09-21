@@ -51,6 +51,7 @@ struct NapiWorkerQueueTask {
     }
 
     std::string taskName;
+    int32_t waitCount = 0;
     NapiWorkerQueueTaskTimePoint createTimePoint;
     NapiWorkerQueueStatus queueStatus = INIT;
 };
