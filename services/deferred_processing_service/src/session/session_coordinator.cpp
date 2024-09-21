@@ -95,7 +95,7 @@ public:
     {
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
-        int32_t isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
         if (coordinator_) {
             coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
         }
@@ -104,7 +104,7 @@ public:
     void OnProcessDoneExt(int userId, const std::string& imageId,
         std::shared_ptr<BufferInfoExt> bufferInfo) override
     {
-        int32_t isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
         if (coordinator_ && bufferInfo) {
             coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture(), isCloudImageEnhanceSupported);
         }
