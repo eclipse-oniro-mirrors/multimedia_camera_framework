@@ -192,6 +192,7 @@ public:
 
     void OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const override
     {
+        MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged() is called!");
         switch (flashStatus) {
             case FLASH_STATUS_OFF: {
                 MEDIA_DEBUG_LOG(
