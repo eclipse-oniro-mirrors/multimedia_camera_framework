@@ -91,7 +91,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
         "SetSlowMotionDetectionArea Session is not Commited");
     this->LockForControl();
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
-        "SetSlowMotionDetectionArea changedMetadata is null");
+        "SetSlowMotionDetectionArea Session is not Commited");
     int32_t retCode = EnableMotionDetection(true);
     CHECK_ERROR_RETURN_LOG(retCode != CameraErrorCode::SUCCESS, "EnableMotionDetection call failed");
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",

@@ -64,11 +64,11 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR):
             errCode = HandleSetMirror(data);
             break;
-        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION):
-            errCode = HandleSetCameraRotation(data);
-            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE):
             errCode = HandleAttachMetaSurface(data);
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION):
+            errCode = HandleSetCameraRotation(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
@@ -93,6 +93,7 @@ int32_t HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
 
 int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -112,6 +113,7 @@ int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 
 int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IStreamRepeat> sketchStream = nullptr;
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
@@ -128,6 +130,7 @@ int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, Mes
 
 int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     float sketchRatio = data.ReadFloat();
     // SketchRatio value could be negative value
     CHECK_AND_RETURN_RET_LOG(sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
@@ -147,22 +150,14 @@ int32_t HStreamRepeatStub::HandleSetFrameRate(MessageParcel& data)
     return error;
 }
 
-int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
-{
-    bool isEnable = data.ReadBool();
-    int32_t rotation = data.ReadInt32();
-    
-    int ret = SetCameraRotation(isEnable, rotation);
-    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", ret);
-    return ret;
-}
-
 int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
  
     int error = SetMirror(isEnable);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
+    }
     return error;
 }
 
@@ -182,6 +177,16 @@ int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
         "HStreamRepeatStub::HandleAttachMetaSurface add deferred surface failed : %{public}d", errCode);
 
     return errCode;
+}
+
+int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+    int32_t rotation = data.ReadInt32();
+
+    int ret = SetCameraRotation(isEnable, rotation);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

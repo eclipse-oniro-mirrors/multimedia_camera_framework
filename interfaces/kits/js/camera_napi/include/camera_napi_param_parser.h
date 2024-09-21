@@ -218,7 +218,7 @@ private:
         if (asyncFunction_ != nullptr) {
             asyncFunction->Reset();
             // Check callback function
-            if (paramSize_ > 0 && paramSize_ == paramSizeIncludeAsyncFun) {
+            if (paramSize_ == paramSizeIncludeAsyncFun) {
                 napi_valuetype napiType = napi_undefined;
                 napi_typeof(env, paramValue_[paramSize_ - 1], &napiType);
                 if (napiType == napi_function) {
@@ -226,7 +226,7 @@ private:
                 } else {
                     napiError = napi_status::napi_invalid_arg;
                 }
-            } else if (paramSizeIncludeAsyncFun > 0 && paramSize_ == paramSizeIncludeAsyncFun - 1) {
+            } else if (paramSize_ == paramSizeIncludeAsyncFun - 1) {
                 napiError = asyncFunction_->CreatePromise();
             } else {
                 napiError = napi_status::napi_invalid_arg;

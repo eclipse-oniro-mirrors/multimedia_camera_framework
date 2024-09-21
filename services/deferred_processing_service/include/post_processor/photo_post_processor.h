@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 
 #include <list>
-#include <atomic>
 
 #include "ipc_file_descriptor.h"
 #include "safe_map.h"

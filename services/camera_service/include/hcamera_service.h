@@ -59,13 +59,12 @@ struct CameraMetaInfo {
     uint8_t cameraType;
     uint8_t position;
     uint8_t connectionType;
-    uint8_t foldStatus;
     std::vector<uint8_t> supportModes;
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-    CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType, uint8_t foldStatus,
+    CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType,
         std::vector<uint8_t> supportModes, shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
         : cameraId(cameraId), cameraType(cameraType), position(position), connectionType(connectionType),
-        foldStatus(foldStatus), supportModes(supportModes), cameraAbility(cameraAbility) {}
+        supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
 enum class CameraServiceStatus : int32_t {
@@ -77,7 +76,7 @@ class CameraInfoDumper;
 
 class EXPORT_API HCameraService
     : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
-    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+      public OHOS::Rosen::DisplayManager::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -87,7 +86,7 @@ public:
     ~HCameraService() override;
     int32_t GetCameras(vector<string>& cameraIds,
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
-    int32_t GetCameraIds(std::vector<string>& cameraIds) override;
+    int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
     int32_t GetCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CreateCameraDevice(string cameraId, sptr<ICameraDeviceService>& device) override;
@@ -144,6 +143,8 @@ public:
     int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) override;
     int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) override;
     bool ShouldSkipStatusUpdates(pid_t pid);
+    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid, const string& bundleName);
+    void CreateAndSaveTask(FoldStatus status, uint32_t pid);
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
@@ -266,13 +267,14 @@ private:
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_;
     sptr<ICameraBroker> peerCallback_;
-    bool isFoldRegister = false;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
+    std::map<uint32_t, std::function<void()>> delayCbtaskMap;
+    std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
 };
 } // namespace CameraStandard
 } // namespace OHOS

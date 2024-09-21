@@ -83,11 +83,11 @@ public:
     static napi_value EnableMirror(napi_env env, napi_callback_info info);
     static napi_value GetSupportedVideoMetaTypes(napi_env env, napi_callback_info info);
     static napi_value AttachMetaSurface(napi_env env, napi_callback_info info);
+    static napi_value GetVideoRotation(napi_env env, napi_callback_info info);
     VideoOutputNapi();
     ~VideoOutputNapi() override;
     sptr<VideoOutput> GetVideoOutput();
     const EmitterFunctions& GetEmitterFunctions() override;
-    static napi_value GetVideoRotation(napi_env env, napi_callback_info info);
 
 private:
     static void VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);

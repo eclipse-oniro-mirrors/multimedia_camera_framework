@@ -98,7 +98,6 @@ int32_t VideoEncoder::GetSurface()
 
 int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(frameRecord->GetSurfaceBuffer() != nullptr, 1,
         "SurfaceBuffer is released %{public}s", frameRecord->GetFrameId().c_str());
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
@@ -173,10 +172,11 @@ int32_t VideoEncoder::FreeOutputData(uint32_t bufferIndex)
 
 int32_t VideoEncoder::Stop()
 {
-    CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
-    int ret = OH_VideoEncoder_Stop(encoder_);
+    int ret = OH_VideoEncoder_Flush(encoder_);
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Flush failed, ret: %{public}d", ret);
+    ret = OH_VideoEncoder_Stop(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     isStarted_ = false;
     return 0;
@@ -241,7 +241,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
     }
     // IDR frame is need if keyFrameInterval is 0
     int32_t needRestoreNumber = 2;
-    int32_t retryCount = 5;
+    int32_t retryCount = 10;
     while (retryCount > 0) {
         retryCount--;
         MEDIA_DEBUG_LOG("EncodeSurfaceBuffer needRestoreNumber %{public}d", needRestoreNumber);

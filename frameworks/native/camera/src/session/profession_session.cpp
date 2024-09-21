@@ -387,8 +387,10 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
     auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFocusModeMap_.end()) {
         focusMode = itr->second;
@@ -613,8 +615,10 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetFlashMode Failed with return code %{public}d", ret);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("ProfessionSession::GetFlashMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
     auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFlashModeMap_.end()) {
         flashMode = itr->second;
@@ -721,8 +725,10 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
     auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
     if (itr != g_metaColorEffectMap_.end()) {
         colorEffect = itr->second;

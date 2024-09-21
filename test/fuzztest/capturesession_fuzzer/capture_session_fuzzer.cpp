@@ -300,8 +300,8 @@ void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size
     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
-    std::string burstKey;
     int64_t timestamp = data.ReadInt64();
+    std::string burstKey = data.ReadString();
     session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 

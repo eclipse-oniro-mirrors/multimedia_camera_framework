@@ -226,8 +226,10 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     switch (session->GetMode()) {
         case SceneMode::HIGH_RES_PHOTO: {
             auto inputDevice = session->GetInputDevice();
-            CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CAMERA_OK,
-                "HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
+            if (inputDevice == nullptr) {
+                MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
+                return CAMERA_OK;
+            }
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
             std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
             camera_metadata_item_t meta;
@@ -339,7 +341,7 @@ PhotoOutput::~PhotoOutput()
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
 {
-    MEDIA_INFO_LOG("Enter Into SetNativeSurface %{public}d", isNativeSurface);
+    MEDIA_INFO_LOG("Enter Into SetNativeSurface: %{public}d", isNativeSurface);
     isNativeSurface_ = isNativeSurface;
 }
 
@@ -354,22 +356,14 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
     auto session = GetSession();
     if (beforeStatus != afterStatus && session) {
         if (session->IsSessionStarted()) {
-            FocusMode focusMode = session->GetFocusMode();
-            MEDIA_INFO_LOG("session restart when callback status changed %d", focusMode);
+            MEDIA_INFO_LOG("session restart when callback status changed");
             session->BeginConfig();
             session->CommitConfig();
-            session->LockForControl();
-            session->SetFocusMode(focusMode);
-            session->UnlockForControl();
             session->Start();
         } else if (session->IsSessionCommited()) {
-            FocusMode focusMode = session->GetFocusMode();
-            MEDIA_INFO_LOG("session recommit when callback status changed %d", focusMode);
+            MEDIA_INFO_LOG("session recommit when callback status changed");
             session->BeginConfig();
             session->CommitConfig();
-            session->LockForControl();
-            session->SetFocusMode(focusMode);
-            session->UnlockForControl();
         }
     }
 }

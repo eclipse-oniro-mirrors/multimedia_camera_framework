@@ -668,7 +668,7 @@ public:
     virtual FoldStatus GetFoldStatus();
 
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
-
+ 
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -773,7 +773,6 @@ private:
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
-    std::string foldScreenType_;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {

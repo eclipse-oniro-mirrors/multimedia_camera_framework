@@ -34,7 +34,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${multimedia_media_library_path}/interfaces",
+    "${multimedia_media_library_path}/interfaces/kits/c",
   ]
 
   sources = [
@@ -49,6 +49,7 @@ ohos_moduletest("camera_framework_moduletest") {
   ]
 
   external_deps = [
+    "ability_base:want",
     "access_token:libaccesstoken_sdk",
     "access_token:libnativetoken",
     "access_token:libprivacy_sdk",
@@ -59,8 +60,10 @@ ohos_moduletest("camera_framework_moduletest") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_surface:surface",
@@ -98,8 +101,9 @@ ohos_moduletest("camera_framework_moduletest") {
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   sanitize = {
-    cfi = true
-    cfi_cross_dso = true
+    cfi = false
+    cfi_cross_dso = false
     debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
   }
 }

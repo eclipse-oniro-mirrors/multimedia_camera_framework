@@ -48,6 +48,11 @@ export default class MainAbility extends Ability {
             })
         })
         this.onLoadContent(windowStage, 'pages/tableIndex')
+//        if (deviceInfo.deviceType === 'default') {
+//            this.onLoadContent(windowStage, 'pages/phoneIndex')
+//        } else {
+//            this.onLoadContent(windowStage, 'pages/tableIndex')
+//        }
     }
 
     onLoadContent(windowStage, page) {

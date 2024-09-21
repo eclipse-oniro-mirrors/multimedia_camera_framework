@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include "camera.h"
 #include "photo_native.h"
-#include "kits/c/media_asset_base_capi.h"
+#include "media_asset_base_capi.h"
 
 #ifdef __cplusplus
 extern "C" {

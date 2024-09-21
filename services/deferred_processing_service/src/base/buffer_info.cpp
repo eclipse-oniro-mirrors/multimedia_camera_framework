@@ -14,9 +14,10 @@
  */
 
 #include "buffer_info.h"
-#include "dp_log.h"
 
 #include <unistd.h>
+
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {

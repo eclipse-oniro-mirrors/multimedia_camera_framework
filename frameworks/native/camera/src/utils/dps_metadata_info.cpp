@@ -14,7 +14,6 @@
  */
 
 #include "dps_metadata_info.h"
-#include "dp_log.h"
 #include <message_parcel.h>
 
 #define DPS_MAX_USER_DATA_COUNT 1000
@@ -154,10 +153,16 @@ template<class T>
 DpsMetadataError DpsMetadata::Get(const std::string &key, DpsDataType type, T &value) const
 {
     auto it = datas.find(key);
-    DP_CHECK_ERROR_RETURN_RET(it == datas.end(), DPS_METADATA_ERROR_NO_ENTRY);
-    DP_CHECK_ERROR_RETURN_RET(it->second.type != type, DPS_METADATA_ERROR_TYPE_ERROR);
+    if (it == datas.end()) {
+        return DPS_METADATA_ERROR_NO_ENTRY;
+    }
+    if (it->second.type != type) {
+        return DPS_METADATA_ERROR_TYPE_ERROR;
+    }
     auto dpVal = std::any_cast<T>(&it->second.val);
-    DP_CHECK_ERROR_RETURN_RET(dpVal == nullptr, DPS_METADATA_ERROR_TYPE_ERROR);
+    if (dpVal == nullptr) {
+        return DPS_METADATA_ERROR_TYPE_ERROR;
+    }
     value = *dpVal;
     return DPS_METADATA_OK;
 }
@@ -165,8 +170,9 @@ DpsMetadataError DpsMetadata::Get(const std::string &key, DpsDataType type, T &v
 DpsMetadataError DpsMetadata::Set(const std::string &key, DpsDataType type, const std::any& val)
 {
     auto it = datas.find(key);
-    DP_CHECK_ERROR_RETURN_RET(it == datas.end() && datas.size() > DPS_MAX_USER_DATA_COUNT,
-        DPS_METADATA_ERROR_OUT_OF_RANGE);
+    if (it == datas.end() && datas.size() > DPS_MAX_USER_DATA_COUNT) {
+        return DPS_METADATA_ERROR_OUT_OF_RANGE;
+    }
     datas[key].type = type;
     datas[key].val = val;
     return DPS_METADATA_OK;

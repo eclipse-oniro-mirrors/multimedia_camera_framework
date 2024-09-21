@@ -28,7 +28,7 @@ namespace {
 void FillSizeListFromStreamInfo(
     vector<Size>& sizeList, const StreamInfo& streamInfo, const camera_format_t targetFormat)
 {
-    for (const auto& detail : streamInfo.detailInfos) {
+    for (const auto &detail : streamInfo.detailInfos) {
         camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
         if (hdi_format != targetFormat) {
             continue;
@@ -83,7 +83,9 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS);
-    CHECK_ERROR_RETURN_RET(item == nullptr, nullptr);
+    if (item == nullptr) {
+        return nullptr;
+    }
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
     ExtendInfo extendInfo = {};
@@ -249,8 +251,10 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
         [currentMode](auto value) -> bool {
             return currentMode == value[0];
         });
-    CHECK_ERROR_RETURN_RET_LOG(it == modeRanges.end(), {},
-        "ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
+    if (it == modeRanges.end()) {
+        MEDIA_ERR_LOG("ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
+        return {};
+    }
 
     return *it;
 }

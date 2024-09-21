@@ -212,6 +212,9 @@ int main(int argc, char **argv)
     Profile photoprofile = Profile(static_cast<CameraFormat>(photoFormat), photosize);
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
+    if (captureListener == nullptr) {
+        return 0;
+    }
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
     sptr<IBufferProducer> bp = photoSurface->GetProducer();
     sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, bp);
@@ -235,6 +238,9 @@ int main(int argc, char **argv)
     Profile previewprofile = Profile(static_cast<CameraFormat>(previewFormat), previewsize);
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
+    if (listener == nullptr) {
+        return 0;
+    }
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
     sptr<Surface> previewProducerSurface = Surface::CreateSurfaceAsProducer(previewProducer);

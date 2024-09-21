@@ -19,6 +19,7 @@
 #include "native_avcodec_audiocodec.h"
 #include "sample_info.h"
 #include "audio_record.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {

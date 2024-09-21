@@ -35,12 +35,11 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
-#include "display_manager.h"
-#include "hcamera_device_manager.h"
 #include "hcamera_preconfig.h"
 #ifdef DEVICE_MANAGER
 #include "device_manager_impl.h"
 #endif
+#include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "os_account_manager.h"
@@ -84,6 +83,10 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_AND_RETURN_LOG(
         cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+    bool isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
+    if (isFoldScreen) {
+        RegisterFoldStatusListener();
+    }
     MEDIA_INFO_LOG("HCameraService Construct end");
     serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
 }
@@ -260,18 +263,16 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
-    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
-    uint8_t foldStatus = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
     std::vector<uint8_t> supportModes = {};
     for (uint32_t i = 0; i < item.count; i++) {
         supportModes.push_back(item.data.u8[i]);
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
-                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d, Fold status %d",
-        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported, foldStatus));
-    return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition, connectionType,
-        foldStatus, supportModes, cameraAbility);
+                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d",
+        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
+    return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition,
+        connectionType, supportModes, cameraAbility);
 }
 
 void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -333,29 +334,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
     return physicalCameras;
 }
 
-vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
-{
-    vector<shared_ptr<CameraMetaInfo>> choosedCameras;
-    for (auto& camera : cameraInfos) {
-        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
-            camera->cameraId.c_str(), camera->position, camera->connectionType);
-        if (any_of(choosedCameras.begin(), choosedCameras.end(),
-            [camera](const auto& defaultCamera) {
-                return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
-                    defaultCamera->position == camera->position &&
-                    defaultCamera->connectionType == camera->connectionType);
-            })
-        ) {
-            MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
-        } else {
-            choosedCameras.emplace_back(camera);
-            MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
-        }
-    }
-    return choosedCameras;
-}
 
-int32_t HCameraService::GetCameraIds(vector<string>& cameraIds)
+int32_t HCameraService::GetCameraIds(std::vector<std::string>& cameraIds)
 {
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
@@ -394,6 +374,28 @@ int32_t HCameraService::GetCameraAbility(std::string& cameraId,
         abilityIndex++;
     }
     return ret;
+}
+
+vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
+{
+    vector<shared_ptr<CameraMetaInfo>> choosedCameras;
+    for (auto& camera : cameraInfos) {
+        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
+            camera->cameraId.c_str(), camera->position, camera->connectionType);
+        if (any_of(choosedCameras.begin(), choosedCameras.end(),
+            [camera](const auto& defaultCamera) {
+                return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
+                    defaultCamera->position == camera->position &&
+                    defaultCamera->connectionType == camera->connectionType);
+            })
+        ) {
+            MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
+        } else {
+            choosedCameras.emplace_back(camera);
+            MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
+        }
+    }
+    return choosedCameras;
 }
 
 int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceService>& device)
@@ -633,6 +635,35 @@ bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
     return true;
 }
 
+void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid,
+    const string& bundleName)
+{
+    auto task = [cameraId, status, pid, &bundleName, this]() {
+        auto it = cameraServiceCallbacks_.find(pid);
+        if (it != cameraServiceCallbacks_.end()) {
+            if (it->second != nullptr) {
+                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
+                it->second->OnCameraStatusChanged(cameraId, status, bundleName);
+            }
+        }
+    };
+    delayCbtaskMap[pid] = task;
+}
+
+void HCameraService::CreateAndSaveTask(FoldStatus status, uint32_t pid)
+{
+    auto task = [status, pid, this]() {
+        auto it = foldServiceCallbacks_.find(pid);
+        if (it != foldServiceCallbacks_.end()) {
+            if (it->second != nullptr) {
+                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
+                it->second->OnFoldStatusChanged(status);
+            }
+        }
+    };
+    delayFoldStatusCbTaskMap[pid] = task;
+}
+
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status, CallbackInvoker invoker)
 {
     lock_guard<mutex> lock(cameraCbMutex_);
@@ -814,10 +845,6 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
-    isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
-    if (isFoldable && !isFoldRegister) {
-        RegisterFoldStatusListener();
-    }
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
@@ -904,8 +931,7 @@ void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
-    CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
-    isFoldRegister = true;
+    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
 }
 
 void HCameraService::UnRegisterFoldStatusListener()
@@ -913,7 +939,6 @@ void HCameraService::UnRegisterFoldStatusListener()
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
-    isFoldRegister = false;
 }
 
 int32_t HCameraService::UnSetAllCallback(pid_t pid)
@@ -1695,6 +1720,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t effect = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
     }
+
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FILTER_TYPE, &item);
     if (ret == CAM_META_SUCCESS) {
         uint8_t filterValue = item.data.u8[0];
@@ -1721,7 +1747,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
 
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CAMERA_USER_ID, &item);
     if (ret == CAM_META_SUCCESS) {
-        int32_t enableValue = item.data.i32[0];
+        uint8_t enableValue = item.data.i32[0];
         defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
     }
 
@@ -1855,6 +1881,17 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
                 freezedPidList_.erase(pid);
             }
             MEDIA_INFO_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(cameraCbMutex_);
+        for (auto pid : pidList) {
+            auto it = delayCbtaskMap.find(pid);
+            if (it != delayCbtaskMap.end()) {
+                it->second();
+                delayCbtaskMap.erase(it);
+            }
         }
     }
     return CAMERA_OK;

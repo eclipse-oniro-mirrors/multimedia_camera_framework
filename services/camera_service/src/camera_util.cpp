@@ -28,11 +28,13 @@
 #include "bundle_mgr_interface.h"
 #include "system_ability_definition.h"
 #include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static bool g_tablet = true;
+static bool g_tablet = false;
+
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -425,6 +427,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
         MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
     }
 }
+
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
@@ -469,6 +472,21 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
     MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
         streamRotation, disPlayRotation);
     return streamRotation;
+}
+
+bool CheckSystemApp()
+{
+    Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    Security::AccessToken::ATokenTypeEnum tokenType =
+        Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType !=  Security::AccessToken::TOKEN_HAP) {
+        MEDIA_DEBUG_LOG("Caller is not a application.");
+        return true;
+    }
+    uint64_t accessTokenId = IPCSkeleton::GetCallingFullTokenID();
+    bool isSystemApplication = Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(accessTokenId);
+    MEDIA_DEBUG_LOG("isSystemApplication:%{public}d", isSystemApplication);
+    return isSystemApplication;
 }
 } // namespace CameraStandard
 } // namespace OHOS

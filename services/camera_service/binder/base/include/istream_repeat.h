@@ -44,13 +44,13 @@ public:
 
     virtual int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) = 0;
 
-    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation) = 0;
-
     virtual int32_t EnableSecure(bool isEnable = false) = 0;
     
     virtual int32_t SetMirror(bool isEnable) = 0;
 
     virtual int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) = 0;
+
+    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };
