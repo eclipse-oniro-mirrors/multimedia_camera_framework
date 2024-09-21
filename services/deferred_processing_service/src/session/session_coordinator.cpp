@@ -95,7 +95,7 @@ public:
     {
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
-        int32_t isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
         if (coordinator_) {
             coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
         }
@@ -104,8 +104,9 @@ public:
     void OnProcessDoneExt(int userId, const std::string& imageId,
         std::shared_ptr<BufferInfoExt> bufferInfo) override
     {
+        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
         if (coordinator_ && bufferInfo) {
-            coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture());
+            coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture(), isCloudImageEnhanceSupported);
         }
     }
 
@@ -181,14 +182,14 @@ void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& 
 }
 
 void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
 {
     auto iter = remoteImageCallbacksMap_.find(userId);
     if (iter != remoteImageCallbacksMap_.end()) {
         auto wpCallback = iter->second;
         sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
         DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
-        spCallback->OnProcessImageDone(imageId, picture);
+        spCallback->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
     } else {
         DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
     }

@@ -310,7 +310,7 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string&
 }
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
 }

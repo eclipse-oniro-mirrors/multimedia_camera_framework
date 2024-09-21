@@ -151,7 +151,8 @@ class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCal
 public:
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         bool isCloudImageEnhanceSupported);
-    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture);
+    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudImageEnhanceSupported);
     void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture);
     void OnError(const std::string& imageId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);

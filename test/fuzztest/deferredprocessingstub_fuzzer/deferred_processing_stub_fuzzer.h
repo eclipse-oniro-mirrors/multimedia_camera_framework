@@ -36,7 +36,8 @@ public:
     {
         return 0;
     }
-    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture) override
+    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudImageEnhanceSupported) override
     {
         return 0;
     }

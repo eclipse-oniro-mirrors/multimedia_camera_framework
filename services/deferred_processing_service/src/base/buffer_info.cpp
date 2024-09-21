@@ -60,10 +60,12 @@ bool BufferInfo::IsCloudImageEnhanceSupported()
     return isCloudImageEnhanceSupported_;
 }
 
-BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality)
+BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
+    bool isCloudImageEnhanceSupported)
     : picture_(picture),
       dataSize_(dataSize),
-      isHighQuality_(isHighQuality)
+      isHighQuality_(isHighQuality),
+      isCloudImageEnhanceSupported_(isCloudImageEnhanceSupported)
 {
 }
 
@@ -85,6 +87,11 @@ long BufferInfoExt::GetDataSize()
 bool BufferInfoExt::IsHighQuality()
 {
     return isHighQuality_;
+}
+
+bool BufferInfoExt::IsCloudImageEnhanceSupported()
+{
+    return isCloudImageEnhanceSupported_;
 }
 } //namespace DeferredProcessing
 } // namespace CameraStandard

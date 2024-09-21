@@ -75,7 +75,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
         "called, status:%{public}s", imageId.c_str());
@@ -83,7 +83,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
         MEDIA_INFO_LOG("picture is not null");
     }
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
-        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture);
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
