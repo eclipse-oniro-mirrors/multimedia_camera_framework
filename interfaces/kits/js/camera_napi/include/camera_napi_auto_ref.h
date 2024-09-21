@@ -33,7 +33,18 @@ public:
     AutoRef(napi_env env, napi_value callback, bool isOnce) : isOnce_(isOnce), env_(env)
     {
         (void)napi_create_reference(env_, callback, 1, &callbackRef_);
-        napi_create_string_utf8(env, "~AutoRef", NAPI_AUTO_LENGTH, &tsfnName_);
+        napi_value workName;
+        napi_create_string_utf8(env, "~AutoRef", NAPI_AUTO_LENGTH, &workName);
+        napi_create_threadsafe_function(
+            env_, nullptr, nullptr, workName, 0, 1, nullptr, nullptr, nullptr,
+            [](napi_env env, napi_value js_cb, void* context, void* data) {
+                if (data == nullptr) {
+                    return;
+                }
+                napi_ref callbackRef = static_cast<napi_ref>(data);
+                (void)napi_reference_unref(env, callbackRef, nullptr);
+            },
+            &tsfn_);
     }
 
     AutoRef(const AutoRef& other)
@@ -41,7 +52,7 @@ public:
         isOnce_ = other.isOnce_;
         env_ = other.env_;
         callbackRef_ = other.callbackRef_;
-        tsfnName_ = other.tsfnName_;
+        tsfn_ = other.tsfn_;
         if (env_ != nullptr && callbackRef_ != nullptr) {
             (void)napi_reference_ref(env_, callbackRef_, nullptr);
         }
@@ -53,31 +64,17 @@ public:
         std::swap(isOnce_, tmp.isOnce_);
         std::swap(env_, tmp.env_);
         std::swap(callbackRef_, tmp.callbackRef_);
-        std::swap(tsfnName_, tmp.tsfnName_);
+        std::swap(tsfn_, tmp.tsfn_);
         return *this;
     }
 
     ~AutoRef()
     {
-        if (callbackRef_ == nullptr) {
-            return;
+        if (tsfn_ != nullptr && callbackRef_ != nullptr) {
+            if (napi_acquire_threadsafe_function(tsfn_) == napi_ok) {
+                napi_call_threadsafe_function(tsfn_, callbackRef_, napi_tsfn_nonblocking);
+            }
         }
-        napi_threadsafe_function tsfn = nullptr;
-        napi_status status = napi_create_threadsafe_function(
-            env_, nullptr, nullptr, tsfnName_, 0, 1, nullptr, nullptr, nullptr,
-            [](napi_env env, napi_value js_cb, void* context, void* data) {
-                if (data == nullptr) {
-                    return;
-                }
-                napi_ref callbackRef = static_cast<napi_ref>(data);
-                (void)napi_reference_unref(env, callbackRef, nullptr);
-            },
-            &tsfn);
-        if (status != napi_ok) {
-            return;
-        }
-        napi_call_threadsafe_function(tsfn, callbackRef_, napi_tsfn_nonblocking);
-        napi_release_threadsafe_function(tsfn, napi_tsfn_release);
     }
 
     napi_value GetCallbackFunction()
@@ -97,7 +94,7 @@ public:
 private:
     napi_env env_ = nullptr;
     napi_ref callbackRef_ = nullptr;
-    napi_value tsfnName_ = nullptr;
+    napi_threadsafe_function tsfn_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS

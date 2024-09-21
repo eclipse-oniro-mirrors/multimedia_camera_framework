@@ -988,6 +988,7 @@ declare namespace camera {
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
+     * @deprecated since 12
      */
     CAMERA_POSITION_FOLD_INNER = 3
   }
@@ -1452,13 +1453,13 @@ declare namespace camera {
   }
 
   /**
-   * Flash object.
+   * FlashQuery object.
    *
-   * @interface Flash
+   * @interface FlashQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
-   */
-  interface Flash {
+   * @since 12
+   */  
+  interface FlashQuery {
     /**
      * Check if device has flash light.
      *
@@ -1479,6 +1480,15 @@ declare namespace camera {
      * @since 10
      */
     isFlashModeSupported(flashMode: FlashMode): boolean;
+  }
+  /**
+   * Flash object.
+   *
+   * @interface Flash
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface Flash extends FlashQuery{
 
     /**
      * Gets current flash mode.
@@ -1535,13 +1545,13 @@ declare namespace camera {
   }
 
   /**
-   * AutoExposure object.
+   * AutoExposureQuery object.
    *
-   * @interface AutoExposure
+   * @interface AutoExposureQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
-   */
-  interface AutoExposure {
+   * @since 12
+   */  
+  interface AutoExposureQuery {
     /**
      * Checks whether a specified exposure mode is supported.
      *
@@ -1553,6 +1563,24 @@ declare namespace camera {
      */
     isExposureModeSupported(aeMode: ExposureMode): boolean;
 
+    /**
+     * Query the exposure compensation range.
+     *
+     * @returns { Array<number> } The array of compensation range.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    getExposureBiasRange(): Array<number>;
+  }
+  /**
+   * AutoExposure object.
+   *
+   * @interface AutoExposure
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface AutoExposure extends AutoExposureQuery{
     /**
      * Gets current exposure mode.
      *
@@ -1592,16 +1620,6 @@ declare namespace camera {
      * @since 10
      */
     setMeteringPoint(point: Point): void;
-
-    /**
-     * Query the exposure compensation range.
-     *
-     * @returns { Array<number> } The array of compensation range.
-     * @throws { BusinessError } 7400103 - Session not config.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 10
-     */
-    getExposureBiasRange(): Array<number>;
 
     /**
      * Set exposure compensation.
@@ -1689,13 +1707,13 @@ declare namespace camera {
   }
 
   /**
-   * Focus object.
+   * FocusQuery object.
    *
-   * @interface Focus
+   * @interface FocusQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
-   */
-  interface Focus {
+   * @since 12
+   */  
+  interface FocusQuery{
     /**
      * Checks whether a specified focus mode is supported.
      *
@@ -1706,6 +1724,15 @@ declare namespace camera {
      * @since 10
      */
     isFocusModeSupported(afMode: FocusMode): boolean;
+  }
+  /**
+   * Focus object.
+   *
+   * @interface Focus
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface Focus extends FocusQuery{
 
     /**
      * Gets current focus mode.
@@ -1792,15 +1819,14 @@ declare namespace camera {
      */
     duration: number;
   }
-
   /**
-   * Zoom object.
+   * ZoomQuery object.
    *
-   * @interface Zoom
+   * @interface ZoomQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
-   */
-  interface Zoom {
+   * @since 12
+   */  
+  interface ZoomQuery {
     /**
      * Gets all supported zoom ratio range.
      *
@@ -1810,7 +1836,15 @@ declare namespace camera {
      * @since 10
      */
     getZoomRatioRange(): Array<number>;
-
+  }
+  /**
+   * Zoom object.
+   *
+   * @interface Zoom
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface Zoom extends ZoomQuery{
     /**
      * Gets zoom ratio.
      *
@@ -1913,13 +1947,13 @@ declare namespace camera {
   }
 
   /**
-   * Stabilization object.
+   * StabilizationQuery object.
    *
-   * @interface Stabilization
+   * @interface StabilizationQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
-   */
-  interface Stabilization {
+   * @since 12
+   */  
+  interface StabilizationQuery {
     /**
      * Check whether the specified video stabilization mode is supported.
      *
@@ -1930,7 +1964,15 @@ declare namespace camera {
      * @since 10
      */
     isVideoStabilizationModeSupported(vsMode: VideoStabilizationMode): boolean;
-
+  }
+  /**
+   * Stabilization object.
+   *
+   * @interface Stabilization
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface Stabilization extends StabilizationQuery {
     /**
      * Query the video stabilization mode currently in use.
      *
@@ -1999,14 +2041,13 @@ declare namespace camera {
   }
 
   /**
-   * Beauty object.
+   * BeautyQuery object.
    *
-   * @interface Beauty
+   * @interface BeautyQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface Beauty {
+   * @since 12
+   */  
+  interface BeautyQuery {
     /**
      * Gets supported beauty effect types.
      *
@@ -2028,7 +2069,17 @@ declare namespace camera {
      * @systemapi
      * @since 10
      */
-    getSupportedBeautyRange(type: BeautyType): Array<number>;
+    getSupportedBeautyRange(type: BeautyType): Array<number>;  
+  }
+  /**
+   * Beauty object.
+   *
+   * @interface Beauty
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface Beauty extends BeautyQuery {
 
     /**
      * Gets the beauty effect in use.
@@ -2159,14 +2210,13 @@ declare namespace camera {
   }
 
   /**
-   * Color effect object.
+   * ColorEffectQuery object.
    *
-   * @interface ColorEffect
+   * @interface ColorEffectQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface ColorEffect {
+   * @since 12
+   */  
+  interface ColorEffectQuery {
     /**
      * Gets supported color effect types.
      *
@@ -2177,7 +2227,16 @@ declare namespace camera {
      * @since 11
      */
     getSupportedColorEffects(): Array<ColorEffectType>;
-
+  }
+  /**
+   * Color effect object.
+   *
+   * @interface ColorEffect
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface ColorEffect extends ColorEffectQuery {
     /**
      * Gets the specific color effect type.
      *
@@ -2202,25 +2261,13 @@ declare namespace camera {
   }
 
   /**
-   * Color Management object.
+   * ColorManagementQuery object.
    *
-   * @interface ColorManagement
+   * @interface ColorManagementQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface ColorManagement {
-    /**
-     * Gets the specific color space type.
-     *
-     * @returns { colorSpaceManager.ColorSpace } Current color space.
-     * @throws { BusinessError } 7400103 - Session not config.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 11
-     */
-    getActiveColorSpace(): colorSpaceManager.ColorSpace;
-
+   * @since 12
+   */  
+  interface ColorManagementQuery {
     /**
      * Gets the supported color space types.
      *
@@ -2231,6 +2278,26 @@ declare namespace camera {
      * @since 11
      */
     getSupportedColorSpaces(): Array<colorSpaceManager.ColorSpace>;
+  }
+  /**
+   * Color Management object.
+   *
+   * @interface ColorManagement
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface ColorManagement extends ColorManagementQuery{
+    /**
+     * Gets the specific color space type.
+     *
+     * @returns { colorSpaceManager.ColorSpace } Current color space.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    getActiveColorSpace(): colorSpaceManager.ColorSpace;
 
     /**
      * Sets a color space for the session.
@@ -2245,14 +2312,13 @@ declare namespace camera {
   }
 
   /**
-   * Macro object.
+   * MacroQuery object.
    *
-   * @interface Macro
+   * @interface MacroQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface Macro {
+   * @since 12
+   */  
+  interface MacroQuery {
     /**
      * Determine whether camera macro is supported.
      *
@@ -2262,6 +2328,16 @@ declare namespace camera {
      * @since 11
      */
     isMacroSupported(): boolean;
+  }
+  /**
+   * Macro object.
+   *
+   * @interface Macro
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface Macro extends MacroQuery {
 
     /**
      * Enable macro for camera.
@@ -2510,6 +2586,16 @@ declare namespace camera {
      * @since 10
      */
     release(): Promise<void>;
+
+    /**
+     * Get Camera Output Capabilities.
+     *
+     * @returns { Array<CameraOutputCapability> } used to return the result.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    getCameraOutputCapabilities(camera: CameraDevice): Array<CameraOutputCapability>;
   }
 
   /**
@@ -2600,8 +2686,74 @@ declare namespace camera {
      * @since 11
      */
     off(type: 'abilityChange', callback?: AsyncCallback<void>): void;
-  }
 
+    /**
+     * Get Camera OutputCapability.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    getCameraOutputCapability(camera: CameraDevice): Array<CameraOutputCapability>;
+  }
+  /**
+   * Photo Ability object.
+   *
+   * @interface PhotoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface PhotoAbility extends FlashQuery, AutoExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery,
+    ColorManagementQuery, MacroQuery {
+  }
+  /**
+   * Video Ability object.
+   *
+   * @interface VideoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface VideoAbility extends FlashQuery, AutoExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery,
+    ColorEffectQuery, ColorManagementQuery, MacroQuery {
+  }
+  /**
+   * PortraitPhoto Ability object.
+   *
+   * @interface PortraitPhotoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface PortraitPhotoAbility extends FlashQuery, AutoExposureQuery, FocusQuery, ZoomQuery, BeautyQuery,
+    ColorEffectQuery, ColorManagementQuery, PortraitQuery, ApertureQuery {
+  }
+  /**
+   * Photo Conflict Ability object.
+   *
+   * @interface PhotoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface PhotoConflictAbility extends ZoomQuery, MacroQuery {
+  }
+  /**
+   * Video Conflict Ability object.
+   *
+   * @interface VideoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface VideoConflictAbility extends ZoomQuery, MacroQuery {
+  }
+  /**
+   * PortraitPhoto Conflict Ability object.
+   *
+   * @interface PortraitPhotoAbility
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface PortraitPhotoConflictAbility extends ZoomQuery, PortraitQuery, ApertureQuery {
+  }
   /**
    * Photo session object.
    *
@@ -2713,6 +2865,28 @@ declare namespace camera {
      * @since 12
      */
     off(type: 'effectSuggestionChange', callback?: AsyncCallback<EffectSuggestionType>): void;
+
+    /**
+     * Get Session Ability.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { PhotoAbility } used to return the Photo Ability.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSessionAbilities(outputCapability: CameraOutputCapability): Array<PhotoAbility>;
+    /**
+     * Get Session Conflict Ability.
+     *
+     * @returns { Array<CameraAbility> } used to return the PhotoConflictAbility.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSessionConflictAbilities(): Array<PhotoConflictAbility>;
   }
 
   /**
@@ -2804,6 +2978,30 @@ declare namespace camera {
      * @since 11
      */
     off(type: 'macroStatusChanged', callback?: AsyncCallback<boolean>): void;
+
+    /**
+     * Get Session Ability.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { VideoAbility } used to return the Video Ability.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSessionAbilities(outputCapability: CameraOutputCapability): Array<VideoAbility>;
+
+    /**
+     * Get Session Conflict Ability.
+     *
+     * @returns { Array<CameraAbility> } used to return the VideoConflictAbility.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSessionConflictAbilities(): Array<VideoConflictAbility>;
+    
   }
 
   /**
@@ -2871,14 +3069,13 @@ declare namespace camera {
   }
 
   /**
-   * Portrait object.
+   * PortraitQuery object.
    *
-   * @interface Portrait
+   * @interface PortraitQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface Portrait {
+   * @since 12
+   */ 
+  interface PortraitQuery {
     /**
      * Gets supported portrait effect.
      *
@@ -2889,7 +3086,16 @@ declare namespace camera {
      * @since 10
      */
     getSupportedPortraitEffects(): Array<PortraitEffect>;
-
+  }
+  /**
+   * Portrait object.
+   *
+   * @interface Portrait
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface Portrait extends PortraitQuery{
     /**
      * Gets the portrait effect in use.
      *
@@ -2976,14 +3182,13 @@ declare namespace camera {
   }
 
   /**
-   * Aperture object.
+   * ApertureQuery object.
    *
-   * @interface Aperture
+   * @interface ApertureQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface Aperture {
+   * @since 12
+   */ 
+  interface ApertureQuery {
     /**
      * Gets the supported virtual apertures.
      *
@@ -2995,6 +3200,26 @@ declare namespace camera {
      */
     getSupportedVirtualApertures(): Array<number>;
 
+    /**
+     * Gets the supported physical apertures.
+     *
+     * @returns { Array<PhysicalAperture> } The array of supported physical apertures.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    getSupportedPhysicalApertures(): Array<PhysicalAperture>;    
+  }
+  /**
+   * Aperture object.
+   *
+   * @interface Aperture
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface Aperture extends ApertureQuery{
     /**
      * Gets current virtual aperture value.
      *
@@ -3016,17 +3241,6 @@ declare namespace camera {
      * @since 11
      */
     setVirtualAperture(aperture: number): void;
-
-    /**
-     * Gets the supported physical apertures.
-     *
-     * @returns { Array<PhysicalAperture> } The array of supported physical apertures.
-     * @throws { BusinessError } 7400103 - Session not config.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 11
-     */
-    getSupportedPhysicalApertures(): Array<PhysicalAperture>;
 
     /**
      * Gets current physical aperture value.
@@ -3119,6 +3333,29 @@ declare namespace camera {
      * @since 11
      */
     off(type: 'smoothZoomInfoAvailable', callback?: AsyncCallback<SmoothZoomInfo>): void;
+
+    /**
+     * Get Session Ability.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { PortraitPhotoAbility } used to return the PortraitPhoto Ability.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+
+    getSessionAbilities(outputCapability: CameraOutputCapability): Array<PortraitPhotoAbility>;
+    /**
+     * Get Session Conflict Ability.
+     *
+     * @returns { Array<PortraitPhotoConflictAbility> } used to return the PortraitPhotoConflictAbility.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSessionConflictAbilities(): Array<PortraitPhotoConflictAbility>;
   }
 
   /**
@@ -3214,14 +3451,13 @@ declare namespace camera {
   }
 
   /**
-   * ManualExposure object.
+   * ManualExposureQuery object.
    *
-   * @interface ManualExposure
+   * @interface ManualExposureQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
-   * @since 11
-   */
-  interface ManualExposure {
+   * @since 12
+   */ 
+  interface ManualExposureQuery {
     /**
      * Gets the supported manual exposure range.
      *
@@ -3232,7 +3468,16 @@ declare namespace camera {
      * @since 11
      */
     getSupportedExposureRange(): Array<number>;
-
+  }
+  /**
+   * ManualExposure object.
+   *
+   * @interface ManualExposure
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface ManualExposure extends ManualExposureQuery{
     /**
      * Gets current exposure value.
      *

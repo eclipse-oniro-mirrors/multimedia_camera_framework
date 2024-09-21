@@ -61,9 +61,8 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
 }
 
 void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
-                                         int32_t rotation)
+    int32_t rotation)
 {
-    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("DoMuxerVideo enter");
     std::sort(frameRecords.begin(), frameRecords.end(),
         [](const sptr<FrameRecord>& a, const sptr<FrameRecord>& b) {
@@ -82,7 +81,6 @@ void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRec
 // Call this function after buffer has been encoded
 void MovingPhotoVideoCache::OnImageEncoded(sptr<FrameRecord> frameRecord, bool encodeResult)
 {
-    CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(callbackVecLock_);
     for (auto cachedFrameCallbackHandle : cachedFrameCallbackHandles_) {
         if (cachedFrameCallbackHandle == nullptr) {
@@ -192,6 +190,5 @@ CachedFrameSet CachedFrameCallbackHandle::GetCacheRecord()
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     return cacheRecords_;
 }
-
 } // CameraStandard
 } // OHOS

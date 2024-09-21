@@ -105,6 +105,7 @@ ohos_shared_library("camera_service") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils/",
     "//foundation/window/window_manager/interfaces/innerkits/dm",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
@@ -127,7 +128,6 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
   ]
 
   if (target_cpu == "arm") {
@@ -167,7 +167,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:metadata",
-    "drivers_interface_display:display_commontype_idl_headers",
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.1",
     "graphic_2d:librender_service_client",
@@ -181,6 +181,8 @@ ohos_shared_library("camera_service") {
     "ipc:ipc_single",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
@@ -223,47 +225,6 @@ ohos_shared_library("camera_service") {
       cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
-
-  cflags_cc = cflags
-
-  part_name = "camera_framework"
-  subsystem_name = "multimedia"
-}
-
-ohos_shared_library("camera_dynamic_medialibrary") {
-  install_enable = true
-  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
-  cflags = [
-    "-fPIC",
-    "-Wall",
-  ]
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  include_dirs = [
-    "${multimedia_camera_framework_path}/common/utils",
-    "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
-  ]
-
-  if (target_cpu == "arm") {
-    cflags += [ "-DBINDER_IPC_32BIT" ]
-  }
-
-  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
-
-  external_deps = [
-    "data_share:datashare_common",
-    "data_share:datashare_consumer",
-    "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "image_framework:image_native",
-    "ipc:ipc_single",
-    "media_library:media_library",
-    "media_library:media_library_manager",
-    "samgr:samgr_proxy",
-  ]
 
   cflags_cc = cflags
 

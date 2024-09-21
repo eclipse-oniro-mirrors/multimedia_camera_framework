@@ -80,8 +80,8 @@ void DepthDataListener::ExecuteDepthData(sptr<SurfaceBuffer> surfaceBuffer) cons
     napi_value retVal;
 
     // create pixelMap
-    int32_t depthDataWidth = static_cast<int32_t>(depthProfile_->GetSize().width);
-    int32_t depthDataHeight = static_cast<int32_t>(depthProfile_->GetSize().height);
+    int32_t depthDataWidth = depthProfile_->GetSize().width;
+    int32_t depthDataHeight = depthProfile_->GetSize().height;
     Media::InitializationOptions opts;
     opts.srcPixelFormat = Media::PixelFormat::RGBA_F16;
     opts.pixelFormat = Media::PixelFormat::RGBA_F16;
@@ -264,7 +264,7 @@ void DepthDataOutputCallback::UpdateJSCallback(DepthDataOutputEventType eventTyp
     ExecuteCallback(eventName, callbackNapiPara);
 }
 
-DepthDataOutputNapi::DepthDataOutputNapi() : env_(nullptr) {}
+DepthDataOutputNapi::DepthDataOutputNapi() {}
 
 DepthDataOutputNapi::~DepthDataOutputNapi()
 {

@@ -250,7 +250,9 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
         case StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken invalid!");
+                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
+                              "is %{public}d",
+                    callerToken_, callerToken);
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;
@@ -261,4 +263,4 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
     return CAMERA_OK;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

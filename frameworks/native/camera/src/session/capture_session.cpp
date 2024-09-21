@@ -29,13 +29,14 @@
 #include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_output.h"
-#include "camera_security_utils.h"
 #include "capture_scene_const.h"
+#include "camera_security_utils.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
+#include "media_photo_asset_proxy.h"
 #include "os_account_manager.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
@@ -1096,7 +1097,6 @@ int32_t CaptureSession::Release()
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
-
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     captureSessionCallback_ = nullptr;
     appCallback_ = nullptr;
@@ -1153,8 +1153,9 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
     auto captureSession = GetCaptureSession();
     if (captureSession) {
         errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
-            errorCode);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
+        }
     } else {
         MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
     }
@@ -1169,8 +1170,6 @@ int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("SetPreviewRotation is failed errorCode: %{public}d", errorCode);
         }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::SetPreviewRotation captureSession is nullptr");
     }
     return errorCode;
 }
@@ -1402,9 +1401,8 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
         stabilizationMode = VideoStabilizationMode::AUTO;
     }
-    CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
-    if ((itr == g_fwkVideoStabModesMap_.end())) {
+    if ((itr == g_fwkVideoStabModesMap_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
@@ -1427,8 +1425,6 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
 
 bool CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode)
 {
-    CHECK_ERROR_RETURN_RET((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH),
-        false);
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
@@ -1443,13 +1439,13 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
         MEDIA_ERR_LOG("CaptureSession::IsVideoStabilizationModeSupported Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    isSupported = false;
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
         isSupported = true;
         return CameraErrorCode::SUCCESS;
     }
+    isSupported = false;
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1561,7 +1557,6 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -1609,8 +1604,10 @@ int32_t CaptureSession::GetExposureMode(ExposureMode& exposureMode)
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
     auto itr = g_metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaExposureModeMap_.end()) {
         exposureMode = itr->second;
@@ -1910,11 +1907,10 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
         MEDIA_ERR_LOG("CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsFocusModeSupported(focusMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusMode Unknown exposure mode");
+        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
     } else {
         focus = itr->second;
     }
@@ -2363,11 +2359,10 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
     if (itr == g_fwkFlashModeMap_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetFlashMode Unknown exposure mode");
+        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
     } else {
         flash = itr->second;
     }
@@ -2446,7 +2441,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
 {
     MEDIA_INFO_LOG("CaptureSession::GetZoomRatioRange is Called");
     zoomRatioRange.clear();
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
@@ -2473,8 +2468,10 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, 0,
-        "CaptureSession::GetZoomRatio Failed with return code %{public}d,item.count = %{public}d", ret, item.count);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetZoomRatio Failed with return code %{public}d,item.count = %{public}d", ret, item.count);
+        return CameraErrorCode::SUCCESS;
+    }
     constexpr float factor = 100.0;
     float minZoom = 0.0;
     float maxZoom = 0.0;
@@ -2830,12 +2827,6 @@ SceneMode CaptureSession::GetMode()
 {
     MEDIA_INFO_LOG(
         "CaptureSession GetMode currentMode_ = %{public}d, guestMode_ = %{public}d", currentMode_, guessMode_);
-    auto inputDevice = GetInputDevice();
-    if (inputDevice && inputDevice->GetCameraDeviceInfo() &&
-        inputDevice->GetCameraDeviceInfo()->GetConnectionType() == ConnectionType::CAMERA_CONNECTION_REMOTE) {
-        MEDIA_INFO_LOG("The current camera device connection mode is remote connection.");
-        return currentMode_;
-    }
     if (currentMode_ == SceneMode::NORMAL) {
         return guessMode_;
     }
@@ -2881,7 +2872,7 @@ int32_t CaptureSession::VerifyAbility(uint32_t ability)
     if (mode != supportModes.end()) {
         matchMode = *mode;
     } else {
-        MEDIA_ERR_LOG("CaptureSession::VerifyAbility need PortraitMode or Night or Video");
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility need VIDEO or PORTRAIT or NIGHT");
         return CAMERA_INVALID_ARG;
     }
     auto inputDevice = GetInputDevice();
@@ -3110,12 +3101,18 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
 
     int32_t beautyTypeAbility;
     auto itr = g_fwkBeautyAbilityMap_.find(beautyType);
-    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkBeautyAbilityMap_.end(), supportedBeautyRange,
-        "CaptureSession::GetSupportedBeautyRange Unknown beauty Type");
-    beautyTypeAbility = itr->second;
-    Camera::FindCameraMetadataItem(metadata->get(), beautyTypeAbility, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, supportedBeautyRange,
-        "CaptureSession::GetSupportedBeautyRange Failed with return code %{public}d", ret);
+    if (itr == g_fwkBeautyAbilityMap_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Unknown beauty Type");
+        return supportedBeautyRange;
+    } else {
+        beautyTypeAbility = itr->second;
+        Camera::FindCameraMetadataItem(metadata->get(), beautyTypeAbility, &item);
+    }
+
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Failed with return code %{public}d", ret);
+        return supportedBeautyRange;
+    }
     if (beautyType == SKIN_TONE) {
         int32_t skinToneOff = -1;
         supportedBeautyRange.push_back(skinToneOff);
@@ -3739,8 +3736,12 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
     }
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
     auto itr = g_fwkColorEffectMap_.find(colorEffect);
-    CHECK_ERROR_RETURN_LOG(itr == g_fwkColorEffectMap_.end(), "CaptureSession::SetColorEffect unknown is color effect");
-    colorEffectTemp = itr->second;
+    if (itr == g_fwkColorEffectMap_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorEffect unknown is color effect");
+        return;
+    } else {
+        colorEffectTemp = itr->second;
+    }
 
     bool status = false;
     int32_t ret;
@@ -3822,9 +3823,11 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     std::vector<uint32_t> sensorExposureTimeRange;
-    CHECK_ERROR_RETURN_RET_LOG((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
-        sensorExposureTimeRange.empty(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CaptureSession::SetSensorExposureTime range is empty");
+    if ((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
+        sensorExposureTimeRange.empty()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime range is empty");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
     const uint32_t autoLongExposure = 0;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
@@ -3926,6 +3929,10 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession Failed EnableMacro!, session not commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::EnableMacro Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
     }
     bool status = false;
     int32_t ret;
@@ -4828,8 +4835,10 @@ int32_t CaptureSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
         return CameraErrorCode::SUCCESS;
     }
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_MODE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetWhiteBalanceMode Failed with return code %{public}d", ret);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetWhiteBalanceMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
     auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[0]));
     if (itr != metaWhiteBalanceModeMap_.end()) {
         mode = itr->second;
@@ -4981,8 +4990,10 @@ int32_t CaptureSession::GetSupportedPhysicalApertures(std::vector<std::vector<fl
     }
     int32_t deviceCntPos = 1;
     int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
-    CHECK_ERROR_RETURN_RET_LOG(supportedDeviceCount == 0, CameraErrorCode::SUCCESS,
-        "GetSupportedPhysicalApertures Failed meta device count is 0");
+    if (supportedDeviceCount == 0) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed meta device count is 0");
+        return CameraErrorCode::SUCCESS;
+    }
     std::vector<float> tempPhysicalApertures = {};
     for (uint32_t i = 2; i < chooseModeRange.size(); i++) {
         if (chooseModeRange[i] == -1) {
@@ -5162,8 +5173,10 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     std::vector<std::vector<float>> physicalApertures;
     GetSupportedPhysicalApertures(physicalApertures);
     // physicalApertures size is one, means not support change
-    CHECK_ERROR_RETURN_RET_LOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
-        "SetPhysicalAperture not support");
+    if (physicalApertures.size() == 1) {
+        MEDIA_ERR_LOG("SetPhysicalAperture not support");
+        return CameraErrorCode::SUCCESS;
+    }
     // accurately currentZoomRatio need smoothing zoom done
     float currentZoomRatio = GetZoomRatio();
     int zoomMinIndex = 0;
@@ -5172,17 +5185,23 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
             return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
         });
     float autoAperture = 0.0;
-    CHECK_ERROR_RETURN_RET_LOG(it == physicalApertures.rend(), CameraErrorCode::SUCCESS,
-        "current zoomRatio not supported in physical apertures zoom ratio");
+    if (it == physicalApertures.rend()) {
+        MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
+        return CameraErrorCode::SUCCESS;
+    }
     int physicalAperturesIndex = 2;
     auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
         [&physicalAperture](
             const float physicalApertureTemp) { return FloatIsEqual(physicalAperture, physicalApertureTemp); });
-    CHECK_ERROR_RETURN_RET_LOG((physicalAperture != autoAperture) && res == (*it).end(), CameraErrorCode::SUCCESS,
-        "current physicalAperture is not supported");
-    CHECK_ERROR_RETURN_RET_LOG(!AddOrUpdateMetadata(
-        changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1),
-        CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
+    if ((physicalAperture != autoAperture) && res == (*it).end()) {
+        MEDIA_ERR_LOG("current physicalAperture is not supported");
+        return CameraErrorCode::SUCCESS;
+    }
+    if (!AddOrUpdateMetadata(
+        changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1)) {
+        MEDIA_ERR_LOG("SetPhysicalAperture Failed to set physical aperture");
+        return CameraErrorCode::SUCCESS;
+    }
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }

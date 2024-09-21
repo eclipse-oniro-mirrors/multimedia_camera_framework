@@ -23,7 +23,6 @@
 #include <unordered_set>
 #include <uv.h>
 
-#include "buffer_extra_data_impl.h"
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -36,10 +35,9 @@
 #include "camera_napi_worker_queue_keeper.h"
 #include "camera_output_capability.h"
 #include "camera_photo_proxy.h"
+#include "image_napi.h"
 #include "camera_report_dfx_uitls.h"
 #include "camera_util.h"
-#include "dp_utils.h"
-#include "image_napi.h"
 #include "image_packer.h"
 #include "image_receiver.h"
 #include "ipc_skeleton.h"
@@ -269,6 +267,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
 
 void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
 {
+    CAMERA_SYNC_TRACE;
     BufferRequestConfig requestConfig = {
         .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
@@ -289,8 +288,8 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
-    CAMERA_SYNC_TRACE;
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo();
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
@@ -329,6 +328,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         MEDIA_ERR_LOG("bufferHandle is nullptr");
         return;
     }
+    // get buffer handle and photo info
     int32_t captureId;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
     int64_t imageId = 0;
@@ -340,8 +340,8 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
         captureId, imageId, deferredProcessingType);
     int32_t photoWidth;
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
     int32_t photoHeight;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, photoHeight);
     uint64_t size = static_cast<uint64_t>(surfaceBuffer->GetSize());
     int32_t extraDataSize = 0;
@@ -367,6 +367,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight,
                                                     isHighQuality, captureId);
     if (photoProxy == nullptr) {
+        MEDIA_ERR_LOG("failed to new photoProxy");
         return;
     }
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
@@ -387,6 +388,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
 
 void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallback enter");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
@@ -415,6 +417,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 
 void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync enter");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
@@ -662,7 +665,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
     MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
     CallbackInfo info;
     info.captureID = captureID;
-    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START, info);
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START_WITH_INFO, info);
 }
 
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const
@@ -672,7 +675,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exp
     CallbackInfo info;
     info.captureID = captureID;
     info.timestamp = exposureTime;
-    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START_WITH_INFO, info);
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START, info);
 }
 
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
@@ -1057,7 +1060,7 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
         obj->photoOutput_ = sPhotoOutput_;
         obj->profile_ = sPhotoOutput_->GetPhotoProfile();
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-		                   PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, nullptr);
+		    PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -1282,7 +1285,6 @@ napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("SystemApi EnableAutoHighQualityPhoto is called!");
         return nullptr;
     }
-
     std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>(
         "PhotoOutputNapi::BurstCapture", CameraNapiUtils::IncrementAndGet(photoOutputTaskId));
     std::shared_ptr<CameraNapiAsyncFunction> asyncFunction;
@@ -1487,6 +1489,36 @@ napi_value PhotoOutputNapi::IsDeferredImageDeliverySupported(napi_env env, napi_
     return result;
 }
 
+napi_value PhotoOutputNapi::IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsDeferredImageDeliveryEnabled is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t deliveryType;
+        napi_get_value_int32(env, argv[PARAM0], &deliveryType);
+        int32_t retCode = photoOutputNapi->photoOutput_->IsDeferredImageDeliveryEnabled(
+            static_cast<DeferredDeliveryImageType>(deliveryType));
+        bool isSupported = (retCode == 0);
+        if (retCode > 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    }
+    return result;
+}
+
 napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetPhotoRotation is called!");
@@ -1518,36 +1550,6 @@ napi_value PhotoOutputNapi::GetPhotoRotation(napi_env env, napi_callback_info in
         MEDIA_INFO_LOG("PhotoOutputNapi GetPhotoRotation! %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("PhotoOutputNapi GetPhotoRotation! called failed!");
-    }
-    return result;
-}
-
-napi_value PhotoOutputNapi::IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info)
-{
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsDeferredImageDeliveryEnabled is called!");
-        return nullptr;
-    }
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
-    napi_get_undefined(env, &result);
-    PhotoOutputNapi* photoOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status == napi_ok && photoOutputNapi != nullptr) {
-        int32_t deliveryType;
-        napi_get_value_int32(env, argv[PARAM0], &deliveryType);
-        int32_t retCode = photoOutputNapi->photoOutput_->IsDeferredImageDeliveryEnabled(
-            static_cast<DeferredDeliveryImageType>(deliveryType));
-        bool isSupported = (retCode == 0);
-        if (retCode > 0 && !CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
-        }
-        napi_get_boolean(env, isSupported, &result);
     }
     return result;
 }

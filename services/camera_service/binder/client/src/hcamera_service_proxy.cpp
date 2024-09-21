@@ -80,8 +80,10 @@ int32_t HCameraServiceProxy::GetCameras(std::vector<std::string> &cameraIds,
 
     reply.ReadStringVector(&cameraIds);
     int32_t count = reply.ReadInt32();
-    CHECK_ERROR_RETURN_RET_LOG((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS),
-        IPC_PROXY_ERR, "HCameraServiceProxy GetCameras Malformed camera count value");
+    if ((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy GetCameras Malformed camera count value");
+        return IPC_PROXY_ERR;
+    }
 
     std::shared_ptr<Camera::CameraMetadata> cameraAbility;
     for (int i = 0; i < count; i++) {
@@ -714,8 +716,10 @@ int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
     MessageParcel reply;
     MessageOption option;
 
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
-        "HCameraServiceProxy SetCallback callback is null");
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback callback is null");
+        return IPC_PROXY_ERR;
+    }
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
@@ -820,7 +824,7 @@ int32_t HCameraServiceProxy::GetCameraOutputStatus(int32_t pid, int32_t &status)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-
+ 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(pid);
     int error = Remote()->SendRequest(

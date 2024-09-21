@@ -171,6 +171,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
     {"TIME_LAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
+    {"FLUORESCENCE_PHOTO", JS_FLUORESCENCE_PHOTO},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {

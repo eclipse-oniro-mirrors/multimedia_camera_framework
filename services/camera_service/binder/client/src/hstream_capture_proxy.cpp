@@ -144,16 +144,19 @@ int32_t HStreamCaptureProxy::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProdu
     MessageParcel reply;
     MessageOption option;
 
-    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
-        "HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
+        return IPC_PROXY_ERR;
+    }
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetRawPhotoStreamInfo failed, error: %{public}d",
-        error);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo failed, error: %{public}d", error);
+    }
     return error;
 }
 
@@ -168,8 +171,9 @@ int32_t HStreamCaptureProxy::DeferImageDeliveryFor(int32_t type)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy DeferImageDeliveryFor failed, error: %{public}d",
-        error);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy DeferImageDeliveryFor failed, error: %{public}d", error);
+    }
     return error;
 }
 
@@ -183,8 +187,9 @@ int32_t HStreamCaptureProxy::IsDeferredPhotoEnabled()
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_PHOTO), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy IsDeferredPhotoEnabled failed, error: %{public}d",
-        error);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredPhotoEnabled failed, error: %{public}d", error);
+    }
     return error;
 }
 
@@ -198,8 +203,9 @@ int32_t HStreamCaptureProxy::IsDeferredVideoEnabled()
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO), data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d",
-        error);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d", error);
+    }
     return error;
 }
 } // namespace CameraStandard

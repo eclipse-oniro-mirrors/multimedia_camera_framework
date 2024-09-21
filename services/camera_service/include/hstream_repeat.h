@@ -42,7 +42,7 @@ enum class RepeatStreamStatus {
     STOPED,
     STARTED
 };
-#define CAMERA_ROTATION_TYPE_BASE 4
+
 class EXPORT_API HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(
@@ -77,20 +77,20 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
-    int32_t SetPreviewRotation(std::string &deviceClass);
     void SetMirrorForLivePhoto(bool isEnable, int32_t mode);
+    int32_t SetPreviewRotation(std::string &deviceClass);
     void SetStreamTransform(int disPlayRotation = -1);
-    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateSketchStatus(SketchStatus status);
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
-    void ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
+    void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 

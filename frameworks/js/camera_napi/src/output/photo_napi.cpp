@@ -143,7 +143,7 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoNapi));
     if (status == napi_ok && photoNapi != nullptr) {
         result = photoNapi->mainImage_;
-        MEDIA_DEBUG_LOG("PhotoNapi::GetMain Success");
+        MEDIA_ERR_LOG("PhotoNapi::GetMain Success");
         return result;
     }
     napi_get_undefined(env, &result);

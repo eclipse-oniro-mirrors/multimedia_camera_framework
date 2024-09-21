@@ -139,6 +139,7 @@ int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
 
 int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
 {
+    CAMERA_SYNC_TRACE;
     auto item = previewOutput_.promote();
     if (item != nullptr) {
         auto callback = item->GetApplicationCallback();
@@ -627,6 +628,7 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
+        MEDIA_ERR_LOG("canSetFrameRateRange item0:%{public}d item1:%{public}d!", item[minIndex], item[maxIndex]);
         if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
             return CameraErrorCode::SUCCESS;
         }
@@ -634,6 +636,7 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
 }
+
 int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
 {
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called");
@@ -696,6 +699,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     } else {
         MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
     }
+    MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return result;
 }
 } // namespace CameraStandard

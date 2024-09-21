@@ -217,7 +217,8 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
             callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
-            DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
+            DPSEventReport::GetInstance()
+                    .ReportImageProcessResult(result.imageId, result.userId, endTime);
         }
         if (result.callbackType == CallbackType::ON_ERROR) {
             callback->OnError(result.imageId, MapDpsErrorCode(result.errorCode));

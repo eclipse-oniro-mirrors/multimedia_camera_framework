@@ -89,7 +89,13 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     MessageOption option;
     if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
         fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+        if (fuzzCameraHostManager == nullptr) {
+            return;
+        }
         fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
+        if (fuzzCameraDevice == nullptr) {
+            return;
+        }
     }
     if (fuzzCameraDevice) {
         uint32_t code = 4;
@@ -126,7 +132,13 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
         fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+        if (fuzzCameraHostManager == nullptr) {
+            return;
+        }
         fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
+        if (fuzzCameraDevice == nullptr) {
+            return;
+        }
     }
     if (fuzzCameraDevice) {
         fuzzCameraDevice->UpdateSetting(ability);

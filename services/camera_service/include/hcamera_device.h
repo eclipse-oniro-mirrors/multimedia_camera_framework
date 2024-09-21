@@ -21,6 +21,7 @@
 #include <iostream>
 #include <atomic>
 #include <mutex>
+#include <set>
 
 #include "camera_privacy.h"
 #include "v1_0/icamera_device_callback.h"
@@ -134,6 +135,8 @@ public:
 
     void NotifyCameraStatus(int32_t type);
 
+    bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
+
     int32_t CloseDevice();
 
 private:
@@ -208,6 +211,7 @@ private:
     void DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+
     void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);

@@ -19,7 +19,6 @@
 #include <atomic>
 #include <memory>
 #include <stdint.h>
-#include <utility>
 
 #include "ability_context.h"
 #include "camera_device.h"
@@ -90,34 +89,6 @@ struct PickerContextProxy {
                 break;
         }
         return nullptr;
-    }
-
-    ErrCode StartAbilityForResult(const AAFwk::Want& want, int requestCode, AbilityRuntime::RuntimeTask&& task)
-    {
-        auto context = mContext_.lock();
-        if (context == nullptr) {
-            return ERR_INVALID_OPERATION;
-        }
-        switch (type_) {
-            case PickerContextType::UI_EXTENSION: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-                if (ctx != nullptr) {
-                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
-                }
-                break;
-            }
-            case PickerContextType::ABILITY: {
-                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-                if (ctx != nullptr) {
-                    return ctx->StartAbilityForResult(want, requestCode, std::move(task));
-                }
-                break;
-            }
-            default:
-                // Do nothing
-                break;
-        }
-        return ERR_INVALID_OPERATION;
     }
 
 private:

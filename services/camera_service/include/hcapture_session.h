@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "camera_util.h"
-#include "camera_dynamic_loader.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
@@ -225,8 +224,8 @@ public:
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy,
         std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
-    int32_t SetFeatureMode(int32_t featureMode) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
+    int32_t SetFeatureMode(int32_t featureMode) override;
     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) override;
     void StartRecord(uint64_t timestamp, int32_t rotation);
     void GetOutputStatus(int32_t &status);
@@ -235,14 +234,6 @@ public:
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
     static void DumpSessions(CameraInfoDumper& infoDumper);
     static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
-    void ReleaseStreams();
-    void StopMovingPhoto();
-
-    static void OpenMediaLib();
-    static void DelayCloseMediaLib();
-    static shared_ptr<CameraDynamicLoader> dynamicLoader_;
-    static std::optional<uint32_t> closeTimerId_;
-    static std::mutex g_mediaTaskLock_;
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
@@ -273,10 +264,12 @@ private:
     int32_t LinkInputAndOutputs();
     int32_t UnlinkInputAndOutputs();
 
+    void ReleaseStreams();
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
     void ClearMovingPhotoRepeatStream();
+    void StopMovingPhoto();
     int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height,
         sptr<OHOS::IBufferProducer> producer);
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
@@ -292,8 +285,8 @@ private:
     void ProcessAudioBuffer();
     void StartOnceRecord(uint64_t timestamp, int32_t rotation);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
-    int32_t GetSensorOritation();
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
+    int32_t GetSensorOritation();
 
     std::string GetSessionState();
 
@@ -325,6 +318,8 @@ private:
     std::mutex displayListenerLock_;
     sptr<DisplayRotationListener> displayListener_;
 };
+
+
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_H_CAPTURE_SESSION_H

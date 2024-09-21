@@ -43,7 +43,6 @@ ThreadPool::ThreadPool(const std::string& name, uint32_t numThreads)
 
 ThreadPool::~ThreadPool()
 {
-    CAMERA_DP_SYNC_TRACE;
     DP_DEBUG_LOG("name: %s.", name_.c_str());
     isStopped_ = true;
     taskCv_.notify_all();

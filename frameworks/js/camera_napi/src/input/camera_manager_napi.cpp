@@ -42,6 +42,7 @@
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "mode/aperture_video_session_napi.h"
+#include "mode/fluorescence_photo_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "mode/light_painting_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
@@ -166,6 +167,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::PANORAMA_PHOTO, JsSceneMode::JS_PANORAMA_PHOTO},
     {SceneMode::LIGHT_PAINTING, JsSceneMode::JS_LIGHT_PAINTING},
     {SceneMode::TIMELAPSE_PHOTO, JsSceneMode::JS_TIMELAPSE_PHOTO},
+    {SceneMode::FLUORESCENCE_PHOTO, JsSceneMode::JS_FLUORESCENCE_PHOTO},
 };
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
@@ -524,10 +526,45 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode4Sys_ = {
     {JsSceneMode::JS_PANORAMA_PHOTO, SceneMode::PANORAMA_PHOTO},
     {JsSceneMode::JS_LIGHT_PAINTING, SceneMode::LIGHT_PAINTING},
     {JsSceneMode::JS_TIMELAPSE_PHOTO, SceneMode::TIMELAPSE_PHOTO},
+    {JsSceneMode::JS_FLUORESCENCE_PHOTO, SceneMode::FLUORESCENCE_PHOTO},
 };
 
 static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
     {JsPolicyType::JS_PRIVACY, PolicyType::PRIVACY},
+};
+
+std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactories = {
+    {JsSceneMode::JS_CAPTURE, [] (napi_env env) { return CheckSystemApp(env, false) ?
+        PhotoSessionForSysNapi::CreateCameraSession(env) : PhotoSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_VIDEO, [] (napi_env env) { return CheckSystemApp(env, false) ?
+        VideoSessionForSysNapi::CreateCameraSession(env) : VideoSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_PORTRAIT, [] (napi_env env) { return PortraitSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_NIGHT, [] (napi_env env) { return NightSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_SLOW_MOTION, [] (napi_env env) { return SlowMotionSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_PROFESSIONAL_PHOTO, [] (napi_env env) {
+        return ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_PHOTO); }},
+    {JsSceneMode::JS_PROFESSIONAL_VIDEO, [] (napi_env env) {
+        return ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_VIDEO); }},
+    {JsSceneMode::JS_CAPTURE_MARCO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        MacroPhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
+    {JsSceneMode::JS_VIDEO_MARCO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        MacroVideoSessionNapi::CreateCameraSession(env) : nullptr; }},
+    {JsSceneMode::JS_HIGH_RES_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        HighResPhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
+    {JsSceneMode::JS_SECURE_CAMERA, [] (napi_env env) {
+        return SecureCameraSessionNapi::CreateCameraSession(env); }},
+    {JsSceneMode::JS_QUICK_SHOT_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        QuickShotPhotoSessionNapi::CreateCameraSession(env):nullptr; }},
+    {JsSceneMode::JS_APERTURE_VIDEO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        ApertureVideoSessionNapi::CreateCameraSession(env):nullptr; }},
+    {JsSceneMode::JS_PANORAMA_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
+    {JsSceneMode::JS_LIGHT_PAINTING, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        LightPaintingSessionNapi::CreateCameraSession(env) : nullptr; }},
+    {JsSceneMode::JS_FLUORESCENCE_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+        FluorescencePhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
+    {JsSceneMode::JS_TIMELAPSE_PHOTO, [] (napi_env env) {
+        return TimeLapsePhotoSessionNapi::CreateCameraSession(env); }},
 };
 
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr)
@@ -714,42 +751,9 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
         MEDIA_ERR_LOG("CameraManagerNapi::CreateSessionInstance invalid argument: %{public}d", jsModeName);
     }
     MEDIA_INFO_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d", jsModeName);
-
-    std::unordered_map<int32_t, std::function<napi_value(napi_env)>> sessionFactories = {
-        {JsSceneMode::JS_CAPTURE, [] (napi_env env) { return CheckSystemApp(env, false) ?
-            PhotoSessionForSysNapi::CreateCameraSession(env) : PhotoSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_VIDEO, [] (napi_env env) { return CheckSystemApp(env, false) ?
-            VideoSessionForSysNapi::CreateCameraSession(env) : VideoSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_PORTRAIT, [] (napi_env env) { return PortraitSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_NIGHT, [] (napi_env env) { return NightSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_SLOW_MOTION, [] (napi_env env) { return SlowMotionSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_PROFESSIONAL_PHOTO, [] (napi_env env) {
-            return ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_PHOTO); }},
-        {JsSceneMode::JS_PROFESSIONAL_VIDEO, [] (napi_env env) {
-            return ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_VIDEO); }},
-        {JsSceneMode::JS_CAPTURE_MARCO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            MacroPhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
-        {JsSceneMode::JS_VIDEO_MARCO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            MacroVideoSessionNapi::CreateCameraSession(env) : nullptr; }},
-        {JsSceneMode::JS_HIGH_RES_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            HighResPhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
-        {JsSceneMode::JS_SECURE_CAMERA, [] (napi_env env) {
-            return SecureCameraSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_QUICK_SHOT_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            QuickShotPhotoSessionNapi::CreateCameraSession(env):nullptr; }},
-        {JsSceneMode::JS_APERTURE_VIDEO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            ApertureVideoSessionNapi::CreateCameraSession(env):nullptr; }},
-        {JsSceneMode::JS_PANORAMA_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
-        {JsSceneMode::JS_TIMELAPSE_PHOTO, [] (napi_env env) {
-            return TimeLapsePhotoSessionNapi::CreateCameraSession(env); }},
-        {JsSceneMode::JS_LIGHT_PAINTING, [] (napi_env env) { return CheckSystemApp(env, true) ?
-            LightPaintingSessionNapi::CreateCameraSession(env) : nullptr; }},
-    };
-
     napi_value result = nullptr;
-    if (sessionFactories.find(jsModeName) != sessionFactories.end()) {
-        result = sessionFactories[jsModeName](env);
+    if (g_sessionFactories.find(jsModeName) != g_sessionFactories.end()) {
+        result = g_sessionFactories[jsModeName](env);
     } else {
         result = CameraNapiUtils::GetUndefinedValue(env);
         MEDIA_ERR_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d not supported", jsModeName);

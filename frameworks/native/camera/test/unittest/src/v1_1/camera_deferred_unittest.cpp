@@ -64,8 +64,7 @@ void DeferredUnitTest::TearDownTestCase(void)
 
 void DeferredUnitTest::SetUp()
 {
-    MEDIA_DEBUG_LOG("SetUp testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    MEDIA_DEBUG_LOG("SetUp");
     NativeAuthorization();
 }
 

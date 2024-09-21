@@ -230,7 +230,10 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
 
     ret = ProcessMetaObjects(timestamp, metaObjects, metadataItem, metadata, isNeedMirror);
     reportFaceResults_ = true;
-    CHECK_ERROR_PRINT_LOG(ret != CameraErrorCode::SUCCESS, "MetadataOutput::ProcessFaceRectangles() is failed.");
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("MetadataOutput::ProcessFaceRectangles() is failed.");
+        return;
+    }
     MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
     return;
 }

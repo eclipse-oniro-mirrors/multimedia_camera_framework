@@ -24,7 +24,6 @@
 
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
-#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"

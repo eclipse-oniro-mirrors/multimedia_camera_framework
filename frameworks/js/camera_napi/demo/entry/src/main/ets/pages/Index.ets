@@ -47,7 +47,9 @@ let cameraConfig: CameraConfig = {
   photoResolution: 0, // 照片分辨率 -> 1920 * 1080
   videoResolution: 0, // 照片分辨率 -> 1920 * 1080
   videoFrame: 1, // 录像帧率 -> 30
-  referenceLineBol: false // 分割线 -> 关闭
+  referenceLineBol: false, // 分割线 -> 关闭
+  hdrPhotoBol: false, // HDR 拍摄
+  hdrVideoBol: false, // HDR 录制
 }
 GlobalContext.get().setObject('cameraConfig', cameraConfig);
 
