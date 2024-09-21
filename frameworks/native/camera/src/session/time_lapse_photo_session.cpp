@@ -204,9 +204,12 @@ int32_t TimeLapsePhotoSession::IsTryAENeeded(bool& result)
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::IsTryAENeeded camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::IsTryAENeeded camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::IsTryAENeeded camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_TIME_LAPSE_TRYAE_STATE, &item);
     result = ret == CAM_META_SUCCESS;
@@ -259,9 +262,12 @@ int32_t TimeLapsePhotoSession::GetSupportedTimeLapseIntervalRange(vector<int32_t
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetSupportedTimeLapseIntervalRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedTimeLapseIntervalRange camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedTimeLapseIntervalRange camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedTimeLapseIntervalRange camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_TIME_LAPSE_INTERVAL_RANGE, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -278,9 +284,12 @@ int32_t TimeLapsePhotoSession::GetTimeLapseInterval(int32_t& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetTimeLapseInterval Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetTimeLapseInterval camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetTimeLapseInterval camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetTimeLapseInterval camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_TIME_LAPSE_INTERVAL, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -430,9 +439,12 @@ int32_t TimeLapsePhotoSession::GetExposure(uint32_t& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetExposure Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetExposure camera device is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetExposure camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetExposure camera deviceInfo is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
@@ -528,9 +540,12 @@ int32_t TimeLapsePhotoSession::GetSupportedMeteringModes(vector<MeteringMode>& r
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetSupportedMeteringModes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedMeteringModes camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedMeteringModes camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedMeteringModes camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_METER_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -565,9 +580,12 @@ int32_t TimeLapsePhotoSession::GetExposureMeteringMode(MeteringMode& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetExposureMeteringMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetExposureMeteringMode camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetExposureMeteringMode camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetExposureMeteringMode camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_METER_MODE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -625,9 +643,12 @@ int32_t TimeLapsePhotoSession::GetIso(int32_t& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetIso Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetIso camera device is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetIso camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetIso camera deviceInfo is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ISO_VALUE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -677,9 +698,12 @@ int32_t TimeLapsePhotoSession::IsManualIsoSupported(bool& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::IsManualIsoSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::IsManualIsoSupported camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::IsManualIsoSupported camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::IsManualIsoSupported camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -762,9 +786,12 @@ int32_t TimeLapsePhotoSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBa
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetSupportedWhiteBalanceModes Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedWhiteBalanceModes camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedWhiteBalanceModes camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetSupportedWhiteBalanceModes camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -784,9 +811,12 @@ int32_t TimeLapsePhotoSession::GetWhiteBalanceRange(vector<int32_t>& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetWhiteBalanceRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetWhiteBalanceRange camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetWhiteBalanceRange camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetWhiteBalanceRange camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_WB_VALUES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -805,9 +835,12 @@ int32_t TimeLapsePhotoSession::GetWhiteBalanceMode(WhiteBalanceMode& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetWhiteBalanceMode Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetWhiteBalanceMode camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetWhiteBalanceMode camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetWhiteBalanceMode camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_MODE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -863,9 +896,12 @@ int32_t TimeLapsePhotoSession::GetWhiteBalance(int32_t& result)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "TimeLapsePhotoSession::GetWhiteBalance Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::GetWhiteBalance camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetWhiteBalance camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "TimeLapsePhotoSession::GetWhiteBalance camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
