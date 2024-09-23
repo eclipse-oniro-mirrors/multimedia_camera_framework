@@ -67,6 +67,11 @@ struct CameraMetaInfo {
         supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
+struct CameraStatusCallbacksInfo {
+    CameraStatus status;
+    string bundleName;
+};
+
 enum class CameraServiceStatus : int32_t {
     SERVICE_READY = 0,
     SERVICE_NOT_READY,
@@ -207,6 +212,7 @@ private:
     shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
         shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility);
     void OnMute(bool muteMode);
+    void ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds);
 
     void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
     void DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
@@ -258,6 +264,7 @@ private:
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    map<string, CameraStatusCallbacksInfo> cameraStatusCallbacks_;
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
