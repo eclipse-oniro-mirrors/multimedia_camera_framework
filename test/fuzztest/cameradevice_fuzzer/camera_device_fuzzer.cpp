@@ -211,13 +211,13 @@ void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
     data.WriteRawData(rawData, size);
     if (fuzzCameraDevice) {
         fuzzCameraDevice->OperatePermissionCheck(data.ReadUint32());
+        fuzzCameraDevice->Open();
         fuzzCameraDevice->CheckMovingPhotoSupported(data.ReadInt32());
         fuzzCameraDevice->NotifyCameraStatus(data.ReadInt32());
         fuzzCameraDevice->RemoveResourceWhenHostDied();
         fuzzCameraDevice->NotifyCameraSessionStatus(data.ReadBool());
         std::vector<int32_t> releaseStreamIds;
         fuzzCameraDevice->ReleaseStreams(releaseStreamIds);
-        fuzzCameraDevice->Open();
         CameraDeviceFuzzTest2Case1(rawData, size);
         fuzzCameraDevice->ResetDeviceSettings();
         fuzzCameraDevice->SetDeviceMuteMode(data.ReadBool());
