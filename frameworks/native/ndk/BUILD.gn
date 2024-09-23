@@ -83,9 +83,9 @@ ohos_shared_library("ohcamera") {
     "image_framework:ohimage",
     "ipc:ipc_core",
     "media_library:media_library",
+    "media_library:media_library_asset_manager",
     "media_library:media_library_manager",
     "media_library:native_media_asset_manager",
-    "media_library:native_media_library_ndk",
     "napi:ace_napi",
     "resource_management:librawfile",
   ]
