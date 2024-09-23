@@ -107,7 +107,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::flash_props = {
     DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
     DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
     DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
-    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode)
+    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
+    DECLARE_NAPI_FUNCTION("isLcdFlashSupported", CameraSessionNapi::IsLcdFlashSupported),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_props = {
@@ -4205,6 +4206,30 @@ napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraSessionNapi>::Off(env, info);
+}
+
+napi_value CameraSessionNapi::IsLcdFlashSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CAMERA_SYNC_TRACE;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi isLcdFlashSupported is called!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("IsLcdFlashSupported parse parameter occur error");
+        return result;
+    }
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsLcdFlashSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsLcdFlashSupported call Failed!");
+    }
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

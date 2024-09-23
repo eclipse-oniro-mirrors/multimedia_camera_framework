@@ -225,6 +225,7 @@ public:
     static napi_value IsFlashModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFlashMode(napi_env env, napi_callback_info info);
     static napi_value SetFlashMode(napi_env env, napi_callback_info info);
+    static napi_value IsLcdFlashSupported(napi_env env, napi_callback_info info);
     static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetExposureMode(napi_env env, napi_callback_info info);
     static napi_value SetExposureMode(napi_env env, napi_callback_info info);
