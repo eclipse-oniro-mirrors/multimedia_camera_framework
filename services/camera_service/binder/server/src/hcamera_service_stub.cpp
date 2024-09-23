@@ -490,18 +490,20 @@ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel& data, MessageP
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateMetadataOutput BufferProducer is null");
-
+ 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateMetadataOutput producer is null");
-
+ 
     int32_t format = data.ReadInt32();
-    int ret = CreateMetadataOutput(producer, format, metadataOutput);
+    std::vector<int32_t> metadataTypes;
+    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+        "HStreamMetadataStub Start metadataTypes is null");
+    int ret = CreateMetadataOutput(producer, format, metadataTypes, metadataOutput);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
         "HCameraServiceStub HandleCreateMetadataOutput CreateMetadataOutput failed : %{public}d", ret);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteRemoteObject(metadataOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateMetadataOutput Write metadataOutput obj failed");
-
     return ret;
 }
 

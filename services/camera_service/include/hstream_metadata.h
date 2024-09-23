@@ -29,7 +29,7 @@ namespace OHOS {
 namespace CameraStandard {
 class EXPORT_API HStreamMetadata : public HStreamMetadataStub, public HStreamCommon {
 public:
-    HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format);
+    HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format, std::vector<int32_t> metadataTypes);
     ~HStreamMetadata();
 
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
@@ -39,9 +39,21 @@ public:
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
+    int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override;
+    int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) override;
+    int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
-
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result);
+
+private:
+    int32_t EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable);
+    void removeMetadataType(std::vector<int32_t>& vec1, std::vector<int32_t>& vec2);
+    std::vector<int32_t> metadataObjectTypes_;
+    std::mutex metadataTypeMutex_;
+    std::atomic<bool> isStarted_ { false };
+    sptr<IStreamMetadataCallback> streamMetadataCallback_;
+    std::mutex callbackLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

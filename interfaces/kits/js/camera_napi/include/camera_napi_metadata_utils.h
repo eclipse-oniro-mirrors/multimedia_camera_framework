@@ -18,7 +18,7 @@
 
 #include <cstdint>
 
-#include "metadata_type.h"
+#include "istream_metadata.h"
 
 namespace OHOS {
 namespace CameraStandard {

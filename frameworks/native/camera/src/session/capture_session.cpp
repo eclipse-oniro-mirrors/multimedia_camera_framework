@@ -839,7 +839,6 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
         metaOutput_ = output;
-        return ServiceToCameraError(CAMERA_OK);
     }
     if (!CanAddOutput(output)) {
         MEDIA_ERR_LOG("CanAddOutput check failed!");
@@ -928,6 +927,8 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
         case CAPTURE_OUTPUT_TYPE_DEPTH_DATA:
             profilePtr = output->GetDepthProfile();
             break;
+        case CAPTURE_OUTPUT_TYPE_METADATA:
+            return true;
         default:
             MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
             return false;
@@ -1014,7 +1015,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         }
         std::vector<MetadataObjectType> metadataObjectTypes = {};
         MEDIA_DEBUG_LOG("CaptureSession::RemoveOutput SetCapturingMetadataObjectTypes off");
-        metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
+        metaOutput->Stop();
         MEDIA_DEBUG_LOG("CaptureSession::RemoveOutput remove metaOutput");
         return ServiceToCameraError(CAMERA_OK);
     }
@@ -1050,14 +1051,6 @@ int32_t CaptureSession::Start()
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Start capture session!, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::Start() captureSession is nullptr");
-    }
-    if (GetMetaOutput()) {
-        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
-        CHECK_ERROR_RETURN_RET_LOG(!metaOutput, ServiceToCameraError(errCode), "CaptureSession::metaOutput is null");
-        std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
-        MEDIA_INFO_LOG("CaptureSession::Start SetCapturingMetadataObjectTypes objectTypes size = %{public}zu",
-            metadataObjectTypes.size());
-        metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
     }
     return ServiceToCameraError(errCode);
 }
@@ -2146,29 +2139,6 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     }
 }
 
-void CaptureSession::ProcessFaceRecUpdates(
-    const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
-{
-    if (GetMetaOutput() != nullptr) {
-        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
-        CHECK_ERROR_RETURN_LOG(!metaOutput, "ProcessFaceRecUpdates metaOutput is null");
-        bool isNeedMirror = false;
-        auto inputDevice = GetInputDevice();
-        CHECK_ERROR_RETURN_LOG(!inputDevice, "ProcessFaceRecUpdates inputDevice is null");
-        auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-        CHECK_ERROR_RETURN_LOG(!inputDeviceInfo, "ProcessFaceRecUpdates inputDeviceInfo is null");
-        isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
-                        inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
-        std::vector<sptr<MetadataObject>> metaObjects;
-        metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
-        std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
-        if ((metaOutput->reportFaceResults_ || metaOutput->reportLastFaceResults_) && appObjectCallback) {
-            MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable");
-            appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
-        }
-    }
-}
-
 void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
@@ -2269,7 +2239,6 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
         "CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
     session->OnResultReceived(result);
-    session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);

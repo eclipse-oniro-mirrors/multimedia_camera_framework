@@ -109,6 +109,10 @@ public:
     {
         return 0;
     }
+    inline int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override
+    {
+        return 0;
+    }
 };
 
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size);

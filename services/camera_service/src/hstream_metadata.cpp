@@ -22,12 +22,30 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
+#include <cstdint>
+#include <unordered_set>
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t DEFAULT_ITEMS = 1;
+constexpr int32_t DEFAULT_DATA_LENGTH = 10;
+static const std::unordered_map<MetadataObjectType, uint8_t> g_FwkToHALResultCameraMetaDetect_ = {
+    {MetadataObjectType::FACE, 0},
+    {MetadataObjectType::HUMAN_BODY, 1},
+    {MetadataObjectType::CAT_FACE, 2},
+    {MetadataObjectType::CAT_BODY, 3},
+    {MetadataObjectType::DOG_FACE, 4},
+    {MetadataObjectType::DOG_BODY, 5},
+    {MetadataObjectType::SALIENT_DETECTION, 6},
+    {MetadataObjectType::BAR_CODE_DETECTION, 7},
+    {MetadataObjectType::BASE_FACE_DETECTION, 8}
+};
+
 using namespace OHOS::HDI::Camera::V1_0;
-HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format)
-    : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight())
+HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer,
+    int32_t format, std::vector<int32_t> metadataTypes)
+    : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight()),
+    metadataObjectTypes_(metadataTypes)
 {}
 
 HStreamMetadata::~HStreamMetadata()
@@ -55,60 +73,16 @@ void HStreamMetadata::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 int32_t HStreamMetadata::Start()
 {
     CAMERA_SYNC_TRACE;
-    auto streamOperator = GetStreamOperator();
-    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
-    auto preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
-        "HStreamMetadata::Start, Already started with captureID: %{public}d", preparedCaptureId);
-    int32_t ret = PrepareCaptureId();
-    preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
-        "HStreamMetadata::Start Failed to allocate a captureId");
-    std::vector<uint8_t> ability;
-    {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
-    }
-    CaptureInfo captureInfo;
-    captureInfo.streamIds_ = { GetHdiStreamId() };
-    captureInfo.captureSetting_ = ability;
-    captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
-    {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_INVALID_STATE,
-            "HStreamMetadata::Start cameraAbility_ is null");
-        HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
-    }
-    CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        ResetCaptureId();
-        MEDIA_ERR_LOG("HStreamMetadata::Start Failed with error Code:%{public}d", rc);
-        CameraReportUtils::ReportCameraError(
-            "HStreamMetadata::SetStreamInfo", rc, true, CameraReportUtils::GetCallerInfo());
-        ret = HdiToServiceError(rc);
-    }
-    return ret;
+    std::lock_guard<std::mutex> lock(metadataTypeMutex_);
+    isStarted_ = true;
+    return EnableOrDisableMetadataType(metadataObjectTypes_, true);
 }
 
 int32_t HStreamMetadata::Stop()
 {
-    CAMERA_SYNC_TRACE;
-    auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
-    auto preparedCaptureId = GetPreparedCaptureId();
-    if (preparedCaptureId == CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamMetadata::Stop, Stream not started yet");
-        return CAMERA_INVALID_STATE;
-    }
-    int32_t ret = StopStream();
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("HStreamMetadata::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", ret,
-            preparedCaptureId);
-    }
-    return ret;
+    std::lock_guard<std::mutex> lock(metadataTypeMutex_);
+    isStarted_ = false;
+    return EnableOrDisableMetadataType(metadataObjectTypes_, false);
 }
 
 int32_t HStreamMetadata::Release()
@@ -144,6 +118,96 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
             break;
     }
     return CAMERA_OK;
+}
+
+int32_t HStreamMetadata::EnableMetadataType(std::vector<int32_t> metadataTypes)
+{
+    int32_t rc = EnableOrDisableMetadataType(metadataTypes, true);
+    CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamMetadata::EnableMetadataType failed!");
+    std::lock_guard<std::mutex> lock(metadataTypeMutex_);
+    for (auto& element : metadataTypes) {
+        metadataObjectTypes_.emplace_back(element);
+    }
+    return rc;
+}
+int32_t HStreamMetadata::DisableMetadataType(std::vector<int32_t> metadataTypes)
+{
+    int32_t rc = EnableOrDisableMetadataType(metadataTypes, false);
+    CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HStreamMetadata::DisableMetadataType failed!");
+    std::lock_guard<std::mutex> lock(metadataTypeMutex_);
+    removeMetadataType(metadataTypes, metadataObjectTypes_);
+    return rc;
+}
+
+int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result)
+{
+    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (streamMetadataCallback_ != nullptr) {
+        streamMetadataCallback_->OnMetadataResult(streamId, cameraResult);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamMetadata::SetCallback(sptr<IStreamMetadataCallback>& callback)
+{
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetCallback input is null");
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamMetadataCallback_ = callback;
+    return CAMERA_OK;
+}
+
+int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable)
+{
+    MEDIA_DEBUG_LOG("HStreamMetadata::EnableOrDisableMetadataType enable: %{public}d, metadataTypes size: %{public}zu",
+        enable, metadataTypes.size());
+    auto streamOperator = GetStreamOperator();
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamMetadata::EnableMetadataType streamOperator is nullptr");
+    int32_t ret = PrepareCaptureId();
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
+        "HStreamMetadata::EnableMetadataType Failed to allocate a captureId");
+    sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
+        OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator);
+    CHECK_ERROR_RETURN_RET_LOG(streamOperatorV1_3 == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HStreamMetadata::EnableMetadataType streamOperatorV1_3 castFrom failed!");
+    OHOS::HDI::Camera::V1_2::CamRetCode rc;
+    std::vector<uint8_t> typeTagToHal;
+    for (auto& type : metadataTypes) {
+        auto itr = g_FwkToHALResultCameraMetaDetect_.find(static_cast<MetadataObjectType>(type));
+        if (itr != g_FwkToHALResultCameraMetaDetect_.end()) {
+            typeTagToHal.emplace_back(itr->second);
+            MEDIA_DEBUG_LOG("EnableOrDisableMetadataType type: %{public}d", itr->second);
+        }
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    uint32_t count = typeTagToHal.size();
+    uint8_t* typesToEnable = typeTagToHal.data();
+    bool status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, typesToEnable, count);
+    CHECK_ERROR_RETURN_RET_LOG(!status, CAMERA_UNKNOWN_ERROR, "set_camera_metadata failed!");
+    std::vector<uint8_t> settings;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metadata4Types, settings);
+    if (enable) {
+        rc = (OHOS::HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_3->
+            EnableResult(-1, settings));
+    } else {
+        rc = (OHOS::HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_3->
+            DisableResult(-1, settings));
+    }
+    ret = CAMERA_OK;
+    CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_2::NO_ERROR, HdiToServiceErrorV1_2(rc),
+        "HStreamCapture::ConfirmCapture failed with error Code: %{public}d", rc);
+    return ret;
+}
+
+void HStreamMetadata::removeMetadataType(std::vector<int32_t>& metaRes, std::vector<int32_t>& metaTarget)
+{
+    std::unordered_set<int32_t> set(metaRes.begin(), metaRes.end());
+    metaTarget.erase(std::remove_if(metaTarget.begin(), metaTarget.end(),
+                                    [&set](const int32_t &element) { return set.find(element) != set.end(); }),
+                     metaTarget.end());
 }
 } // namespace Standard
 } // namespace OHOS

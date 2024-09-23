@@ -96,6 +96,7 @@ public:
                                           int32_t width, int32_t height, sptr<IStreamDepthData> &depthDataOutput) = 0;
 
     virtual int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                         std::vector<int32_t> metadataTypes,
                                          sptr<IStreamMetadata> &metadataOutput) = 0;
 
     virtual int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
