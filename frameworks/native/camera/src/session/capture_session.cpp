@@ -5265,5 +5265,11 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }
+
+bool CaptureSession::IsLcdFlashSupported()
+{
+    CAMERA_SYNC_TRACE;
+    return false;
+}
 } // namespace CameraStandard
 } // namespace OHOS

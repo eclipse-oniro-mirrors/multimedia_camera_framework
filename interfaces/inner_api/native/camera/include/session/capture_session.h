@@ -1463,6 +1463,16 @@ public:
 
     int32_t SetPreviewRotation(std::string &deviceClass);
 
+    /**
+     * @brief Checks if the LCD flash feature is supported.
+     *
+     * This function determines whether the current system or device supports the LCD flash feature.
+     * It returns `true` if the feature is supported; otherwise, it returns `false`.
+     *
+     * @return `true` if the LCD flash feature is supported; `false` otherwise.
+     */
+    bool IsLcdFlashSupported();
+
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
