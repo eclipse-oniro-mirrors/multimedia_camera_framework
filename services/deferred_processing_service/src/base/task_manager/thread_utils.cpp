@@ -49,6 +49,12 @@ void SetThreadPriority(pthread_t handle, int priority)
             static_cast<long>(tid), priority, ret);
     }
 }
+
+int GetThreadPriority(pthread_t handle)
+{
+    pid_t tid = pthread_gettid_np(handle);
+    return getpriority(PRIO_PROCESS, tid);
+}
 } //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

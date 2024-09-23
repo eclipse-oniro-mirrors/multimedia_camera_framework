@@ -158,7 +158,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer)
 {
     auto bufferHandle = buffer.imageHandle->GetBufferHandle();
-    DP_CHECK_AND_RETURN_RET_LOG(bufferHandle != nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
 
     int32_t size = bufferHandle->size;
     int32_t isDegradedImage = 0;
@@ -176,11 +176,11 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     DP_INFO_LOG("bufferHandle param, size: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d",
         size, static_cast<int>(dataSize), isDegradedImage);
     auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
-    DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
         "failed to initialize shared buffer.");
 
     auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle->fd, 0);
-    DP_CHECK_AND_RETURN_RET_LOG(addr != MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(addr == MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
 
     if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
         DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
@@ -372,13 +372,13 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
             retExifDataSize, exifDataSize);
     }
     auto imageBuffer = TransBufferHandleToSurfaceBuffer(buffer.imageHandle->GetBufferHandle());
-    DP_CHECK_AND_RETURN_RET_LOG(imageBuffer != nullptr, nullptr, "bufferHandle is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "bufferHandle is nullptr.");
     DP_INFO_LOG("AssemblePicture ImageBufferInfoExt valid: gainMap(%{public}d), depthMap(%{public}d), "
         "unrefocusMap(%{public}d), linearMap(%{public}d), exif(%{public}d), makeInfo(%{public}d)",
         buffer.isGainMapValid, buffer.isDepthMapValid, buffer.isUnrefocusImageValid,
         buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid);
     std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
-    DP_CHECK_AND_RETURN_RET_LOG(picture != nullptr, nullptr, "picture is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
@@ -429,12 +429,12 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
         photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
     } else {
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
-        DP_CHECK_AND_RETURN_RET_LOG(bufferPtr->Initialize() == DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
+        DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
             "failed to initialize shared buffer.");
 
         auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, imageBufferHandle->fd, 0);
-        DP_CHECK_AND_RETURN_RET_LOG(
-            addr != MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
+        DP_CHECK_ERROR_RETURN_RET_LOG(
+            addr == MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
 
         if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
             DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
@@ -597,7 +597,7 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_CHECK_AND_RETURN_LOG(session_ != nullptr, "PhotoPostProcessor::ProcessImage imageProcessSession is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(session_ == nullptr, "PhotoPostProcessor::ProcessImage imageProcessSession is nullptr");
     int32_t ret = session_->ProcessImage(imageId);
     DP_INFO_LOG("processImage, ret: %{public}d", ret);
     uint32_t callbackHandle;
@@ -769,7 +769,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
     removeNeededList_.clear();
     const sptr<IRemoteObject>& remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
-    DP_CHECK_AND_RETURN_RET_LOG(remote->AddDeathRecipient(sessionDeathRecipient_),
+    DP_CHECK_ERROR_RETURN_RET_LOG(!remote->AddDeathRecipient(sessionDeathRecipient_),
         false, "AddDeathRecipient for ImageProcessSession failed.");
     OnStateChanged(HdiStatus::HDI_READY);
     return true;
@@ -778,7 +778,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
 void PhotoPostProcessor::DisconnectServiceIfNecessary()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_CHECK_AND_RETURN_LOG(session_ != nullptr, "imageProcessSession is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(session_ == nullptr, "imageProcessSession is nullptr");
     const sptr<IRemoteObject> &remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
     DP_CHECK_ERROR_PRINT_LOG(!remote->RemoveDeathRecipient(sessionDeathRecipient_),
@@ -805,7 +805,7 @@ void PhotoPostProcessor::ScheduleConnectService()
 void PhotoPostProcessor::StopTimer(const std::string& imageId)
 {
     uint32_t callbackHandle;
-    DP_CHECK_AND_RETURN_LOG(imageId2Handle_.Find(imageId, callbackHandle),
+    DP_CHECK_ERROR_RETURN_LOG(!imageId2Handle_.Find(imageId, callbackHandle),
         "stoptimer failed not find imageId: %{public}s", imageId.c_str());
     imageId2Handle_.Erase(imageId);
     GetGlobalWatchdog().StopMonitor(callbackHandle);

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#ifndef OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
+#define OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
 
 #include <cstdint>
 #include <string>
@@ -39,4 +39,4 @@ public:
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#endif // OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H

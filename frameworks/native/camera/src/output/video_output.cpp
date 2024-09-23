@@ -79,6 +79,18 @@ int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     return CAMERA_OK;
 }
 
+int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
+    auto item = videoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+    } else {
+        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
+    }
+    return CAMERA_OK;
+}
+
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -263,7 +275,7 @@ void VideoOutput::SetSize(Size size)
 {
     videoSize_ = size;
 }
- 
+
 int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
     int32_t result = canSetFrameRateRange(minFrameRate, maxFrameRate);
@@ -324,7 +336,7 @@ int32_t VideoOutput::enableMirror(bool enabled)
         "VideoOutput::enableMirror failed to set mirror");
     return CameraErrorCode::SUCCESS;
 }
- 
+
 bool VideoOutput::IsMirrorSupported()
 {
     auto session = GetSession();
@@ -364,7 +376,7 @@ std::vector<VideoMetaType> VideoOutput::GetSupportedVideoMetaTypes()
     }
     return vecto;
 }
- 
+
 bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
 {
     camera_metadata_item_t item;
@@ -385,7 +397,7 @@ bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
     MEDIA_DEBUG_LOG("This tag is Supported");
     return true;
 }
- 
+
 void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType)
 {
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
@@ -465,6 +477,69 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
+}
+
+int32_t VideoOutput::IsAutoDeferredVideoEnhancementSupported()
+{
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementSupported");
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, cameraObj is nullptr");
+
+    int32_t curMode = captureSession->GetMode();
+    int32_t isSupported  = cameraObj->modeVideoDeferredType_[curMode];
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementSupported curMode:%{public}d, modeSupportType:%{public}d",
+        curMode, isSupported);
+    return isSupported;
+}
+
+int32_t VideoOutput::IsAutoDeferredVideoEnhancementEnabled()
+{
+    MEDIA_INFO_LOG("VideoOutput IsAutoDeferredVideoEnhancementEnabled");
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, captureSession is nullptr");
+
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, inputDevice is nullptr");
+
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, cameraObj is nullptr");
+
+    int32_t curMode = captureSession->GetMode();
+    bool isEnabled = captureSession->IsVideoDeferred();
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementEnabled curMode:%{public}d, isEnabled:%{public}d",
+        curMode, isEnabled);
+    return isEnabled;
+}
+
+int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
+{
+    MEDIA_INFO_LOG("EnableAutoDeferredVideoEnhancement");
+    CAMERA_SYNC_TRACE;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, inputDevice is nullptr");
+
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, cameraObj is nullptr");
+    captureSession->EnableAutoDeferredVideoEnhancement(enabled);
+    captureSession->SetUserId();
+    return SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

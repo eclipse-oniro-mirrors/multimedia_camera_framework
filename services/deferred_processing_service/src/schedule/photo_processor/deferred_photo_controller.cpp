@@ -19,6 +19,7 @@
 #include "dp_log.h"
 #include "events_monitor.h"
 #include "dps_event_report.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -42,7 +43,7 @@ public:
         controller_ = nullptr;
     }
 
-    void OnEventChange(EventType event, int value) override
+    void OnEventChange(EventType event, int32_t value) override
     {
         DP_INFO_LOG("entered, event: %{public}d", event);
         switch (event) {

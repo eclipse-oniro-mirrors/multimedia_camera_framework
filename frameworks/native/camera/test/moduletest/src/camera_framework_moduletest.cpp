@@ -425,6 +425,11 @@ class AppVideoCallback : public VideoStateCallback {
         g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
         return;
     }
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
+    {
+        MEDIA_DEBUG_LOG("AppVideoCallback::OnDeferredVideoEnhancementInfo");
+        return;
+    }
 };
 
 class AppMetadataCallback : public MetadataObjectCallback, public MetadataStateCallback {

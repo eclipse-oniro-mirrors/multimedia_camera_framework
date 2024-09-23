@@ -75,6 +75,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION):
             errCode = HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_VIDEO_PROCESSING_SESSION):
+            errCode = HCameraServiceStub::HandleCreateDeferredVideoProcessingSession(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT):
             errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
             break;
@@ -388,6 +391,27 @@ int HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(MessageParcel
         "HandleCreateDeferredPhotoProcessingSession create failed : %{public}d", ret);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HandleCreateDeferredPhotoProcessingSession Write HandleCreateDeferredPhotoProcessingSession obj failed");
+
+    return ret;
+}
+
+int HCameraServiceStub::HandleCreateDeferredVideoProcessingSession(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
+
+    int32_t userId = data.ReadInt32();
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HandleCreateDeferredVideoProcessingSession DeferredVideoProcessingSessionCallback is null");
+
+    auto callback = iface_cast<DeferredProcessing::IDeferredVideoProcessingSessionCallback>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleCreateDeferredVideoProcessingSession callback is null");
+    int ret = CreateDeferredVideoProcessingSession(userId, callback, session);
+    CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
+        "HandleCreateDeferredVideoProcessingSession create failed : %{public}d", ret);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+        "HandleCreateDeferredVideoProcessingSession Write HandleCreateDeferredVideoProcessingSession obj failed");
 
     return ret;
 }

@@ -284,6 +284,11 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
+void TestVideoOutputCallback::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const
+{
+    MEDIA_INFO_LOG("TestVideoOutputCallback:OnDeferredVideoEnhancementInfo()");
+}
+
 TestMetadataOutputObjectCallback::TestMetadataOutputObjectCallback(const char* testName) : testName_(testName) {
 }
 

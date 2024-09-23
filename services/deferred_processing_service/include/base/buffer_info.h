@@ -30,10 +30,23 @@ public:
     BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
         bool isCloudImageEnhanceSupported);
     ~BufferInfo();
+    
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
-    int32_t GetDataSize();
-    bool IsHighQuality();
-    bool IsCloudImageEnhanceSupported();
+
+    inline int32_t GetDataSize()
+    {
+        return dataSize_;
+    }
+
+    inline bool IsHighQuality()
+    {
+        return isHighQuality_;
+    }
+
+    inline bool IsCloudImageEnhanceSupported()
+    {
+        return isCloudImageEnhanceSupported_;
+    }
 
 private:
     std::shared_ptr<SharedBuffer> sharedBuffer_;
@@ -57,7 +70,7 @@ private:
     bool isHighQuality_;
     bool isCloudImageEnhanceSupported_;
 };
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_INFO_H

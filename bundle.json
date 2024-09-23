@@ -53,6 +53,8 @@
               "samgr",
               "sensor",
               "thermal_manager",
+              "battery_manager",
+              "power_manager",
               "window_manager",
               "memmgr"
             ],

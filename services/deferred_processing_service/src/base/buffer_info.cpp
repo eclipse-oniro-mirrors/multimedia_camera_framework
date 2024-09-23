@@ -45,21 +45,6 @@ sptr<IPCFileDescriptor> BufferInfo::GetIPCFileDescriptor()
     return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 
-int32_t BufferInfo::GetDataSize()
-{
-    return dataSize_;
-}
-
-bool BufferInfo::IsHighQuality()
-{
-    return isHighQuality_;
-}
-
-bool BufferInfo::IsCloudImageEnhanceSupported()
-{
-    return isCloudImageEnhanceSupported_;
-}
-
 BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
     bool isCloudImageEnhanceSupported)
     : picture_(picture),

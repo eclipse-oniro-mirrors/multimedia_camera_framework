@@ -36,6 +36,8 @@ public:
     int32_t OnFrameError(int32_t errorCode) override;
 
     int32_t OnSketchStatusChanged(SketchStatus status) override;
+    
+    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
 
 private:
     static inline BrokerDelegator<HStreamRepeatCallbackProxy> delegator_;

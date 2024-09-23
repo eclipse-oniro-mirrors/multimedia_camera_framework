@@ -93,7 +93,7 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSession::AddImage(const std::string imageId, DpsMetadata& metadata, bool discardable)
+int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, DpsMetadata& metadata, bool discardable)
 {
     if (inSync_) {
         DP_INFO_LOG("AddImage error, inSync!");
@@ -109,7 +109,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string imageId, DpsM
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string imageId, bool restorable)
+int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string& imageId, bool restorable)
 {
     if (inSync_) {
         DP_INFO_LOG("RemoveImage error, inSync!");
@@ -124,7 +124,7 @@ int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string imageId, b
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string imageId)
+int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
 {
     if (inSync_) {
         DP_INFO_LOG("RestoreImage error, inSync!");
@@ -139,7 +139,7 @@ int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string imageId)
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string appName, const std::string imageId)
+int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName, const std::string imageId)
 {
     if (inSync_) {
         DP_INFO_LOG("ProcessImage error, inSync!");
@@ -154,7 +154,7 @@ int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string appName, 
     return 0;
 }
 
-int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string imageId)
+int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& imageId)
 {
     if (inSync_) {
         DP_INFO_LOG("CancelProcessImage error, inSync!");

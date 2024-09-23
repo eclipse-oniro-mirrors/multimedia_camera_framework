@@ -97,5 +97,25 @@ int32_t HStreamRepeatCallbackProxy::OnSketchStatusChanged(SketchStatus status)
     }
     return error;
 }
+
+int32_t HStreamRepeatCallbackProxy::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureEndedInfo.streamId);
+    data.WriteInt32(captureEndedInfo.frameCount);
+    data.WriteBool(captureEndedInfo.isDeferredVideoEnhancementAvailable);
+    data.WriteString(captureEndedInfo.videoId);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_VIDEO_DEFERRED_INFO), data, reply,
+        option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnDeferredVideoEnhancementInfo failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

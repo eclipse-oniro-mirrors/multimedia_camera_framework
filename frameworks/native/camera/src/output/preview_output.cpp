@@ -165,6 +165,13 @@ int32_t PreviewOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     return CAMERA_OK;
 }
 
+int32_t PreviewOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MEDIA_INFO_LOG("PreviewOutput::OnDeferredVideoEnhancementInfo called");
+    // empty impl
+    return CAMERA_OK;
+}
+
 int32_t PreviewOutput::OnSketchStatusChanged(SketchStatus status)
 {
     CHECK_ERROR_RETURN_RET(sketchWrapper_ == nullptr, CAMERA_INVALID_STATE);

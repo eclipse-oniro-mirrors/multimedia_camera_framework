@@ -29,13 +29,28 @@ static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
 static const std::string CONST_VIDEO_FRAME_START = "frameStart";
 static const std::string CONST_VIDEO_FRAME_END = "frameEnd";
 static const std::string CONST_VIDEO_FRAME_ERROR = "error";
+static const std::string CONST_VIDEO_DEFERRED_ENHANCEMENT = "deferredVideoEnhancementInfo";
 
-enum VideoOutputEventType { VIDEO_FRAME_START, VIDEO_FRAME_END, VIDEO_FRAME_ERROR, VIDEO_INVALID_TYPE };
+struct VideoCallbackInfo {
+    int32_t frameCount = 0;
+    int32_t errorCode;
+    bool isDeferredVideoEnhancementAvailable = false;
+    std::string videoId = "";
+};
+
+enum VideoOutputEventType {
+    VIDEO_FRAME_START,
+    VIDEO_FRAME_END,
+    VIDEO_FRAME_ERROR,
+    VIDEO_INVALID_TYPE,
+    VIDEO_DEFERRED_ENHANCEMENT
+};
 
 static EnumHelper<VideoOutputEventType> VideoOutputEventTypeHelper({
         {VIDEO_FRAME_START, CONST_VIDEO_FRAME_START},
         {VIDEO_FRAME_END, CONST_VIDEO_FRAME_END},
         {VIDEO_FRAME_ERROR, CONST_VIDEO_FRAME_ERROR},
+        {VIDEO_DEFERRED_ENHANCEMENT, CONST_VIDEO_DEFERRED_ENHANCEMENT},
     },
     VideoOutputEventType::VIDEO_INVALID_TYPE
 );
@@ -50,20 +65,21 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override;
 
 private:
-    void UpdateJSCallback(VideoOutputEventType eventType, const int32_t value) const;
-    void UpdateJSCallbackAsync(VideoOutputEventType eventType, const int32_t value) const;
+    void UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
+    void UpdateJSCallbackAsync(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
+    void ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const;
 };
 
 struct VideoOutputCallbackInfo {
     VideoOutputEventType eventType_;
-    int32_t value_;
+    VideoCallbackInfo info_;
     weak_ptr<const VideoCallbackListener> listener_;
-    VideoOutputCallbackInfo(
-        VideoOutputEventType eventType, int32_t value, shared_ptr<const VideoCallbackListener> listener)
-        : eventType_(eventType), value_(value), listener_(listener)
-    {}
+    VideoOutputCallbackInfo(VideoOutputEventType eventType, VideoCallbackInfo info,
+        shared_ptr<const VideoCallbackListener> listener)
+        : eventType_(eventType), info_(info), listener_(listener) {}
 };
 
 class VideoOutputNapi : public CameraNapiEventEmitter<VideoOutputNapi> {
@@ -83,6 +99,9 @@ public:
     static napi_value EnableMirror(napi_env env, napi_callback_info info);
     static napi_value GetSupportedVideoMetaTypes(napi_env env, napi_callback_info info);
     static napi_value AttachMetaSurface(napi_env env, napi_callback_info info);
+    static napi_value IsAutoDeferredVideoEnhancementSupported(napi_env env, napi_callback_info info);
+    static napi_value IsAutoDeferredVideoEnhancementEnabled(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoDeferredVideoEnhancement(napi_env env, napi_callback_info info);
     static napi_value GetVideoRotation(napi_env env, napi_callback_info info);
     VideoOutputNapi();
     ~VideoOutputNapi() override;
@@ -108,6 +127,10 @@ private:
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterDeferredVideoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterDeferredVideoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

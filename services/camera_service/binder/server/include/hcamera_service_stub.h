@@ -43,6 +43,7 @@ private:
     int HandleSetFoldStatusCallback(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPhotoProcessingSession(MessageParcel &data, MessageParcel &reply);
+    int HandleCreateDeferredVideoProcessingSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);

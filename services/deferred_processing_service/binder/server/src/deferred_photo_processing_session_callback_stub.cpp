@@ -16,6 +16,7 @@
 #include "deferred_processing_service_ipc_interface_code.h"
 #include "dp_log.h"
 #include "picture.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -25,7 +26,7 @@ int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    DP_CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    DP_CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(
             DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_IMAGE_DONE): {
