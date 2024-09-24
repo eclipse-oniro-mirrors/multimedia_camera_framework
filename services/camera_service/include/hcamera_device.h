@@ -90,6 +90,7 @@ public:
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
     void SetDeviceMuteMode(bool muteMode);
+    bool GetDeviceMuteMode();
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
     {
