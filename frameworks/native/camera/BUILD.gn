@@ -183,6 +183,7 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:metadata",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "hicollie:libhicollie",
     "hilog:libhilog",
