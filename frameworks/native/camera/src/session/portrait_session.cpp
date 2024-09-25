@@ -57,7 +57,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
-    CHECK_AND_RETURN_RET(ret == CAM_META_SUCCESS && item.count != 0, supportedPortraitEffects);
+    CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, supportedPortraitEffects);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[i]));
         if (itr != g_metaToFwPortraitEffect_.end()) {

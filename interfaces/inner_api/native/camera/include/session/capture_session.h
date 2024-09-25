@@ -1378,11 +1378,11 @@ public:
     void SetUserId();
     bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
+    virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+    bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
 
-    virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
-    bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
     // White Balance
@@ -1455,13 +1455,13 @@ public:
         return innerInputDevice_;
     }
 
+    int32_t SetPreviewRotation(std::string &deviceClass);
+
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
         return innerCaptureSession_;
     }
-
-    int32_t SetPreviewRotation(std::string &deviceClass);
 
     /**
      * @brief Checks if the LCD flash feature is supported.
@@ -1480,7 +1480,6 @@ protected:
 
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
-
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;
@@ -1569,6 +1568,7 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
+
     sptr<CaptureOutput> metaOutput_ = nullptr;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;

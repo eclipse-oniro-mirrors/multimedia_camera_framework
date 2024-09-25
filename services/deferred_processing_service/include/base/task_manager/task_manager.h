@@ -40,7 +40,8 @@ public:
     EXPORT_API bool SubmitTask(std::function<void()> task);
     bool SubmitTask(std::function<void()> task, uint32_t delayMilli);
     bool SubmitTask(TaskGroupHandle handle, std::any param = std::any());
-
+    EXPORT_API void CancelAllTasks();
+    EXPORT_API bool IsEmpty();
 private:
     void Initialize();
     bool RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, bool delayTask,

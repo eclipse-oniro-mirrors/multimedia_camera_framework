@@ -28,8 +28,12 @@ sptr<CameraWindowManagerClient> CameraWindowManagerClient::cameraWindowManagerCl
  
 CameraWindowManagerClient::CameraWindowManagerClient()
 {
-    InitWindowProxy();
-    InitWindowManagerAgent();
+    SubscribeSystemAbility();
+}
+
+CameraWindowManagerClient::~CameraWindowManagerClient()
+{
+    CameraWindowManagerClient::GetInstance()->UnregisterWindowManagerAgent();
 }
  
 sptr<CameraWindowManagerClient>& CameraWindowManagerClient::GetInstance()
@@ -87,7 +91,7 @@ void CameraWindowManagerClient::GetFocusWindowInfo(pid_t& pid)
     } else {
         MEDIA_ERR_LOG("sceneSessionManagerProxy_ is null");
     }
-    MEDIA_ERR_LOG("GetFocusWindowInfo pid_: %{public}d", focusInfo->pid_);
+    MEDIA_DEBUG_LOG("GetFocusWindowInfo pid_: %{public}d", focusInfo->pid_);
     pid = focusInfo->pid_;
     MEDIA_DEBUG_LOG("GetFocusWindowInfo end");
 }
@@ -141,15 +145,57 @@ void CameraWindowManagerClient::InitWindowManagerAgent()
 {
     MEDIA_DEBUG_LOG("InitWindowManagerAgent start");
     windowManagerAgent_ = new CameraWindowManagerAgent();
-    if (windowManagerAgent_ == nullptr) {
-        MEDIA_ERR_LOG("Failed to init windowManagerAgent_");
-    }
-    MEDIA_DEBUG_LOG("InitWindowManagerAgent start");
+    CHECK_ERROR_PRINT_LOG(windowManagerAgent_ == nullptr, "Failed to init windowManagerAgent_");
+    int32_t windowRet = CameraWindowManagerClient::GetInstance()->RegisterWindowManagerAgent();
+    CHECK_ERROR_PRINT_LOG(windowRet != 0, "RegisterWindowManagerAgent faild");
+    MEDIA_DEBUG_LOG("InitWindowManagerAgent end");
 }
  
 sptr<IWindowManagerAgent> CameraWindowManagerClient::GetWindowManagerAgent()
 {
     return windowManagerAgent_;
+}
+
+int32_t CameraWindowManagerClient::SubscribeSystemAbility()
+{
+    MEDIA_DEBUG_LOG("SubscribeSystemAbility start");
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
+    saStatusChangeCallback_ = new CameraWindowManagerClient::WMSSaStatusChangeCallback();
+    CHECK_AND_RETURN_RET_LOG(saStatusChangeCallback_ != nullptr, CAMERA_UNKNOWN_ERROR,
+        "saStatusChangeCallback_ init error");
+    int32_t ret = samgr->SubscribeSystemAbility(WINDOW_MANAGER_SERVICE_ID, saStatusChangeCallback_);
+    MEDIA_DEBUG_LOG("SubscribeSystemAbility ret = %{public}d", ret);
+    return ret == 0? CAMERA_OK : CAMERA_UNKNOWN_ERROR;
+}
+ 
+int32_t CameraWindowManagerClient::UnSubscribeSystemAbility()
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
+    if (saStatusChangeCallback_ == nullptr) {
+        return CAMERA_OK;
+    }
+    CHECK_ERROR_RETURN_RET(saStatusChangeCallback_ == nullptr, CAMERA_OK);
+    int32_t ret = samgr->UnSubscribeSystemAbility(WINDOW_MANAGER_SERVICE_ID, saStatusChangeCallback_);
+    MEDIA_DEBUG_LOG("SubscribeSystemAbility ret = %{public}d", ret);
+    return ret == 0? CAMERA_OK : CAMERA_UNKNOWN_ERROR;
+}
+ 
+void CameraWindowManagerClient::WMSSaStatusChangeCallback::OnAddSystemAbility(
+    int32_t systemAbilityId, const std::string& deviceId)
+{
+    CameraWindowManagerClient::GetInstance()->InitWindowProxy();
+    CameraWindowManagerClient::GetInstance()->InitWindowManagerAgent();
+}
+ 
+void CameraWindowManagerClient::WMSSaStatusChangeCallback::OnRemoveSystemAbility(
+    int32_t systemAbilityId, const std::string& deviceId)
+{
+    CameraWindowManagerClient::GetInstance()->mockSessionManagerServiceProxy_ = nullptr;
+    CameraWindowManagerClient::GetInstance()->sessionManagerServiceProxy_ = nullptr;
+    CameraWindowManagerClient::GetInstance()->sceneSessionManagerProxy_ = nullptr;
+    CameraWindowManagerClient::GetInstance()->windowManagerAgent_ = nullptr;
 }
 } // namespace CameraStandard
 } // namespace OHOS
