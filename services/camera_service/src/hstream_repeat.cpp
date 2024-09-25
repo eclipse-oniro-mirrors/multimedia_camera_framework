@@ -601,6 +601,9 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
+    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    CHECK_ERROR_RETURN_LOG(display == nullptr,
+        "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         if (cameraAbility_ == nullptr) {
@@ -613,7 +616,6 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         }
         sensorOrientation = item.data.i32[0];
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
-
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
         if (ret != CAM_META_SUCCESS) {
             MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
@@ -626,14 +628,13 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr || OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay() == nullptr) {
+    if (producer_ == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
     int mOritation = disPlayRotation;
     if (enableStreamRotate_) {
         if (mOritation == -1) {
-            auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
             if (producer_ == nullptr || display == nullptr) {
                 MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed,"
                     "producer is null or GetDefaultDisplay failed");
