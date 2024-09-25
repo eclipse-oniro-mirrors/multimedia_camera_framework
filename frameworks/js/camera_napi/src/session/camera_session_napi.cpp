@@ -106,7 +106,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_pr
 
     DECLARE_NAPI_FUNCTION("on", CameraSessionNapi::On),
     DECLARE_NAPI_FUNCTION("once", CameraSessionNapi::Once),
-    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off)
+    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off),
+    DECLARE_NAPI_FUNCTION("setUsage", CameraSessionNapi::SetUsage)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::stabilization_props = {
@@ -4019,6 +4020,32 @@ napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_in
     } else {
         MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
     }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetUsage is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi SetUsage is called!");
+        return nullptr;
+    }
+ 
+    uint32_t usageType;
+    bool enabled;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, usageType, enabled);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetUsage parse parameter occur error");
+        return nullptr;
+    }
+ 
+    cameraSessionNapi->cameraSession_->LockForControl();
+    cameraSessionNapi->cameraSession_->SetUsage(static_cast<UsageType>(usageType), enabled);
+    cameraSessionNapi->cameraSession_->UnlockForControl();
+    
+    MEDIA_DEBUG_LOG("CameraSessionNapi::SetUsage success");
+ 
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
