@@ -2695,7 +2695,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test Get supported scene modes and delete scene modes
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_038, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_014, TestSize.Level0)
 {
     Camera_SceneMode* sceneModes = nullptr;
     uint32_t size = 0;
@@ -2725,7 +2725,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_038, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get supported output capabilities with scene mode
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_039, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_015, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -2763,7 +2763,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_039, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test if a capture session can add a camera input
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_040, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_016, TestSize.Level0)
 {
     bool isSuccess = false;
     Camera_CaptureSession* captureSession = nullptr;
@@ -2807,7 +2807,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_040, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test if a capture session can add a preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_041, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_017, TestSize.Level0)
 {
     bool isSuccessful = false;
     Camera_CaptureSession* captureSession = nullptr;
@@ -2852,7 +2852,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_041, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test if a capture session can add a photo output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_042, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_018, TestSize.Level0)
 {
     bool isSuccessful = false;
     Camera_CaptureSession* captureSession = nullptr;
@@ -2904,7 +2904,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_042, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test if a capture session can add a video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_043, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_019, TestSize.Level0)
 {
     bool isSuccessful = false;
     Camera_CaptureSession* captureSession = nullptr;
@@ -2956,7 +2956,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_043, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test set session mode in photo session
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_044, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_020, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -2994,7 +2994,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_044, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test set session mode in video session
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_045, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_021, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3032,7 +3032,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_045, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test set session mode in secure session
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_046, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_022, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3084,7 +3084,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_046, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test add a secure output to the capture session
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_047, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_023, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3136,7 +3136,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_047, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register capture session callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_048, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_024, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3189,7 +3189,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_048, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister capture session callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_049, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_025, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3242,7 +3242,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_049, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test open secure camera
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_050, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_026, TestSize.Level0)
 {
     uint64_t secureSeqId = 10;
     Camera_CaptureSession* captureSession = nullptr;
@@ -3302,7 +3302,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_050, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test create preview output used in preconfig
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_051, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_027, TestSize.Level0)
 {
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
@@ -3357,7 +3357,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_051, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test create photo output used in preconfig
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_052, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_028, TestSize.Level0)
 {
     imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
                                                               RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
@@ -3409,7 +3409,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_052, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test create video output used in preconfig
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_053, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_029, TestSize.Level0)
 {
     sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
@@ -3465,7 +3465,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_053, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig or not
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_054, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_030, TestSize.Level0)
 {
     imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
                                                               RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
@@ -3521,7 +3521,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_054, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig or not with ratio
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_055, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_031, TestSize.Level0)
 {
     imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
                                                               RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
@@ -3578,7 +3578,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_055, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test preconfig
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_056, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_032, TestSize.Level0)
 {
     imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
                                                               RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
@@ -3633,7 +3633,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_056, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test preconfig with ratio
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_057, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_033, TestSize.Level0)
 {
     imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
                                                               RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
@@ -3689,7 +3689,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_057, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active profile of priview output and delete profile of priview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_058, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_034, TestSize.Level0)
 {
     Camera_Profile *profile = nullptr;
     Camera_CaptureSession* captureSession = nullptr;
@@ -3736,7 +3736,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_058, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active profile of photo output and delete profile of photo output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_059, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_035, TestSize.Level0)
 {
     Camera_Profile* profile = nullptr;
     Camera_CaptureSession* captureSession = nullptr;
@@ -3781,7 +3781,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_059, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active profile of video output and delete profile of video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_060, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_036, TestSize.Level0)
 {
     Camera_VideoProfile* videoProfile = nullptr;
     Camera_CaptureSession* captureSession = nullptr;
@@ -3828,7 +3828,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_060, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test is Torch supported or not and supported or not with torch mode
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_061, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_038, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3889,7 +3889,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_061, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test set torch mode
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_062, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_039, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -3943,7 +3943,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_062, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register camera manager callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_063, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_040, TestSize.Level0)
 {
     CameraManager_Callbacks setCameraManagerResultCallback = {
         .onCameraStatus = &CameraManagerOnCameraStatusCb
@@ -3968,7 +3968,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_063, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister camera manager callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_064, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_041, TestSize.Level0)
 {
     CameraManager_Callbacks setCameraManagerResultCallback = {
         .onCameraStatus = &CameraManagerOnCameraStatusCb
@@ -3993,7 +3993,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_064, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get exposure value
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_065, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_042, TestSize.Level0)
 {
     float exposureValue = 0.0f;
     Camera_CaptureSession* captureSession = nullptr;
@@ -4034,7 +4034,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_065, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get focal length
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_066, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_043, TestSize.Level0)
 {
     float focalLength = 0.0f;
     Camera_CaptureSession* captureSession = nullptr;
@@ -4075,7 +4075,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_066, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test set smooth zoom
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_067, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_044, TestSize.Level0)
 {
     float targetZoom = 0.0f;
     Camera_SmoothZoomMode smoothZoomMode = Camera_SmoothZoomMode::NORMAL;
@@ -4115,7 +4115,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_067, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get supported color space
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_068, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_045, TestSize.Level0)
 {
     uint32_t size = 0;
     OH_NativeBuffer_ColorSpace* colorSpace = nullptr;
@@ -4172,7 +4172,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_068, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test set active color space
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_069, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_046, TestSize.Level0)
 {
     uint32_t size = 0;
     Camera_ErrorCode ret = CAMERA_OK;
@@ -4230,7 +4230,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_069, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active color space
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_070, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_047, TestSize.Level0)
 {
     uint32_t size = 0;
     Camera_ErrorCode ret = CAMERA_OK;
@@ -4290,7 +4290,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_070, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register smooth zoom information event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_071, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_048, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4323,7 +4323,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_071, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister smooth zoom information event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_072, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_049, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4356,7 +4356,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_072, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get supported framerates delete framerates in preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_073, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_050, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -4418,7 +4418,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_073, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test set framerate in preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_074, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_051, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -4471,7 +4471,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_074, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active framerate in preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_075, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_052, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -4526,7 +4526,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_075, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo output capture start event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_076, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_053, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4569,7 +4569,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_076, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo output capture start event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_077, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_054, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4612,7 +4612,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_077, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo output capture end event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_078, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_055, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4655,7 +4655,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_078, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo output capture end event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_079, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_056, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4698,7 +4698,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_079, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo output shutter end event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_080, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_057, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4741,7 +4741,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_080, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo output frame shutter end event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_081, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_058, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4784,7 +4784,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_081, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo output capture ready event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_082, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_059, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4831,7 +4831,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_082, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo output capture ready event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_083, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_060, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4874,7 +4874,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_083, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo output estimated capture duration event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_084, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_061, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4920,7 +4920,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_084, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo output estimated capture duration event callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_085, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_062, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -4966,7 +4966,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_085, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get supported framerates and delete framerates in video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_086, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_063, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -5029,7 +5029,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_086, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test set framerate in video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_087, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_064, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -5084,7 +5084,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_087, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get active framerate in video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_088, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_065, TestSize.Level0)
 {
     uint32_t size = 0;
     int32_t minFps = 0;
@@ -5141,7 +5141,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_088, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test create photo output without surface
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_089, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_066, TestSize.Level0)
 {
     Camera_Size photoSize = {
         .width = 10,
@@ -5196,7 +5196,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_089, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo available callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_090, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_067, TestSize.Level0)
 {
     Camera_Size photoSize = {
         .width = 10,
@@ -5254,7 +5254,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_090, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo available callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_091, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_068, TestSize.Level0)
 {
     Camera_Size photoSize = {
         .width = 10,
@@ -5312,7 +5312,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_091, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test register photo asset available callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_092, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_069, TestSize.Level0)
 {
     Camera_Size photoSize = {
         .width = 10,
@@ -5371,7 +5371,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_092, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test unregister photo asset available callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_093, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_070, TestSize.Level0)
 {
     Camera_Size photoSize = {
         .width = 10,
@@ -5430,7 +5430,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_093, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test moving photo supported or not
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_094, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_071, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -5476,7 +5476,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_094, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test enable moving photo
  */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_095, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_072, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -5521,7 +5521,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_095, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test get main image in photo native
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_096, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_073, TestSize.Level0)
 {
     OH_PhotoNative* photoNative = new OH_PhotoNative();
     OH_ImageNative* mainImage = nullptr;
@@ -5547,7 +5547,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_096, TestSize.Level0)
 * EnvConditions: NA
 * CaseDescription: Test release in photo native
 */
-HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_097, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_074, TestSize.Level0)
 {
     OH_PhotoNative* photoNative = new OH_PhotoNative();
     OH_ImageNative* mainImage = nullptr;
