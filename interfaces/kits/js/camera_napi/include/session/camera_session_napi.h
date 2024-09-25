@@ -350,6 +350,7 @@ public:
     static napi_value CreateFunctionsJSArray(
         napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type);
     const EmitterFunctions& GetEmitterFunctions() override;
+    static napi_value SetUsage(napi_env env, napi_callback_info info);
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;

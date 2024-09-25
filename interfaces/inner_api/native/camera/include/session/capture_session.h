@@ -80,6 +80,10 @@ enum PreconfigType : int32_t {
     PRECONFIG_HIGH_QUALITY = 3
 };
 
+enum UsageType {
+    BOKEH = 0
+};
+
 struct PreconfigProfiles {
 public:
     explicit PreconfigProfiles(ColorSpace colorSpace) : colorSpace(colorSpace) {}
@@ -1627,6 +1631,12 @@ public:
     void ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     int32_t EnableRawDelivery(bool enabled);
+    /**
+     * @brief Set usage for the capture session.
+     * @param usage - The capture session usage.
+     * @param enabled - Enable usage for session if TRUE.
+     */
+    void SetUsage(UsageType usageType, bool enabled);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
