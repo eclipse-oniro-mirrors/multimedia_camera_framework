@@ -1362,8 +1362,6 @@ public:
     std::vector<SceneFeaturesMode> GetSubFeatureMods();
     bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
-    void ProcessFaceRecUpdates(const uint64_t timestamp,
-                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     void ProcessSnapshotDurationUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 

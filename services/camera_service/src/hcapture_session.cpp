@@ -197,7 +197,9 @@ int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& str
         if (stream) {
             StreamInfo_V1_1 curStreamInfo;
             stream->SetStreamInfo(curStreamInfo);
-            streamInfos.push_back(curStreamInfo);
+            if (stream->GetStreamType() != StreamType::METADATA) {
+                streamInfos.push_back(curStreamInfo);
+            }
         }
     }
     return CAMERA_OK;
@@ -297,8 +299,9 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         "HCaptureSession::AddOutputStream stream is null");
     MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d",
         stream->GetFwkStreamId(), stream->GetStreamType());
-    CHECK_ERROR_RETURN_RET_LOG(stream->GetFwkStreamId() == STREAM_ID_UNSET, CAMERA_INVALID_ARG,
-        "HCaptureSession::AddOutputStream stream is released!");
+    CHECK_ERROR_RETURN_RET_LOG(
+        stream->GetFwkStreamId() == STREAM_ID_UNSET && stream->GetStreamType() != StreamType::METADATA,
+        CAMERA_INVALID_ARG, "HCaptureSession::AddOutputStream stream is released!");
     bool isAddSuccess = streamContainer_.AddStream(stream);
     CHECK_ERROR_RETURN_RET_LOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
         "HCaptureSession::AddOutputStream add stream fail");
@@ -610,7 +613,9 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HCaptureSession::LinkInputAndOutputs IsValidMode false");
         StreamInfo_V1_1 curStreamInfo;
         stream->SetStreamInfo(curStreamInfo);
-        allStreamInfos.push_back(curStreamInfo);
+        if (stream->GetStreamType() != StreamType::METADATA) {
+            allStreamInfos.push_back(curStreamInfo);
+        }
     }
 
     rc = device->CreateAndCommitStreams(allStreamInfos, settings, GetopMode());
@@ -1897,6 +1902,25 @@ int32_t StreamOperatorCallback::OnCaptureReady(
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureReady StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         }
+    }
+    return CAMERA_OK;
+}
+
+int32_t StreamOperatorCallback::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
+{
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnResult");
+    sptr<HStreamCommon> curStream;
+    const int32_t metaStreamId = -1;
+    if (streamId == metaStreamId) {
+        curStream = GetStreamByStreamID(streamId);
+    } else {
+        curStream = GetHdiStreamByStreamID(streamId);
+    }
+    if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::METADATA)) {
+        CastStream<HStreamMetadata>(curStream)->OnMetaResult(streamId, result);
+    } else {
+        MEDIA_ERR_LOG("StreamOperatorCallback::OnResult StreamId: %{public}d is null or not Not adapted", streamId);
+        return CAMERA_INVALID_ARG;
     }
     return CAMERA_OK;
 }

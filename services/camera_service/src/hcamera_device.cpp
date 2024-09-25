@@ -1082,9 +1082,9 @@ int32_t HCameraDevice::InitStreamOperator()
     }
 
     if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
-        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_2));
-        streamOperator_ = streamOperator_v1_2;
+        sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperator_v1_3;
+        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_3));
+        streamOperator_ = streamOperator_v1_3;
     } else if (hdiCameraDeviceV1_2 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice V1_2");
         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
@@ -1213,6 +1213,21 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
         callback->OnResult(timestamp, cameraResult);
+    }
+    if (IsCameraDebugOn()) {
+        CheckOnResultData(cameraResult);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
+{
+    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    auto streamOperatorCallback = GetStreamOperatorCallback();
+    if (streamOperatorCallback != nullptr) {
+        streamOperatorCallback->OnResult(streamId, result);
     }
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);

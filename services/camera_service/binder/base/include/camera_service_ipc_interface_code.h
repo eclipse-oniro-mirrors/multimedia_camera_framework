@@ -210,7 +210,10 @@ enum StreamRepeatInterfaceCode {
 enum StreamMetadataInterfaceCode {
     CAMERA_STREAM_META_START = 0,
     CAMERA_STREAM_META_STOP,
-    CAMERA_STREAM_META_RELEASE
+    CAMERA_STREAM_META_RELEASE,
+    CAMERA_STREAM_META_SET_CALLBACK,
+    CAMERA_STREAM_META_ENABLE_RESULTS,
+    CAMERA_STREAM_META_DISABLE_RESULTS
 };
 
 /**
@@ -235,7 +238,11 @@ enum StreamDepthDataInterfaceCode {
  */
 enum CameraDeviceCallbackInterfaceCode {
     CAMERA_DEVICE_ON_ERROR = 0,
-    CAMERA_DEVICE_ON_RESULT
+    CAMERA_DEVICE_ON_RESULT,
+};
+
+enum StreamMetadataCallbackInterfaceCode {
+    CAMERA_META_OPERATOR_ON_RESULT = 0
 };
 
 /**

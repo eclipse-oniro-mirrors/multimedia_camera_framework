@@ -16,12 +16,10 @@
 #ifndef OHOS_CAMERA_META_TYPE_OUTPUT_H
 #define OHOS_CAMERA_META_TYPE_OUTPUT_H
 #include <cstdint>
+#include <map>
 namespace OHOS {
 namespace CameraStandard {
-enum class MetadataObjectType : int32_t {
-    INVALID = -1,
-    FACE = 0,
-};
+
 } // namespace CameraStandard
 } // namespace OHOS
 #endif

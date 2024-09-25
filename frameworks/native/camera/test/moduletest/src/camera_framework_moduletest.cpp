@@ -5803,7 +5803,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_024, TestSize.L
     EXPECT_EQ(intResult, 200);
 
     sptr<IStreamMetadata> output_3 = nullptr;
-    intResult = serviceProxy->CreateMetadataOutput(Producer, format, output_3);
+    intResult = serviceProxy->CreateMetadataOutput(Producer, format, {1}, output_3);
     EXPECT_EQ(intResult, 200);
 
     intResult = serviceProxy->CreateVideoOutput(Producer, format, width, height, output_2);
@@ -5869,7 +5869,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.L
     EXPECT_EQ(intResult, -1);
 
     sptr<IStreamMetadata> output_3 = nullptr;
-    intResult = serviceProxy->CreateMetadataOutput(Producer, format, output_3);
+    intResult = serviceProxy->CreateMetadataOutput(Producer, format, {1}, output_3);
     EXPECT_EQ(intResult, -1);
 
     intResult = serviceProxy->CreateVideoOutput(Producer, format, width, height, output_2);
@@ -7708,12 +7708,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     ASSERT_NE(previewOutput, nullptr);
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
-    uint64_t timestamp = 0;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
-    session_->ProcessFaceRecUpdates(timestamp, result);
-    EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    session_->innerInputDevice_ = nullptr;
-    session_->ProcessFaceRecUpdates(timestamp, result);
     EXPECT_EQ(session_->GetFilter(), FilterType::NONE);
     EXPECT_EQ(session_->GetSupportedFilters().empty(), true);
     EXPECT_EQ(session_->GetSupportedBeautyTypes().empty(), true);
@@ -12167,6 +12161,168 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_time_machine, Te
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal branches Requirements for Meta Detection Types
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal branches Requirements for Meta Detection Types
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, TestSize.Level0)
+{
+    SetHapToken();
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = session_->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
+    intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
+    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
+
+    intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
+    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
+    SetNativeToken();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Requirements for Meta Detection Types
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Requirements for Meta Detection Types
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.Level0)
+{
+    SetHapToken();
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = session_->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
+    intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
+    EXPECT_EQ(intResult, 0);
+
+    intResult = metaOutput->Start();
+    EXPECT_EQ(intResult, 0);
+
+    std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
+    metaOutput->SetCallback(metadataObjectCallback);
+    std::shared_ptr<MetadataStateCallback> metadataStateCallback = std::make_shared<AppMetadataCallback>();
+    metaOutput->SetCallback(metadataStateCallback);
+
+    intResult = metaOutput->Stop();
+    EXPECT_EQ(intResult, 0);
+    SetNativeToken();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test callback for Meta Detection Types
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test callback for Meta Detection Types
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, TestSize.Level0)
+{
+    SetHapToken();
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = session_->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
+    intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
+    EXPECT_EQ(intResult, 0);
+
+    std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
+    metaOutput->SetCallback(metadataObjectCallback);
+
+    sptr<HStreamMetadataCallbackImpl> cameraMetadataCallback_ =
+        new HStreamMetadataCallbackImpl(metaOutput.GetRefPtr());
+
+    const int32_t defaultItems = 10;
+    const int32_t defaultDataLength = 100;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> mockMetaFromHal =
+        std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    std::vector<uint8_t> mockHumanFaceTagfromHal = {
+        0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<uint8_t> mockCatFaceTagFromHal = {2, 2, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<uint8_t> mockDogFaceTagFromHal = {4, 1, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    bool status = mockMetaFromHal->addEntry(OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS, mockHumanFaceTagfromHal.data(), mockHumanFaceTagfromHal.size());
+    ASSERT_TRUE(status);
+    status = mockMetaFromHal->addEntry(OHOS_STATISTICS_DETECT_CAT_FACE_INFOS, mockCatFaceTagFromHal.data(), mockCatFaceTagFromHal.size());
+    ASSERT_TRUE(status);
+    status = mockMetaFromHal->addEntry(OHOS_STATISTICS_DETECT_DOG_FACE_INFOS, mockDogFaceTagFromHal.data(), mockDogFaceTagFromHal.size());
+    ASSERT_TRUE(status);
+
+    intResult = cameraMetadataCallback_->OnMetadataResult(0, mockMetaFromHal);
+    EXPECT_EQ(intResult, 0);
+    SetNativeToken();
 }
 } // namespace CameraStandard
 } // namespace OHOS

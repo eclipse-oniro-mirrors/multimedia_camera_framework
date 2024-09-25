@@ -149,6 +149,18 @@ const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatu
     {OHOS_CAMERA_FOLD_STATUS_FOLDED, FOLDED}
 };
 
+const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_ = {
+    {StatisticsDetectType::OHOS_CAMERA_HUMAN_FACE_DETECT, MetadataObjectType::FACE},
+    {StatisticsDetectType::OHOS_CAMERA_HUMAN_BODY_DETECT, MetadataObjectType::HUMAN_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_CAT_FACE_DETECT, MetadataObjectType::CAT_FACE},
+    {StatisticsDetectType::OHOS_CAMERA_CAT_BODY_DETECT, MetadataObjectType::CAT_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_DOG_FACE_DETECT, MetadataObjectType::DOG_FACE},
+    {StatisticsDetectType::OHOS_CAMERA_DOG_BODY_DETECT, MetadataObjectType::DOG_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_SALIENT_DETECT, MetadataObjectType::SALIENT_DETECTION},
+    {StatisticsDetectType::OHOS_CAMERA_BAR_CODE_DETECT, MetadataObjectType::BAR_CODE_DETECTION},
+    {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION}
+};
+
 const std::set<int32_t> isTemplateMode_ = {
     SceneMode::CAPTURE, SceneMode::VIDEO
 };
@@ -644,34 +656,13 @@ sptr<MetadataOutput> CameraManager::CreateMetadataOutput()
 
 int CameraManager::CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput)
 {
-    CAMERA_SYNC_TRACE;
-    auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-        "CameraManager::CreateMetadataOutput serviceProxy is null");
+    return CreateMetadataOutputInternal(pMetadataOutput);
+}
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CameraErrorCode::INVALID_ARGUMENT,
-        "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
-    // only for face recognize
-    int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    int32_t width = 1920;
-    int32_t height = 1080;
-    surface->SetDefaultWidthAndHeight(width, height);
-    sptr<IStreamMetadata> streamMetadata = nullptr;
-    int32_t retCode = serviceProxy->CreateMetadataOutput(surface->GetProducer(), format, streamMetadata);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-        "CreateMetadataOutput Failed to get stream metadata object from hcamera service! %{public}d", retCode);
-    pMetadataOutput = new (std::nothrow) MetadataOutput(surface, streamMetadata);
-    CHECK_ERROR_RETURN_RET_LOG(pMetadataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateMetadataOutput Failed to new pMetadataOutput!");
-    pMetadataOutput->SetStream(streamMetadata);
-    sptr<IBufferConsumerListener> bufferConsumerListener = new (std::nothrow) MetadataObjectListener(pMetadataOutput);
-    CHECK_ERROR_RETURN_RET_LOG(bufferConsumerListener == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CreateMetadataOutput Failed to new bufferConsumerListener!");
-    SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
-    CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
-        "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
-    return CameraErrorCode::SUCCESS;
+int CameraManager::CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput,
+    std::vector<MetadataObjectType> metadataObjectTypes)
+{
+    return CreateMetadataOutputInternal(pMetadataOutput, metadataObjectTypes);
 }
 
 sptr<DepthDataOutput> CameraManager::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBufferProducer> &surface)
@@ -1673,20 +1664,35 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     MEDIA_INFO_LOG("SetDepthProfiles size = %{public}zu", depthProfiles_.size());
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
-    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
+        if (std::any_of(objectTypes.begin(), objectTypes.end(),
+                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
+            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
+        } else {
+            cameraOutputCapability->SetSupportedMetadataObjectType({});
+        }
+    } else {
+        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+    }
+    MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
+                   cameraOutputCapability->GetSupportedMetadataObjectType().size());
     return cameraOutputCapability;
 }
 
 void CameraManager::GetSupportedMetadataObjectType(common_metadata_header_t* metadata,
-                                                   std::vector<MetadataObjectType> objectTypes)
+                                                   std::vector<MetadataObjectType>& objectTypes)
 {
     camera_metadata_item_t metadataItem;
-    int32_t ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
+    int32_t ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &metadataItem);
     if (ret == CAM_META_SUCCESS) {
         for (uint32_t index = 0; index < metadataItem.count; index++) {
-            if (metadataItem.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE) {
-                objectTypes.push_back(MetadataObjectType::FACE);
+            auto iterator =
+                g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(metadataItem.data.u8[index]));
+            CHECK_ERROR_PRINT_LOG(iterator == g_metaToFwCameraMetaDetect_.end(),
+                "Not supported metadataItem %{public}d", metadataItem.data.u8[index]);
+            if (iterator != g_metaToFwCameraMetaDetect_.end()) {
+                objectTypes.push_back(iterator->second);
             }
         }
     }
@@ -2129,6 +2135,52 @@ void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
+}
+
+int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
+    const std::vector<MetadataObjectType>& metadataObjectTypes)
+{
+    CAMERA_SYNC_TRACE;
+    const size_t maxSize4NonSystemApp = 1;
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("public calling for metadataOutput");
+        if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
+            std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
+            return CameraErrorCode::INVALID_ARGUMENT;
+        }
+    }
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+        "CameraManager::CreateMetadataOutput serviceProxy is null");
+ 
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+        "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
+    // only for face recognize
+    int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    surface->SetDefaultWidthAndHeight(width, height);
+    sptr<IStreamMetadata> streamMetadata = nullptr;
+    std::vector<int32_t> result(metadataObjectTypes.size());
+    std::transform(metadataObjectTypes.begin(), metadataObjectTypes.end(), result.begin(), [](MetadataObjectType obj) {
+        return static_cast<int32_t>(obj);
+    });
+    int32_t retCode = serviceProxy->CreateMetadataOutput(surface->GetProducer(), format, result, streamMetadata);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "CreateMetadataOutput Failed to get stream metadata object from hcamera service! %{public}d", retCode);
+    pMetadataOutput = new (std::nothrow) MetadataOutput(surface, streamMetadata);
+    CHECK_ERROR_RETURN_RET_LOG(pMetadataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateMetadataOutput Failed to new pMetadataOutput!");
+    pMetadataOutput->SetStream(streamMetadata);
+    sptr<IBufferConsumerListener> bufferConsumerListener = new (std::nothrow) MetadataObjectListener(pMetadataOutput);
+    CHECK_ERROR_RETURN_RET_LOG(bufferConsumerListener == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateMetadataOutput Failed to new bufferConsumerListener!");
+    SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
+    CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
+        "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
+    return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

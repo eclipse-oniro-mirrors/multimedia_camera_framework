@@ -66,11 +66,7 @@ void TimeLapsePhotoSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
     auto session = session_.promote();
-    if (session == nullptr) {
-        MEDIA_ERR_LOG("%{public}s: session is nullptr", __FUNCTION__);
-        return;
-    }
-    session->ProcessFaceRecUpdates(timestamp, result);
+    CHECK_ERROR_RETURN_LOG(session == nullptr, "ProcessCallbacks session is nullptr");
     session->ProcessIsoInfoChange(result);
     session->ProcessExposureChange(result);
     session->ProcessLuminationChange(result);
