@@ -1699,7 +1699,17 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
-    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
+        if (std::any_of(objectTypes.begin(), objectTypes.end(),
+                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
+            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
+        } else {
+            cameraOutputCapability->SetSupportedMetadataObjectType({});
+        }
+    } else {
+        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+    }
     MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
                    cameraOutputCapability->GetSupportedMetadataObjectType().size());
     return cameraOutputCapability;

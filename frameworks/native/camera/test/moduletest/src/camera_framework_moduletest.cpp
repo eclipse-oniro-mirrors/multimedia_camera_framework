@@ -12911,6 +12911,7 @@ HWTEST_F(CameraFrameworkModuleTest, test_cloud_image_enhance_enable, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, TestSize.Level0)
 {
+    SetHapToken();
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -12937,6 +12938,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, T
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
     EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
+    SetNativeToken();
 }
 
 /*
@@ -12949,6 +12951,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, T
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.Level0)
 {
+    SetHapToken();
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -12989,6 +12992,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.L
 
     intResult = metaOutput->Stop();
     EXPECT_EQ(intResult, 0);
+    SetNativeToken();
 }
 
 /*
@@ -13001,6 +13005,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, TestSize.Level0)
 {
+    SetHapToken();
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -13055,6 +13060,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, T
 
     intResult = cameraMetadataCallback_->OnMetadataResult(0, mockMetaFromHal);
     EXPECT_EQ(intResult, 0);
+    SetNativeToken();
 }
 } // namespace CameraStandard
 } // namespace OHOS
