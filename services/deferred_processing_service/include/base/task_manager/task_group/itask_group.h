@@ -35,6 +35,8 @@ public:
     virtual const std::string& GetName() = 0;
     virtual TaskGroupHandle GetHandle() = 0;
     virtual bool SubmitTask(std::any param) = 0;
+    virtual void CancelAllTasks() = 0;
+    virtual size_t GetTaskCount() = 0;
 };
 constexpr TaskGroupHandle INVALID_TASK_GROUP_HANDLE = 0;
 } //namespace DeferredProcessing

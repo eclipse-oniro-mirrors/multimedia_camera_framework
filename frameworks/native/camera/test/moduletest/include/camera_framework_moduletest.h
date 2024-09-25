@@ -97,8 +97,7 @@ public:
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
     Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
-                                          camera_rational_t ratio, CameraFormat format);
-    SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
+                                          float ratio, CameraFormat format);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
@@ -126,7 +125,6 @@ private:
     void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
     void ProcessSize();
     void ProcessPortraitSession(sptr<PortraitSession>& portraitSession, sptr<CaptureOutput>& previewOutput);
-    sptr<CameraDevice> ChooseCamerasByPositionAndType(CameraPosition, CameraType);
 };
 } // CameraStandard
 } // OHOS

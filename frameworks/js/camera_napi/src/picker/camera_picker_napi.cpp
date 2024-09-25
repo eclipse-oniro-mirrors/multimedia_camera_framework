@@ -34,6 +34,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
+constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.huawei.hmos.camera";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "PickerAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
 const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
@@ -75,7 +77,7 @@ static std::shared_ptr<PickerContextProxy> GetAbilityContext(napi_env env, napi_
         return nullptr;
     }
     auto contextProxy = std::make_shared<PickerContextProxy>(context);
-    if (contextProxy->GetType() == PickerContextType::UNKNOWN) {
+    if (contextProxy == nullptr || contextProxy->GetType() == PickerContextType::UNKNOWN) {
         MEDIA_ERR_LOG("GetAbilityContext AbilityRuntime convert context failed");
         return nullptr;
     }
@@ -185,6 +187,7 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<PickerContext
         }
     }
 
+    want.SetElementName(CAMERA_PICKER_BUNDLE_HAP_NAME, CAMERA_PICKER_BUNDLE_ABILITY_NAME);
     want.SetUri(pickerProfile.saveUri);
     want.SetFlags(AAFwk::Want::FLAG_AUTH_READ_URI_PERMISSION | AAFwk::Want::FLAG_AUTH_WRITE_URI_PERMISSION);
     wantParam.SetParam("ability.want.params.uiExtensionTargetType", AAFwk::String::Box("cameraPicker"));
@@ -268,19 +271,22 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
             uiExtCallback->OnRemoteReady(uiProxy); },
         [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
-    Ace::ModalUIExtensionConfig config;
-    auto uiContent = pickerContextProxy->GetUIContent();
-    if (uiContent == nullptr) {
-        MEDIA_ERR_LOG("StartCameraAbility fail uiContent is null");
+
+    AbilityRuntime::RuntimeTask task = [extensionCallbacks](
+                                           const int32_t code, const AAFwk::Want& returnWant, bool isInner) {
+        if (code == 0) {
+            extensionCallbacks.onResult(0, returnWant);
+        } else {
+            extensionCallbacks.onError(code, "", "");
+        }
+        MEDIA_INFO_LOG("picker StartCameraAbility get result %{public}d %{public}d", code, isInner);
+    };
+
+    auto ret = pickerContextProxy->StartAbilityForResult(want, 1, std::move(task));
+    if (ret != ERR_OK) {
+        MEDIA_ERR_LOG("picker StartCameraAbility picker StartCameraAbility is %{public}d", ret);
         return nullptr;
     }
-    int32_t sessionId = uiContent->CreateModalUIExtension(want, extensionCallbacks, config);
-    MEDIA_DEBUG_LOG("StartCameraAbility CreateModalUIExtension session id is %{public}d", sessionId);
-    if (sessionId == 0) {
-        MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
-        return nullptr;
-    }
-    uiExtCallback->SetSessionId(sessionId);
     return uiExtCallback;
 }
 
@@ -590,8 +596,12 @@ void UIExtensionCallback::CloseWindow()
         MEDIA_ERR_LOG("contextProxy_ is nullptr");
         return;
     }
+    if (sessionId_ == 0) {
+        MEDIA_WARNING_LOG("sessionId_ is 0");
+        return;
+    }
     auto uiContent = contextProxy_->GetUIContent();
-    if (uiContent != nullptr && sessionId_ != 0) {
+    if (uiContent != nullptr) {
         MEDIA_INFO_LOG("CloseModalUIExtension");
         uiContent->CloseModalUIExtension(sessionId_);
     }

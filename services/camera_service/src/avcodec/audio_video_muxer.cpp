@@ -18,6 +18,7 @@
 #include "audio_video_muxer.h"
 #include "camera_log.h"
 #include "native_mfmagic.h"
+#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,10 +32,12 @@ AudioVideoMuxer::~AudioVideoMuxer()
     MEDIA_INFO_LOG("~AudioVideoMuxer enter");
 }
 
-int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy)
+int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy)
 {
     photoAssetProxy_ = photoAssetProxy;
-    fd_ = photoAssetProxy_->GetVideoFd();
+    if (photoAssetProxy) {
+        fd_ = photoAssetProxy_->GetVideoFd();
+    }
     MEDIA_INFO_LOG("CreateAVMuxer with videoFd: %{public}d", fd_);
     muxer_ = AVMuxerFactory::CreateAVMuxer(fd_, static_cast<Plugins::OutputFormat>(format));
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "create muxer failed!");
@@ -73,6 +76,7 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
 
 int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
 {
+    CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     CHECK_AND_RETURN_RET_LOG(sample != nullptr, AV_ERR_INVALID_VAL, "input sample is nullptr!");
     int32_t ret = AV_ERR_OK;
@@ -100,7 +104,7 @@ int32_t AudioVideoMuxer::GetVideoFd()
     return fd_;
 }
 
-std::shared_ptr<Media::PhotoAssetProxy> AudioVideoMuxer::GetPhotoAssetProxy()
+PhotoAssetIntf* AudioVideoMuxer::GetPhotoAssetProxy()
 {
     return photoAssetProxy_;
 }

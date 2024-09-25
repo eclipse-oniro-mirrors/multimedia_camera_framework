@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <refbase.h>
 #include "avmuxer.h"
-#include "media_photo_asset_proxy.h"
+#include "media_library/photo_asset_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,7 +39,7 @@ public:
     explicit AudioVideoMuxer();
     ~AudioVideoMuxer();
 
-    int32_t Create(OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy);
+    int32_t Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy);
     int32_t AddTrack(int &trackId, OH_AVFormat *format, TrackType type);
     int32_t Start();
     int32_t WriteSampleBuffer(OH_AVBuffer *sample, TrackType type);
@@ -48,13 +48,13 @@ public:
     int32_t SetRotation(int32_t rotation);
     int32_t SetCoverTime(float timems);
     int32_t GetVideoFd();
-    std::shared_ptr<Media::PhotoAssetProxy> GetPhotoAssetProxy();
+    PhotoAssetIntf* GetPhotoAssetProxy();
     std::atomic<int32_t> releaseSignal_ = 2;
 
 private:
     std::shared_ptr<AVMuxer> muxer_ = nullptr;
     int32_t fd_ = -1;
-    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy_;
+    PhotoAssetIntf* photoAssetProxy_ = nullptr;
     int audioTrackId_ = -1;
     int videoTrackId_ = -1;
     int metaTrackId_ = -1;

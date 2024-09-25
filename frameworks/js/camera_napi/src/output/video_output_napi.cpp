@@ -58,6 +58,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 }
 } // namespace
 
+
 thread_local napi_ref VideoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<VideoOutput> VideoOutputNapi::sVideoOutput_ = nullptr;
 thread_local uint32_t VideoOutputNapi::videoOutputTaskId = CAMERA_VIDEO_OUTPUT_TASKID;
@@ -179,9 +180,9 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
+        DECLARE_NAPI_FUNCTION("getVideoRotation", GetVideoRotation),
         DECLARE_NAPI_FUNCTION("getSupportedVideoMetaTypes", GetSupportedVideoMetaTypes),
-        DECLARE_NAPI_FUNCTION("attachMetaSurface", AttachMetaSurface),
-        DECLARE_NAPI_FUNCTION("getVideoRotation", GetVideoRotation)
+        DECLARE_NAPI_FUNCTION("attachMetaSurface", AttachMetaSurface)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

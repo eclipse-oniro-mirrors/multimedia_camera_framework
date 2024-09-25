@@ -84,8 +84,8 @@ napi_value TryAEInfoNapi::Init(napi_env env, napi_value exports)
 
 napi_value TryAEInfoNapi::NewInstance(napi_env env)
 {
-    CAMERA_NAPI_VALUE result = nullptr;
-    CAMERA_NAPI_VALUE constructor;
+    CAMERA_NAPI_VALUE  result = nullptr;
+    CAMERA_NAPI_VALUE  constructor;
     if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok) {
         napi_new_instance(env, constructor, 0, nullptr, &result);
     }
@@ -646,10 +646,12 @@ napi_value TimeLapsePhotoSessionNapi::IsExposureMeteringModeSupported(napi_env e
 napi_value TimeLapsePhotoSessionNapi::GetExposureMeteringMode(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
-    TimeLapsePhotoSessionNapi* obj;
-    CameraNapiParamParser parser(env, info, obj);
-    if (!parser.AssertStatus(INVALID_ARGUMENT, "Invalid argument!")) {
-        MEDIA_ERR_LOG("%{public}s: Read Params Error", __FUNCTION__);
+    napi_status status;
+    napi_value thisVar;
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+    TimeLapsePhotoSessionNapi* obj = Unwrap<TimeLapsePhotoSessionNapi>(env, thisVar);
+    if (obj == nullptr) {
+        MEDIA_ERR_LOG("%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
         return nullptr;
     }
     MeteringMode mode;

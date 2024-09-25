@@ -130,7 +130,6 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
     napi_value result[ARGS_TWO];
     napi_value retVal;
-    CAMERA_NAPI_CHECK_AND_RETURN_LOG((metadataObjList.size() != 0), "callback metadataObjList is null");
 
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);

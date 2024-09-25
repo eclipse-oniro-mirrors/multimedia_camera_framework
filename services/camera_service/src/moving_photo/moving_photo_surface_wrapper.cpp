@@ -114,9 +114,8 @@ void MovingPhotoSurfaceWrapper::OnBufferArrival()
     if (surfaceBufferListener == nullptr) {
         MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival surfaceBufferListener_ is nullptr.");
         err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
-        if (err != GSERROR_OK) {
-            MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival ReleaseBuffer fail.");
-        }
+        CHECK_ERROR_PRINT_LOG(err != GSERROR_OK,
+            "MovingPhotoSurfaceWrapper::OnBufferArrival ReleaseBuffer fail.");
         return;
     }
 
@@ -148,15 +147,9 @@ void MovingPhotoSurfaceWrapper::RecycleBuffer(sptr<SurfaceBuffer> buffer)
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
 
     GSError err = videoSurface_->AttachBufferToQueue(buffer);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to attach buffer %{public}d", err);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK, "Failed to attach buffer %{public}d", err);
     err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to Release Buffer %{public}d", err);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK, "Failed to Release buffer %{public}d", err);
 }
 } // namespace CameraStandard
 } // namespace OHOS

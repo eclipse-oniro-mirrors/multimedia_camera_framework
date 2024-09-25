@@ -75,7 +75,7 @@ private:
 
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
-    typedef int (HCameraServiceStub::* HandlerFunc)(MessageParcel&, MessageParcel&);
+    typedef int (HCameraServiceStub::* HandleMethod)(MessageParcel &, MessageParcel &);
 };
 } // namespace CameraStandard
 } // namespace OHOS

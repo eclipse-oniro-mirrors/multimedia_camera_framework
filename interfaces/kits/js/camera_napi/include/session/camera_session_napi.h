@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "ability/camera_ability_napi.h"
 #include "camera_napi_utils.h"
 #include "capture_scene_const.h"
 #include "input/camera_device.h"
@@ -34,6 +33,7 @@
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/capture_session.h"
+#include "ability/camera_ability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
