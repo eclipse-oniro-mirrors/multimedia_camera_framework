@@ -17,16 +17,20 @@
 #define OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 
 #include "iimage_process_callbacks.h"
+#include "ivideo_process_callbacks.h"
 #include "ipc_file_descriptor.h"
 #include "ideferred_photo_processing_session_callback.h"
+#include "ideferred_video_processing_session_callback.h"
+#include "video_session_info.h"
 #include "task_manager.h"
+
 namespace OHOS::Media {
     class Picture;
 }
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class SessionCoordinator : public RefBase {
+class SessionCoordinator : public std::enable_shared_from_this<SessionCoordinator> {
 public:
     SessionCoordinator();
     ~SessionCoordinator();
@@ -45,8 +49,16 @@ public:
         TaskManager* taskManager);
     void NotifyCallbackDestroyed(const int32_t userId);
 
+    void AddSession(const sptr<VideoSessionInfo>& sessionInfo);
+    void DeleteSession(const int32_t userId);
+    void OnVideoProcessDone(const int32_t userId, const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFd);
+    void OnVideoError(const int32_t userId, const std::string& videoId, DpsError errorCode);
+    void OnVideoStateChanged(const int32_t userId, DpsStatus statusCode);
+    std::shared_ptr<IVideoProcessCallbacks> GetVideoProcCallbacks();
+
 private:
     class ImageProcCallbacks;
+    class VideoProcCallbacks;
 
     enum struct CallbackType {
         ON_PROCESS_DONE,
@@ -74,11 +86,27 @@ private:
         DpsError errorCode;
         DpsStatus statusCode;
     };
+    
+    struct RequestResult {
+        CallbackType callbackType;
+        const int32_t userId;
+        const std::string requestId;
+        sptr<IPCFileDescriptor> ipcFd;
+        long dataSize;
+        DpsError errorCode;
+        DpsStatus statusCode;
+    };
 
     void ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback);
+    void ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback);
+
+    std::mutex mutex_;
     std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
     std::map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
     std::deque<ImageResult> pendingImageResults_;
+    std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_;
+    std::map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> remoteVideoCallbacksMap_;
+    std::deque<RequestResult> pendingRequestResults_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

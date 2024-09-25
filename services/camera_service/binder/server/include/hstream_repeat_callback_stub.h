@@ -30,6 +30,7 @@ private:
     int HandleOnFrameEnded(MessageParcel& data);
     int HandleOnFrameError(MessageParcel& data);
     int HandleOnSketchStatusChanged(MessageParcel& data);
+    int HandleOnDeferredVideoEnhancementInfo(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

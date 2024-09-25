@@ -34,5 +34,17 @@ if (defined(global_parts_info) &&
   use_thermal_manager = true
 }
 
+use_battery_manager = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.powermgr_battery_manager)) {
+  use_battery_manager = true
+}
+
+use_power_manager = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.powermgr_power_manager)) {
+  use_power_manager = true
+}
+
 gen_camera_picker = true
 hicollie_enable = true

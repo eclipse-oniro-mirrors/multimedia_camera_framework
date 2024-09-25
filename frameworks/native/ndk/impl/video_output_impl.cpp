@@ -58,6 +58,12 @@ public:
         }
     }
 
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
+    {
+        // empty impl
+        MEDIA_DEBUG_LOG("OnDeferredVideoEnhancementInfo is called!");
+    }
+
 private:
     Camera_VideoOutput* videoOutput_;
     VideoOutput_Callbacks callback_;

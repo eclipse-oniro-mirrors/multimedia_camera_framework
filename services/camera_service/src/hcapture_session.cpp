@@ -2009,7 +2009,28 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
 int32_t StreamOperatorCallback::OnCaptureEndedExt(int32_t captureId,
     const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt");
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt captureId:%{public}d", captureId);
+    std::lock_guard<std::mutex> lock(cbMutex_);
+    for (auto& captureInfo : infos) {
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
+        if (curStream == nullptr) {
+            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureEndedExt StreamId: %{public}d not found."
+                          " Framecount: %{public}d",
+                captureInfo.streamId_, captureInfo.frameCount_);
+            return CAMERA_INVALID_ARG;
+        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
+            CastStream<HStreamRepeat>(curStream)->OnFrameEnded(captureInfo.frameCount_);
+            CaptureEndedInfoExt extInfo;
+            extInfo.streamId = captureInfo.streamId_;
+            extInfo.frameCount = captureInfo.frameCount_;
+            extInfo.isDeferredVideoEnhancementAvailable = captureInfo.isDeferredVideoEnhancementAvailable_;
+            extInfo.videoId = captureInfo.videoId_;
+            MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt captureId:%{public}d videoId:%{public}s "
+                           "isDeferredVideo:%{public}d",
+                captureId, extInfo.videoId.c_str(), extInfo.isDeferredVideoEnhancementAvailable);
+            CastStream<HStreamRepeat>(curStream)->OnDeferredVideoEnhancementInfo(extInfo);
+        }
+    }
     return CAMERA_OK;
 }
 

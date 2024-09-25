@@ -39,6 +39,9 @@ int HStreamRepeatCallbackStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_SKETCH_STATUS_ON_CHANGED):
             errCode = HStreamRepeatCallbackStub::HandleOnSketchStatusChanged(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_VIDEO_DEFERRED_INFO):
+            errCode = HStreamRepeatCallbackStub::HandleOnDeferredVideoEnhancementInfo(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -64,6 +67,16 @@ int HStreamRepeatCallbackStub::HandleOnSketchStatusChanged(MessageParcel& data)
 {
     int32_t status = data.ReadInt32();
     return OnSketchStatusChanged(static_cast<SketchStatus>(status));
+}
+
+int HStreamRepeatCallbackStub::HandleOnDeferredVideoEnhancementInfo(MessageParcel& data)
+{
+    CaptureEndedInfoExt captureEndedInfo;
+    captureEndedInfo.streamId = data.ReadInt32();
+    captureEndedInfo.frameCount = data.ReadInt32();
+    captureEndedInfo.isDeferredVideoEnhancementAvailable = data.ReadBool();
+    captureEndedInfo.videoId = data.ReadString();
+    return OnDeferredVideoEnhancementInfo(captureEndedInfo);
 }
 } // namespace CameraStandard
 } // namespace OHOS

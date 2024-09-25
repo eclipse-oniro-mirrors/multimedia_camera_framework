@@ -17,37 +17,39 @@
 #define OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
 #define EXPORT_API __attribute__((visibility("default")))
 
-#include "session_manager.h"
-#include "scheduler_manager.h"
+#include "ideferred_photo_processing_session.h"
+#include "ideferred_photo_processing_session_callback.h"
+#include "ideferred_video_processing_session.h"
+#include "ideferred_video_processing_session_callback.h"
+#include "singleton.h"
 #include "task_manager.h"
+
 namespace OHOS::Media {
     class Picture;
 }
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredProcessingService : public RefBase {
+class EXPORT_API DeferredProcessingService : public RefBase, public Singleton<DeferredProcessingService> {
+    DECLARE_SINGLETON(DeferredProcessingService)
+
 public:
-    EXPORT_API static DeferredProcessingService& GetInstance();
-    DeferredProcessingService(const DeferredProcessingService& other) = delete;
-    DeferredProcessingService& operator=(const DeferredProcessingService& other) = delete;
-    EXPORT_API void Initialize();
-    EXPORT_API void Start();
-    EXPORT_API void Stop();
-    EXPORT_API void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
+    void Initialize();
+    void Start();
+    void Stop();
+    void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
         std::shared_ptr<Media::Picture> picture);
-    ~DeferredProcessingService();
-    EXPORT_API sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
+    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback> callbacks);
-    EXPORT_API void NotifyCameraSessionStatus(const int32_t userId,
+    sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
+        const sptr<IDeferredVideoProcessingSessionCallback> callbacks);
+    void NotifyCameraSessionStatus(const int32_t userId,
         const std::string& cameraId, bool running, bool isSystemCamera);
 
 private:
-    DeferredProcessingService();
     TaskManager* GetPhotoTaskManager(const int32_t userId);
-    std::atomic<bool> initialized_;
-    std::shared_ptr<SessionManager> sessionManager_;
-    std::unique_ptr<SchedulerManager> schedulerManager_;
+
+    std::atomic<bool> initialized_ {false};
     std::unordered_map<int, std::shared_ptr<TaskManager>> photoTaskManagerMap_;
     std::mutex taskManagerMutex_;
 };

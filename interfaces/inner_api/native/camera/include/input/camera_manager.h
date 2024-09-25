@@ -26,6 +26,7 @@
 
 #include "camera_stream_info_parse.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
+#include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"
 #include "hcamera_service_callback_stub.h"
 #include "hcamera_service_proxy.h"
@@ -260,6 +261,24 @@ public:
     static int CreateDeferredPhotoProcessingSession(int userId,
         std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
         sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
+    
+    /**
+     * @brief Create deferred video processing session.
+     *
+     * @return Returns pointer to capture session.
+     */
+    static sptr<DeferredVideoProcSession> CreateDeferredVideoProcessingSession(int userId,
+        std::shared_ptr<IDeferredVideoProcSessionCallback> callback);
+
+    /**
+     * @brief Create deferred video processing session.
+     *
+     * @param Returns pointer to capture session.
+     * @return Returns error code.
+     */
+    static int CreateDeferredVideoProcessingSession(int userId,
+        std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
+        sptr<DeferredVideoProcSession> *pDeferredVideoProcSession);
 
     /**
      * @brief Create photo output instance.

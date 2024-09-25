@@ -46,24 +46,27 @@
 #define CAMERA_DP_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
 
 #define DP_OK 0
-#define DP_ERR (-1)
-#define DP_INVALID_PARAM (-2)
-#define DP_INIT_FAIL (-3)
-#define DP_PERMISSION_DENIED (-4)
-#define DP_MEM_MAP_FAILED (-5)
-#define DP_INSUFFICIENT_RESOURCES (-6)
+#define DP_ERR (1)
+#define DP_INVALID_PARAM (2)
+#define DP_INIT_FAIL (3)
+#define DP_PERMISSION_DENIED (4)
+#define DP_MEM_MAP_FAILED (5)
+#define DP_INSUFFICIENT_RESOURCES (6)
+#define DP_NULL_POINTER (7)
+#define DP_SEND_COMMAND_FAILED (8)
+#define DP_NOT_AVAILABLE (9)
 
-#define DP_CHECK_AND_RETURN_RET_LOG(cond, ret, fmt, ...)    \
+#define DP_CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
     do {                                                    \
-        if (!(cond)) {                                      \
+        if (cond) {                                         \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             return ret;                                     \
         }                                                   \
     } while (0)
 
-#define DP_CHECK_AND_RETURN_LOG(cond, fmt, ...)             \
+#define DP_CHECK_ERROR_RETURN_LOG(cond, fmt, ...)           \
     do {                                                    \
-        if (!(cond)) {                                      \
+        if (cond) {                                         \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             return;                                         \
         }                                                   \
@@ -71,22 +74,69 @@
 
 #define DP_CHECK_ERROR_PRINT_LOG(cond, fmt, ...)            \
     do {                                                    \
-        if (cond) {                                      \
+        if (cond) {                                         \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
         }                                                   \
     } while (0)
 
-#define DP_CHECK_AND_RETURN_RET(cond, ret)                  \
+#define DP_CHECK_ERROR_BREAK_LOG(cond, fmt, ...)            \
     do {                                                    \
-        if (!(cond)) {                                      \
+        if (cond) {                                         \
+            DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            break;                                          \
+        }                                                   \
+    } while (0)
+
+#define DP_CHECK_RETURN_RET(cond, ret)                      \
+    do {                                                    \
+        if (cond) {                                         \
             return ret;                                     \
         }                                                   \
     } while (0)
 
-#define DP_CHECK_ERROR_RETURN_RET(cond, ret)                \
+#define DP_CHECK_EXECUTE(cond, cmd)                         \
     do {                                                    \
-        if (cond) {                                      \
+        if (cond) {                                         \
+            cmd;                                            \
+        }                                                   \
+    } while (0)
+
+#define DP_CHECK_RETURN(cond)                               \
+    do {                                                    \
+        if (cond) {                                         \
+            return;                                         \
+        }                                                   \
+    } while (0)
+
+#define DP_CHECK_RETURN_RET_LOG(cond, ret, fmt, ...)        \
+    do {                                                    \
+        if (cond) {                                         \
+            DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
             return ret;                                     \
         }                                                   \
     } while (0)
+
+#define DP_CHECK_RETURN_LOG(cond, fmt, ...)                 \
+    do {                                                    \
+        if (cond) {                                         \
+            DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            return;                                         \
+        }                                                   \
+    } while (0)
+
+#define DP_CHECK_BREAK_LOG(cond, fmt, ...)                  \
+    if (1) {                                                \
+        if (cond) {                                         \
+            DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            break;                                          \
+        }                                                   \
+    } else void (0)
+
+#define DP_CHECK_CONTINUE_LOG(cond, fmt, ...)               \
+    if (1) {                                                \
+        if (cond) {                                         \
+            DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
+            continue;                                       \
+        }                                                   \
+    } else void (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

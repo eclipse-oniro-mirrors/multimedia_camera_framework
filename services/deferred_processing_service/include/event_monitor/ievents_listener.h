@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_IEVENTS_LISTENER_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_IEVENTS_LISTENER_H
+#ifndef OHOS_CAMERA_DPS_IEVENTS_LISTENER_H
+#define OHOS_CAMERA_DPS_IEVENTS_LISTENER_H
 
 #include "basic_definitions.h"
-#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,9 +25,10 @@ class IEventsListener {
 public:
     IEventsListener() = default;
     virtual ~IEventsListener() = default;
-    virtual void OnEventChange(EventType event, int value) = 0;
+
+    virtual void OnEventChange(EventType event, int32_t value) = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_IEVENTS_LISTENER_H
+#endif // OHOS_CAMERA_DPS_IEVENTS_LISTENER_H

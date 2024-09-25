@@ -100,6 +100,19 @@ void ThreadPool::EndBackgroundTasks() const
     }
 }
 
+void ThreadPool::SetThreadPoolPriority(int priority)
+{
+    DP_DEBUG_LOG("entered.");
+    for (auto& workerInfo : workers_) {
+        SetThreadPriority(workerInfo.thread.native_handle(), priority);
+    }
+}
+
+int ThreadPool::GetThreadPoolPriority() const
+{
+    return GetThreadPriority(workers_[0].thread.native_handle());
+}
+
 void ThreadPool::PrintThreadInfo()
 {
     struct sched_param sch;
@@ -123,7 +136,7 @@ ThreadPool::Task ThreadPool::GetTask() const
         return {};
     }
     auto task = std::move(tasks_.front());
-    tasks_.pop();
+    tasks_.pop_front();
     return task;
 }
 
@@ -133,13 +146,17 @@ bool ThreadPool::HasPendingTasks() const
     return !tasks_.empty();
 }
 
-bool ThreadPool::Submit(Task func) const
+bool ThreadPool::Submit(Task func, bool isUrgent) const
 {
     DP_DEBUG_LOG("entered.");
     if (!isStopped_.load()) {
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            tasks_.emplace([task = std::move(func)] { task(); });
+            if (isUrgent) {
+                tasks_.emplace_front([task = std::move(func)] { task(); });
+            } else {
+                tasks_.emplace_back([task = std::move(func)] { task(); });
+            }
         }
         taskCv_.notify_one();
     } else {
@@ -148,6 +165,6 @@ bool ThreadPool::Submit(Task func) const
     }
     return true;
 }
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

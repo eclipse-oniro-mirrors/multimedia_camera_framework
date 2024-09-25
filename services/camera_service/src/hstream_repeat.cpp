@@ -364,6 +364,22 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamRepeat::OnDeferredVideoEnhancementInfo");
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        // report video end dfx
+        CameraReportUtils::GetInstance().SetVideoEndInfo(1);
+        std::lock_guard<std::mutex> lock(callbackLock_);
+        if (streamRepeatCallback_ != nullptr) {
+            streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+        }
+    }
+    UpdateSketchStatus(SketchStatus::STOPED);
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);

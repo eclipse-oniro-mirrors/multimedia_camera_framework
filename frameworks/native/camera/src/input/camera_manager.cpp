@@ -445,6 +445,54 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     return CameraErrorCode::SUCCESS;
 }
 
+sptr<DeferredVideoProcSession> CameraManager::CreateDeferredVideoProcessingSession(int userId,
+    std::shared_ptr<IDeferredVideoProcSessionCallback> callback)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<DeferredVideoProcSession> deferredVideoProcSession = nullptr;
+    int ret = CreateDeferredVideoProcessingSession(userId, callback, &deferredVideoProcSession);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateDeferredVideoProcessingSession with error code:%{public}d", ret);
+        return nullptr;
+    }
+    return deferredVideoProcSession;
+}
+
+int CameraManager::CreateDeferredVideoProcessingSession(int userId,
+    std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
+    sptr<DeferredVideoProcSession> *pDeferredVideoProcSession)
+{
+    CAMERA_SYNC_TRACE;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession Failed to get System ability manager");
+    sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession object is null");
+    sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession serviceProxy is null");
+
+    auto deferredVideoProcSession = new(std::nothrow) DeferredVideoProcSession(userId, callback);
+    CHECK_ERROR_RETURN_RET_LOG(deferredVideoProcSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession failed to new deferredVideoProcSession!");
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback> remoteCallback =
+        new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredVideoProcSession);
+    CHECK_ERROR_RETURN_RET_LOG(remoteCallback == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession failed to new remoteCallback!");
+
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
+    int32_t retCode = serviceProxy->CreateDeferredVideoProcessingSession(userId, remoteCallback, session);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "Failed to get video session!, %{public}d", retCode);
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CreateDeferredVideoProcessingSession Failed to CreateDeferredVideoProcessingSession as session is null");
+
+    deferredVideoProcSession->SetDeferredVideoSession(session);
+    *pDeferredVideoProcSession = deferredVideoProcSession;
+    return CameraErrorCode::SUCCESS;
+}
+
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surface)
 {
     CAMERA_SYNC_TRACE;

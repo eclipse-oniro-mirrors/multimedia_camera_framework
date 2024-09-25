@@ -291,6 +291,34 @@ int32_t HCameraServiceProxy::CreateDeferredPhotoProcessingSession(int32_t userId
     return error;
 }
 
+int32_t HCameraServiceProxy::CreateDeferredVideoProcessingSession(int32_t userId,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession callback is null");
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(userId);
+    data.WriteRemoteObject(callback->AsObject());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_VIDEO_PROCESSING_SESSION),
+        data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession failed, error: %{public}d", error);
+
+    auto remoteObject = reply.ReadRemoteObject();
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession session is null");
+    session = iface_cast<DeferredProcessing::IDeferredVideoProcessingSession>(remoteObject);
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                                int32_t width, int32_t height,
                                                sptr<IStreamCapture> &photoOutput)

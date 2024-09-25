@@ -596,6 +596,18 @@ void CaptureSession::UpdateDeviceDeferredability()
                 static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
         }
     }
+
+    inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_ = {};
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
+    MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability video item: %{public}d count: %{public}d", item.item, item.count);
+    for (uint32_t i = 0; i + 1 < item.count; i++) {
+        if (i % DEFERRED_MODE_DATA_SIZE == 0) {
+            MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, video deferredType:%{public}d",
+                item.data.u8[i], item.data.u8[i + 1]);
+            inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
+        }
+    }
 }
 
 void CaptureSession::FindTagId()
@@ -2811,6 +2823,12 @@ bool CaptureSession::IsImageDeferred()
     return isImageDeferred_;
 }
 
+bool CaptureSession::IsVideoDeferred()
+{
+    MEDIA_INFO_LOG("CaptureSession IsVideoDeferred:%{public}d", isVideoDeferred_);
+    return isVideoDeferred_;
+}
+
 SceneFeaturesMode CaptureSession::GetFeaturesMode()
 {
     SceneFeaturesMode sceneFeaturesMode;
@@ -4353,6 +4371,37 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
         return;
     }
     isDeferTypeSetted_ = isEnableByUser;
+}
+
+void CaptureSession::EnableAutoDeferredVideoEnhancement(bool isEnableByUser)
+{
+    MEDIA_INFO_LOG("EnableAutoDeferredVideoEnhancement isEnableByUser:%{public}d", isEnableByUser);
+    if (IsSessionCommited()) {
+        MEDIA_ERR_LOG("EnableAutoDeferredVideoEnhancement session has committed!");
+        return;
+    }
+    this->LockForControl();
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("EnableAutoDeferredVideoEnhancement changedMetadata_ is NULL");
+        return;
+    }
+
+    bool status = false;
+    camera_metadata_item_t item;
+    isVideoDeferred_ = isEnableByUser;
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("EnableAutoDeferredVideoEnhancement Failed to set type!");
+    }
+    int32_t errCode = this->UnlockForControl();
+    if (errCode != CameraErrorCode::SUCCESS) {
+        MEDIA_DEBUG_LOG("EnableAutoDeferredVideoEnhancement Failed");
+    }
 }
 
 void CaptureSession::SetUserId()

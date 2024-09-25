@@ -15,10 +15,10 @@
 
 #include "session_info.h"
 
-#include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "session_manager.h"
 #include "dp_log.h"
+#include "ideferred_photo_processing_session.h"
 
 namespace OHOS {
 namespace CameraStandard {

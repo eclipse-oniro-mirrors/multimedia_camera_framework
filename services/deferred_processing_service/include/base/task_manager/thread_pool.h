@@ -38,8 +38,10 @@ public:
     ~ThreadPool();
     void BeginBackgroundTasks() const;
     void EndBackgroundTasks() const;
+    void SetThreadPoolPriority(int priority);
+    int GetThreadPoolPriority() const;
     bool HasPendingTasks() const;
-    bool Submit(Task func) const;
+    bool Submit(Task func, bool isUrgent = false) const;
 
 private:
     struct ThreadInfo {
@@ -82,7 +84,7 @@ private:
     mutable std::atomic<bool> isStopped_;
     mutable std::mutex mutex_;
     mutable std::condition_variable taskCv_;
-    mutable std::queue<Task> tasks_;
+    mutable std::deque<Task> tasks_;
 };
 } //namespace DeferredProcessing
 } // namespace CameraStandard

@@ -1442,9 +1442,11 @@ public:
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     void EnableDeferredType(DeferredDeliveryImageType deferredType, bool isEnableByUser);
+    void EnableAutoDeferredVideoEnhancement(bool isEnableByUser);
     void SetUserId();
     bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
+    bool IsVideoDeferred();
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
     int32_t EnableAutoCloudImageEnhance(bool enabled);
@@ -1644,6 +1646,7 @@ protected:
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
     bool isImageDeferred_ = false;
     std::atomic<bool> isRawImageDelivery_ { false };
+    bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;

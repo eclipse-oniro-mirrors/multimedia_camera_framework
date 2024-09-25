@@ -473,6 +473,23 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     return CAMERA_OK;
 }
 
+int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_INFO_LOG("CreateDeferredVideoProcessingSession get uid:%{public}d userId:%{public}d", uid, userId);
+    videoSession =
+        DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(userId,
+        callback);
+    session = videoSession;
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
     int32_t height, sptr<IStreamCapture>& photoOutput)
 {

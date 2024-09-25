@@ -20,6 +20,7 @@
 #include "dps_event_report.h"
 #include "steady_clock.h"
 #include "picture.h"
+#include "video_session_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -48,6 +49,18 @@ ErrorCode MapDpsErrorCode(DpsError errorCode)
             break;
         case DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED:
             code = ErrorCode::ERROR_IMAGE_PROC_INTERRUPTED;
+            break;
+        case DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID:
+            code = ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID;
+            break;
+        case DpsError::DPS_ERROR_VIDEO_PROC_FAILED:
+            code = ErrorCode::ERROR_VIDEO_PROC_FAILED;
+            break;
+        case DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT:
+            code = ErrorCode::ERROR_VIDEO_PROC_TIMEOUT;
+            break;
+        case DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED:
+            code = ErrorCode::ERROR_VIDEO_PROC_INTERRUPTED;
             break;
         default:
             DP_WARNING_LOG("unexpected error code: %{public}d.", errorCode);
@@ -96,9 +109,8 @@ public:
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
         bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
-        if (coordinator_) {
-            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
-        }
+        DP_CHECK_EXECUTE(coordinator_ != nullptr,
+            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported));
     }
 
     void OnProcessDoneExt(int userId, const std::string& imageId,
@@ -112,26 +124,59 @@ public:
 
     void OnError(const int userId, const std::string& imageId, DpsError errorCode) override
     {
-        if (coordinator_) {
-            coordinator_->OnError(userId, imageId, errorCode);
-        }
+        DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->OnError(userId, imageId, errorCode));
     }
 
     void OnStateChanged(const int32_t userId, DpsStatus statusCode) override
     {
-        if (coordinator_) {
-            coordinator_->OnStateChanged(userId, statusCode);
-        }
+        DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->OnStateChanged(userId, statusCode));
     }
 
 private:
     SessionCoordinator* coordinator_;
 };
 
+class SessionCoordinator::VideoProcCallbacks : public IVideoProcessCallbacks {
+public:
+    explicit VideoProcCallbacks(const std::weak_ptr<SessionCoordinator>& coordinator) : coordinator_(coordinator)
+    {
+    }
+
+    ~VideoProcCallbacks() = default;
+
+    void OnProcessDone(const int32_t userId, const std::string& videoId,
+        const sptr<IPCFileDescriptor>& ipcFd) override
+    {
+        auto video = coordinator_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(video == nullptr, "SessionCoordinator is nullptr.");
+        video->OnVideoProcessDone(userId, videoId, ipcFd);
+    }
+
+    void OnError(const int32_t userId, const std::string& videoId, DpsError errorCode) override
+    {
+        auto video = coordinator_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(video == nullptr, "SessionCoordinator is nullptr.");
+        video->OnVideoError(userId, videoId, errorCode);
+    }
+
+    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override
+    {
+        auto video = coordinator_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(video == nullptr, "SessionCoordinator is nullptr.");
+        video->OnStateChanged(userId, statusCode);
+    }
+
+private:
+    std::weak_ptr<SessionCoordinator> coordinator_;
+};
+
 SessionCoordinator::SessionCoordinator()
     : imageProcCallbacks_(nullptr),
       remoteImageCallbacksMap_(),
-      pendingImageResults_()
+      pendingImageResults_(),
+      videoProcCallbacks_(nullptr),
+      remoteVideoCallbacksMap_(),
+      pendingRequestResults_()
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -139,11 +184,18 @@ SessionCoordinator::SessionCoordinator()
 SessionCoordinator::~SessionCoordinator()
 {
     DP_DEBUG_LOG("entered.");
+    imageProcCallbacks_ = nullptr;
+    remoteImageCallbacksMap_.clear();
+    pendingImageResults_.clear();
+    videoProcCallbacks_ = nullptr;
+    remoteVideoCallbacksMap_.clear();
+    pendingRequestResults_.clear();
 }
 
 void SessionCoordinator::Initialize()
 {
     imageProcCallbacks_ = std::make_shared<ImageProcCallbacks>(this);
+    videoProcCallbacks_ = std::make_shared<VideoProcCallbacks>(weak_from_this());
 }
 
 void SessionCoordinator::Start()
@@ -159,6 +211,11 @@ void SessionCoordinator::Stop()
 std::shared_ptr<IImageProcessCallbacks> SessionCoordinator::GetImageProcCallbacks()
 {
     return imageProcCallbacks_;
+}
+
+std::shared_ptr<IVideoProcessCallbacks> SessionCoordinator::GetVideoProcCallbacks()
+{
+    return videoProcCallbacks_;
 }
 
 void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
@@ -263,6 +320,81 @@ void SessionCoordinator::NotifyCallbackDestroyed(const int32_t userId)
     if (remoteImageCallbacksMap_.count(userId) != 0) {
         DP_INFO_LOG("session userId: %{public}d destroyed.", userId);
         remoteImageCallbacksMap_.erase(userId);
+    }
+}
+
+void SessionCoordinator::AddSession(const sptr<VideoSessionInfo>& sessionInfo)
+{
+    int32_t userId = sessionInfo->GetUserId();
+    DP_INFO_LOG("add session userId: %{public}d", userId);
+    auto callback = sessionInfo->GetRemoteCallback();
+    if (callback != nullptr) {
+        remoteVideoCallbacksMap_[userId] = callback;
+        ProcessVideoResults(callback);
+    }
+}
+
+void SessionCoordinator::DeleteSession(const int32_t userId)
+{
+    if (remoteVideoCallbacksMap_.count(userId) != 0) {
+        DP_INFO_LOG("delete session userId: %{public}d", userId);
+        remoteVideoCallbacksMap_.erase(userId);
+    }
+}
+
+void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::string& videoId,
+    const sptr<IPCFileDescriptor> &ipcFd)
+{
+    DP_INFO_LOG("userId: %{public}d, map size: %{public}d.",
+        userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
+    auto iter = remoteVideoCallbacksMap_.find(userId);
+    if (iter != remoteVideoCallbacksMap_.end()) {
+        auto wpCallback = iter->second;
+        sptr<IDeferredVideoProcessingSessionCallback> spCallback = wpCallback.promote();
+        DP_INFO_LOG("videoId: %{public}s", videoId.c_str());
+        spCallback->OnProcessVideoDone(videoId, ipcFd);
+    } else {
+        DP_INFO_LOG("callback is null, videoId: %{public}s.", videoId.c_str());
+    }
+}
+
+void SessionCoordinator::OnVideoError(const int32_t userId, const std::string& videoId, DpsError errorCode)
+{
+    DP_INFO_LOG("userId: %{public}d, map size: %{public}d.",
+        userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
+    auto iter = remoteVideoCallbacksMap_.find(userId);
+    if (iter != remoteVideoCallbacksMap_.end()) {
+        auto wpCallback = iter->second;
+        sptr<IDeferredVideoProcessingSessionCallback> spCallback = wpCallback.promote();
+        auto error = MapDpsErrorCode(errorCode);
+        DP_INFO_LOG("videoId: %{public}s, error: %{public}d", videoId.c_str(), error);
+        spCallback->OnError(videoId, error);
+    } else {
+        DP_INFO_LOG("callback is null, videoId: %{public}s, errorCode: %{public}d.",
+            videoId.c_str(), errorCode);
+    }
+}
+
+void SessionCoordinator::OnVideoStateChanged(const int32_t userId, DpsStatus statusCode)
+{
+    DP_DEBUG_LOG("entered.");
+}
+
+void SessionCoordinator::ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback)
+{
+    DP_DEBUG_LOG("entered.");
+    while (!pendingRequestResults_.empty()) {
+        auto result = pendingRequestResults_.front();
+        if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
+            callback->OnProcessVideoDone(result.requestId, result.ipcFd);
+        }
+        if (result.callbackType == CallbackType::ON_ERROR) {
+            callback->OnError(result.requestId, MapDpsErrorCode(result.errorCode));
+        }
+        if (result.callbackType == CallbackType::ON_STATE_CHANGED) {
+            callback->OnStateChanged(MapDpsStatus(result.statusCode));
+        }
+        pendingRequestResults_.pop_back();
     }
 }
 } // namespace DeferredProcessing
