@@ -1064,6 +1064,11 @@ int32_t CaptureSession::Start()
     } else {
         MEDIA_ERR_LOG("CaptureSession::Start() captureSession is nullptr");
     }
+    if (GetMetaOutput()) {
+        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
+        CHECK_ERROR_RETURN_RET_LOG(!metaOutput, ServiceToCameraError(errCode), "CaptureSession::metaOutput is null");
+        metaOutput->Start();
+    }
     return ServiceToCameraError(errCode);
 }
 

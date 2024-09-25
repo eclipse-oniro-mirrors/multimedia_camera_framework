@@ -54,6 +54,8 @@ private:
     std::atomic<bool> isStarted_ { false };
     sptr<IStreamMetadataCallback> streamMetadataCallback_;
     std::mutex callbackLock_;
+    uint32_t majorVer_;
+    uint32_t minorVer_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

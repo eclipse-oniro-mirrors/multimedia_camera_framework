@@ -2117,7 +2117,7 @@ int32_t StreamOperatorCallback::OnResult(int32_t streamId, const std::vector<uin
 {
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnResult");
     sptr<HStreamCommon> curStream;
-    const int32_t metaStreamId = 0;
+    const int32_t metaStreamId = -1;
     if (streamId == metaStreamId) {
         curStream = GetStreamByStreamID(streamId);
     } else {

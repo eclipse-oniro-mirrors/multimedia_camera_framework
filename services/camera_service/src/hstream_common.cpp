@@ -82,7 +82,8 @@ HStreamCommon::HStreamCommon(
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::HStreamCommon");
     callerToken_ = IPCSkeleton::GetCallingTokenID();
-    fwkStreamId_ = streamType == StreamType::METADATA ? STREAM_ID_UNSET : GenerateStreamId();
+    const int32_t metaStreamId = -1;
+    fwkStreamId_ = streamType == StreamType::METADATA ? metaStreamId : GenerateStreamId();
     MEDIA_DEBUG_LOG(
         "HStreamCommon Create streamId_ is %{public}d, streamType is:%{public}d", fwkStreamId_, streamType_);
 }
