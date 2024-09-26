@@ -44,7 +44,7 @@ class CameraService {
   };
   private curCameraDevice: camera.CameraDevice | undefined = undefined;
   private isRecording: boolean = false;
-  frameStartFlag: number = 0;
+  private frameStartFlag: number = 0;
   // 推荐拍照分辨率之一
   private photoProfileObj: camera.Profile = {
     format: 2000,
