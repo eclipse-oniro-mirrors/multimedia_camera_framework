@@ -202,7 +202,9 @@ int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& str
         if (stream) {
             StreamInfo_V1_1 curStreamInfo;
             stream->SetStreamInfo(curStreamInfo);
-            streamInfos.push_back(curStreamInfo);
+            if (stream->GetStreamType() != StreamType::METADATA) {
+                streamInfos.push_back(curStreamInfo);
+            }
         }
     }
     return CAMERA_OK;
