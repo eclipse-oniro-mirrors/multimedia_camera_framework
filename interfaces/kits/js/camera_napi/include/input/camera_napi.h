@@ -381,6 +381,10 @@ static const std::unordered_map<std::string, int32_t> mapTripodStatus = {
     { "EXITING", 3 },
 };
 
+static const std::unordered_map<std::string, int32_t> mapUsageType = {
+    {"BOKEH", 0},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

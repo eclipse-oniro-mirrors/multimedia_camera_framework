@@ -106,7 +106,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_pr
 
     DECLARE_NAPI_FUNCTION("on", CameraSessionNapi::On),
     DECLARE_NAPI_FUNCTION("once", CameraSessionNapi::Once),
-    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off)
+    DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off),
+    DECLARE_NAPI_FUNCTION("setUsage", CameraSessionNapi::SetUsage)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::stabilization_props = {
@@ -3952,6 +3953,42 @@ napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
     }
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetUsage is called");
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+ 
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi SetUsage is called!");
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_TWO), "Requires two parameters.");
+ 
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        uint32_t usageType;
+        napi_status getUintValueRet = napi_get_value_uint32(env, argv[PARAM0], &usageType);
+        CHECK_ERROR_RETURN_RET_LOG(getUintValueRet != napi_ok, result, "SetUsage invalid parameter!");
+        bool enabled;
+        napi_status getBoolValueRet = napi_get_value_bool(env, argv[PARAM1], &enabled);
+        CHECK_ERROR_RETURN_RET_LOG(getBoolValueRet != napi_ok, result, "SetUsage invalid parameter!");
+ 
+        CHECK_ERROR_RETURN_RET_LOG(usageType != UsageType::BOKEH, nullptr, "Usage type should be BOKEH!");
+ 
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetUsage(static_cast<UsageType>(usageType), enabled);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetUsage failed!");
+    }
+    return result;
 }
 
 void CameraSessionNapi::RegisterExposureCallbackListener(
