@@ -1453,7 +1453,7 @@ public:
     bool IsVideoDeferred();
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
-    int32_t EnableAutoCloudImageEnhance(bool enabled);
+    int32_t EnableAutoCloudImageEnhancement(bool enabled);
 
     virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
