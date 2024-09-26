@@ -12855,7 +12855,7 @@ HWTEST_F(CameraFrameworkModuleTest, test_cloud_image_enhance_enable, TestSize.Le
     ASSERT_NE(camSession, nullptr);
 
     bool isEnabled = false;
-    int32_t intResult = camSession->EnableAutoCloudImageEnhance(isEnabled);
+    int32_t intResult = camSession->EnableAutoCloudImageEnhancement(isEnabled);
     EXPECT_EQ(intResult, 0);
 
     intResult = camSession->BeginConfig();
@@ -12885,19 +12885,19 @@ HWTEST_F(CameraFrameworkModuleTest, test_cloud_image_enhance_enable, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     bool isAutoCloudImageEnhanceSupported;
-    intResult = photoOutput_1->IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    intResult = photoOutput_1->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhanceSupported);
     EXPECT_EQ(isAutoCloudImageEnhanceSupported, true);
 
-    intResult = photoOutput_1->EnableAutoCloudImageEnhance(isEnabled);
+    intResult = photoOutput_1->EnableAutoCloudImageEnhancement(isEnabled);
     EXPECT_EQ(intResult, 0);
 
     intResult = photoOutput_1->Release();
     EXPECT_EQ(intResult, 0);
 
-    intResult = photoOutput_1->IsAutoCloudImageEnhanceSupported(isAutoCloudImageEnhanceSupported);
+    intResult = photoOutput_1->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhanceSupported);
     EXPECT_EQ(intResult, 7400201);
 
-    intResult = photoOutput_1->EnableAutoCloudImageEnhance(isEnabled);
+    intResult = photoOutput_1->EnableAutoCloudImageEnhancement(isEnabled);
     EXPECT_EQ(intResult, 7400201);
 }
 

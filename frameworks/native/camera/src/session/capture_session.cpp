@@ -4460,13 +4460,13 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
     return res;
 }
 
-int32_t CaptureSession::EnableAutoCloudImageEnhance(bool enabled)
+int32_t CaptureSession::EnableAutoCloudImageEnhancement(bool enabled)
 {
-    MEDIA_INFO_LOG("CaptureSession::EnableAutoCloudImageEnhance enabled:%{public}d", enabled);
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoCloudImageEnhancement enabled:%{public}d", enabled);
 
     LockForControl();
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, INVALID_ARGUMENT,
-        "CaptureSession::EnableAutoCloudImageEnhance changedMetadata_ is NULL");
+        "CaptureSession::EnableAutoCloudImageEnhancement changedMetadata_ is NULL");
 
     int32_t res = CameraErrorCode::SUCCESS;
     bool status = false;
@@ -4479,11 +4479,11 @@ int32_t CaptureSession::EnableAutoCloudImageEnhance(bool enabled)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
     }
     if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::EnableAutoCloudImageEnhance Failed to set type!");
+        MEDIA_ERR_LOG("CaptureSession::EnableAutoCloudImageEnhancement Failed to set type!");
         res = INVALID_ARGUMENT;
     }
     UnlockForControl();
-    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoCloudImageEnhance Failed");
+    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoCloudImageEnhancement Failed");
     return res;
 }
 

@@ -416,14 +416,14 @@ public:
      *
      * @return Returns the support result.
      */
-    int32_t IsAutoCloudImageEnhanceSupported(bool& isAutoCloudImageEnhanceSupported);
+    int32_t IsAutoCloudImageEnhancementSupported(bool& isAutoCloudImageEnhanceSupported);
 
     /**
      * @brief To enable the auto cloud image enhance.
      *
      * @return Returns the result of the auto cloud image enhance enable.
      */
-    int32_t EnableAutoCloudImageEnhance(bool enabled);
+    int32_t EnableAutoCloudImageEnhancement(bool enabled);
 
     /**
      * @brief To get status by callbackFlags.
