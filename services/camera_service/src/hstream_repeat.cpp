@@ -376,7 +376,6 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
             streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
         }
     }
-    UpdateSketchStatus(SketchStatus::STOPED);
     return CAMERA_OK;
 }
 

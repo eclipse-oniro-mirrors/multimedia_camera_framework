@@ -15,6 +15,7 @@
 
 #include "reader.h"
 
+#include "basic_definitions.h"
 #include "dp_log.h"
 #include "track_factory.h"
 
@@ -81,8 +82,9 @@ MediaManagerError Reader::InitTracksAndDemuxer()
 
     for (int32_t index = 0; index < trackCount_; ++index) {
         auto track = TrackFactory::GetInstance().CreateTrack(source_, index);
+        DP_CHECK_ERROR_RETURN_RET_LOG(track == nullptr, ERROR_FAIL, "track: %{public}d is nullptr", index);
         DP_DEBUG_LOG("track type: %{public}d", track->GetType());
-        tracks_.insert(std::pair(track->GetType(), track));
+        tracks_.emplace(std::pair(track->GetType(), track));
     }
     DP_DEBUG_LOG("trackCount num: %{public}d, trackMap size: %{public}d",
         trackCount_, static_cast<int32_t>(tracks_.size()));
