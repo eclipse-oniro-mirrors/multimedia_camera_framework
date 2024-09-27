@@ -30,7 +30,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
         device->CloseDevice();
-        device->OnError(DEVICE_DISCONNECT, 0);
+        device->OnError(DEVICE_PREEMPT, 0);
     }
 }
 
