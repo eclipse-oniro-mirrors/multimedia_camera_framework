@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "camera_service_ipc_interface_code.h"
+#include <vector>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,6 +40,15 @@ int HStreamMetadataStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE):
             errCode = Release();
             break;
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_SET_CALLBACK):
+            errCode = HandleSetCallback(data);
+            break;
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_ENABLE_RESULTS):
+            errCode = HandleEnableMetadataType(data);
+            break;
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_DISABLE_RESULTS):
+            errCode = HandleDisableMetadataType(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamMetadataStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -46,6 +56,37 @@ int HStreamMetadataStub::OnRemoteRequest(
     }
 
     return errCode;
+}
+
+int32_t HStreamMetadataStub::HandleSetCallback(MessageParcel &data)
+{
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamMetadataStub HandleSetCallback remoteObject is null");
+
+    auto callback = iface_cast<IStreamMetadataCallback>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamMetadataStub HandleSetCallback remoteCallback is null");
+    return SetCallback(callback);
+}
+
+int32_t HStreamMetadataStub::HandleEnableMetadataType(MessageParcel& data)
+{
+    std::vector<int32_t> metadataTypes;
+    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+        "HStreamMetadataStub Start metadataTypes is null");
+    int ret = EnableMetadataType(metadataTypes);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamMetadataStub HandleStart failed : %{public}d", ret);
+    return ret;
+}
+int32_t HStreamMetadataStub::HandleDisableMetadataType(MessageParcel& data)
+{
+    std::vector<int32_t> metadataTypes;
+    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+        "HStreamMetadataStub Start metadataTypes is null");
+    int ret = DisableMetadataType(metadataTypes);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamMetadataStub HandleStart failed : %{public}d", ret);
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

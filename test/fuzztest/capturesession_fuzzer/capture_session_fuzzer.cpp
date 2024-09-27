@@ -325,7 +325,6 @@ void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->ProcessAutoExposureUpdates(result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessAREngineUpdates(data.ReadUint64(), result);
-    session->ProcessFaceRecUpdates(data.ReadUint64(), result);
     session->ProcessSnapshotDurationUpdates(data.ReadUint64(), result);
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);

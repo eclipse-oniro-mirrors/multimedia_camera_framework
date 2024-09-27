@@ -460,6 +460,15 @@ public:
                               sptr<DepthDataOutput>* pDepthDataOutput);
 
     /**
+     * @brief Create metadata output instance.
+     *
+     * @param Returns pointer to metadata output instance.
+     * @return Returns error code.
+     */
+    int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput,
+        std::vector<MetadataObjectType> metadataObjectTypes);
+
+    /**
      * @brief Set camera manager callback.
      *
      * @param CameraManagerCallback pointer.
@@ -689,6 +698,8 @@ private:
     void CreateAndSetCameraMuteServiceCallback();
     void CreateAndSetTorchServiceCallback();
     void CreateAndSetFoldServiceCallback();
+    int32_t CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
+        const std::vector<MetadataObjectType>& metadataObjectTypes = {});
 
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
@@ -699,7 +710,7 @@ private:
     void ParseProfileLevel(const int32_t modeName, const camera_metadata_item_t& item);
     void CreateProfileLevel4StreamType(int32_t specId, StreamInfo &streamInfo);
     void GetSupportedMetadataObjectType(
-        common_metadata_header_t* metadata, std::vector<MetadataObjectType> objectTypes);
+        common_metadata_header_t* metadata, std::vector<MetadataObjectType>& objectTypes);
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,

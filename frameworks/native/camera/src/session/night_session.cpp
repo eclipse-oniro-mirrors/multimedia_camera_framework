@@ -118,7 +118,6 @@ void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
     CHECK_ERROR_RETURN_LOG(session == nullptr,
         "CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
-    session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
 }
 

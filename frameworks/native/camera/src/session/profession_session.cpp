@@ -984,7 +984,6 @@ void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbac
     CHECK_AND_RETURN_LOG(session != nullptr,
         "CaptureSession::ProfessionSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
-    session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessSensorExposureTimeChange(result);
     session->ProcessIsoChange(result);

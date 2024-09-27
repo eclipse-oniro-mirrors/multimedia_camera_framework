@@ -35,6 +35,11 @@ public:
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override;
 private:
     void OnMetadataObjectsAvailableCallback(const std::vector<sptr<MetadataObject>> metadataObjList) const;
+    napi_value CreateMetadataObjJSArray(napi_env env, const std::vector<sptr<MetadataObject>> metadataObjList) const;
+    void AddMetadataObjExtending(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
+    void CreateHumanFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
+    void CreateCatFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
+    void CreateDogFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
 };
 
 class MetadataStateCallbackNapi : public MetadataStateCallback, public ListenerBase,
@@ -67,7 +72,9 @@ struct MetadataStateCallbackInfo {
 class MetadataOutputNapi : public CameraNapiEventEmitter<MetadataOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateMetadataOutput(napi_env env);
+    static napi_value CreateMetadataOutput(napi_env env, std::vector<MetadataObjectType> metadataObjectTypes);
+    static napi_value AddMetadataObjectTypes(napi_env env, napi_callback_info info);
+    static napi_value RemoveMetadataObjectTypes(napi_env env, napi_callback_info info);
     MetadataOutputNapi();
     ~MetadataOutputNapi() override;
     sptr<MetadataOutput> GetMetadataOutput();
@@ -97,6 +104,7 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;
+    static thread_local uint32_t metadataOutputTaskId;
 
     napi_env env_;
     sptr<MetadataOutput> metadataOutput_;
@@ -105,6 +113,7 @@ private:
 };
 
 struct MetadataOutputAsyncContext : public AsyncContext {
+    MetadataOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     MetadataOutputNapi* objectInfo;
     std::string errorMsg;
     std::vector<MetadataObjectType> SupportedMetadataObjectTypes;

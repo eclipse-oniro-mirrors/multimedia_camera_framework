@@ -107,8 +107,8 @@ public:
         int32_t height, sptr<IStreamRepeat>& previewOutput) override;
     int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamDepthData>& depthDataOutput) override;
-    int32_t CreateMetadataOutput(
-        const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput) override;
+    int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
+        std::vector<int32_t> metadataTypes, sptr<IStreamMetadata>& metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamRepeat>& videoOutput) override;
     int32_t UnSetAllCallback(pid_t pid) override;
