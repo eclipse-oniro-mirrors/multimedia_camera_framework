@@ -21,8 +21,8 @@
 #define ERROR_PROSS() __catch_error_line = __LINE__
 
 #define PROSS                                       \
-    uint32_t __catch_error_code = 0x7FFFFFCC;       \
-    uint32_t __catch_error_line = 0xFFFFFFFF;       \
+    int32_t __catch_error_code = 0x7FFFFFCC;       \
+    int32_t __catch_error_line = 0x7FFFFFFF;       \
     {
 #define END_PROSS                                   \
     }                                               \
