@@ -349,8 +349,8 @@ void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::str
         userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
     auto iter = remoteVideoCallbacksMap_.find(userId);
     if (iter != remoteVideoCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredVideoProcessingSessionCallback> spCallback = wpCallback.promote();
+        auto spCallback = iter->second.promote();
+        DP_CHECK_ERROR_RETURN_LOG(spCallback == nullptr, "OnVideoProcessDone callback is nullptr.");
         DP_INFO_LOG("videoId: %{public}s", videoId.c_str());
         spCallback->OnProcessVideoDone(videoId, ipcFd);
     } else {
@@ -364,8 +364,8 @@ void SessionCoordinator::OnVideoError(const int32_t userId, const std::string& v
         userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
     auto iter = remoteVideoCallbacksMap_.find(userId);
     if (iter != remoteVideoCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredVideoProcessingSessionCallback> spCallback = wpCallback.promote();
+        auto spCallback = iter->second.promote();
+        DP_CHECK_ERROR_RETURN_LOG(spCallback == nullptr, "OnVideoError callback is nullptr.");
         auto error = MapDpsErrorCode(errorCode);
         DP_INFO_LOG("videoId: %{public}s, error: %{public}d", videoId.c_str(), error);
         spCallback->OnError(videoId, error);

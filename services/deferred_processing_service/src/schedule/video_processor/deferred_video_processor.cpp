@@ -26,10 +26,9 @@ DeferredVideoProcessor::DeferredVideoProcessor(const int32_t userId, std::shared
     : userId_(userId),
       repository_(repository),
       callbacks_(callbacks),
-      postProcessor_(nullptr)
+      postProcessor_(CreateShared<VideoPostProcessor>(userId_))
 {
     DP_DEBUG_LOG("entered.");
-    postProcessor_ = CreateShared<VideoPostProcessor>(userId_);
 }
 
 DeferredVideoProcessor::~DeferredVideoProcessor()
