@@ -584,18 +584,13 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         "ProfessionSession::GetSupportedFlashModes camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "ProfessionSession::GetSupportedFlashModes camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+        "ProfessionSession::GetSupportedFlashModes camera deviceInfo is null");
+    auto metadata = isRawImageDelivery_ ? GetMetadata() : inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
-    for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
-        if (itr != g_metaFlashModeMap_.end()) {
-            supportedFlashModes.emplace_back(itr->second);
-        }
-    }
+    g_transformValidData(item, g_metaFlashModeMap_, supportedFlashModes);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -610,7 +605,7 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetFlashMode camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    auto metadata = isRawImageDelivery_ ? GetMetadata() : inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -670,15 +665,15 @@ int32_t ProfessionSession::IsFlashModeSupported(FlashMode flashMode, bool &isSup
 
 int32_t ProfessionSession::HasFlash(bool &hasFlash)
 {
+    hasFlash = false;
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::HasFlash Session is not Commited");
-    std::vector<FlashMode> vecSupportedFlashModeList;
-    (void)this->GetSupportedFlashModes(vecSupportedFlashModeList);
-    if (vecSupportedFlashModeList.empty()) {
-        hasFlash = false;
-        return CameraErrorCode::SUCCESS;
+    std::vector<FlashMode> supportedFlashModeList;
+    GetSupportedFlashModes(supportedFlashModeList);
+    bool onlyHasCloseMode = supportedFlashModeList.size() == 1 && supportedFlashModeList[0] == FLASH_MODE_CLOSE;
+    if (!supportedFlashModeList.empty() && !onlyHasCloseMode) {
+        hasFlash = true;
     }
-    hasFlash = true;
     return CameraErrorCode::SUCCESS;
 }
 // XMAGE
