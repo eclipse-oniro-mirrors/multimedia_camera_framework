@@ -13105,7 +13105,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_set_moving_photo_vid
  * EnvConditions: NA
  * CaseDescription: Test EnableRawDelivery Methodology
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_set_moving_photo_video_codec_type, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_enable_raw_delivery, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -13140,7 +13140,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_set_moving_photo_vid
  * EnvConditions: NA
  * CaseDescription: Test IsRawDeliverySupported Methodology
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_set_moving_photo_video_codec_type, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supported, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
