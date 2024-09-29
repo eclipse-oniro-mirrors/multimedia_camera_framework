@@ -445,7 +445,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "GetVideoRotation Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
-    imageRotation = (imageRotation + 45) / 90 * 90;
+    imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
