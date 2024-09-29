@@ -80,12 +80,12 @@
     } while (0)
 
 #define DP_CHECK_ERROR_BREAK_LOG(cond, fmt, ...)            \
-    do {                                                    \
+    if (1) {                                                \
         if (cond) {                                         \
             DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
             break;                                          \
         }                                                   \
-    } while (0)
+    } else void (0)
 
 #define DP_CHECK_RETURN_RET(cond, ret)                      \
     do {                                                    \

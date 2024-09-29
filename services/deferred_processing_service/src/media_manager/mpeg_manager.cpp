@@ -212,6 +212,7 @@ void MpegManager::UnInitVideoCodec()
     if (isRunning_) {
         encoder_->Stop();
     }
+    DP_CHECK_RETURN(encoder_ == nullptr);
     encoder_->Release();
     encoder_ = nullptr;
 }
