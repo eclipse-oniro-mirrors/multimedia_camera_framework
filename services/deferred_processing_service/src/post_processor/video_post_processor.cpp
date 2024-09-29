@@ -402,11 +402,11 @@ void VideoPostProcessor::ConnectService()
 void VideoPostProcessor::DisconnectService()
 {
     auto session = GetVideoSession();
-    DP_CHECK_ERROR_PRINT_LOG(session == nullptr, "video session is nullptr.");
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "video session is nullptr.");
 
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<IVideoProcessSession>(session);
     bool result = remote->RemoveDeathRecipient(sessionDeathRecipient_);
-    DP_CHECK_ERROR_PRINT_LOG(!result, "remove DeathRecipient for VideoProcessSession failed.");
+    DP_CHECK_ERROR_RETURN_LOG(!result, "remove DeathRecipient for VideoProcessSession failed.");
 
     auto svcMgr = HDI::ServiceManager::V1_0::IServiceManager::Get();
     DP_CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "IServiceManager init failed.");
