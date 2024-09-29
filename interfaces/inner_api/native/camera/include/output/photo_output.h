@@ -32,7 +32,9 @@ namespace OHOS::Media {
 }
 namespace OHOS {
 namespace CameraStandard {
-
+namespace DeferredProcessing {
+    class TaskManager;
+}
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -447,7 +449,7 @@ public:
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType);
-    
+
     /**
      * @brief Check the depth data delivery capability is supported or not.
      */
@@ -485,6 +487,7 @@ public:
     std::map<int32_t, uint32_t> caputreIdHandleMap_;
     std::map<int32_t, std::unique_ptr<Media::Picture>> caputreIdPictureMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;

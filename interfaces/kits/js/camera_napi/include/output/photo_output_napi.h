@@ -27,7 +27,7 @@
 #include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
-#include "task_manager.h"
+
 namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
@@ -124,22 +124,17 @@ public:
 private:
     sptr<Surface> photoSurface_ = nullptr;
 };
-// enum class PhotoType : int32_t{
-//     MAIN_PHOTO = 0,
-//     GAINMAP_PHOTO = 1,
-//     DEEP_PHOTO = 2,
-//     EXIF_PHOTO = 3,
-//     DEBUG_PHOTO = 4,
-// };
 
 class PhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
-    ~PhotoListener() = default;
+    virtual ~PhotoListener();
     void OnBufferAvailable() override;
     void SaveCallback(const std::string eventName, napi_value callback);
     void RemoveCallback(const std::string eventName, napi_value callback);
-    void ExecuteDeepyCopySurfaceBuffer();
+    void ExecuteDeepCopySurfaceBuffer();
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+
 private:
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;
@@ -158,7 +153,6 @@ private:
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
     sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer);
     uint8_t callbackFlag_ = 0;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
@@ -181,14 +175,13 @@ public:
         wptr<PhotoOutput> photoOutput);
     ~AuxiliaryPhotoListener() = default;
     void OnBufferAvailable() override;
-    void ExecuteDeepyCopySurfaceBuffer();
+    void ExecuteDeepCopySurfaceBuffer();
 private:
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     std::string surfaceName_;
     sptr<Surface> surface_;
     wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class PictureListener : public RefBase {

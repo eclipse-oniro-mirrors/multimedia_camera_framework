@@ -58,6 +58,7 @@
 #include "pixel_map_napi.h"
 #include "refbase.h"
 #include "securec.h"
+#include "task_manager.h"
 #include "video_key_info.h"
 
 namespace OHOS {
@@ -185,7 +186,14 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wpt
             numThreads, true);
     }
 }
-
+PhotoListener::~PhotoListener()
+{
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
+}
 RawPhotoListener::RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface)
     : ListenerBase(env), rawPhotoSurface_(rawPhotoSurface)
 {
@@ -199,11 +207,6 @@ AuxiliaryPhotoListener::AuxiliaryPhotoListener(const std::string surfaceName, co
 {
     if (bufferProcessor_ == nullptr && surface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(surface);
-    }
-    if (taskManager_ == nullptr) {
-        constexpr int32_t numThreads = 1;
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxiliaryPhotoListener_" + surfaceName,
-            numThreads, true);
     }
 }
 
@@ -287,16 +290,16 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %{public}d", allocErrorCode);
     if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
         MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
     }
 }
 
-void AuxiliaryPhotoListener::ExecuteDeepyCopySurfaceBuffer()
+void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
-    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepyCopySurfaceBuffer surfaceName = %{public}s",
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
         surfaceName_.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
@@ -391,9 +394,12 @@ void AuxiliaryPhotoListener::OnBufferAvailable()
         MEDIA_ERR_LOG("AuxiliaryPhotoListener napi photoSurface_ is null");
         return;
     }
-    taskManager_->SubmitTask([this]() {
-        this->ExecuteDeepyCopySurfaceBuffer();
-    });
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput->taskManager_) {
+        photoOutput->taskManager_->SubmitTask([this]() {
+            ExecuteDeepCopySurfaceBuffer();
+        });
+    }
     MEDIA_INFO_LOG("AuxiliaryPhotoListener::OnBufferAvailable is end, surfaceName=%{public}s", surfaceName_.c_str());
 }
 
@@ -449,7 +455,7 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     return photoProxy;
 }
 
-void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
+void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
     auto photoOutput = photoOutput_.promote();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
@@ -551,10 +557,12 @@ void PhotoListener::OnBufferAvailable()
         return;
     }
     auto photoOutput = photoOutput_.promote();
-    if (photoOutput->IsYuvOrHeifPhoto()) {
-        taskManager_->SubmitTask([this]() {
-            ExecuteDeepyCopySurfaceBuffer();
-        });
+    if (photoOutput && photoOutput->IsYuvOrHeifPhoto()) {
+        if (taskManager_) {
+            taskManager_->SubmitTask([this]() {
+                ExecuteDeepCopySurfaceBuffer();
+            });
+        }
     } else {
         UpdateJSCallbackAsync(photoSurface_);
     }
@@ -816,7 +824,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %{public}d", allocErrorCode);
     if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
         MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
@@ -1667,6 +1675,11 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
             }
             photoListener_ = photoListener;
             pictureListener_ = pictureListener;
+        }
+        if (photoOutput_->taskManager_ == nullptr) {
+            constexpr int32_t auxiliaryPictureCount = 4;
+            photoOutput_->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxilaryPictureListener",
+                auxiliaryPictureCount, true);
         }
     }
 }
@@ -2559,6 +2572,18 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
 {
     if (photoListener_ != nullptr) {
         photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
+        if (photoListener_->taskManager_) {
+            photoListener_->taskManager_->CancelAllTasks();
+            photoListener_->taskManager_.reset();
+            photoListener_->taskManager_ = nullptr;
+        }
+    }
+    if (photoOutput_) {
+        if (photoOutput_->taskManager_) {
+            photoOutput_->taskManager_->CancelAllTasks();
+            photoOutput_->taskManager_.reset();
+            photoOutput_->taskManager_ = nullptr;
+        }
     }
 }
 
