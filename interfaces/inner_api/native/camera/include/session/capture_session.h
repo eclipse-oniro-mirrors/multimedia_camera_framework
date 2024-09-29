@@ -831,7 +831,7 @@ public:
      * @param vector of camera_focus_mode_enum_t supported exposure modes.
      * @return Returns errCode.
      */
-    int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes);
+    virtual int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes);
 
     /**
      * @brief Check whether camera has flash.
@@ -874,7 +874,7 @@ public:
      * @param current flash mode.
      * @return Returns errCode.
      */
-    int32_t GetFlashMode(FlashMode& flashMode);
+    virtual int32_t GetFlashMode(FlashMode& flashMode);
 
     /**
      * @brief Set flash mode.
@@ -882,7 +882,7 @@ public:
      * @param camera_flash_mode_enum_t flash mode to be set.
      * @return Returns errCode.
      */
-    int32_t SetFlashMode(FlashMode flashMode);
+    virtual int32_t SetFlashMode(FlashMode flashMode);
 
     /**
      * @brief Get the supported Zoom Ratio range.

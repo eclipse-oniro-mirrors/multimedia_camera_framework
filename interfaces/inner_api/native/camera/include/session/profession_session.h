@@ -170,12 +170,6 @@ public:
      */
     int32_t GetFocusMode(FocusMode& mode);
 
-    /**
-     * @brief Determine if the given Ouput can be added to session.
-     *
-     * @param CaptureOutput to be added to session.
-     */
-
 // ExposureHint mode
     /**
      * @brief Get ExposureHint mode.
@@ -235,7 +229,7 @@ public:
      * @param vector of camera_focus_mode_enum_t supported exposure modes.
      * @return Returns errCode.
      */
-    int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes);
+    int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes) override;
 
     /**
      * @brief Check whether camera has flash.
@@ -258,7 +252,7 @@ public:
      * @param current flash mode.
      * @return Returns errCode.
      */
-    int32_t GetFlashMode(FlashMode& flashMode);
+    int32_t GetFlashMode(FlashMode& flashMode) override;
 
     /**
      * @brief Set flash mode.
@@ -266,12 +260,8 @@ public:
      * @param camera_flash_mode_enum_t flash mode to be set.
      * @return Returns errCode.
      */
-    int32_t SetFlashMode(FlashMode flashMode);
-    /**
-     * @brief Determine if the given Ouput can be added to session.
-     *
-     * @param CaptureOutput to be added to session.
-     */
+    int32_t SetFlashMode(FlashMode flashMode) override;
+
 // XMAGE
     /**
      * @brief Get the supported color effect.
@@ -367,6 +357,11 @@ public:
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata() override;
 
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param output to be added to session.
+     */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
 protected:
     static const std::unordered_map<camera_meter_mode_t, MeteringMode> metaMeteringModeMap_;
