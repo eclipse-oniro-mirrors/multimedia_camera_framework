@@ -39,8 +39,8 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
-        device->CloseDevice();
         device->OnError(DEVICE_DISCONNECT, 0);
+        device->CloseDevice();
     }
 }
 
