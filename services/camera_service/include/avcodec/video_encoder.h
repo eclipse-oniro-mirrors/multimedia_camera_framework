@@ -59,6 +59,7 @@ private:
     sptr<Surface> codecSurface_;
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
     VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
+    int32_t bitrate_ = 0;
 };
 } // CameraStandard
 } // OHOS
