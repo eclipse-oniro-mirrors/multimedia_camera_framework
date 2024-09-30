@@ -335,13 +335,19 @@ int32_t VideoEncoder::Configure()
 {
     OH_AVFormat *format = OH_AVFormat_Create();
     CHECK_AND_RETURN_RET_LOG(format != nullptr, 1, "AVFormat create failed");
+    int32_t bitrate = static_cast<int32_t>(pow(float(size_->width) * float(size_->height) / DEFAULT_SIZE,
+        VIDEO_BITRATE_CONSTANT) * BITRATE_22M);
+    bitrate_ = (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC
+        ? static_cast<int32_t>(bitrate * HEVC_TO_AVC_FACTOR) : bitrate);
+    MEDIA_INFO_LOG("Current resolution is : %{public}d*%{public}d, encode type : %{public}d, set bitrate : %{public}d",
+        size_->width, size_->height, videoCodecType_, bitrate_);
 
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_WIDTH, size_->width);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_HEIGHT, size_->height);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_ROTATION, rotation_);
     OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, VIDOE_FRAME_RATE);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
-    OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, BITRATE_30M);
+    OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, VBR);
+    OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, bitrate_);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, INT_MAX);
 

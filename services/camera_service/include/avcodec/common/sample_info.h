@@ -31,9 +31,10 @@ namespace CameraStandard {
 constexpr std::string_view MIME_VIDEO_AVC = "video/avc";
 constexpr std::string_view MIME_VIDEO_HEVC = "video/hevc";
 
-constexpr int32_t BITRATE_10M = 10 * 1024 * 1024; // 10Mbps
-constexpr int32_t BITRATE_20M = 20 * 1024 * 1024; // 20Mbps
-constexpr int32_t BITRATE_30M = 30 * 1024 * 1024; // 30Mbps
+constexpr int32_t BITRATE_10M = 10 * 1000 * 1000; // 10Mbps
+constexpr int32_t BITRATE_20M = 20 * 1000 * 1000; // 20Mbps
+constexpr int32_t BITRATE_22M = 22 * 1000 * 1000; // 22Mbps
+constexpr int32_t BITRATE_30M = 30 * 1000 * 1000; // 30Mbps
 constexpr uint32_t DEFAULT_SAMPLERATE = 48000;
 constexpr uint64_t DEFAULT_BITRATE = 48000;
 constexpr uint32_t DEFAULT_CHANNEL_COUNT = 1;
@@ -57,6 +58,9 @@ constexpr int32_t IDR_FRAME_COUNT = 2;
 constexpr int32_t KEY_FRAME_INTERVAL = 10;
 const std::string TIMED_METADATA_TRACK_MIMETYPE = "meta/timed-metadata";
 const std::string TIMED_METADATA_KEY = "com.openharmony.timed_metadata.movingphoto";
+constexpr int32_t DEFAULT_SIZE = 1920 * 1440;
+constexpr float VIDEO_BITRATE_CONSTANT = 0.7;
+constexpr float HEVC_TO_AVC_FACTOR = 1.5;
 
 class CodecAVBufferInfo : public RefBase {
 public:
