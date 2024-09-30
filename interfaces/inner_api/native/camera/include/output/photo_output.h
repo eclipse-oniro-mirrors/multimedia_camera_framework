@@ -247,7 +247,8 @@ constexpr uint8_t CAPTURE_PHOTO = 1 << 0;
 constexpr uint8_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
 constexpr uint8_t CAPTURE_PHOTO_ASSET = 1 << 2;
 constexpr int32_t CAPTURE_ROTATION_BASE = 360;
-
+constexpr int32_t ROTATION_45_DEGREES = 45;
+constexpr int32_t ROTATION_90_DEGREES = 90;
 class PhotoOutput : public CaptureOutput {
 public:
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
