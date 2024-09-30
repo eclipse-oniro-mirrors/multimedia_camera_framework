@@ -491,6 +491,7 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 int32_t PhotoOutput::EnableRawDelivery(bool enabled)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("enter into EnableRawDelivery");
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput EnableRawDelivery error!, session is nullptr");
@@ -728,6 +729,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
 
 int32_t PhotoOutput::IsRawDeliverySupported()
 {
+    MEDIA_DEBUG_LOG("enter into IsRawDeliverySupported");
     int32_t isRawDevliveryEnabled = -1;
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,

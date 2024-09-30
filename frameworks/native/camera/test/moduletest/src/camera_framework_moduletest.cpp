@@ -13062,5 +13062,109 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, T
     EXPECT_EQ(intResult, 0);
     SetNativeToken();
 }
+/*
+ * Feature: Framework
+ * Function: Test setMovingPhotoVideoCodecType Methodology
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test setMovingPhotoVideoCodecType Methodology
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_set_moving_photo_video_codec_type, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    int32_t videoCodecType = 0;
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->SetMovingPhotoVideoCodecType(videoCodecType);
+    EXPECT_EQ(intResult, 0);
+}
+/*
+ * Feature: Framework
+ * Function: Test EnableRawDelivery Methodology
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableRawDelivery Methodology
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_enable_raw_delivery, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool enable = true;
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->EnableRawDelivery(enable);
+    EXPECT_EQ(intResult, 0);
+}
+/*
+ * Feature: Framework
+ * Function: Test IsRawDeliverySupported Methodology
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsRawDeliverySupported Methodology
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supported, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsRawDeliverySupported();
+    EXPECT_EQ(intResult, 1);
+}
 } // namespace CameraStandard
 } // namespace OHOS
