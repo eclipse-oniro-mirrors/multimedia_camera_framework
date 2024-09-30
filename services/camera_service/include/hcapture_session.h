@@ -174,6 +174,7 @@ public:
     void OnDrainImageFinish(bool isFinished) override;
 
 private:
+    std::mutex mutex_;
     std::vector<sptr<FrameRecord>> frameCacheList_;
     wptr<MovingPhotoListener> listener_;
     wptr<MovingPhotoVideoCache> videoCache_;

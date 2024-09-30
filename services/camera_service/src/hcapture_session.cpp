@@ -1763,7 +1763,10 @@ SessionDrainImageCallback::~SessionDrainImageCallback()
 void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
 {
     MEDIA_INFO_LOG("OnDrainImage enter");
-    frameCacheList_.push_back(frame);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        frameCacheList_.push_back(frame);
+    }
     auto videoCache = videoCache_.promote();
     if (frame->IsIdle() && videoCache) {
         videoCache_->CacheFrame(frame);
@@ -1778,13 +1781,16 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
 {
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto videoCache = videoCache_.promote();
-    videoCache_->GetFrameCachedResult(
-        frameCacheList_,
-        [videoCache](const std::vector<sptr<FrameRecord>> &frameRecords,
-            uint64_t timestamp,
-            int32_t rotation) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation); },
-        timestamp_,
-        rotation_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        videoCache_->GetFrameCachedResult(
+            frameCacheList_,
+            [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
+                        uint64_t timestamp,
+                        int32_t rotation) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation); },
+            timestamp_,
+            rotation_);
+    }
     auto listener = listener_.promote();
     if (listener && isFinished) {
         listener->RemoveDrainImageManager(this);
