@@ -57,10 +57,12 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     VideoCodecType type) : videoCodecType_(type)
 {
     CAMERA_SYNC_TRACE;
+    #ifdef MOVING_PHOTO_ADD_AUDIO
     audioCapturerSession_ = audioCaptureSession;
+    audioEncoder_ = make_unique<AudioEncoder>();
+    #endif
     // Create Task Manager
     videoEncoder_ = make_unique<VideoEncoder>(type);
-    audioEncoder_ = make_unique<AudioEncoder>();
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -167,6 +169,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, DEFAULT_SAMPLERATE);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
     int audioTrackId = -1;
+    #ifdef MOVING_PHOTO_ADD_AUDIO
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
     int metaTrackId = -1;
     auto formatMeta = make_shared<Format>();
@@ -174,6 +177,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY, TIMED_METADATA_KEY);
     formatMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
     muxer->AddTrack(metaTrackId, formatMeta, META_TRACK);
+    #endif
     MEDIA_INFO_LOG("CreateMuxer vId:%{public}d,aid:%{public}d,mid:%{public}d", videoTrackId, audioTrackId, metaTrackId);
     muxer->SetTimedMetadata();
     muxer->Start();
@@ -248,6 +252,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
                 MEDIA_ERR_LOG("metaSurfaceBuffer is nullptr");
             }
         }
+        #ifdef MOVING_PHOTO_ADD_AUDIO
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
         if (thisPtr->audioCapturerSession_) {
@@ -257,6 +262,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
         }
         thisPtr->CollectAudioBuffer(audioRecords, muxer);
+        #endif
         thisPtr->FinishMuxer(muxer);
     });
 }
