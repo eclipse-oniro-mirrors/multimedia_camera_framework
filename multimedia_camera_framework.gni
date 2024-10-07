@@ -49,120 +49,129 @@ if (defined(global_parts_info) &&
 gen_camera_picker = true
 hicollie_enable = true
 
-
-
-
-
-From b4fa7851c1684d937c16fbbc8989e487c4ac55cb Mon Sep 17 00:00:00 2001
+From 3adb2335a6a0c0b65eef1793006cefcbee97d119 Mon Sep 17 00:00:00 2001
 From: n00564676 <n00564676@notesmail.huawei.com/>
-Date: Mon, 7 Oct 2024 14:20:16 +0800
-Subject: [PATCH] TicketNo:DTS2024081529387 Description:fix gn dep Team:OTHERS
- Feature or Bugfix:Bugfix Binary Source:No PrivateCode(Yes/No):No ------ DO
- NOT MODIFY, AUTO-GENERATED! ------ Gitee-Issue: #IAIDAW Time:
- 2024-08-07T06:56:26.825Z PR-Num: 1759 Gitee-PR:
- https://openharmony.gitee.com/openharmony/multimedia_camera_framework/pulls/1759
+Date: Wed, 11 Sep 2024 10:45:22 +0800
+Subject: [PATCH] DTS:DTS2024090604078 TicketNo:DTS2024090604078
+ Description:movingphoto timstamp Team:OTHERS Feature or Bugfix:Bugfix Binary
+ Source:No PrivateCode(Yes/No):No ------ DO NOT MODIFY, AUTO-GENERATED! ------
+ Gitee-Issue: #I9RYCE Time: 2024-09-08T13:42:18.697Z PR-Num: 1433 Gitee-PR:
+ https://openharmony.gitee.com/openharmony/multimedia_camera_framework/pulls/1433
+ Comments-thread: I169564d19ed8bcf595f2395f56b36c2396910f01
+ OpenSourceCenter_CR/openharmony/multimedia_camera_framework
 
-Change-Id: I51040b4f4dfb70aee9cddff1445cfd25fb6d2712
+Change-Id: I169564d19ed8bcf595f2395f56b36c2392d222df
+Reviewed-by: l00510116
+Approved-by: l00512942
+Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/2673
+Merged-by: public hisicitools
 ---
- .../src/avcodec/avcodec_task_manager.cpp              | 11 +++++++++--
- services/camera_service/src/hcapture_session.cpp      |  6 ++++++
- 2 files changed, 15 insertions(+), 2 deletions(-)
+ common/BUILD.gn                                  |  5 ++++-
+ services/camera_service/BUILD.gn                 | 16 ++++++----------
+ .../src/avcodec/avcodec_task_manager.cpp         |  8 ++++++--
+ 3 files changed, 16 insertions(+), 13 deletions(-)
 
+diff --git a/common/BUILD.gn b/common/BUILD.gn
+index 0daa89124..afe8ff533 100644
+--- a/common/BUILD.gn
++++ b/common/BUILD.gn
+@@ -29,7 +29,10 @@ ohos_source_set("camera_utils") {
+ 
+   include_dirs = [ "utils" ]
+ 
+-  sources = [ "utils/camera_xcollie.cpp", "utils/camera_dynamic_loader.cpp" ]
++  sources = [
++    "utils/camera_dynamic_loader.cpp",
++    "utils/camera_xcollie.cpp",
++  ]
+ 
+   external_deps = [
+     "c_utils:utils",
+diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
+index 5b74cd83e..51dc288a9 100644
+--- a/services/camera_service/BUILD.gn
++++ b/services/camera_service/BUILD.gn
+@@ -234,12 +234,10 @@ ohos_shared_library("camera_service") {
+ 
+ ohos_shared_library("camera_dynamic_medialibrary") {
+   install_enable = true
+-  sources = [
+-    "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp",
+-  ]
++  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
+   cflags = [
+     "-fPIC",
+-    "-Wall"
++    "-Wall",
+   ]
+   sanitize = {
+     cfi = true
+@@ -255,19 +253,17 @@ ohos_shared_library("camera_dynamic_medialibrary") {
+     cflags += [ "-DBINDER_IPC_32BIT" ]
+   }
+ 
+-  deps = [
+-    "${multimedia_camera_framework_path}/common:camera_utils",
+-  ]
++  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
+ 
+   external_deps = [
+     "data_share:datashare_common",
+     "data_share:datashare_consumer",
++    "hilog:libhilog",
++    "image_framework:image_native",
++    "ipc:ipc_single",
+     "media_library:media_library",
+     "media_library:media_library_manager",
+-    "hilog:libhilog",
+-    "ipc:ipc_single",
+     "samgr:samgr_proxy",
+-    "image_framework:image_native"
+   ]
+ 
+   cflags_cc = cflags
 diff --git a/services/camera_service/src/avcodec/avcodec_task_manager.cpp b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
-index 16c197d3f..15e73e141 100644
+index 38d68bb7f..dbab969ce 100644
 --- a/services/camera_service/src/avcodec/avcodec_task_manager.cpp
 +++ b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
-@@ -57,10 +57,12 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
-     VideoCodecType type) : videoCodecType_(type)
+@@ -207,6 +207,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
+         vector<sptr<FrameRecord>> choosedBuffer;
+         sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer);
+         CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
++        CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
+         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
+         for (size_t index = 0; index < choosedBuffer.size(); index++) {
+             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
+@@ -245,7 +246,6 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
+     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime)
  {
-     CAMERA_SYNC_TRACE;
-+    #ifdef MOVING_PHOTO_ADD_AUDIO
-     audioCapturerSession_ = audioCaptureSession;
-+    audioEncoder_ = make_unique<AudioEncoder>();
-+    #endif
-     // Create Task Manager
-     videoEncoder_ = make_unique<VideoEncoder>(type);
--    audioEncoder_ = make_unique<AudioEncoder>();
+     choosedBuffer.clear();
+-    bool firstIDRFrame = false;
+     int64_t nanosecRange = 1500000000LL;
+     for (size_t index = 0; index < frameRecords.size(); ++index) {
+         auto frame = frameRecords[index];
+@@ -254,7 +254,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
+             choosedBuffer.push_back(frame);
+         }
+     }
+-    if (!choosedBuffer.empty() && !firstIDRFrame) {
++    if (!choosedBuffer.empty()) {
+         // Find the first IDR frame in the buffer
+         auto it = find_if(choosedBuffer.begin(), choosedBuffer.end(),
+             [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
+@@ -262,6 +262,10 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
+             choosedBuffer.erase(choosedBuffer.begin(), it);
+         }
+     }
++    if (choosedBuffer.empty()) {
++        choosedBuffer = frameRecords;
++    }
++    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
  }
  
- shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
-@@ -158,18 +160,21 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
-     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
-     int videoTrackId = -1;
-     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
-+    int audioTrackId = -1;
-+    #ifdef MOVING_PHOTO_ADD_AUDIO
-     auto formatAudio = make_shared<Format>();
-     formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
-     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, DEFAULT_SAMPLERATE);
-     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
--    int audioTrackId = -1;
-     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
-+    #endif
-     int metaTrackId = -1;
-     auto formatMeta = make_shared<Format>();
-     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, TIMED_METADATA_TRACK_MIMETYPE);
-     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY, TIMED_METADATA_KEY);
-     formatMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
-     muxer->AddTrack(metaTrackId, formatMeta, META_TRACK);
-+ 
-     MEDIA_INFO_LOG("CreateMuxer vId:%{public}d,aid:%{public}d,mid:%{public}d", videoTrackId, audioTrackId, metaTrackId);
-     muxer->SetTimedMetadata();
-     muxer->Start();
-@@ -229,6 +234,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
-             }
-             frameRecords[index]->UnLockMetaBuffer();
-         }
-+        #ifdef MOVING_PHOTO_ADD_AUDIO
-         // CollectAudioBuffer
-         vector<sptr<AudioRecord>> audioRecords;
-         if (thisPtr->audioCapturerSession_) {
-@@ -237,6 +243,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
-             thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
-         }
-         thisPtr->CollectAudioBuffer(audioRecords, muxer);
-+        #endif
-         thisPtr->FinishMuxer(muxer);
-     });
- }
-diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
-index b54038764..4aff15708 100644
---- a/services/camera_service/src/hcapture_session.cpp
-+++ b/services/camera_service/src/hcapture_session.cpp
-@@ -401,8 +401,10 @@ void HCaptureSession::StartMovingPhotoStream()
-             }
-             if (isSetMotionPhoto_) {
-                 errorCode = curStreamRepeat->Start(settings);
-+                #ifdef MOVING_PHOTO_ADD_AUDIO
-                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-                 audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
-+                #endif
-             } else {
-                 errorCode = curStreamRepeat->Stop();
-                 StopMovingPhoto();
-@@ -893,9 +895,11 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
-     if (videoCache_) {
-         videoCache_->ClearCache();
-     }
-+    #ifdef MOVING_PHOTO_ADD_AUDIO
-     if (audioCapturerSession_) {
-         audioCapturerSession_->Stop();
-     }
-+    #endif
-     if (taskManager_) {
-         taskManager_->Stop();
-     }
-@@ -1375,8 +1379,10 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
-         int32_t movingPhotoErrorCode = CAMERA_OK;
-         if (isSetMotionPhoto_ && !hasDerferedPreview) {
-             movingPhotoErrorCode = curStreamRepeat->Start(settings);
-+            #ifdef MOVING_PHOTO_ADD_AUDIO
-             std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-             audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
-+            #endif
-         }
-         if (movingPhotoErrorCode != CAMERA_OK) {
-             MEDIA_ERR_LOG("Failed to start movingPhoto, rc: %{public}d", movingPhotoErrorCode);
+ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer)
 -- 
 2.45.2.huawei.5
+
+
 
