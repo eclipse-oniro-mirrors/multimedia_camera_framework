@@ -540,5 +540,20 @@ napi_value CameraInputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraInputNapi>::Off(env, info);
 }
+
+napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition is called");
+    CameraInputNapi* cameraInputNapi = nullptr;
+    int32_t cameraPosition;
+    CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, cameraPosition);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "input usedAsPosition with invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraInputNapi::UsedAsPosition invalid arguments!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition params: %{public}d", cameraPosition);
+    cameraInputNapi->cameraInput_->SetInputUsedAsPosition(static_cast<const CameraPosition>(cameraPosition));
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
 } // namespace CameraStandard
 } // namespace OHOS
