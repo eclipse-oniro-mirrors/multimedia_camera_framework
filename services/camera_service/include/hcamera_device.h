@@ -54,6 +54,7 @@ public:
     int32_t Close() override;
     int32_t Release() override;
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
+    int32_t SetUsedAsPosition(uint8_t value) override;
     int32_t UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
             std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut) override;
@@ -91,6 +92,7 @@ public:
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
     void SetDeviceMuteMode(bool muteMode);
+    uint8_t GetUsedAsPosition();
     bool GetDeviceMuteMode();
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
@@ -174,7 +176,7 @@ private:
 
     std::string clientName_;
     int clientUserId_;
-
+    uint8_t usedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
     std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;

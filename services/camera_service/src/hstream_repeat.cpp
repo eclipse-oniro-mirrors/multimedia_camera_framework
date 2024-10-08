@@ -179,6 +179,13 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Exit");
 }
 
+void HStreamRepeat::SetUsedAsPosition(camera_position_enum_t cameraPosition)
+{
+    MEDIA_INFO_LOG("HStreamRepeat::SetUsedAsPosition %{public}d", cameraPosition);
+    cameraUsedAsPosition_ = cameraPosition;
+    SetStreamTransform();
+}
+
 int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings)
 {
     CAMERA_SYNC_TRACE;
@@ -639,6 +646,10 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
             "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
+    }
+    if (cameraUsedAsPosition_ != OHOS_CAMERA_POSITION_OTHER) {
+        cameraPosition = cameraUsedAsPosition_;
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position as %{public}d", cameraPosition);
     }
     if (enableCameraRotation_) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
