@@ -632,16 +632,14 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
                                "HStreamMetadataCallbackImpl OnMetadataResult error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     bool isNeedMirror = false;
-    if (inputDevice && inputDeviceInfo) {
+    bool isNeedFlip = false;
+    if (inputDevice) {
+        auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
         isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
                         inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
-    }
-    bool isNeedFlip = false;
-    if (inputDevice && inputDeviceInfo) {
         isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
-    }   
+    }
     std::vector<sptr<MetadataObject>> metaObjects;
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
