@@ -59,6 +59,200 @@ class MetadataFaceObject : public MetadataObject {
 public:
     MetadataFaceObject(double timestamp, Rect rect);
     ~MetadataFaceObject() = default;
+    inline Rect GetLeftEyeBoundingBox()
+    {
+        return leftEyeBoundingBox_;
+    };
+    inline Rect GetRightEyeBoundingBox()
+    {
+        return rightEyeBoundingBox_;
+    };
+    inline Emotion GetEmotion()
+    {
+        return emotion_;
+    };
+    inline int32_t GetEmotionConfidence()
+    {
+        return emotionConfidence_;
+    };
+    inline int32_t GetPitchAngle()
+    {
+        return pitchAngle_;
+    };
+    inline int32_t GetYawAngle()
+    {
+        return yawAngle_;
+    };
+    inline int32_t GetRollAngle()
+    {
+        return rollAngle_;
+    };
+
+private:
+    Rect leftEyeBoundingBox_;
+    Rect rightEyeBoundingBox_;
+    Emotion emotion_;
+    int32_t emotionConfidence_;
+    int32_t pitchAngle_;
+    int32_t yawAngle_;
+    int32_t rollAngle_;
+};
+
+class MetadataHumanBodyObject : public MetadataObject {
+public:
+    MetadataHumanBodyObject(const MetaObjectParms& parms);
+    ~MetadataHumanBodyObject() = default;
+};
+
+class MetadataCatFaceObject : public MetadataObject {
+public:
+    MetadataCatFaceObject(const MetaObjectParms& parms, const Rect leftEyeBoundingBox, const Rect rightEyeBoundingBox);
+    ~MetadataCatFaceObject() = default;
+    inline Rect GetLeftEyeBoundingBox()
+    {
+        return leftEyeBoundingBox_;
+    };
+    inline Rect GetRightEyeBoundingBox()
+    {
+        return rightEyeBoundingBox_;
+    };
+
+private:
+    Rect leftEyeBoundingBox_;
+    Rect rightEyeBoundingBox_;
+};
+
+class MetadataCatBodyObject : public MetadataObject {
+public:
+    MetadataCatBodyObject(const MetaObjectParms& parms);
+    ~MetadataCatBodyObject() = default;
+};
+
+class MetadataDogFaceObject : public MetadataObject {
+public:
+    MetadataDogFaceObject(const MetaObjectParms& parms, const Rect leftEyeBoundingBox, const Rect rightEyeBoundingBox);
+    ~MetadataDogFaceObject() = default;
+    inline Rect GetLeftEyeBoundingBox()
+    {
+        return leftEyeBoundingBox_;
+    };
+    inline Rect GetRightEyeBoundingBox()
+    {
+        return rightEyeBoundingBox_;
+    };
+
+private:
+    Rect leftEyeBoundingBox_;
+    Rect rightEyeBoundingBox_;
+};
+
+class MetadataDogBodyObject : public MetadataObject {
+public:
+    MetadataDogBodyObject(const MetaObjectParms& parms);
+    ~MetadataDogBodyObject() = default;
+};
+
+class MetadataSalientDetectionObject : public MetadataObject {
+public:
+    MetadataSalientDetectionObject(const MetaObjectParms& parms);
+    ~MetadataSalientDetectionObject() = default;
+};
+
+class MetadataBarCodeDetectionObject : public MetadataObject {
+public:
+    MetadataBarCodeDetectionObject(const MetaObjectParms& parms);
+    ~MetadataBarCodeDetectionObject() = default;
+};
+
+class MetadataObjectFactory : public RefBase {
+public:
+    virtual ~MetadataObjectFactory() = default;
+
+    static sptr<MetadataObjectFactory> &GetInstance();
+    inline sptr<MetadataObjectFactory> SetType(MetadataObjectType type)
+    {
+        type_ = type;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetTimestamp(int32_t timestamp)
+    {
+        timestamp_ = timestamp;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetBox(Rect box)
+    {
+        box_ = box;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetObjectId(int32_t objectId)
+    {
+        objectId_ = objectId;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetConfidence(int32_t confidence)
+    {
+        confidence_ = confidence;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetLeftEyeBoundingBox(Rect leftEyeBoundingBox)
+    {
+        leftEyeBoundingBox_ = leftEyeBoundingBox;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetRightEyeBoundingBoxd(Rect rightEyeBoundingBox)
+    {
+        rightEyeBoundingBox_ = rightEyeBoundingBox;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetEmotion(Emotion emotion)
+    {
+        emotion_ = emotion;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetEmotionConfidence(int32_t emotionConfidence)
+    {
+        emotionConfidence_ = emotionConfidence;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetPitchAngle(int32_t pitchAngle)
+    {
+        pitchAngle_ = pitchAngle;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetYawAngle(int32_t yawAngle)
+    {
+        yawAngle_ = yawAngle;
+        return this;
+    }
+    inline sptr<MetadataObjectFactory> SetRollAngle(int32_t rollAngle)
+    {
+        rollAngle_ = rollAngle;
+        return this;
+    }
+
+    sptr<MetadataObject> createMetadataObject(MetadataObjectType type);
+
+private:
+    MetadataObjectFactory();
+    static sptr<MetadataObjectFactory> metaFactoryInstance_;
+    static std::mutex instanceMutex_;
+    // Parameters of metadataObject
+    MetadataObjectType type_;
+    int32_t timestamp_ = 0;
+    Rect box_ = {0.0, 0.0, 0.0, 0.0};
+    int32_t objectId_ = 0;
+    int32_t confidence_ = 0;
+    // Parameters of All face metadata
+    Rect leftEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
+    Rect rightEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
+    // Parameters of human face metadata
+    Emotion emotion_ = NEUTRAL;
+    int32_t emotionConfidence_ = 0;
+    int32_t pitchAngle_ = 0;
+    int32_t yawAngle_ = 0;
+    int32_t rollAngle_ = 0;
+
+    void ResetParameters();
 };
 
 class MetadataObjectCallback {

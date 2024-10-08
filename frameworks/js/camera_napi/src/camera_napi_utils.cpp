@@ -412,5 +412,33 @@ napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vecto
     }
     return result;
 }
+
+napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
+    std::vector<MetadataObjectType> &metadataObjectTypes)
+{
+    MEDIA_DEBUG_LOG("ParseMetadataObjectTypes is called");
+    napi_value result;
+    uint32_t length = 0;
+    napi_value value;
+    int32_t metadataType = 0;
+    napi_get_array_length(env, arrayParam, &length);
+    napi_valuetype type = napi_undefined;
+    const int32_t invalidType = -1;
+    for (uint32_t i = 0; i < length; i++) {
+        napi_get_element(env, arrayParam, i, &value);
+        napi_typeof(env, value, &type);
+        if (type != napi_number) {
+            return nullptr;
+        }
+        if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) &&
+            metadataType > static_cast<int32_t>(MetadataObjectType::BAR_CODE_DETECTION)) {
+            metadataType = invalidType;
+        }
+        napi_get_value_int32(env, value, &metadataType);
+        metadataObjectTypes.push_back(static_cast<MetadataObjectType>(metadataType));
+    }
+    napi_get_boolean(env, true, &result);
+    return result;
+}
 } // namespace CameraStandard
 } // namespace OHOS

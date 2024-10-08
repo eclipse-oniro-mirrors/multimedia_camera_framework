@@ -42,6 +42,16 @@ public:
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+private:
+    int32_t EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable);
+    void removeMetadataType(std::vector<int32_t>& vec1, std::vector<int32_t>& vec2);
+    std::vector<int32_t> metadataObjectTypes_;
+    std::mutex metadataTypeMutex_;
+    std::atomic<bool> isStarted_ { false };
+    sptr<IStreamMetadataCallback> streamMetadataCallback_;
+    std::mutex callbackLock_;
+    uint32_t majorVer_ = 0;
+    uint32_t minorVer_ = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
