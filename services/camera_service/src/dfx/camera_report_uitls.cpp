@@ -264,8 +264,7 @@ CallerInfo CameraReportUtils::GetCallerInfo()
     callerInfo.uid = IPCSkeleton::GetCallingUid();
     callerInfo.tokenID = IPCSkeleton::GetCallingTokenID();
     callerInfo.bundleName = GetClientBundle(callerInfo.uid);
-    MEDIA_DEBUG_LOG("CameraReportUtils::GetCallerInfo pid:%{public}d uid:%{public}d tokenID:%{public}d",
-        callerInfo.pid, callerInfo.uid, callerInfo.tokenID);
+    MEDIA_DEBUG_LOG("CameraReportUtils::GetCallerInfo pid:%{public}d uid:%{public}d", callerInfo.pid, callerInfo.uid);
     return callerInfo;
 }
 

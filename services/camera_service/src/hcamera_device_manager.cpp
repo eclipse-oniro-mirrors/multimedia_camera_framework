@@ -201,9 +201,6 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     int32_t requestState = CameraAppManagerClient::GetInstance()->GetProcessState(pidOfOpenRequest);
     MEDIA_INFO_LOG("HCameraDeviceManager::GetConflictDevices active pid:%{public}d state: %{public}d,"
         "request pid:%{public}d state: %{public}d", pidOfActiveClient, activeState, pidOfOpenRequest, requestState);
-
-    MEDIA_DEBUG_LOG("active TokenId is: %{public}d request TokenId is : %{public}d",
-        activeCameraHolder->GetAccessTokenId(), accessTokenIdOfRequestProc);
     UpdateProcessState(activeState, requestState,
         activeCameraHolder->GetAccessTokenId(), accessTokenIdOfRequestProc);
     pid_t focusWindowPid = -1;
@@ -389,7 +386,7 @@ void HCameraDeviceManager::UpdateProcessState(int32_t& activeState, int32_t& req
     if (winMgrAgent != nullptr) {
         accessTokenIdInPip =
             static_cast<CameraWindowManagerAgent*>(winMgrAgent.GetRefPtr())->GetAccessTokenId();
-        MEDIA_DEBUG_LOG("current pip window accessTokenId is: %{public}d", accessTokenIdInPip);
+        MEDIA_DEBUG_LOG("update current pip window accessTokenId");
     }
 
     auto updateState = [accessTokenIdInPip](int32_t& state, uint32_t accessTokenId) {
