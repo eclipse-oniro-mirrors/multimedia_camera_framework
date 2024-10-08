@@ -114,7 +114,7 @@ private:
 
 struct MetadataOutputAsyncContext : public AsyncContext {
     MetadataOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
-    MetadataOutputNapi* objectInfo;
+    MetadataOutputNapi* objectInfo = nullptr;
     std::string errorMsg;
     std::vector<MetadataObjectType> SupportedMetadataObjectTypes;
     std::vector<MetadataObjectType> setSupportedMetadataObjectTypes;
