@@ -289,19 +289,19 @@ private:
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
     MetadataObjectType type_;
-    int32_t timestamp_;
-    Rect box_;
-    int32_t objectId_;
-    int32_t confidence_;
+    int32_t timestamp_ = 0;
+    Rect box_ = {0.0, 0.0, 0.0, 0.0};
+    int32_t objectId_ = 0;
+    int32_t confidence_ = 0;
     // Parameters of All face metadata
-    Rect leftEyeBoundingBox_;
-    Rect rightEyeBoundingBox_;
+    Rect leftEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
+    Rect rightEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
     // Parameters of human face metadata
-    Emotion emotion_;
-    int32_t emotionConfidence_;
-    int32_t pitchAngle_;
-    int32_t yawAngle_;
-    int32_t rollAngle_;
+    Emotion emotion_ = NEUTRAL;
+    int32_t emotionConfidence_ = 0;
+    int32_t pitchAngle_ = 0;
+    int32_t yawAngle_ = 0;
+    int32_t rollAngle_ = 0;
 
     void ResetParameters();
 };

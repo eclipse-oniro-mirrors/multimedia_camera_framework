@@ -116,6 +116,7 @@ void VideoJobQueue::Heapify(int32_t index)
 void VideoJobQueue::Swap(int32_t x, int32_t y)
 {
     std::swap(heap_[x], heap_[y]);
+    DP_CHECK_ERROR_RETURN_LOG(x < DEFAULT || x >= size_ || y < DEFAULT || y >= size_, "swap failed.");
     indexMap_[heap_[x]] = x;
     indexMap_[heap_[y]] = y;
 }
