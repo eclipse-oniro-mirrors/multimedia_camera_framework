@@ -362,7 +362,7 @@ sptr<IConsumerSurface> MetadataOutput::GetSurface()
 
 void MetadataOutput::ProcessMetadata(const int32_t streamId,
                                      const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
-                                     std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror)
+                                     std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip)
 {
     CHECK_ERROR_RETURN(result == nullptr);
     // camera_metadata_item_t metadataItem;
@@ -380,7 +380,7 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
         MEDIA_ERR_LOG("Camera not ProcessFaceRectangles");
         return;
     }
-    int32_t ret = ProcessMetaObjects(streamId, metaObjects, metadataResults, metadataTypes, isNeedMirror);
+    int32_t ret = ProcessMetaObjects(streamId, metaObjects, metadataResults, metadataTypes, isNeedMirror, isNeedFlip);
     reportFaceResults_ = true;
     CHECK_ERROR_RETURN_LOG(ret != CameraErrorCode::SUCCESS, "MetadataOutput::ProcessFaceRectangles() is failed.");
     return;
@@ -389,12 +389,12 @@ void MetadataOutput::ProcessMetadata(const int32_t streamId,
 int32_t MetadataOutput::ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>>& metaObjects,
                                            const std::vector<camera_metadata_item_t>& metadataItem,
                                            const std::vector<uint32_t>& metadataTypes,
-                                           bool isNeedMirror)
+                                           bool isNeedMirror, bool isNeedFlip)
 {
     for (size_t i = 0; i < metadataItem.size(); ++i) {
         auto itr = g_HALResultToFwCameraMetaDetect_.find(metadataTypes[i]);
         if (itr != g_HALResultToFwCameraMetaDetect_.end()) {
-            GenerateObjects(metadataItem[i], itr->second, metaObjects, isNeedMirror);
+            GenerateObjects(metadataItem[i], itr->second, metaObjects, isNeedMirror, isNeedFlip);
         } else {
             MEDIA_ERR_LOG("MetadataOutput::ProcessMetaObjects() unsupported type: %{public}d", metadataTypes[i]);
         }
@@ -403,7 +403,7 @@ int32_t MetadataOutput::ProcessMetaObjects(const int32_t streamId, std::vector<s
 }
 
 void MetadataOutput::GenerateObjects(const camera_metadata_item_t &metadataItem, MetadataObjectType type,
-                                     std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror)
+                                     std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror, bool isNeedFlip)
 {
     int32_t index = 0;
     int32_t countOfObject = 0;
@@ -415,8 +415,8 @@ void MetadataOutput::GenerateObjects(const camera_metadata_item_t &metadataItem,
         sptr<MetadataObjectFactory> objectFactoryPtr = MetadataObjectFactory::GetInstance();
         MetadataObjectType typeFromHal = static_cast<MetadataObjectType>(metadataItem.data.i32[index]);
         index++;
-        ProcessBaseInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror);
-        ProcessExternInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror);
+        ProcessBaseInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip);
+        ProcessExternInfo(objectFactoryPtr, metadataItem, index, typeFromHal, isNeedMirror, isNeedFlip);
         metaObjects.push_back(objectFactoryPtr->createMetadataObject(type));
     }
 }
@@ -435,7 +435,7 @@ void MetadataOutput::GetMetadataResults(const common_metadata_header_t *metadata
 }
 
 Rect MetadataOutput::ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
-    int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror)
+    int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip)
 {
     constexpr int32_t scale = 1000000;
     double topLeftX = 0;
@@ -447,6 +447,12 @@ Rect MetadataOutput::ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLef
         topLeftY = scale - offsetBottomRightX;
         width = offsetBottomRightY - offsetTopLeftY;
         height = offsetBottomRightX - offsetTopLeftX;
+    } else if (isNeedFlip) {
+        topLeftX = offsetTopLeftY;
+        topLeftY = offsetTopLeftX;
+        width = offsetBottomRightY - offsetTopLeftY;
+        height = offsetBottomRightX - offsetTopLeftX;       
+    }
     } else {
         topLeftX = scale - offsetBottomRightY;
         topLeftY = offsetTopLeftX;
@@ -462,7 +468,7 @@ Rect MetadataOutput::ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLef
 }
 
 void MetadataOutput::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
-                                     int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror)
+                                     int32_t &index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip)
 {
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
@@ -475,7 +481,7 @@ void MetadataOutput::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, con
     index++;
     factoryPtr->SetBox(ProcessRectBox(metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
                                       metadataItem.data.i32[index + offsetTwo],
-                                      metadataItem.data.i32[index + offsetThree], isNeedMirror));
+                                      metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
     factoryPtr->SetConfidence(metadataItem.data.i32[index]);
     index++;
@@ -487,17 +493,17 @@ void MetadataOutput::ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, con
 
 void MetadataOutput::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
                                        const camera_metadata_item_t &metadataItem, int32_t &index,
-                                       MetadataObjectType typeFromHal, bool isNeedMirror)
+                                       MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip)
 {
     switch (typeFromHal) {
         case MetadataObjectType::FACE:
-            ProcessHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror);
+            ProcessHumanFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip);
             break;
         case MetadataObjectType::CAT_FACE:
-            ProcessCatFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror);
+            ProcessCatFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip);
             break;
         case MetadataObjectType::DOG_FACE:
-            ProcessDogFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror);
+            ProcessDogFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip);
             break;
         default:
             break;
@@ -506,21 +512,24 @@ void MetadataOutput::ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
 
 void MetadataOutput::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                                 const camera_metadata_item_t &metadataItem, int32_t &index,
-                                                bool isNeedMirror)
+                                                bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, version: %{public}d", isNeedMirror, version);
+    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+        isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
     factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
     factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
     factoryPtr->SetEmotion(static_cast<Emotion>(metadataItem.data.i32[index]));
     index++;
@@ -536,41 +545,47 @@ void MetadataOutput::ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> fact
 
 void MetadataOutput::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                               const camera_metadata_item_t &metadataItem, int32_t &index,
-                                              bool isNeedMirror)
+                                              bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, version: %{public}d", isNeedMirror, version);
+    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+        isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
     factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
     factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
 }
 
 void MetadataOutput::ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
                                               const camera_metadata_item_t &metadataItem, int32_t &index,
-                                              bool isNeedMirror)
+                                              bool isNeedMirror, bool isNeedFlip)
 {
     int32_t version = metadataItem.data.i32[index++];
-    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, version: %{public}d", isNeedMirror, version);
+    MEDIA_DEBUG_LOG("isNeedMirror: %{public}d, isNeedFlip: %{public}d, version: %{public}d",
+        isNeedMirror, isNeedFlip, version);
     const int32_t rectLength = 4;
     const int32_t offsetOne = 1;
     const int32_t offsetTwo = 2;
     const int32_t offsetThree = 3;
     factoryPtr->SetLeftEyeBoundingBox(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
     factoryPtr->SetRightEyeBoundingBoxd(ProcessRectBox(
         metadataItem.data.i32[index], metadataItem.data.i32[index + offsetOne],
-        metadataItem.data.i32[index + offsetTwo], metadataItem.data.i32[index + offsetThree], isNeedMirror));
+        metadataItem.data.i32[index + offsetTwo],
+        metadataItem.data.i32[index + offsetThree], isNeedMirror, isNeedFlip));
     index += rectLength;
 }
 
@@ -617,13 +632,18 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
                                "HStreamMetadataCallbackImpl OnMetadataResult error!, session is nullptr");
     auto inputDevice = session->GetInputDevice();
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     bool isNeedMirror = false;
-    if (inputDevice && inputDevice->GetCameraDeviceInfo()) {
-        isNeedMirror = (inputDevice->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT ||
-                        inputDevice->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FOLD_INNER);
+    if (inputDevice && inputDeviceInfo) {
+        isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
+                        inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
     }
+    bool isNeedFlip = false;
+    if (inputDevice && inputDeviceInfo) {
+        isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
+    }   
     std::vector<sptr<MetadataObject>> metaObjects;
-    metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror);
+    metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
     CHECK_ERROR_RETURN_RET(objectCallback == nullptr, INVALID_ARGUMENT);
     if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback) {

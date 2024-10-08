@@ -29,6 +29,7 @@ public:
 private:
     int32_t HandleSetCallback(MessageParcel& data);
     int32_t HandleUpdateSetting(MessageParcel& data);
+    int32_t HandleUsedAsPos(MessageParcel& data);
     int32_t HandleGetStatus(MessageParcel& data, MessageParcel& reply);
     int32_t HandleGetEnabledResults(MessageParcel& reply);
     int32_t HandleEnableResult(MessageParcel& data);

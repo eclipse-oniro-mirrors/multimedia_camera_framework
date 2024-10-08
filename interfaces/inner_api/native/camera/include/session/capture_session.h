@@ -1794,6 +1794,7 @@ private:
     bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);
     void SessionRemoveDeathRecipient();
     int32_t AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& output, sptr<ICaptureSession>& captureSession);
+    CameraPosition GetUsedAsPosition();
 };
 } // namespace CameraStandard
 } // namespace OHOS

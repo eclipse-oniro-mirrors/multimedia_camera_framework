@@ -24,6 +24,7 @@
 
 #include "camera_death_recipient.h"
 #include "camera_device.h"
+#include "camera_device_ability_items.h"
 #include "camera_info.h"
 #include "capture_input.h"
 #include "hcamera_device_callback_stub.h"
@@ -313,6 +314,14 @@ public:
     * @return Returns camera info.
     */
     void SetCameraDeviceInfo(sptr<CameraDevice> CameraObj);
+
+    /**
+    * @brief set the camera used as position with the device.
+    *
+    * @return Returns camera info.
+    */
+    void SetInputUsedAsPosition(CameraPosition usedAsPosition);
+
     /**
     * @brief set the cameraObj.
     */
@@ -381,6 +390,7 @@ private:
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void InputRemoveDeathRecipient();
+    std::map<CameraPosition, camera_position_enum> positionMapping;
 };
 
 class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {

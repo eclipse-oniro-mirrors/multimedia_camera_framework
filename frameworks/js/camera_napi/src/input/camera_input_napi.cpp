@@ -19,6 +19,7 @@
 #include <memory>
 #include <uv.h>
 
+#include "camera_device.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_napi_const.h"
@@ -224,7 +225,8 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off)
+        DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("usedAsPosition", UsedAsPosition)
     };
 
     status = napi_define_class(env, CAMERA_INPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

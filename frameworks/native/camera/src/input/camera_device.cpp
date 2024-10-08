@@ -178,6 +178,11 @@ CameraPosition CameraDevice::GetPosition()
     return cameraPosition_;
 }
 
+CameraType CameraDevice::GetUsedAsPosition()
+{
+    return usedAsCameraPosition_;
+}
+
 CameraType CameraDevice::GetCameraType()
 {
     return cameraType_;
@@ -300,6 +305,13 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
     exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;
+}
+
+void CameraDevice::SetCameraDeviceUsedAsPosition(CameraPosition usedAsPosition)
+{
+    MEDIA_INFO_LOG("CameraDevice::SetCameraDeviceUsedAsPosition params: %{public}u", usedAsPosition);
+    UsedAsCameraPosition_ = usedAsPosition;
+
 }
 
 uint32_t CameraDevice::GetSupportedFoldStatus()

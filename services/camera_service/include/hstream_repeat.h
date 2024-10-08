@@ -81,6 +81,7 @@ public:
     int32_t SetPreviewRotation(std::string &deviceClass);
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
     void SetStreamTransform(int disPlayRotation = -1);
+    void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
     int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
 
@@ -118,6 +119,7 @@ private:
     std::function<void()> startMovingPhotoCallback_;
     std::vector<int32_t> streamFrameRateRange_ = {};
     sptr<BufferProducerSequenceable> metaSurfaceBufferQueue_;
+    camera_position_enum_t cameraUsedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
 };
 } // namespace CameraStandard
 } // namespace OHOS
