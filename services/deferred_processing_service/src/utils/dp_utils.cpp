@@ -93,7 +93,7 @@ DpsCallerInfo GetDpsCallerInfo()
     dpsCallerInfo.uid = IPCSkeleton::GetCallingUid();
     dpsCallerInfo.tokenID = IPCSkeleton::GetCallingTokenID();
     dpsCallerInfo.bundleName = GetClientBundle(dpsCallerInfo.uid);
-    DP_DEBUG_LOG("GetDpsCallerInfo pid:%{public}d uid:%{public}d, dpsCallerInfo.pid, dpsCallerInfo.uid);
+    DP_DEBUG_LOG("GetDpsCallerInfo pid:%{public}d uid:%{public}d", dpsCallerInfo.pid, dpsCallerInfo.uid);
     return dpsCallerInfo;
 }
 } // namespace DeferredProcessing
