@@ -144,7 +144,7 @@ int32_t HCameraDeviceProxy::SetUsedAsPosition(uint8_t value)
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    if (!data.writeUint8(value)) {
+    if (!data.WriteUint8(value)) {
         MEDIA_ERR_LOG("HCameraDeviceProxy SetUsedAsPosition Encode failed");
         return IPC_PROXY_ERR;
     }
