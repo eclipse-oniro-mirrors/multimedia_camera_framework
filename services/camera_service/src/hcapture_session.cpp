@@ -1729,8 +1729,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     int uid = IPCSkeleton::GetCallingUid();
     CHECK_ERROR_PRINT_LOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
     int32_t userId = uid / BASE_USER_RANGE;
-    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d, tokenId:%{public}d", uid, userId,
-        IPCSkeleton::GetCallingTokenID());
+    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d", uid, userId);
 
     MessageParcel data;
     photoProxy->WriteToParcel(data);
@@ -1843,8 +1842,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
         MEDIA_ERR_LOG("Get INVALID_UID UID %{public}d", uid);
     }
     int32_t userId = uid / BASE_USER_RANGE;
-    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d, tokenId:%{public}d", uid, userId,
-        IPCSkeleton::GetCallingTokenID());
+    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d", uid, userId);
     MessageParcel data;
     photoProxy->WriteToParcel(data);
     photoProxy->CameraFreeBufferHandle();

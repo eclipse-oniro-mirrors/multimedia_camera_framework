@@ -41,8 +41,7 @@ int CameraWindowManagerAgentStub::HandleUpdateCameraWindowStatus(MessageParcel& 
 {
     uint32_t accessTokenId = data.ReadUint32();
     bool isShowing = data.ReadBool();
-    MEDIA_DEBUG_LOG("HandleUpdateCameraWindowStatus get accessTokenId: %{public}d changed, isShowing: %{public}d",
-        accessTokenId, isShowing);
+    MEDIA_DEBUG_LOG("HandleUpdateCameraWindowStatus get accessTokenId changed, isShowing: %{public}d", isShowing);
     UpdateCameraWindowStatus(accessTokenId, isShowing);
     return 0;
 }
