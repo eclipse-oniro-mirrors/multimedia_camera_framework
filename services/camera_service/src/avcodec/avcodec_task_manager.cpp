@@ -126,6 +126,7 @@ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProx
     lock_guard<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64, timestamp);
     videoFdQueue_.push(std::make_pair(timestamp, photoAssetProxy));
+    MEDIA_DEBUG_LOG("video queue size:%{public}zu", videoFdQueue_.size());
     cvEmpty_.notify_all();
 }
 

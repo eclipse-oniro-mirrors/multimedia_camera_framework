@@ -1749,7 +1749,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    if (isSetMotionPhoto_ && taskManager_) {
+    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
         taskManager_->SetVideoFd(timestamp, photoAssetProxy);
     }
@@ -1864,7 +1864,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     }
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(userId, (isBursting ? uri : cameraServerPhotoProxy->GetPhotoId()), picturePtr);
-    if (isSetMotionPhoto_) {
+    if (!isBursting && isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
         if (taskManager_) {
