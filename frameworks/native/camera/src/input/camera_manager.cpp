@@ -1673,7 +1673,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 }
 
 void CameraManager::GetSupportedMetadataObjectType(common_metadata_header_t* metadata,
-                                                   std::vector<MetadataObjectType> objectTypes)
+                                                   std::vector<MetadataObjectType>& objectTypes)
 {
     camera_metadata_item_t metadataItem;
     int32_t ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);

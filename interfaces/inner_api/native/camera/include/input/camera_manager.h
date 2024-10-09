@@ -699,7 +699,7 @@ private:
     void ParseProfileLevel(const int32_t modeName, const camera_metadata_item_t& item);
     void CreateProfileLevel4StreamType(int32_t specId, StreamInfo &streamInfo);
     void GetSupportedMetadataObjectType(
-        common_metadata_header_t* metadata, std::vector<MetadataObjectType> objectTypes);
+        common_metadata_header_t* metadata, std::vector<MetadataObjectType>& objectTypes);
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
