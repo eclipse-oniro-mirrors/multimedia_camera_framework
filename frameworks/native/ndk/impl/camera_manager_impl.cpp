@@ -242,7 +242,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
 
     std::vector<Profile> uniquePreviewProfiles;
     for (const auto& profile : priviewProfiles) {
-        if (std::find(uniquePreviewProfiles.begin(),uniquePreviewProfiles.end(),profile) == uniquePreviewProfiles.end()) {
+        if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(), profile) == uniquePreviewProfiles.end()) {
             uniquePreviewProfiles.push_back(profile);
         }
     }
