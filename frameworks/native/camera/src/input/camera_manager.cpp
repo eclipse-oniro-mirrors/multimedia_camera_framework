@@ -1379,11 +1379,38 @@ sptr<CameraInput> CameraManager::CreateCameraInput(sptr<CameraDevice> &camera)
     return cameraInput;
 }
 
+void CameraManager::ReportEvent(const string& cameraId)
+{
+    int pid = IPCSkeleton::GetCallingPid();
+    int uid = IPCSkeleton::GetCallingUid();
+    auto clientName = "";
+    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraId, clientName);
+
+    stringstream ss;
+    const std::string S_CUR_CAMERAID = "curCameraId:";
+    const std::string S_CPID = ",cPid:";
+    const std::string S_CUID = ",cUid:";
+    const std::string S_CBUNDLENAME = ",cBundleName:";
+    ss << S_CUR_CAMERAID << cameraId
+    << S_CPID << pid
+    << S_CUID << uid
+    << S_CBUNDLENAME << clientName;
+
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "USER_BEHAVIOR",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "MSG", ss.str());
+}
+
 int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput)
 {
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateCameraInput Camera object is null");
+    if (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
+        ReportEvent(camera->GetID());
+    }
     sptr<ICameraDeviceService> deviceObj = nullptr;
     int32_t retCode = CreateCameraDevice(camera->GetID(), &deviceObj);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, retCode,

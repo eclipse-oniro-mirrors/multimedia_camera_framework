@@ -783,6 +783,7 @@ private:
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
+    void ReportEvent(const string& cameraId);
     int32_t RefreshServiceProxy();
     std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
     bool IsSystemApp();
