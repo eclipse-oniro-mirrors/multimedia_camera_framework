@@ -282,7 +282,7 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
 {
     MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition params: %{public}u", usedAsPosition);
     std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
-    unit8_t translatePos = OHOS_CAMERA_POSITION_OTHER;
+    uint8_t translatePos = OHOS_CAMERA_POSITION_OTHER;
     if (positionMapping.empty()) {
         positionMapping = createPositionMapping();
     }
