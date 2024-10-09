@@ -451,7 +451,7 @@ Rect MetadataOutput::ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLef
         topLeftX = offsetTopLeftY;
         topLeftY = offsetTopLeftX;
         width = offsetBottomRightY - offsetTopLeftY;
-        height = offsetBottomRightX - offsetTopLeftX;       
+        height = offsetBottomRightX - offsetTopLeftX;
     }
     } else {
         topLeftX = scale - offsetBottomRightY;
