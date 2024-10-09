@@ -311,7 +311,6 @@ void CameraDevice::SetCameraDeviceUsedAsPosition(CameraPosition usedAsPosition)
 {
     MEDIA_INFO_LOG("CameraDevice::SetCameraDeviceUsedAsPosition params: %{public}u", usedAsPosition);
     UsedAsCameraPosition_ = usedAsPosition;
-
 }
 
 uint32_t CameraDevice::GetSupportedFoldStatus()
