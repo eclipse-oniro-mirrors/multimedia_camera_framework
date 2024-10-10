@@ -106,7 +106,7 @@ private:
     std::map<int32_t, std::string> burstkeyMap_;
     std::map<int32_t, int32_t> burstNumMap_;
     int32_t burstNum_;
-    int32_t videoCodecType_ = 0;
+    int32_t videoCodecType_ = 1;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -27,6 +27,7 @@ public:
     static void OnOutputFormatChanged(OH_AVCodec *codec, OH_AVFormat *format, void *userData);
     static void OnNeedInputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData);
     static void OnNewOutputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData);
+    static void OnEncInputParam(OH_AVCodec *codec, uint32_t index, OH_AVFormat *parameter, void *userData);
 };
 } // CameraStandard
 } // OHOS

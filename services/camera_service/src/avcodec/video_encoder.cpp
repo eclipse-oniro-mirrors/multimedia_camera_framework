@@ -59,8 +59,11 @@ int32_t VideoEncoder::Config()
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     context_ = new CodecUserData;
+    // SetParameterCallback for video encoder
+    int32_t ret = SetParameterCallback(context_);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Set parameter callback failed");
     // Configure video encoder
-    int32_t ret = Configure();
+    ret = Configure();
     CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Configure failed");
     // SetCallback for video encoder
     ret = SetCallback(context_);
@@ -203,17 +206,10 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Start();
 }
 
-bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval)
+bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
 {
     if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
-    }
-    if (keyFrameInterval == KEY_FRAME_INTERVAL) {
-        std::lock_guard<std::mutex> lock(encoderMutex_);
-        OH_AVFormat *format = OH_AVFormat_Create();
-        OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
-        OH_VideoEncoder_SetParameter(encoder_, format);
-        OH_AVFormat_Destroy(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     if (buffer == nullptr) {
@@ -245,16 +241,12 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
-    if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
+    if (!EnqueueBuffer(frameRecord)) {
         return false;
     }
-    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRAME_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
-    keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
-        MEDIA_DEBUG_LOG("EncodeSurfaceBuffer needRestoreNumber %{public}d", needRestoreNumber);
         std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "VideoEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
@@ -263,37 +255,45 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
-        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64,
-            context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
+        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64 ", "
+            "timestamp:%{public}" PRId64, context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags,
+            bufferInfo->attr.pts, frameRecord->GetTimeStamp());
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        if (needRestoreNumber == IDR_FRAME_COUNT && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        if (context_->outputFrameCount_ == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+            int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
+            CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
+            continue;
+        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(IDRBuffer);
             frameRecord->SetIDRProperty(true);
-        } else if (needRestoreNumber == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
+            successFrame_ = false;
+        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
             OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
             if (tempBuffer != nullptr) {
                 frameRecord->encodedBuffer = tempBuffer;
             }
+            successFrame_ = true;
         } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_NONE) {
             // return P frame
             OH_AVBuffer *PBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(PBuffer);
             frameRecord->SetIDRProperty(false);
+            successFrame_ = true;
         } else {
-            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}d", needRestoreNumber);
+            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->attr.flags);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
             CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
             continue;
         }
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
         CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
-        if (--needRestoreNumber == 0) {
+        if (successFrame_) {
             MEDIA_DEBUG_LOG("Success frame id is : %{public}s, refCount: %{public}d",
                 frameRecord->GetFrameId().c_str(), frameRecord->GetSptrRefCount());
             return true;
@@ -328,6 +328,14 @@ int32_t VideoEncoder::SetCallback(CodecUserData *codecUserData)
         {SampleCallback::OnCodecError, SampleCallback::OnCodecFormatChange,
          SampleCallback::OnNeedInputBuffer, SampleCallback::OnNewOutputBuffer}, codecUserData);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
+    return 0;
+}
+
+int32_t VideoEncoder::SetParameterCallback(CodecUserData *codecUserData)
+{
+    int32_t ret = AV_ERR_OK;
+    ret = OH_VideoEncoder_RegisterParameterCallback(encoder_, SampleCallback::OnEncInputParam, codecUserData);
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set parameter callback failed, ret: %{public}d", ret);
     return 0;
 }
 

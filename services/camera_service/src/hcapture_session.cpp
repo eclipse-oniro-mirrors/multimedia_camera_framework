@@ -719,7 +719,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     MEDIA_INFO_LOG("HCameraService::ExpandMovingPhotoRepeatStream capture stream size = %{public}zu",
         captureStreams.size());
-    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_AVC;
+    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_HEVC;
     for (auto &stream : captureStreams) {
         int32_t type = static_cast<HStreamCapture*>(stream.GetRefPtr())->GetMovingPhotoVideoCodecType();
         videoCodecType = static_cast<VideoCodecType>(type);
@@ -2379,6 +2379,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         MEDIA_DEBUG_LOG("frame has meta");
         frameRecord->SetMetaBuffer(metaPair.value().second);
     }
+    std::lock_guard<std::mutex> lock(DrainImageLock_);
     vector<sptr<SessionDrainImageCallback>> callbacks;
     callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
         sptr<DrainImageManager> manager) {
@@ -2405,11 +2406,13 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
     if (!frameList.empty()) {
         frameList.back()->SetCoverFrame();
     }
+    std::lock_guard<std::mutex> lock(DrainImageLock_);
     for (const auto& frame : frameList) {
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
         drainImageManager->DrainImage(frame);
     }
 }
+
 void MovingPhotoMetaListener::OnBufferAvailable()
 {
     MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
