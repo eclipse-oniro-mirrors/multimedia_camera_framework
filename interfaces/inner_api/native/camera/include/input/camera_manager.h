@@ -712,6 +712,12 @@ public:
 
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
 
+    inline sptr<ICameraService> GetServiceProxy()
+    {
+        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
+        return serviceProxyPrivate_;
+    }
+
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -790,11 +796,6 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
-    inline sptr<ICameraService> GetServiceProxy()
-    {
-        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
-        return serviceProxyPrivate_;
-    }
 
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {
