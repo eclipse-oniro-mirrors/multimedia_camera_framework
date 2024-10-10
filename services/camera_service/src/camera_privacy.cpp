@@ -58,8 +58,8 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
             session->ReleaseStreams();
             session->StopMovingPhoto();
         }
-        device->CloseDevice();
         device->OnError(DEVICE_DISCONNECT, 0);
+        device->CloseDevice();
     }
 }
 
