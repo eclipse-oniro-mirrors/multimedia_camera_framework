@@ -39,6 +39,8 @@ public:
 
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) override;
 
+    int32_t SetUsedAsPosition(uint8_t value) override;
+
     int32_t GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
                 std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut) override;
 

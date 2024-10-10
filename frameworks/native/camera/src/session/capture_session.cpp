@@ -3138,10 +3138,14 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
         levelVec = GetSupportedBeautyRange(beautyType);
     }
 
-    auto itrType = std::find(levelVec.cbegin(), levelVec.cend(), beautyLevel);
-    if (itrType == levelVec.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetBeautyValue: %{public}d not in beautyRanges", beautyLevel);
-        return status;
+    CameraPosition usedAsCameraPosition = GetUsedAsPosition();
+    MEDIA_INFO_LOG("CaptureSession::SetBeautyValue usedAsCameraPosition %{public}d", usedAsCameraPosition);
+    if (CAMERA_POSITION_UNSPECIFIED == usedAsCameraPosition) {
+        auto itrType = std::find(levelVec.cbegin(), levelVec.cend(), beautyLevel);
+        if (itrType == levelVec.end()) {
+            MEDIA_ERR_LOG("CaptureSession::SetBeautyValue: %{public}d not in beautyRanges", beautyLevel);
+            return status;
+        }
     }
     if (beautyType == BeautyType::SKIN_TONE) {
         int32_t skinToneVal = beautyLevel;
@@ -3165,6 +3169,23 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
     return status;
 }
 
+CameraPosition CaptureSession::GetUsedAsPosition()
+{
+    CameraPosition usedAsCameraPosition = CAMERA_POSITION_UNSPECIFIED;
+    auto inputDevice = GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetUsedAsPosition input device is null");
+        return usedAsCameraPosition;
+    }
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetUsedAsPosition camera device info is null");
+        return usedAsCameraPosition;
+    }
+    usedAsCameraPosition = inputDeviceInfo->usedAsCameraPosition_;
+    return usedAsCameraPosition;
+}
+
 void CaptureSession::SetBeauty(BeautyType beautyType, int value)
 {
     if (!(IsSessionCommited() || IsSessionConfiged())) {
@@ -3176,11 +3197,15 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
         return;
     }
 
-    std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
-    auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
-    if (itr == supportedBeautyTypes.end()) {
-        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
-        return;
+    CameraPosition usedAsCameraPosition = GetUsedAsPosition();
+    MEDIA_INFO_LOG("CaptureSession::SetBeauty usedAsCameraPosition %{public}d", usedAsCameraPosition);
+    if (CAMERA_POSITION_UNSPECIFIED == usedAsCameraPosition) {
+        std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
+        auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
+        if (itr == supportedBeautyTypes.end()) {
+            MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+            return;
+        }
     }
     MEDIA_ERR_LOG("SetBeauty beautyType %{public}d", beautyType);
     bool status = false;

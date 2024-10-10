@@ -137,6 +137,27 @@ int32_t HCameraDeviceProxy::UpdateSetting(const std::shared_ptr<Camera::CameraMe
     return error;
 }
 
+int32_t HCameraDeviceProxy::SetUsedAsPosition(uint8_t value)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    if (!data.WriteUint8(value)) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy SetUsedAsPosition Encode failed");
+        return IPC_PROXY_ERR;
+    }
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy SetUsedAsPosition failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HCameraDeviceProxy::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
     std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut)
 {

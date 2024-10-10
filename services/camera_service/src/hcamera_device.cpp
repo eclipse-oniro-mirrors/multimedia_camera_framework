@@ -75,6 +75,7 @@ const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice:
     {OHOS_CONTROL_LIGHT_PAINTING_TYPE, "OHOS_CONTROL_LIGHT_PAINTING_TYPE", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_LIGHT_PAINTING_FLASH, "OHOS_CONTROL_LIGHT_PAINTING_FLASH", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_MANUAL_EXPOSURE_TIME, "OHOS_CONTROL_MANUAL_EXPOSURE_TIME", DFX_UB_NOT_REPORT},
+    {OHOS_CONTROL_CAMERA_USED_AS_POSITION, "OHOS_CONTROL_CAMERA_USED_AS_POSITION", DFX_UB_NOT_REPORT},
 };
 
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
@@ -598,6 +599,20 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     }
     MEDIA_INFO_LOG("HCameraDevice::UpdateSetting execute success");
     return CAMERA_OK;
+}
+
+int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
+{
+    MEDIA_INFO_LOG("HCameraDevice::SetUsedAsPosition as %{public}d", value);
+    usedAsPosition_ = value;
+    // lockforcontrol
+    return CAMERA_OK;
+}
+
+uint8_t HCameraDevice::GetUsedAsPosition()
+{
+    MEDIA_INFO_LOG("HCameraDevice::GetUsedAsPosition success");
+    return usedAsPosition_;
 }
 
 int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
@@ -1236,6 +1251,7 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS:
+        case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT: {
