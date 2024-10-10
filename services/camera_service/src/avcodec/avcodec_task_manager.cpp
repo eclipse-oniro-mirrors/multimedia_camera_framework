@@ -190,11 +190,7 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
 void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
     int32_t captureRotation) __attribute__((no_sanitize("cfi")))
 {
-    CAMERA_SYNC_TRACE;
-    if (frameRecords.empty()) {
-        MEDIA_ERR_LOG("DoMuxerVideo error of empty encoded frame");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(frameRecords.empty(), "DoMuxerVideo error of empty encoded frame");
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto taskManager = GetTaskManager();
     if (!taskManager) {
@@ -204,16 +200,26 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}s", frameRecords.front()->GetFrameId().c_str());
-        sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation);
-        if (muxer == nullptr) {
-            MEDIA_ERR_LOG("CreateAVMuxer failed");
-            return;
+        vector<sptr<FrameRecord>> choosedBuffer;
+        sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer);
+        CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
+        CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
+        int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
+        for (size_t index = 0; index < choosedBuffer.size(); index++) {
+            OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
+            OH_AVBuffer* buffer = choosedBuffer[index]->encodedBuffer;
+            CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
+            OH_AVBuffer_GetBufferAttr(buffer, &attr);
+            attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+            OH_AVBuffer_SetBufferAttr(buffer, &attr);
+            muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
         }
+        #ifdef MOVING_PHOTO_ADD_AUDIO
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
         if (thisPtr->audioCapturerSession_) {
-            int64_t startTime = NanosecToMillisec(frameRecords.front()->GetTimeStamp());
-            int64_t endTime = startTime + (int64_t)(frameRecords.size() * VIDEO_FRAME_INTERVAL_MS);
+            int64_t startTime = NanosecToMillisec(videoStartTime);
+            int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
             thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
         }
         for (size_t index = 0; index < frameRecords.size(); index++) {
