@@ -1761,6 +1761,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t enableValue = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_CAMERA_USED_AS_POSITION, &enableValue, count);
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e5cf4811 (解决差异)
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
     return defaultSettings;
