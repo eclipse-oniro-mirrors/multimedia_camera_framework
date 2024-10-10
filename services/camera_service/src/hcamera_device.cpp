@@ -609,7 +609,7 @@ int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
     return CAMERA_OK;
 }
 
-int8_t HCameraDevice::GetUsedAsPosition()
+uint8_t HCameraDevice::GetUsedAsPosition()
 {
     MEDIA_INFO_LOG("HCameraDevice::GetUsedAsPosition success");
     return usedAsPosition_;
