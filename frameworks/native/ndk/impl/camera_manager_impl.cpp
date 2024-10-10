@@ -240,13 +240,13 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     std::vector<MetadataObjectType> metadataTypeList = innerCameraOutputCapability->GetSupportedMetadataObjectType();
 
     std::vector<Profile> uniquePreviewProfiles;
-    for (const auto& profile : priviewProfiles) {
+    for (const auto& profile : previewProfiles) {
         if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
             profile) == uniquePreviewProfiles.end()) {
             uniquePreviewProfiles.push_back(profile);
         }
     }
-    GetSupportedPreviewProfile(outCapability, uniquePreviewProfiles);
+    GetSupportedPreviewProfiles(outCapability, uniquePreviewProfiles);
     GetSupportedPhotoProfiles(outCapability, photoProfiles);
     GetSupportedVideoProfiles(outCapability, videoProfiles);
     GetSupportedMetadataTypeList(outCapability, metadataTypeList);
