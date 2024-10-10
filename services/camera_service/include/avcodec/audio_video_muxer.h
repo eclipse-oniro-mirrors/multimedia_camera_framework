@@ -48,6 +48,7 @@ public:
     int32_t Release();
     int32_t SetRotation(int32_t rotation);
     int32_t SetCoverTime(float timems);
+    int32_t SetStartTime(float timems);
     int32_t SetTimedMetadata();
     int32_t GetVideoFd();
     std::shared_ptr<Media::PhotoAssetProxy> GetPhotoAssetProxy();

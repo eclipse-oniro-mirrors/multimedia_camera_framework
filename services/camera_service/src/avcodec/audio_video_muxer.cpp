@@ -71,6 +71,27 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
     return 0;
 }
 
+int32_t AudioVideoMuxer::SetStartTime(float timems){
+    MEDIA_INFO_LOG("SetStartTime StartTime: %{public}f", timems);
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    constexpr int64_t SEC_TO_MSEC = 1e3;
+    constexpr int64_t MSEC_TO_NSEC = 1e6;
+    struct timespec realTime;
+    struct timespec monotonic;
+    clock_gettime(CLOCK_REALTIME, &realTime);
+    clock_gettime(CLOCK_MONOTONIC, &monotonic);
+    int64_t realTimeStamp = realTime.tv_sec * SEC_TO_MSEC + realTime.tv_nsec / MSEC_TO_NSEC;
+    int64_t monotonicTimeStamp = monotonic.tv_sec * SEC_TO_MSEC + monotonic.tv_nsec / MSEC_TO_NSEC;
+    int64_t firstFrameTime = realTimeStamp - monotonicTimeStamp + int64_t(timems);
+    std::string firstFrameTimeStr = std::to_string(firstFrameTime);
+    MEDIA_INFO_LOG("SetStartTime StartTime end: %{public}s", firstFrameTimeStr.c_str());
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    userMeta->SetData("com.openharmony.starttime", firstFrameTimeStr);
+    int32_t ret = muxer_->SetUserMeta(userMeta);
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "SetStartTime Failed, ret: %{public}d", ret);
+    return 0;
+}
+
 int32_t AudioVideoMuxer::SetTimedMetadata()
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
