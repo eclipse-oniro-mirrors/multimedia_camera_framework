@@ -34,8 +34,7 @@ const int32_t NUM_2 = 2;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 bool g_isCameraDevicePermission = false;
-sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
-HCameraDevice *fuzzCameraDevice = nullptr;
+sptr<HCameraDevice> fuzzCameraDevice = nullptr;
 
 void CameraDeviceFuzzTestGetPermission()
 {
@@ -50,6 +49,30 @@ void CameraDeviceFuzzTestGetPermission()
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
         g_isCameraDevicePermission = true;
+    }
+}
+
+void PrepareHCameraDevice()
+{
+    if (fuzzCameraDevice == nullptr) {
+        sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
+        std::vector<std::string> cameraIds;
+        cameraHostManager->GetCameras(cameraIds);
+        if (cameraIds.empty()) {
+            MEDIA_ERR_LOG("Fuzz:PrepareHCameraDevice: GetCameras returns empty");
+            return;
+        }
+        string cameraID = cameraIds[0];
+        auto callingTokenId = IPCSkeleton::GetCallingTokenID();
+        MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: callingTokenId = %{public}d", callingTokenId);
+        string permissionName = OHOS_PERMISSION_CAMERA;
+        int32_t ret = CheckPermission(permissionName, callingTokenId);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("Fuzz:PrepareHCameraDevice: CheckPermission Failed");
+            return;
+        }
+        fuzzCameraDevice = new HCameraDevice(cameraHostManager, cameraID, callingTokenId);
+        MEDIA_INFO_LOG("Fuzz:PrepareHCameraDevice: Success");
     }
 }
 
@@ -89,10 +112,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
-        fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
-        fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
-    }
+    PrepareHCameraDevice();
     if (fuzzCameraDevice) {
         uint32_t code = 4;
         fuzzCameraDevice->OnRemoteRequest(code, data, reply, option);
@@ -224,7 +244,6 @@ void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
         fuzzCameraDevice->IsOpenedCameraDevice();
         fuzzCameraDevice->CloseDevice();
     }
-    fuzzCameraDevice = nullptr;
 }
 
 void GetPermission()
