@@ -97,7 +97,7 @@ int32_t HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
     return UpdateSetting(metadata);
 }
 
-int32_t HCameraDeviceStub::HandleUsedAsPos(MseeageParcel &data)
+int32_t HCameraDeviceStub::HandleUsedAsPos(MessageParcel &data)
 {
     uint8_t value = 0;
     value = data.ReadUint8();
