@@ -355,8 +355,10 @@ void HCaptureSession::StartMovingPhotoStream()
             }
             if (isSetMotionPhoto_) {
                 errorCode = curStreamRepeat->Start(settings);
+                #ifdef MOVING_PHOTO_ADD_AUDIO
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
+                #endif
             } else {
                 errorCode = curStreamRepeat->Stop();
                 StopMovingPhoto();
@@ -821,9 +823,11 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
     if (videoCache_) {
         videoCache_->ClearCache();
     }
+    #ifdef MOVING_PHOTO_ADD_AUDIO
     if (audioCapturerSession_) {
         audioCapturerSession_->Stop();
     }
+    #endif
     if (taskManager_) {
         taskManager_->Stop();
     }
@@ -1279,8 +1283,10 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         int32_t movingPhotoErrorCode = CAMERA_OK;
         if (isSetMotionPhoto_ && !hasDerferedPreview) {
             movingPhotoErrorCode = curStreamRepeat->Start(settings);
+            #ifdef MOVING_PHOTO_ADD_AUDIO
             std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
             audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
+            #endif
         }
         if (movingPhotoErrorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to start movingPhoto, rc: %{public}d", movingPhotoErrorCode);
