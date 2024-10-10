@@ -152,6 +152,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->SetRotation(captureRotation);
     if (!choosedBuffer.empty()) {
         muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp()));
+        muxer->SetStartTime(NanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
     }
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
