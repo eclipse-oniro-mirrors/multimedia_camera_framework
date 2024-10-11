@@ -32,7 +32,6 @@
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
 #include "session/capture_session.h"
-#include <unordered_map>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -172,7 +171,6 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
     {"TIME_LAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
-    {"FLUORESCENCE_PHOTO", JS_FLUORESCENCE_PHOTO},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
@@ -269,21 +267,7 @@ static const std::unordered_map<std::string, int32_t> mapVideoOutputErrorCode = 
 };
 
 static const std::unordered_map<std::string, int32_t> mapMetadataObjectType = {
-    {"FACE_DETECTION", 0},
-    {"HUMAN_BODY", 1},
-    {"CAT_FACE", 2},
-    {"CAT_BODY", 3},
-    {"DOG_FACE", 4},
-    {"DOG_BODY", 5},
-    {"SALIENT_DETECTION", 6},
-    {"BAR_CODE_DETECTION", 7}
-};
-
-static const std::unordered_map<std::string, int32_t> mapMetaFaceEmotion = {
-    {"NEUTRAL", 0},
-    {"SADNESS", 1},
-    {"SMILE", 2},
-    {"SURPRISE", 3}
+    {"FACE_DETECTION", 0}
 };
 
 static const std::unordered_map<std::string, int32_t> mapMetadataOutputErrorCode = {

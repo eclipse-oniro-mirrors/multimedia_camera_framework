@@ -25,11 +25,6 @@ namespace CameraStandard {
 class HStreamMetadataStub : public IRemoteStub<IStreamMetadata>, public ICameraIpcChecker {
 public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
-
-private:
-    int32_t HandleSetCallback(MessageParcel& data);
-    int32_t HandleEnableMetadataType(MessageParcel& data);
-    int32_t HandleDisableMetadataType(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

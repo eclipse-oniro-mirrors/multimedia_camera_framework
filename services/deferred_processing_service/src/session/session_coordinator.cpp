@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -217,8 +217,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
             callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
-            DPSEventReport::GetInstance()
-                    .ReportImageProcessResult(result.imageId, result.userId, endTime);
+            DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
         }
         if (result.callbackType == CallbackType::ON_ERROR) {
             callback->OnError(result.imageId, MapDpsErrorCode(result.errorCode));

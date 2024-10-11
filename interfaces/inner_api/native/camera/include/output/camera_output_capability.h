@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "istream_repeat_callback.h"
-#include "istream_metadata.h"
+#include "metadata_type.h"
 
 namespace OHOS {
 namespace CameraStandard {

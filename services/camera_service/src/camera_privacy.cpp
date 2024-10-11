@@ -16,6 +16,7 @@
 #include "camera_privacy.h"
 #include "camera_log.h"
 #include "hcamera_device.h"
+#include "hcapture_session.h"
 #include "types.h"
 
 namespace OHOS {
@@ -23,12 +24,25 @@ namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
 
+sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
+{
+    if (streamOpCb == nullptr) {
+        return nullptr;
+    }
+    return static_cast<HCaptureSession*>(streamOpCb.GetRefPtr());
+}
+
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify permStateChangeType:%{public}d tokenId:%{public}d"
+    MEDIA_INFO_LOG("enter PermissionStatusChangeNotify permStateChangeType:%{public}d tokenId:%{public}d"
         " permissionName:%{public}s", result.permStateChangeType, result.tokenID, result.permissionName.c_str());
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
+        auto session = CastToSession(device->GetStreamOperatorCallback());
+        if (session) {
+            session->ReleaseStreams();
+            session->StopMovingPhoto();
+        }
         device->CloseDevice();
         device->OnError(DEVICE_PREEMPT, 0);
     }
@@ -39,7 +53,11 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
-        device->OnError(DEVICE_DISCONNECT, 0);
+        auto session = CastToSession(device->GetStreamOperatorCallback());
+        if (session) {
+            session->ReleaseStreams();
+            session->StopMovingPhoto();
+        }
         device->CloseDevice();
     }
 }
@@ -55,7 +73,7 @@ bool CameraPrivacy::IsAllowUsingCamera()
     return PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
 }
 
-bool CameraPrivacy::RegisterPermissionCallback()
+void CameraPrivacy::RegisterPermissionCallback()
 {
     Security::AccessToken::PermStateChangeScope scopeInfo;
     scopeInfo.permList = {OHOS_PERMISSION_CAMERA};
@@ -63,8 +81,9 @@ bool CameraPrivacy::RegisterPermissionCallback()
     permissionCallbackPtr_ = std::make_shared<PermissionStatusChangeCb>(cameraDevice_, scopeInfo);
     MEDIA_DEBUG_LOG("RegisterPermissionCallback tokenId:%{public}d register", callerToken_);
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(permissionCallbackPtr_);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
-    return res == CAMERA_OK;
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("RegisterPermissionCallback failed.");
+    }
 }
 
 void CameraPrivacy::UnregisterPermissionCallback()
@@ -81,24 +100,29 @@ void CameraPrivacy::UnregisterPermissionCallback()
     permissionCallbackPtr_ = nullptr;
 }
 
-bool CameraPrivacy::AddCameraPermissionUsedRecord()
+void CameraPrivacy::AddCameraPermissionUsedRecord()
 {
     int32_t successCout = 1;
     int32_t failCount = 0;
-    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
+    int32_t ret = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
     MEDIA_DEBUG_LOG("AddCameraPermissionUsedRecord tokenId:%{public}d", callerToken_);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
-    return res == CAMERA_OK;
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("AddCameraPermissionUsedRecord failed.");
+    }
 }
 
-bool CameraPrivacy::StartUsingPermissionCallback()
+void CameraPrivacy::StartUsingPermissionCallback()
 {
-    CHECK_ERROR_RETURN_RET_LOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
+    if (cameraUseCallbackPtr_) {
+        MEDIA_ERR_LOG("has StartUsingPermissionCallback!");
+        return;
+    }
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>(cameraDevice_);
     int32_t res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
     MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callerToken_);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StartUsingPermissionCallback failed.");
-    return res == CAMERA_OK;
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
+    }
 }
 
 void CameraPrivacy::StopUsingPermissionCallback()

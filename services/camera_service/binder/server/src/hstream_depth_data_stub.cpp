@@ -79,4 +79,4 @@ int32_t HStreamDepthDataStub::HandleSetDataAccuracy(MessageParcel& data)
     return error;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

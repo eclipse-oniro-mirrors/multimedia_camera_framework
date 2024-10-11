@@ -115,4 +115,4 @@ int32_t HStreamDepthDataProxy::SetDataAccuracy(int32_t dataAccuracy)
     return error;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,7 @@
 #define OHOS_IDEFERRED_PHOTO_PROCESSING_SESSION_H
 
 #include "iremote_broker.h"
-#include "dps_metadata_info.h"
+#include "foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils/dps_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {

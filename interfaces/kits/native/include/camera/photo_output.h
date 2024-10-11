@@ -31,7 +31,6 @@
  * @brief Declare the photo output concepts.
  *
  * @library libohcamera.so
- * @kit CameraKit
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -44,7 +43,7 @@
 #include <stdio.h>
 #include "camera.h"
 #include "photo_native.h"
-#include "media_asset_base_capi.h"
+#include "kits/c/media_asset_base_capi.h"
 
 #ifdef __cplusplus
 extern "C" {

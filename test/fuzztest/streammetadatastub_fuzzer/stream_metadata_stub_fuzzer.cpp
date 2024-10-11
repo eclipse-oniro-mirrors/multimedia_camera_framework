@@ -95,9 +95,7 @@ void Test(uint8_t *rawData, size_t size)
             return;
         }
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        const int32_t face = 0;
-        std::vector<int32_t> type = {face};
-        fuzz = new HStreamMetadata(producer, PHOTO_FORMAT, type);
+        fuzz = new HStreamMetadata(producer, PHOTO_FORMAT);
     }
 
     Test_OnRemoteRequest(rawData, size);

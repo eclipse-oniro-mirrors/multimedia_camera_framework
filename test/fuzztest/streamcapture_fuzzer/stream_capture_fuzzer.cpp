@@ -95,9 +95,6 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     if (fuzzStreamcapture == nullptr) {
         fuzzStreamcapture = new(std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-        if (fuzzStreamcapture == nullptr) {
-            return;
-        }
     }
     uint32_t code = 0;
     fuzzStreamcapture->OnRemoteRequest(code, data, reply, option);

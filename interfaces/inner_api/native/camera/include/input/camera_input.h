@@ -279,12 +279,6 @@ public:
     * @return Returns Camera Device pointer.
     */
     sptr<ICameraDeviceService> GetCameraDevice();
-    
-    /**
-    * @brief Set Camera Device pointer.
-    *
-    */
-    void SetCameraDevice(sptr<ICameraDeviceService> deviceObj);
 
     /**
     * @brief Get ErrorCallback pointer.
@@ -314,7 +308,7 @@ public:
     */
     void SetCameraDeviceInfo(sptr<CameraDevice> CameraObj);
     /**
-    *@brief set the cameraObj.
+    * @brief set the cameraObj.
     */
     sptr<CameraDevice> GetCameraDeviceInfo() override;
 
@@ -365,10 +359,10 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
 
 private:
-    std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
     std::mutex cameraDeviceInfoMutex_;
     std::mutex resultCallbackMutex_;
+    std::mutex occlusionCallbackMutex_;
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;

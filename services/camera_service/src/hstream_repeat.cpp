@@ -21,7 +21,7 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
@@ -216,10 +216,6 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateFrameRateSettings(dynamicSetting);
     }
-    if (settings != nullptr) {
-        UpdateFrameMuteSettings(settings, dynamicSetting);
-    }
-    
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -364,10 +360,6 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
 int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
-    MEDIA_DEBUG_LOG("HStreamRepeat::OnFrameError %{public}d  %{public}d", errorType, streamRepeatCallback_ == nullptr);
-    if (errorType == HDI::Camera::V1_3::HIGH_TEMPERATURE_ERROR) {
-        UpdateSketchStatus(SketchStatus::STOPED);
-    }
     if (streamRepeatCallback_ != nullptr) {
         int32_t repeatErrorCode;
         if (errorType == BUFFER_LOST) {
@@ -475,9 +467,9 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
         std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+        camera_metadata_item_t item;
         CHECK_AND_RETURN_RET_LOG(dynamicSetting != nullptr, CAMERA_INVALID_ARG,
             "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
-        camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
         bool status = false;
         if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -489,7 +481,9 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
             status = dynamicSetting->updateEntry(
                 OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         }
-        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
+        if (!status) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
+        }
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
 
@@ -522,7 +516,23 @@ int32_t HStreamRepeat::SetMirror(bool isEnable)
     enableMirror_ = isEnable;
     return CAMERA_OK;
 }
+
+int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
+{
+    enableStreamRotate_ = true;
+    deviceClass_ = deviceClass;
+    return CAMERA_OK;
+}
  
+int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
+{
+    enableCameraRotation_ = isEnable;
+    CHECK_ERROR_RETURN_RET(rotation>STREAM_ROTATE_360, CAMERA_INVALID_ARG);
+    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
+    SetStreamTransform();
+    return CAMERA_OK;
+}
+
 void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
 {
     camera_metadata_item_t item;
@@ -553,22 +563,6 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     } else {
         MEDIA_ERR_LOG("HStreamRepeat::SetMirrorForLivePhoto not supported mirror with mode:%{public}d", mode);
     }
-}
-
-int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
-{
-    enableCameraRotation_ = isEnable;
-    CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
-    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
-    SetStreamTransform();
-    return CAMERA_OK;
-}
-
-int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
-{
-    enableStreamRotate_ = true;
-    deviceClass_ = deviceClass;
-    return CAMERA_OK;
 }
 
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
@@ -605,9 +599,6 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-    CHECK_ERROR_RETURN_LOG(display == nullptr,
-        "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         if (cameraAbility_ == nullptr) {
@@ -633,18 +624,16 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr) {
+    if (producer_ == nullptr || OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay() == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
     int mOritation = disPlayRotation;
     if (enableStreamRotate_) {
         if (mOritation == -1) {
-            if (producer_ == nullptr || display == nullptr) {
-                MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed,"
-                    "producer is null or GetDefaultDisplay failed");
-                return;
-            }
+            auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+            CHECK_ERROR_RETURN_LOG(producer_ == nullptr || display == nullptr,
+                "HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
             mOritation = static_cast<int>(display->GetRotation());
         }
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
@@ -658,12 +647,13 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
 {
     sensorOrientation = STREAM_ROTATE_360 - setCameraRotation_;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        sensorOrientation = (sensorOrientation == STREAM_ROTATE_180) ? STREAM_ROTATE_0 :
-            (sensorOrientation == STREAM_ROTATE_0) ? STREAM_ROTATE_180 : sensorOrientation;
+        sensorOrientation = (sensorOrientation == STREAM_ROTATE_180) ? GRAPHIC_ROTATE_NONE : (sensorOrientation == 0) ?
+            STREAM_ROTATE_180 : sensorOrientation;
     }
-    if (sensorOrientation == STREAM_ROTATE_0) {
+    if (sensorOrientation == GRAPHIC_ROTATE_NONE) {
         int ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraSetRotation %{public}d", ret);
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null "
+                      "or GetDefaultDisplay failed %{public}d", ret);
     }
 }
 
@@ -873,27 +863,6 @@ void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::Camera
             MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
         }
     }
-}
-
-void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                                            std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting)
-{
-    CHECK_ERROR_RETURN(settings == nullptr);
-    bool status = false;
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        return;
-    }
-    auto mode = item.data.u8[0];
-    int32_t count = 1;
-    ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        status = dynamicSetting->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    } else {
-        status = dynamicSetting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    }
-    CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::UpdateFrameMuteSettings Failed to set frame mute");
 }
 
 int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)

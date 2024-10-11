@@ -247,8 +247,7 @@ constexpr uint8_t CAPTURE_PHOTO = 1 << 0;
 constexpr uint8_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
 constexpr uint8_t CAPTURE_PHOTO_ASSET = 1 << 2;
 constexpr int32_t CAPTURE_ROTATION_BASE = 360;
-constexpr int32_t ROTATION_45_DEGREES = 45;
-constexpr int32_t ROTATION_90_DEGREES = 90;
+
 class PhotoOutput : public CaptureOutput {
 public:
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
@@ -269,18 +268,18 @@ public:
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
 
     /**
-     * @brief Get the photo rotation.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPhotoRotation(int32_t imageRotation);
-
-    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.
      */
     int32_t SetThumbnail(bool isEnabled);
+
+    /**
+     * @brief Get the photo rotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation(int32_t imageRotation);
 
     /**
      * @brief Set the Thumbnail profile.
@@ -364,11 +363,11 @@ public:
      * @brief Set the callbackFlag when on photoAssetAvailable.
      */
     void SetCallbackFlag(uint8_t callbackFlag);
-
+    
     /**
-     * @brief Set the flag when on native surface.
-     */
-    void SetNativeSurface(bool isNativeSurface);
+    * @brief Set the flag when on native surface.
+    */
+    void SetNativeSurface(bool SetNativeSurface);
 
     /**
      * @brief To check the deferredImageDelivery capability is enable or not.

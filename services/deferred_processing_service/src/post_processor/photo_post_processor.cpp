@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -415,6 +415,7 @@ void PhotoPostProcessor::OnSessionDied()
 {
     DP_INFO_LOG("entered, session died!");
     std::lock_guard<std::mutex> lock(mutex_);
+
     session_ = nullptr;
     consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
@@ -489,6 +490,7 @@ void PhotoPostProcessor::DisconnectServiceIfNecessary()
 void PhotoPostProcessor::ScheduleConnectService()
 {
     DP_INFO_LOG("entered.");
+
     if (session_ == nullptr) {
         constexpr uint32_t delayMilli = 10 * 1000;
         uint32_t callbackHandle;

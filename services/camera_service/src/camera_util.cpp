@@ -21,20 +21,17 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
 #include "system_ability_definition.h"
 #include "ipc_skeleton.h"
-#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static bool g_tablet = false;
-
+static bool g_tablet = true;
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -427,17 +424,16 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
         MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
     }
 }
-
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     if (display == nullptr) {
         MEDIA_ERR_LOG("IsVerticalDevice GetDefaultDisplay failed");
         return isVerticalDevice;
     }
-    MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
-                   display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
+    MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
+                   display->GetWidth(), display->GetHeight(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
                             display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_180;
     bool isScreenHorizontal = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_90 ||
@@ -472,21 +468,6 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
     MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
         streamRotation, disPlayRotation);
     return streamRotation;
-}
-
-bool CheckSystemApp()
-{
-    Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    Security::AccessToken::ATokenTypeEnum tokenType =
-        Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
-    if (tokenType !=  Security::AccessToken::TOKEN_HAP) {
-        MEDIA_DEBUG_LOG("Caller is not a application.");
-        return true;
-    }
-    uint64_t accessTokenId = IPCSkeleton::GetCallingFullTokenID();
-    bool isSystemApplication = Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(accessTokenId);
-    MEDIA_DEBUG_LOG("isSystemApplication:%{public}d", isSystemApplication);
-    return isSystemApplication;
 }
 } // namespace CameraStandard
 } // namespace OHOS

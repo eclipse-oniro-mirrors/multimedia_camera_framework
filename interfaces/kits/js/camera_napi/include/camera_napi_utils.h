@@ -21,7 +21,6 @@
 #include "camera_napi_const.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
-#include "istream_metadata.h"
 #include "napi/native_api.h"
 
 #ifdef NAPI_ASSERT
@@ -182,9 +181,6 @@ public:
  
     static napi_value CreateSupportFrameRatesJSArray(
         napi_env env, std::vector<std::vector<int32_t>> supportedFrameRatesRange);
-    
-    static napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
-                                    std::vector<MetadataObjectType> &metadataObjectTypes);
 
     static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
 

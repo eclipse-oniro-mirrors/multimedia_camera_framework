@@ -31,7 +31,6 @@ public:
 
 public:
     int32_t HandleCapture(MessageParcel& data);
-    int32_t HandleConfirmCapture(MessageParcel& data);
     int32_t HandleSetCallback(MessageParcel& data);
     int32_t HandleSetThumbnail(MessageParcel& data);
     int32_t HandleSetRawPhotoInfo(MessageParcel& data);

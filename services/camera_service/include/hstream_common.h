@@ -31,7 +31,6 @@
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
 #include "v1_2/istream_operator.h"
-#include "v1_3/istream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {

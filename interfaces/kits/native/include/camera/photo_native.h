@@ -31,7 +31,6 @@
  * @brief Declare the camera photo concepts.
  *
  * @library libohcamera.so
- * @kit CameraKit
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 12
  * @version 1.0

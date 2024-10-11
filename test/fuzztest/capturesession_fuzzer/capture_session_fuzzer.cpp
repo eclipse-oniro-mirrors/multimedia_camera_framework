@@ -300,8 +300,8 @@ void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size
     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
+    std::string burstKey;
     int64_t timestamp = data.ReadInt64();
-    std::string burstKey = data.ReadString();
     session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 
@@ -325,6 +325,7 @@ void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->ProcessAutoExposureUpdates(result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessAREngineUpdates(data.ReadUint64(), result);
+    session->ProcessFaceRecUpdates(data.ReadUint64(), result);
     session->ProcessSnapshotDurationUpdates(data.ReadUint64(), result);
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);

@@ -30,4 +30,4 @@ public:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_CALLBACK_H
+#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_CALLBACK_H

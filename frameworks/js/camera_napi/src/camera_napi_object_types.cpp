@@ -109,16 +109,12 @@ CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()
 CameraNapiObject& CameraNapiObjMetadataObject::GetCameraNapiObject()
 {
     auto type = Hold<int32_t>(CameraNapiMetadataUtils::MapMetadataObjSupportedTypesEnum(metadataObject_.GetType()));
-    auto timestamp = Hold<int32_t>(metadataObject_.GetTimestamp());
+    auto timestamp = Hold<double>(metadataObject_.GetTimestamp());
     auto boundingBox = Hold<CameraNapiBoundingBox>(*Hold<Rect>(metadataObject_.GetBoundingBox()));
-    auto objectId = Hold<int32_t>(metadataObject_.GetObjectId());
-    auto confidence = Hold<int32_t>(metadataObject_.GetConfidence());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "type", type },
         { "timestamp", timestamp },
-        { "boundingBox", &boundingBox->GetCameraNapiObject() },
-        { "objectId", objectId },
-        { "confidence", confidence }});
+        { "boundingBox", &boundingBox->GetCameraNapiObject() } });
 }
 
 CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()

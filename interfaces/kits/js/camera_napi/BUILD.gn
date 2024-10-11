@@ -58,7 +58,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/aperture_video_session_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/fluorescence_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/high_res_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/light_painting_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/macro_photo_session_napi.cpp",
@@ -165,12 +164,13 @@ if (gen_camera_picker) {
       "ability_runtime:ability_context_native",  # ability_context.h
       "ability_runtime:ability_manager",  # pixel_map.h
       "ability_runtime:napi_base_context",  # napi_base_context.h
-      "ability_runtime:ui_extension",  # ui_extension_context.h
+      "ability_runtime:ui_extension", # ui_extension_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
+      "window_manager:libwm", # windows.h
     ]
     sanitize = {
       cfi = true

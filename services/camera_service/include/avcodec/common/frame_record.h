@@ -89,9 +89,9 @@ public:
         return encodedBuffer;
     }
 
-    inline void CacheBuffer(OH_AVBuffer* buffer)
+    inline void CacheIDRBuffer(OH_AVBuffer* buffer)
     {
-        MEDIA_DEBUG_LOG("cacheBuffer start");
+        MEDIA_DEBUG_LOG("cacheIDRBuffer start");
         encodedBuffer = buffer;
     }
 
@@ -129,16 +129,6 @@ public:
     {
         auto it = transformTypeToValue.find(transformType_);
         return it == transformTypeToValue.end() ? 0 : it->second;
-    }
-
-    inline void SetIDRProperty(bool isIDRFrame)
-    {
-        isIDRFrame_ = isIDRFrame;
-    }
-
-    inline bool IsIDRFrame()
-    {
-        return isIDRFrame_;
     }
 
     struct HashFunction {
@@ -181,7 +171,6 @@ private:
     GraphicTransformType transformType_;
     std::mutex mutex_;
     std::condition_variable canReleased_;
-    bool isIDRFrame_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

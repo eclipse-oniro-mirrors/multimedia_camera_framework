@@ -226,10 +226,8 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     switch (session->GetMode()) {
         case SceneMode::HIGH_RES_PHOTO: {
             auto inputDevice = session->GetInputDevice();
-            if (inputDevice == nullptr) {
-                MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
-                return CAMERA_OK;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CAMERA_OK,
+                "HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
             std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
             camera_metadata_item_t meta;
@@ -341,7 +339,7 @@ PhotoOutput::~PhotoOutput()
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
 {
-    MEDIA_INFO_LOG("Enter Into SetNativeSurface: %{public}d", isNativeSurface);
+    MEDIA_INFO_LOG("Enter Into SetNativeSurface %{public}d", isNativeSurface);
     isNativeSurface_ = isNativeSurface;
 }
 
@@ -356,14 +354,22 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
     auto session = GetSession();
     if (beforeStatus != afterStatus && session) {
         if (session->IsSessionStarted()) {
-            MEDIA_INFO_LOG("session restart when callback status changed");
+            FocusMode focusMode = session->GetFocusMode();
+            MEDIA_INFO_LOG("session restart when callback status changed %d", focusMode);
             session->BeginConfig();
             session->CommitConfig();
+            session->LockForControl();
+            session->SetFocusMode(focusMode);
+            session->UnlockForControl();
             session->Start();
         } else if (session->IsSessionCommited()) {
-            MEDIA_INFO_LOG("session recommit when callback status changed");
+            FocusMode focusMode = session->GetFocusMode();
+            MEDIA_INFO_LOG("session recommit when callback status changed %d", focusMode);
             session->BeginConfig();
             session->CommitConfig();
+            session->LockForControl();
+            session->SetFocusMode(focusMode);
+            session->UnlockForControl();
         }
     }
 }
@@ -816,11 +822,10 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PhotoOutput Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
-    imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
-        result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+        result = (ImageRotation)((imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);

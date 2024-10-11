@@ -60,12 +60,9 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
         "IsSlowMotionDetectionSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, false,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
         "IsSlowMotionDetectionSupported camera device is null");
-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
-        "IsSlowMotionDetectionSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
@@ -94,7 +91,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
         "SetSlowMotionDetectionArea Session is not Commited");
     this->LockForControl();
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
-        "SetSlowMotionDetectionArea Session is not Commited");
+        "SetSlowMotionDetectionArea changedMetadata is null");
     int32_t retCode = EnableMotionDetection(true);
     CHECK_ERROR_RETURN_LOG(retCode != CameraErrorCode::SUCCESS, "EnableMotionDetection call failed");
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",

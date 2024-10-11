@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,6 +67,23 @@ bool BaseTaskGroup::SubmitTask(std::any param)
     que_.Push(std::move(param));
     DispatchTaskUnlocked();
     return true;
+}
+
+void BaseTaskGroup::CancelAllTasks()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_DEBUG_LOG("Cancel all tasks for task group (%s), handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
+    que_.Clear();
+    if (serial_) {
+        inflight_ = false;
+    }
+}
+
+size_t BaseTaskGroup::GetTaskCount()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_DEBUG_LOG("Get task count for task group (%s), handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
+    return que_.Size();
 }
 
 std::function<void()> BaseTaskGroup::GetTaskUnlocked()

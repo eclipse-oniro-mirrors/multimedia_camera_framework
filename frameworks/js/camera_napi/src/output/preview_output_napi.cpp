@@ -884,6 +884,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
     return result;
 }
 
+
 napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface enter");

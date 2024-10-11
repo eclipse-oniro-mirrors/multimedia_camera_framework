@@ -33,11 +33,6 @@ public:
 
     int32_t Release() override;
 
-    int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override;
-
-    int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) override;
-
-    int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) override;
 private:
     static inline BrokerDelegator<HStreamMetadataProxy> delegator_;
 };

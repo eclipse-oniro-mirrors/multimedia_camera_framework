@@ -15,7 +15,6 @@
 
 #include "camera_napi_worker_queue_keeper.h"
 
-#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
@@ -28,8 +27,7 @@
 #include "camera_napi_utils.h"
 namespace OHOS {
 namespace CameraStandard {
-constexpr uint64_t WORKER_TIMEOUT = 2000L;
-constexpr int32_t WORKER_TASK_WAIT_COUNT_MAX = 1;
+constexpr uint64_t WORKER_TIMEOUT = 3000L;
 static std::mutex g_WorkerQueueKeeperMutex;
 static std::shared_ptr<CameraNapiWorkerQueueKeeper> g_WorkerQueueKeeper = nullptr;
 
@@ -37,7 +35,6 @@ void CameraNapiWorkerQueueKeeper::WorkerQueueTasksResetCreateTimeNoLock(NapiWork
 {
     for (auto& task : workerQueueTasks_) {
         task->createTimePoint = timePoint;
-        task->waitCount = 0;
     }
 }
 
@@ -66,42 +63,34 @@ std::shared_ptr<NapiWorkerQueueTask> CameraNapiWorkerQueueKeeper::AcquireWorkerQ
 bool CameraNapiWorkerQueueKeeper::WorkerLockCondition(std::shared_ptr<NapiWorkerQueueTask> queueTask, bool& isError)
 {
     std::lock_guard<std::mutex> lock(workerQueueTaskMutex_);
-    if (std::find(workerQueueTasks_.begin(), workerQueueTasks_.end(), queueTask) == workerQueueTasks_.end()) {
-        MEDIA_ERR_LOG("CameraNapiWorkerQueueKeeper::WorkerLockCondition current task %{public}s not in queue",
-            queueTask->taskName.c_str());
-        isError = true;
-        return true;
-    }
     auto firstTask = workerQueueTasks_.front();
-    if (firstTask == queueTask) {
+    if (firstTask != queueTask) {
+        if (firstTask->queueStatus == RUNNING) {
+            return false;
+        }
+        auto now = std::chrono::steady_clock::now();
+        auto diffTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - firstTask->createTimePoint);
+        if (diffTime < std::chrono::milliseconds(WORKER_TIMEOUT)) {
+            return false;
+        }
+
+        workerQueueTasks_.pop_front();
+        if (workerQueueTasks_.empty()) {
+            isError = true;
+            return true;
+        }
+        auto frontTask = workerQueueTasks_.front();
+        if (frontTask == queueTask) {
+            return true;
+        }
+        MEDIA_ERR_LOG(
+            "CameraNapiWorkerQueueKeeper::WorkerLockCondition wait task timeout,%{public}s waitTime:%{public}lld",
+            frontTask->taskName.c_str(), diffTime.count());
+        WorkerQueueTasksResetCreateTimeNoLock(now);
+        workerCond_.notify_all();
         return true;
     }
-    if (firstTask->queueStatus == RUNNING) {
-        return false;
-    }
-    auto now = std::chrono::steady_clock::now();
-    auto diffTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - firstTask->createTimePoint);
-    if (diffTime < std::chrono::milliseconds(WORKER_TIMEOUT)) {
-        return false;
-    }
-    if (queueTask->waitCount < WORKER_TASK_WAIT_COUNT_MAX) {
-        queueTask->waitCount++;
-        return false;
-    }
-    MEDIA_ERR_LOG("CameraNapiWorkerQueueKeeper::WorkerLockCondition current task %{public}s wait queue task %{public}s "
-                  "timeout, waitTime:%{public}lld",
-        queueTask->taskName.c_str(), firstTask->taskName.c_str(), diffTime.count());
-    workerQueueTasks_.pop_front();
-    auto frontTask = workerQueueTasks_.front();
-    if (frontTask == queueTask) {
-        return true;
-    }
-    MEDIA_INFO_LOG("CameraNapiWorkerQueueKeeper::WorkerLockCondition current task not equal front task,%{public}s "
-                   "vs %{public}s, continue wait.",
-        queueTask->taskName.c_str(), frontTask->taskName.c_str());
-    WorkerQueueTasksResetCreateTimeNoLock(now);
-    workerCond_.notify_all();
-    return false;
+    return true;
 }
 
 bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
@@ -124,9 +113,7 @@ bool CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask(
             [this, &queueTask, &isError]() { return WorkerLockCondition(queueTask, isError); });
     }
     if (isError) {
-        MEDIA_ERR_LOG("CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask wait task %{public}s occur error",
-            queueTask->taskName.c_str());
-        workerCond_.notify_all();
+        MEDIA_ERR_LOG("CameraNapiWorkerQueueKeeper::ConsumeWorkerQueueTask wait task occur error");
         return false;
     }
     queueTask->queueStatus = RUNNING;

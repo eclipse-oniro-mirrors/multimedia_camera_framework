@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,7 @@
 #define DP_WARNING_LOG(fmt, ...) DECORATOR_HILOG(HILOG_WARN, fmt, ##__VA_ARGS__)
 #define DP_INFO_LOG(fmt, ...) DECORATOR_HILOG(HILOG_INFO, fmt, ##__VA_ARGS__)
 #define DP_FATAL_LOG(fmt, ...) DECORATOR_HILOG(HILOG_FATAL, fmt, ##__VA_ARGS__)
+#define CAMERA_DP_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
 
 #define DP_OK 0
 #define DP_ERR (-1)
@@ -77,4 +78,10 @@
         }                                                   \
     } while (0)
 
+#define DP_CHECK_ERROR_RETURN_RET(cond, ret)                \
+    do {                                                    \
+        if (cond) {                                      \
+            return ret;                                     \
+        }                                                   \
+    } while (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

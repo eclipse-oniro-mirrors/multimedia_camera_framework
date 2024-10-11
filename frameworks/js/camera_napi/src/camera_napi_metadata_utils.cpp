@@ -25,21 +25,7 @@ int32_t MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjTyp
 {
     switch (nativeMetadataObjType) {
         case MetadataObjectType::FACE:
-            return JSMetadataObjectType::FACE_DETECTION;
-        case MetadataObjectType::HUMAN_BODY:
-            return JSMetadataObjectType::HUMAN_BODY;
-        case MetadataObjectType::CAT_FACE:
-            return JSMetadataObjectType::CAT_FACE;
-        case MetadataObjectType::CAT_BODY:
-            return JSMetadataObjectType::CAT_BODY;
-        case MetadataObjectType::DOG_FACE:
-            return JSMetadataObjectType::DOG_FACE;
-        case MetadataObjectType::DOG_BODY:
-            return JSMetadataObjectType::DOG_BODY;
-        case MetadataObjectType::SALIENT_DETECTION:
-            return JSMetadataObjectType::SALIENT_DETECTION;
-        case MetadataObjectType::BAR_CODE_DETECTION:
-            return JSMetadataObjectType::BAR_CODE_DETECTION;
+            return JSMetadataObjectType::FACE;
         default:
             // do nothing
             break;
@@ -50,22 +36,8 @@ int32_t MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjTyp
 MetadataObjectType MapMetadataObjSupportedTypesEnumFromJS(int32_t jsMetadataObjType)
 {
     switch (jsMetadataObjType) {
-        case JSMetadataObjectType::FACE_DETECTION:
+        case JSMetadataObjectType::FACE:
             return MetadataObjectType::FACE;
-        case JSMetadataObjectType::HUMAN_BODY:
-            return MetadataObjectType::HUMAN_BODY;
-        case JSMetadataObjectType::CAT_FACE:
-            return MetadataObjectType::CAT_FACE;
-        case JSMetadataObjectType::CAT_BODY:
-            return MetadataObjectType::CAT_BODY;
-        case JSMetadataObjectType::DOG_FACE:
-            return MetadataObjectType::DOG_FACE;
-        case JSMetadataObjectType::DOG_BODY:
-            return MetadataObjectType::DOG_BODY;
-        case JSMetadataObjectType::SALIENT_DETECTION:
-            return MetadataObjectType::SALIENT_DETECTION;
-        case JSMetadataObjectType::BAR_CODE_DETECTION:
-            return MetadataObjectType::BAR_CODE_DETECTION;
         default:
             // do nothing
             break;

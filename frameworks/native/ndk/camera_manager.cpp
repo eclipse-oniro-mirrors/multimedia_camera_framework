@@ -119,10 +119,10 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, camera is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraOutputCapability is null!");
-    CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument,camera is null!");
 
     return cameraManager->GetSupportedCameraOutputCapability(camera, cameraOutputCapability);
 }
@@ -386,7 +386,6 @@ Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager, Ca
 
     return cameraManager->SetTorchMode(torchMode);
 }
-
 #ifdef __cplusplus
 }
 #endif

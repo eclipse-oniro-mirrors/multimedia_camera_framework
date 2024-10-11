@@ -33,7 +33,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${multimedia_media_library_path}/interfaces/kits/c",
+    "${multimedia_media_library_path}/interfaces",
   ]
 
   sources = [
@@ -58,10 +58,8 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_surface:surface",
@@ -77,7 +75,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]
@@ -119,10 +117,8 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${multimedia_media_library_path}/interfaces/kits/c",
+    "${multimedia_media_library_path}/interfaces",
     "${multimedia_image_framework_path}/interfaces/kits/native/include/image",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
-    "${multimedia_camera_framework_path}/interfaces",
   ]
 
   sources = [
@@ -146,10 +142,8 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_surface:surface",
@@ -158,17 +152,16 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
-    "image_framework:ohimage",
     "ipc:ipc_core",
+    "napi:ace_napi",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
     "media_library:media_library",
     "media_library:media_library_manager",
-    "napi:ace_napi",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
     "sensor:sensor_interface_native",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]
@@ -269,7 +262,7 @@ ohos_unittest("camera_framework_deferred_unittest") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]

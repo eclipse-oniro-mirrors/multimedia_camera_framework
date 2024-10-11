@@ -31,4 +31,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_STUB_H
+#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_CALLBACK_STUB_H

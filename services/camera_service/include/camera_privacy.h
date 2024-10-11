@@ -54,11 +54,11 @@ public:
     explicit CameraPrivacy(wptr<HCameraDevice> device, uint32_t callingTokenId, int32_t pid)
         : pid_(pid), callerToken_(callingTokenId), cameraDevice_(device) {}
     ~CameraPrivacy();
-    bool RegisterPermissionCallback();
+    void RegisterPermissionCallback();
     void UnregisterPermissionCallback();
-    bool StartUsingPermissionCallback();
+    void StartUsingPermissionCallback();
     void StopUsingPermissionCallback();
-    bool AddCameraPermissionUsedRecord();
+    void AddCameraPermissionUsedRecord();
     bool IsAllowUsingCamera();
 
 private:
