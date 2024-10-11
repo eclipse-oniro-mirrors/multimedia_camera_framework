@@ -14,19 +14,17 @@
  */
 
 #include "hcamera_host_manager.h"
-#include <memory>
 
+#include "camera_report_uitls.h"
+#include "camera_util.h"
+#include "display_manager.h"
 #include "hcamera_device.h"
 #include "icamera_service_callback.h"
-#include "v1_2/icamera_host_callback.h"
-#include "metadata_utils.h"
-#include "camera_util.h"
-#include "hdf_device_class.h"
+#include "ipc_skeleton.h"
 #include "iproxy_broker.h"
-#include "iservmgr_hdi.h"
-#include "camera_log.h"
-#include "display_manager.h"
-#include "camera_report_uitls.h"
+#include "metadata_utils.h"
+#include "os_account_manager.h"
+#include "v1_2/icamera_host_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -93,6 +91,7 @@ public:
     bool IsNeedRestore(int32_t opMode,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
+    bool CheckUserHasChanged(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
 
     int32_t GetCameraResourceCost(const std::string& cameraId,
         OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
@@ -369,6 +368,7 @@ void HCameraHostManager::CameraHostInfo::UpdateMuteSetting(std::shared_ptr<OHOS:
 
 int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode)
 {
+    CHECK_ERROR_RETURN_RET(CheckUserHasChanged(cameraRestoreParam->GetSetting()), CAMERA_UNKNOWN_ERROR);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostProxy_ == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
     CHECK_ERROR_RETURN_RET_LOG(GetCameraHostVersion() < GetVersionId(1, 1), CAMERA_UNKNOWN_ERROR,
@@ -478,6 +478,22 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
     }
+}
+
+bool HCameraHostManager::CameraHostInfo::CheckUserHasChanged(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
+{
+    CHECK_ERROR_RETURN_RET_LOG(cameraSettings == nullptr, false, "camera settings is nullptr.");
+    int32_t userId;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(cameraSettings->get(), OHOS_CAMERA_USER_ID, &item);
+    if (ret == CAM_META_SUCCESS && userId != item.data.i32[0]) {
+        MEDIA_INFO_LOG("userId changed from %{public}d to %{public}d", item.data.i32[0], userId);
+        return true;
+    }
+    return false;
 }
 
 int32_t HCameraHostManager::CameraHostInfo::GetCameraResourceCost(const std::string& cameraId,
