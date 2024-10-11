@@ -1697,7 +1697,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    if (isSetMotionPhoto_ && taskManager_) {
+    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
         taskManager_->SetVideoFd(timestamp, photoAssetProxy);
     } else {
