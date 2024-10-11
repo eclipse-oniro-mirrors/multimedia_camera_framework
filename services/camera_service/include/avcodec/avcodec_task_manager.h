@@ -51,7 +51,8 @@ public:
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
     void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation);
-    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation);
+    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
+        vector<sptr<FrameRecord>> &choosedBuffer);
     void SubmitTask(function<void()> task);
     void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy);
     void Stop();
@@ -60,6 +61,8 @@ public:
     shared_ptr<TaskManager>& GetEncoderManager();
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
+    void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
+        int64_t shutterTime);
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
