@@ -129,7 +129,7 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
     bool status = false;
     camera_metadata_item_t item;
 
-    MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
+    MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location_->latitude, location_->longitude, location_->altitude);
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_GPS_COORDINATES, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -147,7 +147,7 @@ void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
 {
     std::lock_guard<std::mutex> lock(locationMutex_);
     location = location_;
-    MEDIA_DEBUG_LOG("PhotoCaptureSetting::GetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
+    MEDIA_DEBUG_LOG("PhotoCaptureSetting::GetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location->latitude, location->longitude, location->altitude);
 }
 
