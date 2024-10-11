@@ -16,7 +16,6 @@
 #include "sample_callback.h"
 #include "sample_info.h"
 #include "camera_log.h"
-#include "native_avcodec_videoencoder.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -88,21 +87,6 @@ void SampleCallback::OnOutputBufferAvailable(OH_AVCodec *codec, uint32_t index, 
     std::unique_lock<std::mutex> lock(codecAudioData->outputMutex_);
     codecAudioData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecAudioData->outputCond_.notify_all();
-}
-
-void SampleCallback::OnEncInputParam(OH_AVCodec *codec, uint32_t index, OH_AVFormat *parameter, void *userData)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnEncInputParam");
-    CodecUserData *codecUserData = static_cast<CodecUserData *>(userData);
-    CHECK_AND_RETURN_LOG(codecUserData != nullptr, "failed to new CodecUserData.");
-    codecUserData->keyFrameInterval_ = (codecUserData->keyFrameInterval_ == 0
-        ? KEY_FRAME_INTERVAL : codecUserData->keyFrameInterval_);
-    if (codecUserData->keyFrameInterval_ % KEY_FRAME_INTERVAL == 0) {
-        OH_AVFormat_SetIntValue(parameter, OH_MD_KEY_REQUEST_I_FRAME, true);
-    }
-    codecUserData->keyFrameInterval_--;
-    OH_VideoEncoder_PushInputParameter(codec, index);
 }
 } // CameraStandard
 } // OHOS

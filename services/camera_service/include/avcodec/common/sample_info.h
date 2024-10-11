@@ -155,8 +155,6 @@ public:
     std::mutex outputMutex_;
     std::condition_variable outputCond_;
     std::queue<sptr<CodecAVBufferInfo>> outputBufferInfoQueue_;
-    
-    uint32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
 };
 } // CameraStandard
 } // OHOS

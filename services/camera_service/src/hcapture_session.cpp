@@ -719,7 +719,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     MEDIA_INFO_LOG("HCameraService::ExpandMovingPhotoRepeatStream capture stream size = %{public}zu",
         captureStreams.size());
-    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_HEVC;
+    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_AVC;
     for (auto &stream : captureStreams) {
         int32_t type = static_cast<HStreamCapture*>(stream.GetRefPtr())->GetMovingPhotoVideoCodecType();
         videoCodecType = static_cast<VideoCodecType>(type);

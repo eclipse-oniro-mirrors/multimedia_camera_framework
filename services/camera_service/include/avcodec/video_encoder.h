@@ -45,10 +45,9 @@ public:
 
 private:
     int32_t SetCallback(CodecUserData *codecUserData);
-    int32_t SetParameterCallback(CodecUserData *codecUserData);
     int32_t Configure();
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
-    bool EnqueueBuffer(sptr<FrameRecord> frameRecord);
+    bool EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
     OH_AVCodec *encoder_ = nullptr;
@@ -58,7 +57,8 @@ private:
     int32_t rotation_ = 0;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
-    VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_HEVC;
+    int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
+    VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
     int32_t bitrate_ = 0;
     bool successFrame_ = false;
 };

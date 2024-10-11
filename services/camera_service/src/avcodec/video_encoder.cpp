@@ -59,11 +59,8 @@ int32_t VideoEncoder::Config()
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     context_ = new CodecUserData;
-    // SetParameterCallback for video encoder
-    int32_t ret = SetParameterCallback(context_);
-    CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Set parameter callback failed");
     // Configure video encoder
-    ret = Configure();
+    int32_t ret = Configure();
     CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Configure failed");
     // SetCallback for video encoder
     ret = SetCallback(context_);
@@ -206,10 +203,17 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Start();
 }
 
-bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
+bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval)
 {
     if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
+    }
+    if (keyFrameInterval == KEY_FRAME_INTERVAL) {
+        std::lock_guard<std::mutex> lock(encoderMutex_);
+        OH_AVFormat *format = OH_AVFormat_Create();
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
+        OH_VideoEncoder_SetParameter(encoder_, format);
+        OH_AVFormat_Destroy(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     if (buffer == nullptr) {
@@ -241,9 +245,11 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    if (!EnqueueBuffer(frameRecord)) {
+    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
+    if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
+    keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
@@ -262,11 +268,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        if (context_->outputFrameCount_ == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
-            int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
-            CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
-            continue;
-        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(IDRBuffer);
@@ -328,14 +330,6 @@ int32_t VideoEncoder::SetCallback(CodecUserData *codecUserData)
         {SampleCallback::OnCodecError, SampleCallback::OnCodecFormatChange,
          SampleCallback::OnNeedInputBuffer, SampleCallback::OnNewOutputBuffer}, codecUserData);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
-    return 0;
-}
-
-int32_t VideoEncoder::SetParameterCallback(CodecUserData *codecUserData)
-{
-    int32_t ret = AV_ERR_OK;
-    ret = OH_VideoEncoder_RegisterParameterCallback(encoder_, SampleCallback::OnEncInputParam, codecUserData);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set parameter callback failed, ret: %{public}d", ret);
     return 0;
 }
 
