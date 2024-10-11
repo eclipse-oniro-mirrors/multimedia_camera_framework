@@ -171,7 +171,6 @@ private:
     std::atomic<bool> isNeededClear_ { false };
     std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
-    std::mutex drainImageLock_;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
