@@ -48,7 +48,7 @@ private:
     int32_t SetParameterCallback(CodecUserData *codecUserData);
     int32_t Configure();
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
-    bool EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval);
+    bool EnqueueBuffer(sptr<FrameRecord> frameRecord);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
     OH_AVCodec *encoder_ = nullptr;
