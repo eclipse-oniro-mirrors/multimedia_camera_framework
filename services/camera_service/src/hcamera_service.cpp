@@ -1771,6 +1771,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t enableValue = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &enableValue, count);
+    }
+
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
     return defaultSettings;
