@@ -624,14 +624,14 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr || OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay() == nullptr) {
+    if (producer_ == nullptr || OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay() == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
     int mOritation = disPlayRotation;
     if (enableStreamRotate_) {
         if (mOritation == -1) {
-            auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+            auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
             CHECK_ERROR_RETURN_LOG(producer_ == nullptr || display == nullptr,
                 "HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
             mOritation = static_cast<int>(display->GetRotation());

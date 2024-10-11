@@ -427,7 +427,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     if (display == nullptr) {
         MEDIA_ERR_LOG("IsVerticalDevice GetDefaultDisplay failed");
         return isVerticalDevice;

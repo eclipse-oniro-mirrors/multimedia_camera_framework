@@ -1168,7 +1168,7 @@ bool CameraManager::GetIsFoldable()
 
 FoldStatus CameraManager::GetFoldStatus()
 {
-    return (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
 }
 
 void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
