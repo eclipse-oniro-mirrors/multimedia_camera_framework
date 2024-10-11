@@ -1569,7 +1569,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
         DECLARE_NAPI_FUNCTION("getPhotoRotation", GetPhotoRotation),
         DECLARE_NAPI_FUNCTION("isAutoCloudImageEnhancementSupported", IsAutoCloudImageEnhancementSupported),
-        DECLARE_NAPI_FUNCTION("enableAutoCloudImageEnhancement", EnableAutoCloudImageEnhancement)
+        DECLARE_NAPI_FUNCTION("enableAutoCloudImageEnhancement", EnableAutoCloudImageEnhancement),
+        DECLARE_NAPI_FUNCTION("isDepthDataDeliverySupported", IsDepthDataDeliverySupported),
+        DECLARE_NAPI_FUNCTION("enableDepthDataDelivery", EnableDepthDataDelivery)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2849,6 +2851,71 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoCloudImageEnhancement(isEnable);
     if (CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement fail %{public}d", retCode);
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsDepthDataDeliverySupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsDepthDataDeliverySupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("IsDepthDataDeliverySupported photoOutputNapi is null!");
+        return result;
+    }
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (session != nullptr) {
+        bool isSupported = session->IsDepthDataDeliverySupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        napi_get_boolean(env, false, &result);
+        MEDIA_ERR_LOG("IsDepthDataDeliverySupported call Failed!");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableDepthDataDelivery(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("EnableDepthDataDelivery is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("EnableDepthDataDelivery photoOutputNapi is null!");
+        return result;
+    }
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (session != nullptr) {
+        bool isEnableDepthDataDelivery;
+        napi_get_value_bool(env, argv[PARAM0], &isEnableDepthDataDelivery);
+        session->LockForControl();
+        int32_t retCode = session->EnableDepthDataDelivery(isEnableDepthDataDelivery);
+        session->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
     }
     return result;
 }

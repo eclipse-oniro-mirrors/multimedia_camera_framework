@@ -1223,7 +1223,7 @@ public:
      */
     bool IsSessionConfiged();
 
-     /**
+    /**
      * @brief Get whether or not start session.
      *
      * @return Returns whether or not start session.
@@ -1331,7 +1331,7 @@ public:
      */
     void CreateCameraAbilityContainer();
 
-     /**
+    /**
      * @brief Get whether effectSuggestion Supported.
      *
      * @return True if supported false otherwise.
@@ -1428,6 +1428,16 @@ public:
      * @return Error code.
      */
     int32_t SetPhysicalAperture(float physicalAperture);
+
+    /**
+     * @brief Check the depth data delivery capability is supported or not.
+     */
+    bool IsDepthDataDeliverySupported();
+
+    /**
+     * @brief Enable the depth data delivery.
+     */
+    int32_t EnableDepthDataDelivery(bool enabled);
 
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
@@ -1658,6 +1668,7 @@ protected:
     std::atomic<bool> isRawImageDelivery_ { false };
     bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
+    std::atomic<bool> isDepthDataDelivery_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
