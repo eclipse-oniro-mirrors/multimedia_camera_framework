@@ -19,6 +19,7 @@ group("camera_fuzz_test") {
     "fuzztest/camerainput_fuzzer:fuzztest",
     "fuzztest/cameralistenerstub_fuzzer:fuzztest",
     "fuzztest/capturesession_fuzzer:fuzztest",
+    "fuzztest/cloudenhancesession_fuzzer:fuzztest",
     "fuzztest/deferredprocessingstub_fuzzer:fuzztest",
     "fuzztest/photooutput_fuzzer:fuzztest",
     "fuzztest/streamcapture_fuzzer:fuzztest",
