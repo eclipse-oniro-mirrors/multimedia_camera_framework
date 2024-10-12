@@ -222,6 +222,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
             OH_AVBuffer_GetBufferAttr(buffer, &attr);
             attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+            MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRId64, attr.pts);
             OH_AVBuffer_SetBufferAttr(buffer, &attr);
             muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
             sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
