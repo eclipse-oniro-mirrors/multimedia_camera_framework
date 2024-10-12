@@ -27,13 +27,14 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::CameraStandard::DeferredProcessing;
-const std::u16string FORMMGR_INTERFACE_TOKEN = u"IDeferredPhotoProcessingSession";
+const std::u16string FORMMGR_INTERFACE_PHOTO_TOKEN = u"IDeferredPhotoProcessingSession";
+const std::u16string FORMMGR_INTERFACE_VIDEO_TOKEN = u"IDeferredVideoProcessingSession";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
-const int USERID = 1;
+const int32_t USERID = 1;
 bool g_isDeferredProcessingPermission = false;
-DeferredPhotoProcessingSession *fuzz = nullptr;
+DeferredPhotoProcessingSession *photoFuzz = nullptr;
+DeferredVideoProcessingSession *videoFuzz = nullptr;
 
 void DeferredProcessingFuzzTestGetPermission()
 {
@@ -51,7 +52,7 @@ void DeferredProcessingFuzzTestGetPermission()
     }
 }
 
-void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
+void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
@@ -81,7 +82,7 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
     MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_PHOTO_TOKEN);
     CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
         "DeferredProcessingFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
@@ -90,16 +91,69 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
 
     sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz = nullptr;
 
-    if (fuzz == nullptr) {
-        fuzz = new DeferredPhotoProcessingSession(USERID, nullptr, nullptr, IDPSessionCallbackFuzz);
+    if (photoFuzz == nullptr) {
+        photoFuzz = new DeferredPhotoProcessingSession(USERID, nullptr, nullptr, IDPSessionCallbackFuzz);
     }
 
-    if (fuzz != nullptr) {
+    if (photoFuzz != nullptr) {
         const uint32_t maxNum = 1;
         for (uint32_t code = 0; code < maxNum; ++code) {
             data.RewindRead(0);
             reply.RewindWrite(0);
-            fuzz->OnRemoteRequest(code, data, reply, option);
+            photoFuzz->OnRemoteRequest(code, data, reply, option);
+        }
+    }
+}
+
+void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    DeferredProcessingFuzzTestGetPermission();
+
+    int32_t itemCount = 0;
+    int32_t dataSize = 0;
+    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
+    int32_t compensationRange[2] = {rawData[0], rawData[1]};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
+                      sizeof(compensationRange) / sizeof(compensationRange[0]));
+    float focalLength = rawData[0];
+    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
+
+    int32_t sensorOrientation = rawData[0];
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
+
+    int32_t cameraPosition = rawData[0];
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+
+    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+
+    MessageParcel data;
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_VIDEO_TOKEN);
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+        "DeferredProcessingFuzzer: EncodeCameraMetadata Error");
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+
+    sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz = nullptr;
+
+    if (videoFuzz == nullptr) {
+        videoFuzz = new DeferredVideoProcessingSession(USERID);
+    }
+
+    if (videoFuzz != nullptr) {
+        const uint32_t maxNum = 5;
+        for (uint32_t code = 0; code < maxNum; ++code) {
+            data.RewindRead(0);
+            reply.RewindWrite(0);
+            videoFuzz->OnRemoteRequest(MIN_TRANSACTION_ID + code, data, reply, option);
         }
     }
 }
@@ -133,8 +187,9 @@ void TestBufferInfo(uint8_t *rawData, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
-    OHOS::CameraStandard::DeferredProcessingFuzzTest(data, size);
+    OHOS::CameraStandard::DeferredProcessingPhotoFuzzTest(data, size);
     OHOS::CameraStandard::TestBufferInfo(data, size);
+    OHOS::CameraStandard::DeferredProcessingVideoFuzzTest(data, size);
     return 0;
 }
 

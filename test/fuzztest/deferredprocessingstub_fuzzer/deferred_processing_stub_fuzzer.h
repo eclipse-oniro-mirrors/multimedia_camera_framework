@@ -21,11 +21,14 @@
 #include "deferred_photo_processor.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "deferred_photo_processing_session_stub.h"
+#include "deferred_video_processing_session.h"
+#include "ideferred_video_processing_session_callback.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::CameraStandard::DeferredProcessing;
 void DeferredProcessingFuzzTestGetPermission();
-void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size);
+void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size);
+void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size);
 
 class IDeferredPhotoProcessingSessionCallbackFuzz : public IDeferredPhotoProcessingSessionCallback {
 public:
@@ -51,6 +54,24 @@ public:
         return 0;
     }
     inline int32_t OnStateChanged(const StatusCode status) override
+    {
+        return 0;
+    }
+};
+
+class IDeferredVideoProcessingSessionCallbackFuzz : public IDeferredVideoProcessingSessionCallback {
+public:
+    explicit IDeferredVideoProcessingSessionCallbackFuzz() = default;
+    virtual ~IDeferredVideoProcessingSessionCallbackFuzz() = default;
+    inline ErrCode OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor>& fd) override
+    {
+        return 0;
+    }
+    inline ErrCode OnError(const std::string& videoId, int32_t errorCode) override
+    {
+        return 0;
+    }
+    inline ErrCode OnStateChanged(int32_t status) override
     {
         return 0;
     }
