@@ -4056,7 +4056,7 @@ int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
             retCode = EnableMoonCaptureBoost(isEnable);
             break;
         case FEATURE_TRIPOD_DETECTION:
-            retCode = EnableTripodDetection(isEnable);
+            retCode = EnableTripodStabilization(isEnable);
             break;
         case FEATURE_LOW_LIGHT_BOOST:
             retCode = EnableLowLightBoost(isEnable);
@@ -5418,7 +5418,6 @@ int32_t CaptureSession::EnableTripodDetection(bool isEnable)
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_DETECTION, &enableValue, 1)) {
         MEDIA_ERR_LOG("CaptureSession::EnableTripodDetection failed to enable tripod detection");
     }
-    isSetTripodDetectionEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
 }
 
