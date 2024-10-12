@@ -239,7 +239,7 @@ bool IsHapTokenId(uint32_t tokenId)
 
 bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    if (opMode == 0) { // 0 is normal mode
+    if (opMode == 0 || opMode == 1 || opMode == 2) { // 0 is normal mode, 1 is capture mode, 2 is video mode
         MEDIA_INFO_LOG("operationMode:%{public}d", opMode);
         return true;
     }
