@@ -16,7 +16,7 @@
 #ifndef CLOUD_ENHANCE_SESSION_FUZZER_H
 #define CLOUD_ENHANCE_SESSION_FUZZER_H
 
-#include "session/cloud_enhance_session.h"
+#include "session/capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
