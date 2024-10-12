@@ -65,7 +65,7 @@ void VideoJobQueue::Remove(DeferredVideoJobPtr obj)
     auto it = indexMap_.find(obj);
     DP_CHECK_RETURN(it == indexMap_.end());
 
-    int32_t index = it->second;
+    uint32_t index = it->second;
     DeferredVideoJobPtr replace = heap_.back();
     indexMap_.erase(obj);
     heap_.pop_back();
@@ -80,7 +80,7 @@ void VideoJobQueue::Remove(DeferredVideoJobPtr obj)
 
 void VideoJobQueue::Update(DeferredVideoJobPtr obj)
 {
-    int32_t index = indexMap_[obj];
+    uint32_t index = indexMap_[obj];
     HeapInsert(index);
     Heapify(index);
 }
@@ -90,7 +90,7 @@ std::vector<DeferredVideoJobPtr> VideoJobQueue::GetAllElements() const
     return heap_;
 }
 
-void VideoJobQueue::HeapInsert(int32_t index)
+void VideoJobQueue::HeapInsert(uint32_t index)
 {
     while (index > 0 && comp_(heap_[index], heap_[(index - 1) >> 1])) {
         Swap(index, (index - 1) >> 1);
@@ -98,11 +98,11 @@ void VideoJobQueue::HeapInsert(int32_t index)
     }
 }
 
-void VideoJobQueue::Heapify(int32_t index)
+void VideoJobQueue::Heapify(uint32_t index)
 {
-    int32_t left = (index << 1) + 1;
+    uint32_t left = (index << 1) + 1;
     while (left < size_) {
-        int32_t best = (left + 1 < size_ && comp_(heap_[left + 1], heap_[left])) ? left + 1 : left;
+        uint32_t best = (left + 1 < size_ && comp_(heap_[left + 1], heap_[left])) ? left + 1 : left;
         best = comp_(heap_[best], heap_[index]) ? best : index;
         if (best == index) {
             break;
@@ -113,7 +113,7 @@ void VideoJobQueue::Heapify(int32_t index)
     }
 }
 
-void VideoJobQueue::Swap(int32_t x, int32_t y)
+void VideoJobQueue::Swap(uint32_t x, uint32_t y)
 {
     std::swap(heap_[x], heap_[y]);
     DP_CHECK_ERROR_RETURN_LOG(x < DEFAULT || x >= size_ || y < DEFAULT || y >= size_, "swap failed.");
