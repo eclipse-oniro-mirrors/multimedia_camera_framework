@@ -49,9 +49,9 @@ public:
     }
 
 private:
-    void HeapInsert(int32_t index);
-    void Heapify(int32_t index);
-    void Swap(int32_t x, int32_t y);
+    void HeapInsert(uint32_t index);
+    void Heapify(uint32_t index);
+    void Swap(uint32_t x, uint32_t y);
 
     int32_t size_ {0};
     Comparator comp_;
