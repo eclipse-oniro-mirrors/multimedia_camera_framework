@@ -444,7 +444,7 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
     napi_value result;
     uint32_t length = 0;
     napi_value value;
-    int32_t metadataType;
+    int32_t metadataType = 0;
     napi_get_array_length(env, arrayParam, &length);
     napi_valuetype type = napi_undefined;
     const int32_t invalidType = -1;

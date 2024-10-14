@@ -1585,9 +1585,9 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
             auto streamRepeat = CastStream<HStreamRepeat>(stream);
             if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
                 MEDIA_INFO_LOG("restart movingphoto stream.");
-                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
                 // set clear cache flag
+                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 livephotoListener_->SetClearFlag();
                 break;
             }
@@ -1943,9 +1943,9 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
     }
     auto videoCache = videoCache_.promote();
     if (frame->IsIdle() && videoCache) {
-        videoCache_->CacheFrame(frame);
+        videoCache->CacheFrame(frame);
     } else if (frame->IsFinishCache() && videoCache) {
-        videoCache_->OnImageEncoded(frame, true);
+        videoCache->OnImageEncoded(frame, true);
     } else {
         MEDIA_INFO_LOG("videoCache and frame is not useful");
     }
@@ -1955,8 +1955,7 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
 {
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto videoCache = videoCache_.promote();
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
+    if(videoCache) {
         videoCache_->GetFrameCachedResult(
             frameCacheList_,
             [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
@@ -1975,6 +1974,7 @@ void HCaptureSession::StartOnceRecord(uint64_t timestamp, int32_t rotation)
 {
     MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
+    std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation);
