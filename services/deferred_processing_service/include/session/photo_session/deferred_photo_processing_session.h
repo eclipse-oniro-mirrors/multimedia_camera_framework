@@ -21,6 +21,7 @@
 #include "ideferred_photo_processing_session_callback.h"
 #include "task_manager.h"
 #include "deferred_photo_processor.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -59,6 +60,7 @@ private:
     TaskManager* taskManager_;
     sptr<IDeferredPhotoProcessingSessionCallback> callback_;
     std::unordered_map<std::string, std::shared_ptr<PhotoInfo>> imageIds_;
+    std::mutex imageLock_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
