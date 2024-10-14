@@ -21,12 +21,13 @@
 #include "camera_util.h"
 #include "system_ability_definition.h"
 #include "camera_error_code.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes)
+    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
     if (ipcFileDescriptor == nullptr) {
@@ -40,7 +41,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
             deferredPhotoProcSession_->GetCallback()->OnError(imageId, ERROR_IMAGE_PROC_FAILED);
             return 0;
         } else {
-            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes);
+            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
+                isCloudImageEnhanceSupported);
         }
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
@@ -68,6 +70,34 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
         deferredPhotoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged not set!, Discarding callback");
+    }
+    return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+{
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
+        "called, status:%{public}s", imageId.c_str());
+    if (picture != nullptr) {
+        MEDIA_INFO_LOG("picture is not null");
+    }
+    if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
+    } else {
+        MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
+    }
+    return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
+        "called, status:%{public}s", imageId.c_str());
+    if (picture != nullptr) {
+        MEDIA_INFO_LOG("picture is not null");
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, picture);
     }
     return 0;
 }

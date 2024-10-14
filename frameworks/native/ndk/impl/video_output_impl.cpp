@@ -58,6 +58,12 @@ public:
         }
     }
 
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
+    {
+        // empty impl
+        MEDIA_DEBUG_LOG("OnDeferredVideoEnhancementInfo is called!");
+    }
+
 private:
     Camera_VideoOutput* videoOutput_;
     VideoOutput_Callbacks callback_;
@@ -202,8 +208,8 @@ Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Cam
     CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerVideoOutput_->GetVideoRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_VideoOutput::GetVideoRotation camera service fatal error!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;
 }

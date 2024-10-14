@@ -56,13 +56,14 @@ public:
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t Start() override;
-    int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings = false);
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
     int32_t OnFrameStarted();
     int32_t OnFrameEnded(int32_t frameCount);
     int32_t OnFrameError(int32_t errorType);
     int32_t OnSketchStatusChanged(SketchStatus status);
+    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo);
     int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
     int32_t ForkSketchStreamRepeat(
         int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
@@ -78,10 +79,10 @@ public:
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
     int32_t SetPreviewRotation(std::string &deviceClass);
-    void SetMirrorForLivePhoto(bool isEnable, int32_t mode);
+    bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
     void SetStreamTransform(int disPlayRotation = -1);
-    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -93,6 +94,8 @@ private:
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                 std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;

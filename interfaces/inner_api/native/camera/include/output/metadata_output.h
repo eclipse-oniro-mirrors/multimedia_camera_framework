@@ -16,23 +16,42 @@
 #ifndef OHOS_CAMERA_METADATA_OUTPUT_H
 #define OHOS_CAMERA_METADATA_OUTPUT_H
 
+#include <cstdint>
 #include <iostream>
 #include <mutex>
+#include <sys/types.h>
 
 #include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "capture_output.h"
+#include "hstream_metadata_callback_stub.h"
 #include "iconsumer_surface.h"
 #include "istream_metadata.h"
-#include "metadata_type.h"
+
+#include "nocopyable.h"
+#include "singleton.h"
 #include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
+static const std::map<MetadataObjectType, int32_t> mapLengthOfType = {
+    {MetadataObjectType::FACE, 23},
+    {MetadataObjectType::HUMAN_BODY, 9},
+    {MetadataObjectType::CAT_FACE, 18},
+    {MetadataObjectType::CAT_BODY, 9},
+    {MetadataObjectType::DOG_FACE, 18},
+    {MetadataObjectType::DOG_BODY, 9},
+    {MetadataObjectType::SALIENT_DETECTION, 9},
+    {MetadataObjectType::BAR_CODE_DETECTION, 9},
+    {MetadataObjectType::BASE_FACE_DETECTION, 9},
+};
+
 enum MetadataOutputErrorCode : int32_t {
     ERROR_UNKNOWN = 1,
     ERROR_INSUFFICIENT_RESOURCES,
 };
+
+enum Emotion : int32_t { NEUTRAL = 0, SADNESS, SMILE, SUPRISE };
 
 struct Rect {
     double topLeftX;
@@ -41,23 +60,55 @@ struct Rect {
     double height;
 };
 
+struct MetaObjectParms {
+    MetadataObjectType type;
+    int32_t timestamp;
+    Rect box;
+    int32_t objectId;
+    int32_t confidence;
+};
+
+
 class MetadataObject : public RefBase {
 public:
-    MetadataObject(MetadataObjectType type, double timestamp, Rect rect);
+    MetadataObject(const MetadataObjectType type, const int32_t timestamp, const Rect rect, const int32_t objectId,
+                   const int32_t confidence);
+    MetadataObject(const MetaObjectParms& parms);
     virtual ~MetadataObject() = default;
-    MetadataObjectType GetType();
-    double GetTimestamp();
-    Rect GetBoundingBox();
+    inline MetadataObjectType GetType()
+    {
+        return type_;
+    };
+    inline int32_t GetTimestamp()
+    {
+        return timestamp_;
+    };
+    inline Rect GetBoundingBox()
+    {
+        return box_;
+    };
+    inline int32_t GetObjectId()
+    {
+        return objectId_;
+    };
+    inline int32_t GetConfidence()
+    {
+        return confidence_;
+    };
 
 private:
     MetadataObjectType type_;
-    double timestamp_;
+    int32_t timestamp_;
     Rect box_;
+    int32_t objectId_;
+    int32_t confidence_;
 };
 
 class MetadataFaceObject : public MetadataObject {
 public:
-    MetadataFaceObject(double timestamp, Rect rect);
+    MetadataFaceObject(const MetaObjectParms& parms, const Rect leftEyeBoundingBox, const Rect rightEyeBoundingBox,
+                       const Emotion emotion, const int32_t emotionConfidence, const int32_t pitchAngle,
+                       const int32_t yawAngle, const int32_t rollAngle);
     ~MetadataFaceObject() = default;
     inline Rect GetLeftEyeBoundingBox()
     {
@@ -238,19 +289,19 @@ private:
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
     MetadataObjectType type_;
-    int32_t timestamp_ = 0;
-    Rect box_ = {0.0, 0.0, 0.0, 0.0};
-    int32_t objectId_ = 0;
-    int32_t confidence_ = 0;
+    int32_t timestamp_;
+    Rect box_;
+    int32_t objectId_;
+    int32_t confidence_;
     // Parameters of All face metadata
-    Rect leftEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
-    Rect rightEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
+    Rect leftEyeBoundingBox_;
+    Rect rightEyeBoundingBox_;
     // Parameters of human face metadata
-    Emotion emotion_ = NEUTRAL;
-    int32_t emotionConfidence_ = 0;
-    int32_t pitchAngle_ = 0;
-    int32_t yawAngle_ = 0;
-    int32_t rollAngle_ = 0;
+    Emotion emotion_;
+    int32_t emotionConfidence_;
+    int32_t pitchAngle_;
+    int32_t yawAngle_;
+    int32_t rollAngle_;
 
     void ResetParameters();
 };
@@ -271,7 +322,7 @@ public:
 
 class MetadataOutput : public CaptureOutput {
 public:
-    MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata>& streamMetadata);
+    MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata);
     ~MetadataOutput();
 
     /**
@@ -287,6 +338,20 @@ public:
      * @param Vector of MetadataObjectType
      */
     void SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> objectTypes);
+
+    /**
+     * @brief Add the metadata object types
+     *
+     * @param Vector of MetadataObjectType
+     */
+    int32_t AddMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes);
+
+    /**
+     * @brief Remove the metadata object types
+     *
+     * @param Vector of MetadataObjectType
+     */
+    int32_t RemoveMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes);
 
     /**
      * @brief Set the metadata object callback for the metadata output.
@@ -320,23 +385,55 @@ public:
     int32_t Release() override;
     bool reportFaceResults_ = false;
     bool reportLastFaceResults_ = false;
-    void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
-        std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
-    int32_t ProcessMetaObjects(int64_t timestamp, std::vector<sptr<MetadataObject>>& metaObjects,
-        camera_metadata_item_t& metadataItem, common_metadata_header_t* metadata, bool isNeedMirror);
+    void ProcessMetadata(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
+                               std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
+    int32_t ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>> &metaObjects,
+                               const std::vector<camera_metadata_item_t>& metadataItem,
+                               const std::vector<uint32_t>& metadataTypes, bool isNeedMirror);
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
 
     friend class MetadataObjectListener;
+
 private:
     void CameraServerDied(pid_t pid) override;
     void ReleaseSurface();
     sptr<IConsumerSurface> GetSurface();
-
+    bool checkValidType(const std::vector<MetadataObjectType>& typeAdded,
+                        const std::vector<MetadataObjectType>& supportedType);
+    std::vector<int32_t> convert(const std::vector<MetadataObjectType>& typesOfMetadata);
+    void GetMetadataResults(const common_metadata_header_t *metadata,
+        std::vector<camera_metadata_item_t>& metadataResults, std::vector<uint32_t>& metadataTypes);
+    void GenerateObjects(const camera_metadata_item_t& metadataItem, MetadataObjectType type,
+        std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
+    Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
+                        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror);
+    void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr,
+        const camera_metadata_item_t& metadataItem, int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror);
+    void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
+        const camera_metadata_item_t& metadataItem, int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror);
+    void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+    void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+    void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+    
     std::mutex surfaceMutex_;
     sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
+    sptr<IStreamMetadataCallback> cameraMetadataCallback_;
+    std::vector<uint32_t> typesOfMetadata_ = {
+        OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS,
+        OHOS_STATISTICS_DETECT_HUMAN_BODY_INFOS,
+        OHOS_STATISTICS_DETECT_CAT_FACE_INFOS,
+        OHOS_STATISTICS_DETECT_CAT_BODY_INFOS,
+        OHOS_STATISTICS_DETECT_DOG_FACE_INFOS,
+        OHOS_STATISTICS_DETECT_DOG_BODY_INFOS,
+        OHOS_STATISTICS_DETECT_SALIENT_INFOS,
+        OHOS_STATISTICS_DETECT_BAR_CODE_INFOS,
+        OHOS_STATISTICS_DETECT_BASE_FACE_INFO};
 };
 
 class MetadataObjectListener : public IBufferConsumerListener {
@@ -345,9 +442,30 @@ public:
     void OnBufferAvailable() override;
 
 private:
-    int32_t ProcessMetadataBuffer(void* buffer, int64_t timestamp);
+    int32_t ProcessMetadataBuffer(void *buffer, int64_t timestamp);
     wptr<MetadataOutput> metadata_;
 };
-} // namespace CameraStandard
-} // namespace OHOS
-#endif // OHOS_CAMERA_METADATA_OUTPUT_H
+
+class HStreamMetadataCallbackImpl : public HStreamMetadataCallbackStub {
+public:
+    explicit HStreamMetadataCallbackImpl(MetadataOutput *metaDataOutput) : innerMetadataOutput(metaDataOutput) {}
+
+    ~HStreamMetadataCallbackImpl() = default;
+
+    int32_t OnMetadataResult(const int32_t streamId,
+                             const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override;
+
+    inline sptr<MetadataOutput> GetMetadataOutput()
+    {
+        if (innerMetadataOutput == nullptr) {
+            return nullptr;
+        }
+        return innerMetadataOutput.promote();
+    }
+
+private:
+    wptr<MetadataOutput> innerMetadataOutput = nullptr;
+};
+}  // namespace CameraStandard
+}  // namespace OHOS
+#endif  // OHOS_CAMERA_METADATA_OUTPUT_H

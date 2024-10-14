@@ -54,6 +54,9 @@ constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 10;
 constexpr int32_t ROTATION_360 = 360;
 constexpr OH_AVPixelFormat VIDOE_PIXEL_FORMAT = AV_PIXEL_FORMAT_NV21;
 constexpr int32_t IDR_FRAME_COUNT = 2;
+const std::string TIMED_METADATA_TRACK_MIMETYPE = "meta/timed-metadata";
+const std::string TIMED_METADATA_KEY = "com.openharmony.timed_metadata.movingphoto";
+constexpr int32_t KEY_FRAME_INTERVAL = 10;
 
 class CodecAVBufferInfo : public RefBase {
 public:
@@ -99,7 +102,7 @@ public:
         OH_AVBuffer *destBuffer = OH_AVBuffer_Create(destBufferSize);
         auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
         auto sourceIDRAddr = OH_AVBuffer_GetAddr(IDRBuffer);
-        
+
         errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), destBufferSize,
                                   reinterpret_cast<void *>(sourceIDRAddr), IDRAttr.size);
         if (cpyRet != 0) {

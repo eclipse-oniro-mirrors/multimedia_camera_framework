@@ -229,6 +229,7 @@ public:
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
+    std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
 private:
     std::string cameraID_;
     const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#ifndef OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
+#define OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
 
 #include <cstdint>
 #include <string>
 #include "buffer_info.h"
 #include "basic_definitions.h"
-
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -29,10 +31,12 @@ public:
     virtual ~IImageProcessCallbacks() = default;
     virtual void OnProcessDone(const int32_t userId,
         const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) = 0;
+    virtual void OnProcessDoneExt(int userId, const std::string& imageId,
+        std::shared_ptr<BufferInfoExt> bufferInfo) = 0;
     virtual void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) = 0;
     virtual void OnStateChanged(const int32_t userId, DpsStatus statusCode) = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#endif // OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H

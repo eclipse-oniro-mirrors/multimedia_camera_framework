@@ -56,6 +56,9 @@ constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 #endif
 constexpr uint8_t POSITION_FOLD_INNER = 3;
+constexpr uint32_t ROOT_UID = 0;
+constexpr uint32_t FACE_CLIENT_UID = 1088;
+constexpr uint32_t RSS_UID = 1096;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
@@ -146,20 +149,17 @@ void HCameraService::OnStop()
 int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_INVALID_ARG,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG,
         "GetMuteModeFromDataShareHelper NULL");
     std::string value = "";
     auto ret = cameraDataShareHelper_->QueryOnce(PREDICATES_STRING, value);
     MEDIA_INFO_LOG("GetMuteModeFromDataShareHelper Query ret = %{public}d, value = %{public}s", ret, value.c_str());
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_INVALID_ARG, "GetMuteModeFromDataShareHelper QueryOnce fail.");
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_INVALID_ARG, "GetMuteModeFromDataShareHelper QueryOnce fail.");
     value = (value == "0" || value == "1") ? value : "0";
     int32_t muteModeVal = std::stoi(value);
-    if (muteModeVal == 0 || muteModeVal == 1) {
-        muteMode = (muteModeVal == 1) ? true: false;
-    } else {
-        MEDIA_ERR_LOG("GetMuteModeFromDataShareHelper Query MuteMode invald, value = %{public}d", muteModeVal);
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(muteModeVal != 0 && muteModeVal != 1, CAMERA_INVALID_ARG,
+        "GetMuteModeFromDataShareHelper Query MuteMode invald, value = %{public}d", muteModeVal);
+    muteMode = (muteModeVal == 1) ? true: false;
     this->muteModeStored_ = muteMode;
     return CAMERA_OK;
 }
@@ -167,13 +167,13 @@ int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
 int32_t HCameraService::SetMuteModeByDataShareHelper(bool muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_ALLOC_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR,
         "GetMuteModeFromDataShareHelper NULL");
     std::string unMuteModeStr = "0";
     std::string muteModeStr = "1";
     std::string value = muteMode? muteModeStr : unMuteModeStr;
     auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_STRING, value);
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_ALLOC_ERROR, "SetMuteModeByDataShareHelper UpdateOnce fail.");
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, CAMERA_ALLOC_ERROR, "SetMuteModeByDataShareHelper UpdateOnce fail.");
     return CAMERA_OK;
 }
 
@@ -248,9 +248,6 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
-    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER) {
-        return nullptr;
-    }
     if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {
         cameraPosition = POSITION_FOLD_INNER;
     }
@@ -284,7 +281,8 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    if (IPCSkeleton::GetCallingUid() == 0 ||
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (uid == ROOT_UID || uid == FACE_CLIENT_UID || uid == RSS_UID ||
         OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
         vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
         for (const auto& camera: physicalCameras) {
@@ -343,7 +341,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             [camera](const auto& defaultCamera) {
                 return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
                     defaultCamera->position == camera->position &&
-                    defaultCamera->connectionType == camera->connectionType);
+                    defaultCamera->connectionType == camera->connectionType &&
+                    defaultCamera->foldStatus == camera->foldStatus);
             })
         ) {
             MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
@@ -474,6 +473,23 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     return CAMERA_OK;
 }
 
+int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_INFO_LOG("CreateDeferredVideoProcessingSession get uid:%{public}d userId:%{public}d", uid, userId);
+    videoSession =
+        DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(userId,
+        callback);
+    session = videoSession;
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
     int32_t height, sptr<IStreamCapture>& photoOutput)
 {
@@ -576,8 +592,8 @@ int32_t HCameraService::CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>&
     return rc;
 }
 
-int32_t HCameraService::CreateMetadataOutput(
-    const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput)
+int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
+    std::vector<int32_t> metadataTypes, sptr<IStreamMetadata>& metadataOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamMetadata> streamMetadata;
@@ -585,7 +601,7 @@ int32_t HCameraService::CreateMetadataOutput(
 
     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMetadataOutput producer is null");
-    streamMetadata = new (nothrow) HStreamMetadata(producer, format);
+    streamMetadata = new (nothrow) HStreamMetadata(producer, format, metadataTypes);
     CHECK_ERROR_RETURN_RET_LOG(streamMetadata == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
@@ -653,6 +669,7 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
             continue;
         }
         it.second->OnCameraStatusChanged(cameraId, status, bundleName);
+        cameraStatusCallbacks_[cameraId] = CameraStatusCallbacksInfo{status, bundleName};
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
             cameraId.c_str(), status));
     }
@@ -734,10 +751,7 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         curFoldStatus = FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
-    if (foldServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("OnFoldStatusChanged foldServiceCallbacks is empty");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
     for (auto it : foldServiceCallbacks_) {
         if (it.second == nullptr) {
@@ -763,8 +777,22 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
+void HCameraService::ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds)
+{
+    for (const auto& cameraId : cameraIds) {
+        auto it = cameraStatusCallbacks_.find(cameraId);
+        if (it != cameraStatusCallbacks_.end()) {
+            MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = %{public}d, bundleName = %{public}s",
+                cameraId.c_str(), it->second.status, it->second.bundleName.c_str());
+            callback->OnCameraStatusChanged(cameraId, it->second.status, it->second.bundleName);
+        }
+    }
+}
+
 int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback)
 {
+    std::vector<std::string> cameraIds;
+    GetCameraIds(cameraIds);
     lock_guard<mutex> lock(cameraCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetCameraCallback pid = %{public}d", pid);
@@ -776,6 +804,7 @@ int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(make_pair(pid, callback));
+    ExecutePidSetCallback(callback, cameraIds);
     return CAMERA_OK;
 }
 
@@ -815,9 +844,7 @@ int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callba
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
-    if (isFoldable && !isFoldRegister) {
-        RegisterFoldStatusListener();
-    }
+    CHECK_EXECUTE((isFoldable && !isFoldRegister), RegisterFoldStatusListener());
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
@@ -903,7 +930,7 @@ int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
 void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(this);
     CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
     isFoldRegister = true;
 }
@@ -911,7 +938,7 @@ void HCameraService::RegisterFoldStatusListener()
 void HCameraService::UnRegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(this);
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
     isFoldRegister = false;
 }
@@ -1042,11 +1069,8 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "CheckPermission arguments failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
         to_string(isMute), CameraReportUtils::GetCallerInfo());
-    if (g_policyTypeMap_.count(policyType) == 0) {
-        MEDIA_ERR_LOG("MuteCameraPersist Failed, invalid param policyType = %{public}d",
-            static_cast<int32_t>(policyType));
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(g_policyTypeMap_.count(policyType) == 0, CAMERA_INVALID_ARG,
+        "MuteCameraPersist Failed, invalid param policyType = %{public}d", static_cast<int32_t>(policyType));
     bool targetMuteMode = isMute;
     const Security::AccessToken::PolicyType secPolicyType = g_policyTypeMap_[policyType];
     const Security::AccessToken::CallerType secCaller = Security::AccessToken::CallerType::CAMERA;
@@ -1170,9 +1194,7 @@ int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
 int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 {
     MEDIA_INFO_LOG("SetPeerCallback get callback");
-    if (callback == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET(callback == nullptr, CAMERA_INVALID_ARG);
     peerCallback_ = callback;
     MEDIA_INFO_LOG("HCameraService::SetPeerCallback current muteMode:%{public}d", muteModeStored_);
     callback->NotifyMuteCamera(muteModeStored_);
@@ -1224,9 +1246,7 @@ void HCameraService::SetServiceStatus(CameraServiceStatus serviceStatus)
 int32_t HCameraService::IsCameraMuted(bool& muteMode)
 {
     lock_guard<mutex> lock(g_dataShareHelperMutex);
-    if (GetServiceStatus() != CameraServiceStatus::SERVICE_READY) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE);
     muteMode = muteModeStored_;
 
     MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted success. isMuted: %{public}d", muteMode);
@@ -1465,7 +1485,7 @@ void HCameraService::DumpCameraVideoFrameRateRange(
     int ret;
     infoDumper.Title("Video FrameRateRange Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_FPS_RANGES, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         infoDumper.Msg("Available FrameRateRange:");
         for (uint32_t i = 0; i < (item.count - 1); i += FRAME_RATE_RANGE_STEP) {
             infoDumper.Msg("[ " + to_string(item.data.i32[i]) + ", " + to_string(item.data.i32[i + 1]) + " ]");
@@ -1521,9 +1541,7 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int ret = GetCameras(cameraIds, cameraAbilityList);
-    if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
-        return OHOS::UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET((ret != CAMERA_OK) || cameraIds.empty() || cameraAbilityList.empty(), OHOS::UNKNOWN_ERROR);
     CameraInfoDumper infoDumper(fd);
     if (args.empty() || argSets.count(u16string(u"summary"))) {
         DumpCameraSummary(cameraIds, infoDumper);
@@ -1581,18 +1599,10 @@ void HCameraService::UnRegisterSensorCallback()
 void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 {
     MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl prepare execute");
-    if (event == nullptr) {
-        MEDIA_INFO_LOG("SensorEvent is nullptr.");
-        return;
-    }
-    if (event[0].data == nullptr) {
-        MEDIA_INFO_LOG("SensorEvent[0].data is nullptr.");
-        return;
-    }
-    if (event[0].dataLen < sizeof(DropDetectionData)) {
-        MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].dataLen < sizeof(DropDetectionData),
+        "less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
     {
         std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
         g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(
@@ -1611,7 +1621,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         preCameraClient_, cameraId);
     cameraRestoreParam->SetRestoreParamType(restoreParamType);
     cameraRestoreParam->SetStartActiveTime(activeTime);
-    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
     cameraRestoreParam->SetFoldStatus(foldStatus);
     if (captureSession == nullptr || restoreParamType == NO_NEED_RESTORE_PARAM_OHOS) {
         cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
@@ -1724,13 +1734,16 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         int32_t enableValue = item.data.i32[0];
         defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
     }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_MOVING_PHOTO, &item);
     if (ret == CAM_META_SUCCESS) {
         uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &enableValue, count);
+        defaultSettings->addEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, count);
     }
-
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t filterValue = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &filterValue, count);
+    }
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
     return defaultSettings;
@@ -1854,13 +1867,24 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
         if (isProxy) {
             freezedPidList_.insert(pidList.begin(), pidList.end());
-            MEDIA_INFO_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+            MEDIA_DEBUG_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
             return CAMERA_OK;
         } else {
             for (auto pid : pidList) {
                 freezedPidList_.erase(pid);
             }
-            MEDIA_INFO_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+            MEDIA_DEBUG_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(cameraCbMutex_);
+        for (auto pid : pidList) {
+            auto it = delayCbtaskMap.find(pid);
+            if (it != delayCbtaskMap.end()) {
+                it->second();
+                delayCbtaskMap.erase(it);
+            }
         }
     }
     return CAMERA_OK;

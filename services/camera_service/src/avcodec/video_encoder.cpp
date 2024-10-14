@@ -14,22 +14,10 @@
  */
 
 #include "video_encoder.h"
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-#include "frame_record.h"
-#include "surface_type.h"
-#include "external_window.h"
 #include "sample_callback.h"
 #include "camera_log.h"
-#include <chrono>
-#include <fcntl.h>
-#include <cinttypes>
-#include <unistd.h>
-#include <memory>
 #include <sync_fence.h>
-#include "surface_utils.h"
-#include <cinttypes>
+#include "native_window.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +25,16 @@ namespace CameraStandard {
 VideoEncoder::~VideoEncoder()
 {
     MEDIA_INFO_LOG("~VideoEncoder enter");
+    if (codecSurface_) {
+        MEDIA_INFO_LOG("codecSurface refCount %{public}d", codecSurface_->GetSptrRefCount());
+    }
     Release();
+}
+
+VideoEncoder::VideoEncoder(VideoCodecType type) : videoCodecType_(type)
+{
+    rotation_ = 0;
+    MEDIA_INFO_LOG("VideoEncoder enter");
 }
 
 int32_t VideoEncoder::Create(const std::string &codecMime)
@@ -85,13 +82,10 @@ int32_t VideoEncoder::GetSurface()
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     int ret = OH_VideoEncoder_GetSurface(encoder_, &nativeWindow);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Get surface failed, ret: %{public}d", ret);
-    uint64_t  surfaceId;
-    ret = OH_NativeWindow_GetSurfaceId(nativeWindow, &surfaceId);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Get surfaceId failed, ret: %{public}d", ret);
-    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(surfaceId);
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, 1, "Surface is null");
     surfaceMutex_.lock();
-    codecSurface_ = surface;
+    codecSurface_ = nativeWindow->surface;
+    OH_NativeWindow_DestroyNativeWindow(nativeWindow);
+    CHECK_AND_RETURN_RET_LOG(codecSurface_ != nullptr, 1, "Surface is null");
     surfaceMutex_.unlock();
     return 0;
 }
@@ -187,7 +181,12 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Release();
     size_ = size;
     rotation_ = rotation;
-    Create(MIME_VIDEO_AVC.data());
+    MEDIA_INFO_LOG("VideoEncoder videoCodecType_ = %{public}d", videoCodecType_);
+    if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC) {
+        Create(MIME_VIDEO_AVC.data());
+    } else if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC) {
+        Create(MIME_VIDEO_HEVC.data());
+    }
     Config();
     GetSurface();
     Start();
@@ -198,7 +197,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
     if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
         RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
     }
-    if (keyFrameInterval == 0) {
+    if (keyFrameInterval == KEY_FRAME_INTERVAL) {
         std::lock_guard<std::mutex> lock(encoderMutex_);
         OH_AVFormat *format = OH_AVFormat_Create();
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
@@ -235,12 +234,12 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    int32_t keyFrameInterval = 0;
-    if (!EnqueueBuffer(frameRecord, keyFrameInterval)) {
+    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
+    if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
-    // IDR frame is need if keyFrameInterval is 0
-    int32_t needRestoreNumber = 2;
+    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRAME_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
+    keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
@@ -262,13 +261,19 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         if (needRestoreNumber == IDR_FRAME_COUNT && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
-            frameRecord->CacheIDRBuffer(IDRBuffer);
+            frameRecord->CacheBuffer(IDRBuffer);
+            frameRecord->SetIDRProperty(true);
         } else if (needRestoreNumber == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
             OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
             if (tempBuffer != nullptr) {
                 frameRecord->encodedBuffer = tempBuffer;
             }
+        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_NONE) {
+            // return P frame
+            OH_AVBuffer *PBuffer = bufferInfo->GetCopyAVBuffer();
+            frameRecord->CacheBuffer(PBuffer);
+            frameRecord->SetIDRProperty(false);
         } else {
             MEDIA_ERR_LOG("Flag is not acceptted number: %{public}d", needRestoreNumber);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
@@ -327,8 +332,7 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
     OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, BITRATE_30M);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 0);
-
+    OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, INT_MAX);
     int ret = OH_VideoEncoder_Configure(encoder_, format);
     OH_AVFormat_Destroy(format);
     format = nullptr;

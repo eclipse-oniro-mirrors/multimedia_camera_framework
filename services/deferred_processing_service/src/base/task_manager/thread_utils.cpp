@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -48,6 +48,12 @@ void SetThreadPriority(pthread_t handle, int priority)
         DP_DEBUG_LOG("failed for tid (%ld) with priority (%{public}d), ret = %{public}d.",
             static_cast<long>(tid), priority, ret);
     }
+}
+
+int GetThreadPriority(pthread_t handle)
+{
+    pid_t tid = pthread_gettid_np(handle);
+    return getpriority(PRIO_PROCESS, tid);
 }
 } //namespace DeferredProcessing
 } // namespace CameraStandard

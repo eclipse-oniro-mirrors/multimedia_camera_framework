@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,21 +19,56 @@
 #include "ipc_file_descriptor.h"
 #include "shared_buffer.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 class BufferInfo {
 public:
-    BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality);
+    BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
+        bool isCloudImageEnhanceSupported);
     ~BufferInfo();
+    
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
-    int32_t GetDataSize();
-    bool IsHighQuality();
+    
+    inline int32_t GetDataSize()
+    {
+        return dataSize_;
+    }
+
+    inline bool IsHighQuality()
+    {
+        return isHighQuality_;
+    }
+
+    inline bool IsCloudImageEnhanceSupported()
+    {
+        return isCloudImageEnhanceSupported_;
+    }
 
 private:
     std::shared_ptr<SharedBuffer> sharedBuffer_;
     const int32_t dataSize_;
     const bool isHighQuality_;
+    bool isCloudImageEnhanceSupported_;
+};
+class BufferInfoExt {
+public:
+    explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
+        bool isCloudImageEnhanceSupported);
+    ~BufferInfoExt();
+    std::shared_ptr<Media::Picture> GetPicture();
+    long GetDataSize();
+    bool IsHighQuality();
+    bool IsCloudImageEnhanceSupported();
+
+private:
+    std::shared_ptr<Media::Picture> picture_;
+    long dataSize_;
+    bool isHighQuality_;
+    bool isCloudImageEnhanceSupported_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +19,9 @@
 #include "iremote_broker.h"
 #include "ipc_file_descriptor.h"
 #include "basic_definitions.h"
-
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -34,6 +36,11 @@ enum ErrorCode {
     ERROR_IMAGE_PROC_TIMEOUT = 4,
     ERROR_IMAGE_PROC_ABNORMAL = 5,
     ERROR_IMAGE_PROC_INTERRUPTED = 6,
+
+    ERROR_VIDEO_PROC_INVALID_VIDEO_ID = 7,
+    ERROR_VIDEO_PROC_FAILED = 8,
+    ERROR_VIDEO_PROC_TIMEOUT = 9,
+    ERROR_VIDEO_PROC_INTERRUPTED = 10,
 };
 
 enum StatusCode {
@@ -45,7 +52,11 @@ enum StatusCode {
 
 class IDeferredPhotoProcessingSessionCallback : public IRemoteBroker {
 public:
-    virtual int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes) = 0;
+    virtual int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudEnhancementAvailable) = 0;
+    virtual int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture) = 0;
+    virtual int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes,
+        bool isCloudEnhancementAvailable) = 0;
     virtual int32_t OnError(const std::string &imageId, const ErrorCode errorCode) = 0;
     virtual int32_t OnStateChanged(const StatusCode status) = 0;
     DECLARE_INTERFACE_DESCRIPTOR(u"IDeferredPhotoProcessingSessionCallback");

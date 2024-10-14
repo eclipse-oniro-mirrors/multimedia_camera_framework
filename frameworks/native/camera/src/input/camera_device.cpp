@@ -175,10 +175,6 @@ const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbili
 
 CameraPosition CameraDevice::GetPosition()
 {
-    // Compatible with adaptive applications
-    if (cameraPosition_ == CAMERA_POSITION_FRONT && foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
-        cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
-    }
     return cameraPosition_;
 }
 
@@ -294,17 +290,13 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};
     }
-    if (item.count != biasRangeCount) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range count: %{public}d", item.count);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(item.count != biasRangeCount, {},
+        "Invalid exposure compensation range count: %{public}d", item.count);
 
     range = { item.data.i32[minIndex], item.data.i32[maxIndex] };
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG(
-            "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
+
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
     exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;

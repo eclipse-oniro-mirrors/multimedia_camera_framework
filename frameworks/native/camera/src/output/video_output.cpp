@@ -25,6 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t FRAMERATE_120 = 120;
 VideoOutput::VideoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -78,6 +79,18 @@ int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     return CAMERA_OK;
 }
 
+int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
+    auto item = videoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+    } else {
+        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
+    }
+    return CAMERA_OK;
+}
+
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -120,6 +133,10 @@ int32_t VideoOutput::Start()
         CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
+    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+        MEDIA_INFO_LOG("EnableFaceDetection is call");
+        session->EnableFaceDetection(false);
+    }
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -144,6 +161,13 @@ int32_t VideoOutput::Stop()
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
+    }
+    if (!GetFrameRateRange().empty() && GetFrameRateRange()[0] >= FRAMERATE_120) {
+        auto session = GetSession();
+        CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+            CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
+        MEDIA_INFO_LOG("EnableFaceDetection is call");
+        session->EnableFaceDetection(true);
     }
     return ServiceToCameraError(errCode);
 }
@@ -418,6 +442,7 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
 }
+
 int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
 {
     MEDIA_DEBUG_LOG("VideoOutput GetVideoRotation is called");
@@ -453,6 +478,69 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
+}
+
+int32_t VideoOutput::IsAutoDeferredVideoEnhancementSupported()
+{
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementSupported");
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementSupported error!, cameraObj is nullptr");
+
+    int32_t curMode = captureSession->GetMode();
+    int32_t isSupported  = cameraObj->modeVideoDeferredType_[curMode];
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementSupported curMode:%{public}d, modeSupportType:%{public}d",
+        curMode, isSupported);
+    return isSupported;
+}
+
+int32_t VideoOutput::IsAutoDeferredVideoEnhancementEnabled()
+{
+    MEDIA_INFO_LOG("VideoOutput IsAutoDeferredVideoEnhancementEnabled");
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, captureSession is nullptr");
+
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, inputDevice is nullptr");
+
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput IsAutoDeferredVideoEnhancementEnabled error!, cameraObj is nullptr");
+
+    int32_t curMode = captureSession->GetMode();
+    bool isEnabled = captureSession->IsVideoDeferred();
+    MEDIA_INFO_LOG("IsAutoDeferredVideoEnhancementEnabled curMode:%{public}d, isEnabled:%{public}d",
+        curMode, isEnabled);
+    return isEnabled;
+}
+
+int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
+{
+    MEDIA_INFO_LOG("EnableAutoDeferredVideoEnhancement");
+    CAMERA_SYNC_TRACE;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, inputDevice is nullptr");
+
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+        "VideoOutput EnableAutoDeferredVideoEnhancement error!, cameraObj is nullptr");
+    captureSession->EnableAutoDeferredVideoEnhancement(enabled);
+    captureSession->SetUserId();
+    return SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

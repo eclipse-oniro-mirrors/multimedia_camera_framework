@@ -23,9 +23,9 @@
 #include "photo_output_impl.h"
 #include "inner_api/native/camera/include/camera_photo_proxy.h"
 #include "inner_api/native/camera/include/session/capture_session.h"
-#include "inner_api/media_library_helper/include/media_photo_asset_proxy.h"
-#include "inner_api/media_library_helper/include/userfile_manager_types.h"
-#include "inner_api/media_library_helper/include/media_asset_helper.h"
+#include "media_photo_asset_proxy.h"
+#include "userfile_manager_types.h"
+#include "media_asset_helper.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -205,7 +205,10 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
         uri, cameraShotType, burstKey, timestamp);
     CHECK_AND_RETURN_LOG(!uri.empty(), "uri is empty");
 
-    auto mediaAsset = Media::MediaAssetHelper::GetInstance()->GetMediaAsset(uri, cameraShotType, burstKey);
+    auto mediaAssetHelper = Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
+    CHECK_AND_RETURN_LOG(mediaAssetHelper != nullptr, "create media asset helper failed");
+
+    auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
     CHECK_AND_RETURN_LOG(mediaAsset != nullptr, "Create photo asset failed");
 
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {

@@ -30,10 +30,12 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera device is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SESSION_NOT_CONFIG,
+        "LightPaintingSession::GetSupportedLightPaintings camera deviceInfo is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LIGHT_PAINTING_TYPE, &item);
@@ -84,12 +86,9 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
         MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting success to find OHOS_CONTROL_LIGHT_PAINTING_TYPE");
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, count);
     }
-    if (status) {
-        currentLightPaintingType_ = type;
-    } else {
-        MEDIA_ERR_LOG("LightPaintingSession::SetLightPainting Failed to set LightPainting type");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+        "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
+    currentLightPaintingType_ = type;
     return CameraErrorCode::SUCCESS;
 }
  
@@ -115,10 +114,8 @@ int32_t LightPaintingSession::TriggerLighting()
         MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting success to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("LightPaintingSession::TriggerLighting Failed to trigger lighting");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
+        "LightPaintingSession::TriggerLighting Failed to trigger lighting");
     return CameraErrorCode::SUCCESS;
 }
 } // CameraStandard

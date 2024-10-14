@@ -252,21 +252,17 @@ void HCameraDeviceManager::UpdateProcessState(int32_t& activeState, int32_t& req
             static_cast<CameraWindowManagerAgent*>(winMgrAgent.GetRefPtr())->GetAccessTokenId();
         MEDIA_DEBUG_LOG("current pip window accessTokenId is: %{public}d", accessTokenIdInPip);
     }
-    auto it = APP_MGR_STATE_TO_CAMERA_STATE.find(activeState);
-    if (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) {
-        activeState = it->second;
-    } else {
-        activeState = UNKNOW_STATE_OF_PROCESS;
-    }
-    
-    it = APP_MGR_STATE_TO_CAMERA_STATE.find(requestState);
-    if (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) {
-        requestState = it->second;
-    } else {
-        requestState = UNKNOW_STATE_OF_PROCESS;
-    }
-    activeState = activeAccessTokenId == accessTokenIdInPip ? PIP_STATE_OF_PROCESS : activeState;
-    requestState = requestAccessTokenId == accessTokenIdInPip ? PIP_STATE_OF_PROCESS : requestState;
+
+    auto updateState = [accessTokenIdInPip](int32_t& state, uint32_t accessTokenId) {
+        auto it = APP_MGR_STATE_TO_CAMERA_STATE.find(state);
+        state = (it != APP_MGR_STATE_TO_CAMERA_STATE.end()) ? it->second : UNKNOW_STATE_OF_PROCESS;
+        if (accessTokenId == accessTokenIdInPip) {
+            state = PIP_STATE_OF_PROCESS;
+        }
+    };
+
+    updateState(activeState, activeAccessTokenId);
+    updateState(requestState, requestAccessTokenId);
 }
 
 void HCameraDeviceManager::PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder,

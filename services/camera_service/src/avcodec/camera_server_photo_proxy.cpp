@@ -162,14 +162,6 @@ int32_t CameraServerPhotoProxy::GetHeight()
 
 PhotoFormat CameraServerPhotoProxy::GetFormat()
 {
-    if (!burstKey_.empty()) {
-        MEDIA_INFO_LOG("CameraServerPhotoProxy get jpg format for burst");
-        return Media::PhotoFormat::JPG;
-    }
-    if (isHighQuality_) {
-        MEDIA_INFO_LOG("CameraServerPhotoProxy get jpg format");
-        return Media::PhotoFormat::JPG;
-    }
     auto iter = formatMap.find(imageFormat_);
     if (iter != formatMap.end()) {
         return iter->second;
@@ -199,7 +191,7 @@ std::string CameraServerPhotoProxy::GetTitle()
 
 std::string CameraServerPhotoProxy::GetExtension()
 {
-    return suffix;
+    return (GetFormat() == PhotoFormat::HEIF) ? suffixHeif : suffixJpeg;
 }
 double CameraServerPhotoProxy::GetLatitude()
 {

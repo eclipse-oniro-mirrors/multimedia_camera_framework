@@ -51,6 +51,7 @@ static const std::string DFX_FLASHMODE = "FlashMode";
 static const std::string DFX_FRAMERATERANGE = "FrameRateRange";
 static const std::string DFX_MUTE_CAMERA = "MuteCamera";
 
+static const std::string DFX_UB_NOT_REPORT = "";
 static const std::string DFX_UB_SET_ZOOMRATIO = "SetZoomRatio";
 static const std::string DFX_UB_SET_SMOOTHZOOM = "SetSmoothZoom";
 static const std::string DFX_UB_SET_VIDEOSTABILIZATIONMODE = "SetVideoStabilizationMode";

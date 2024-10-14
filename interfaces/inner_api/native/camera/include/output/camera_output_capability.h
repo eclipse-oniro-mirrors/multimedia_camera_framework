@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "istream_repeat_callback.h"
-#include "metadata_type.h"
+#include "istream_metadata.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -51,6 +51,7 @@ enum CameraFormat {
     CAMERA_FORMAT_JPEG = 2000,
     CAMERA_FORMAT_YCBCR_P010 = 2001,
     CAMERA_FORMAT_YCRCB_P010 = 2002,
+    CAMERA_FORMAT_HEIC = 2003,
     CAMERA_FORMAT_DEPTH_16 = 3000,
     CAMERA_FORMAT_DEPTH_32 = 3001,
 };

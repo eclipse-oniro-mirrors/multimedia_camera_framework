@@ -31,6 +31,7 @@
  * @brief Declare the camera base concepts.
  *
  * @library libohcamera.so
+ * @kit CameraKit
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -41,6 +42,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -43,13 +43,13 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
     switch (cameraFormat) {
         case CAMERA_FORMAT_YCBCR_420_888:
             return OHOS_CAMERA_FORMAT_YCBCR_420_888;
-        case CAMERA_FORMAT_YUV_420_SP:
+        case CAMERA_FORMAT_YUV_420_SP: // nv21
             return OHOS_CAMERA_FORMAT_YCRCB_420_SP;
         case CAMERA_FORMAT_YCBCR_P010:
             return OHOS_CAMERA_FORMAT_YCBCR_P010;
         case CAMERA_FORMAT_YCRCB_P010:
             return OHOS_CAMERA_FORMAT_YCRCB_P010;
-        case CAMERA_FORMAT_NV12:
+        case CAMERA_FORMAT_NV12: // nv12
             return OHOS_CAMERA_FORMAT_YCBCR_420_SP;
         case CAMERA_FORMAT_YUV_422_YUYV:
             return OHOS_CAMERA_FORMAT_422_YUYV;
@@ -139,6 +139,7 @@ int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
 
 int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
 {
+    CAMERA_SYNC_TRACE;
     auto item = previewOutput_.promote();
     if (item != nullptr) {
         auto callback = item->GetApplicationCallback();
@@ -161,6 +162,13 @@ int32_t PreviewOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
     }
+    return CAMERA_OK;
+}
+
+int32_t PreviewOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MEDIA_INFO_LOG("PreviewOutput::OnDeferredVideoEnhancementInfo called");
+    // empty impl
     return CAMERA_OK;
 }
 
@@ -294,9 +302,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
         CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed EnableSketch!, session not config");
 
     if (isEnable) {
-        if (sketchWrapper_ != nullptr) {
-            return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-        }
+        CHECK_ERROR_RETURN_RET(sketchWrapper_ != nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
         auto sketchSize = FindSketchSize();
         CHECK_ERROR_RETURN_RET_LOG(sketchSize == nullptr, ServiceToCameraError(errCode),
             "PreviewOutput EnableSketch FindSketchSize is null");
@@ -306,9 +312,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     }
 
     // Disable sketch branch
-    if (sketchWrapper_ == nullptr) {
-        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-    }
+    CHECK_ERROR_RETURN_RET(sketchWrapper_ == nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
     errCode = sketchWrapper_->Destroy();
     sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
@@ -657,7 +661,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
     result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
-    MEDIA_INFO_LOG("PreviewOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
+    MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     return result;
 }

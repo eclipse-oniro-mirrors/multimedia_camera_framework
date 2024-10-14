@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,61 +15,59 @@
 
 #include "deferred_processing_service.h"
 
-#include "dp_log.h"
+#include "events_info.h"
 #include "events_monitor.h"
+#include "dp_log.h"
+#include "dps.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-DeferredProcessingService& DeferredProcessingService::GetInstance()
-{
-    static DeferredProcessingService dpsService;
-    return dpsService;
-}
-
 DeferredProcessingService::DeferredProcessingService()
-    : initialized_(false),
-      sessionManager_(nullptr),
-      schedulerManager_(nullptr),
-      photoTaskManagerMap_()
 {
-    DP_DEBUG_LOG("enter.");
+    DP_DEBUG_LOG("entered.");
 }
 
 DeferredProcessingService::~DeferredProcessingService()
 {
-    DP_DEBUG_LOG("enter.");
-    if (!initialized_) {
-        return;
-    }
-    initialized_ = false;
-    sessionManager_ = nullptr;
-    schedulerManager_ = nullptr;
+    DP_DEBUG_LOG("entered.");
+    DP_CHECK_RETURN(!initialized_.load());
+
     photoTaskManagerMap_.clear();
+    DPS_Destroy();
 }
 
 void DeferredProcessingService::Initialize()
 {
-    if (initialized_) {
-        DP_DEBUG_LOG("already initialized.");
-        return;
-    }
     DP_DEBUG_LOG("entered.");
-    sessionManager_ = SessionManager::Create();
-    schedulerManager_ = std::make_unique<SchedulerManager>();
-    schedulerManager_->Initialize();
+    DP_CHECK_RETURN(initialized_.load());
+
+    DPS_Initialize();
     EventsMonitor::GetInstance().Initialize();
-    initialized_ = true;
+    EventsInfo::GetInstance().Initialize();
+    initialized_.store(true);
 }
 
 void DeferredProcessingService::Start()
 {
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
 }
 
 void DeferredProcessingService::Stop()
 {
+    DP_DEBUG_LOG("entered.");
+}
+
+void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
     DP_INFO_LOG("entered.");
+    auto sessionManager = DPS_GetSessionManager();
+    if (sessionManager != nullptr && sessionManager->GetCallback(userId) != nullptr) {
+        sessionManager->GetCallback(userId)->OnDeliveryLowQualityImage(imageId, picture);
+    } else {
+        DP_INFO_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityImage not set!, Discarding callback");
+    }
 }
 
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
@@ -78,11 +76,27 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
     DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %{public}d",
         userId);
     TaskManager* taskManager = GetPhotoTaskManager(userId);
-    std::shared_ptr<IImageProcessCallbacks> sessionImageProcCallbacks = sessionManager_->GetImageProcCallbacks();
-    auto processor = schedulerManager_->GetPhotoProcessor(userId, taskManager, sessionImageProcCallbacks);
-    sptr<IDeferredPhotoProcessingSession> session = sessionManager_->CreateDeferredPhotoProcessingSession(userId,
+    auto schedulerManager = DPS_GetSchedulerManager();
+    auto sessionManager = DPS_GetSessionManager();
+    if (schedulerManager == nullptr || sessionManager == nullptr) {
+        DP_ERR_LOG("schedulerManager or sessionManager is nullptr.");
+        return nullptr;
+    }
+    std::shared_ptr<IImageProcessCallbacks> sessionImageProcCallbacks = sessionManager->GetImageProcCallbacks();
+    auto processor = schedulerManager->GetPhotoProcessor(userId, taskManager, sessionImageProcCallbacks);
+    sptr<IDeferredPhotoProcessingSession> session = sessionManager->CreateDeferredPhotoProcessingSession(userId,
         callbacks, processor, taskManager);
     return session;
+}
+
+sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredVideoProcessingSession(
+    const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback> callbacks)
+{
+    DP_INFO_LOG("create video session, userId: %{public}d", userId);
+    auto sessionManager = DPS_GetSessionManager();
+    DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
+        "SessionManager is null, userId: %{public}d", userId);
+    return sessionManager->CreateDeferredVideoProcessingSession(userId, callbacks);
 }
 
 TaskManager* DeferredProcessingService::GetPhotoTaskManager(const int32_t userId)
@@ -94,7 +108,6 @@ TaskManager* DeferredProcessingService::GetPhotoTaskManager(const int32_t userId
         std::shared_ptr<TaskManager> taskManager =
             std::make_shared<TaskManager>("PhotoProcTaskManager_userid_" + std::to_string(userId),
             numThreads, true);
-        EventsMonitor::GetInstance().RegisterTaskManager(userId, taskManager.get());
         photoTaskManagerMap_[userId] = taskManager;
     }
     return photoTaskManagerMap_[userId].get();

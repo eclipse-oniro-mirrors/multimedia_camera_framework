@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -68,6 +68,9 @@ private:
     class SessionDeathRecipient;
 
     void OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo);
+
+    void OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo);
+
     void OnError(const std::string& imageId,  DpsError errorCode);
     void OnStateChanged(HdiStatus HdiStatus);
     bool ConnectServiceIfNecessary();

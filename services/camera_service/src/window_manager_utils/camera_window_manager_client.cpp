@@ -59,7 +59,7 @@ int32_t CameraWindowManagerClient::RegisterWindowManagerAgent()
         MEDIA_ERR_LOG("sceneSessionManagerProxy_ is null");
     }
     if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
+        MEDIA_ERR_LOG("failed to RegisterWindowManagerAgent error code: %{public}d", ret);
     }
     MEDIA_DEBUG_LOG("RegisterWindowManagerAgent end");
     return ret;
@@ -75,9 +75,7 @@ int32_t CameraWindowManagerClient::UnregisterWindowManagerAgent()
     } else {
         MEDIA_ERR_LOG("sceneSessionManagerProxy_ is null");
     }
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "failed to UnregisterWindowManagerAgent error code: %{public}d", ret);
     MEDIA_DEBUG_LOG("UnregisterWindowManagerAgent end");
     return ret;
 }
@@ -101,43 +99,29 @@ void CameraWindowManagerClient::InitWindowProxy()
     MEDIA_DEBUG_LOG("InitWindowProxy begin");
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (!systemAbilityManager) {
-        MEDIA_ERR_LOG("Failed to get system ability manager");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!systemAbilityManager, "Failed to get system ability manager");
  
     sptr<IRemoteObject> remoteObject = systemAbilityManager->GetSystemAbility(WINDOW_MANAGER_SERVICE_ID);
     if (!remoteObject) {
         MEDIA_ERR_LOG("remoteObjectWmMgrService is null");
         return;
     }
+
     mockSessionManagerServiceProxy_ = iface_cast<IMockSessionManagerInterface>(remoteObject);
-    if (!mockSessionManagerServiceProxy_) {
-        MEDIA_ERR_LOG("Failed to get mockSessionManagerServiceProxy_");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!mockSessionManagerServiceProxy_, "Failed to get mockSessionManagerServiceProxy_");
  
     sptr<IRemoteObject> remoteObjectMgrService = mockSessionManagerServiceProxy_->GetSessionManagerService();
-    if (!remoteObjectMgrService) {
-        MEDIA_ERR_LOG("remoteObjectMgrService is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!remoteObjectMgrService, "remoteObjectMgrService is null");
+
     sessionManagerServiceProxy_ = iface_cast<ISessionManagerService>(remoteObjectMgrService);
-    if (!sessionManagerServiceProxy_) {
-        MEDIA_ERR_LOG("Failed to get sessionManagerServiceProxy_");
-        return;
-    }
- 
+    CHECK_ERROR_RETURN_LOG(!sessionManagerServiceProxy_, "Failed to get sessionManagerServiceProxy_");
+
     sptr<IRemoteObject> remoteObjectMgr = sessionManagerServiceProxy_->GetSceneSessionManager();
-    if (!remoteObjectMgr) {
-        MEDIA_ERR_LOG("remoteObjectMgr is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!remoteObjectMgr, "remoteObjectMgr is null");
+
     sceneSessionManagerProxy_ = iface_cast<ISceneSessionManager>(remoteObjectMgr);
-    if (sceneSessionManagerProxy_ == nullptr) {
-        MEDIA_ERR_LOG("Failed to get sceneSessionManagerProxy_");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!sceneSessionManagerProxy_, "Failed to get sceneSessionManagerProxy_");
+
     MEDIA_DEBUG_LOG("InitWindowProxy end");
 }
  

@@ -21,10 +21,12 @@
 #include <mutex>
 #include <refbase.h>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "camera_stream_info_parse.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
+#include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"
 #include "hcamera_service_callback_stub.h"
 #include "hcamera_service_proxy.h"
@@ -259,6 +261,24 @@ public:
     static int CreateDeferredPhotoProcessingSession(int userId,
         std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
         sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
+    
+    /**
+     * @brief Create deferred video processing session.
+     *
+     * @return Returns pointer to capture session.
+     */
+    static sptr<DeferredVideoProcSession> CreateDeferredVideoProcessingSession(int userId,
+        std::shared_ptr<IDeferredVideoProcSessionCallback> callback);
+
+    /**
+     * @brief Create deferred video processing session.
+     *
+     * @param Returns pointer to capture session.
+     * @return Returns error code.
+     */
+    static int CreateDeferredVideoProcessingSession(int userId,
+        std::shared_ptr<IDeferredVideoProcSessionCallback> callback,
+        sptr<DeferredVideoProcSession> *pDeferredVideoProcSession);
 
     /**
      * @brief Create photo output instance.
@@ -460,6 +480,15 @@ public:
                               sptr<DepthDataOutput>* pDepthDataOutput);
 
     /**
+     * @brief Create metadata output instance.
+     *
+     * @param Returns pointer to metadata output instance.
+     * @return Returns error code.
+     */
+    int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput,
+        std::vector<MetadataObjectType> metadataObjectTypes);
+
+    /**
      * @brief Set camera manager callback.
      *
      * @param CameraManagerCallback pointer.
@@ -634,12 +663,6 @@ public:
     void UpdateTorchMode(TorchMode mode);
 
     /**
-    * @brief Initializes the camera list.
-    *
-    */
-    void InitCameraList();
-
-    /**
     * @brief set cameramanager null
     *
     */
@@ -667,6 +690,18 @@ public:
 
     virtual FoldStatus GetFoldStatus();
 
+    inline void ClearCameraDeviceListCache()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        cameraDeviceList_.clear();
+    }
+
+    inline void ClearCameraDeviceAbilitySupportMap()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
+        cameraDeviceAbilitySupportMap_.clear();
+    }
+
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
 
 protected:
@@ -675,10 +710,17 @@ protected:
     {
         // Construct method add mutex lock is not necessary. Ignore g_instanceMutex.
         CameraManager::g_cameraManager = this;
-        InitCameraList();
     }
 
 private:
+    struct ProfilesWrapper {
+        std::vector<Profile> photoProfiles = {};
+        std::vector<Profile> previewProfiles = {};
+        std::vector<VideoProfile> vidProfiles = {};
+    };
+
+    enum CameraAbilitySupportCacheKey { CAMERA_ABILITY_SUPPORT_TORCH, CAMERA_ABILITY_SUPPORT_MUTE };
+
     explicit CameraManager();
     void InitCameraManager();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
@@ -689,6 +731,8 @@ private:
     void CreateAndSetCameraMuteServiceCallback();
     void CreateAndSetTorchServiceCallback();
     void CreateAndSetFoldServiceCallback();
+    int32_t CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
+        const std::vector<MetadataObjectType>& metadataObjectTypes = {});
 
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
@@ -696,39 +740,47 @@ private:
     int32_t AddServiceProxyDeathRecipient();
     void RemoveServiceProxyDeathRecipient();
 
-    void ParseProfileLevel(const int32_t modeName, const camera_metadata_item_t& item);
-    void CreateProfileLevel4StreamType(int32_t specId, StreamInfo &streamInfo);
+    void ParseProfileLevel(
+        ProfilesWrapper& profilesWrapper, const int32_t modeName, const camera_metadata_item_t& item);
+    void CreateProfileLevel4StreamType(ProfilesWrapper& profilesWrapper, int32_t specId, StreamInfo& streamInfo);
     void GetSupportedMetadataObjectType(
-        common_metadata_header_t* metadata, std::vector<MetadataObjectType> objectTypes);
-    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
-        uint32_t streamIndex, ExtendInfo extendInfo);
-    void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        common_metadata_header_t* metadata, std::vector<MetadataObjectType>& objectTypes);
+    void CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
     static const std::unordered_map<DepthDataAccuracyType, DepthDataAccuracy> metaToFwDepthDataAccuracy_;
-
+    void ParseExtendCapability(
+        ProfilesWrapper& profilesWrapper, const int32_t modeName, const camera_metadata_item_t& item);
+    void ParseBasicCapability(ProfilesWrapper& profilesWrapper, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
+        const camera_metadata_item_t& item);
+    void CreateDepthProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
     void ParseExtendCapability(const int32_t modeName, const camera_metadata_item_t& item);
     void ParseBasicCapability(
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
     void ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item);
-
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     void SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
-    SceneMode GetFallbackConfigMode(SceneMode profileMode);
-    void ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    std::recursive_mutex cameraListMutex_;
-    std::mutex vectorMutex_;
+    SceneMode GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper);
+    void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
+        camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
-    bool GetDmDeviceInfo();
-    bool isDistributeCamera(std::string cameraId, dmDeviceInfo& deviceInfo);
+    std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    dmDeviceInfo GetDmDeviceInfo(const std::string& cameraId, const std::vector<dmDeviceInfo>& dmDeviceInfoList);
     int32_t SetTorchLevel(float level);
-
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
+    int32_t RefreshServiceProxy();
+    std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
+    bool IsSystemApp();
+    vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    void FillSupportPhotoFormats(std::vector<Profile>& profiles);
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
@@ -740,7 +792,45 @@ private:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         serviceProxyPrivate_ = proxy;
     }
-    int32_t RefreshServiceProxy();
+
+    inline std::vector<sptr<CameraDevice>> GetCameraDeviceList()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        if (cameraDeviceList_.empty()) {
+            cameraDeviceList_ = GetCameraDeviceListFromServer();
+        }
+        return cameraDeviceList_;
+    }
+
+    inline bool IsCameraDeviceListCached()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        return !cameraDeviceList_.empty();
+    }
+
+    inline void CacheCameraDeviceAbilitySupportValue(CameraAbilitySupportCacheKey key, bool value)
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
+        cameraDeviceAbilitySupportMap_[key] = value;
+    }
+
+    inline bool GetCameraDeviceAbilitySupportValue(CameraAbilitySupportCacheKey key, bool& value)
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
+        auto it = cameraDeviceAbilitySupportMap_.find(key);
+        if (it == cameraDeviceAbilitySupportMap_.end()) {
+            return false;
+        }
+        value = it->second;
+        return true;
+    }
+
+    std::mutex cameraDeviceListMutex_;
+    std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
+
+    std::mutex cameraDeviceAbilitySupportMapMutex_;
+    std::unordered_map<CameraAbilitySupportCacheKey, bool> cameraDeviceAbilitySupportMap_;
+
     std::mutex serviceProxyMutex_;
     sptr<ICameraService> serviceProxyPrivate_;
     std::mutex deathRecipientMutex_;
@@ -758,22 +848,18 @@ private:
     SafeMap<std::thread::id, std::shared_ptr<TorchListener>> torchListenerMap_;
     SafeMap<std::thread::id, std::shared_ptr<FoldListener>> foldListenerMap_;
 
-    std::vector<sptr<CameraDevice>> cameraObjList_ = {};
-    std::vector<sptr<CameraInfo>> dcameraObjList_ = {};
-    std::vector<dmDeviceInfo> distributedCamInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
 
     std::map<std::string, std::vector<Profile>> modePhotoProfiles_ = {};
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
-
-    std::vector<Profile> photoProfiles_ = {};
-    std::vector<Profile> previewProfiles_ = {};
-    std::vector<VideoProfile> vidProfiles_ = {};
     std::vector<DepthProfile> depthProfiles_ = {};
+
+    std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
     std::string foldScreenType_;
+    bool isSystemApp_ = false;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {

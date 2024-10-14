@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service_ipc_interface_code.h"
 #include "dp_log.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    DP_CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    DP_CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(
             DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_IMAGE_DONE): {
@@ -38,6 +39,16 @@ int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
         }
         case static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_STATE_CHANGED): {
             errCode = DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(data);
+            break;
+        }
+        case static_cast<uint32_t>(
+            DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_LOW_QUALITY_IMAGE): {
+            errCode = DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(data);
+            break;
+        }
+        case static_cast<uint32_t>(
+            DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_PICTURE_DONE): {
+            errCode = DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(data);
             break;
         }
         default:
@@ -54,7 +65,8 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessImageDone(Message
     std::string imageId = data.ReadString();
     sptr<IPCFileDescriptor> ipcFd = data.ReadObject<IPCFileDescriptor>();
     long bytes = data.ReadInt64();
-    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes);
+    bool isCloudImageEnhanceSupported = data.ReadBool();
+    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes, isCloudImageEnhanceSupported);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone result: %{public}d", ret);
     return ret;
 }
@@ -77,6 +89,27 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(MessageParc
 
     int32_t ret = OnStateChanged((StatusCode)status);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged result: %{public}d", ret);
+    return ret;
+}
+
+int DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(MessageParcel& data)
+{
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
+    std::string imageId = data.ReadString();
+    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    int32_t ret = OnDeliveryLowQualityImage(imageId, picturePtr);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
+    return ret;
+}
+
+int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(MessageParcel& data)
+{
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
+    std::string imageId = data.ReadString();
+    bool isCloudImageEnhanceSupported = data.ReadBool();
+    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    int32_t ret = OnProcessImageDone(imageId, picturePtr, isCloudImageEnhanceSupported);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
     return ret;
 }
 } // namespace DeferredProcessing

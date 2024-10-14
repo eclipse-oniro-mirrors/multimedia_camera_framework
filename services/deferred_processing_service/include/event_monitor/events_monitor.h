@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,70 +13,59 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
+#ifndef OHOS_CAMERA_DPS_EVENTS_MONITOR_H
+#define OHOS_CAMERA_DPS_EVENTS_MONITOR_H
 
+#include "events_subscriber.h"
 #include "ievents_listener.h"
-#include "task_manager.h"
-#include "common_event_manager.h"
-#include "common_event_support.h"
-#ifdef CAMERA_USE_THERMAL
-#include "ithermal_srv.h"
-#endif
+#include "singleton.h"
+#include "system_ability_status_change_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class ThermalLevelSubscriber : public OHOS::EventFwk::CommonEventSubscriber {
+class CommonEventListener : public SystemAbilityStatusChangeStub {
 public:
-    explicit ThermalLevelSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo &subscriberInfo);
-    virtual ~ThermalLevelSubscriber();
-    void OnReceiveEvent(const OHOS::EventFwk::CommonEventData &data) override;
-    SystemPressureLevel MapEventLevel(int level);
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+
+private:
+    std::shared_ptr<EventSubscriber> eventSubscriber_ {nullptr};
 };
 
-class EventsMonitor {
+class EventsMonitor : public Singleton<EventsMonitor> {
+    DECLARE_SINGLETON(EventsMonitor)
+
 public:
-    static EventsMonitor& GetInstance();
-    explicit EventsMonitor();
-    ~EventsMonitor();
     void Initialize();
     void NotifyCameraSessionStatus(const int32_t userId,
         const std::string& cameraId, bool running, bool isSystemCamera);
     void NotifyMediaLibraryStatus(bool available);
     void NotifyImageEnhanceStatus(int32_t status);
+    void NotifyScreenStatus(int32_t status);
+    void NotifyChargingStatus(int32_t status);
+    void NotifyBatteryStatus(int32_t status);
+    void NotifyBatteryLevel(int32_t level);
     void NotifySystemPressureLevel(SystemPressureLevel level);
-    void NotifyThermalLevel(int32_t level);
-    void NotifyEventToObervers(const int32_t userId, EventType event, int32_t value);
-    void RegisterTaskManager(const int32_t userId, TaskManager* taskManager);
-    void RegisterThermalLevel();
-    void UnRegisterThermalLevel();
-    void RegisterEventsListener(const int32_t userId, const std::vector<EventType>& events,
-        const std::shared_ptr<IEventsListener>& listener);
-    void UnRegisterListener(const int32_t userId, TaskManager* taskManager);
-    void SetRegisterThermalStatus(bool isHasRegistered);
-    void ScheduleRegisterThermalListener();
-    void NotifyObservers(EventType event, int value, int32_t userId = 0);
+    void NotifyThermalLevel(int level);
+    void NotifyPhotoProcessSize(int32_t size);
+    void NotifyEventToObervers(int userId, EventType event, int value);
+    void RegisterEventsListener(int userId, const std::vector<EventType>& events,
+        const std::weak_ptr<IEventsListener>& listener);
+    void NotifyObservers(EventType event, int value, int userId = 0);
 
 private:
-    class ThermalMgrDeathRecipient;
-    void NotifyObserversUnlocked(const int32_t userId, EventType event, int32_t value);
-    void ConnectThermalSvr();
+    void NotifyObserversUnlocked(int userId, EventType event, int value);
+    int32_t SubscribeSystemAbility();
+    int32_t UnSubscribeSystemAbility();
 
     std::mutex mutex_;
-    bool initialized_;
-    std::atomic<int> numActiveSessions_;
-    std::map<int32_t, std::vector<TaskManager*>> userIdToTaskManager;
-    std::map<int32_t, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_;
-    bool mIsRegistered;
-    sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
-    std::shared_ptr<ThermalLevelSubscriber> thermalLevelSubscriber_ = nullptr;
-    std::mutex thermalEventMutex;
-#ifdef CAMERA_USE_THERMAL
-    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;
-#endif
+    std::atomic_bool initialized_ {false};
+    std::atomic<int> numActiveSessions_ {0};
+    std::map<int32_t, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_ {};
+    sptr<CommonEventListener> ceListener_ {nullptr};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
+#endif // OHOS_CAMERA_DPS_EVENTS_MONITOR_H

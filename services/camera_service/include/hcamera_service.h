@@ -68,6 +68,11 @@ struct CameraMetaInfo {
         foldStatus(foldStatus), supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
+struct CameraStatusCallbacksInfo {
+    CameraStatus status;
+    string bundleName;
+};
+
 enum class CameraServiceStatus : int32_t {
     SERVICE_READY = 0,
     SERVICE_NOT_READY,
@@ -77,7 +82,7 @@ class CameraInfoDumper;
 
 class EXPORT_API HCameraService
     : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
-    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+    public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -95,6 +100,9 @@ public:
     int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) override;
+    int32_t CreateDeferredVideoProcessingSession(int32_t userId,
+        sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+        sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
     int32_t CreateDeferredPreviewOutput(
@@ -103,8 +111,8 @@ public:
         int32_t height, sptr<IStreamRepeat>& previewOutput) override;
     int32_t CreateDepthDataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamDepthData>& depthDataOutput) override;
-    int32_t CreateMetadataOutput(
-        const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput) override;
+    int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format,
+        std::vector<int32_t> metadataTypes, sptr<IStreamMetadata>& metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamRepeat>& videoOutput) override;
     int32_t UnSetAllCallback(pid_t pid) override;
@@ -206,6 +214,7 @@ private:
     shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
         shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility);
     void OnMute(bool muteMode);
+    void ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds);
 
     void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
     void DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
@@ -257,6 +266,7 @@ private:
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    map<string, CameraStatusCallbacksInfo> cameraStatusCallbacks_;
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
@@ -273,6 +283,8 @@ private:
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
+    std::map<uint32_t, std::function<void()>> delayCbtaskMap;
+    std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
 };
 } // namespace CameraStandard
 } // namespace OHOS

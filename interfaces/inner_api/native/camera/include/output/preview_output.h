@@ -267,6 +267,8 @@ public:
      * @param status Indicates a {@link SketchStatus} which will give information for preview callback error.
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
+
+    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

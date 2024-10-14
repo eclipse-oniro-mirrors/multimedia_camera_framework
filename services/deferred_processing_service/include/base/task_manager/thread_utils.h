@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,7 @@ enum {
 
 void SetThreadName(pthread_t tid, const std::string& name);
 void SetThreadPriority(pthread_t tid, int priority);
+int GetThreadPriority(pthread_t tid);
 } //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

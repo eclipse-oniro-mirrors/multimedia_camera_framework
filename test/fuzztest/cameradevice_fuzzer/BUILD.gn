@@ -71,8 +71,8 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
   sources = [ "camera_device_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+    "../../../frameworks/native/camera:camera_framework",
+    "../../../services/camera_service:camera_service",
   ]
   external_deps = [
     "ability_base:want",

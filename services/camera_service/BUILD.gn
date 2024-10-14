@@ -28,6 +28,7 @@ ohos_shared_library("camera_service") {
     "binder/client/src/hstream_capture_callback_proxy.cpp",
     "binder/client/src/hstream_depth_data_callback_proxy.cpp",
     "binder/client/src/hstream_depth_data_proxy.cpp",
+    "binder/client/src/hstream_metadata_callback_proxy.cpp",
     "binder/client/src/hstream_repeat_callback_proxy.cpp",
     "binder/client/src/window_manager_service_proxy_impl/hcamera_mock_session_manager_interface_proxy.cpp",
     "binder/client/src/window_manager_service_proxy_impl/hcamera_scene_session_manager_proxy.cpp",
@@ -89,6 +90,7 @@ ohos_shared_library("camera_service") {
 
   include_dirs = [
     "//drivers/peripheral/display/interfaces/include",
+    "${graphic_surface_path}/interfaces/inner_api/surface",
     "${graphic_surface_path}/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
     "${multimedia_camera_framework_path}/common/utils",
@@ -101,12 +103,12 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
-    "${window_manager_path}/interfaces/innerkits/wm",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
     "//foundation/window/window_manager/interfaces/innerkits/dm",
+    "//foundation/window/window_manager/interfaces/innerkits/wm",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
@@ -121,20 +123,29 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "${multimedia_media_library_path}/interfaces/inner_api/media_library_helper/include",
+    "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
   ]
 
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
-
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
@@ -259,12 +270,12 @@ ohos_shared_library("camera_dynamic_medialibrary") {
   external_deps = [
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "hilog:libhilog",
+    "image_framework:image_native",
+    "ipc:ipc_single",
     "media_library:media_library",
     "media_library:media_library_manager",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-    "samgr:samgr_proxy",
-    "image_framework:image_native"
+    "samgr:samgr_proxy"
   ]
 
   cflags_cc = cflags

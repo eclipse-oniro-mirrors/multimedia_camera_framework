@@ -124,27 +124,29 @@ void ErrorCallbackListener::OnError(const int32_t errorType, const int32_t error
     OnErrorCallbackAsync(errorType, errorMsg);
 }
 
-void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusionDetect) const
+void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusion,
+    const uint8_t isCameraLensDirty) const
 {
     MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallback is called");
     napi_value result[ARGS_TWO];
     napi_value retVal;
     napi_value propValue;
- 
+
     napi_get_undefined(env_, &result[PARAM0]);
     napi_create_object(env_, &result[PARAM1]);
-    if (isCameraOcclusionDetect) {
-        napi_get_boolean(env_, true, &propValue);
-    } else {
-        napi_get_boolean(env_, false, &propValue);
-    }
+    napi_get_boolean(env_, isCameraOcclusion == 1 ? true : false, &propValue);
     napi_set_named_property(env_, result[PARAM1], "isCameraOccluded", propValue);
+
+    napi_value propValueForLensDirty = nullptr;
+    napi_get_boolean(env_, isCameraLensDirty == 1 ? true : false, &propValueForLensDirty);
+    napi_set_named_property(env_, result[PARAM1], "isCameraLensDirty", propValueForLensDirty);
+
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("cameraOcclusionDetect", callbackNapiPara);
 }
  
 void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
-    const uint8_t isCameraOcclusionDetect) const
+    const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const
 {
     MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallbackAsync is called");
     uv_loop_s* loop = nullptr;
@@ -159,14 +161,15 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
         return;
     }
     std::unique_ptr<CameraOcclusionDetectResult> callbackInfo =
-        std::make_unique<CameraOcclusionDetectResult>(isCameraOcclusionDetect, shared_from_this());
+        std::make_unique<CameraOcclusionDetectResult>(isCameraOcclusion, isCameraLensDirty, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         CameraOcclusionDetectResult* callbackInfo = reinterpret_cast<CameraOcclusionDetectResult *>(work->data);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
-                listener->OnCameraOcclusionDetectedCallback(callbackInfo->isCameraOccluded_);
+                listener->OnCameraOcclusionDetectedCallback(callbackInfo->isCameraOccluded_,
+                                                            callbackInfo->isCameraLensDirty_);
             }
             delete callbackInfo;
         }
@@ -180,11 +183,13 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
     }
 }
  
-void OcclusionDetectCallbackListener::OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const
+void OcclusionDetectCallbackListener::OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
+    const uint8_t isCameraLensDirty) const
 {
-    MEDIA_DEBUG_LOG("OnCameraOcclusionDetected is called!, isCameraOcclusionDetect: %{public}d",
-        isCameraOcclusionDetect);
-    OnCameraOcclusionDetectedCallbackAsync(isCameraOcclusionDetect);
+    MEDIA_DEBUG_LOG("OnCameraOcclusionDetected is called!, "
+                    "isCameraOcclusion: %{public}u, isCameraLensDirty: %{public}u",
+                    isCameraOcclusion, isCameraLensDirty);
+    OnCameraOcclusionDetectedCallbackAsync(isCameraOcclusion, isCameraLensDirty);
 }
 
 CameraInputNapi::CameraInputNapi() : env_(nullptr)

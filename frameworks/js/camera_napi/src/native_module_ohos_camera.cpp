@@ -19,6 +19,7 @@
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "mode/aperture_video_session_napi.h"
+#include "mode/fluorescence_photo_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "mode/light_painting_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
@@ -73,12 +74,12 @@ static napi_value Export(napi_env env, napi_value exports)
     PhotoSessionForSysNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     VideoSessionForSysNapi::Init(env, exports);
-    PhotoAbilityNapi::Init(env, exports);
-    VideoAbilityNapi::Init(env, exports);
-    PortraitPhotoAbilityNapi::Init(env, exports);
-    PhotoConflictAbilityNapi::Init(env, exports);
-    VideoConflictAbilityNapi::Init(env, exports);
-    PortraitPhotoConflictAbilityNapi::Init(env, exports);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PHOTO_CONFLICT_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::VIDEO_CONFLICT_FUNCTIONS);
+    CameraFunctionsNapi::Init(env, exports, FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS);
     SlowMotionSessionNapi::Init(env, exports);
     MacroPhotoSessionNapi::Init(env, exports);
     MacroVideoSessionNapi::Init(env, exports);
@@ -88,6 +89,7 @@ static napi_value Export(napi_env env, napi_value exports)
     SecureCameraSessionNapi::Init(env, exports);
     QuickShotPhotoSessionNapi::Init(env, exports);
     ApertureVideoSessionNapi::Init(env, exports);
+    FluorescencePhotoSessionNapi::Init(env, exports);
     TimeLapsePhotoSessionNapi::Init(env, exports);
     TryAEInfoNapi::Init(env, exports);
     LightPaintingSessionNapi::Init(env, exports);

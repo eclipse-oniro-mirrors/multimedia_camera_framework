@@ -28,15 +28,15 @@ public:
 
     virtual int32_t EndSynchronize() = 0;
 
-    virtual int32_t AddImage(const std::string imageId, DpsMetadata& metadata, const bool discardable = false) = 0;
+    virtual int32_t AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false) = 0;
 
-    virtual int32_t RemoveImage(const std::string imageId, const bool restorable = false) = 0;
+    virtual int32_t RemoveImage(const std::string& imageId, const bool restorable = false) = 0;
 
-    virtual int32_t RestoreImage(const std::string imageId) = 0;
+    virtual int32_t RestoreImage(const std::string& imageId) = 0;
 
-    virtual int32_t ProcessImage(const std::string appName, const std::string imageId) = 0;
+    virtual int32_t ProcessImage(const std::string& appName, const std::string imageId) = 0;
 
-    virtual int32_t CancelProcessImage(const std::string imageId) = 0;
+    virtual int32_t CancelProcessImage(const std::string& imageId) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IDeferredPhotoProcessingSession");
 };

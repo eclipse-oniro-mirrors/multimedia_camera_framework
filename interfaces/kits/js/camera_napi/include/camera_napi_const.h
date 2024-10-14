@@ -51,6 +51,7 @@ struct NapiWorkerQueueTask {
     }
 
     std::string taskName;
+    int32_t waitCount = 0;
     NapiWorkerQueueTaskTimePoint createTimePoint;
     NapiWorkerQueueStatus queueStatus = INIT;
 };
@@ -131,9 +132,20 @@ enum CameraTaskId {
     DEFERRED_PHOTO_PROXY_TASKID = 0x0A000000,
     CAMERA_DEPTH_DATA_OUTPUT_TASKID = 0x0B000000,
     DEPTH_DATA_TASKID = 0x0C000000,
+    CAMERA_METADATA_OUTPUT_TASKID = 0x0D000000,
 };
 
-enum JSMetadataObjectType { INVALID = -1, FACE = 0 };
+enum JSMetadataObjectType {
+    INVALID = -1,
+    FACE_DETECTION = 0,
+    HUMAN_BODY,
+    CAT_FACE,
+    CAT_BODY,
+    DOG_FACE,
+    DOG_BODY,
+    SALIENT_DETECTION,
+    BAR_CODE_DETECTION
+};
 
 enum CameraSteps {
     CREATE_CAMERA_INPUT_INSTANCE,

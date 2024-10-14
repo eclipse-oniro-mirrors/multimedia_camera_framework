@@ -34,7 +34,6 @@ public:
     void SetLocation(double latitude, double longitude);
     int32_t CameraFreeBufferHandle();
 
-private:
     BufferHandle* bufferHandle_;
     int32_t format_;
     int32_t photoWidth_;

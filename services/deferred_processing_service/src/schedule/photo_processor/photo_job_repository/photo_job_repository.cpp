@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,9 @@
 
 #include "dp_log.h"
 #include "dps_event_report.h"
+#include "events_monitor.h"
 #include "steady_clock.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -63,6 +65,7 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
         DP_INFO_LOG("add offline job, imageId: %s", imageId.c_str());
         offlineJobList_.push_back(jobPtr);
         offlineJobMap_.emplace(imageId, jobPtr);
+        EventsMonitor::GetInstance().NotifyPhotoProcessSize(offlineJobList_.size());
     }
     jobPtr->SetPhotoJobType(type);
     bool priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
@@ -71,7 +74,8 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
 
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
-    return;
+    int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
+    EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
 }
 
 void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool restorable)
@@ -111,7 +115,8 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
     UpdateRunningCountUnLocked(statusChanged, jobPtr);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
-    return;
+    int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
+    EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
 }
 
 bool PhotoJobRepository::RequestJob(const std::string& imageId)

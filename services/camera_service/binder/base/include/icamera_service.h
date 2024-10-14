@@ -29,6 +29,8 @@
 #include "surface.h"
 #include "ideferred_photo_processing_session.h"
 #include "ideferred_photo_processing_session_callback.h"
+#include "ideferred_video_processing_session.h"
+#include "ideferred_video_processing_session_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -82,6 +84,10 @@ public:
     virtual int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
         sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) = 0;
+    
+    virtual int32_t CreateDeferredVideoProcessingSession(int32_t userId,
+        sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+        sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session) = 0;
 
     virtual int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                       int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) = 0;
@@ -96,6 +102,7 @@ public:
                                           int32_t width, int32_t height, sptr<IStreamDepthData> &depthDataOutput) = 0;
 
     virtual int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                         std::vector<int32_t> metadataTypes,
                                          sptr<IStreamMetadata> &metadataOutput) = 0;
 
     virtual int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,

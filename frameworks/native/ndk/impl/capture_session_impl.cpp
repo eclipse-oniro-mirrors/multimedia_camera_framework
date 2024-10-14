@@ -208,10 +208,9 @@ Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMod
 Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* previewOutput)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::AddSecureOutput is called");
-    int ret = CAMERA_OK;
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
-    ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
-    return FrameworkToNdkCameraError(ret);
+    int32_t ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
+    return FrameworkToNdkCameraError(ServiceToCameraError(ret));
 }
 
 Camera_ErrorCode Camera_CaptureSession::BeginConfig()

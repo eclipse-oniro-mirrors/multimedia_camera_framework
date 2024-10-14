@@ -33,6 +33,13 @@ typedef struct {
     float sketchRatio;
 } SketchStatusData;
 
+struct CaptureEndedInfoExt {
+    int streamId;
+    int frameCount;
+    bool isDeferredVideoEnhancementAvailable;
+    std::string videoId;
+};
+
 class IStreamRepeatCallback : public IRemoteBroker {
 public:
     virtual int32_t OnFrameStarted() = 0;
@@ -42,6 +49,8 @@ public:
     virtual int32_t OnFrameError(int32_t errorCode) = 0;
 
     virtual int32_t OnSketchStatusChanged(SketchStatus status) = 0;
+
+    virtual int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeatCallback");
 };

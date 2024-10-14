@@ -74,9 +74,10 @@ Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session
 
 Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
-    session->AddSecureOutput(previewOutput);
-    return CAMERA_OK;
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    return session->AddSecureOutput(previewOutput);
 }
 
 Camera_ErrorCode OH_CaptureSession_BeginConfig(Camera_CaptureSession* session)

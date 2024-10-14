@@ -141,9 +141,7 @@ struct PreconfigProfile {
         camera_metadata_item_t item;
         int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
             cameraInfo.ability->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
-        if (ret != CAM_META_SUCCESS || item.count == 0) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, nullptr);
         ExtendInfo extendInfo = {};
         std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
         modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
@@ -175,7 +173,7 @@ struct PreconfigProfile {
             if (ret != CAM_META_SUCCESS || item.count == 0) {
                 return "device camera type info error";
             }
-            camera_type_enum_t cameraType = static_cast<camera_type_enum_t>(*item.data.u8);
+            camera_type_enum_t cameraType = static_cast<camera_type_enum_t>(item.data.u8[0]);
             if (cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED) {
                 continue;
             }

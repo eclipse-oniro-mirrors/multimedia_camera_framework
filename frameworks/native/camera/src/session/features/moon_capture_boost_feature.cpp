@@ -34,11 +34,8 @@ MoonCaptureBoostFeature::MoonCaptureBoostFeature(
     MEDIA_INFO_LOG("MoonCaptureBoostFeature::MoonCaptureBoostFeature SceneMode:%{public}d", relatedMode);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility->get(), OHOS_ABILITY_MOON_CAPTURE_BOOST, &item);
-    if (ret != CAM_META_SUCCESS || item.count <= 0) {
-        MEDIA_ERR_LOG("MoonCaptureBoostFeature get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
-        return;
-    }
-
+    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "MoonCaptureBoostFeature get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;

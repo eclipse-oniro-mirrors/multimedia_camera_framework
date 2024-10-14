@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +42,7 @@ public:
 
     void OnProcessDone(const int32_t userId,
         const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) override;
+    void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo) override;
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override;
     void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
     void NotifyScheduleState(DpsStatus status);

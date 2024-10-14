@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -54,7 +54,7 @@ int32_t DeferredPhotoProcessingSessionProxy::EndSynchronize()
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::AddImage(const std::string imageId,
+int32_t DeferredPhotoProcessingSessionProxy::AddImage(const std::string& imageId,
                                                       DpsMetadata& metadata, const bool discardable)
 {
     MessageParcel data;
@@ -74,7 +74,7 @@ int32_t DeferredPhotoProcessingSessionProxy::AddImage(const std::string imageId,
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::RemoveImage(const std::string imageId, const bool restorable)
+int32_t DeferredPhotoProcessingSessionProxy::RemoveImage(const std::string& imageId, const bool restorable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -92,7 +92,7 @@ int32_t DeferredPhotoProcessingSessionProxy::RemoveImage(const std::string image
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::RestoreImage(const std::string imageId)
+int32_t DeferredPhotoProcessingSessionProxy::RestoreImage(const std::string& imageId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -109,7 +109,7 @@ int32_t DeferredPhotoProcessingSessionProxy::RestoreImage(const std::string imag
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::ProcessImage(const std::string appName, const std::string imageId)
+int32_t DeferredPhotoProcessingSessionProxy::ProcessImage(const std::string& appName, const std::string imageId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -127,7 +127,7 @@ int32_t DeferredPhotoProcessingSessionProxy::ProcessImage(const std::string appN
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::CancelProcessImage(const std::string imageId)
+int32_t DeferredPhotoProcessingSessionProxy::CancelProcessImage(const std::string& imageId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -144,6 +144,6 @@ int32_t DeferredPhotoProcessingSessionProxy::CancelProcessImage(const std::strin
     return error;
 }
 
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

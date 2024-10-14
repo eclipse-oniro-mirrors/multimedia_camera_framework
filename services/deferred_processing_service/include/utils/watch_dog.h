@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -71,6 +71,16 @@ public:
         }
     }
 
+    void DoTimeout(const uint32_t handle)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (timeBroker_) {
+            timeBroker_->GetExpiredFunc(handle)(handle);
+            DP_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
+        } else {
+            DP_ERR_LOG("(%s) failed", name_.c_str());
+        }
+    }
 private:
 
     std::mutex mutex_;

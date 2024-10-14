@@ -43,6 +43,7 @@ private:
     int HandleSetFoldStatusCallback(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPhotoProcessingSession(MessageParcel &data, MessageParcel &reply);
+    int HandleCreateDeferredVideoProcessingSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);
@@ -74,8 +75,6 @@ private:
     virtual int32_t CloseCameraForDestory(pid_t pid);
 
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
-
-    typedef int (HCameraServiceStub::* HandleMethod)(MessageParcel &, MessageParcel &);
 };
 } // namespace CameraStandard
 } // namespace OHOS

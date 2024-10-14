@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,7 +26,11 @@ class DeferredPhotoProcessingSessionCallbackProxy : public IRemoteProxy<IDeferre
 public:
     explicit DeferredPhotoProcessingSessionCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~DeferredPhotoProcessingSessionCallbackProxy() = default;
-    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, long bytes) override;
+    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudEnhancementAvailable) override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture)override;
+    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, long bytes,
+        bool isCloudEnhancementAvailable) override;
     int32_t OnError(const std::string &imageId, ErrorCode errorCode) override;
     int32_t OnStateChanged(StatusCode status) override;
 

@@ -21,6 +21,8 @@
 #include "ipc_skeleton.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_photo_proxy.h"
+#include "picture.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -93,6 +95,10 @@ int HCaptureSessionStub::OnRemoteRequest(
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
             errCode = HandleCreateMediaLibrary(data, reply);
+            break;
+        case static_cast<uint32_t>(
+            CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE):
+            errCode = HandleCreateMediaLibraryForPicture(data, reply);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
             {
@@ -240,6 +246,7 @@ int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel 
 
 int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     int featureMode = static_cast<int>(data.ReadUint32());
     return SetFeatureMode(featureMode);
 }
@@ -273,5 +280,24 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, Messa
     return ret;
 }
 
+int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
+{
+    Picture *picturePtr = Media::Picture::Unmarshalling(data);
+    CHECK_AND_RETURN_RET_LOG(picturePtr != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
+    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    photoProxy->ReadFromParcel(data);
+    CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
+    int64_t timestamp = data.ReadInt64();
+    std::string uri;
+    int32_t cameraShotType = 0;
+    std::string burstKey;
+    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType) && reply.WriteString(burstKey),
+        IPC_STUB_WRITE_PARCEL_ERR, "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
+    return ret;
+}
 } // namespace CameraStandard
 } // namespace OHOS

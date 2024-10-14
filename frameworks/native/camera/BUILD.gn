@@ -38,12 +38,16 @@ config("camera_framework_local_config") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
   ]
 }
 
@@ -59,18 +63,32 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/src/icamera_util.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_capture_proxy.cpp",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_metadata_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_device_callback_stub.cpp",
@@ -78,12 +96,15 @@ ohos_shared_library("camera_framework") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
     "src/ability/camera_ability.cpp",
     "src/ability/camera_ability_builder.cpp",
     "src/ability/camera_ability_const.cpp",
     "src/ability/camera_ability_parse_util.cpp",
     "src/deferred_proc_session/deferred_photo_proc_session.cpp",
+    "src/deferred_proc_session/deferred_video_proc_session.cpp",
     "src/input/camera_device.cpp",
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
@@ -101,6 +122,7 @@ ohos_shared_library("camera_framework") {
     "src/session/aperture_video_session.cpp",
     "src/session/capture_session.cpp",
     "src/session/features/moon_capture_boost_feature.cpp",
+    "src/session/fluorescence_photo_session.cpp",
     "src/session/high_res_photo_session.cpp",
     "src/session/light_painting_session.cpp",
     "src/session/macro_photo_session.cpp",
@@ -131,6 +153,9 @@ ohos_shared_library("camera_framework") {
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -152,6 +177,8 @@ ohos_shared_library("camera_framework") {
 
   external_deps = [
     "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",

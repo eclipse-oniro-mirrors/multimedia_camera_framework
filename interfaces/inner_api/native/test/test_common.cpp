@@ -265,6 +265,11 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
+void TestVideoOutputCallback::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const
+{
+    MEDIA_INFO_LOG("TestVideoOutputCallback:OnDeferredVideoEnhancementInfo()");
+}
+
 TestMetadataOutputObjectCallback::TestMetadataOutputObjectCallback(const char* testName) : testName_(testName) {
 }
 
@@ -285,9 +290,21 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
                                                               const uint8_t* addr,
-                                                              const long bytes)
+                                                              const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
 }
 
 void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)

@@ -44,7 +44,7 @@ class CameraOcclusionDetectCallback {
 public:
     CameraOcclusionDetectCallback() = default;
     virtual ~CameraOcclusionDetectCallback() = default;
-    virtual void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const = 0;
+    virtual void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const = 0;
 };
 
 class ResultCallback {
@@ -281,6 +281,12 @@ public:
     sptr<ICameraDeviceService> GetCameraDevice();
 
     /**
+    * @brief Set Camera Device pointer.
+    *
+    */
+    void SetCameraDevice(sptr<ICameraDeviceService> deviceObj);
+
+    /**
     * @brief Get ErrorCallback pointer.
     *
     * @return Returns ErrorCallback pointer.
@@ -359,6 +365,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
 
 private:
+    std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
     std::mutex cameraDeviceInfoMutex_;
     std::mutex resultCallbackMutex_;

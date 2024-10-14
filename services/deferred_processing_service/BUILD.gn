@@ -22,8 +22,14 @@ ohos_shared_library("deferred_processing_service") {
     "binder/client/src/deferred_photo_processing_session_proxy.cpp",
     "binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
     "binder/server/src/deferred_photo_processing_session_stub.cpp",
+    "binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
+    "binder/client/src/deferred_video_processing_session_proxy.cpp",
+    "binder/server/src/deferred_video_processing_session_callback_stub.cpp",
+    "binder/server/src/deferred_video_processing_session_stub.cpp",
+    "src/base/basic_definitions.cpp",
     "src/base/buffer_info.cpp",
     "src/base/buffer_manager/shared_buffer.cpp",
+    "src/base/dps.cpp",
     "src/base/task_manager/task_group/base_task_group.cpp",
     "src/base/task_manager/task_group/delayed_task_group.cpp",
     "src/base/task_manager/task_group/task_group.cpp",
@@ -35,10 +41,44 @@ ohos_shared_library("deferred_processing_service") {
     "src/base/timer/steady_clock.cpp",
     "src/base/timer/time_broker.cpp",
     "src/base/timer/timer.cpp",
+    "src/base/command_server/command_server_impl.cpp",
+    "src/base/command_server/command_server.cpp",
+    "src/base/command_server/command.cpp",
     "src/deferred_processing_service.cpp",
     "src/dfx/dps_event_report.cpp",
+    "src/dfx/dps_video_report.cpp",
+    "src/event_monitor/events_info.cpp",
     "src/event_monitor/events_monitor.cpp",
+    "src/event_monitor/events_subscriber.cpp",
+    "src/event_monitor/impl/thermal_strategy.cpp",
+    "src/event_monitor/impl/screen_strategy.cpp",
+    "src/event_monitor/impl/charging_strategy.cpp",
+    "src/event_monitor/impl/battery_strategy.cpp",
+    "src/event_monitor/impl/battery_level_strategy.cpp",
+    "src/event_monitor/command/event_status_change_command.cpp",
+    "src/media_manager/demuxer.cpp",
+    "src/media_manager/media_manager.cpp",
+    "src/media_manager/mpeg_manager_factory.cpp",
+    "src/media_manager/mpeg_manager.cpp",
+    "src/media_manager/muxer.cpp",
+    "src/media_manager/reader.cpp",
+    "src/media_manager/track_factory.cpp",
+    "src/media_manager/track.cpp",
+    "src/media_manager/writer.cpp",
+    "src/post_processor/command/service_died_command.cpp",
+    "src/post_processor/command/video_process_command.cpp",
     "src/post_processor/photo_post_processor.cpp",
+    "src/post_processor/video_post_processor.cpp",
+    "src/schedule/base/ischeduler_video_state.cpp",
+    "src/schedule/impl/video_battery_level_state.cpp",
+    "src/schedule/impl/video_battery_state.cpp",
+    "src/schedule/impl/video_camera_state.cpp",
+    "src/schedule/impl/video_charging_state.cpp",
+    "src/schedule/impl/video_hal_state.cpp",
+    "src/schedule/impl/video_media_library_state.cpp",
+    "src/schedule/impl/video_photo_process_state.cpp",
+    "src/schedule/impl/video_screen_state.cpp",
+    "src/schedule/impl/video_temperature_state.cpp",
     "src/schedule/photo_processor/deferred_photo_controller.cpp",
     "src/schedule/photo_processor/deferred_photo_processor.cpp",
     "src/schedule/photo_processor/photo_job_repository/deferred_photo_job.cpp",
@@ -47,10 +87,23 @@ ohos_shared_library("deferred_processing_service") {
     "src/schedule/photo_processor/strategy/user_initiated_strategy.cpp",
     "src/schedule/scheduler_coordinator.cpp",
     "src/schedule/scheduler_manager.cpp",
+    "src/schedule/video_processor/deferred_video_controller.cpp",
+    "src/schedule/video_processor/deferred_video_processor.cpp",
+    "src/schedule/video_processor/strategy/video_strategy_center.cpp",
+    "src/schedule/video_processor/video_job_repository/deferred_video_job.cpp",
+    "src/schedule/video_processor/video_job_repository/video_job_queue.cpp",
+    "src/schedule/video_processor/video_job_repository/video_job_repository.cpp",
+    "src/session/command/session_command.cpp",
+    "src/session/command/sync_command.cpp",
+    "src/session/command/video_command.cpp",
     "src/session/photo_session/deferred_photo_processing_session.cpp",
     "src/session/session_coordinator.cpp",
     "src/session/session_info.cpp",
     "src/session/session_manager.cpp",
+    "src/session/video_session/video_session_info.cpp",
+    "src/session/video_session/deferred_video_processing_session.cpp",
+    "src/utils/dp_power_manager.cpp",
+    "src/utils/dp_timer.cpp",
     "src/utils/dp_utils.cpp",
   ]
   cflags = [
@@ -71,19 +124,32 @@ ohos_shared_library("deferred_processing_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
   ]
@@ -91,11 +157,22 @@ ohos_shared_library("deferred_processing_service") {
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
-
+  if (build_variant == "user") {
+    cflags += [ "-DIS_RELEASE_VERSION" ]
+  }
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
     "access_token:libprivacy_sdk",
+    "av_codec:av_codec_client",
+    "av_codec:native_media_acodec",
+    "av_codec:native_media_avcencinfo",
+    "av_codec:native_media_avdemuxer",
+    "av_codec:native_media_avmuxer",
+    "av_codec:native_media_avsource",
+    "av_codec:native_media_codecbase",
+    "av_codec:native_media_venc",
+    "av_codec:native_media_aenc",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
@@ -112,6 +189,9 @@ ohos_shared_library("deferred_processing_service") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
@@ -138,6 +218,16 @@ ohos_shared_library("deferred_processing_service") {
   if (use_thermal_manager) {
     external_deps += [ "thermal_manager:thermalsrv_client" ]
     defines += [ "CAMERA_USE_THERMAL" ]
+  }
+
+  if (use_battery_manager) {
+    external_deps += [ "battery_manager:batterysrv_client" ]
+    defines += [ "CAMERA_USE_BATTERY" ]
+  }
+
+  if (use_power_manager) {
+    external_deps += [ "power_manager:powermgr_client" ]
+    defines += [ "CAMERA_USE_POWER" ]
   }
 
   cflags_cc = cflags

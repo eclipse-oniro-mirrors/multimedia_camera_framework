@@ -131,7 +131,14 @@ void CameraAbilityBuilder::SetModeSpecTagField(
 
 void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t modeName, sptr<CaptureSession> session)
 {
-    ability->supportedFlashModes_ = session->GetSupportedFlashModes();
+    CHECK_ERROR_RETURN(session == nullptr);
+    auto metadata = session->GetMetadata();
+    CHECK_ERROR_RETURN(metadata == nullptr);
+    camera_metadata_item_t item;
+    if (Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item) == CAM_META_SUCCESS) {
+        g_transformValidData(item, g_metaFlashModeMap_, ability->supportedFlashModes_);
+    }
+    ability->isLcdFlashSupported_ = session->IsLcdFlashSupported();
     ability->supportedExposureModes_ = session->GetSupportedExposureModes();
     ability->supportedFocusModes_ = session->GetSupportedFocusModes();
     ability->exposureBiasRange_ = session->GetExposureBiasRange();

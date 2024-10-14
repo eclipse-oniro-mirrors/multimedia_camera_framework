@@ -60,9 +60,12 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
         "IsSlowMotionDetectionSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, false,
         "IsSlowMotionDetectionSupported camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
+        "IsSlowMotionDetectionSupported camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
@@ -110,9 +113,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
         status = changedMetadata_->addEntry(OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA, rectVec.data(), rectVec.size());
     }
     this->UnlockForControl();
-    if (!status) {
-        MEDIA_ERR_LOG("SetSlowMotionDetectionArea failed to set motion rect");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "SetSlowMotionDetectionArea failed to set motion rect");
     return;
 }
 
@@ -175,9 +176,7 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("EnableMotionDetection Failed to enable motion detection");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "EnableMotionDetection Failed to enable motion detection");
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard

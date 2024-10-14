@@ -22,11 +22,7 @@ void CameraWindowManagerAgent::UpdateCameraWindowStatus(uint32_t accessTokenId, 
 {
     MEDIA_DEBUG_LOG("UpdateCameraWindowStatus get accessTokenId: %{public}d changed, isShowing: %{public}d",
         accessTokenId, isShowing);
-    if (isShowing == 1) {
-        accessTokenId_ = accessTokenId;
-    } else {
-        accessTokenId_ = 0;
-    }
+    accessTokenId_ = isShowing == 1 ? accessTokenId : 0;
 }
  
 uint32_t CameraWindowManagerAgent::GetAccessTokenId()

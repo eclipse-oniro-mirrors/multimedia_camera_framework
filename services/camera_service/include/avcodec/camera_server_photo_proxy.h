@@ -25,7 +25,8 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace Media;
 static const std::string prefix = "IMG_";
-static const std::string suffix = "jpg";
+static const std::string suffixJpeg = "jpg";
+static const std::string suffixHeif = "heic";
 static const std::string connector = "_";
 static const std::string burstTag = "BURST";
 static const std::string coverTag = "_COVER";
@@ -49,7 +50,9 @@ static const std::map<int32_t, int32_t> modeMap = {
 };
 static const std::map<int32_t, PhotoFormat> formatMap = {
     {0, PhotoFormat::RGBA},
-    {1, PhotoFormat::JPG}
+    {1, PhotoFormat::JPG},
+    {2, PhotoFormat::HEIF},
+    {3, PhotoFormat::YUV}
 };
 class CameraServerPhotoProxy : public PhotoProxy {
 public:

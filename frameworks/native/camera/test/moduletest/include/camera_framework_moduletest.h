@@ -27,6 +27,7 @@
 #include "hstream_capture_callback_proxy.h"
 #include "hstream_repeat_callback_proxy.h"
 #include "hcapture_session_callback_proxy.h"
+#include "session/slow_motion_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -57,6 +58,7 @@ public:
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
+    sptr<SlowMotionSession> slowMotionSession_;
     sptr<CaptureSession> highResSession_;
     sptr<CaptureSession> videoSession_;
     sptr<CaptureInput> input_;
@@ -100,6 +102,7 @@ public:
                                           float ratio, CameraFormat format);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void ConfigSlowMotionSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
     void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
                                   Profile previewProfile, Profile photoProfile);
     void ConfigVideoSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);

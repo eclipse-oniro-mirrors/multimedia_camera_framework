@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -154,10 +154,10 @@ template<class T>
 DpsMetadataError DpsMetadata::Get(const std::string &key, DpsDataType type, T &value) const
 {
     auto it = datas.find(key);
-    DP_CHECK_ERROR_RETURN_RET(it == datas.end(), DPS_METADATA_ERROR_NO_ENTRY);
-    DP_CHECK_ERROR_RETURN_RET(it->second.type != type, DPS_METADATA_ERROR_TYPE_ERROR);
+    DP_CHECK_RETURN_RET(it == datas.end(), DPS_METADATA_ERROR_NO_ENTRY);
+    DP_CHECK_RETURN_RET(it->second.type != type, DPS_METADATA_ERROR_TYPE_ERROR);
     auto dpVal = std::any_cast<T>(&it->second.val);
-    DP_CHECK_ERROR_RETURN_RET(dpVal == nullptr, DPS_METADATA_ERROR_TYPE_ERROR);
+    DP_CHECK_RETURN_RET(dpVal == nullptr, DPS_METADATA_ERROR_TYPE_ERROR);
     value = *dpVal;
     return DPS_METADATA_OK;
 }
@@ -165,7 +165,7 @@ DpsMetadataError DpsMetadata::Get(const std::string &key, DpsDataType type, T &v
 DpsMetadataError DpsMetadata::Set(const std::string &key, DpsDataType type, const std::any& val)
 {
     auto it = datas.find(key);
-    DP_CHECK_ERROR_RETURN_RET(it == datas.end() && datas.size() > DPS_MAX_USER_DATA_COUNT,
+    DP_CHECK_RETURN_RET(it == datas.end() && datas.size() > DPS_MAX_USER_DATA_COUNT,
         DPS_METADATA_ERROR_OUT_OF_RANGE);
     datas[key].type = type;
     datas[key].val = val;

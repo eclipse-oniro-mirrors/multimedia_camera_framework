@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,8 +38,10 @@ public:
     ~ThreadPool();
     void BeginBackgroundTasks() const;
     void EndBackgroundTasks() const;
+    void SetThreadPoolPriority(int priority);
+    int GetThreadPoolPriority() const;
     bool HasPendingTasks() const;
-    bool Submit(Task func) const;
+    bool Submit(Task func, bool isUrgent = false) const;
 
 private:
     struct ThreadInfo {
@@ -82,7 +84,7 @@ private:
     mutable std::atomic<bool> isStopped_;
     mutable std::mutex mutex_;
     mutable std::condition_variable taskCv_;
-    mutable std::queue<Task> tasks_;
+    mutable std::deque<Task> tasks_;
 };
 } //namespace DeferredProcessing
 } // namespace CameraStandard

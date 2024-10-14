@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,11 +45,11 @@ public:
     ~DeferredPhotoProcessingSession();
     int32_t BeginSynchronize() override;
     int32_t EndSynchronize() override;
-    int32_t AddImage(const std::string imageId, DpsMetadata& metadata, bool discardable) override;
-    int32_t RemoveImage(const std::string imageId, bool restorable) override;
-    int32_t RestoreImage(const std::string imageId) override;
-    int32_t ProcessImage(const std::string appName, const std::string imageId) override;
-    int32_t CancelProcessImage(const std::string imageId) override;
+    int32_t AddImage(const std::string& imageId, DpsMetadata& metadata, bool discardable) override;
+    int32_t RemoveImage(const std::string& imageId, bool restorable) override;
+    int32_t RestoreImage(const std::string& imageId) override;
+    int32_t ProcessImage(const std::string& appName, const std::string imageId) override;
+    int32_t CancelProcessImage(const std::string& imageId) override;
 
 private:
     void ReportEvent(const std::string& imageId, int32_t event);

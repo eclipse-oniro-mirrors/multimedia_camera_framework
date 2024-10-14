@@ -53,9 +53,30 @@ static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
-sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
+sptr<OHOS::Rosen::DisplayManagerLite::IFoldStatusListener> listener;
 CallerInfo caller_;
-class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+
+const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice::reportTagInfos_ = {
+    {OHOS_CONTROL_FLASH_MODE, "OHOS_CONTROL_FLASH_MODE", DFX_UB_SET_FLASHMODE},
+    {OHOS_CONTROL_FOCUS_MODE, "OHOS_CONTROL_FOCUS_MODE", DFX_UB_SET_FOCUSMODE},
+    {OHOS_CONTROL_EXPOSURE_MODE, "OHOS_CONTROL_EXPOSURE_MODE", DFX_UB_SET_EXPOSUREMODE},
+    {OHOS_CONTROL_VIDEO_STABILIZATION_MODE, "OHOS_CONTROL_VIDEO_STABILIZATION_MODE", DFX_UB_SET_VIDEOSTABILIZATIONMODE},
+    {OHOS_CONTROL_FILTER_TYPE, "OHOS_CONTROL_FILTER_TYPE", DFX_UB_SET_FILTER},
+    {OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, "OHOS_CONTROL_PORTRAIT_EFFECT_TYPE", DFX_UB_SET_PORTRAITEFFECT},
+    {OHOS_CONTROL_BEAUTY_AUTO_VALUE, "OHOS_CONTROL_BEAUTY_AUTO_VALUE", DFX_UB_SET_BEAUTY_AUTOVALUE},
+    {OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, "OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE", DFX_UB_SET_BEAUTY_SKINSMOOTH},
+    {OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, "OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE", DFX_UB_SET_BEAUTY_FACESLENDER},
+    {OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, "OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE", DFX_UB_SET_BEAUTY_SKINTONE},
+    {OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, "OHOS_CONTROL_AE_EXPOSURE_COMPENSATION", DFX_UB_SET_EXPOSUREBIAS},
+    {OHOS_CONTROL_FPS_RANGES, "OHOS_CONTROL_FPS_RANGES", DFX_UB_SET_FRAMERATERANGE},
+    {OHOS_CONTROL_ZOOM_RATIO, "OHOS_CONTROL_ZOOM_RATIO", DFX_UB_SET_ZOOMRATIO},
+    {OHOS_CONTROL_BEAUTY_TYPE, "OHOS_CONTROL_BEAUTY_TYPE", DFX_UB_NOT_REPORT},
+    {OHOS_CONTROL_LIGHT_PAINTING_TYPE, "OHOS_CONTROL_LIGHT_PAINTING_TYPE", DFX_UB_NOT_REPORT},
+    {OHOS_CONTROL_LIGHT_PAINTING_FLASH, "OHOS_CONTROL_LIGHT_PAINTING_FLASH", DFX_UB_NOT_REPORT},
+    {OHOS_CONTROL_MANUAL_EXPOSURE_TIME, "OHOS_CONTROL_MANUAL_EXPOSURE_TIME", DFX_UB_NOT_REPORT},
+};
+
+class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
 public:
     explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, const std::string cameraId)
         : cameraHostManager_(cameraHostManager), cameraId_(cameraId)
@@ -131,6 +152,11 @@ void HCameraDevice::SetDeviceMuteMode(bool muteMode)
     deviceMuteMode_ = muteMode;
 }
 
+bool HCameraDevice::GetDeviceMuteMode()
+{
+    return deviceMuteMode_;
+}
+
 void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
@@ -148,9 +174,7 @@ int32_t HCameraDevice::ResetDeviceSettings()
     MEDIA_INFO_LOG("HCameraDevice::ResetDeviceSettings enter");
     {
         std::lock_guard<std::mutex> lock(opMutex_);
-        if (hdiCameraDevice_ == nullptr) {
-            return CAMERA_OK;
-        }
+        CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_OK);
         hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     }
     if (hdiCameraDeviceV1_2 != nullptr) {
@@ -198,7 +222,7 @@ int32_t HCameraDevice::DispatchDefaultSettingToHdi()
     }
 
     std::lock_guard<std::mutex> lock(opMutex_);
-    CHECK_AND_RETURN_RET(hdiCameraDevice_ != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_INVALID_STATE);
     std::vector<uint8_t> hdiMetadata;
     bool isSuccess = OHOS::Camera::MetadataUtils::ConvertMetadataToVec(lifeCycleSettings, hdiMetadata);
     CHECK_ERROR_RETURN_RET_LOG(!isSuccess, CAMERA_UNKNOWN_ERROR,
@@ -231,7 +255,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetDeviceAbility()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(deviceAbilityMutex_);
-    CHECK_AND_RETURN_RET(deviceAbility_ == nullptr, deviceAbility_);
+    CHECK_ERROR_RETURN_RET(deviceAbility_ != nullptr, deviceAbility_);
     int32_t errCode = cameraHostManager_->GetCameraAbility(cameraID_, deviceAbility_);
     CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, nullptr,
         "HCameraDevice::GetSettings Failed to get Camera Ability: %{public}d", errCode);
@@ -306,9 +330,8 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     int32_t errorCode = CheckPermissionBeforeOpenDevice();
     CHECK_AND_RETURN_RET(errorCode == CAMERA_OK, errorCode);
     bool canOpenDevice = CanOpenCamera();
-    CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT,
-        "HCameraDevice::Refuse to turning on the camera");
-    HandlePrivacyBeforeOpenDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT, "HCameraDevice::Refuse to turn on the camera");
+    CHECK_ERROR_RETURN_RET_LOG(!HandlePrivacyBeforeOpenDevice(), CAMERA_OPERATION_NOT_ALLOWED, "privacy not allow!");
     CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
@@ -357,15 +380,16 @@ int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
     return CAMERA_OK;
 }
 
-void HCameraDevice::HandlePrivacyBeforeOpenDevice()
+bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
     MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    CHECK_ERROR_RETURN_RET_LOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     auto cameraPrivacy = GetCameraPrivacy();
-    if (cameraPrivacy != nullptr) {
-        cameraPrivacy->AddCameraPermissionUsedRecord();
-        cameraPrivacy->StartUsingPermissionCallback();
-        cameraPrivacy->RegisterPermissionCallback();
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->StartUsingPermissionCallback(), false, "start using permission failed");
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
+    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
+    return true;
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
@@ -393,7 +417,7 @@ int32_t HCameraDevice::UpdateDeviceSetting()
 
 void HCameraDevice::HandleFoldableDevice()
 {
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice isFoldable is %d", isFoldable);
     if (isFoldable) {
         RegisterFoldStatusListener();
@@ -408,7 +432,7 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
             "HCameraDevice::CloseDevice device has benn closed");
-        bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+        bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
         if (isFoldable) {
             UnRegisterFoldStatusListener();
         }
@@ -498,7 +522,7 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
     std::vector<int32_t> modes = {};
     ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_MOVING_PHOTO,
         &metadataItem);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && metadataItem.count > 0) {
         uint32_t step = 3;
         for (uint32_t index = 0; index < metadataItem.count - 1;) {
             if (metadataItem.data.i32[index + 1] == 1) {
@@ -552,12 +576,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "Nothing to update");
     std::lock_guard<std::mutex> lock(opMutex_);
-    if (updateSettings_ != nullptr) {
-        bool ret = CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_);
-        if (!ret) {
-            updateSettings_ = settings;
-        }
-    } else {
+    if (updateSettings_ == nullptr || !CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_)) {
         updateSettings_ = settings;
     }
     MEDIA_INFO_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
@@ -638,38 +657,49 @@ int32_t HCameraDevice::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &
 void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
 {
     caller_ = CameraReportUtils::GetCallerInfo();
-    DebugLogForZoom(settings, OHOS_CONTROL_ZOOM_RATIO);
+    for (const auto &tagInfo : reportTagInfos_) {
+        std::string tagName, dfxUbStr;
+        uint32_t tag;
+        std::tie(tag, tagName, dfxUbStr) = tagInfo;
+        DebugLogTag(settings, tag, tagName, dfxUbStr);
+    }
+
     DebugLogForSmoothZoom(settings, OHOS_CONTROL_SMOOTH_ZOOM_RATIOS);
-    DebugLogForVideoStabilizationMode(settings, OHOS_CONTROL_VIDEO_STABILIZATION_MODE);
-    DebugLogForFilter(settings, OHOS_CONTROL_FILTER_TYPE);
-    DebugLogForBeautyAuto(settings, OHOS_CONTROL_BEAUTY_AUTO_VALUE);
-    DebugLogForBeautySkinSmooth(settings, OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE);
-    DebugLogForBeautyFaceSlender(settings, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE);
-    DebugLogForBeautySkinTone(settings, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE);
-    DebugLogForPortraitEffect(settings, OHOS_CONTROL_PORTRAIT_EFFECT_TYPE);
-    DebugLogForFocusMode(settings, OHOS_CONTROL_FOCUS_MODE);
     DebugLogForAfRegions(settings, OHOS_CONTROL_AF_REGIONS);
-    DebugLogForExposureMode(settings, OHOS_CONTROL_EXPOSURE_MODE);
-    DebugLogForExposureTime(settings, OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
     DebugLogForAeRegions(settings, OHOS_CONTROL_AE_REGIONS);
-    DebugLogForAeExposureCompensation(settings, OHOS_CONTROL_AE_EXPOSURE_COMPENSATION);
-    DebugLogForFlashMode(settings, OHOS_CONTROL_FLASH_MODE);
-    DebugLogForFrameRateRange(settings, OHOS_CONTROL_FPS_RANGES);
-    DebugLogForLightPaintingType(settings, OHOS_CONTROL_LIGHT_PAINTING_TYPE);
-    DebugLogForTriggerLighting(settings, OHOS_CONTROL_LIGHT_PAINTING_FLASH);
 }
 
-void HCameraDevice::DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+void HCameraDevice::DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                uint32_t tag, std::string tagName, std::string dfxUbStr)
 {
-    // debug log for zoom
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_ZOOM_RATIO tag");
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Failed to find %{public}s tag", tagName.c_str());
+        return;
+    }
+    uint32_t dataType = item.data_type;
+    std::string valueStr;
+    if (dataType == META_TYPE_BYTE) {
+        valueStr = std::to_string(item.data.u8[0]);
+    } else if (dataType == META_TYPE_INT32) {
+        valueStr = std::to_string(item.data.i32[0]);
+    } else if (dataType == META_TYPE_UINT32) {
+        valueStr = std::to_string(item.data.ui32[0]);
+    } else if (dataType == META_TYPE_FLOAT) {
+        valueStr = std::to_string(item.data.f[0]);
+    } else if (dataType == META_TYPE_INT64) {
+        valueStr = std::to_string(item.data.i64[0]);
+    } else if (dataType == META_TYPE_DOUBLE) {
+        valueStr = std::to_string(item.data.d[0]);
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_ZOOM_RATIO value = %{public}f", item.data.f[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_ZOOMRATIO,
-            std::to_string(item.data.f[0]), caller_);
+        MEDIA_ERR_LOG("unknown dataType");
+        return;
+    }
+    MEDIA_DEBUG_LOG("Find %{public}s value = %{public}s", tagName.c_str(), valueStr.c_str());
+
+    if (dfxUbStr != DFX_UB_NOT_REPORT) {
+        CameraReportUtils::GetInstance().ReportUserBehavior(dfxUbStr, valueStr, caller_);
     }
 }
 
@@ -692,139 +722,6 @@ void HCameraDevice::DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::Ca
     }
 }
 
-void HCameraDevice::DebugLogForVideoStabilizationMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for videoStabilization mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
-            item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_VIDEOSTABILIZATIONMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForFilter(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for filter
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FILTER_TYPE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FILTER_TYPE value = %{public}d", item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FILTER,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for beauty auto value
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_AUTO_VALUE portraitEffect tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_AUTOVALUE,
-            std::to_string(item.data.i32[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForBeautySkinSmooth(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for beauty skin smooth
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE value = %{public}d",
-            item.data.i32[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_SKINSMOOTH,
-            std::to_string(item.data.i32[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForBeautyFaceSlender(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for beauty face slender
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE value = %{public}d",
-            item.data.i32[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_FACESLENDER,
-            std::to_string(item.data.i32[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for beauty skin tone
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value=%{public}d", item.data.i32[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_SKINTONE,
-            std::to_string(item.data.i32[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for beauty control
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_TYPE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value = %{public}d",
-            item.data.u8[0]);
-    }
-}
-
-void HCameraDevice::DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for portrait effect
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE value = %{public}d", item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_PORTRAITEFFECT,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for focus mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FOCUS_MODE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FOCUS_MODE value = %{public}d", item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FOCUSMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
 void HCameraDevice::DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
 {
     // debug log for af regions
@@ -838,34 +735,6 @@ void HCameraDevice::DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::Cam
         std::string str = ss.str();
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AF_REGIONS %{public}s", str.c_str());
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FOCUSPOINT, str, caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for exposure mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_EXPOSURE_MODE tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_EXPOSURE_MODE value = %{public}d", item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_EXPOSUREMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForExposureTime(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for exposure mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_MANUAL_EXPOSURE_TIME tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_MANUAL_EXPOSURE_TIME value = %{public}d", item.data.ui32[0]);
     }
 }
 
@@ -885,87 +754,14 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
     }
 }
 
-void HCameraDevice::DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-    uint32_t tag)
-{
-    // debug log for ae exposure compensation
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
-            item.data.u8[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_EXPOSUREBIAS,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for flash mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FLASH_MODE tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                                              uint32_t tag)
-{
-    // debug log for frame rate range
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES value = %{public}d",
-            item.data.i32[0]);
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
-            std::to_string(item.data.i32[0]), caller_);
-    }
-}
-
-void HCameraDevice::DebugLogForLightPaintingType(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for flash mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
- 
-void HCameraDevice::DebugLogForTriggerLighting(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
-{
-    // debug log for flash mode
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH tag");
-    } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
-            std::to_string(item.data.u8[0]), caller_);
-    }
-}
-
 void HCameraDevice::RegisterFoldStatusListener()
 {
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
-        int foldStatus = (int)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+        int foldStatus = (int)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, foldStatus);
     }
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener failed");
         listener = nullptr;
@@ -980,7 +776,7 @@ void HCameraDevice::UnRegisterFoldStatusListener()
         MEDIA_ERR_LOG("HCameraDevice::unRegisterFoldStatusListener  listener is null");
         return;
     }
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::UnRegisterFoldStatusListener failed");
     }
@@ -1083,9 +879,9 @@ int32_t HCameraDevice::InitStreamOperator()
     }
 
     if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
-        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_2));
-        streamOperator_ = streamOperator_v1_2;
+        sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperator_v1_3;
+        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_3));
+        streamOperator_ = streamOperator_v1_3;
     } else if (hdiCameraDeviceV1_2 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice V1_2");
         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
@@ -1157,50 +953,47 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
 
 void HCameraDevice::CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
-    if (cameraResult != nullptr) {
-        camera_metadata_item_t item;
-        common_metadata_header_t* metadata = cameraResult->get();
-        int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
-        if (ret == 0) {
-            MEDIA_DEBUG_LOG(
-                "CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d", item.data.u8[0]);
-        }
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
-        if (ret == 0) {
-            MEDIA_DEBUG_LOG(
-                "CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d", item.data.u8[0]);
-        }
-
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
-        if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
-        }
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
-        if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
-        }
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &item);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
-        }
-        MEDIA_DEBUG_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
-        constexpr int32_t rectangleUnitLen = 4;
-
-        if (item.count % rectangleUnitLen) {
-            MEDIA_DEBUG_LOG("Metadata item: %{public}d count: %{public}d is invalid", item.item, item.count);
-        }
-        const int32_t offsetX = 0;
-        const int32_t offsetY = 1;
-        const int32_t offsetW = 2;
-        const int32_t offsetH = 3;
-        float* start = item.data.f;
-        float* end = item.data.f + item.count;
-        for (; start < end; start += rectangleUnitLen) {
-            MEDIA_DEBUG_LOG("Metadata item: %{public}f,%{public}f,%{public}f,%{public}f", start[offsetX],
-                start[offsetY], start[offsetW], start[offsetH]);
-        }
-    } else {
+    if (cameraResult == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::OnResult cameraResult is nullptr");
+        return;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = cameraResult->get();
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
+    if (ret == 0) {
+        MEDIA_DEBUG_LOG("Flash mode: %{public}d", item.data.u8[0]);
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
+    if (ret == 0) {
+        MEDIA_DEBUG_LOG("Flash state: %{public}d", item.data.u8[0]);
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
+    }
+    MEDIA_DEBUG_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
+    constexpr int32_t rectangleUnitLen = 4;
+
+    if (item.count % rectangleUnitLen) {
+        MEDIA_DEBUG_LOG("Metadata item: %{public}d count: %{public}d is invalid", item.item, item.count);
+    }
+    const int32_t offsetX = 0;
+    const int32_t offsetY = 1;
+    const int32_t offsetW = 2;
+    const int32_t offsetH = 3;
+    float* start = item.data.f;
+    float* end = item.data.f + item.count;
+    for (; start < end; start += rectangleUnitLen) {
+        MEDIA_DEBUG_LOG("Metadata item: %{public}f, %{public}f, %{public}f, %{public}f", start[offsetX], start[offsetY],
+            start[offsetW], start[offsetH]);
     }
 }
 
@@ -1215,6 +1008,21 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
         callback->OnResult(timestamp, cameraResult);
+    }
+    if (IsCameraDebugOn()) {
+        CheckOnResultData(cameraResult);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
+{
+    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    auto streamOperatorCallback = GetStreamOperatorCallback();
+    if (streamOperatorCallback != nullptr) {
+        streamOperatorCallback->OnResult(streamId, result);
     }
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);
@@ -1273,9 +1081,9 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         for (auto& streamInfo : streamInfos) {
             streamIds.emplace_back(streamInfo.v1_0.streamId_);
         }
-        if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to release streams");
-        }
+        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
+            streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
+            "HCameraDevice::CreateStreams(), Failed to release streams");
     }
     for (auto& info : streamInfos) {
         MEDIA_INFO_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
@@ -1468,7 +1276,7 @@ int32_t HCameraDevice::OnCaptureReady(int32_t captureId, const std::vector<int32
 
 void HCameraDevice::NotifyCameraSessionStatus(bool running)
 {
-    bool isSystemCamera = (clientName_ == SYSTEM_CAMERA) ? true : false;
+    bool isSystemCamera = (clientName_ == SYSTEM_CAMERA);
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyCameraSessionStatus(clientUserId_, cameraID_,
         running, isSystemCamera);
     return;
@@ -1478,7 +1286,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
     CAMERA_SYNC_TRACE;
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }

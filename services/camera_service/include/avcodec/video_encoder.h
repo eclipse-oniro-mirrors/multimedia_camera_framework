@@ -20,6 +20,7 @@
 #include "native_avcodec_videoencoder.h"
 #include "output/camera_output_capability.h"
 #include "sample_info.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,6 +28,7 @@ using namespace std;
 class VideoEncoder {
 public:
     VideoEncoder() = default;
+    explicit VideoEncoder(VideoCodecType type);
     ~VideoEncoder();
 
     int32_t Create(const std::string &codecMime);
@@ -55,6 +57,8 @@ private:
     int32_t rotation_;
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
+    VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
+    int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
 };
 } // CameraStandard
 } // OHOS

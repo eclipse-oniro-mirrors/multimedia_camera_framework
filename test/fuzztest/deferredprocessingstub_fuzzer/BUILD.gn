@@ -67,7 +67,11 @@ ohos_fuzztest("DeferredProcessingStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [ "deferred_processing_stub_fuzzer.cpp" ]
+  sources = [
+    "../../../services/deferred_processing_service/src/base/buffer_info.cpp",
+    "../../../services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
+    "deferred_processing_stub_fuzzer.cpp",
+  ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",

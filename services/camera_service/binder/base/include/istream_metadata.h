@@ -16,10 +16,23 @@
 #ifndef OHOS_CAMERA_ISTREAM_METADATA_H
 #define OHOS_CAMERA_ISTREAM_METADATA_H
 
+#include "istream_metadata_callback.h"
 #include "istream_common.h"
 
 namespace OHOS {
 namespace CameraStandard {
+enum class MetadataObjectType : int32_t {
+    INVALID = -1,
+    FACE = 0,
+    HUMAN_BODY = 1,
+    CAT_FACE = 2,
+    CAT_BODY = 3,
+    DOG_FACE = 4,
+    DOG_BODY = 5,
+    SALIENT_DETECTION = 6,
+    BAR_CODE_DETECTION = 7,
+    BASE_FACE_DETECTION = 8,
+};
 class IStreamMetadata : public IStreamCommon {
 public:
     virtual int32_t Start() = 0;
@@ -27,6 +40,12 @@ public:
     virtual int32_t Stop() = 0;
 
     virtual int32_t Release() = 0;
+
+    virtual int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) = 0;
+
+    virtual int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) = 0;
+
+    virtual int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamMetadata");
 };

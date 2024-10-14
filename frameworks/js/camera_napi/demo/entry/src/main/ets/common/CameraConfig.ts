@@ -25,5 +25,7 @@ export interface CameraConfig {
   photoResolution: number, // 照片分辨率
   videoResolution: number, // 照片分辨率
   videoFrame: number, // 录像帧率
-  referenceLineBol: boolean // 分割线
+  referenceLineBol: boolean, // 分割线
+  hdrPhotoBol: boolean, // HDR 拍摄
+  hdrVideoBol: boolean, // HDR 录制
 }
