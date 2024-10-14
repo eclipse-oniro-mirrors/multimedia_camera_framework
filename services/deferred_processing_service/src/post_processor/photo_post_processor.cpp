@@ -660,7 +660,6 @@ void PhotoPostProcessor::OnProcessDone(const std::string& imageId, std::shared_p
 
 void PhotoPostProcessor::OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo)
 {
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
     DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     consecutiveTimeoutCount_ = 0;
     StopTimer(imageId);
