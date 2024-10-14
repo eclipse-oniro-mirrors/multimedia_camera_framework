@@ -2853,7 +2853,7 @@ index d4a75c403..ea66ac134 100644
 +++ b/services/deferred_processing_service/binder/base/include/ideferred_photo_processing_session.h
 @@ -1,47 +1,47 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -2969,7 +2969,7 @@ index 000000000..9ec749fc4
 +++ b/services/deferred_processing_service/binder/base/include/ideferred_video_processing_session.h
 @@ -0,0 +1,57 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3032,7 +3032,7 @@ index 000000000..b0c6cfc3b
 +++ b/services/deferred_processing_service/binder/base/include/ideferred_video_processing_session_callback.h
 @@ -0,0 +1,52 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3089,7 +3089,7 @@ index 7acc9b4ff..04549abe8 100644
 +++ b/services/deferred_processing_service/binder/client/include/deferred_photo_processing_session_proxy.h
 @@ -1,43 +1,43 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -3132,7 +3132,7 @@ index 7acc9b4ff..04549abe8 100644
 -} // namespace OHOS
 -#endif // OHOS_DEFERRED_PHOTO_PROCESSING_SESSION_PROXY_H
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3181,7 +3181,7 @@ index 000000000..b43ba39dd
 +++ b/services/deferred_processing_service/binder/client/include/deferred_video_processing_session_callback_proxy.h
 @@ -0,0 +1,59 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3246,7 +3246,7 @@ index 000000000..7be4230af
 +++ b/services/deferred_processing_service/binder/client/include/deferred_video_processing_session_proxy.h
 @@ -0,0 +1,66 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3375,7 +3375,7 @@ index 000000000..e77e47778
 +++ b/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_callback_proxy.cpp
 @@ -0,0 +1,122 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3503,7 +3503,7 @@ index 000000000..9c5617ac2
 +++ b/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp
 @@ -0,0 +1,181 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3690,7 +3690,7 @@ index 000000000..85336f1df
 +++ b/services/deferred_processing_service/binder/server/include/deferred_video_processing_session_callback_stub.h
 @@ -0,0 +1,42 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3738,7 +3738,7 @@ index 000000000..bc0e605bd
 +++ b/services/deferred_processing_service/binder/server/include/deferred_video_processing_session_stub.h
 @@ -0,0 +1,44 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3787,7 +3787,7 @@ index 9489f380f..5af88f541 100644
 +++ b/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -3815,7 +3815,7 @@ index 0df09366e..8e12b293f 100644
 +++ b/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp
 @@ -1,5 +1,5 @@
  /*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -3836,7 +3836,7 @@ index 000000000..e32e6fa6c
 +++ b/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp
 @@ -0,0 +1,67 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -3909,7 +3909,7 @@ index 000000000..57c3f4f4b
 +++ b/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_stub.cpp
 @@ -0,0 +1,90 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4213,7 +4213,7 @@ index 000000000..25d8eb6d7
 +++ b/services/deferred_processing_service/include/base/command_server/command.h
 @@ -0,0 +1,62 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4375,7 +4375,7 @@ index 000000000..5a58b74dd
 +++ b/services/deferred_processing_service/include/base/command_server/command_server_impl.h
 @@ -0,0 +1,47 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4533,7 +4533,7 @@ index 000000000..844ce1663
 +++ b/services/deferred_processing_service/include/base/ivideo_process_callbacks.h
 @@ -0,0 +1,37 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4575,7 +4575,7 @@ index fef49d481..787284dbf 100644
 +++ b/services/deferred_processing_service/include/base/task_manager/thread_pool.h
 @@ -1,90 +1,92 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -4665,7 +4665,7 @@ index fef49d481..787284dbf 100644
 -} // namespace OHOS
 -#endif // OHOS_DEFERRED_PROCESSING_SERVICE_THREAD_POOL_H
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4762,7 +4762,7 @@ index 1899fad49..a6732ae80 100644
 +++ b/services/deferred_processing_service/include/base/task_manager/thread_utils.h
 @@ -1,35 +1,36 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -4797,7 +4797,7 @@ index 1899fad49..a6732ae80 100644
 -} // namespace OHOS
 -#endif // OHOS_DEFERRED_PROCESSING_SERVICE_THREAD_UTILS_H
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4838,7 +4838,7 @@ index c6fcadea3..00bbfcdba 100644
 +++ b/services/deferred_processing_service/include/deferred_processing_service.h
 @@ -1,57 +1,59 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -4894,7 +4894,7 @@ index c6fcadea3..00bbfcdba 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -4960,7 +4960,7 @@ index 000000000..e1442440b
 +++ b/services/deferred_processing_service/include/dfx/dps_video_report.h
 @@ -0,0 +1,64 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5031,7 +5031,7 @@ index 000000000..4a6d9a1eb
 +++ b/services/deferred_processing_service/include/event_monitor/base/events_strategy.h
 @@ -0,0 +1,42 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5080,7 +5080,7 @@ index 000000000..01d25e64f
 +++ b/services/deferred_processing_service/include/event_monitor/command/event_status_change_command.h
 @@ -0,0 +1,43 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5130,7 +5130,7 @@ index 000000000..8af7faaf6
 +++ b/services/deferred_processing_service/include/event_monitor/events_info.h
 @@ -0,0 +1,50 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5187,7 +5187,7 @@ index 79651833e..1711529ba 100644
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
   * You may obtain a copy of the License at
@@ -5302,7 +5302,7 @@ index 000000000..429bc5323
 +++ b/services/deferred_processing_service/include/event_monitor/events_subscriber.h
 @@ -0,0 +1,45 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5385,7 +5385,7 @@ index 000000000..dcce52210
 +++ b/services/deferred_processing_service/include/event_monitor/impl/battery_level_strategy.h
 @@ -0,0 +1,37 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5429,7 +5429,7 @@ index 000000000..fad8d281f
 +++ b/services/deferred_processing_service/include/event_monitor/impl/battery_strategy.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5470,7 +5470,7 @@ index 000000000..2d5824f65
 +++ b/services/deferred_processing_service/include/event_monitor/impl/charging_strategy.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5511,7 +5511,7 @@ index 000000000..ee4889370
 +++ b/services/deferred_processing_service/include/event_monitor/impl/screen_strategy.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5552,7 +5552,7 @@ index 000000000..c0731f1f7
 +++ b/services/deferred_processing_service/include/event_monitor/impl/thermal_strategy.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5593,7 +5593,7 @@ index 000000000..ad3acad7d
 +++ b/services/deferred_processing_service/include/media_manager/demuxer.h
 @@ -0,0 +1,47 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5647,7 +5647,7 @@ index 000000000..d375b0014
 +++ b/services/deferred_processing_service/include/media_manager/media_format.h
 @@ -0,0 +1,105 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5759,7 +5759,7 @@ index 000000000..97f18e5bd
 +++ b/services/deferred_processing_service/include/media_manager/media_manager.h
 @@ -0,0 +1,70 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5836,7 +5836,7 @@ index 000000000..2aa12d1e7
 +++ b/services/deferred_processing_service/include/media_manager/mpeg_manager.h
 @@ -0,0 +1,66 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5909,7 +5909,7 @@ index 000000000..0bd1134ed
 +++ b/services/deferred_processing_service/include/media_manager/mpeg_manager_factory.h
 @@ -0,0 +1,41 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -5957,7 +5957,7 @@ index 000000000..27f03379c
 +++ b/services/deferred_processing_service/include/media_manager/muxer.h
 @@ -0,0 +1,49 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6013,7 +6013,7 @@ index 000000000..39487a51a
 +++ b/services/deferred_processing_service/include/media_manager/reader.h
 @@ -0,0 +1,60 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6080,7 +6080,7 @@ index 000000000..98c65e0d7
 +++ b/services/deferred_processing_service/include/media_manager/track.h
 @@ -0,0 +1,55 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6142,7 +6142,7 @@ index 000000000..6b6524ac1
 +++ b/services/deferred_processing_service/include/media_manager/track_factory.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6183,7 +6183,7 @@ index 000000000..29b3fb643
 +++ b/services/deferred_processing_service/include/media_manager/writer.h
 @@ -0,0 +1,52 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6242,7 +6242,7 @@ index 000000000..0c4edf40e
 +++ b/services/deferred_processing_service/include/post_processor/command/service_died_command.h
 @@ -0,0 +1,38 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6287,7 +6287,7 @@ index 000000000..102147c31
 +++ b/services/deferred_processing_service/include/post_processor/command/video_process_command.h
 @@ -0,0 +1,82 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6376,7 +6376,7 @@ index 000000000..3ed9329b4
 +++ b/services/deferred_processing_service/include/post_processor/video_post_processor.h
 @@ -0,0 +1,102 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6485,7 +6485,7 @@ index 000000000..8d5eabe7c
 +++ b/services/deferred_processing_service/include/schedule/base/ischeduler_video_state.h
 @@ -0,0 +1,57 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6549,7 +6549,7 @@ index 000000000..3de5b41cf
 +++ b/services/deferred_processing_service/include/schedule/impl/video_battery_level_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6591,7 +6591,7 @@ index 000000000..26b355b4b
 +++ b/services/deferred_processing_service/include/schedule/impl/video_battery_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6633,7 +6633,7 @@ index 000000000..e8512ffc6
 +++ b/services/deferred_processing_service/include/schedule/impl/video_camera_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6675,7 +6675,7 @@ index 000000000..80b845b9c
 +++ b/services/deferred_processing_service/include/schedule/impl/video_charging_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6717,7 +6717,7 @@ index 000000000..1a55cbab6
 +++ b/services/deferred_processing_service/include/schedule/impl/video_hal_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6759,7 +6759,7 @@ index 000000000..2e26b7d88
 +++ b/services/deferred_processing_service/include/schedule/impl/video_media_library_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6801,7 +6801,7 @@ index 000000000..62eb30173
 +++ b/services/deferred_processing_service/include/schedule/impl/video_photo_process_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6843,7 +6843,7 @@ index 000000000..ffc8bf478
 +++ b/services/deferred_processing_service/include/schedule/impl/video_screen_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6885,7 +6885,7 @@ index 000000000..f3eed5bda
 +++ b/services/deferred_processing_service/include/schedule/impl/video_temperature_state.h
 @@ -0,0 +1,35 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -6926,7 +6926,7 @@ index 4a43731f5..0080b09f4 100644
 +++ b/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository/deferred_photo_job.h
 @@ -1,109 +1,102 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -7142,7 +7142,7 @@ index d4746b485..a54d251eb 100644
 +++ b/services/deferred_processing_service/include/schedule/scheduler_coordinator.h
 @@ -1,45 +1,42 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -7186,7 +7186,7 @@ index d4746b485..a54d251eb 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7283,7 +7283,7 @@ index 000000000..8868ed910
 +++ b/services/deferred_processing_service/include/schedule/video_processor/deferred_video_controller.h
 @@ -0,0 +1,65 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7355,7 +7355,7 @@ index 000000000..91f9eaeb8
 +++ b/services/deferred_processing_service/include/schedule/video_processor/deferred_video_processor.h
 @@ -0,0 +1,58 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7420,7 +7420,7 @@ index 000000000..fae0c7124
 +++ b/services/deferred_processing_service/include/schedule/video_processor/strategy/ivideo_state_change_listener.h
 @@ -0,0 +1,37 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7464,7 +7464,7 @@ index 000000000..e1cf896de
 +++ b/services/deferred_processing_service/include/schedule/video_processor/strategy/ivideo_strategy.h
 @@ -0,0 +1,37 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7508,7 +7508,7 @@ index 000000000..212ae4302
 +++ b/services/deferred_processing_service/include/schedule/video_processor/strategy/video_strategy_center.h
 @@ -0,0 +1,116 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7631,7 +7631,7 @@ index 000000000..e84693924
 +++ b/services/deferred_processing_service/include/schedule/video_processor/video_job_repository/deferred_video_job.h
 @@ -0,0 +1,149 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7787,7 +7787,7 @@ index 000000000..c350fae2e
 +++ b/services/deferred_processing_service/include/schedule/video_processor/video_job_repository/ivideo_job_repository_listener.h
 @@ -0,0 +1,34 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7828,7 +7828,7 @@ index 000000000..619c52bf4
 +++ b/services/deferred_processing_service/include/schedule/video_processor/video_job_repository/video_job_queue.h
 @@ -0,0 +1,64 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7899,7 +7899,7 @@ index 000000000..43ffc19a0
 +++ b/services/deferred_processing_service/include/schedule/video_processor/video_job_repository/video_job_repository.h
 @@ -0,0 +1,65 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -7971,7 +7971,7 @@ index 000000000..4a050d304
 +++ b/services/deferred_processing_service/include/session/command/session_command.h
 @@ -0,0 +1,61 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8039,7 +8039,7 @@ index 000000000..602d21f9f
 +++ b/services/deferred_processing_service/include/session/command/sync_command.h
 @@ -0,0 +1,56 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8102,7 +8102,7 @@ index 000000000..ccf959aa4
 +++ b/services/deferred_processing_service/include/session/command/video_command.h
 @@ -0,0 +1,77 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8185,7 +8185,7 @@ index 8921c2cf2..6df7a8185 100644
 +++ b/services/deferred_processing_service/include/session/photo_session/deferred_photo_processing_session.h
 @@ -1,66 +1,66 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -8250,7 +8250,7 @@ index 8921c2cf2..6df7a8185 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8323,7 +8323,7 @@ index 6c0de8218..252211b26 100644
 @@ -1,5 +1,5 @@
  /*
 - * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
   * You may obtain a copy of the License at
@@ -8400,7 +8400,7 @@ index 4f82416d6..9ff35f6f5 100644
 +++ b/services/deferred_processing_service/include/session/session_manager.h
 @@ -1,52 +1,58 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -8438,7 +8438,7 @@ index 4f82416d6..9ff35f6f5 100644
 -        std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager);
 -    std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8515,7 +8515,7 @@ index 000000000..df4ef33f6
 +++ b/services/deferred_processing_service/include/session/video_session/deferred_video_processing_session.h
 @@ -0,0 +1,61 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8583,7 +8583,7 @@ index 000000000..8ff25581a
 +++ b/services/deferred_processing_service/include/session/video_session/video_session_info.h
 @@ -0,0 +1,49 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8639,7 +8639,7 @@ index 000000000..2071789f3
 +++ b/services/deferred_processing_service/include/utils/dp_catch.h
 @@ -0,0 +1,55 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8819,7 +8819,7 @@ index 000000000..1de320e34
 +++ b/services/deferred_processing_service/include/utils/dp_power_manager.h
 @@ -0,0 +1,47 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8873,7 +8873,7 @@ index 000000000..0cce1911f
 +++ b/services/deferred_processing_service/include/utils/dp_timer.h
 @@ -0,0 +1,42 @@
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -8921,7 +8921,7 @@ index 201961a9c..de167bde0 100644
 +++ b/services/deferred_processing_service/include/utils/dp_utils.h
 @@ -1,68 +1,125 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -8977,7 +8977,7 @@ index 201961a9c..de167bde0 100644
 -}
 -
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -9559,7 +9559,7 @@ index 87696fbac..c6437f156 100644
 +++ b/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp
 @@ -1,153 +1,170 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -9712,7 +9712,7 @@ index 87696fbac..c6437f156 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -9887,7 +9887,7 @@ index d07f41f23..520f79024 100644
 +++ b/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp
 @@ -1,54 +1,60 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -9941,7 +9941,7 @@ index d07f41f23..520f79024 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
@@ -15812,7 +15812,7 @@ index 1ac0d33fd..85c0986e0 100644
 +++ b/services/deferred_processing_service/src/session/session_info.cpp
 @@ -1,107 +1,107 @@
 -/*
-- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 - * Licensed under the Apache License, Version 2.0 (the "License");
 - * you may not use this file except in compliance with the License.
 - * You may obtain a copy of the License at
@@ -15919,7 +15919,7 @@ index 1ac0d33fd..85c0986e0 100644
 -} // namespace CameraStandard
 -} // namespace OHOS
 +/*
-+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 + * Licensed under the Apache License, Version 2.0 (the "License");
 + * you may not use this file except in compliance with the License.
 + * You may obtain a copy of the License at
