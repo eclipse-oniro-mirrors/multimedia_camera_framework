@@ -1012,8 +1012,9 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     int32_t ret = CAMERA_OK;
     bool currentMuteMode = muteModeStored_;
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    pid_t activeClient = deviceManager->GetActiveClient();
-    if (activeClient == -1) {
+    lock_guard<mutex> lock(deviceManager->mapMutex_);
+    std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
+    if (deviceHolderVector.size() == 0) {
         OnMute(muteMode);
         int32_t retCode = SetMuteModeByDataShareHelper(muteMode);
         muteModeStored_ = muteMode;
@@ -1023,24 +1024,27 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
         }
         return retCode;
     }
-    sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
-    if (activeDevice != nullptr) {
-        string cameraId = activeDevice->GetCameraId();
-        CHECK_ERROR_RETURN_RET_LOG(!IsCameraMuteSupported(cameraId), CAMERA_UNSUPPORTED,
-            "Not Supported Mute,cameraId: %{public}s", cameraId.c_str());
+    for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
+        sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
         if (activeDevice != nullptr) {
-            ret = UpdateMuteSetting(activeDevice, muteMode);
+            string cameraId = activeDevice->GetCameraId();
+            CHECK_ERROR_RETURN_RET_LOG(!IsCameraMuteSupported(cameraId), CAMERA_UNSUPPORTED,
+                "Not Supported Mute,cameraId: %{public}s", cameraId.c_str());
+            if (activeDevice != nullptr) {
+                ret = UpdateMuteSetting(activeDevice, muteMode);
+            }
+            if (ret != CAMERA_OK) {
+                MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
+                muteModeStored_ = currentMuteMode;
+            }
         }
-        if (ret != CAMERA_OK) {
-            MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
-            muteModeStored_ = currentMuteMode;
+        if (activeDevice != nullptr) {
+            activeDevice->SetDeviceMuteMode(muteMode);
         }
     }
+
     if (ret == CAMERA_OK) {
         OnMute(muteMode);
-    }
-    if (activeDevice != nullptr) {
-        activeDevice->SetDeviceMuteMode(muteMode);
     }
     ret = SetMuteModeByDataShareHelper(muteMode);
     if (ret == CAMERA_OK) {

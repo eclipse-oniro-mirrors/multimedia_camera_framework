@@ -220,6 +220,8 @@ public:
     */
     pid_t GetActiveClient();
 
+    std::vector<sptr<HCameraDeviceHolder>> GetActiveCameraHolders();
+
     void SetStateOfACamera(std::string cameraId, int32_t state);
 
     void SetPeerCallback(sptr<ICameraBroker>& callback);
@@ -244,6 +246,8 @@ public:
     */
     bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
+
+    std::mutex mapMutex_;
 private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
@@ -252,7 +256,6 @@ private:
     SafeMap<std::string, int32_t> stateOfACamera_;
     // LRU ordered, most recent at end
     std::vector<sptr<HCameraDeviceHolder>> activeCameras_;
-    std::mutex mapMutex_;
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
     std::string GetACameraId();
