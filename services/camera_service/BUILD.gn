@@ -241,12 +241,10 @@ ohos_shared_library("camera_service") {
 
 ohos_shared_library("camera_dynamic_medialibrary") {
   install_enable = true
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp",
-  ]
+  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
   cflags = [
     "-fPIC",
-    "-Wall"
+    "-Wall",
   ]
   sanitize = {
     cfi = true
@@ -262,9 +260,7 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [
-    "${multimedia_camera_framework_path}/common:camera_utils",
-  ]
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
 
   external_deps = [
     "data_share:datashare_common",
@@ -274,7 +270,7 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     "ipc:ipc_single",
     "media_library:media_library",
     "media_library:media_library_manager",
-    "samgr:samgr_proxy"
+    "samgr:samgr_proxy",
   ]
 
   cflags_cc = cflags
