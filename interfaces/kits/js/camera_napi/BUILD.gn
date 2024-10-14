@@ -168,13 +168,13 @@ if (gen_camera_picker) {
       "ability_runtime:ability_context_native",  # ability_context.h
       "ability_runtime:ability_manager",  # pixel_map.h
       "ability_runtime:napi_base_context",  # napi_base_context.h
-      "ability_runtime:ui_extension", # ui_extension_context.h
+      "ability_runtime:ui_extension",  # ui_extension_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
-      "window_manager:libwm", # windows.h
+      "window_manager:libwm",  # windows.h
     ]
     sanitize = {
       cfi = true
