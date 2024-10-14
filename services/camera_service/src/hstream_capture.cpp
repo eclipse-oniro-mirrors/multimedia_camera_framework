@@ -634,6 +634,7 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
         streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
     }
     if (IsBurstCapture(captureId)) {
+        std::lock_guard<std::mutex> burstLock(burstLock_);
         burstNumMap_[captureId] = burstNum_;
         ResetBurst();
     }
