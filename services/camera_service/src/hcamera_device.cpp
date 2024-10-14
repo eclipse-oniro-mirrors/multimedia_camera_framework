@@ -120,6 +120,7 @@ HCameraDevice::HCameraDevice(
     CameraTimer::GetInstance()->IncreaseUserCount();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
+    cameraPid_ = IPCSkeleton::GetCallingPid();
 }
 
 HCameraDevice::~HCameraDevice()
@@ -389,7 +390,11 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     CHECK_ERROR_RETURN_RET_LOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
-    CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->StartUsingPermissionCallback(), false, "start using permission failed");
+    if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
+        MEDIA_INFO_LOG("do StartUsingPermissionCallback");
+        CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->StartUsingPermissionCallback(), false,
+            "start using permission failed");
+    }
     CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
     CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
     return true;
@@ -400,7 +405,10 @@ void HCameraDevice::HandlePrivacyAfterCloseDevice()
     MEDIA_DEBUG_LOG("enter handlePrivacyAfterCloseDevice");
     auto cameraPrivacy = GetCameraPrivacy();
     if (cameraPrivacy != nullptr) {
-        cameraPrivacy->StopUsingPermissionCallback();
+        if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
+            MEDIA_INFO_LOG("do StopUsingPermissionCallback");
+            cameraPrivacy->StopUsingPermissionCallback();
+        }
         cameraPrivacy->UnregisterPermissionCallback();
     }
 }
