@@ -101,12 +101,12 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
+    "${window_manager_path}/interfaces/innerkits/wm",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
     "//foundation/window/window_manager/interfaces/innerkits/dm",
-    "//foundation/window/window_manager/interfaces/innerkits/wm",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
@@ -128,7 +128,7 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+    "${multimedia_media_library_path}/interfaces/inner_api/media_library_helper/include",
   ]
 
   if (target_cpu == "arm") {
