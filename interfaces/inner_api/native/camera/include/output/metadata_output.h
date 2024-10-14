@@ -288,14 +288,14 @@ private:
     static sptr<MetadataObjectFactory> metaFactoryInstance_;
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
-    MetadataObjectType type_;
+    MetadataObjectType type_ = MetadataObjectType::INVALID;
     int32_t timestamp_ = 0;
     Rect box_ = {0.0, 0.0, 0.0, 0.0};
     int32_t objectId_ = 0;
     int32_t confidence_ = 0;
     // Parameters of All face metadata
-    Rect leftEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
-    Rect rightEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};;
+    Rect leftEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};
+    Rect rightEyeBoundingBox_ = {0.0, 0.0, 0.0, 0.0};
     // Parameters of human face metadata
     Emotion emotion_ = NEUTRAL;
     int32_t emotionConfidence_ = 0;
