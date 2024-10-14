@@ -288,7 +288,7 @@ private:
     static sptr<MetadataObjectFactory> metaFactoryInstance_;
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
-    MetadataObjectType type_ = INVALID;
+    MetadataObjectType type_ = MetadataObjectType::INVALID;;
     int32_t timestamp_ = 0;
     Rect box_ = {0.0, 0.0, 0.0, 0.0};
     int32_t objectId_ = 0;
