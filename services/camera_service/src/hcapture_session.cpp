@@ -1955,7 +1955,7 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
 {
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto videoCache = videoCache_.promote();
-    if(videoCache) {
+    if (videoCache) {
         videoCache_->GetFrameCachedResult(
             frameCacheList_,
             [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
