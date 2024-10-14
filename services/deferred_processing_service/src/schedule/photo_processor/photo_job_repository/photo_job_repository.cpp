@@ -19,7 +19,6 @@
 #include "dps_event_report.h"
 #include "events_monitor.h"
 #include "steady_clock.h"
-#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,6 +34,9 @@ PhotoJobRepository::PhotoJobRepository(const int32_t userId)
       jobListeners_()
 {
     DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
+    priotyToNum_.Insert(PhotoJobPriority::HIGH, 0);
+    priotyToNum_.Insert(PhotoJobPriority::LOW, 0);
+    priotyToNum_.Insert(PhotoJobPriority::NORMAL, 0);
 }
 
 PhotoJobRepository::~PhotoJobRepository()
@@ -45,34 +47,42 @@ PhotoJobRepository::~PhotoJobRepository()
     offlineJobList_.clear();
     jobQueue_.clear();
     jobListeners_.clear();
+    priotyToNum_.Clear();
 }
 
 void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata)
 {
-    DP_INFO_LOG("entered");
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtrFind = GetJobUnLocked(imageId);
-    if (jobPtrFind != nullptr) {
-        DP_INFO_LOG("already existed, imageId: %s", imageId.c_str());
-        return;
-    }
-    DeferredPhotoJobPtr jobPtr = std::make_shared<DeferredPhotoJob>(imageId, discardable, metadata);
-    int type;
-    metadata.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
-    if (type == DeferredProcessingType::DPS_BACKGROUND) {
-        backgroundJobMap_.emplace(imageId, jobPtr);
-    } else {
-        DP_INFO_LOG("add offline job, imageId: %s", imageId.c_str());
-        offlineJobList_.push_back(jobPtr);
-        offlineJobMap_.emplace(imageId, jobPtr);
-        EventsMonitor::GetInstance().NotifyPhotoProcessSize(offlineJobList_.size());
-    }
-    jobPtr->SetPhotoJobType(type);
-    bool priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
-    bool statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    bool priorityChanged = false;
+    bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s, discardable: %{public}d", imageId.c_str(), discardable);
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        DeferredPhotoJobPtr jobPtrFind = GetJobUnLocked(imageId);
+        if (jobPtrFind != nullptr) {
+            DP_INFO_LOG("already existed, imageId: %s", imageId.c_str());
+            return;
+        }
 
+        jobPtr = std::make_shared<DeferredPhotoJob>(imageId, discardable, metadata);
+        int type;
+        metadata.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
+        if (type == DeferredProcessingType::DPS_BACKGROUND) {
+            backgroundJobMap_.emplace(imageId, jobPtr);
+        } else {
+            DP_INFO_LOG("add offline job, imageId: %s", imageId.c_str());
+            offlineJobList_.push_back(jobPtr);
+            offlineJobMap_.emplace(imageId, jobPtr);
+            EventsMonitor::GetInstance().NotifyPhotoProcessSize(offlineJobList_.size());
+        }
+        jobPtr->SetPhotoJobType(type);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
+        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
+    }
+
+    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
     int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
     EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
@@ -80,40 +90,43 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
 
 void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool restorable)
 {
-    DP_INFO_LOG("entered, imageId: %s, restorable: %{public}d", imageId.c_str(), restorable);
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s", imageId.c_str());
-        return;
-    }
-
     bool priorityChanged = false;
     bool statusChanged = false;
-
-    UpdateJobQueueUnLocked(false, jobPtr);
-
-    if (restorable) {
-        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::LOW);
-        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
-    } else {
-        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::DELETED);
-        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::DELETED);
-        if (backgroundJobMap_.count(imageId) == 1) {
-            backgroundJobMap_.erase(imageId);
-            DP_INFO_LOG("background job removed, imageId: %s: ", imageId.c_str());
-        } else if (offlineJobMap_.count(imageId) == 1) {
-            auto it = std::find_if(offlineJobList_.begin(), offlineJobList_.end(),
-                [jobPtr](const auto& ptr) { return ptr == jobPtr; });
-            if (it != offlineJobList_.end()) {
-                offlineJobList_.erase(it);
-            }
-            offlineJobMap_.erase(imageId);
-            DP_INFO_LOG("offline job removed, imageId: %s: ", imageId.c_str());
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s, restorable: %{public}d", imageId.c_str(), restorable);
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
         }
+
+        UpdateJobQueueUnLocked(false, jobPtr);
+        if (restorable) {
+            priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::LOW);
+            statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
+        } else {
+            priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::DELETED);
+            statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::DELETED);
+            if (backgroundJobMap_.count(imageId) == 1) {
+                backgroundJobMap_.erase(imageId);
+                DP_INFO_LOG("background job removed, imageId: %{public}s", imageId.c_str());
+            } else if (offlineJobMap_.count(imageId) == 1) {
+                auto it = std::find_if(offlineJobList_.begin(), offlineJobList_.end(),
+                    [jobPtr](const auto& ptr) { return ptr == jobPtr; });
+                if (it != offlineJobList_.end()) {
+                    offlineJobList_.erase(it);
+                }
+                offlineJobMap_.erase(imageId);
+                DP_INFO_LOG("offline job removed, imageId: %{public}s", imageId.c_str());
+            }
+        }
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
     }
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    
+    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
     int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
     EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
@@ -121,148 +134,171 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
 
 bool PhotoJobRepository::RequestJob(const std::string& imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return false;
-    }
     bool priorityChanged = false;
     bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return false;
+        }
 
-    UpdateJobQueueUnLocked(true, jobPtr);
-
-    priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::HIGH);
-
-    if (jobPtr->GetCurStatus() == PhotoJobStatus::FAILED) {
-        DP_INFO_LOG("FAILED to PENDING, imageId: %s: ", imageId.c_str());
-        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
+        UpdateJobQueueUnLocked(true, jobPtr);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::HIGH);
+        if (jobPtr->GetCurStatus() == PhotoJobStatus::FAILED) {
+            DP_INFO_LOG("FAILED to PENDING, imageId: %{public}s", imageId.c_str());
+            statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
+        }
     }
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    
+    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
     return true;
 }
 
 void PhotoJobRepository::CancelJob(const std::string& imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
     bool priorityChanged = false;
-    bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    UpdateJobQueueUnLocked(false, jobPtr);
-
-    priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        UpdateJobQueueUnLocked(false, jobPtr);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
+    }
+    
+    NotifyJobChanged(priorityChanged, false, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
-    return;
 }
 
 void PhotoJobRepository::RestoreJob(const std::string& imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
     bool priorityChanged = false;
-    bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
+    }
+    
+    NotifyJobChanged(priorityChanged, false, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);
 }
 
 void PhotoJobRepository::SetJobPending(const std::string imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
-    bool priorityChanged = false;
     bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
+    }
+    
+    NotifyJobChanged(false, statusChanged, jobPtr);
 }
 
 void PhotoJobRepository::SetJobRunning(const std::string imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
-    bool priorityChanged = false;
     bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::RUNNING);
-    jobPtr->RecordJobRunningPriority();
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::RUNNING);
+        jobPtr->RecordJobRunningPriority();
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
+    }
+    
+    NotifyJobChanged(false, statusChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
 }
 
 void PhotoJobRepository::SetJobCompleted(const std::string imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
     bool priorityChanged = false;
     bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    UpdateJobQueueUnLocked(false, jobPtr);
-
-    priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
-    statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::COMPLETED);
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        UpdateJobQueueUnLocked(false, jobPtr);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
+        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::COMPLETED);
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
+    }
+    
+    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
 }
 
 void PhotoJobRepository::SetJobFailed(const std::string imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return;
-    }
     bool priorityChanged = false;
     bool statusChanged = false;
+    DeferredPhotoJobPtr jobPtr = nullptr;
+    {
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        jobPtr = GetJobUnLocked(imageId);
+        if (jobPtr == nullptr) {
+            DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
+            return;
+        }
 
-    UpdateJobQueueUnLocked(false, jobPtr);
-
-    priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
-    statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::FAILED);
-    UpdateRunningCountUnLocked(statusChanged, jobPtr);
-    NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+        UpdateJobQueueUnLocked(false, jobPtr);
+        priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
+        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::FAILED);
+        UpdateRunningCountUnLocked(statusChanged, jobPtr);
+    }
+    
+    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
+    RecordPriotyNum(priorityChanged, jobPtr);
 }
 
 PhotoJobStatus PhotoJobRepository::GetJobStatus(const std::string& imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s: ", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
     if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
+        DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
         return PhotoJobStatus::NONE;
     } else {
         return jobPtr->GetCurStatus();
@@ -334,7 +370,7 @@ DeferredPhotoJobPtr PhotoJobRepository::GetHighPriorityJob()
 int PhotoJobRepository::GetRunningJobCounts()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DP_DEBUG_LOG("running jobs num: %{public}d", runningNum_);
+    DP_INFO_LOG("running jobs num: %{public}d", runningNum_);
     return runningNum_;
 }
 
@@ -344,7 +380,7 @@ PhotoJobPriority PhotoJobRepository::GetJobPriority(std::string imageId)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
     if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
+        DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
         return PhotoJobPriority::NONE;
     } else {
         return jobPtr->GetCurPriority();
@@ -357,32 +393,25 @@ PhotoJobPriority PhotoJobRepository::GetJobRunningPriority(std::string imageId)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
     if (jobPtr == nullptr) {
-        DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
+        DP_INFO_LOG("does not existed, imageId: %{public}s", imageId.c_str());
         return PhotoJobPriority::NONE;
     } else {
         return jobPtr->GetRunningPriority();
     }
 }
 
-void PhotoJobRepository::NotifyJobChangedUnLocked(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr)
+void PhotoJobRepository::NotifyJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr)
 {
-    DP_INFO_LOG("entered, priorityChanged: %{public}d, statusChanged: %{public}d, imageId: %s: ",
+    DP_INFO_LOG("entered, priorityChanged: %{public}d, statusChanged: %{public}d, imageId: %{public}s",
         priorityChanged, statusChanged, jobPtr->GetImageId().c_str());
+    DP_INFO_LOG("jobListenersMutex begin");
+    std::lock_guard<std::recursive_mutex> lock(jobListenersMutex_);
     for (auto& listenerWptr : jobListeners_) {
         if (auto listenerSptr = listenerWptr.lock()) {
             listenerSptr->OnPhotoJobChanged(priorityChanged, statusChanged, jobPtr);
         }
     }
-    if (priorityChanged) {
-        auto curJob = priotyToNum.find(jobPtr->GetCurPriority());
-        if (curJob != priotyToNum.end()) {
-            (curJob->second)++;
-        }
-        curJob = priotyToNum.find(jobPtr->GetPrePriority());
-        if (curJob != priotyToNum.end()) {
-            (curJob->second)--;
-        }
-    }
+    DP_INFO_LOG("jobListenersMutex end");
 }
 
 void PhotoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, DeferredPhotoJobPtr jobPtr)
@@ -420,10 +449,10 @@ void PhotoJobRepository::UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr 
 
 void PhotoJobRepository::RegisterJobListener(std::weak_ptr<IPhotoJobRepositoryListener> listener)
 {
-    DP_INFO_LOG("entered");
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("jobListenersMutex begin");
+    std::lock_guard<std::recursive_mutex> lock(jobListenersMutex_);
     jobListeners_.emplace_back(listener);
-    return;
+    DP_INFO_LOG("jobListenersMutex end");
 }
 
 DeferredPhotoJobPtr PhotoJobRepository::GetJobUnLocked(const std::string& imageId)
@@ -474,14 +503,19 @@ bool PhotoJobRepository::HasUnCompletedBackgroundJob()
     return it != backgroundJobMap_.end();
 }
 
+void PhotoJobRepository::RecordPriotyNum(bool priorityChanged, const DeferredPhotoJobPtr& jobPtr)
+{
+    DP_CHECK_RETURN(!priorityChanged);
+    int32_t oldNum;
+    priotyToNum_.FindOldAndSetNew(jobPtr->GetCurPriority(), oldNum, oldNum + 1);
+    priotyToNum_.FindOldAndSetNew(jobPtr->GetPrePriority(), oldNum, oldNum - 1);
+}
+
 void PhotoJobRepository::ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event)
 {
-    auto iter = priotyToNum.find(PhotoJobPriority::HIGH);
-    int highJobNum = iter->second;
-    iter = priotyToNum.find(PhotoJobPriority::NORMAL);
-    int normalJobNum = iter->second;
-    iter = priotyToNum.find(PhotoJobPriority::LOW);
-    int lowJobNum = iter->second;
+    int32_t highJobNum = priotyToNum_.ReadVal(PhotoJobPriority::HIGH);
+    int32_t normalJobNum = priotyToNum_.ReadVal(PhotoJobPriority::NORMAL);
+    int32_t lowJobNum = priotyToNum_.ReadVal(PhotoJobPriority::LOW);
     std::string imageId = jobPtr->GetImageId();
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.imageId = imageId;
