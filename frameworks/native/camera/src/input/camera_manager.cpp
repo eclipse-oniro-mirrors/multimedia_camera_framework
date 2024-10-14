@@ -224,7 +224,7 @@ int32_t CameraManager::CreateListenerObject()
 int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
     const std::string& bundleName) __attribute__((no_sanitize("cfi")))
 {
-    MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
+    MEDIA_INFO_LOG("OnCameraStatusChanged cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = cameraManager_.promote();
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraStatusChanged CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMngrCallbackMap();
@@ -1008,11 +1008,9 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
-    if (cameraSvcCallback_ == nullptr) {
-        CreateAndSetCameraServiceCallback();
-    }
     std::thread::id threadId = std::this_thread::get_id();
     cameraMngrCallbackMap_.EnsureInsert(threadId, callback);
+    CHECK_EXECUTE(cameraSvcCallback_ == nullptr, CreateAndSetCameraServiceCallback());
 }
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
@@ -1025,11 +1023,9 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
-    if (cameraMuteSvcCallback_ == nullptr) {
-        CreateAndSetCameraMuteServiceCallback();
-    }
     std::thread::id threadId = std::this_thread::get_id();
     cameraMuteListenerMap_.EnsureInsert(threadId, listener);
+    CHECK_EXECUTE(cameraMuteSvcCallback_ == nullptr, CreateAndSetCameraMuteServiceCallback());
 }
 
 shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
@@ -1042,11 +1038,9 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 
 void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
-    if (torchSvcCallback_ == nullptr) {
-        CreateAndSetTorchServiceCallback();
-    }
     std::thread::id threadId = std::this_thread::get_id();
     torchListenerMap_.EnsureInsert(threadId, listener);
+    CHECK_EXECUTE(torchSvcCallback_ == nullptr, CreateAndSetTorchServiceCallback());
 }
 
 shared_ptr<TorchListener> CameraManager::GetTorchListener()
@@ -1059,9 +1053,9 @@ shared_ptr<TorchListener> CameraManager::GetTorchListener()
 
 void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
 {
-    CHECK_EXECUTE(foldSvcCallback_ == nullptr, CreateAndSetFoldServiceCallback());
     std::thread::id threadId = std::this_thread::get_id();
     foldListenerMap_.EnsureInsert(threadId, listener);
+    CHECK_EXECUTE(foldSvcCallback_ == nullptr, CreateAndSetFoldServiceCallback());
 }
 
 shared_ptr<FoldListener> CameraManager::GetFoldListener()
