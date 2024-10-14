@@ -19,6 +19,7 @@
 #include "basic_definitions.h"
 #include "dps_event_report.h"
 #include "steady_clock.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -60,6 +61,7 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
     inSync_ = false;
     std::vector<std::string> pendingImages;
     bool isSuccess = processor_->GetPendingImages(pendingImages);
+    std::lock_guard<std::mutex> lock(imageLock_);
     if (!isSuccess) {
         for (auto it = imageIds_.begin(); it != imageIds_.end();) {
             AddImage(it->first, it->second->metadata_, it->second->discardable_);
