@@ -1623,22 +1623,25 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
     if (!isSetMotionPhoto_ || isMirror == isMovingPhotoMirror_) {
         return CAMERA_OK;
     }
-    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-    for (auto& stream : repeatStreams) {
-        if (stream == nullptr) {
-            continue;
-        }
-        auto streamRepeat = CastStream<HStreamRepeat>(stream);
-        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
-            MEDIA_INFO_LOG("restart movingphoto stream.");
-            std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-            if (streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_)) {
-                isMovingPhotoMirror_ = isMirror;
-                // set clear cache flag
-                livephotoListener_->SetClearFlag();
+    if (isMirror != isMovingPhotoMirror_) {
+        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+        for (auto& stream : repeatStreams) {
+            if (stream == nullptr) {
+                continue;
             }
-            break;
+            auto streamRepeat = CastStream<HStreamRepeat>(stream);
+            if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
+                MEDIA_INFO_LOG("restart movingphoto stream.");
+                streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
+                streamRepeat->Stop();
+                streamRepeat->Start();
+                break;
+            }
         }
+        isMovingPhotoMirror_ = isMirror;
+        // clear cache frame
+        std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+        livephotoListener_->ClearCache();
     }
     return CAMERA_OK;
 }
@@ -1984,7 +1987,6 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto videoCache = videoCache_.promote();
     if (videoCache) {
-        std::lock_guard<std::mutex> lock(mutex_);
         videoCache_->GetFrameCachedResult(
             frameCacheList_,
             [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
