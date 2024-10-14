@@ -105,6 +105,7 @@ private:
     std::map<int32_t, std::vector<std::string>> burstImagesMap_;
     std::map<int32_t, std::string> burstkeyMap_;
     std::map<int32_t, int32_t> burstNumMap_;
+    std::mutex burstLock_;
     int32_t burstNum_;
     int32_t videoCodecType_ = 0;
 };

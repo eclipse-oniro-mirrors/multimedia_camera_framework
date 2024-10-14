@@ -19,6 +19,7 @@
 #include "dp_utils.h"
 #include "deferred_video_job.h"
 #include "singleton.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,7 +57,7 @@ public:
     void ReportCompleteVideoEvent(const std::string &videoId);
 
 private:
-    std::map<std::string, VideoRecord> processVideoInfo_;
+    SafeMap<std::string, VideoRecord> processVideoInfo_;
 };
 } // namespace DeferredProcessingService
 } // namespace CameraStandard
