@@ -56,6 +56,7 @@ private:
     std::mutex surfaceMutex_; // guard codecSurface_
     sptr<Surface> codecSurface_;
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
+    bool successFrame_ = false;
 };
 } // CameraStandard
 } // OHOS
