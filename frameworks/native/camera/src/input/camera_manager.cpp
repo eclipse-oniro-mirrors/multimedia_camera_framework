@@ -1708,9 +1708,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     if (profileMode != fallbackMode) {
         ParseCapability(profilesWrapper, camera, fallbackMode, item, metadata);
     }
-    if (IsSystemApp()) {
-        FillSupportPhotoFormats(profilesWrapper.photoProfiles);
-    }
+    FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
@@ -2302,7 +2300,7 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");
- 
+
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_RET_LOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
