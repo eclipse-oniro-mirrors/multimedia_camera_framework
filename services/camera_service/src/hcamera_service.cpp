@@ -785,6 +785,9 @@ void HCameraService::ExecutePidSetCallback(sptr<ICameraServiceCallback>& callbac
             MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = %{public}d, bundleName = %{public}s",
                 cameraId.c_str(), it->second.status, it->second.bundleName.c_str());
             callback->OnCameraStatusChanged(cameraId, it->second.status, it->second.bundleName);
+        } else {
+            MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = 2", cameraId.c_str());
+            callback->OnCameraStatusChanged(cameraId, CameraStatus::CAMERA_STATUS_AVAILABLE);
         }
     }
 }
