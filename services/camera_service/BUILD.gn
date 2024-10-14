@@ -90,7 +90,6 @@ ohos_shared_library("camera_service") {
 
   include_dirs = [
     "//drivers/peripheral/display/interfaces/include",
-    "${graphic_surface_path}/interfaces/inner_api/surface",
     "${graphic_surface_path}/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
     "${multimedia_camera_framework_path}/common/utils",
