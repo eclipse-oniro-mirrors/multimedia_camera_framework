@@ -29,7 +29,10 @@ ohos_source_set("camera_utils") {
 
   include_dirs = [ "utils" ]
 
-  sources = [ "utils/camera_xcollie.cpp", "utils/camera_dynamic_loader.cpp" ]
+  sources = [
+    "utils/camera_dynamic_loader.cpp",
+    "utils/camera_xcollie.cpp",
+  ]
 
   external_deps = [
     "c_utils:utils",
