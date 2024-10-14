@@ -38,6 +38,7 @@ private:
 
 public:
     int drainCount;
+    std::mutex drainImageLock_;
     DrainImageManager(sptr<DrainImageCallback> callback, int count) : drainImageCallback(callback), drainCount(count) {}
     void DrainImage(sptr<FrameRecord> frame)
     {

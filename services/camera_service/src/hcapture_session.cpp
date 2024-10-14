@@ -2145,6 +2145,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
         sptr<DrainImageManager> drainImageManager;
         if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
+            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
             drainImageManager->DrainImage(frameRecord);
         }
     }
@@ -2163,6 +2164,7 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
     if (!frameList.empty()) {
         frameList.back()->SetCoverFrame();
     }
+    std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
     for (const auto& frame : frameList) {
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
         drainImageManager->DrainImage(frame);
