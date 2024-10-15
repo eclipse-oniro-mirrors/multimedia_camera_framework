@@ -238,12 +238,10 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
     if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
-    int32_t needRestoreNumber = (keyFrameInterval_ % KEY_FRAME_INTERVAL == 0 ? IDR_FRAME_COUNT : 1);
     keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
-        MEDIA_DEBUG_LOG("EncodeSurfaceBuffer needRestoreNumber %{public}d", needRestoreNumber);
         std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "VideoEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
@@ -252,37 +250,41 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
-        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64,
-            context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
+        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64 ", "
+            "timestamp:%{public}" PRId64, context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags,
+            bufferInfo->attr.pts, frameRecord->GetTimeStamp());
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        if (needRestoreNumber == IDR_FRAME_COUNT && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(IDRBuffer);
             frameRecord->SetIDRProperty(true);
-        } else if (needRestoreNumber == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
+            successFrame_ = false;
+        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
             OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
             if (tempBuffer != nullptr) {
                 frameRecord->encodedBuffer = tempBuffer;
             }
+            successFrame_ = true;
         } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_NONE) {
             // return P frame
             OH_AVBuffer *PBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(PBuffer);
             frameRecord->SetIDRProperty(false);
+            successFrame_ = true;
         } else {
-            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}d", needRestoreNumber);
+            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->attr.flags);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
             CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
             continue;
         }
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
         CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
-        if (--needRestoreNumber == 0) {
+        if (successFrame_) {
             MEDIA_DEBUG_LOG("Success frame id is : %{public}s, refCount: %{public}d",
                 frameRecord->GetFrameId().c_str(), frameRecord->GetSptrRefCount());
             return true;

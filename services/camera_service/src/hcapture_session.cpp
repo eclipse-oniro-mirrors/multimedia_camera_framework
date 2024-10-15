@@ -1965,9 +1965,9 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
     }
     auto videoCache = videoCache_.promote();
     if (frame->IsIdle() && videoCache) {
-        videoCache_->CacheFrame(frame);
+        videoCache->CacheFrame(frame);
     } else if (frame->IsFinishCache() && videoCache) {
-        videoCache_->OnImageEncoded(frame, true);
+        videoCache->OnImageEncoded(frame, true);
     } else {
         MEDIA_INFO_LOG("videoCache and frame is not useful");
     }
@@ -1977,7 +1977,7 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
 {
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto videoCache = videoCache_.promote();
-    {
+    if (videoCache) {
         std::lock_guard<std::mutex> lock(mutex_);
         videoCache_->GetFrameCachedResult(
             frameCacheList_,
@@ -1997,6 +1997,7 @@ void HCaptureSession::StartOnceRecord(uint64_t timestamp, int32_t rotation)
 {
     MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
+    std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation);
@@ -2409,6 +2410,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
         sptr<DrainImageManager> drainImageManager;
         if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
+            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
             drainImageManager->DrainImage(frameRecord);
         }
     }
@@ -2427,6 +2429,7 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
     if (!frameList.empty()) {
         frameList.back()->SetCoverFrame();
     }
+    std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
     for (const auto& frame : frameList) {
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
         drainImageManager->DrainImage(frame);
