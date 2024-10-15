@@ -1481,25 +1481,26 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         size.height = static_cast<uint32_t>(item.data.i32[i + heightOffset]);
         Profile profile = Profile(format, size);
 #ifdef CAMERA_EMULATOR
-        if (format == CAMERA_FORMAT_RGBA_8888) {
+        if (format != CAMERA_FORMAT_RGBA_8888) {
+            continue;
+        }
+        profilesWrapper.photoProfiles.push_back(profile);
 #else
         if (format == CAMERA_FORMAT_JPEG) {
-#endif
             profilesWrapper.photoProfiles.push_back(profile);
-#ifndef CAMERA_EMULATOR
-        } else {
+            continue;
+        }
 #endif
-            profilesWrapper.previewProfiles.push_back(profile);
-            camera_metadata_item_t fpsItem;
-            int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
-            if (ret != CAM_META_SUCCESS) {
-                continue;
-            }
-            for (uint32_t j = 0; j < (fpsItem.count - 1); j += FPS_STEP) {
-                std::vector<int32_t> fps = { fpsItem.data.i32[j], fpsItem.data.i32[j + 1] };
-                VideoProfile vidProfile = VideoProfile(format, size, fps);
-                profilesWrapper.vidProfiles.push_back(vidProfile);
-            }
+        profilesWrapper.previewProfiles.push_back(profile);
+        camera_metadata_item_t fpsItem;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
+        if (ret != CAM_META_SUCCESS) {
+            continue;
+        }
+        for (uint32_t j = 0; j < (fpsItem.count - 1); j += FPS_STEP) {
+            std::vector<int32_t> fps = { fpsItem.data.i32[j], fpsItem.data.i32[j + 1] };
+            VideoProfile vidProfile = VideoProfile(format, size, fps);
+            profilesWrapper.vidProfiles.push_back(vidProfile);
         }
     }
 }

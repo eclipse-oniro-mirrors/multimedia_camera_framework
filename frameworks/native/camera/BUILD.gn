@@ -218,7 +218,7 @@ ohos_shared_library("camera_framework") {
   }
 
   if (is_emulator) {
-    defines += ["CAMERA_EMULATOR"]
+    defines += [ "CAMERA_EMULATOR" ]
   }
 
   cflags_cc = cflags
