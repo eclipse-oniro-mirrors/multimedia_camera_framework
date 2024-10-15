@@ -15,7 +15,6 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_VIDEO_PROCESSING_SESSION_H
 #define OHOS_CAMERA_DPS_DEFERRED_VIDEO_PROCESSING_SESSION_H
-#define EXPORT_API __attribute__((visibility("default")))
 
 #include "deferred_video_processing_session_stub.h"
 
@@ -40,7 +39,7 @@ public:
         sptr<IPCFileDescriptor> dstFd_;
     };
 
-    EXPORT_API DeferredVideoProcessingSession(const int32_t userId);
+    DeferredVideoProcessingSession(const int32_t userId);
     ~DeferredVideoProcessingSession();
     
     int32_t BeginSynchronize() override;

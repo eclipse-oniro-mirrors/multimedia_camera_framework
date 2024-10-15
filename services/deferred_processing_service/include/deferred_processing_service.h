@@ -40,9 +40,9 @@ public:
     void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
         std::shared_ptr<Media::Picture> picture);
     sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
-        const sptr<IDeferredPhotoProcessingSessionCallback> callbacks);
+        const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
-        const sptr<IDeferredVideoProcessingSessionCallback> callbacks);
+        const sptr<IDeferredVideoProcessingSessionCallback>& callbacks);
     void NotifyCameraSessionStatus(const int32_t userId,
         const std::string& cameraId, bool running, bool isSystemCamera);
 

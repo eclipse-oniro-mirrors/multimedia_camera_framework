@@ -72,7 +72,7 @@ void SessionManager::Stop()
 }
 
 sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(const int32_t userId,
-    const sptr<IDeferredPhotoProcessingSessionCallback> callback, std::shared_ptr<DeferredPhotoProcessor> processor,
+    const sptr<IDeferredPhotoProcessingSessionCallback>& callback, std::shared_ptr<DeferredPhotoProcessor> processor,
     TaskManager* taskManager)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
@@ -115,7 +115,7 @@ sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const 
 }
 
 sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcessingSession(const int32_t userId,
-    const sptr<IDeferredVideoProcessingSessionCallback> callback)
+    const sptr<IDeferredVideoProcessingSessionCallback>& callback)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
