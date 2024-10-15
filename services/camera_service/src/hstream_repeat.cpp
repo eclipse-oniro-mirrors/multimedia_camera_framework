@@ -898,6 +898,7 @@ void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::Camera
     }
     auto mode = item.data.u8[0];
     int32_t count = 1;
+    CHECK_ERROR_RETURN_LOG(dynamicSetting == nullptr, "dynamicSetting is nullptr");
     ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_MUTE_MODE, &item);
     if (ret == CAM_META_SUCCESS) {
         status = dynamicSetting->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
