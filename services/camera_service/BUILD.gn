@@ -102,7 +102,6 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
-    "${window_manager_path}/interfaces/innerkits/wm",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
@@ -179,7 +178,8 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:metadata",
     "drivers_interface_display:display_commontype_idl_headers",
-    "drivers_interface_display:libdisplay_composer_proxy_1.0",
+    "drivers_interface_display:libdisplay_composer_hdi_impl",
+    "drivers_interface_display:libdisplay_composer_hdi_impl_1.1",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hdf_core:libhdi",
@@ -196,7 +196,8 @@ ohos_shared_library("camera_service") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libdm_lite",
+    "window_manager:libdm",
+    "window_manager:libwm",
   ]
 
   public_external_deps = [ "e2fsprogs:libext2_uuid" ]

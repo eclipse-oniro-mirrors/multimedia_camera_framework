@@ -21,7 +21,8 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display_manager_lite.h"
+#include "display.h"
+#include "display_manager.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
@@ -409,7 +410,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
     MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
                    display->GetWidth(), display->GetHeight(), display->GetRotation());

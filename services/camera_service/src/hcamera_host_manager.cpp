@@ -25,7 +25,7 @@
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "camera_report_uitls.h"
 
 namespace OHOS {
@@ -848,7 +848,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::Prelaunch failed with invalid device info");
     sptr<HCameraRestoreParam> cameraRestoreParam = GetRestoreParam(clientName, cameraId);
-    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
     if (foldStatus != cameraRestoreParam->GetFlodStatus()) {
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
         return 0;

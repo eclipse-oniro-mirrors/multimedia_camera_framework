@@ -21,7 +21,7 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
@@ -621,7 +621,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_LOG(display == nullptr,
         "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {

@@ -42,7 +42,7 @@
 #include "datetime_ex.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "display_lite.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "errors.h"
 #include "hcamera_device_manager.h"
 #include "hcamera_restore_param.h"
@@ -197,7 +197,7 @@ HCaptureSession::~HCaptureSession()
     CAMERA_SYNC_TRACE;
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
     if (displayListener_) {
-        OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterDisplayListener(displayListener_);
+        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
         displayListener_ = nullptr;
     }
 }
@@ -423,7 +423,7 @@ void HCaptureSession::StartMovingPhotoStream()
     MEDIA_INFO_LOG("HCaptureSession::StartMovingPhotoStream result:%{public}d", errorCode);
 }
 
-class DisplayRotationListener : public OHOS::Rosen::DisplayManagerLite::IDisplayListener {
+class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
 public:
     explicit DisplayRotationListener() {};
     virtual ~DisplayRotationListener() = default;
@@ -431,10 +431,10 @@ public:
     void OnDestroy(OHOS::Rosen::DisplayId) override {}
     void OnChange(OHOS::Rosen::DisplayId displayId) override
     {
-        sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+        sptr<Rosen::DisplayLite> display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
         if (display == nullptr) {
             MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64"", displayId);
-            display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
+            display = Rosen::DisplayManager::GetInstance().GetDisplayById(0);
             CHECK_ERROR_RETURN_LOG(display == nullptr, "Get display info failed, display is nullptr");
         }
         {
@@ -474,7 +474,7 @@ void HCaptureSession::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
 {
     if (displayListener_ == nullptr) {
         displayListener_ = new DisplayRotationListener();
-        OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterDisplayListener(displayListener_);
+        OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayListener(displayListener_);
     }
     displayListener_->AddHstreamRepeatForListener(repeat);
 }
@@ -1521,7 +1521,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
         if (displayListener_) {
-            OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterDisplayListener(displayListener_);
+            OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
             displayListener_ = nullptr;
         }
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
