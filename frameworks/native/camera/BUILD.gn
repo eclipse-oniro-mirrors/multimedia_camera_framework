@@ -216,7 +216,7 @@ ohos_shared_library("camera_framework") {
     external_deps += [ "sensor:sensor_interface_native" ]
     defines += [ "CAMERA_USE_SENSOR" ]
   }
-  
+
   if (is_emulator) {
     defines += ["CAMERA_EMULATOR"]
   }
