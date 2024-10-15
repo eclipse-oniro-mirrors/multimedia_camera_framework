@@ -424,5 +424,19 @@ void HCameraDeviceManager::PrintClientInfo(sptr<HCameraDeviceHolder> activeCamer
         requestCameraHolder->GetPriority()->GetFocusState(),
         requestCameraHolder->GetDevice()->GetCameraId().c_str());
 }
+
+bool HCameraDeviceManager::IsMultiCameraActive(int32_t pid)
+{
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    uint8_t count = 0;
+    for (const auto &x : activeCameras_) {
+        if (pid == x->GetPid()) {
+            count++;
+        }
+    }
+
+    MEDIA_INFO_LOG("pid(%{public}d) has activated %{public}d camera.", pid, count);
+    return count > 0;
+}
 } // namespace CameraStandard
 } // namespace OHOS

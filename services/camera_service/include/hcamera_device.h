@@ -165,6 +165,8 @@ private:
     uint32_t callerToken_;
     std::mutex cameraPrivacyMutex_;
     sptr<CameraPrivacy> cameraPrivacy_;
+    int32_t cameraPid_;
+
     std::mutex proxyStreamOperatorCallbackMutex_;
     wptr<IStreamOperatorCallback> proxyStreamOperatorCallback_;
 

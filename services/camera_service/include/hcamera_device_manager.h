@@ -224,6 +224,8 @@ public:
 
     void SetStateOfACamera(std::string cameraId, int32_t state);
 
+    bool IsMultiCameraActive(int32_t pid);
+
     void SetPeerCallback(sptr<ICameraBroker>& callback);
 
     void UnsetPeerCallback();
