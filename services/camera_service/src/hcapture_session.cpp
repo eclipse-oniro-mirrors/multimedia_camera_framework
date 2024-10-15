@@ -129,14 +129,6 @@ static void TotalSessionErase(pid_t pid)
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
     g_totalSessions.erase(pid);
 }
-
-static bool IsExistSessionsNeedMediaLib()
-{
-    std::lock_guard<std::mutex> lock(g_totalSessionLock);
-    return std::any_of(g_totalSessions.begin(), g_totalSessions.end(), [](const auto& pair) {
-        return pair.second && pair.second->isNeedMediaLib;
-    });
-}
 } // namespace
 
 static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP = {
@@ -429,7 +421,7 @@ public:
     void OnDestroy(OHOS::Rosen::DisplayId) override {}
     void OnChange(OHOS::Rosen::DisplayId displayId) override
     {
-        sptr<Rosen::DisplayLite> display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+        sptr<Rosen::Display> display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
         if (display == nullptr) {
             MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64"", displayId);
             display = Rosen::DisplayManager::GetInstance().GetDisplayById(0);
@@ -1899,17 +1891,6 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(photoAssetProxy->GetUserId(), cameraPhotoProxy->GetPhotoId(), picturePtr);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    std::shared_ptr<Media::Picture> picturePtr(picture.release());
-    if (!isBursting && picturePtr) {
-        RotatePicture(picturePtr);
-    }
-    if (isBursting) {
-        DeferredProcessing::DeferredProcessingService::GetInstance().
-            NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
-    } else {
-        DeferredProcessing::DeferredProcessingService::GetInstance().
-            NotifyLowQualityImage(photoAssetProxy->GetUserId(), cameraPhotoProxy->GetPhotoId(), picturePtr);
-    }
     if (isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
