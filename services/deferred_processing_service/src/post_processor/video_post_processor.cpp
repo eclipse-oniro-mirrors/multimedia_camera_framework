@@ -180,8 +180,8 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     StartTimer(videoId, work);
     auto startTime = mpegManager_->GetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
-    DP_INFO_LOG("process video to ive, videoId: %{public}s, startTime: %{public}lu, ret: %{public}d",
-        videoId.c_str(), startTime, ret);
+    DP_INFO_LOG("process video to ive, videoId: %{public}s, startTime: %{public}llu, ret: %{public}d",
+        videoId.c_str(), static_cast<unsigned long long>(startTime), ret);
 }
 
 void VideoPostProcessor::RemoveRequest(const std::string& videoId)
