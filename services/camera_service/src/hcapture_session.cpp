@@ -41,7 +41,6 @@
 #include "camera_util.h"
 #include "datetime_ex.h"
 #include "display/composer/v1_1/display_composer_type.h"
-#include "display_lite.h"
 #include "display_manager.h"
 #include "errors.h"
 #include "hcamera_device_manager.h"
