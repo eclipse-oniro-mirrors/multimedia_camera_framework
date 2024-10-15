@@ -1020,10 +1020,67 @@ public:
      * @brief Set the beauty.
      */
     void SetBeauty(BeautyType type, int value);
+
     /**
      * @brief according type to get the strength.
      */
     int32_t GetBeauty(BeautyType type);
+
+    /**
+     * @brief Gets supported portrait theme type.
+     * @param vector of PortraitThemeType supported portraitTheme type.
+     * @return Returns errCode.
+     */
+    int32_t GetSupportedPortraitThemeTypes(std::vector<PortraitThemeType>& types);
+
+    /**
+     * @brief Checks whether portrait theme is supported.
+     * @param isSupported True if supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsPortraitThemeSupported(bool &isSupported);
+
+    /**
+     * @brief Checks whether portrait theme is supported.
+     *
+     * @return True if supported false otherwise.
+     */
+    bool IsPortraitThemeSupported();
+
+    /**
+     * @brief Sets a portrait theme type for a camera device.
+     * @param type PortraitTheme type to be sety.
+     * @return Returns errCode.
+     */
+    int32_t SetPortraitThemeType(PortraitThemeType type);
+
+    /**
+     * @brief Gets supported rotations.
+     * @param vector of supported rotations.
+     * @return Returns errCode.
+     */
+    int32_t GetSupportedVideoRotations(std::vector<int32_t>& supportedRotation);
+
+    /**
+     * @brief Checks whether rotation is supported.
+     * @param isSupported True if supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsVideoRotationSupported(bool &isSupported);
+
+    /**
+     * @brief Checks whether rotation is supported.
+     *
+     * @return True if supported false otherwise.
+     */
+    bool IsVideoRotationSupported();
+
+    /**
+     * @brief Sets a rotation type for a camera device.
+     * @param rotation Potation to be sety.
+     * @return Returns errCode.
+     */
+    int32_t SetVideoRotation(int32_t rotation);
 
     /**
      * @brief Get the supported color spaces.

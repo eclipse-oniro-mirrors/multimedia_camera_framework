@@ -1017,7 +1017,7 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     sptr<ICameraDeviceService> device = nullptr;
     int32_t retCode = serviceProxy->CreateCameraDevice(cameraId, device);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
-        "CameraManager::CreateCameraDeviceFailed to create camera device from hcamera service! %{public}d", retCode);
+        "CameraManager::CreateCameraDevice Failed to create camera device from hcamera service! %{public}d", retCode);
     *pICameraDeviceService = device;
     return CameraErrorCode::SUCCESS;
 }
