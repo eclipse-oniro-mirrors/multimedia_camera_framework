@@ -260,8 +260,7 @@ int32_t HCaptureSessionStub::HandleEnableMovingPhoto(MessageParcel &data)
 int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
 {
     bool isMirror = data.ReadBool();
-    int32_t rotation = data.ReadInt32();
-    return StartMovingPhotoCapture(isMirror, rotation);
+    return EnableMovingPhotoMirror(isMirror);
 }
 
 int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)

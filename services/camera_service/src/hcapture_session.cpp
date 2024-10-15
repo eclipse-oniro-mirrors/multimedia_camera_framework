@@ -1571,7 +1571,7 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
     }
 }
 
-int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
+int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
 {
     if (!isSetMotionPhoto_) {
         return CAMERA_OK;
