@@ -1480,9 +1480,15 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         size.width = static_cast<uint32_t>(item.data.i32[i + widthOffset]);
         size.height = static_cast<uint32_t>(item.data.i32[i + heightOffset]);
         Profile profile = Profile(format, size);
+#ifdef CAMERA_EMULATOR
+        if (format == CAMERA_FORMAT_RGBA_8888) {
+#else
         if (format == CAMERA_FORMAT_JPEG) {
+#endif
             profilesWrapper.photoProfiles.push_back(profile);
+#ifndef CAMERA_EMULATOR
         } else {
+#endif
             profilesWrapper.previewProfiles.push_back(profile);
             camera_metadata_item_t fpsItem;
             int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
