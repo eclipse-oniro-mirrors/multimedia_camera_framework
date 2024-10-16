@@ -251,7 +251,10 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
 {
     MEDIA_INFO_LOG("CheckBurstCapture start!");
     camera_metadata_item_t item;
-    CHECK_ERROR_RETURN_LOG(captureSettings == nullptr, "captureSettings is nullptr");
+    if (captureSettings == nullptr) {
+        MEDIA_ERR_LOG("captureSettings is nullptr");
+        return CAMERA_INVALID_STATE;
+    }
     int32_t result = OHOS::Camera::FindCameraMetadataItem(captureSettings->get(), OHOS_CONTROL_BURST_CAPTURE, &item);
     if (result == CAM_META_SUCCESS && item.count > 0) {
         CameraBurstCaptureEnum burstState = static_cast<CameraBurstCaptureEnum>(item.data.u8[0]);
