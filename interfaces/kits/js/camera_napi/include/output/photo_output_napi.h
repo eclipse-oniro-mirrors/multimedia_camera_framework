@@ -295,6 +295,8 @@ public:
     static napi_value IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info);
     static napi_value GetSupportedMovingPhotoVideoCodecTypes(napi_env env, napi_callback_info info);
     static napi_value SetMovingPhotoVideoCodecType(napi_env env, napi_callback_info info);
+    static napi_value IsDepthDataDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value EnableDepthDataDelivery(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
     static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
