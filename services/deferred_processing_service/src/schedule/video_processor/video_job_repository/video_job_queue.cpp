@@ -115,10 +115,16 @@ void VideoJobQueue::Heapify(uint32_t index)
 
 void VideoJobQueue::Swap(uint32_t x, uint32_t y)
 {
-    std::swap(heap_[x], heap_[y]);
     DP_CHECK_ERROR_RETURN_LOG(x < DEFAULT || x >= size_ || y < DEFAULT || y >= size_, "swap failed.");
-    indexMap_[heap_[x]] = x;
-    indexMap_[heap_[y]] = y;
+    std::swap(heap_[x], heap_[y]);
+    auto item = indexMap_.find(heap_[x]);
+    if (item != indexMap_.end()) {
+        indexMap_[heap_[x]] = x;
+    }
+    item = indexMap_.find(heap_[y]);
+    if (item != indexMap_.end()) {
+        indexMap_[heap_[y]] = y;
+    }
 }
 
 void VideoJobQueue::Clear()
