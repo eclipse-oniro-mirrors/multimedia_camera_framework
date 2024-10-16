@@ -580,6 +580,7 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
         auto session = GetSession();
         CHECK_ERROR_RETURN(session == nullptr || !session->IsSessionCommited());
         auto metadata = GetDeviceMetadata();
+        CHECK_ERROR_RETURN_LOG(metadata == nullptr, "metadata is nullptr");
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
         CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS || item.count <= 0);
