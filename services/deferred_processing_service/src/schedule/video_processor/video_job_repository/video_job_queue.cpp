@@ -122,7 +122,7 @@ void VideoJobQueue::Swap(uint32_t x, uint32_t y)
         indexMap_[heap_[x]] = x;
     }
     item = indexMap_.find(heap_[y]);
-    if(item != indexMap_.end()) {
+    if (item != indexMap_.end()) {
         indexMap_[heap_[y]] = y;
     }
 }
