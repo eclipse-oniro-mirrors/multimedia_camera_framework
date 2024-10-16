@@ -15,6 +15,7 @@
 
 #include "deferred_processing_stub_fuzzer.h"
 #include "buffer_info.h"
+#include "deferred_processing_service.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
@@ -27,14 +28,9 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-const std::u16string FORMMGR_INTERFACE_PHOTO_TOKEN = u"IDeferredPhotoProcessingSession";
-const std::u16string FORMMGR_INTERFACE_VIDEO_TOKEN = u"IDeferredVideoProcessingSession";
-const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
 const int32_t USERID = 1;
 bool g_isDeferredProcessingPermission = false;
-DeferredPhotoProcessingSession *photoFuzz = nullptr;
-DeferredVideoProcessingSession *videoFuzz = nullptr;
 
 void DeferredProcessingFuzzTestGetPermission()
 {
@@ -59,50 +55,22 @@ void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size)
     }
     DeferredProcessingFuzzTestGetPermission();
 
-    int32_t itemCount = 0;
-    int32_t dataSize = 0;
-    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
-                      sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
-    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
-
-    int32_t sensorOrientation = rawData[0];
-    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
-
-    int32_t cameraPosition = rawData[0];
-    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
-
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-
     MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_PHOTO_TOKEN);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
-        "DeferredProcessingFuzzer: EncodeCameraMetadata Error");
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-
-    sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz = nullptr;
-
-    if (photoFuzz == nullptr) {
-        photoFuzz = new DeferredPhotoProcessingSession(USERID, nullptr, nullptr, IDPSessionCallbackFuzz);
-    }
-
-    if (photoFuzz != nullptr) {
-        const uint32_t maxNum = 1;
-        for (uint32_t code = 0; code < maxNum; ++code) {
-            data.RewindRead(0);
-            reply.RewindWrite(0);
-            photoFuzz->OnRemoteRequest(code, data, reply, option);
-        }
-    }
+    data.WriteRawData(rawData, size);
+    DeferredProcessingService::GetInstance().Initialize();
+    sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz =
+        sptr<IDeferredPhotoProcessingSessionCallbackFuzz>::MakeSptr();
+    sptr<IDeferredPhotoProcessingSession> session =
+        DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(USERID, IDPSessionCallbackFuzz);
+    session->BeginSynchronize();
+    session->EndSynchronize();
+    auto imageId = data.ReadString();
+    bool restorable = data.RewindRead(0);
+    session->RemoveImage(imageId, restorable);
+    session->RestoreImage(imageId);
+    auto appName = data.ReadString();
+    session->ProcessImage(appName, imageId);
+    session->CancelProcessImage(imageId);
 }
 
 void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
@@ -112,50 +80,22 @@ void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
     }
     DeferredProcessingFuzzTestGetPermission();
 
-    int32_t itemCount = 0;
-    int32_t dataSize = 0;
-    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
-                      sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
-    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
-
-    int32_t sensorOrientation = rawData[0];
-    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
-
-    int32_t cameraPosition = rawData[0];
-    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
-
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-
     MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_VIDEO_TOKEN);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
-        "DeferredProcessingFuzzer: EncodeCameraMetadata Error");
-    data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
-
-    sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz = nullptr;
-
-    if (videoFuzz == nullptr) {
-        videoFuzz = new DeferredVideoProcessingSession(USERID);
-    }
-
-    if (videoFuzz != nullptr) {
-        const uint32_t maxNum = 5;
-        for (uint32_t code = 0; code < maxNum; ++code) {
-            data.RewindRead(0);
-            reply.RewindWrite(0);
-            videoFuzz->OnRemoteRequest(MIN_TRANSACTION_ID + code, data, reply, option);
-        }
-    }
+    data.WriteRawData(rawData, size);
+    DeferredProcessingService::GetInstance().Initialize();
+    sptr<IDeferredVideoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz =
+        sptr<IDeferredVideoProcessingSessionCallbackFuzz>::MakeSptr();
+    sptr<IDeferredVideoProcessingSession> session =
+        DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(USERID, IDPSessionCallbackFuzz);
+    session->BeginSynchronize();
+    session->EndSynchronize();
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(data.ReadFileDescriptor());
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(data.ReadFileDescriptor());
+    auto videoId = data.ReadString();
+    session->AddVideo(videoId, srcFd, dstFd);
+    bool restorable = data.RewindRead(0);
+    session->RemoveVideo(videoId, restorable);
+    session->RestoreVideo(videoId);
 }
 
 void TestBufferInfo(uint8_t *rawData, size_t size)

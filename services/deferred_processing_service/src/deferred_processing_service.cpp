@@ -71,7 +71,7 @@ void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, cons
 }
 
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
-    const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
+    const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks)
 {
     DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %{public}d",
         userId);
@@ -90,7 +90,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
 }
 
 sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredVideoProcessingSession(
-    const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback> callbacks)
+    const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback>& callbacks)
 {
     DP_INFO_LOG("create video session, userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();

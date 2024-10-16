@@ -20,9 +20,10 @@
 #include "deferred_photo_processing_session.h"
 #include "deferred_photo_processor.h"
 #include "ideferred_photo_processing_session_callback.h"
-#include "deferred_photo_processing_session_stub.h"
+#include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
+#include "deferred_video_processing_session_callback_stub.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -30,7 +31,7 @@ void DeferredProcessingFuzzTestGetPermission();
 void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size);
 void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size);
 
-class IDeferredPhotoProcessingSessionCallbackFuzz : public IDeferredPhotoProcessingSessionCallback {
+class IDeferredPhotoProcessingSessionCallbackFuzz : public DeferredPhotoProcessingSessionCallbackStub {
 public:
     explicit IDeferredPhotoProcessingSessionCallbackFuzz() = default;
     virtual ~IDeferredPhotoProcessingSessionCallbackFuzz() = default;
@@ -59,7 +60,7 @@ public:
     }
 };
 
-class IDeferredVideoProcessingSessionCallbackFuzz : public IDeferredVideoProcessingSessionCallback {
+class IDeferredVideoProcessingSessionCallbackFuzz : public DeferredVideoProcessingSessionCallbackStub {
 public:
     explicit IDeferredVideoProcessingSessionCallbackFuzz() = default;
     virtual ~IDeferredVideoProcessingSessionCallbackFuzz() = default;

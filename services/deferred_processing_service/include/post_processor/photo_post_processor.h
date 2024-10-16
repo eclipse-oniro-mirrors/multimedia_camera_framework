@@ -80,7 +80,7 @@ private:
     std::mutex mutex_;
     const int32_t userId_;
     TaskManager* taskManager_;
-    std::shared_ptr<IImageProcessCallbacks> processCallacks_;
+    IImageProcessCallbacks* processCallacks_;
     sptr<PhotoProcessListener> listener_;
     sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> session_;
     sptr<IRemoteObject::DeathRecipient> sessionDeathRecipient_;
