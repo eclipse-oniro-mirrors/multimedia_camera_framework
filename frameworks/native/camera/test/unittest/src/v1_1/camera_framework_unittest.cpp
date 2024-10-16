@@ -5680,7 +5680,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level
     session->Start();
 
     EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
     metadatOutput->Release();
 
     input->Close();
