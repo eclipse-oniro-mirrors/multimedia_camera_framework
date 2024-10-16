@@ -350,7 +350,7 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     MEDIA_INFO_LOG("CheckBurstCapture start!");
     camera_metadata_item_t item;
     if (captureSettings == nullptr) {
-        MEDIA_ERR_LOG(captureSettings == nullptr, "captureSettings is nullptr");
+        MEDIA_ERR_LOG("captureSettings is nullptr");
         return CAMERA_INVALID_STATE;
     }
     int32_t result = OHOS::Camera::FindCameraMetadataItem(captureSettings->get(), OHOS_CONTROL_BURST_CAPTURE, &item);
