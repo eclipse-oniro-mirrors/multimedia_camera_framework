@@ -377,6 +377,10 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
 napi_value DepthDataOutputNapi::CreateDepthDataOutput(napi_env env, DepthProfile& depthProfile)
 {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi CreateDepthDataOutput is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("CreateDepthDataOutput is called");
     CAMERA_SYNC_TRACE;
     napi_status status;

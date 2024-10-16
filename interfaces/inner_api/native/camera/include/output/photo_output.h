@@ -407,6 +407,16 @@ public:
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
+    /**
+     * @brief Check the depth data delivery capability is supported or not.
+     */
+    bool IsDepthDataDeliverySupported();
+
+    /**
+     * @brief Enable the depth data delivery.
+     */
+    int32_t EnableDepthDataDelivery(bool enabled);
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;

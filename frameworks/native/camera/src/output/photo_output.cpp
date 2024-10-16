@@ -826,5 +826,19 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
         result, sensorOrientation);
     return result;
 }
+
+bool PhotoOutput::IsDepthDataDeliverySupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter IsDepthDataDeliverySupported");
+    return false;
+}
+
+int32_t PhotoOutput::EnableDepthDataDelivery(bool enabled)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter EnableDepthDataDelivery, enabled:%{public}d", enabled);
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS

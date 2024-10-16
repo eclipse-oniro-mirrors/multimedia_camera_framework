@@ -1150,7 +1150,7 @@ public:
      */
     bool IsSessionConfiged();
 
-     /**
+    /**
      * @brief Get whether or not start session.
      *
      * @return Returns whether or not start session.
@@ -1258,7 +1258,7 @@ public:
      */
     void CreateCameraAbilityContainer();
 
-     /**
+    /**
      * @brief Get whether effectSuggestion Supported.
      *
      * @return True if supported false otherwise.
