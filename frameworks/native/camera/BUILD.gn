@@ -207,7 +207,7 @@ ohos_shared_library("camera_framework") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libdm_lite",
+    "window_manager:libdm",
   ]
 
   defines = []
