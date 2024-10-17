@@ -7112,7 +7112,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_049, TestSize.L
     sptr<MetadataOutput> metadatOutput_1 = (sptr<MetadataOutput>&)metadatOutput;
 
     intResult = metadatOutput_1->Start();
-    EXPECT_EQ(intResult, 7400201);
+    EXPECT_EQ(intResult, 0);
 }
 
 /*

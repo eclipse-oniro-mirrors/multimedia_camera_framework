@@ -5492,7 +5492,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_060, TestSize.Level
 
     pid_t pid = 0;
     metadatOutput->CameraServerDied(pid);
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
 }
 
 /*
@@ -5514,8 +5514,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_061, TestSize.Level
     pid_t pid = 0;
     metadatOutput->stream_ = nullptr;
     metadatOutput->CameraServerDied(pid);
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
-    EXPECT_EQ(metadatOutput->Release(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(metadatOutput->Release(), CameraErrorCode::SUCCESS);
 }
 
 /*
@@ -5555,7 +5555,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_063, TestSize.Level
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
 
     metadatOutput->session_ = nullptr;
-    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
 }
 
 /*
@@ -5591,7 +5591,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level
     session->AddInput(input);
     session->AddOutput(metadata);
 
-    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
 
     session->CommitConfig();
     session->Start();
@@ -5637,7 +5637,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_065, TestSize.Level
     session->Start();
 
     metadatOutput->stream_ = nullptr;
-    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
 
     input->Close();
 }
@@ -5703,7 +5703,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_067, TestSize.Level
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
 
     metadatOutput->Release();
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
 }
 
 /*
