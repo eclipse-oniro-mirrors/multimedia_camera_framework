@@ -148,6 +148,7 @@ int32_t HStreamCapture::PrepareBurst(int32_t captureId)
 {
     MEDIA_INFO_LOG("HStreamCapture::PrepareBurst captureId:%{public}d", captureId);
     isBursting_ = true;
+    std::lock_guard<std::mutex> lock(burstLock_);
     curBurstKey_ = GenerateBurstUuid();
     burstkeyMap_.emplace(captureId, curBurstKey_);
     std::vector<std::string> imageList = {};
@@ -166,7 +167,6 @@ void HStreamCapture::ResetBurst()
 
 void HStreamCapture::ResetBurstKey(int32_t captureId)
 {
-    std::lock_guard<std::mutex> lock(burstLock_);
     if (burstkeyMap_.erase(captureId) > 0 &&
         burstImagesMap_.erase(captureId) > 0 &&
         burstNumMap_.erase(captureId) > 0) {
@@ -180,6 +180,7 @@ std::string HStreamCapture::GetBurstKey(int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("HStreamCapture::GetBurstKey captureId:%{public}d", captureId);
     std::string burstKey = BURST_UUID_UNSET;
+    std::lock_guard<std::mutex> lock(burstLock_);
     auto iter = burstkeyMap_.find(captureId);
     if (iter != burstkeyMap_.end()) {
         burstKey = iter->second;
@@ -200,6 +201,7 @@ bool HStreamCapture::IsBurstCapture(int32_t captureId) const
 bool HStreamCapture::IsBurstCover(int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("HStreamCapture::IsBurstCover for captureId: %d", captureId);
+    std::lock_guard<std::mutex> lock(burstLock_);
     auto iter = burstImagesMap_.find(captureId);
     return (iter != burstImagesMap_.end()) ? (iter->second.size() == 1) : false;
 }
@@ -207,6 +209,7 @@ bool HStreamCapture::IsBurstCover(int32_t captureId) const
 int32_t HStreamCapture::GetCurBurstSeq(int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("HStreamCapture::GetCurBurstSeq for captureId: %d", captureId);
+    std::lock_guard<std::mutex> lock(burstLock_);
     auto iter = burstImagesMap_.find(captureId);
     if (iter != burstImagesMap_.end()) {
         return iter->second.size();
@@ -231,6 +234,7 @@ void HStreamCapture::SetBurstImages(int32_t captureId, std::string imageId)
 void HStreamCapture::CheckResetBurstKey(int32_t captureId)
 {
     MEDIA_DEBUG_LOG("HStreamCapture::CheckResetBurstKey captureId:%{public}d", captureId);
+    std::lock_guard<std::mutex> lock(burstLock_);
     auto numIter = burstNumMap_.find(captureId);
     auto imageIter = burstImagesMap_.find(captureId);
     if (numIter != burstNumMap_.end() && imageIter != burstImagesMap_.end()) {
@@ -260,7 +264,6 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
         CameraBurstCaptureEnum burstState = static_cast<CameraBurstCaptureEnum>(item.data.u8[0]);
         MEDIA_INFO_LOG("CheckBurstCapture get burstState:%{public}d", item.data.u8[0]);
         if (burstState) {
-            std::lock_guard<std::mutex> lock(burstLock_);
             std::string burstUuid = GetBurstKey(preparedCaptureId);
             if (burstUuid != BURST_UUID_UNSET || isBursting_) {
                 MEDIA_ERR_LOG("CheckBurstCapture faild!");
@@ -637,8 +640,8 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
     }
+    std::lock_guard<std::mutex> burstLock(burstLock_);
     if (IsBurstCapture(captureId)) {
-        std::lock_guard<std::mutex> burstLock(burstLock_);
         burstNumMap_[captureId] = burstNum_;
         ResetBurst();
     }
