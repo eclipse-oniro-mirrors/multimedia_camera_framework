@@ -217,6 +217,10 @@ ohos_shared_library("camera_framework") {
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
+  if (is_emulator) {
+    defines += [ "CAMERA_EMULATOR" ]
+  }
+
   cflags_cc = cflags
   innerapi_tags = [ "platformsdk" ]
   part_name = "camera_framework"
