@@ -740,7 +740,7 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
     }
-    std::lock_guard<std::mutex> lock(burstLock_);
+    std::lock_guard<std::mutex> burstLock(burstLock_);
     if (IsBurstCapture(captureId)) {
         burstNumMap_[captureId] = burstNum_;
         ResetBurst();
