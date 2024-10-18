@@ -1,0 +1,681 @@
+From 1fec9851dd7793ccf1830f13bd67a9b55691bd03 Mon Sep 17 00:00:00 2001
+From: sunchao <sunchao106@huawei.com>
+Date: Sat, 12 Oct 2024 15:21:27 +0800
+Subject: [PATCH] enableMirror in photoOutput interface TicketNo:
+ DTS2024061513033 Description: enableMirror in photoOutput interface Team:
+ Others Feature or Bugfix: Feature Binary Source: No PrivateCode(Yes/No): No
+
+------ DO NOT MODIFY, AUTO-GENERATED! ------
+Gitee-Issue: #IAX4R5
+Time: "2024-10-15T10:08:41.256Z"
+PR-Num: 2168
+Gitee-PR: https://gitee.com/openharmony/multimedia_camera_framework/pulls/2168
+
+Change-Id: Ie7e355aa6eca89b4c48b332453c0867220ebd22e
+Reviewed-by: n00564676
+Approved-by: l00512942
+Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/3027
+Merged-by: public hisicitools
+---
+ .../src/output/photo_output_napi.cpp          |  48 ++++-
+ .../native/camera/src/output/photo_output.cpp |  22 ++-
+ .../camera/src/session/capture_session.cpp    |   6 +-
+ .../native/ndk/impl/photo_output_impl.cpp     |  13 +-
+ .../native/ndk/impl/photo_output_impl.h       |   3 +
+ frameworks/native/ndk/photo_output.cpp        |  12 ++
+ .../camera/include/output/photo_output.h      |   7 +
+ .../camera/include/session/capture_session.h  |   4 +-
+ .../include/output/photo_output_napi.h        |   8 +
+ .../kits/native/include/camera/photo_output.h |  12 ++
+ .../binder/base/include/icapture_session.h    |   2 +-
+ .../client/include/hcapture_session_proxy.h   |   2 +-
+ .../client/src/hcapture_session_proxy.cpp     |   3 +-
+ .../server/src/hcapture_session_stub.cpp      |   3 +-
+ .../camera_service/include/hcapture_session.h |   2 +-
+ .../camera_service/src/hcapture_session.cpp   |   2 +-
+ .../capture_session_fuzzer.cpp                |   2 +-
+ .../time_lapse_photo_session_fuzzer.cpp       | 177 ++++++++++++++++++
+ 18 files changed, 308 insertions(+), 20 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index df58bd302..001021e39 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -94,6 +94,8 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
+ {
+     context->status = true;
+     sptr<PhotoOutput> photoOutput = context->objectInfo->GetPhotoOutput();
++    MEDIA_INFO_LOG("PhotoOutputAsyncContext objectInfo GetEnableMirror is %{public}d",
++        context->objectInfo->GetEnableMirror());
+     if (context->hasPhotoSettings) {
+         std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+         if (context->quality != -1) {
+@@ -102,7 +104,11 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
+         if (context->rotation != -1) {
+             capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
+         }
+-        capSettings->SetMirror(context->isMirror);
++        if (!context->isMirrorSettedByUser) {
++            capSettings->SetMirror(context->objectInfo->GetEnableMirror());
++        } else {
++            capSettings->SetMirror(context->isMirror);
++        }
+         if (context->location != nullptr) {
+             capSettings->SetLocation(context->location);
+         }
+@@ -113,7 +119,9 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
+         }
+         context->errorCode = photoOutput->Capture(capSettings);
+     } else {
+-        context->errorCode = photoOutput->Capture();
++        std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
++        capSettings->SetMirror(context->objectInfo->GetEnableMirror());
++        context->errorCode = photoOutput->Capture(capSettings);
+     }
+     context->status = context->errorCode == 0;
+ }
+@@ -1566,6 +1574,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
+         DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
+         DECLARE_NAPI_FUNCTION("release", Release),
+         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
++        DECLARE_NAPI_FUNCTION("enableMirror", EnableMirror),
+         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
+         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
+         DECLARE_NAPI_FUNCTION("enableRawDelivery", EnableRawDelivery),
+@@ -1637,6 +1646,11 @@ sptr<PhotoOutput> PhotoOutputNapi::GetPhotoOutput()
+     return photoOutput_;
+ }
+ 
++bool PhotoOutputNapi::GetEnableMirror()
++{
++    return isMirrorEnabled_;
++}
++
+ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
+ {
+     MEDIA_DEBUG_LOG("IsPhotoOutput is called");
+@@ -1816,6 +1830,10 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
+             CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "rotation field not legal");
+             return false;
+         }
++        if (settingsNapiOjbect.IsKeySetted("mirror") && asyncContext->isMirror) {
++                MEDIA_INFO_LOG("GetMirrorStatus is ok!");
++                asyncContext->isMirrorSettedByUser = true;
++        }
+         MEDIA_INFO_LOG("ParseCaptureSettings with capture settings pass");
+         asyncContext->hasPhotoSettings = true;
+         if (settingsNapiOjbect.IsKeySetted("location")) {
+@@ -2000,6 +2018,32 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
+     return result;
+ }
+ 
++napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
++{
++    auto result = CameraNapiUtils::GetUndefinedValue(env);
++    if (!CameraNapiSecurity::CheckSystemApp(env)) {
++        MEDIA_ERR_LOG("SystemApi EnableMirror is called!");
++        return nullptr;
++    }
++    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableMirror is called");
++    PhotoOutputNapi* photoOutputNapi = nullptr;
++    bool isMirror;
++    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isMirror);
++    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
++        MEDIA_ERR_LOG("PhotoOutputNapi::EnableMirror invalid argument");
++        return nullptr;
++    }
++    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
++    if (session != nullptr) {
++        photoOutputNapi->isMirrorEnabled_ = isMirror;
++        int32_t retCode = session->EnableMovingPhotoMirror(isMirror);
++        if (!CameraNapiUtils::CheckError(env, retCode)) {
++            return result;
++        }
++    }
++    return result;
++}
++
+ napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callback_info info)
+ {
+     if (!CameraNapiSecurity::CheckSystemApp(env)) {
+diff --git a/frameworks/native/camera/src/output/photo_output.cpp b/frameworks/native/camera/src/output/photo_output.cpp
+index d98f316b6..67813763d 100644
+--- a/frameworks/native/camera/src/output/photo_output.cpp
++++ b/frameworks/native/camera/src/output/photo_output.cpp
+@@ -558,8 +558,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
+     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+     if (itemStream) {
+         MEDIA_DEBUG_LOG("Capture start");
+-        session->StartMovingPhotoCapture(photoCaptureSettings->GetMirror(),
+-            photoCaptureSettings->GetRotation());
++        session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror());
+         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
+         MEDIA_DEBUG_LOG("Capture End");
+     } else {
+@@ -585,7 +584,7 @@ int32_t PhotoOutput::Capture()
+     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+     if (itemStream) {
+         MEDIA_DEBUG_LOG("Capture start");
+-        session->StartMovingPhotoCapture(false, 0);
++        session->EnableMovingPhotoMirror(false);
+         errCode = itemStream->Capture(captureMetadataSetting);
+         MEDIA_DEBUG_LOG("Capture end");
+     } else {
+@@ -718,6 +717,23 @@ bool PhotoOutput::IsMirrorSupported()
+     return isMirrorEnabled;
+ }
+ 
++int32_t PhotoOutput::EnableMirror(bool isEnable)
++{
++    auto session = GetSession();
++    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
++        "PhotoOutput EnableMirror error!, session is nullptr");
++
++    int32_t ret = CAMERA_UNKNOWN_ERROR;
++    if (IsMirrorSupported()) {
++        ret = session->EnableMovingPhotoMirror(isEnable);
++        CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
++            "PhotoOutput EnableMirror error!, ret is not success");
++    } else {
++        MEDIA_ERR_LOG("PhotoOutput EnableMirror error!, mirror is not supported");
++    }
++    return ret;
++}
++      
+ int32_t PhotoOutput::IsQuickThumbnailSupported()
+ {
+     int32_t isQuickThumbnailEnabled = -1;
+diff --git a/frameworks/native/camera/src/session/capture_session.cpp b/frameworks/native/camera/src/session/capture_session.cpp
+index a5db5d666..dafa546ee 100644
+--- a/frameworks/native/camera/src/session/capture_session.cpp
++++ b/frameworks/native/camera/src/session/capture_session.cpp
+@@ -4114,10 +4114,10 @@ bool CaptureSession::IsMovingPhotoEnabled()
+     return isMovingPhotoEnabled_;
+ }
+ 
+-int32_t CaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
++int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
+ {
+     CAMERA_SYNC_TRACE;
+-    MEDIA_INFO_LOG("StartMovingPhotoCapture %{public}d, rotation:%{public}d", isMirror, rotation);
++    MEDIA_INFO_LOG("EnableMovingPhotoMirror %{public}d", isMirror);
+     if (!IsMovingPhotoSupported()) {
+         MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
+         return CameraErrorCode::SERVICE_FATL_ERROR;
+@@ -4125,7 +4125,7 @@ int32_t CaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
+     auto captureSession = GetCaptureSession();
+     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+         "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+-    int32_t errCode = captureSession->StartMovingPhotoCapture(isMirror, rotation);
++    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
+     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
+     return CameraErrorCode::SUCCESS;
+ }
+diff --git a/frameworks/native/ndk/impl/photo_output_impl.cpp b/frameworks/native/ndk/impl/photo_output_impl.cpp
+index 28c03a7d3..f5e34a119 100644
+--- a/frameworks/native/ndk/impl/photo_output_impl.cpp
++++ b/frameworks/native/ndk/impl/photo_output_impl.cpp
+@@ -293,7 +293,9 @@ void Camera_PhotoOutput::SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface
+ 
+ Camera_ErrorCode Camera_PhotoOutput::Capture()
+ {
+-    int32_t ret = innerPhotoOutput_->Capture();
++    std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
++    capSettings->SetMirror(isMirrorEnable_);
++    int32_t ret = innerPhotoOutput_->Capture(capSettings);
+     return FrameworkToNdkCameraError(ret);
+ }
+ 
+@@ -332,6 +334,15 @@ Camera_ErrorCode Camera_PhotoOutput::IsMirrorSupported(bool* isSupported)
+     return CAMERA_OK;
+ }
+ 
++Camera_ErrorCode Camera_PhotoOutput::EnableMirror(bool enableMirror)
++{
++    int32_t ret = innerPhotoOutput_->EnableMirror(enableMirror);
++    if (ret == napi_ok) {
++        isMirrorEnable_ = enableMirror;
++    }
++    
++    return FrameworkToNdkCameraError(ret);
++}
+ 
+ sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
+ {
+diff --git a/frameworks/native/ndk/impl/photo_output_impl.h b/frameworks/native/ndk/impl/photo_output_impl.h
+index ad51264a4..ade84e39d 100644
+--- a/frameworks/native/ndk/impl/photo_output_impl.h
++++ b/frameworks/native/ndk/impl/photo_output_impl.h
+@@ -251,6 +251,8 @@ public:
+ 
+     Camera_ErrorCode IsMirrorSupported(bool* isSupported);
+ 
++    Camera_ErrorCode EnableMirror(bool enableMirror);
++
+     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
+ 
+     void SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface);
+@@ -275,5 +277,6 @@ private:
+     OHOS::sptr<OHOS::CameraStandard::RawPhotoListener> rawPhotoListener_ = nullptr;
+     uint8_t callbackFlag_ = 0;
+     OH_PhotoNative *photoNative_ = nullptr;
++    bool isMirrorEnable_ = false;
+ };
+ #endif // OHOS_PHOTO_OUTPUT_IMPL_H
+\ No newline at end of file
+diff --git a/frameworks/native/ndk/photo_output.cpp b/frameworks/native/ndk/photo_output.cpp
+index b5dadb7fe..50a4b9715 100644
+--- a/frameworks/native/ndk/photo_output.cpp
++++ b/frameworks/native/ndk/photo_output.cpp
+@@ -327,6 +327,18 @@ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutpu
+     return photoOutput->IsMirrorSupported(isSupported);
+ }
+ 
++/**
++ * @since 13
++ * @version 1.0
++ */
++Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enableMirror)
++{
++    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
++        "Invaild argument, photoOutput is null!");
++
++    return photoOutput->EnableMirror(enableMirror);
++}
++
+ /**
+  * @since 12
+  * @version 1.0
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
+index 0646ae623..cfdaa91ab 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
+@@ -354,6 +354,13 @@ public:
+      */
+     bool IsMirrorSupported();
+ 
++    /**
++     * @brief To enable the photo capture mirror.
++     *
++     * @return Returns the result of the photo capture mirror enable.
++     */
++    int32_t EnableMirror(bool isEnable);
++
+     /**
+      * @brief To check the quick thumbnail is supported or not.
+      *
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index 8789b48a6..d40cd42fd 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -1086,9 +1086,9 @@ public:
+     int32_t EnableMovingPhoto(bool isEnable);
+ 
+     /**
+-     * @brief startMotionPhotoCapture.
++     * @brief Enable moving photo mirror.
+      */
+-    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation);
++    int32_t EnableMovingPhotoMirror(bool isMirror);
+ 
+     /**
+      * @brief Check current status is support moon capture boost or not.
+diff --git a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
+index 11b551d37..6ba35b044 100644
+--- a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
++++ b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
+@@ -286,6 +286,7 @@ public:
+     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);
+     static napi_value Release(napi_env env, napi_callback_info info);
+     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
++    static napi_value EnableMirror(napi_env env, napi_callback_info info);
+     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
+     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
+     static napi_value EnableRawDelivery(napi_env env, napi_callback_info info);
+@@ -316,6 +317,7 @@ public:
+     ~PhotoOutputNapi() override;
+ 
+     sptr<PhotoOutput> GetPhotoOutput();
++    bool GetEnableMirror();
+ 
+     const EmitterFunctions& GetEmitterFunctions() override;
+ 
+@@ -381,6 +383,7 @@ private:
+     std::shared_ptr<Profile> profile_;
+     bool isQuickThumbnailEnabled_ = false;
+     bool isDeferredPhotoEnabled_ = false;
++    bool isMirrorEnabled_ = false;
+     sptr<ThumbnailListener> thumbnailListener_;
+     sptr<PhotoListener> photoListener_;
+     sptr<RawPhotoListener> rawPhotoListener_;
+@@ -395,11 +398,16 @@ struct PhotoOutputNapiCaptureSetting {
+     int32_t quality = -1;
+ };
+ 
++struct PhotoOutputCaptureMirrorContext {
++    bool isMirrorEnable = false;
++};
++
+ struct PhotoOutputAsyncContext : public AsyncContext {
+     PhotoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
+     int32_t quality = -1;
+     int32_t rotation = -1;
+     bool isMirror = false;
++    bool isMirrorSettedByUser = false;
+     bool hasPhotoSettings = false;
+     bool isSupported = false;
+     shared_ptr<Location> location;
+diff --git a/interfaces/kits/native/include/camera/photo_output.h b/interfaces/kits/native/include/camera/photo_output.h
+index 474ff30bc..ef28d708e 100644
+--- a/interfaces/kits/native/include/camera/photo_output.h
++++ b/interfaces/kits/native/include/camera/photo_output.h
+@@ -429,6 +429,18 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput);
+  */
+ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutput, bool* isSupported);
+ 
++/**
++ * @brief Enable mirror photo or not.
++ *
++ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to enable mirror photo or not.
++ * @param enabled the flag of enable mirror photo or not.
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
++ * @since 13
++  */
++Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enabled);
++
+ /**
+  * @brief Get active photo output profile.
+  *
+diff --git a/services/camera_service/binder/base/include/icapture_session.h b/services/camera_service/binder/base/include/icapture_session.h
+index fb235fad8..eb3912dc0 100644
+--- a/services/camera_service/binder/base/include/icapture_session.h
++++ b/services/camera_service/binder/base/include/icapture_session.h
+@@ -75,7 +75,7 @@ public:
+ 
+     virtual int32_t EnableMovingPhoto(bool isEnable) = 0;
+ 
+-    virtual int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) = 0;
++    virtual int32_t EnableMovingPhotoMirror(bool isMirror) = 0;
+ 
+     virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
+diff --git a/services/camera_service/binder/client/include/hcapture_session_proxy.h b/services/camera_service/binder/client/include/hcapture_session_proxy.h
+index c36a48f5a..e4bbd7383 100644
+--- a/services/camera_service/binder/client/include/hcapture_session_proxy.h
++++ b/services/camera_service/binder/client/include/hcapture_session_proxy.h
+@@ -63,7 +63,7 @@ public:
+ 
+     int32_t EnableMovingPhoto(bool isEnable) override;
+ 
+-    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
++    int32_t EnableMovingPhotoMirror(bool isMirror) override;
+ 
+     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
+diff --git a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
+index e02da6188..9a7d42f34 100644
+--- a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
++++ b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
+@@ -345,7 +345,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhoto(bool isEnable)
+     return error;
+ }
+ 
+-int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
++int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
+ {
+     MessageParcel data;
+     MessageParcel reply;
+@@ -353,7 +353,6 @@ int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rot
+ 
+     data.WriteInterfaceToken(GetDescriptor());
+     data.WriteBool(isMirror);
+-    data.WriteInt32(rotation);
+     int error = Remote()->SendRequest(
+         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE),
+         data, reply, option);
+diff --git a/services/camera_service/binder/server/src/hcapture_session_stub.cpp b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
+index 5cdb94708..d53cdd54e 100644
+--- a/services/camera_service/binder/server/src/hcapture_session_stub.cpp
++++ b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
+@@ -260,8 +260,7 @@ int32_t HCaptureSessionStub::HandleEnableMovingPhoto(MessageParcel &data)
+ int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
+ {
+     bool isMirror = data.ReadBool();
+-    int32_t rotation = data.ReadInt32();
+-    return StartMovingPhotoCapture(isMirror, rotation);
++    return EnableMovingPhotoMirror(isMirror);
+ }
+ 
+ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
+diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
+index 3db26eb98..c5cd99e52 100644
+--- a/services/camera_service/include/hcapture_session.h
++++ b/services/camera_service/include/hcapture_session.h
+@@ -248,7 +248,7 @@ public:
+     int32_t GetopMode();
+ 
+     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+-    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
++    int32_t EnableMovingPhotoMirror(bool isMirror) override;
+     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy,
+         std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp) override;
+     int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index d961775dc..44ccfdb91 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -1635,7 +1635,7 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
+     }
+ }
+ 
+-int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
++int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
+ {
+     if (!isSetMotionPhoto_ || isMirror == isMovingPhotoMirror_) {
+         return CAMERA_OK;
+diff --git a/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp b/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
+index 232aea47b..7b19f348d 100644
+--- a/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
++++ b/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
+@@ -447,7 +447,7 @@ void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
+     session->SetFocusDistance(data.ReadFloat());
+     session->EnableMacro(data.ReadBool());
+     session->EnableMovingPhoto(data.ReadBool());
+-    session->StartMovingPhotoCapture(data.ReadBool(), data.ReadInt32());
++    session->EnableMovingPhotoMirror(data.ReadBool());
+     session->EnableMoonCaptureBoost(data.ReadBool());
+     session->SetSensorSensitivity(data.ReadUint32());
+     session->UnlockForControl();
+diff --git a/test/fuzztest/timelapsephotosession_fuzzer/time_lapse_photo_session_fuzzer.cpp b/test/fuzztest/timelapsephotosession_fuzzer/time_lapse_photo_session_fuzzer.cpp
+index da87191b7..876c6c8b4 100644
+--- a/test/fuzztest/timelapsephotosession_fuzzer/time_lapse_photo_session_fuzzer.cpp
++++ b/test/fuzztest/timelapsephotosession_fuzzer/time_lapse_photo_session_fuzzer.cpp
+@@ -288,6 +288,183 @@ void TestGetMetadata2()
+     tlpSession->Release();
+ }
+ 
++void Test2()
++{
++    CaptureSessionCallback callback(session);
++    callback.OnError(1);
++    auto s = manager->CreateCaptureSession(SceneMode::VIDEO);
++    s->BeginConfig();
++    auto cap = s->GetCameraOutputCapabilities(camera)[0];
++    auto vp = cap->GetVideoProfiles()[0];
++    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
++    auto vo = manager->CreateVideoOutput(vp, surface);
++    sptr<CaptureOutput> output = static_cast<CaptureOutput*>(vo.GetRefPtr());
++    s->AddOutput(output);
++    const int32_t N_30 = 30;
++    const int32_t N_60 = 60;
++    const int32_t N_200 = 200;
++    vo->SetFrameRateRange(N_30, N_30);
++    s->CanSetFrameRateRangeForOutput(N_30, N_30, output);
++    vo->SetFrameRateRange(N_30, N_60);
++    s->CanSetFrameRateRangeForOutput(N_30, N_60, output);
++    s->CanSetFrameRateRangeForOutput(1, N_200, output);
++
++    Profile p = cap->GetPreviewProfiles()[0];
++    output = manager->CreatePreviewOutput(p, Surface::CreateSurfaceAsConsumer());
++    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
++    s->AddOutput(output);
++    surface = Surface::CreateSurfaceAsConsumer();
++    output = manager->CreateVideoOutput(vp, surface);
++    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
++    s->AddOutput(output);
++    s->Release();
++
++    s = manager->CreateCaptureSession(SceneMode::CAPTURE);
++    s->BeginConfig();
++    sptr<IConsumerSurface> cs = IConsumerSurface::Create();
++    sptr<IBufferProducer> bp = cs->GetProducer();
++    p = cap->GetPhotoProfiles()[0];
++    output = manager->CreatePhotoOutput(p, bp);
++    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
++    s->AddOutput(output);
++
++    output = manager->CreateMetadataOutput();
++    s->AddOutput(output);
++    output = manager->CreateMetadataOutput();
++    output->AddTag(CaptureOutput::DYNAMIC_PROFILE);
++    s->AddOutput(output);
++    s->Release();
++}
++
++void Test31(sptr<CaptureSession> s)
++{
++    s->UnlockForControl();
++    bool supported = true;
++    set<camera_face_detect_mode_t> metadataObjectTypes{};
++    s->SetCaptureMetadataObjectTypes(metadataObjectTypes);
++    metadataObjectTypes.emplace(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
++    s->SetCaptureMetadataObjectTypes(metadataObjectTypes);
++    s->EnableFaceDetection(supported);
++    const float distance = 1.0f;
++    s->IsSessionStarted();
++    s->EnableMovingPhotoMirror(supported);
++    vector<WhiteBalanceMode> modes;
++    s->GetSupportedWhiteBalanceModes(modes);
++    s->IsWhiteBalanceModeSupported(WhiteBalanceMode::AWB_MODE_AUTO, supported);
++    s->LockForControl();
++    s->SetFocusDistance(distance);
++    
++    s->EnableLowLightDetection(supported);
++    s->EnableMovingPhoto(supported);
++    s->SetSensorSensitivity(1);
++    s->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_AUTO);
++    WhiteBalanceMode mode;
++    s->GetWhiteBalanceMode(mode);
++    vector<int32_t> whiteBalanceRange;
++    s->GetManualWhiteBalanceRange(whiteBalanceRange);
++    s->IsManualWhiteBalanceSupported(supported);
++    int32_t wbValue;
++    s->GetManualWhiteBalance(wbValue);
++    s->SetManualWhiteBalance(wbValue);
++    vector<std::vector<float>> supportedPhysicalApertures;
++    s->GetSupportedPhysicalApertures(supportedPhysicalApertures);
++    vector<float> apertures;
++    s->GetSupportedVirtualApertures(apertures);
++    s->GetSupportedPortraitEffects();
++    float aperture;
++    s->GetVirtualAperture(aperture);
++    s->SetVirtualAperture(aperture);
++    s->GetPhysicalAperture(aperture);
++    s->SetPhysicalAperture(aperture);
++    s->IsLcdFlashSupported();
++    s->EnableLcdFlash(supported);
++    s->EnableLcdFlashDetection(supported);
++    auto callback = s->GetLcdFlashStatusCallback();
++    s->SetLcdFlashStatusCallback(callback);
++    s->IsTripodDetectionSupported();
++    s->EnableTripodStabilization(supported);
++    s->EnableTripodDetection(supported);
++}
++
++void Test3()
++{
++    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
++    input->Open();
++    auto s = manager->CreateCaptureSession(SceneMode::SECURE);
++    s->BeginConfig();
++    auto cap = manager->GetSupportedOutputCapability(camera, SceneMode::CAPTURE);
++    if (!cap->GetDepthProfiles().empty()) {
++        DepthProfile dp = cap->GetDepthProfiles()[0];
++        sptr<IConsumerSurface> cs = IConsumerSurface::Create();
++        sptr<IBufferProducer> bp = cs->GetProducer();
++        sptr<CaptureOutput> output = manager->CreateDepthDataOutput(dp, bp);
++        s->AddSecureOutput(output);
++    }
++    sptr<CaptureOutput> output = manager->CreateMetadataOutput();
++    s->AddOutput(output);
++    s->AddInput(input);
++    s->CommitConfig();
++    s->Start();
++    string deviceClass{"device/0"};
++    s->SetPreviewRotation(deviceClass);
++    uint32_t value = 1;
++    auto meta = s->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
++    AddOrUpdateMetadata(meta, OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &value, 1);
++    s->GetActiveVideoStabilizationMode();
++    s->UnlockForControl();
++    s->SetExposureMode(ExposureMode::EXPOSURE_MODE_AUTO);
++    s->LockForControl();
++    s->SetExposureMode(ExposureMode::EXPOSURE_MODE_AUTO);
++    s->GetSupportedFlashModes();
++    vector<FlashMode> flashModes;
++    s->GetSupportedFlashModes(flashModes);
++    s->GetFlashMode();
++    FlashMode flashMode;
++    s->GetFlashMode(flashMode);
++    s->SetFlashMode(flashMode);
++    s->IsFlashModeSupported(flashMode);
++    bool supported;
++    s->IsFlashModeSupported(flashMode, supported);
++    s->HasFlash();
++    s->HasFlash(supported);
++    meta = camera->GetMetadata();
++    AddOrUpdateMetadata(meta, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &value, 0);
++    AddOrUpdateMetadata(meta, OHOS_ABILITY_SCENE_ZOOM_CAP, &value, 1);
++    vector<float> zoomRatioRange;
++    s->GetZoomRatioRange(zoomRatioRange);
++    Test31(s);
++    s->Stop();
++    s->Release();
++}
++
++void TestMetadataResultProcessor()
++{
++    auto s = manager->CreateCaptureSession(SceneMode::CAPTURE);
++    s->BeginConfig();
++    sptr<CaptureOutput> output = manager->CreateMetadataOutput();
++    s->AddOutput(output);
++    sptr<CaptureInput> input = manager->CreateCameraInput(camera);
++    input->Open();
++    s->AddInput(input);
++    CaptureSession::CaptureSessionMetadataResultProcessor processor(s);
++    auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
++    uint64_t data = 1;
++    AddOrUpdateMetadata(metadata, OHOS_CONTROL_EXPOSURE_STATE, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_CONTROL_FOCUS_MODE, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_CONTROL_FOCUS_STATE, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_CAMERA_MACRO_STATUS, &data, 1);
++    AddOrUpdateMetadata(metadata, FEATURE_MOON_CAPTURE_BOOST, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_STATUS_MOON_CAPTURE_DETECTION, &data, 1);
++    AddOrUpdateMetadata(metadata, FEATURE_LOW_LIGHT_BOOST, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_STATUS_LOW_LIGHT_DETECTION, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_CAMERA_CUSTOM_SNAPSHOT_DURATION, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_CAMERA_EFFECT_SUGGESTION_TYPE, &data, 1);
++    AddOrUpdateMetadata(metadata, OHOS_STATUS_LCD_FLASH_STATUS, &data, 1);
++    processor.ProcessCallbacks(1, metadata);
++    s->Release();
++}
++
+ void Test(uint8_t *rawData, size_t size)
+ {
+     if (rawData == nullptr || size < LIMITSIZE) {
+-- 
+2.45.2.huawei.5
+
