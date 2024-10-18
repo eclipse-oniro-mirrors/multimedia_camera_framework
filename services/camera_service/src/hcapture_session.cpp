@@ -1633,15 +1633,12 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
             if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
                 MEDIA_INFO_LOG("restart movingphoto stream.");
                 streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
-                streamRepeat->Stop();
-                streamRepeat->Start();
+                // set clear cache flag
+                livephotoListener_->SetClearFlag();
                 break;
             }
         }
         isMovingPhotoMirror_ = isMirror;
-        // clear cache frame
-        std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-        livephotoListener_->ClearCache();
     }
     return CAMERA_OK;
 }

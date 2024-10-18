@@ -152,9 +152,15 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->SetRotation(captureRotation);
     if (!choosedBuffer.empty()) {
         muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp()));
+        muxer->SetStartTime(NanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
     }
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
+    auto formatVideo = make_shared<Format>();
+    MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
+    formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
+        == VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
+    formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     int videoTrackId = -1;
     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
     MEDIA_INFO_LOG("Succeed create videoTrackId %{public}d", videoTrackId);
