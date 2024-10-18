@@ -226,6 +226,7 @@ public:
     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static napi_value DeferImageDeliveryFor(napi_env env, napi_callback_info info);
@@ -248,6 +249,7 @@ public:
     ~PhotoOutputNapi() override;
 
     sptr<PhotoOutput> GetPhotoOutput();
+    bool GetEnableMirror();
 
     const EmitterFunctions& GetEmitterFunctions() override;
 
@@ -312,6 +314,7 @@ private:
     std::shared_ptr<Profile> profile_;
     bool isQuickThumbnailEnabled_ = false;
     bool isDeferredPhotoEnabled_ = false;
+    bool isMirrorEnabled_ = false;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
     sptr<RawPhotoListener> rawPhotoListener_;
@@ -330,6 +333,7 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     int32_t rotation = -1;
     bool isMirror = false;
     bool hasPhotoSettings = false;
+    bool isMirrorSettedByUser = false;
     bool isSupported = false;
     shared_ptr<Location> location;
     PhotoOutputNapi* objectInfo = nullptr;

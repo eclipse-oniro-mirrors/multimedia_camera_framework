@@ -87,6 +87,8 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
 {
     context->status = true;
     sptr<PhotoOutput> photoOutput = context->objectInfo->GetPhotoOutput();
+    MEDIA_INFO_LOG("PhotoOutputAsyncContext objectInfo GetEnableMirror is %{public}d",
+        context->objectInfo->GetEnableMirror());
     if (context->hasPhotoSettings) {
         std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
         if (context->quality != -1) {
@@ -95,7 +97,11 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
         if (context->rotation != -1) {
             capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
         }
-        capSettings->SetMirror(context->isMirror);
+        if (!context->isMirrorSettedByUser) {
+            capSettings->SetMirror(context->objectInfo->GetEnableMirror());
+        } else {
+            capSettings->SetMirror(context->isMirror);
+        }
         if (context->location != nullptr) {
             capSettings->SetLocation(context->location);
         }
@@ -106,7 +112,9 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
         }
         context->errorCode = photoOutput->Capture(capSettings);
     } else {
-        context->errorCode = photoOutput->Capture();
+        std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+        capSettings->SetMirror(context->objectInfo->GetEnableMirror());
+        context->errorCode = photoOutput->Capture(capSettings);
     }
     context->status = context->errorCode == 0;
 }
@@ -1014,6 +1022,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
+        DECLARE_NAPI_FUNCTION("enableMirror", EnableMirror),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
         DECLARE_NAPI_FUNCTION("on", On),
@@ -1077,6 +1086,11 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
 sptr<PhotoOutput> PhotoOutputNapi::GetPhotoOutput()
 {
     return photoOutput_;
+}
+
+bool PhotoOutputNapi::GetEnableMirror()
+{
+    return isMirrorEnabled_;
 }
 
 bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
@@ -1224,6 +1238,10 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
         if (settingsNapiOjbect.IsKeySetted("rotation") && !ValidImageRotationFromJs(asyncContext->rotation)) {
             CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "rotation field not legal");
             return false;
+        }
+        if (settingsNapiOjbect.IsKeySetted("mirror") && asyncContext->isMirror) {
+                MEDIA_INFO_LOG("GetMirrorStatus is ok!");
+                asyncContext->isMirrorSettedByUser = true;
         }
         MEDIA_INFO_LOG("ParseCaptureSettings with capture settings pass");
         asyncContext->hasPhotoSettings = true;
@@ -1404,6 +1422,32 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsMirrorSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableMirror is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableMirror is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isMirror;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isMirror);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableMirror invalid argument");
+        return nullptr;
+    }
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (session != nullptr) {
+        photoOutputNapi->isMirrorEnabled_ = isMirror;
+        int32_t retCode = session->EnableMovingPhotoMirror(isMirror);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
     }
     return result;
 }
