@@ -399,13 +399,8 @@ private:
     static thread_local napi_ref rawCallback_;
 };
 
-
 struct PhotoOutputNapiCaptureSetting {
     int32_t quality = -1;
-};
-
-struct PhotoOutputCaptureMirrorContext {
-    bool isMirrorEnable = false;
 };
 
 struct PhotoOutputAsyncContext : public AsyncContext {
