@@ -33,7 +33,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${multimedia_media_library_path}/interfaces",
+    "${multimedia_media_library_path}/interfaces/kits/c",
   ]
 
   sources = [
@@ -117,7 +117,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${multimedia_media_library_path}/interfaces",
+    "${multimedia_media_library_path}/interfaces/kits/c",
     "${multimedia_image_framework_path}/interfaces/kits/native/include/image",
   ]
 
