@@ -345,7 +345,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhoto(bool isEnable)
     return error;
 }
 
-int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
+int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -353,7 +353,6 @@ int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rot
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isMirror);
-    data.WriteInt32(rotation);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE),
         data, reply, option);

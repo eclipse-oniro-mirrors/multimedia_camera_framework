@@ -1086,9 +1086,9 @@ public:
     int32_t EnableMovingPhoto(bool isEnable);
 
     /**
-     * @brief startMotionPhotoCapture.
+     * @brief Enable moving photo mirror.
      */
-    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation);
+    int32_t EnableMovingPhotoMirror(bool isMirror);
 
     /**
      * @brief Check current status is support moon capture boost or not.

@@ -353,6 +353,13 @@ public:
     bool IsMirrorSupported();
 
     /**
+     * @brief To enable the photo capture mirror.
+     *
+     * @return Returns the result of the photo capture mirror enable.
+     */
+    int32_t EnableMirror(bool isEnable);
+
+    /**
      * @brief To check the quick thumbnail is supported or not.
      *
      * @return Returns true/false if the quick thumbnail is supported/not-supported respectively.

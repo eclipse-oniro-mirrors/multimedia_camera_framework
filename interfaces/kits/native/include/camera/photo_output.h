@@ -430,6 +430,18 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput);
 Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutput, bool* isSupported);
 
 /**
+ * @brief Enable mirror photo or not.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to enable mirror photo or not.
+ * @param enabled the flag of enable mirror photo or not.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 13
+  */
+Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enabled);
+
+/**
  * @brief Get active photo output profile.
  *
  * @param photoOutput the {@link Camera_PhotoOutput} instance to deliver active profile.

@@ -293,7 +293,9 @@ void Camera_PhotoOutput::SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface
 
 Camera_ErrorCode Camera_PhotoOutput::Capture()
 {
-    int32_t ret = innerPhotoOutput_->Capture();
+    std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+    capSettings->SetMirror(isMirrorEnable_);
+    int32_t ret = innerPhotoOutput_->Capture(capSettings);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -332,6 +334,15 @@ Camera_ErrorCode Camera_PhotoOutput::IsMirrorSupported(bool* isSupported)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_PhotoOutput::EnableMirror(bool enableMirror)
+{
+    int32_t ret = innerPhotoOutput_->EnableMirror(enableMirror);
+    if (ret == napi_ok) {
+        isMirrorEnable_ = enableMirror;
+    }
+    
+    return FrameworkToNdkCameraError(ret);
+}
 
 sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
 {
