@@ -328,6 +328,18 @@ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutpu
 }
 
 /**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enableMirror)
+{
+    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, photoOutput is null!");
+
+    return photoOutput->EnableMirror(enableMirror);
+}
+
+/**
  * @since 12
  * @version 1.0
  */

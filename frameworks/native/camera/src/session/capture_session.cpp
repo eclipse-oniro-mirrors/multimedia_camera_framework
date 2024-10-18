@@ -4124,17 +4124,17 @@ bool CaptureSession::IsMovingPhotoEnabled()
     return isMovingPhotoEnabled_;
 }
 
-int32_t CaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
+int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("StartMovingPhotoCapture %{public}d, rotation:%{public}d", isMirror, rotation);
+    MEDIA_INFO_LOG("EnableMovingPhotoMirror %{public}d", isMirror);
     if (!IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        int32_t errCode = captureSession->StartMovingPhotoCapture(isMirror, rotation);
+        int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
         }
