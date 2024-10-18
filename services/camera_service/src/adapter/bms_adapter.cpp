@@ -101,7 +101,7 @@ bool BmsAdapter::RegisterListener()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "samgr is null");
     auto bmsAdapterWptr = wptr<BmsAdapter>(this);
-    auto removeCallback = [&bmsAdapterWptr]() {
+    auto removeCallback = [bmsAdapterWptr]() {
         auto adapter = bmsAdapterWptr.promote();
         if (adapter) {
             adapter->SetBms(nullptr);
