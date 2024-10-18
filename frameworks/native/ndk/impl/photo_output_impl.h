@@ -251,6 +251,8 @@ public:
 
     Camera_ErrorCode IsMirrorSupported(bool* isSupported);
 
+    Camera_ErrorCode EnableMirror(bool enableMirror);
+
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
     void SetPhotoSurface(OHOS::sptr<OHOS::Surface> &photoSurface);
@@ -275,5 +277,6 @@ private:
     OHOS::sptr<OHOS::CameraStandard::RawPhotoListener> rawPhotoListener_ = nullptr;
     uint8_t callbackFlag_ = 0;
     OH_PhotoNative *photoNative_ = nullptr;
+    bool isMirrorEnable_ = false;
 };
 #endif // OHOS_PHOTO_OUTPUT_IMPL_H

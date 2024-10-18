@@ -349,7 +349,7 @@ void Test31(sptr<CaptureSession> s)
     s->EnableFaceDetection(supported);
     const float distance = 1.0f;
     s->IsSessionStarted();
-    s->StartMovingPhotoCapture(supported, 0);
+    s->EnableMovingPhotoMirror(supported);
     vector<WhiteBalanceMode> modes;
     s->GetSupportedWhiteBalanceModes(modes);
     s->IsWhiteBalanceModeSupported(WhiteBalanceMode::AWB_MODE_AUTO, supported);
