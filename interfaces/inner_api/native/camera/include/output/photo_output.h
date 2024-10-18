@@ -447,6 +447,17 @@ public:
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType);
+    
+    /**
+     * @brief Check the depth data delivery capability is supported or not.
+     */
+    bool IsDepthDataDeliverySupported();
+
+    /**
+     * @brief Enable the depth data delivery.
+     */
+    int32_t EnableDepthDataDelivery(bool enabled);
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;
