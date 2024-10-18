@@ -469,7 +469,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
     removeNeededList_.clear();
     const sptr<IRemoteObject>& remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
-    DP_CHECK_AND_RETURN_RET_LOG(remote->AddDeathRecipient(sessionDeathRecipient_),
+    DP_CHECK_ERROR_RETURN_RET_LOG(remote == nullptr && !remote->AddDeathRecipient(sessionDeathRecipient_),
         false, "AddDeathRecipient for ImageProcessSession failed.");
     OnStateChanged(HdiStatus::HDI_READY);
     return true;
