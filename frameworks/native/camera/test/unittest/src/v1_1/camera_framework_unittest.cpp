@@ -5492,7 +5492,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_060, TestSize.Level
 
     pid_t pid = 0;
     metadatOutput->CameraServerDied(pid);
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
 }
 
 /*
@@ -5514,8 +5514,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_061, TestSize.Level
     pid_t pid = 0;
     metadatOutput->stream_ = nullptr;
     metadatOutput->CameraServerDied(pid);
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
-    EXPECT_EQ(metadatOutput->Release(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Release(), CameraErrorCode::SERVICE_FATL_ERROR);
 }
 
 /*
