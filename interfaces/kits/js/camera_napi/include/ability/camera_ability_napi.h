@@ -72,6 +72,9 @@ public:
     static napi_value GetSupportedColorSpaces(napi_env env, napi_callback_info info);
     // MacroQuery
     static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
+    // DepthFusionQuery
+    static napi_value IsDepthFusionSupported(napi_env env, napi_callback_info info);
+    static napi_value GetDepthFusionThreshold(napi_env env, napi_callback_info info);
     // PortraitQuery
     static napi_value GetSupportedPortraitEffects(napi_env env, napi_callback_info info);
     // ApertureQuery
@@ -110,6 +113,7 @@ public:
     static const std::vector<napi_property_descriptor> color_effect_query_props;
     static const std::vector<napi_property_descriptor> color_management_query_props;
     static const std::vector<napi_property_descriptor> macro_query_props;
+    static const std::vector<napi_property_descriptor> depth_fusion_query_props;
     static const std::vector<napi_property_descriptor> portrait_query_props;
     static const std::vector<napi_property_descriptor> aperture_query_props;
     static const std::vector<napi_property_descriptor> stabilization_query_props;

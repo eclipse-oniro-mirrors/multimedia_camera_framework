@@ -3907,6 +3907,106 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
     return CameraErrorCode::SUCCESS;
 }
 
+bool CaptureSession::IsDepthFusionSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter IsDepthFusionSupported");
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
+        MEDIA_ERR_LOG("CaptureSession::IsDepthFusionSupported Session is not Commited");
+        return false;
+    }
+    auto inputDevice = GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsDepthFusionSupported camera device is null");
+        return false;
+        }
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    if (deviceInfo == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsDepthFusionSupported camera deviceInfo is null");
+        return false;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_MACRO_DEPTH_FUSION_SUPPORTED, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count <= 0, false,
+        "CaptureSession::IsDepthFusionSupported Failed with return code %{public}d", ret);
+    auto supportResult = static_cast<bool>(item.data.u8[0]);
+    return supportResult;
+}
+
+std::vector<float> CaptureSession::GetDepthFusionThreshold()
+{
+    std::vector<float> depthFusionThreshold;
+    GetDepthFusionThreshold(depthFusionThreshold);
+    return depthFusionThreshold;
+}
+
+int32_t CaptureSession::GetDepthFusionThreshold(std::vector<float>& depthFusionThreshold)
+{
+    MEDIA_DEBUG_LOG("Enter GetDepthFusionThreshold");
+    depthFusionThreshold.clear();
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetDepthFusionThreshold Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetDepthFusionThreshold camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_CAPTURE_MACRO_DEPTH_FUSION_ZOOM_RANGE, &item);
+    const int32_t zoomRangeLength = 2;
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count < zoomRangeLength, 0,
+        "CaptureSession::GetDepthFusionThreshold Failed with return code %{public}d, item.count = %{public}d", ret,
+        item.count);
+    float minDepthFusionZoom = 0.0;
+    float maxDepthFusionZoom = 0.0;
+    MEDIA_INFO_LOG("Capture marco depth fusion zoom range, min: %{public}f, max: %{public}f",
+        item.data.f[0], item.data.f[1]);
+    minDepthFusionZoom = item.data.f[0];
+    maxDepthFusionZoom = item.data.f[1];
+    depthFusionThreshold = {minDepthFusionZoom, maxDepthFusionZoom};
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableDepthFusion(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableDepthFusion, isEnable:%{public}d", isEnable);
+    if (!IsDepthFusionSupported()) {
+        MEDIA_ERR_LOG("EnableDepthFusion IsDepthFusionSupported is false");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession Failed EnableDepthFusion!, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::EnableDepthFusion Need to call LockForControl() before setting camera properties");
+    bool status = false;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &item);
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableDepthFusion Failed to enable depth fusion");
+    }
+    isDepthFusionEnable_ = isEnable;
+    return CameraErrorCode::SUCCESS;
+}
+
+bool CaptureSession::IsDepthFusionEnabled()
+{
+    return isDepthFusionEnable_;
+}
+
 std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeature()
 {
     auto inputDevice = GetInputDevice();
