@@ -119,6 +119,8 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "${base_security_path}/interfaces/innerkits/token_setproc/include",
     "${multimedia_media_library_path}/interfaces/kits/c",
     "${multimedia_image_framework_path}/interfaces/kits/native/include/image",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
+    "${multimedia_camera_framework_path}/interfaces",
   ]
 
   sources = [
@@ -152,6 +154,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
+    "image_framework:ohimage",
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
