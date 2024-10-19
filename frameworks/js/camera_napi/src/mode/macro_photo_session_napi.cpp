@@ -43,7 +43,8 @@ napi_value MacroPhotoSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, flash_props,
-        auto_exposure_props, focus_props, zoom_props, color_effect_props, features_props, manual_focus_props };
+        auto_exposure_props, focus_props, zoom_props, depth_fusion_props,
+        color_effect_props, features_props, manual_focus_props };
 
     std::vector<napi_property_descriptor> macro_photo_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
