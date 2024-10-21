@@ -189,13 +189,13 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("doMxuer video is finished");
     if (muxer) {
+        muxer->Stop();
+        muxer->Release();
         shared_ptr<PhotoAssetProxy> proxy = muxer->GetPhotoAssetProxy();
         MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
         if (proxy) {
             proxy->NotifyVideoSaveFinished();
         }
-        muxer->Stop();
-        muxer->Release();
     }
 }
 
