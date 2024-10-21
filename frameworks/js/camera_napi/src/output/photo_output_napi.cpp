@@ -2384,6 +2384,7 @@ napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info i
         }
     }
     MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutputNapi == nullptr, result, "photoOutputNapi is null!");
     auto rawSurface = photoOutputNapi->photoOutput_->rawPhotoSurface_;
     if (rawSurface == nullptr) {
         MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
