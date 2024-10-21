@@ -427,14 +427,14 @@ int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeatures
     
     if (tag == OHOS_CONTROL_ZOOM_RATIO) {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_ZOOM_RATIO");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedZoomRatio(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_SMOOTH_ZOOM_RATIOS) {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_SMOOTH_ZOOM_RATIOS");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedZoomRatio(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
-        return OnMetadataChangedMacro(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedMacro(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_MOON_CAPTURE_BOOST) {
-        return OnMetadataChangedMoonCaptureBoost(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedMoonCaptureBoost(filteredFeaturesMode, tag, metadataItem);
     } else {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
     }
