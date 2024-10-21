@@ -1429,16 +1429,6 @@ public:
      */
     int32_t SetPhysicalAperture(float physicalAperture);
 
-    /**
-     * @brief Check the depth data delivery capability is supported or not.
-     */
-    bool IsDepthDataDeliverySupported();
-
-    /**
-     * @brief Enable the depth data delivery.
-     */
-    int32_t EnableDepthDataDelivery(bool enabled);
-
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1668,7 +1658,6 @@ protected:
     std::atomic<bool> isRawImageDelivery_ { false };
     bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
-    std::atomic<bool> isDepthDataDelivery_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;

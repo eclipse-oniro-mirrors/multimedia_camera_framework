@@ -5472,20 +5472,5 @@ void CaptureSession::SetUsage(UsageType usageType, bool enabled)
  
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
 }
-
-bool CaptureSession::IsDepthDataDeliverySupported()
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("Enter IsDepthDataDeliverySupported");
-    return false;
-}
-
-int32_t CaptureSession::EnableDepthDataDelivery(bool enabled)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("Enter EnableDepthDataDelivery, enabled:%{public}d", enabled);
-    isDepthDataDelivery_ = enabled;
-    return CameraErrorCode::SUCCESS;
-}
 } // namespace CameraStandard
 } // namespace OHOS

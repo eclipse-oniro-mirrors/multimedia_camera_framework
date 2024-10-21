@@ -2901,67 +2901,58 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
 
 napi_value PhotoOutputNapi::IsDepthDataDeliverySupported(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("IsDepthDataDeliverySupported is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsDepthDataDeliverySupported is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status != napi_ok || photoOutputNapi == nullptr) {
-        MEDIA_ERR_LOG("IsDepthDataDeliverySupported photoOutputNapi is null!");
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported parse parameter occur error");
+        return nullptr;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    int32_t retCode = photoOutputNapi->photoOutput_->IsDepthDataDeliverySupported();
+    if (retCode == 0) {
+        napi_get_boolean(env, true, &result);
         return result;
     }
-    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
-    if (session != nullptr) {
-        bool isSupported = session->IsDepthDataDeliverySupported();
-        napi_get_boolean(env, isSupported, &result);
-    } else {
-        napi_get_boolean(env, false, &result);
-        MEDIA_ERR_LOG("IsDepthDataDeliverySupported call Failed!");
-    }
+    MEDIA_ERR_LOG("PhotoOutputNapi::IsDepthDataDeliverySupported is not supported");
+    napi_get_boolean(env, false, &result);
     return result;
 }
 
 napi_value PhotoOutputNapi::EnableDepthDataDelivery(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("EnableDepthDataDelivery is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
-    napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
-    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
-        return result;
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableDepthDataDelivery is called!");
+        return nullptr;
     }
-    napi_get_undefined(env, &result);
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableDepthDataDelivery is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status != napi_ok || photoOutputNapi == nullptr) {
-        MEDIA_ERR_LOG("EnableDepthDataDelivery photoOutputNapi is null!");
-        return result;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableDepthDataDelivery parse parameter occur error");
+        return nullptr;
     }
-    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
-    if (session != nullptr) {
-        bool isEnableDepthDataDelivery;
-        napi_get_value_bool(env, argv[PARAM0], &isEnableDepthDataDelivery);
-        session->LockForControl();
-        int32_t retCode = session->EnableDepthDataDelivery(isEnableDepthDataDelivery);
-        session->UnlockForControl();
-        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
-        }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableDepthDataDelivery get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
     }
-    return result;
+
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableDepthDataDelivery(isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableDepthDataDelivery fail %{public}d", retCode);
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 } // namespace CameraStandard
 } // namespace OHOS
