@@ -1869,8 +1869,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     if (!isBursting && picturePtr) {
         RotatePicture(picturePtr);
     }
-    DeferredProcessing::DeferredProcessingService::GetInstance().
-        NotifyLowQualityImage(userId, (isBursting ? uri : cameraServerPhotoProxy->GetPhotoId()), picturePtr);
+    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(userId, uri, picturePtr);
     if (!isBursting && isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
