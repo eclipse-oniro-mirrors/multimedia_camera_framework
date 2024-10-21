@@ -957,6 +957,9 @@ sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> HCameraDevice::GetStreamOperator(
 int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, const int32_t errorMsg)
 {
     auto errType = static_cast<OHOS::HDI::Camera::V1_3::ErrorType>(type);
+    MEDIA_ERR_LOG("CameraDeviceCallback::OnError() is called!, type: %{pubilc}d,"
+                    "cameraID_: %{public}s, cameraPid: %{public}d.",
+        type, cameraID_.c_str(), cameraPid_);
     NotifyCameraStatus(HdiToCameraErrorType(errType));
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
