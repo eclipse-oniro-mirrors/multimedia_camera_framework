@@ -320,11 +320,11 @@ int32_t MetadataOutput::Stop()
 {
     MEDIA_DEBUG_LOG("MetadataOutput::Stop");
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to Stop!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
-    return CameraErrorCode::SUCCESS;
+    return ServiceToCameraError(errCode);
 }
 
 int32_t MetadataOutput::Release()
@@ -335,13 +335,13 @@ int32_t MetadataOutput::Release()
         appStateCallback_ = nullptr;
     }
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "MetadataOutput Failed to Release!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Release();
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Release MetadataOutput!, errCode: %{public}d", errCode);
     ReleaseSurface();
     CaptureOutput::Release();
-    return CameraErrorCode::SUCCESS;
+    return ServiceToCameraError(errCode);
 }
 
 void MetadataOutput::ReleaseSurface()
