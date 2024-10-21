@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr int32_t DEFAULT = 0;
+constexpr uint32_t DEFAULT = 0;
 class VideoJobQueue {
 public:
     typedef std::function<bool(DeferredVideoJobPtr, DeferredVideoJobPtr)> Comparator;
@@ -53,7 +53,7 @@ private:
     void Heapify(uint32_t index);
     void Swap(uint32_t x, uint32_t y);
 
-    int32_t size_ {0};
+    uint32_t size_ {0};
     Comparator comp_;
     std::vector<DeferredVideoJobPtr> heap_ {};
     std::unordered_map<DeferredVideoJobPtr, int32_t> indexMap_ {};
