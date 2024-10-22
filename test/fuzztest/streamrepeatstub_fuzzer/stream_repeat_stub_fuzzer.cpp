@@ -104,12 +104,14 @@ void TestHandleSetCallback(uint8_t *rawData, size_t size)
 
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_ERROR_RETURN(!samgr);
     object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
     sptr<IStreamRepeatCallback> repeatCallback = iface_cast<IStreamRepeatCallback>(object);
-
+    CHECK_ERROR_RETURN(!repeatCallback);
     data.WriteRemoteObject(repeatCallback->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK;
+    CHECK_ERROR_RETURN(!hstreamRepeat);
     hstreamRepeat->OnRemoteRequest(code, data, reply, option);
 }
 
