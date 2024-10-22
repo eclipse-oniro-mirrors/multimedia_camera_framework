@@ -669,7 +669,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
-        ProcessFixedTransform(sensorOrientation, cameraPosition);
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     }
 }
 
@@ -684,11 +684,6 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
         int ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
         MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraSetRotation %{public}d", ret);
     }
-}
-
-void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
-{
-    ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
 }
 
 void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
