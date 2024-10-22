@@ -184,6 +184,13 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::macro_props = {
     DECLARE_NAPI_FUNCTION("enableMacro", CameraSessionNapi::EnableMacro)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::depth_fusion_props = {
+    DECLARE_NAPI_FUNCTION("isDepthFusionSupported", CameraSessionNapi::IsDepthFusionSupported),
+    DECLARE_NAPI_FUNCTION("getDepthFusionThreshold", CameraSessionNapi::GetDepthFusionThreshold),
+    DECLARE_NAPI_FUNCTION("isDepthFusionEnabled", CameraSessionNapi::IsDepthFusionEnabled),
+    DECLARE_NAPI_FUNCTION("enableDepthFusion", CameraSessionNapi::EnableDepthFusion)
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::moon_capture_boost_props = {
     DECLARE_NAPI_FUNCTION("isMoonCaptureBoostSupported", CameraSessionNapi::IsMoonCaptureBoostSupported),
     DECLARE_NAPI_FUNCTION("enableMoonCaptureBoost", CameraSessionNapi::EnableMoonCaptureBoost)
@@ -886,8 +893,8 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props,
-        macro_props, moon_capture_boost_props, features_props, color_management_props, manual_focus_props,
-        preconfig_props, camera_output_capability_props };
+        macro_props, depth_fusion_props, moon_capture_boost_props, features_props, color_management_props,
+        manual_focus_props, preconfig_props, camera_output_capability_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -2941,6 +2948,131 @@ napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::IsDepthFusionSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetDepthFusionThreshold is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("CameraSessionNapi::IsDepthFusionSupported is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsDepthFusionSupported();
+        napi_get_boolean(env, isSupported, &result);
+        return result;
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported call Failed!");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetDepthFusionThreshold(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetDepthFusionThreshold is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("CameraSessionNapi::GetDepthFusionThreshold is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<float> vecDepthFusionThreshold;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetDepthFusionThreshold(vecDepthFusionThreshold);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraSessionNapi::GetDepthFusionThreshold len = %{public}zu",
+            vecDepthFusionThreshold.size());
+
+        if (!vecDepthFusionThreshold.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < vecDepthFusionThreshold.size(); i++) {
+                float depthFusion = vecDepthFusionThreshold[i];
+                napi_value value;
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(depthFusion), &value);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("vecDepthFusionThreshold is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetDepthFusionThreshold call Failed!");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsDepthFusionEnabled(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsDepthFusionEnabled is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("CameraSessionNapi::IsDepthFusionEnabled is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionEnabled parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isEnabled = cameraSessionNapi->cameraSession_->IsDepthFusionEnabled();
+        napi_get_boolean(env, isEnabled, &result);
+        MEDIA_INFO_LOG("CameraSessionNapi::IsDepthFusionEnabled:%{public}d", isEnabled);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionEnabled get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableDepthFusion(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableDepthFusion is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("CameraSessionNapi::EnableDepthFusion is called");
+    bool isEnabledDepthFusion;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnabledDepthFusion);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnabledDepthFusion parse parameter occur error");
+        return nullptr;
+    }
+    
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableDepthFusion:%{public}d", isEnabledDepthFusion);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableDepthFusion(isEnabledDepthFusion);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("CameraSessionNapi::EnableDepthFusion fail %{public}d", retCode);
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableDepthFusion success");
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableDepthFusion get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return nullptr;
     }

@@ -46,6 +46,8 @@ public:
     std::vector<ColorEffect> GetSupportedColorEffects();
     std::vector<ColorSpace> GetSupportedColorSpaces();
     bool IsMacroSupported();
+    bool IsDepthFusionSupported();
+    std::vector<float> GetDepthFusionThreshold();
     std::vector<PortraitEffect> GetSupportedPortraitEffects();
     std::vector<float> GetSupportedVirtualApertures();
     std::vector<std::vector<float>> GetSupportedPhysicalApertures();
@@ -73,6 +75,8 @@ public:
 
     std::optional<std::vector<float>> zoomRatioRange_;
     std::optional<bool> isMacroSupported_;
+    std::optional<bool> isDepthFusionSupported_;
+    std::optional<std::vector<float>> getDepthFusionThreshold_;
 };
 
 class CaptureSession;

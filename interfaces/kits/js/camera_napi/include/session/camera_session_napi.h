@@ -306,6 +306,10 @@ public:
     static napi_value SetFocusDistance(napi_env env, napi_callback_info info);
     static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMacro(napi_env env, napi_callback_info info);
+    static napi_value IsDepthFusionSupported(napi_env env, napi_callback_info info);
+    static napi_value GetDepthFusionThreshold(napi_env env, napi_callback_info info);
+    static napi_value IsDepthFusionEnabled(napi_env env, napi_callback_info info);
+    static napi_value EnableDepthFusion(napi_env env, napi_callback_info info);
     static napi_value CanPreconfig(napi_env env, napi_callback_info info);
     static napi_value Preconfig(napi_env env, napi_callback_info info);
     static napi_value IsEffectSuggestionSupported(napi_env env, napi_callback_info info);
@@ -406,6 +410,7 @@ public:
     static const std::vector<napi_property_descriptor> beauty_props;
     static const std::vector<napi_property_descriptor> color_effect_props;
     static const std::vector<napi_property_descriptor> macro_props;
+    static const std::vector<napi_property_descriptor> depth_fusion_props;
     static const std::vector<napi_property_descriptor> moon_capture_boost_props;
     static const std::vector<napi_property_descriptor> features_props;
     static const std::vector<napi_property_descriptor> color_management_props;
