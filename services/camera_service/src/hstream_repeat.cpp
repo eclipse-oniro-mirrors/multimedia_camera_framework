@@ -688,7 +688,6 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
 
 void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
-    int ret = SurfaceError::SURFACE_ERROR_OK;
     ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
 }
 
