@@ -124,6 +124,67 @@ private:
     OH_CameraManager_TorchStatusCallback torchStatusCallback_ = nullptr;
 };
 
+class InnerCameraManagerFoldStatusCallback : public FoldListener {
+public:
+    InnerCameraManagerFoldStatusCallback(Camera_Manager* cameraManager,
+        OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
+        : cameraManager_(cameraManager), foldStatusCallback_(foldStatusCallback) {};
+    ~InnerCameraManagerFoldStatusCallback() = default;
+
+    void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override
+    {
+        MEDIA_DEBUG_LOG("OnFoldStatusChanged is called!");
+        if (cameraManager_ != nullptr && (foldStatusCallback_ != nullptr)) {
+            Camera_FoldStatusInfo statusInfo;
+            auto cameraSize = foldStatusInfo.supportedCameras.size();
+            if (cameraSize <= 0) {
+                MEDIA_ERR_LOG("Invalid size.");
+                return;
+            }
+            Camera_Device** supportedCameras = new Camera_Device* [cameraSize];
+            bool operatorFlag = true;
+            for (size_t index = 0; index < cameraSize; index++) {
+                Camera_Device* cameraDevice = new Camera_Device;
+                const string cameraId = foldStatusInfo.supportedCameras[index]->GetID();
+                const char* src = cameraId.c_str();
+                size_t dstSize = strlen(src) + 1;
+                char* dst = new char[dstSize];
+                if (!dst) {
+                    MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
+                    delete[] supportedCameras;
+                    operatorFlag = false;
+                    return;
+                }
+                strlcpy(dst, src, dstSize);
+                cameraDevice->cameraId = dst;
+                auto itr = g_FwkCameraPositionToNdk_.find(foldStatusInfo.supportedCameras[index]->GetPosition());
+                if (itr != g_FwkCameraPositionToNdk_.end()) {
+                    cameraDevice->cameraPosition = itr->second;
+                } else {
+                    MEDIA_ERR_LOG("Camera_Manager::OnFoldStatusChanged cameraPosition not found!");
+                    cameraSize = cameraSize - 1;
+                    continue;
+                }
+                cameraDevice->cameraType =
+                    static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
+                cameraDevice->connectionType =
+                    static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
+                supportedCameras[index] = cameraDevice;
+            }
+            if (!operatorFlag) {
+                cameraSize = 0;
+            }
+            statusInfo.supportedCameras = supportedCameras;
+            statusInfo.cameraSize = cameraSize;
+            statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
+            foldStatusCallback_(cameraManager_, &statusInfo);
+        }
+    }
+private:
+    Camera_Manager* cameraManager_;
+    OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback_ = nullptr;
+};
+
 Camera_Manager::Camera_Manager()
 {
     MEDIA_DEBUG_LOG("Camera_Manager Constructor is called");
@@ -815,4 +876,21 @@ Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
     }
     int32_t ret = CameraManager::GetInstance()->SetTorchMode(itr->second);
     return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
+{
+    shared_ptr<InnerCameraManagerFoldStatusCallback> innerFoldStatusCallback =
+                make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
+    CHECK_AND_RETURN_RET_LOG(innerFoldStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerFoldStatusCallback failed!");
+    cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::UnregisterFoldStatusCallback(
+    OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
+{
+    cameraManager_->RegisterFoldListener(nullptr);
+    return CAMERA_OK;
 }
