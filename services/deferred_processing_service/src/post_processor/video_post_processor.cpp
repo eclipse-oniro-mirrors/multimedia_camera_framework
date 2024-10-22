@@ -260,7 +260,7 @@ void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<Buf
 }
 
 bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd)
-{   
+{
     auto mpegManager = MpegManagerFactory::GetInstance().Acquire(videoId, inputFd);
     SetMpegManager(mpegManager);
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager == nullptr, false, "mpeg manager is nullptr.");
