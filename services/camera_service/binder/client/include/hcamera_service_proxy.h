@@ -47,7 +47,7 @@ public:
 
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
 
-    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback) override;
+    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
 
     int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;

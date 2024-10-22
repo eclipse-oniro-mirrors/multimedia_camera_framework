@@ -217,7 +217,7 @@ int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callb
     return error;
 }
 
-int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
+int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -229,7 +229,7 @@ int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& c
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
-
+    data.WriteBool(isInnerCallback);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {

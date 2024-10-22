@@ -35,6 +35,7 @@
 #include "color_space_info_parse.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
+#include "hcamera_service_callback_stub.h"
 #include "icamera_util.h"
 #include "icapture_session.h"
 #include "icapture_session_callback.h"
@@ -346,6 +347,22 @@ public:
 private:
     LcdFlashStatusInfo lcdFlashStatusInfo_ = { .isLcdFlashNeeded = true, .lcdCompensation = -1 };
     std::mutex mutex_;
+};
+
+class AutoDeviceSwitchCallback {
+public:
+    AutoDeviceSwitchCallback() = default;
+    virtual ~AutoDeviceSwitchCallback() = default;
+    virtual void OnAutoDeviceSwitchStatusChange(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const = 0 ;
+};
+
+class FoldCallback : public HFoldServiceCallbackStub {
+public:
+    explicit FoldCallback(wptr<CaptureSession> captureSession) : captureSession_(captureSession) {}
+    int32_t OnFoldStatusChanged(const FoldStatus status) override;
+
+private:
+    wptr<CaptureSession> captureSession_ = nullptr;
 };
 
 struct EffectSuggestionStatus {
@@ -1235,7 +1252,7 @@ public:
      *
      * @return Returns whether or not commit config.
      */
-    void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
+    int32_t SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
 
     /**
     * @brief Set camera sensor sensitivity.
@@ -1639,6 +1656,84 @@ public:
      * @param enabled - Enable usage for session if TRUE.
      */
     void SetUsage(UsageType usageType, bool enabled);
+
+    /**
+     * @brief Checks if the automatic switchover device is supported.
+     *
+     * @return true if supported; false otherwise.
+     */
+    bool IsAutoDeviceSwitchSupported();
+
+    /**
+     * @brief Enables or disables the automatic switchover device.
+     *
+     * @param isEnable True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoDeviceSwitch(bool isEnable);
+
+    /**
+     * @brief Switches the current device to a different one.
+     *
+     * @return true if the switch was successful; false if it failed or is not supported.
+     */
+    bool SwitchDevice();
+
+    /**
+     * @brief Enables or disables the automatic switchover device.
+     *
+     * @param isEnable True to enable, false to disable.
+     */
+    void SetIsAutoSwitchDeviceStatus(bool isEnable);
+
+    /**
+     * @brief Checks if the automatic switchover device is enabled.
+     *
+     * @return True if enabled, false otherwise.
+     */
+    bool GetIsAutoSwitchDeviceStatus();
+
+    /**
+     * @brief Sets the callback for automatic device switching.
+     *
+     * @param autoDeviceSwitchCallback A shared pointer to the callback.
+     */
+    void SetAutoDeviceSwitchCallback(shared_ptr<AutoDeviceSwitchCallback> autoDeviceSwitchCallback);
+
+    /**
+     * @brief Gets the current automatic device switch callback.
+     *
+     * @return A shared pointer to the callback, or nullptr if not set.
+     */
+    shared_ptr<AutoDeviceSwitchCallback> GetAutoDeviceSwitchCallback();
+
+    inline void SetDeviceCapabilityChangeStatus(bool isDeviceCapabilityChanged)
+    {
+        isDeviceCapabilityChanged_ = isDeviceCapabilityChanged;
+    }
+
+    inline bool GetDeviceCapabilityChangeStatus()
+    {
+        return isDeviceCapabilityChanged_;
+    }
+
+    /**
+     * @brief Adds a function to the mapping with the specified control tag.
+     *
+     * This function is used to register a callback that will be executed
+     * when the automatic switchover device is enabled. The control target
+     * must be set prior to switching the device. After the device is switched,
+     * the target needs to be reset to HAL.
+     *
+     * @note This functionality is applicable only for SceneMode::CAPTURE
+     *       and SceneMode::VIDEO modes.
+     *
+     * @param ctrlTag The control tag associated with the function.
+     * @param func The function to be added to the map, which will be called
+     *             when the corresponding control tag is triggered.
+     */
+    void AddFunctionToMap(std::string ctrlTag, std::function<void()> func);
+    void ExecuteAllFunctionsInMap();
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1704,6 +1799,8 @@ protected:
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
 
 private:
+    std::mutex switchDeviceMutex_;
+    std::mutex functionMapMutex_;
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
     std::mutex captureSessionMutex_;
@@ -1719,6 +1816,8 @@ private:
     std::shared_ptr<ARCallback> arCallback_;
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
     std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
+    std::shared_ptr<AutoDeviceSwitchCallback> autoDeviceSwitchCallback_;
+    sptr<IFoldServiceCallback> foldStatusCallback_ = nullptr;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -1747,6 +1846,11 @@ private:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
     atomic<bool> isDeferTypeSetted_ = false;
+    atomic<bool> isAutoSwitchDevice_ = false;
+    atomic<bool> isDeviceCapabilityChanged_ = false;
+
+    // Only for the SceneMode::CAPTURE and SceneMode::VIDEO mode
+    map<std::string, std::function<void()>> functionMap;
 
     std::mutex preconfigProfilesMutex_;
     std::shared_ptr<PreconfigProfiles> preconfigProfiles_ = nullptr;
@@ -1806,6 +1910,10 @@ private:
     void SessionRemoveDeathRecipient();
     int32_t AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& output, sptr<ICaptureSession>& captureSession);
     CameraPosition GetUsedAsPosition();
+    sptr<CameraDevice> FindFrontCamera();
+    void StartVideoOutput();
+    bool StopVideoOutput();
+    void CreateAndSetFoldServiceCallback();
 };
 } // namespace CameraStandard
 } // namespace OHOS

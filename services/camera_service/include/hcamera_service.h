@@ -120,7 +120,7 @@ public:
     int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
-    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback) override;
+    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
@@ -277,6 +277,7 @@ private:
     CameraServiceStatus serviceStatus_;
     sptr<ICameraBroker> peerCallback_;
     bool isFoldRegister = false;
+    sptr<IFoldServiceCallback> innerFoldCallback_;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif
