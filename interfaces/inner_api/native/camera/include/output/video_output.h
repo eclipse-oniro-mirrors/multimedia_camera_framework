@@ -208,12 +208,20 @@ public:
      */
     int32_t EnableAutoDeferredVideoEnhancement(bool enabled);
 
+    /**
+    * @brief Checks if the video has started.
+    *
+    * @return true if the video is currently running; false otherwise.
+    */
+    bool IsVideoStarted();
+
 private:
     int32_t videoFormat_;
     Size videoSize_;
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::vector<int32_t> videoFrameRateRange_{0, 0};
+    std::atomic_bool isVideoStarted_ = false;
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 };

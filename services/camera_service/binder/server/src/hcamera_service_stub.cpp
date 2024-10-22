@@ -354,7 +354,8 @@ int HCameraServiceStub::HandleSetFoldStatusCallback(MessageParcel& data, Message
     auto callback = iface_cast<IFoldServiceCallback>(remoteObject);
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
                              "HCameraServiceStub HandleSetFoldStatusCallback callback is null");
-    return SetFoldStatusCallback(callback);
+    bool isInnerCallback = data.ReadBool();
+    return SetFoldStatusCallback(callback, isInnerCallback);
 }
 
 int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel& data, MessageParcel& reply)

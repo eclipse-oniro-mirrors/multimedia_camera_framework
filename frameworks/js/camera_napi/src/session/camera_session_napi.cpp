@@ -247,6 +247,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::aperture_props = 
     DECLARE_NAPI_FUNCTION("setPhysicalAperture", CameraSessionNapi::SetPhysicalAperture)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::auto_switch_props = {
+    DECLARE_NAPI_FUNCTION("isAutoDeviceSwitchSupported", CameraSessionNapi::IsAutoDeviceSwitchSupported),
+    DECLARE_NAPI_FUNCTION("enableAutoDeviceSwitch", CameraSessionNapi::EnableAutoDeviceSwitch)
+};
+
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
@@ -796,6 +801,69 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo 
     MEDIA_DEBUG_LOG("OnLcdFlashStatusChanged is called, isLcdFlashNeeded: %{public}d, lcdCompensation: %{public}d",
         lcdFlashStatusInfo.isLcdFlashNeeded, lcdFlashStatusInfo.lcdCompensation);
     OnLcdFlashStatusCallbackAsync(lcdFlashStatusInfo);
+}
+
+void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
+    bool isDeviceSwitched, bool isDeviceCapabilityChanged) const
+{
+    MEDIA_DEBUG_LOG("OnAutoDeviceSwitchCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<AutoDeviceSwitchCallbackListenerInfo>(
+        isDeviceSwitched, isDeviceCapabilityChanged, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<AutoDeviceSwitchCallbackListenerInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnAutoDeviceSwitchCallback(
+                    callbackInfo->isDeviceSwitched_, callbackInfo->isDeviceCapabilityChanged_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallback(
+    bool isDeviceSwitched, bool isDeviceCapabilityChanged) const
+{
+    MEDIA_INFO_LOG("OnAutoDeviceSwitchCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_value retVal;
+    napi_value propValue;
+    napi_create_object(env_, &result[PARAM1]);
+    napi_get_boolean(env_, isDeviceSwitched, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isDeviceSwitched", propValue);
+    napi_get_boolean(env_, isDeviceCapabilityChanged, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isDeviceCapabilityChanged", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("autoDeviceSwitchStatusChange", callbackNapiPara);
+}
+
+void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchStatusChange(
+    bool isDeviceSwitched, bool isDeviceCapabilityChanged) const
+{
+    MEDIA_INFO_LOG("isDeviceSwitched: %{public}d, isDeviceCapabilityChanged: %{public}d",
+        isDeviceSwitched, isDeviceCapabilityChanged);
+    OnAutoDeviceSwitchCallbackAsync(isDeviceSwitched, isDeviceCapabilityChanged);
 }
 
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr) {}
@@ -4371,6 +4439,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "lcdFlashStatus", {
         &CameraSessionNapi::RegisterLcdFlashStatusCallbackListener,
         &CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener } },
+    { "autoDeviceSwitchStatusChange", {
+        &CameraSessionNapi::RegisterAutoDeviceSwitchCallbackListener,
+        &CameraSessionNapi::UnregisterAutoDeviceSwitchCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
@@ -4427,6 +4498,79 @@ void CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener(
         cameraSession_->EnableLcdFlashDetection(false);
         cameraSession_->UnlockForControl();
     }
+}
+
+napi_value CameraSessionNapi::IsAutoDeviceSwitchSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsAutoDeviceSwitchSupported parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsAutoDeviceSwitchSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsAutoDeviceSwitchSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableAutoDeviceSwitch(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("CameraSessionNapi::EnableAutoDeviceSwitch is called");
+    bool isEnable;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableAutoDeviceSwitch parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableAutoDeviceSwitch:%{public}d", isEnable);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableAutoDeviceSwitch(isEnable);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("CameraSessionNapi::EnableAutoSwitchDevice fail %{public}d", retCode);
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableAutoDeviceSwitch get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+void CameraSessionNapi::RegisterAutoDeviceSwitchCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("cameraSession is null!");
+        return;
+    }
+    if (autoDeviceSwitchCallback_ == nullptr) {
+        autoDeviceSwitchCallback_ = std::make_shared<AutoDeviceSwitchCallbackListener>(env);
+        cameraSession_->SetAutoDeviceSwitchCallback(autoDeviceSwitchCallback_);
+    }
+    autoDeviceSwitchCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void CameraSessionNapi::UnregisterAutoDeviceSwitchCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (autoDeviceSwitchCallback_ == nullptr) {
+        MEDIA_ERR_LOG("autoDeviceSwitchCallback is nullptr.");
+        return;
+    }
+    autoDeviceSwitchCallback_->RemoveCallbackRef(eventName, callback);
 }
 } // namespace CameraStandard
 } // namespace OHOS

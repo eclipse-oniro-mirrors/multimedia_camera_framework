@@ -69,7 +69,7 @@ public:
 
     virtual int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) = 0;
 
-    virtual int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback) = 0;
+    virtual int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) = 0;
 
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) = 0;

@@ -230,6 +230,26 @@ struct LcdFlashStatusStatusCallbackInfo {
         : lcdFlashStatusInfo_(lcdFlashStatusInfo), listener_(listener) {}
 };
 
+class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase {
+public:
+    AutoDeviceSwitchCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~AutoDeviceSwitchCallbackListener() = default;
+    void OnAutoDeviceSwitchStatusChange(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const override;
+private:
+    void OnAutoDeviceSwitchCallback(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const;
+    void OnAutoDeviceSwitchCallbackAsync(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const;
+};
+
+struct AutoDeviceSwitchCallbackListenerInfo {
+    bool isDeviceSwitched_;
+    bool isDeviceCapabilityChanged_;
+    const AutoDeviceSwitchCallbackListener* listener_;
+    AutoDeviceSwitchCallbackListenerInfo(bool isDeviceSwitched, bool isDeviceCapabilityChanged,
+        const AutoDeviceSwitchCallbackListener* listener)
+        : isDeviceSwitched_(isDeviceSwitched), isDeviceCapabilityChanged_(isDeviceCapabilityChanged),
+        listener_(listener) {}
+};
+
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -351,6 +371,8 @@ public:
         napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type);
     const EmitterFunctions& GetEmitterFunctions() override;
     static napi_value SetUsage(napi_env env, napi_callback_info info);
+    static napi_value IsAutoDeviceSwitchSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoDeviceSwitch(napi_env env, napi_callback_info info);
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
@@ -364,6 +386,7 @@ public:
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_;
     std::shared_ptr<LcdFlashStatusCallbackListener> lcdFlashStatusCallback_;
+    std::shared_ptr<AutoDeviceSwitchCallbackListener> autoDeviceSwitchCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
@@ -391,6 +414,7 @@ public:
     static const std::vector<napi_property_descriptor> aperture_props;
     static const std::vector<napi_property_descriptor> auto_wb_props;
     static const std::vector<napi_property_descriptor> manual_wb_props;
+    static const std::vector<napi_property_descriptor> auto_switch_props;
 
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
@@ -467,6 +491,10 @@ protected:
     virtual void RegisterLcdFlashStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterLcdFlashStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterAutoDeviceSwitchCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterAutoDeviceSwitchCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 

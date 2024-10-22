@@ -204,6 +204,24 @@ int32_t CaptureSessionCallback::OnError(int32_t errorCode)
     return CameraErrorCode::SUCCESS;
 }
 
+int32_t FoldCallback::OnFoldStatusChanged(const FoldStatus status)
+{
+    MEDIA_INFO_LOG("FoldStatus is %{public}d", status);
+    auto captureSession = captureSession_.promote();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "captureSession is nullptr.");
+    bool isEnableAutoSwitch = captureSession->GetIsAutoSwitchDeviceStatus();
+    CHECK_ERROR_RETURN_RET_LOG(!isEnableAutoSwitch, CAMERA_OPERATION_NOT_ALLOWED, "isEnableAutoSwitch is false.");
+    bool isSuccess = captureSession->SwitchDevice();
+    MEDIA_INFO_LOG("SwitchDevice isSuccess: %{public}d", isSuccess);
+    auto autoDeviceSwitchCallback = captureSession->GetAutoDeviceSwitchCallback();
+    CHECK_ERROR_RETURN_RET_LOG(autoDeviceSwitchCallback == nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "autoDeviceSwitchCallback is nullptr");
+    bool isDeviceCapabilityChanged = captureSession->GetDeviceCapabilityChangeStatus();
+    MEDIA_INFO_LOG("SwitchDevice isDeviceCapabilityChanged: %{public}d", isDeviceCapabilityChanged);
+    autoDeviceSwitchCallback->OnAutoDeviceSwitchStatusChange(isSuccess, isDeviceCapabilityChanged);
+    return CAMERA_OK;
+}
+
 CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCaptureSession_(captureSession)
 {
     metadataResultProcessor_ = std::make_shared<CaptureSessionMetadataResultProcessor>(this);
@@ -1115,6 +1133,7 @@ int32_t CaptureSession::Release()
     arCallback_ = nullptr;
     effectSuggestionCallback_ = nullptr;
     cameraAbilityContainer_ = nullptr;
+    foldStatusCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -1439,8 +1458,13 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode StabilizationMode : %{public}d", stabilizationMode_);
     if (!(this->changedMetadata_->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count))) {
         MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
+    } else {
+        AddFunctionToMap(std::to_string(OHOS_CONTROL_VIDEO_STABILIZATION_MODE),
+            [this, stabilizationMode]() {
+                int32_t retCode = SetVideoStabilizationMode(stabilizationMode);
+                CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+            });
     }
-
     int32_t errCode = this->UnlockForControl();
     if (errCode != CameraErrorCode::SUCCESS) {
         MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
@@ -1602,7 +1626,11 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
     }
-
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_EXPOSURE_MODE),
+        [this, exposureMode]() {
+            int32_t retCode = SetExposureMode(exposureMode);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposureMode Failed to set exposure mode");
 
     return CameraErrorCode::SUCCESS;
@@ -1666,7 +1694,11 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
         status = changedMetadata_->updateEntry(
             OHOS_CONTROL_AE_REGIONS, exposureArea, sizeof(exposureArea) / sizeof(exposureArea[0]));
     }
-
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_REGIONS),
+        [this, exposurePoint]() {
+            int32_t retCode = SetMeteringPoint(exposurePoint);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposurePoint Failed to set exposure Area");
     return CameraErrorCode::SUCCESS;
 }
@@ -1778,6 +1810,11 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
     }
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION),
+        [this, exposureValue]() {
+            int32_t retCode = SetExposureBias(exposureValue);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposureValue Failed to set exposure compensation");
     return CameraErrorCode::SUCCESS;
 }
@@ -1952,7 +1989,11 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
     }
-
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_FOCUS_MODE),
+        [this, focusMode]() {
+            int32_t retCode = SetFocusMode(focusMode);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -2019,7 +2060,11 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         status =
             changedMetadata_->updateEntry(OHOS_CONTROL_AF_REGIONS, FocusArea, sizeof(FocusArea) / sizeof(FocusArea[0]));
     }
-
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AF_REGIONS),
+        [this, focusPoint]() {
+            int32_t retCode = SetFocusPoint(focusPoint);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusPoint Failed to set Focus Area");
     return CameraErrorCode::SUCCESS;
 }
@@ -2383,6 +2428,11 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     }
 
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFlashMode Failed to set flash mode");
+    AddFunctionToMap(std::to_string(OHOS_CONTROL_FLASH_MODE),
+        [this, flashMode]() {
+            int32_t retCode = SetFlashMode(flashMode);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        });
     return CameraErrorCode::SUCCESS;
 }
 
@@ -2582,6 +2632,11 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         if (abilityContainer && supportSpecSearch_) {
             abilityContainer->FilterByZoomRatio(zoomRatio);
         }
+        AddFunctionToMap(std::to_string(OHOS_CONTROL_ZOOM_RATIO),
+            [this, zoomRatio]() {
+                int32_t retCode = SetZoomRatio(zoomRatio);
+                CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+            });
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -3352,21 +3407,32 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LENS_FOCUS_DISTANCE, &value, count);
     }
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_LENS_FOCUS_DISTANCE),
+        [this, focusDistance]() {
+            int32_t retCode = SetFocusDistance(focusDistance);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDistance Failed to set");
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
+int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
 {
     std::vector<int32_t> videoFrameRateRange = frameRateRange;
     this->LockForControl();
     bool isSuccess = this->changedMetadata_->addEntry(
         OHOS_CONTROL_FPS_RANGES, videoFrameRateRange.data(), videoFrameRateRange.size());
-    CHECK_ERROR_PRINT_LOG(!isSuccess, "Failed to SetFrameRateRange");
+    CHECK_EXECUTE(isSuccess, AddFunctionToMap("video" + std::to_string(OHOS_CONTROL_FPS_RANGES),
+        [this, frameRateRange]() {
+            int32_t retCode = SetFrameRateRange(frameRateRange);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     for (size_t i = 0; i < frameRateRange.size(); i++) {
         MEDIA_DEBUG_LOG("CaptureSession::SetFrameRateRange:index:%{public}zu->%{public}d", i, frameRateRange[i]);
     }
     this->UnlockForControl();
+    CHECK_ERROR_RETURN_RET_LOG(!isSuccess, CameraErrorCode::SERVICE_FATL_ERROR, "Failed to SetFrameRateRange ");
+    return CameraErrorCode::SUCCESS;
 }
 
 bool CaptureSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
@@ -3724,7 +3790,8 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
     }
-
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_SUPPORTED_COLOR_MODES),
+        [this, colorEffect]() { SetColorEffect(colorEffect); }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetColorEffect Failed to set color effect");
     return;
 }
@@ -3802,6 +3869,11 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
     bool res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1);
+    CHECK_EXECUTE(res, AddFunctionToMap(std::to_string(OHOS_CONTROL_SENSOR_EXPOSURE_TIME),
+        [this, exposureTime]() {
+            int32_t retCode = SetSensorExposureTime(exposureTime);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!res, "CaptureSession::SetSensorExposureTime Failed to set exposure compensation");
     exposureDurationValue_ = exposureTime;
     return CameraErrorCode::SUCCESS;
@@ -4113,6 +4185,11 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
     }
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_MOVING_PHOTO),
+        [this, isEnable]() {
+            int32_t retCode = EnableMovingPhoto(isEnable);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMovingPhoto Failed to enable");
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_PRINT_LOG(captureSession == nullptr, "CaptureSession::EnableMovingPhoto() captureSession is nullptr");
@@ -4480,6 +4557,11 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
         MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed to set type!");
         res = INVALID_ARGUMENT;
     }
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_HIGH_QUALITY_MODE),
+        [this, enabled]() {
+            int32_t retCode = EnableAutoHighQualityPhoto(enabled);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        }));
     res = this->UnlockForControl();
     CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoHighQualityPhoto Failed");
     return res;
@@ -5249,6 +5331,11 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     CHECK_ERROR_RETURN_RET_LOG(!AddOrUpdateMetadata(
         changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1),
         CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
+    AddFunctionToMap(std::to_string(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE),
+        [this, physicalAperture]() {
+            int32_t retCode = SetPhysicalAperture(physicalAperture);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        });
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }
@@ -5471,6 +5558,169 @@ void CaptureSession::SetUsage(UsageType usageType, bool enabled)
     bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
  
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
+}
+
+bool CaptureSession::IsAutoDeviceSwitchSupported()
+{
+    bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
+    MEDIA_INFO_LOG("IsAutoDeviceSwitchSupported %{public}d.", isFoldable);
+    return isFoldable;
+}
+
+int32_t CaptureSession::EnableAutoDeviceSwitch(bool isEnable)
+{
+    MEDIA_INFO_LOG("EnableAutoDeviceSwitch, isEnable:%{public}d", isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!IsAutoDeviceSwitchSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "The automatic switchover mode is not supported.");
+    CHECK_ERROR_RETURN_RET_LOG(GetIsAutoSwitchDeviceStatus() == isEnable, CameraErrorCode::SUCCESS,
+        "Repeat Settings.");
+    SetIsAutoSwitchDeviceStatus(isEnable);
+    if (GetIsAutoSwitchDeviceStatus()) {
+        MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
+        CreateAndSetFoldServiceCallback();
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::SetIsAutoSwitchDeviceStatus(bool isEnable)
+{
+    isAutoSwitchDevice_ = isEnable;
+}
+
+bool CaptureSession::GetIsAutoSwitchDeviceStatus()
+{
+    return isAutoSwitchDevice_;
+}
+
+bool CaptureSession::SwitchDevice()
+{
+    std::lock_guard<std::mutex> lock(switchDeviceMutex_);
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionStarted(), false,
+        "The switch device has failed because the session has not started.");
+    auto captureInput = GetInputDevice();
+    auto cameraInput = (sptr<CameraInput>&)captureInput;
+    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
+    auto deviceiInfo = cameraInput->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo || deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT,
+        false, "No need switch camera.");
+    bool hasVideoOutput = StopVideoOutput();
+    int32_t retCode = CameraErrorCode::SUCCESS;
+    Stop();
+    BeginConfig();
+    RemoveInput(captureInput);
+    cameraInput->Close();
+    sptr<CameraDevice> cameraDeviceTemp = FindFrontCamera();
+    CHECK_ERROR_RETURN_RET_LOG(cameraDeviceTemp == nullptr, false, "No front camera found.");
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    retCode = CameraManager::GetInstance()->CreateCameraDevice(cameraDeviceTemp->GetID(), &deviceObj);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, false,
+        "SwitchDevice::CreateCameraDevice Create camera device failed.");
+    cameraInput->SwitchCameraDevice(deviceObj, cameraDeviceTemp);
+    retCode = cameraInput->Open();
+    CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::Open failed.");
+    retCode = AddInput(captureInput);
+    CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::AddInput failed.");
+    retCode = CommitConfig();
+    CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::CommitConfig failed.");
+    retCode = Start();
+    CHECK_EXECUTE(GetDeviceCapabilityChangeStatus(), ExecuteAllFunctionsInMap());
+    CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::Start failed.");
+    CHECK_EXECUTE(hasVideoOutput, StartVideoOutput());
+    return true;
+}
+
+sptr<CameraDevice> CaptureSession::FindFrontCamera()
+{
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    for (const auto& cameraDevice : cameraDeviceList) {
+        MEDIA_INFO_LOG("CreateCameraInput position:%{public}d", cameraDevice->GetPosition());
+        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
+            return cameraDevice;
+        }
+    }
+    return nullptr;
+}
+
+void CaptureSession::StartVideoOutput()
+{
+    sptr<VideoOutput> videoOutput = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+        for (const auto& output : captureOutputSets_) {
+            auto item = output.promote();
+            if (item && item->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+                videoOutput = (sptr<VideoOutput>&)item;
+                break;
+            }
+        }
+    }
+    CHECK_EXECUTE(videoOutput, videoOutput->Start());
+}
+
+bool CaptureSession::StopVideoOutput()
+{
+    sptr<VideoOutput> videoOutput = nullptr;
+    bool hasVideoOutput = false;
+    {
+        std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+        for (const auto& output : captureOutputSets_) {
+            auto item = output.promote();
+            if (item && item->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+                videoOutput = (sptr<VideoOutput>&)item;
+                break;
+            }
+        }
+    }
+    if (videoOutput && videoOutput->IsVideoStarted()) {
+        videoOutput->Stop();
+        hasVideoOutput = true;
+    }
+    return hasVideoOutput;
+}
+
+void CaptureSession::SetAutoDeviceSwitchCallback(shared_ptr<AutoDeviceSwitchCallback> autoDeviceSwitchCallback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    autoDeviceSwitchCallback_ = autoDeviceSwitchCallback;
+}
+
+shared_ptr<AutoDeviceSwitchCallback> CaptureSession::GetAutoDeviceSwitchCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return autoDeviceSwitchCallback_;
+}
+
+void CaptureSession::AddFunctionToMap(std::string ctrlTarget, std::function<void()> func)
+{
+    if (!GetIsAutoSwitchDeviceStatus()) {
+        MEDIA_INFO_LOG("The automatic switching device is not enabled.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(functionMapMutex_);
+    functionMap[ctrlTarget] = func;
+}
+
+void CaptureSession::ExecuteAllFunctionsInMap()
+{
+    MEDIA_INFO_LOG("ExecuteAllFunctionsInMap is called.");
+    std::lock_guard<std::mutex> lock(functionMapMutex_);
+    for (const auto& pair : functionMap) {
+        pair.second();
+    }
+}
+
+void CaptureSession::CreateAndSetFoldServiceCallback()
+{
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
+        "CaptureSession::CreateAndSetFoldServiceCallback serviceProxy is null");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    foldStatusCallback_ = new(std::nothrow) FoldCallback(this);
+    CHECK_ERROR_RETURN_LOG(foldStatusCallback_ == nullptr,
+        "CaptureSession::CreateAndSetFoldServiceCallback failed to new foldSvcCallback_!");
+    int32_t retCode = serviceProxy->SetFoldStatusCallback(foldStatusCallback_, true);
+    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
+        "CreateAndSetFoldServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
 }
 } // namespace CameraStandard
 } // namespace OHOS

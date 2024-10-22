@@ -97,14 +97,21 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
                          sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
-    if (cameraObj_) {
-        MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    InitCameraInput();
+}
+
+void CameraInput::InitCameraInput()
+{
+    auto cameraObj = GetCameraDeviceInfo();
+    auto deviceObj = GetCameraDevice();
+    if (cameraObj) {
+        MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj->GetID().c_str());
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     CHECK_ERROR_RETURN_LOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
-    CHECK_ERROR_RETURN_LOG(!deviceObj_, "CameraInput::CameraInput() deviceObj_ is nullptr");
-    deviceObj_->SetCallback(CameraDeviceSvcCallback_);
-    sptr<IRemoteObject> object = deviceObj_->AsObject();
+    CHECK_ERROR_RETURN_LOG(!deviceObj, "CameraInput::CameraInput() deviceObj is nullptr");
+    deviceObj->SetCallback(CameraDeviceSvcCallback_);
+    sptr<IRemoteObject> object = deviceObj->AsObject();
     CHECK_ERROR_RETURN(object == nullptr);
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
@@ -453,6 +460,13 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags success! vendors size = %{public}zu!", infos.size());
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
     return CAMERA_OK;
+}
+
+void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj)
+{
+    SetCameraDeviceInfo(cameraObj);
+    SetCameraDevice(deviceObj);
+    InitCameraInput();
 }
 } // namespace CameraStandard
 } // namespace OHOS

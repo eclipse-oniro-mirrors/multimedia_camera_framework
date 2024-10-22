@@ -974,6 +974,24 @@ typedef struct Camera_FrameShutterEndInfo {
 } Camera_FrameShutterEndInfo;
 
 /**
+ * @brief Auto device switch status info.
+ *
+ * @since 13
+ * @version 1.0
+ */
+typedef struct Camera_AutoDeviceSwitchStatusInfo {
+    /**
+     * is device switched.
+     */
+    bool isDeviceSwitched;
+
+    /**
+     * is device capability changed.
+     */
+    bool isDeviceCapabilityChanged;
+} Camera_AutoDeviceSwitchStatusInfo;
+
+/**
  * @brief Creates a CameraManager instance.
  *
  * @param cameraManager the output {@link Camera_Manager} cameraManager will be created
