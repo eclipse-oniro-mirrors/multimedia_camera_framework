@@ -847,9 +847,13 @@ private:
 
     static sptr<CameraManager> g_cameraManager;
     static std::mutex g_instanceMutex;
+    std::mutex cameraSvcCallbackMutex_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
+    std::mutex cameraMuteSvcCallbackMutex_;
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
+    std::mutex torchSvcCallbackMutex_;
     sptr<ITorchServiceCallback> torchSvcCallback_;
+    std::mutex foldSvcCallbackMutex_;
     sptr<IFoldServiceCallback> foldSvcCallback_;
 
     SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> cameraMngrCallbackMap_;

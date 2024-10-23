@@ -916,10 +916,23 @@ void CameraManager::OnCameraServerAlive()
     int32_t ret = RefreshServiceProxy();
     CHECK_ERROR_RETURN_LOG(ret != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
     AddServiceProxyDeathRecipient();
-    CHECK_EXECUTE(cameraSvcCallback_ != nullptr, SetCameraServiceCallback(cameraSvcCallback_));
-    CHECK_EXECUTE(cameraMuteSvcCallback_ != nullptr, SetCameraMuteServiceCallback(cameraMuteSvcCallback_));
-    CHECK_EXECUTE(torchSvcCallback_ != nullptr, SetTorchServiceCallback(torchSvcCallback_));
-    CHECK_EXECUTE(foldSvcCallback_ != nullptr, SetFoldServiceCallback(foldSvcCallback_));
+    {
+        std::lock_guard<std::mutex> lock(cameraSvcCallbackMutex_);
+        CHECK_EXECUTE(cameraSvcCallback_ != nullptr, SetCameraServiceCallback(cameraSvcCallback_));
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(cameraMuteSvcCallbackMutex_);
+        CHECK_EXECUTE(cameraMuteSvcCallback_ != nullptr, SetCameraMuteServiceCallback(cameraMuteSvcCallback_));
+    }
+    {
+        std::lock_guard<std::mutex> lock(torchSvcCallbackMutex_);
+        CHECK_EXECUTE(torchSvcCallback_ != nullptr, SetTorchServiceCallback(torchSvcCallback_));
+    }
+    {
+        std::lock_guard<std::mutex> lock(foldSvcCallbackMutex_);
+        CHECK_EXECUTE(foldSvcCallback_ != nullptr, SetFoldServiceCallback(foldSvcCallback_));
+    }
 }
 
 int32_t CameraManager::DestroyStubObj()
@@ -942,7 +955,10 @@ void CameraManager::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     RemoveServiceProxyDeathRecipient();
     SetServiceProxy(nullptr);
-    CHECK_ERROR_RETURN_LOG(cameraSvcCallback_ == nullptr, "CameraServerDied cameraSvcCallback_ is nullptr");
+    {
+        std::lock_guard<std::mutex> lock(cameraSvcCallbackMutex_);
+        CHECK_ERROR_RETURN_LOG(cameraSvcCallback_ == nullptr, "CameraServerDied cameraSvcCallback_ is nullptr");
+    }
     auto cameraDeviceList = GetCameraDeviceList();
     for (size_t i = 0; i < cameraDeviceList.size(); i++) {
         CameraStatusInfo cameraStatusInfo;
@@ -1010,7 +1026,7 @@ void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
     std::thread::id threadId = std::this_thread::get_id();
     cameraMngrCallbackMap_.EnsureInsert(threadId, callback);
-    CHECK_EXECUTE(cameraSvcCallback_ == nullptr, CreateAndSetCameraServiceCallback());
+    CreateAndSetCameraServiceCallback();
 }
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
@@ -1025,7 +1041,7 @@ void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListene
 {
     std::thread::id threadId = std::this_thread::get_id();
     cameraMuteListenerMap_.EnsureInsert(threadId, listener);
-    CHECK_EXECUTE(cameraMuteSvcCallback_ == nullptr, CreateAndSetCameraMuteServiceCallback());
+    CreateAndSetCameraMuteServiceCallback();
 }
 
 shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
@@ -1040,7 +1056,7 @@ void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
     std::thread::id threadId = std::this_thread::get_id();
     torchListenerMap_.EnsureInsert(threadId, listener);
-    CHECK_EXECUTE(torchSvcCallback_ == nullptr, CreateAndSetTorchServiceCallback());
+    CreateAndSetTorchServiceCallback();
 }
 
 shared_ptr<TorchListener> CameraManager::GetTorchListener()
@@ -1055,7 +1071,7 @@ void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
 {
     std::thread::id threadId = std::this_thread::get_id();
     foldListenerMap_.EnsureInsert(threadId, listener);
-    CHECK_EXECUTE(foldSvcCallback_ == nullptr, CreateAndSetFoldServiceCallback());
+    CreateAndSetFoldServiceCallback();
 }
 
 shared_ptr<FoldListener> CameraManager::GetFoldListener()
@@ -1849,6 +1865,7 @@ void CameraManager::CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, O
 
 void CameraManager::CreateAndSetCameraServiceCallback()
 {
+    std::lock_guard<std::mutex> lock(cameraSvcCallbackMutex_);
     CHECK_ERROR_RETURN_LOG(cameraSvcCallback_ != nullptr,
         "CameraManager::CreateAndSetCameraServiceCallback cameraSvcCallback_ is not nullptr");
     auto serviceProxy = GetServiceProxy();
@@ -1967,6 +1984,7 @@ void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callbac
 
 void CameraManager::CreateAndSetTorchServiceCallback()
 {
+    std::lock_guard<std::mutex> lock(torchSvcCallbackMutex_);
     CHECK_ERROR_RETURN_LOG(torchSvcCallback_ != nullptr,
         "CameraManager::CreateAndSetTorchServiceCallback torchSvcCallback_ is not nullptr");
     auto serviceProxy = GetServiceProxy();
@@ -1993,6 +2011,7 @@ void CameraManager::SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback)
 
 void CameraManager::CreateAndSetFoldServiceCallback()
 {
+    std::lock_guard<std::mutex> lock(foldSvcCallbackMutex_);
     CHECK_ERROR_RETURN_LOG(foldSvcCallback_ != nullptr,
         "CameraManager::CreateAndSetFoldServiceCallback foldSvcCallback_ is not nullptr");
     auto serviceProxy = GetServiceProxy();
@@ -2030,6 +2049,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 
 void CameraManager::CreateAndSetCameraMuteServiceCallback()
 {
+    std::lock_guard<std::mutex> lock(cameraMuteSvcCallbackMutex_);
     CHECK_ERROR_RETURN_LOG(cameraMuteSvcCallback_ != nullptr,
         "CameraManager::CreateAndSetCameraMuteServiceCallback cameraMuteSvcCallback_ is not nullptr");
     auto serviceProxy = GetServiceProxy();
