@@ -669,7 +669,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
-        ProcessFixedTransform(sensorOrientation, cameraPosition);
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     }
 }
 
@@ -686,32 +686,16 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
     }
 }
 
-void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
-{
-    int ret = SurfaceError::SURFACE_ERROR_OK;
-    if (IsVerticalDevice()) {
-        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
-    } else {
-        ret = SurfaceError::SURFACE_ERROR_OK;
-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
-        } else {
-            ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
-        }
-    }
-    if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
-    }
-}
-
 void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
     int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
                 break;
@@ -732,6 +716,10 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
     } else {
         streamRotation = STREAM_ROTATE_360 - sensorOrientation;
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
                 break;
