@@ -85,13 +85,13 @@ private:
         session_ = session;
     }
     
-    inline sptr<MpegManager> GetMpegManager()
+    inline shared_ptr<MpegManager> GetMpegManager()
     {
         std::lock_guard<std::mutex> lock(mpegManagerMutex_);
         return mpegManager_;
     }
     
-    inline void SetMpegManager(const sptr<MpegManager>& mpegManager)
+    inline void SetMpegManager(const shared_ptr<MpegManager>& mpegManager)
     {
         std::lock_guard<std::mutex> lock(mpegManagerMutex_);
         mpegManager_ = mpegManager;
