@@ -294,7 +294,7 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 void VideoPostProcessor::ReleaseMpeg()
 {
     auto mpegManager = GetMpegManager();
-    DP_CHECK_ERROR_RETURN_LOG(mpegManager = nullptr, "mpegManager is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(mpegManager == nullptr, "mpegManager is nullptr");
     MpegManagerFactory::GetInstance().Release(mpegManager);
     mpegManager.reset();
     DP_INFO_LOG("release mpeg success.");
