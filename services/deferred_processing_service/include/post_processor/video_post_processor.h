@@ -84,7 +84,21 @@ private:
         std::lock_guard<std::mutex> lock(sessionMutex_);
         session_ = session;
     }
+    
+    inline std::shared_ptr<MpegManager> GetMpegManager()
+    {
+        std::lock_guard<std::mutex> lock(mpegManagerMutex_);
+        return mpegManager_;
+    }
+    
+    inline void SetMpegManager(const std::shared_ptr<MpegManager>& mpegManager)
+    {
+        std::lock_guard<std::mutex> lock(mpegManagerMutex_);
+        mpegManager_ = mpegManager;
+        return;
+    }
 
+    std::mutex mpegManagerMutex_;
     std::mutex sessionMutex_;
     const int32_t userId_;
     int32_t timeoutCount_ {0};
