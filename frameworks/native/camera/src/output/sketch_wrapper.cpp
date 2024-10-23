@@ -417,16 +417,24 @@ void SketchWrapper::AutoStream()
 int32_t SketchWrapper::OnMetadataDispatch(const SceneFeaturesMode& sceneFeaturesMode,
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
+    SceneFeaturesMode filteredFeaturesMode = sceneFeaturesMode;
+    for (int32_t i = SceneFeature::FEATURE_ENUM_MIN; i < SceneFeature::FEATURE_ENUM_MAX; i++) {
+        if (i == SceneFeature::FEATURE_MACRO || i == SceneFeature::FEATURE_MOON_CAPTURE_BOOST) {
+            continue;
+        }
+        filteredFeaturesMode.SwitchFeature(static_cast<SceneFeature>(i), false);
+    }
+
     if (tag == OHOS_CONTROL_ZOOM_RATIO) {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_ZOOM_RATIO");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedZoomRatio(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_SMOOTH_ZOOM_RATIOS) {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_SMOOTH_ZOOM_RATIOS");
-        return OnMetadataChangedZoomRatio(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedZoomRatio(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
-        return OnMetadataChangedMacro(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedMacro(filteredFeaturesMode, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_MOON_CAPTURE_BOOST) {
-        return OnMetadataChangedMoonCaptureBoost(sceneFeaturesMode, tag, metadataItem);
+        return OnMetadataChangedMoonCaptureBoost(filteredFeaturesMode, tag, metadataItem);
     } else {
         MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
     }
