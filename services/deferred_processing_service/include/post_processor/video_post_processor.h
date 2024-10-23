@@ -91,7 +91,7 @@ private:
         return mpegManager_;
     }
     
-    inline void SetMpegManager(sptr<MpegManager> &mpegManager)
+    inline void SetMpegManager(const sptr<MpegManager>& mpegManager)
     {
         std::lock_guard<std::mutex> lock(mpegManagerMutex_);
         mpegManager_ = mpegManager;
