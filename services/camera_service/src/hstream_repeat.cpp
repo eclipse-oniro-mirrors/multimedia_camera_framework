@@ -718,7 +718,7 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
         switch (streamRotation) {
             case STREAM_ROTATE_0: {
                 ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-                break;               
+                break;
             }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
