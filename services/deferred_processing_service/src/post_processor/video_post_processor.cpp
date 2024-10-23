@@ -217,7 +217,7 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
         DP_INFO_LOG("streamId: %{public}d, stream type: %{public}d", stream.streamId, stream.type);
         if (stream.type == 0) {
             auto mpegManager = GetMpegManager();
-            DP_CHECK_ERROR_RETURN_LOG(!mpegManager, "mpegManager is nullptr");
+            DP_CHECK_ERROR_RETURN_RET_LOG(!mpegManager, flase, "mpegManager is nullptr");
             auto producer = sptr<BufferProducerSequenceable>::MakeSptr(mpegManager->GetSurface()->GetProducer());
             SetStreamInfo(stream, producer);
         }
