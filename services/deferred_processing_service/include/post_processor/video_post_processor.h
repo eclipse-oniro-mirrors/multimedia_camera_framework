@@ -95,6 +95,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(mpegManagerMutex_);
         mpegManager_ = mpegManager;
+        return;
     }
 
     std::mutex mpegManagerMutex_;
