@@ -21,7 +21,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-
 #include "ability/camera_ability_napi.h"
 #include "camera_napi_utils.h"
 #include "capture_scene_const.h"
@@ -211,6 +210,25 @@ struct EffectSuggestionCallbackInfo {
         : effectSuggestionType_(effectSuggestionType), listener_(listener) {}
 };
 
+class LcdFlashStatusCallbackListener : public LcdFlashStatusCallback, public ListenerBase {
+public:
+    LcdFlashStatusCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~LcdFlashStatusCallbackListener() = default;
+    void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
+
+private:
+    void OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const;
+    void OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const;
+};
+
+struct LcdFlashStatusStatusCallbackInfo {
+    LcdFlashStatusInfo lcdFlashStatusInfo_;
+    const LcdFlashStatusCallbackListener* listener_;
+    LcdFlashStatusStatusCallbackInfo(LcdFlashStatusInfo lcdFlashStatusInfo,
+    const LcdFlashStatusCallbackListener* listener)
+        : lcdFlashStatusInfo_(lcdFlashStatusInfo), listener_(listener) {}
+};
+
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -225,6 +243,8 @@ public:
     static napi_value IsFlashModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFlashMode(napi_env env, napi_callback_info info);
     static napi_value SetFlashMode(napi_env env, napi_callback_info info);
+    static napi_value IsLcdFlashSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableLcdFlash(napi_env env, napi_callback_info info);
     static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetExposureMode(napi_env env, napi_callback_info info);
     static napi_value SetExposureMode(napi_env env, napi_callback_info info);
@@ -326,8 +346,8 @@ public:
 
     static napi_value GetSessionFunctions(napi_env env, napi_callback_info info);
     static napi_value GetSessionConflictFunctions(napi_env env, napi_callback_info info);
-    static napi_value CreateAbilitiesJSArray(
-        napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict);
+    static napi_value CreateFunctionsJSArray(
+        napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type);
     const EmitterFunctions& GetEmitterFunctions() override;
 
     napi_env env_;
@@ -341,10 +361,13 @@ public:
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_;
+    std::shared_ptr<LcdFlashStatusCallbackListener> lcdFlashStatusCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
     static thread_local uint32_t cameraSessionTaskId;
+    static const std::map<SceneMode, FunctionsType> modeToFunctionTypeMap_;
+    static const std::map<SceneMode, FunctionsType> modeToConflictFunctionTypeMap_;
     static const std::vector<napi_property_descriptor> camera_output_capability_props;
     static const std::vector<napi_property_descriptor> camera_ability_props;
     static const std::vector<napi_property_descriptor> camera_process_props;
@@ -437,6 +460,11 @@ protected:
     virtual void RegisterTryAEInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterLcdFlashStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterLcdFlashStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 

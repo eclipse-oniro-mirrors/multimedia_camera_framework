@@ -19,16 +19,17 @@
 #include "session_info.h"
 #include "session_coordinator.h"
 #include "task_manager.h"
-#include "deferred_photo_processor.h"
+#include "video_session_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class SessionManager : public RefBase {
+class SessionManager {
 public:
     static std::shared_ptr<SessionManager> Create();
     SessionManager();
     ~SessionManager();
+    
     void Initialize();
     void Start();
     void Stop();
@@ -36,14 +37,20 @@ public:
         const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callback,
         std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
+    sptr<IDeferredPhotoProcessingSessionCallback> GetCallback(const int32_t userId);
     sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
+    sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
+        const sptr<IDeferredVideoProcessingSessionCallback> callback);
+    std::shared_ptr<SessionCoordinator> GetSessionCoordinator();
+    sptr<VideoSessionInfo> GetSessionInfo(const int32_t userId);
     void OnCallbackDied(const int32_t userId);
 
 private:
     std::mutex mutex_;
     std::atomic<bool> initialized_;
     std::unordered_map<int32_t, sptr<SessionInfo>> photoSessionInfos_;
-    std::unique_ptr<SessionCoordinator> coordinator_;
+    SafeMap<int32_t, sptr<VideoSessionInfo>> videoSessionInfos_;
+    std::shared_ptr<SessionCoordinator> coordinator_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

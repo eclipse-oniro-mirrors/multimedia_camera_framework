@@ -17,7 +17,7 @@
 #define OHOS_IDEFERRED_PHOTO_PROCESSING_SESSION_H
 
 #include "iremote_broker.h"
-#include "dps_metadata_info.h"
+#include "foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils/dps_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,15 +28,15 @@ public:
 
     virtual int32_t EndSynchronize() = 0;
 
-    virtual int32_t AddImage(const std::string imageId, DpsMetadata& metadata, const bool discardable = false) = 0;
+    virtual int32_t AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false) = 0;
 
-    virtual int32_t RemoveImage(const std::string imageId, const bool restorable = false) = 0;
+    virtual int32_t RemoveImage(const std::string& imageId, const bool restorable = false) = 0;
 
-    virtual int32_t RestoreImage(const std::string imageId) = 0;
+    virtual int32_t RestoreImage(const std::string& imageId) = 0;
 
-    virtual int32_t ProcessImage(const std::string appName, const std::string imageId) = 0;
+    virtual int32_t ProcessImage(const std::string& appName, const std::string imageId) = 0;
 
-    virtual int32_t CancelProcessImage(const std::string imageId) = 0;
+    virtual int32_t CancelProcessImage(const std::string& imageId) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IDeferredPhotoProcessingSession");
 };

@@ -170,4 +170,4 @@ struct DepthDataOutputAsyncContext : public AsyncContext {
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* DEPTH_DATA_OUTPUT_NAPI_H_ */
+#endif /* DEPTH_DATA_OUTPUT_NAPI_H_ */

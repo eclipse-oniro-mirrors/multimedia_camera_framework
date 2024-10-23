@@ -29,7 +29,7 @@ namespace CameraStandard {
 using namespace std;
 sptr<CameraReportDfxUtils> CameraReportDfxUtils::cameraReportDfx_;
 std::mutex CameraReportDfxUtils::instanceMutex_;
- 
+
 sptr<CameraReportDfxUtils> &CameraReportDfxUtils::GetInstance()
 {
     if (CameraReportDfxUtils::cameraReportDfx_ == nullptr) {

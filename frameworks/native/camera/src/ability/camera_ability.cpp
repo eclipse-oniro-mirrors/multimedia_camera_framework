@@ -29,7 +29,8 @@ bool g_isValidZoomRaioRange(std::vector<float> range)
 
 bool CameraAbility::HasFlash()
 {
-    return !supportedFlashModes_.empty();
+    bool onlyHasCloseMode = supportedFlashModes_.size() == 1 && supportedFlashModes_[0] == FLASH_MODE_CLOSE;
+    return !supportedFlashModes_.empty() && !onlyHasCloseMode;
 }
 
 bool CameraAbility::IsFlashModeSupported(FlashMode flashMode)
@@ -139,6 +140,11 @@ bool CameraAbility::IsFeatureSupported(SceneFeature sceneFeature)
 {
     return std::find(
         supportedSceneFeature_.begin(), supportedSceneFeature_.end(), sceneFeature) != supportedSceneFeature_.end();
+}
+
+bool CameraAbility::IsLcdFlashSupported()
+{
+    return isLcdFlashSupported_;
 }
 
 void CameraAbility::DumpCameraAbilityInfo()

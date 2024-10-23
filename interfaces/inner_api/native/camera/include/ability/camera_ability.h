@@ -53,6 +53,7 @@ public:
     bool IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode);
     std::vector<uint32_t> GetSupportedExposureRange();
     bool IsFeatureSupported(SceneFeature sceneFeature);
+    bool IsLcdFlashSupported();
 
     std::vector<FlashMode> supportedFlashModes_;
     std::vector<ExposureMode> supportedExposureModes_;
@@ -68,6 +69,7 @@ public:
     std::vector<VideoStabilizationMode> supportedVideoStabilizationMode_;
     std::vector<uint32_t> supportedExposureRange_;
     std::vector<SceneFeature> supportedSceneFeature_;
+    bool isLcdFlashSupported_;
 
     std::optional<std::vector<float>> zoomRatioRange_;
     std::optional<bool> isMacroSupported_;

@@ -15,6 +15,7 @@
 
 #include "photo_output_fuzzer.h"
 #include "camera_device.h"
+#include "camera_log.h"
 #include "camera_output_capability.h"
 #include "capture_scene_const.h"
 #include "input/camera_manager.h"
@@ -29,23 +30,28 @@ namespace OHOS {
 namespace CameraStandard {
 namespace PhotoOutputFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t CAM_NUM = 2;
+const int32_t NUM_2 = 2;
 bool g_isCameraDevicePermission = false;
 
 void GetPermission()
 {
-    if (!g_isCameraDevicePermission) {
-        uint64_t tokenId;
-        const char *perms[0];
-        perms[0] = "ohos.permission.CAMERA";
-        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-        };
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        g_isCameraDevicePermission = true;
-    }
+    uint64_t tokenId;
+    const char* perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
 void Test(uint8_t *rawData, size_t size)
@@ -55,46 +61,31 @@ void Test(uint8_t *rawData, size_t size)
     }
     GetPermission();
     auto manager = CameraManager::GetInstance();
-    if (manager == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    if (cameras.size() < CAM_NUM) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(cameras.size() >= NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    auto camera = cameras[data.ReadUint32() % CAM_NUM];
-    if (camera == nullptr) {
-        return;
-    }
-    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + 1 + 1);
+    auto camera = cameras[data.ReadUint32() % cameras.size()];
+    CHECK_AND_RETURN_LOG(camera, "PhotoOutputFuzzer: camera is null");
+    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
-    if (capability == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
-    if (profiles.empty()) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(!profiles.empty(), "PhotoOutputFuzzer: GetPhotoProfiles empty");
     Profile profile = profiles[data.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    if (producer == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(producer, "PhotoOutputFuzzer: GetProducer Error");
     auto output = manager->CreatePhotoOutput(profile, producer);
-    if (output == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(output, "PhotoOutputFuzzer: CreatePhotoOutput Error");
     TestOutput(output, rawData, size);
 }
 
 void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
 {
+    MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     output->SetCallback(make_shared<PhotoStateCallbackMock>());
@@ -103,13 +94,9 @@ void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     data.RewindRead(0);
     output->SetThumbnail(data.ReadBool());
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    if (producer == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(producer, "PhotoOutputFuzzer: GetProducer Error");
     sptr<Surface> sf = Surface::CreateSurfaceAsProducer(producer);
     output->SetRawPhotoInfo(sf);
     output->Capture(make_shared<PhotoCaptureSetting>());

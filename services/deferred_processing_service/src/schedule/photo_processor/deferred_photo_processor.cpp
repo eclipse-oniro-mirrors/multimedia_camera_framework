@@ -133,6 +133,29 @@ void DeferredPhotoProcessor::OnProcessDone(const int32_t userId, const std::stri
     callbacks_->OnProcessDone(userId, imageId, std::move(bufferInfo));
 }
 
+void DeferredPhotoProcessor::OnProcessDoneExt(const int32_t userId, const std::string& imageId,
+    std::shared_ptr<BufferInfoExt> bufferInfo)
+{
+    DP_INFO_LOG("entered");
+    //如果已经非高优先级，且任务结果不是全质量的图，那么不用返回给上层了，等下次出全质量图再返回
+    if (!(bufferInfo->IsHighQuality())) {
+        DP_INFO_LOG("not high quality photo");
+        if ((repository_->GetJobPriority(imageId) != PhotoJobPriority::HIGH)) {
+            DP_INFO_LOG("not high quality and not high priority, need retry");
+            repository_->SetJobPending(imageId);
+            return;
+        } else {
+            DP_INFO_LOG("not high quality, but high priority, and process as normal job before, need retry");
+            if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
+                repository_->SetJobPending(imageId);
+                return;
+            }
+        }
+    }
+    repository_->SetJobCompleted(imageId);
+    callbacks_->OnProcessDoneExt(userId, imageId, std::move(bufferInfo));
+}
+
 void DeferredPhotoProcessor::OnError(const int32_t userId, const std::string& imageId, DpsError errorCode)
 {
     DP_INFO_LOG("entered");

@@ -133,6 +133,7 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override;
 
 private:
     const char* testName_;
@@ -149,7 +150,11 @@ private:
 
 class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCallback {
 public:
-    void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes);
+    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudImageEnhanceSupported);
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture);
+    void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
+        bool isCloudImageEnhanceSupported);
     void OnError(const std::string& imageId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);
 };

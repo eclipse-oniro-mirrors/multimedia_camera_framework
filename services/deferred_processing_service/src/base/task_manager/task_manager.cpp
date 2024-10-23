@@ -36,11 +36,18 @@ TaskManager::TaskManager(const std::string& name, uint32_t  numThreads, bool ser
 
 void TaskManager::Initialize()
 {
+    CAMERA_DP_SYNC_TRACE;
     DP_INFO_LOG("entered.");
     pool_ = ThreadPool::Create(name_, numThreads_);
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     auto ret = RegisterTaskGroup("defaultTaskGroup",
-        [this](std::any param) { DoDefaultWorks(std::move(param)); }, serial_, false, defaultTaskHandle_);
+        [this](std::any param) {
+            if (param.has_value()) {
+                DoDefaultWorks(std::move(param));
+            } else {
+                DP_ERR_LOG("register default task group: failed, param has no value");
+            }
+        }, serial_, false, defaultTaskHandle_);
     DP_INFO_LOG("register default task group: %{public}d, handle: %{public}d", ret,
         static_cast<int>(defaultTaskHandle_));
     (void)(ret);
@@ -49,7 +56,8 @@ void TaskManager::Initialize()
 
 TaskManager::~TaskManager()
 {
-    DP_INFO_LOG("name: %s.", name_.c_str());
+    CAMERA_DP_SYNC_TRACE;
+    DP_INFO_LOG("TaskManager name: %{public}s.", name_.c_str());
     DeregisterTaskGroup("defaultTaskGroup", defaultTaskHandle_);
     defaultTaskHandle_ = INVALID_TASK_GROUP_HANDLE;
     if (delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
@@ -66,7 +74,13 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
         return;
     } else {
         RegisterTaskGroup("delayedTaskGroup",
-            [this](std::any param) { DoDefaultWorks(std::move(param)); }, true, true, delayedTaskHandle_);
+            [this](std::any param) {
+                if (param.has_value()) {
+                    DoDefaultWorks(std::move(param));
+                } else {
+                    DP_ERR_LOG("CreateDelayedTaskGroupIfNeed register default task group: failed, param has no value");
+                }
+            }, true, true, delayedTaskHandle_);
     }
     return;
 }
@@ -88,6 +102,7 @@ bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool
 
 bool TaskManager::DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle)
 {
+    CAMERA_DP_SYNC_TRACE;
     bool ret = false;
     if (taskRegistry_) {
         ret = taskRegistry_->DeregisterTaskGroup(name, handle);
@@ -119,6 +134,24 @@ bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
     return taskRegistry_->SubmitTask(handle, std::move(param));
 }
 
+void TaskManager::CancelAllTasks()
+{
+    DP_INFO_LOG("Cancel all tasks to handle: %{public}d", static_cast<int>(defaultTaskHandle_));
+    if (taskRegistry_ == nullptr) {
+        DP_ERR_LOG("invalid ptr");
+        return;
+    }
+    taskRegistry_->CancelAllTasks(defaultTaskHandle_);
+}
+
+bool TaskManager::IsEmpty()
+{
+    DP_INFO_LOG("Get tasks count: %{public}d", static_cast<int>(defaultTaskHandle_));
+    if (taskRegistry_ == nullptr) {
+        return true;
+    }
+    return taskRegistry_->GetTaskCount(defaultTaskHandle_) == 0;
+}
 
 bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, bool delayTask,
     TaskGroupHandle& handle)

@@ -58,6 +58,12 @@ public:
         }
     }
 
+    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
+    {
+        // empty impl
+        MEDIA_DEBUG_LOG("OnDeferredVideoEnhancementInfo is called!");
+    }
+
 private:
     Camera_VideoOutput* videoOutput_;
     VideoOutput_Callbacks callback_;
@@ -197,7 +203,6 @@ Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* f
 
     return CAMERA_OK;
 }
-
 Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
     CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,

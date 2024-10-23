@@ -17,6 +17,7 @@
 #define CAMERA_NAPI_H_
 
 #include "camera_napi_utils.h"
+#include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hilog/log.h"
 #include "input/camera_input_napi.h"
@@ -105,6 +106,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_DNG", CameraFormat::CAMERA_FORMAT_DNG},
     {"CAMERA_FORMAT_YCBCR_P010", CameraFormat::CAMERA_FORMAT_YCBCR_P010},
     {"CAMERA_FORMAT_YCRCB_P010", CameraFormat::CAMERA_FORMAT_YCRCB_P010},
+    {"CAMERA_FORMAT_HEIC", CameraFormat::CAMERA_FORMAT_HEIC},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraStatus = {
@@ -336,6 +338,7 @@ static const std::unordered_map<std::string, int32_t> mapPolicyType = {
 static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
     { "MOON_CAPTURE_BOOST", FEATURE_MOON_CAPTURE_BOOST },
     { "TRIPOD_DETECTION", FEATURE_TRIPOD_DETECTION },
+    { "LOW_LIGHT_BOOST", FEATURE_LOW_LIGHT_BOOST },
     { "MACRO", FEATURE_MACRO },
 };
 
@@ -346,10 +349,10 @@ static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
-    {"CAR", 0},
-    {"STAR", 1},
-    {"WATER", 2},
-    {"LIGHT", 3},
+    {"TRAFFIC_TRAILS", 0},
+    {"STAR_TRAILS", 1},
+    {"SILKY_WATER", 2},
+    {"LIGHT_GRAFFITI", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapTimeLapseRecordState = {
@@ -362,8 +365,20 @@ static const std::unordered_map<std::string, int32_t> mapTimeLapsePreviewType = 
     {"LIGHT", 2},
 };
 
+static const std::unordered_map<std::string, int32_t> mapVideoCodecType = {
+    {"AVC", VideoCodecType::VIDEO_ENCODE_TYPE_AVC},
+    {"HEVC", VideoCodecType::VIDEO_ENCODE_TYPE_HEVC},
+};
+
 static const std::unordered_map<std::string, int32_t> mapVideoMetaType = {
     {"VIDEO_META_DEBUG_INFO", 0},
+};
+
+static const std::unordered_map<std::string, int32_t> mapTripodStatus = {
+    { "INVALID", 0 },
+    { "ACTIVE", 1 },
+    { "ENTER", 2 },
+    { "EXITING", 3 },
 };
 
 enum CreateAsyncCallbackModes {

@@ -37,10 +37,10 @@ CameraPhotoProxy::CameraPhotoProxy()
     bufferHandle_ = nullptr;
     fileSize_ = 0;
     isDeferredPhoto_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
-    imageFormat_ = 0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = 0;
+    imageFormat_ = 0;
 }
 
 CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
@@ -55,10 +55,10 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     isHighQuality_ = isHighQuality;
     deferredProcType_ = 0;
     isDeferredPhoto_ = 0;
-    longitude_ = -1.0;
-    latitude_ = -1.0;
-    imageFormat_ = 0;
+    longitude_ = 0.0;
+    latitude_ = 0.0;
     captureId_ = captureId;
+    imageFormat_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }
@@ -93,10 +93,7 @@ int32_t CameraPhotoProxy::CameraFreeBufferHandle()
 {
     MEDIA_ERR_LOG("CameraFreeBufferHandle start");
     std::lock_guard<std::mutex> lock(mutex_);
-    if (bufferHandle_ == nullptr) {
-        MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(bufferHandle_ == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (bufferHandle_->fd >= 0) {
         close(bufferHandle_->fd);
         bufferHandle_->fd = -1;

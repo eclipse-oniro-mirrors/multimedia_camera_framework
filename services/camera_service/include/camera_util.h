@@ -24,7 +24,6 @@
 #include <sstream>
 
 #include "camera_metadata_info.h"
-#include "display/graphic/common/v1_0/cm_color_space.h"
 #include "safe_map.h"
 #include "surface_type.h"
 #include "v1_0/types.h"
@@ -110,6 +109,11 @@ enum FallingState {
     FALLING_STATE = 1008,
 };
 
+enum VideoCodecType : int32_t {
+    VIDEO_ENCODE_TYPE_AVC = 0,
+    VIDEO_ENCODE_TYPE_HEVC,
+};
+
 extern std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat;
 extern std::map<int, std::string> g_cameraPos;
 extern std::map<int, std::string> g_cameraType;
@@ -162,8 +166,6 @@ EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerTo
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
-bool IsVerticalDevice();
-
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
     std::string& deviceClass);
 
@@ -212,6 +214,7 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
     stringStream << "]";
     return stringStream.str();
 }
+bool IsVerticalDevice();
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

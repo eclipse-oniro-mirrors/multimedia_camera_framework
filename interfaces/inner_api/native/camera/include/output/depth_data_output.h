@@ -110,4 +110,4 @@ public:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DEPTH_DATA_OUTPUT_H
+#endif // OHOS_CAMERA_DEPTH_DATA_OUTPUT_H

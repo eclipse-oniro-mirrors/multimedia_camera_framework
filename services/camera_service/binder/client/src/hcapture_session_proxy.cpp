@@ -16,7 +16,7 @@
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
-#include <cstdint>
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -229,10 +229,8 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
@@ -272,9 +270,8 @@ int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace& colorSpace)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_ACTIVE_COLOR_SPACE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy GetActiveColorSpace failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy GetActiveColorSpace failed, error: %{public}d", error);
     colorSpace = static_cast<ColorSpace>(reply.ReadInt32());
     return error;
 }
@@ -311,9 +308,7 @@ int32_t HCaptureSessionProxy::SetSmoothZoom(int32_t mode, int32_t operationMode,
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_SMOOTH_ZOOM),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy set smooth zoom failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy set smooth zoom failed, error: %{public}d", error);
     duration = reply.ReadFloat();
     return error;
 }
@@ -330,9 +325,7 @@ int32_t HCaptureSessionProxy::SetFeatureMode(int32_t featureMode)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_FEATURE_MODE), data, reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("SetFeatureMode failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy SetFeatureMode failed, error: %{public}d", error);
     return error;
 }
 
@@ -347,9 +340,8 @@ int32_t HCaptureSessionProxy::EnableMovingPhoto(bool isEnable)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ENABLE_MOTION_PHOTO),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy enable moving photo failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy enable moving photo failed, error: %{public}d", error);
     return error;
 }
 
@@ -364,9 +356,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy start moving capture, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy start moving capture, error: %{public}d", error);
     return error;
 }
 
@@ -376,15 +366,39 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    if (photoProxy == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
     data.WriteInterfaceToken(GetDescriptor());
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
+    return error;
+}
+
+int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
+    std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (picture == nullptr || photoProxy == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
+        return IPC_PROXY_ERR;
+    }
+    data.WriteInterfaceToken(GetDescriptor());
+    picture->Marshalling(data);
+    photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
         data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
@@ -406,9 +420,8 @@ int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetMirror failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy SetPreviewRotation failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

@@ -234,7 +234,7 @@ public:
     Camera_ErrorCode RegisterEstimatedCaptureDurationCallback(OH_PhotoOutput_EstimatedCaptureDuration callback);
 
     Camera_ErrorCode UnregisterEstimatedCaptureDurationCallback(OH_PhotoOutput_EstimatedCaptureDuration callback);
-
+	
     Camera_ErrorCode RegisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);
 
     Camera_ErrorCode UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback);

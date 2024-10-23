@@ -186,7 +186,7 @@ Camera_ErrorCode OH_CaptureSession_IsVideoStabilizationModeSupported(Camera_Capt
         mode == STABILIZATION_MODE_MIDDLE ||
         mode == STABILIZATION_MODE_HIGH ||
         mode == STABILIZATION_MODE_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument, mode is invaid!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument,mode is invaild!");
 
     return session->IsVideoStabilizationModeSupported(mode, isSupported);
 }
@@ -211,7 +211,7 @@ Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSessi
         mode == STABILIZATION_MODE_MIDDLE ||
         mode == STABILIZATION_MODE_HIGH ||
         mode == STABILIZATION_MODE_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument, mode is invaid!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument,mode is invaild!");
 
     return session->SetVideoStabilizationMode(mode);
 }
@@ -248,13 +248,13 @@ Camera_ErrorCode OH_CaptureSession_IsFocusModeSupported(Camera_CaptureSession* s
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsFocusModeSupported is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(isSupported != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSupported is null!");
     CHECK_AND_RETURN_RET_LOG(focusMode == FOCUS_MODE_MANUAL ||
         focusMode == FOCUS_MODE_CONTINUOUS_AUTO ||
         focusMode == FOCUS_MODE_AUTO ||
         focusMode == FOCUS_MODE_LOCKED,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument,focusMode is invaild!");
-    CHECK_AND_RETURN_RET_LOG(isSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSupported is null!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, focusMode is invaild!");
 
     return session->IsFocusModeSupported(focusMode, isSupported);
 }
@@ -276,7 +276,7 @@ Camera_ErrorCode OH_CaptureSession_SetFocusMode(Camera_CaptureSession* session, 
         focusMode == FOCUS_MODE_CONTINUOUS_AUTO ||
         focusMode == FOCUS_MODE_AUTO ||
         focusMode == FOCUS_MODE_LOCKED,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument,focusMode is invaild!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, focusMode is invaild!");
 
     return session->SetFocusMode(focusMode);
 }
@@ -370,11 +370,13 @@ Camera_ErrorCode OH_CaptureSession_GetFlashMode(Camera_CaptureSession* session, 
 Camera_ErrorCode OH_CaptureSession_SetFlashMode(Camera_CaptureSession* session, Camera_FlashMode flashMode)
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+
     CHECK_AND_RETURN_RET_LOG(flashMode == FLASH_MODE_CLOSE ||
         flashMode == FLASH_MODE_OPEN ||
         flashMode == FLASH_MODE_AUTO ||
         flashMode == FLASH_MODE_ALWAYS_OPEN,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument,flashMode is invaild!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, flashMode is invaild!");
+
     return session->SetFlashMode(flashMode);
 }
 
@@ -387,7 +389,7 @@ Camera_ErrorCode OH_CaptureSession_IsExposureModeSupported(Camera_CaptureSession
     CHECK_AND_RETURN_RET_LOG(exposureMode == EXPOSURE_MODE_LOCKED ||
         exposureMode == EXPOSURE_MODE_AUTO ||
         exposureMode == EXPOSURE_MODE_CONTINUOUS_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument,exposureMode is invaild!");
+        CAMERA_INVALID_ARGUMENT, "Invaild argument,exposureMode is invalid");
     return session->IsExposureModeSupported(exposureMode, isSupported);
 }
 
@@ -407,8 +409,7 @@ Camera_ErrorCode OH_CaptureSession_SetExposureMode(Camera_CaptureSession* sessio
     CHECK_AND_RETURN_RET_LOG(exposureMode == EXPOSURE_MODE_LOCKED ||
         exposureMode == EXPOSURE_MODE_AUTO ||
         exposureMode == EXPOSURE_MODE_CONTINUOUS_AUTO,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument,exposureMode is invaild!");
-
+        CAMERA_INVALID_ARGUMENT, "Invaild argument,exposureMode is invalid");
     return session->SetExposureMode(exposureMode);
 }
 
@@ -424,9 +425,8 @@ Camera_ErrorCode OH_CaptureSession_SetMeteringPoint(Camera_CaptureSession* sessi
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetMeteringPoint is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
-    CHECK_AND_RETURN_RET_LOG(point.x >= 0 && point.y >= 0,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument, point is invaild!");
-
+    CHECK_AND_RETURN_RET_LOG(point.x >= 0 && point.y >= 0, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, point is illeagal!");
     return session->SetMeteringPoint(point);
 }
 
@@ -664,7 +664,6 @@ Camera_ErrorCode OH_CaptureSession_SetActiveColorSpace(Camera_CaptureSession* se
 
     return session->SetActiveColorSpace(colorSpace);
 }
-
 #ifdef __cplusplus
 }
 #endif

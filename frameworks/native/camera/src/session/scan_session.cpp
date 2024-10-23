@@ -69,10 +69,9 @@ bool ScanSession::IsBrightnessStatusSupported()
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, false,
         "ScanSession::IsBrightnessStatusSupported camera device is null");
-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
+    auto device = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!device, false,
         "ScanSession::IsBrightnessStatusSupported camera deviceInfo is null");
-    sptr<CameraDevice> device = inputDeviceInfo;
     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_SUGGESTION_SUPPORTED, &item);
@@ -99,9 +98,7 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
     this->UnlockForControl();
 }
 

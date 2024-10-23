@@ -14,6 +14,7 @@
  */
 
 #include "scheduler_coordinator.h"
+
 #include "dp_log.h"
 
 namespace OHOS {

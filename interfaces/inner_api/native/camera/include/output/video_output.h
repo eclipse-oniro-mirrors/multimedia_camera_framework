@@ -56,6 +56,8 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for video callback error.
      */
     virtual void OnError(const int32_t errorCode) const = 0;
+
+    virtual void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const = 0;
 };
 
 class VideoOutput : public CaptureOutput {
@@ -88,11 +90,6 @@ public:
     int32_t Stop();
 
     /**
-     * @brief get the video rotation angle.
-     */
-    int32_t GetVideoRotation(int32_t imageRotation);
-
-    /**
      * @brief Pause the video capture.
      */
     int32_t Pause();
@@ -101,6 +98,11 @@ public:
      * @brief Resume the paused video capture.
      */
     int32_t Resume();
+
+    /**
+     * @brief get the video rotation angle.
+     */
+    int32_t GetVideoRotation(int32_t imageRotation);
 
     /**
      * @brief Get the application callback information.
@@ -186,6 +188,25 @@ public:
      *
      */
     void AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType);
+    /**
+     * @brief To check the autoDeferredVideoEnhance capability is supported or not.
+     *
+     * @return Returns true/false if the autoDeferredVideoEnhance is supported/not-supported respectively.
+     */
+    int32_t IsAutoDeferredVideoEnhancementSupported();
+
+    /**
+     * @brief To check the autoDeferredVideoEnhance capability is supported or not.
+     *
+     * @return Returns true/false if the autoDeferredVideoEnhance is supported/not-supported respectively.
+     */
+    int32_t IsAutoDeferredVideoEnhancementEnabled();
+
+    /**
+     * @brief Enable or not enable for autoDeferredVideoEnhance capability.
+     *
+     */
+    int32_t EnableAutoDeferredVideoEnhancement(bool enabled);
 
 private:
     int32_t videoFormat_;
@@ -234,6 +255,8 @@ public:
      * @param status sketch status.
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
+
+    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

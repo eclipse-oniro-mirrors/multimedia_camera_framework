@@ -34,10 +34,9 @@ int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
     option.SetFlags(option.TF_SYNC);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
     MEDIA_DEBUG_LOG("HCameraServiceProxy notifyCloseCamera");
+
     return error;
 }
 
@@ -52,10 +51,9 @@ int32_t HCameraProxy::NotifyMuteCamera(bool muteMode)
     option.SetFlags(option.TF_SYNC);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_MUTE_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
     MEDIA_DEBUG_LOG("HCameraServiceProxy NotifyMuteCamera");
+
     return error;
 }
 
@@ -73,17 +71,13 @@ int32_t HCameraServiceProxy::GetCameras(std::vector<std::string> &cameraIds,
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameras failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy GetCameras failed, error: %{public}d", error);
 
     reply.ReadStringVector(&cameraIds);
     int32_t count = reply.ReadInt32();
-    if ((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameras Malformed camera count value");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS),
+        IPC_PROXY_ERR, "HCameraServiceProxy GetCameras Malformed camera count value");
 
     std::shared_ptr<Camera::CameraMetadata> cameraAbility;
     for (int i = 0; i < count; i++) {
@@ -104,17 +98,14 @@ int32_t HCameraServiceProxy::GetCameraIds(std::vector<std::string> &cameraIds)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_IDS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy GetCameraIds failed, error: %{public}d", error);
 
     reply.ReadStringVector(&cameraIds);
     int32_t count = reply.ReadInt32();
-    if ((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds Malformed camera count: %{public}d", count);
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS),
+        IPC_PROXY_ERR, "HCameraServiceProxy GetCameraIds Malformed camera count: %{public}d", count);
+
     return error;
 }
 
@@ -129,12 +120,11 @@ int32_t HCameraServiceProxy::GetCameraAbility(std::string &cameraId,
     data.WriteString(cameraId);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_ABILITY), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraAbility failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy GetCameraAbility failed, error: %{public}d", error);
 
     Camera::MetadataUtils::DecodeCameraMetadata(reply, cameraAbility);
+
     return error;
 }
 
@@ -155,12 +145,9 @@ int32_t HCameraServiceProxy::CreateCameraDevice(std::string cameraId, sptr<ICame
     }
 
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        device = iface_cast<ICameraDeviceService>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCameraDevice CameraDevice is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateCameraDevice CameraDevice is null");
+    device = iface_cast<ICameraDeviceService>(remoteObject);
 
     return error;
 }
@@ -271,12 +258,9 @@ int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session
     }
 
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        session = iface_cast<ICaptureSession>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCaptureSession CaptureSession is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateCaptureSession CaptureSession is null");
+    session = iface_cast<ICaptureSession>(remoteObject);
 
     return error;
 }
@@ -289,10 +273,8 @@ int32_t HCameraServiceProxy::CreateDeferredPhotoProcessingSession(int32_t userId
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPhotoProcessingSession callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredPhotoProcessingSession callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(userId);
@@ -301,18 +283,42 @@ int32_t HCameraServiceProxy::CreateDeferredPhotoProcessingSession(int32_t userId
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPhotoProcessingSession failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateDeferredPhotoProcessingSession failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        session = iface_cast<DeferredProcessing::IDeferredPhotoProcessingSession>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPhotoProcessingSession session is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredPhotoProcessingSession session is null");
+    session = iface_cast<DeferredProcessing::IDeferredPhotoProcessingSession>(remoteObject);
+
+    return error;
+}
+
+int32_t HCameraServiceProxy::CreateDeferredVideoProcessingSession(int32_t userId,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSessionCallback>& callback,
+    sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession callback is null");
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(userId);
+    data.WriteRemoteObject(callback->AsObject());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_VIDEO_PROCESSING_SESSION),
+        data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession failed, error: %{public}d", error);
+
+    auto remoteObject = reply.ReadRemoteObject();
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredVideoProcessingSession session is null");
+    session = iface_cast<DeferredProcessing::IDeferredVideoProcessingSession>(remoteObject);
     return error;
 }
 
@@ -343,12 +349,9 @@ int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>
     }
 
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        photoOutput = iface_cast<IStreamCapture>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePhotoOutput photoOutput is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreatePhotoOutput photoOutput is null");
+    photoOutput = iface_cast<IStreamCapture>(remoteObject);
 
     return error;
 }
@@ -379,12 +382,10 @@ int32_t HCameraServiceProxy::CreatePreviewOutput(const sptr<OHOS::IBufferProduce
         return error;
     }
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        previewOutput = iface_cast<IStreamRepeat>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput previewOutput is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreatePreviewOutput previewOutput is null");
+    previewOutput = iface_cast<IStreamRepeat>(remoteObject);
+
     return error;
 }
 
@@ -413,12 +414,10 @@ int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t
         return error;
     }
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        previewOutput = iface_cast<IStreamRepeat>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput previewOutput is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredPreviewOutput previewOutput is null");
+    previewOutput = iface_cast<IStreamRepeat>(remoteObject);
+
     return error;
 }
 
@@ -481,14 +480,10 @@ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProduc
         MEDIA_ERR_LOG("HCameraServiceProxy CreateMetadataOutput failed, error: %{public}d", error);
         return error;
     }
-
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        metadataOutput = iface_cast<IStreamMetadata>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateMetadataOutput metadataOutput is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateMetadataOutput metadataOutput is null");
+    metadataOutput = iface_cast<IStreamMetadata>(remoteObject);
 
     return error;
 }
@@ -520,12 +515,9 @@ int32_t HCameraServiceProxy::CreateVideoOutput(const sptr<OHOS::IBufferProducer>
     }
 
     auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        videoOutput = iface_cast<IStreamRepeat>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateVideoOutput videoOutput is null");
-        error = IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateVideoOutput videoOutput is null");
+    videoOutput = iface_cast<IStreamRepeat>(remoteObject);
 
     return error;
 }
@@ -561,6 +553,7 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::MuteCamera failed, error: %{public}d", error);
     }
+
     return error;
 }
 
@@ -575,9 +568,9 @@ int32_t HCameraServiceProxy::MuteCameraPersist(PolicyType policyType, bool muteM
     (void)data.WriteBool(muteMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::MuteCameraPersist failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::MuteCameraPersist failed, error: %{public}d", error);
+
     return error;
 }
 
@@ -593,6 +586,7 @@ int32_t HCameraServiceProxy::PrelaunchCamera()
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
     }
+
     return error;
 }
 
@@ -615,6 +609,7 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId, RestorePar
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::SetPrelaunchConfig failed, error: %{public}d", error);
     }
+
     return error;
 }
 
@@ -627,9 +622,8 @@ int32_t HCameraServiceProxy::PreSwitchCamera(const std::string cameraId)
     data.WriteString(cameraId);
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::PreSwitchCamera failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::PreSwitchCamera failed, error: %{public}d", error);
+
     return error;
 }
 
@@ -650,6 +644,7 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
 
     muteMode = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuted Read muteMode is %{public}d", muteMode);
+
     return error;
 }
 
@@ -666,8 +661,8 @@ int32_t HCameraServiceProxy::SetTorchLevel(float level)
         data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel failed, error: %{public}d", error);
-        return error;
     }
+
     return error;
 }
 
@@ -684,12 +679,12 @@ int32_t HCameraServiceProxy::AllowOpenByOHSide(std::string cameraId, int32_t sta
 
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::AllowOpenByOHSide failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::AllowOpenByOHSide failed, error: %{public}d", error);
 
     canOpenCamera = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy::AllowOpenByOHSide read canOpenCamera is %{public}d", canOpenCamera);
+
     return error;
 }
 
@@ -706,9 +701,9 @@ int32_t HCameraServiceProxy::NotifyCameraState(std::string cameraId, int32_t sta
 
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::NotifyCameraState failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::NotifyCameraState failed, error: %{public}d", error);
+
     return error;
 }
 
@@ -718,19 +713,15 @@ int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -745,9 +736,8 @@ int32_t HCameraServiceProxy::UnsetPeerCallback()
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_UNSET_PEER_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy UnsetPeerCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::UnsetPeerCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -761,9 +751,7 @@ int32_t HCameraServiceProxy::DestroyStubObj()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy DestroyStubObj failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::DestroyStubObj failed, error: %{public}d", error);
 
     return error;
 }
@@ -779,13 +767,11 @@ int32_t HCameraServiceProxy::ProxyForFreeze(const std::set<int32_t>& pidList, bo
     for (auto it = pidList.begin(); it != pidList.end(); it++) {
         data.WriteInt32(*it);
     }
-    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    MEDIA_DEBUG_LOG("isProxy value: %{public}d", isProxy);
     data.WriteBool(isProxy);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PROXY_FOR_FREEZE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy ProxyForFreeze failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::ProxyForFreeze failed, error: %{public}d", error);
 
     return error;
 }
@@ -799,10 +785,8 @@ int32_t HCameraServiceProxy::ResetAllFreezeStatus()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_ALL_FREEZE_STATUS),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::ResetAllFreezeStatus failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::ResetAllFreezeStatus failed, error: %{public}d", error);
     return error;
 }
 int32_t HCameraServiceProxy::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
@@ -814,11 +798,10 @@ int32_t HCameraServiceProxy::GetDmDeviceInfo(std::vector<std::string> &deviceInf
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetDmDeviceInfo failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy GetDmDeviceInfo failed, error: %{public}d", error);
     reply.ReadStringVector(&deviceInfos);
+
     return error;
 }
 int32_t HCameraServiceProxy::GetCameraOutputStatus(int32_t pid, int32_t &status)
@@ -826,7 +809,7 @@ int32_t HCameraServiceProxy::GetCameraOutputStatus(int32_t pid, int32_t &status)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
+
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(pid);
     int error = Remote()->SendRequest(

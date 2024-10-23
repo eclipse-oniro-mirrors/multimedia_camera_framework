@@ -94,9 +94,6 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
-    int32_t GetCameraResourceCost(const std::string& cameraId,
-        OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
-
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
@@ -132,11 +129,13 @@ HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
+
     if (cameraHostProxy_ && cameraHostDeathRecipient_) {
-        const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
+        const sptr <IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
         remote->RemoveDeathRecipient(cameraHostDeathRecipient_);
         cameraHostDeathRecipient_ = nullptr;
     }
+
     cameraHostProxy_ = nullptr;
     cameraHostProxyV1_1_ = nullptr;
     cameraHostProxyV1_2_ = nullptr;
@@ -215,10 +214,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
 void HCameraHostManager::CameraHostInfo::CameraHostDied()
 {
     auto hostDeadCallback = cameraHostDeadCallback_.lock();
-    if (hostDeadCallback == nullptr) {
-        MEDIA_ERR_LOG("%{public}s CameraHostDied but hostDeadCallback is null.", name_.c_str());
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(hostDeadCallback == nullptr,
+        "%{public}s CameraHostDied but hostDeadCallback is null.", name_.c_str());
     hostDeadCallback->OnCameraHostDied(name_);
 }
 
@@ -470,10 +467,7 @@ int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& c
 void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (cameraHostProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraHostInfo::Prelaunch cameraHostProxy_ is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraHostProxy_ == nullptr, "CameraHostInfo::Prelaunch cameraHostProxy_ is null");
     MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
         notifyType, deviceState);
     if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
@@ -483,18 +477,6 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
     }
-}
-
-int32_t HCameraHostManager::CameraHostInfo::GetCameraResourceCost(const std::string& cameraId,
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (cameraHostProxyV1_3_ != nullptr &&
-        cameraHostProxyV1_3_->GetResourceCost(cameraId, resourceCost) ==
-        HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
-        return CAMERA_OK;
-    }
-    return CAMERA_UNSUPPORTED;
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(
@@ -538,7 +520,7 @@ void HCameraHostManager::CameraHostInfo::NotifyCameraHostDied()
     std::vector<std::string> cameraIds;
     if (statusCallback && this->GetCameras(cameraIds) == CAMERA_OK) {
         for (const auto& cameraId : cameraIds) {
-            statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE);
+            statusCallback->OnCameraStatus(cameraId, CAMERA_SERVER_UNAVAILABLE);
         }
     }
 }
@@ -743,14 +725,9 @@ void HCameraHostManager::DeInit()
 {
     using namespace OHOS::HDI::ServiceManager::V1_0;
     auto svcMgr = IServiceManager::Get();
-    if (svcMgr == nullptr) {
-        MEDIA_ERR_LOG("%s: IServiceManager failed", __func__);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "HCameraHostManager::DeInit(): IServiceManager failed");
     auto rt = svcMgr->UnregisterServiceStatusListener(registerServStatListener_);
-    if (rt != 0) {
-        MEDIA_ERR_LOG("%s: UnregisterServiceStatusListener failed!", __func__);
-    }
+    CHECK_ERROR_PRINT_LOG(rt != 0, "HCameraHostManager::DeInit(): UnregisterServiceStatusListener failed!");
     registerServStatListener_ = nullptr;
 }
 
@@ -912,10 +889,7 @@ void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceS
 void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam)
 {
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
-    if (cameraRestoreParam == nullptr) {
-        MEDIA_ERR_LOG("HCameraRestoreParam is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraRestoreParam == nullptr, "HCameraRestoreParam is nullptr");
     std::string clientName = cameraRestoreParam->GetClientName();
     if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
         DeleteRestoreParam(clientName, cameraRestoreParam->GetCameraId());
@@ -997,10 +971,7 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string&
 
 void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam)
 {
-    if (cameraRestoreParam == nullptr) {
-        MEDIA_ERR_LOG("HCameraHostManager::UpdateRestoreParam is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraRestoreParam == nullptr, "HCameraHostManager::UpdateRestoreParam is nullptr");
     std::string clientName = cameraRestoreParam->GetClientName();
     std::string cameraId = cameraRestoreParam->GetCameraId();
     std::map<std::string, sptr<HCameraRestoreParam>>::iterator iter = (persistentParamMap_[clientName]).begin();
@@ -1043,8 +1014,8 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetTransitentParam(const std::stri
 
 bool HCameraHostManager::CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId)
 {
-    CHECK_AND_RETURN_RET(cameraRestoreParam != nullptr, false);
-    CHECK_AND_RETURN_RET(cameraRestoreParam->GetCameraId() != cameraId, true);
+    CHECK_ERROR_RETURN_RET(cameraRestoreParam == nullptr, false);
+    CHECK_ERROR_RETURN_RET(cameraRestoreParam->GetCameraId() == cameraId, true);
     return false;
 }
 
@@ -1064,14 +1035,8 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
     auto statusCallback = statusCallback_.lock();
     sptr<HCameraHostManager::CameraHostInfo> cameraHost =
         new (std::nothrow) HCameraHostManager::CameraHostInfo(statusCallback, cameraHostDeadCallback_, svcName);
-    if (cameraHost == nullptr) {
-        MEDIA_ERR_LOG("failed to new cameraHost!");
-        return;
-    }
-    if (!cameraHost->Init()) {
-        MEDIA_ERR_LOG("HCameraHostManager::AddCameraHost failed due to init failure");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraHost == nullptr, "failed to new cameraHost!");
+    CHECK_ERROR_RETURN_LOG(!cameraHost->Init(), "HCameraHostManager::AddCameraHost failed due to init failure");
     cameraHostInfos_.push_back(cameraHost);
     std::vector<std::string> cameraIds;
     if (statusCallback && cameraHost->GetCameras(cameraIds) == CAMERA_OK) {
@@ -1147,15 +1112,6 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 void HCameraHostManager::SetMuteMode(bool muteMode)
 {
     muteMode_ = muteMode;
-}
-
-int32_t HCameraHostManager::GetCameraResourceCost(const std::string& cameraId,
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
-{
-    auto cameraHostInfo = FindCameraHostInfo(cameraId);
-    CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
-        "HCameraHostManager::GetCameraResourceCost failed with invalid device info");
-    return cameraHostInfo->GetCameraResourceCost(cameraId, resourceCost);
 }
 
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)

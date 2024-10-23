@@ -38,7 +38,7 @@ int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
         "NightSession::GetExposureRange camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::INVALID_ARGUMENT,
-        "NightSession::GetExposureRange camera deviceInfo is null");
+        "NightSession::GetExposureRange camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     CHECK_AND_RETURN_RET(metadata != nullptr, CameraErrorCode::INVALID_ARGUMENT);
     camera_metadata_item_t item;
@@ -79,9 +79,7 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, count);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("NightSession::SetExposure Failed to set exposure compensation");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "NightSession::SetExposure Failed to set exposure compensation");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -119,6 +117,7 @@ void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
         "CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
     session->ProcessAutoFocusUpdates(result);
+    session->ProcessLcdFlashStatusUpdates(result);
 }
 
 bool NightSession::CanAddOutput(sptr<CaptureOutput>& output)

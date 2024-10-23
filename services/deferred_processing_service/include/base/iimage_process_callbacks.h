@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#ifndef OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
+#define OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H
 
 #include <cstdint>
 #include <string>
 #include "buffer_info.h"
 #include "basic_definitions.h"
-
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -29,10 +31,12 @@ public:
     virtual ~IImageProcessCallbacks() = default;
     virtual void OnProcessDone(const int32_t userId,
         const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) = 0;
+    virtual void OnProcessDoneExt(int userId, const std::string& imageId,
+        std::shared_ptr<BufferInfoExt> bufferInfo) = 0;
     virtual void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) = 0;
     virtual void OnStateChanged(const int32_t userId, DpsStatus statusCode) = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_I_IMAGE_PROCESS_CALLBACKS_H
+#endif // OHOS_CAMERA_DPS_I_IMAGE_PROCESS_CALLBACKS_H

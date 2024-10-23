@@ -21,7 +21,18 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static const char CAMERA_ABILITY_NAPI_CLASS_NAME[] = "CameraFunctions";
+
+using Descriptor = std::vector<std::vector<napi_property_descriptor>>;
+
+enum class FunctionsType {
+    PHOTO_FUNCTIONS = 0,
+    PHOTO_CONFLICT_FUNCTIONS,
+    PORTRAIT_PHOTO_FUNCTIONS,
+    PORTRAIT_PHOTO_CONFLICT_FUNCTIONS,
+    VIDEO_FUNCTIONS,
+    VIDEO_CONFLICT_FUNCTIONS
+};
+
 static const char PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PhotoFunctions";
 static const char PORTRAIT_PHOTO_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoFunctions";
 static const char VIDEO_ABILITY_NAPI_CLASS_NAME[] = "VideoFunctions";
@@ -29,20 +40,22 @@ static const char PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PhotoConflictFunct
 static const char PORTRAIT_PHOTO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "PortraitPhotoConflictFunctions";
 static const char VIDEO_CONFLICT_ABILITY_NAPI_CLASS_NAME[] = "VideoConflictFunctions";
 
-class CameraAbilityNapi {
+class CameraFunctionsNapi {
 public:
-    static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateCameraAbility(napi_env env, sptr<CameraAbility> cameraAbility);
+    static napi_value Init(napi_env env, napi_value exports, FunctionsType type);
+    static napi_value CreateCameraFunctions(napi_env env, sptr<CameraAbility> functions, FunctionsType type);
 
-    CameraAbilityNapi();
-    ~CameraAbilityNapi();
+    CameraFunctionsNapi();
+    ~CameraFunctionsNapi();
 
-    static napi_value CameraAbilityNapiConstructor(napi_env env, napi_callback_info info);
-    static void CameraAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
+    static napi_value CameraFunctionsNapiConstructor(napi_env env, napi_callback_info info);
+    static void CameraFunctionsNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
 
     // FlashQuery
     static napi_value HasFlash(napi_env env, napi_callback_info info);
     static napi_value IsFlashModeSupported(napi_env env, napi_callback_info info);
+    static napi_value IsLcdFlashSupported(napi_env env, napi_callback_info info);
+
     // AutoExposureQuery
     static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
@@ -71,11 +84,22 @@ public:
     // SceneDetectionQuery
     static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
 
+    template<typename U>
+    static napi_value HandleQuery(napi_env env, napi_callback_info info, napi_value thisVar, U queryFunction);
+
     sptr<CameraAbility> GetNativeObj() { return cameraAbility_; }
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraAbility> cameraAbility_;
     static thread_local napi_ref sConstructor_;
+
+    static thread_local napi_ref sPhotoConstructor_;
+    static thread_local napi_ref sPhotoConflictConstructor_;
+    static thread_local napi_ref sPortraitPhotoConstructor_;
+    static thread_local napi_ref sPortraitPhotoConflictConstructor_;
+    static thread_local napi_ref sVideoConstructor_;
+    static thread_local napi_ref sVideoConflictConstructor_;
+
     static thread_local sptr<CameraAbility> sCameraAbility_;
 
     static const std::vector<napi_property_descriptor> flash_query_props;
@@ -89,110 +113,11 @@ public:
     static const std::vector<napi_property_descriptor> portrait_query_props;
     static const std::vector<napi_property_descriptor> aperture_query_props;
     static const std::vector<napi_property_descriptor> stabilization_query_props;
-    static const std::vector<napi_property_descriptor> manual_exposure_props;
-    static const std::vector<napi_property_descriptor> features_props;
-};
+    static const std::vector<napi_property_descriptor> manual_exposure_query_props;
+    static const std::vector<napi_property_descriptor> features_query_props;
 
-class PhotoAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value CreatePhotoAbility(napi_env env, sptr<CameraAbility> photoAbility);
-    static napi_value Init(napi_env env, napi_value exports);
-
-    PhotoAbilityNapi();
-    ~PhotoAbilityNapi();
-
-private:
-    static void PhotoAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PhotoAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
-};
-
-class PortraitPhotoAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePortraitPhotoAbility(napi_env env, sptr<CameraAbility> portraitAbility);
-
-    PortraitPhotoAbilityNapi();
-    ~PortraitPhotoAbilityNapi();
-
-private:
-    static void PortraitPhotoAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PortraitPhotoAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
-};
-
-class VideoAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateVideoAbility(napi_env env, sptr<CameraAbility> videoAbility);
-
-    VideoAbilityNapi();
-    ~VideoAbilityNapi();
-
-private:
-    static void VideoAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value VideoAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
-};
-
-class PhotoConflictAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value CreatePhotoConflictAbility(napi_env env, sptr<CameraAbility> photoConflictAbility);
-    static napi_value Init(napi_env env, napi_value exports);
-
-    PhotoConflictAbilityNapi();
-    ~PhotoConflictAbilityNapi();
-
-private:
-    static void PhotoConflictAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PhotoConflictAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
-};
-
-class PortraitPhotoConflictAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePortraitPhotoConflictAbility(napi_env env, sptr<CameraAbility> portraitConflictAbility);
-
-    PortraitPhotoConflictAbilityNapi();
-    ~PortraitPhotoConflictAbilityNapi();
-
-private:
-    static void PortraitPhotoConflictAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PortraitPhotoConflictAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
-};
-
-class VideoConflictAbilityNapi : public CameraAbilityNapi {
-public:
-    static napi_value CreateVideoConflictAbility(napi_env env, sptr<CameraAbility> videoConflictAbility);
-    static napi_value Init(napi_env env, napi_value exports);
-
-    VideoConflictAbilityNapi();
-    ~VideoConflictAbilityNapi();
-
-private:
-    static void VideoConflictAbilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value VideoConflictAbilityNapiConstructor(napi_env env, napi_callback_info info);
-
-    napi_env env_;
-    napi_ref wrapper_;
-    static thread_local napi_ref sConstructor_;
+    static const std::map<FunctionsType, const char*> functionsNameMap_;
+    static const std::map<FunctionsType, Descriptor> functionsDescMap_;
 };
 }
 }

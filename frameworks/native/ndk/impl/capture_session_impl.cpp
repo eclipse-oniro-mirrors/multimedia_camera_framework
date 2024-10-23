@@ -21,7 +21,7 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
-const int32_t ARGS_TWO = 2;
+
 const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
     {Camera_SceneMode::NORMAL_PHOTO, SceneMode::CAPTURE},
     {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
@@ -516,6 +516,7 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureBiasRange(float* minExposureB
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBiasRange is called");
 
     std::vector<float> vecExposureBiasList = innerCaptureSession_->GetExposureBiasRange();
+    constexpr int32_t ARGS_TWO = 2;
     if (!vecExposureBiasList.empty() && vecExposureBiasList.size() >= ARGS_TWO) {
         *minExposureBias = vecExposureBiasList[0];
         *maxExposureBias = vecExposureBiasList[1];

@@ -43,13 +43,13 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
     switch (cameraFormat) {
         case CAMERA_FORMAT_YCBCR_420_888:
             return OHOS_CAMERA_FORMAT_YCBCR_420_888;
-        case CAMERA_FORMAT_YUV_420_SP:
+        case CAMERA_FORMAT_YUV_420_SP: // nv21
             return OHOS_CAMERA_FORMAT_YCRCB_420_SP;
         case CAMERA_FORMAT_YCBCR_P010:
             return OHOS_CAMERA_FORMAT_YCBCR_P010;
         case CAMERA_FORMAT_YCRCB_P010:
             return OHOS_CAMERA_FORMAT_YCRCB_P010;
-        case CAMERA_FORMAT_NV12:
+        case CAMERA_FORMAT_NV12: // nv12
             return OHOS_CAMERA_FORMAT_YCBCR_420_SP;
         case CAMERA_FORMAT_YUV_422_YUYV:
             return OHOS_CAMERA_FORMAT_422_YUYV;
@@ -162,6 +162,13 @@ int32_t PreviewOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
     }
+    return CAMERA_OK;
+}
+
+int32_t PreviewOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+{
+    MEDIA_INFO_LOG("PreviewOutput::OnDeferredVideoEnhancementInfo called");
+    // empty impl
     return CAMERA_OK;
 }
 
@@ -295,9 +302,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
         CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed EnableSketch!, session not config");
 
     if (isEnable) {
-        if (sketchWrapper_ != nullptr) {
-            return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-        }
+        CHECK_ERROR_RETURN_RET(sketchWrapper_ != nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
         auto sketchSize = FindSketchSize();
         CHECK_ERROR_RETURN_RET_LOG(sketchSize == nullptr, ServiceToCameraError(errCode),
             "PreviewOutput EnableSketch FindSketchSize is null");
@@ -307,9 +312,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     }
 
     // Disable sketch branch
-    if (sketchWrapper_ == nullptr) {
-        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-    }
+    CHECK_ERROR_RETURN_RET(sketchWrapper_ == nullptr, ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED));
     errCode = sketchWrapper_->Destroy();
     sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
@@ -629,7 +632,6 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
-        MEDIA_ERR_LOG("canSetFrameRateRange item0:%{public}d item1:%{public}d!", item[minIndex], item[maxIndex]);
         if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
             return CameraErrorCode::SUCCESS;
         }
@@ -637,7 +639,6 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;
 }
-
 int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
 {
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation is called");
@@ -700,7 +701,6 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     } else {
         MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
     }
-    MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return result;
 }
 } // namespace CameraStandard

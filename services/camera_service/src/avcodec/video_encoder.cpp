@@ -14,22 +14,10 @@
  */
 
 #include "video_encoder.h"
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-#include "frame_record.h"
-#include "surface_type.h"
-#include "external_window.h"
 #include "sample_callback.h"
 #include "camera_log.h"
-#include <chrono>
-#include <fcntl.h>
-#include <cinttypes>
-#include <unistd.h>
-#include <memory>
 #include <sync_fence.h>
-#include "surface_utils.h"
-#include <cinttypes>
+#include "native_window.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +25,16 @@ namespace CameraStandard {
 VideoEncoder::~VideoEncoder()
 {
     MEDIA_INFO_LOG("~VideoEncoder enter");
+    if (codecSurface_) {
+        MEDIA_INFO_LOG("codecSurface refCount %{public}d", codecSurface_->GetSptrRefCount());
+    }
     Release();
+}
+
+VideoEncoder::VideoEncoder(VideoCodecType type) : videoCodecType_(type)
+{
+    rotation_ = 0;
+    MEDIA_INFO_LOG("VideoEncoder enter");
 }
 
 int32_t VideoEncoder::Create(const std::string &codecMime)
@@ -85,19 +82,17 @@ int32_t VideoEncoder::GetSurface()
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     int ret = OH_VideoEncoder_GetSurface(encoder_, &nativeWindow);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Get surface failed, ret: %{public}d", ret);
-    uint64_t  surfaceId;
-    ret = OH_NativeWindow_GetSurfaceId(nativeWindow, &surfaceId);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Get surfaceId failed, ret: %{public}d", ret);
-    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(surfaceId);
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, 1, "Surface is null");
     surfaceMutex_.lock();
-    codecSurface_ = surface;
+    codecSurface_ = nativeWindow->surface;
+    OH_NativeWindow_DestroyNativeWindow(nativeWindow);
+    CHECK_AND_RETURN_RET_LOG(codecSurface_ != nullptr, 1, "Surface is null");
     surfaceMutex_.unlock();
     return 0;
 }
 
 int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
+    CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(frameRecord->GetSurfaceBuffer() != nullptr, 1,
         "SurfaceBuffer is released %{public}s", frameRecord->GetFrameId().c_str());
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
@@ -172,11 +167,10 @@ int32_t VideoEncoder::FreeOutputData(uint32_t bufferIndex)
 
 int32_t VideoEncoder::Stop()
 {
+    CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
-    int ret = OH_VideoEncoder_Flush(encoder_);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Flush failed, ret: %{public}d", ret);
-    ret = OH_VideoEncoder_Stop(encoder_);
+    int ret = OH_VideoEncoder_Stop(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     isStarted_ = false;
     return 0;
@@ -187,7 +181,12 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
     Release();
     size_ = size;
     rotation_ = rotation;
-    Create(MIME_VIDEO_AVC.data());
+    MEDIA_INFO_LOG("VideoEncoder videoCodecType_ = %{public}d", videoCodecType_);
+    if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC) {
+        Create(MIME_VIDEO_AVC.data());
+    } else if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC) {
+        Create(MIME_VIDEO_HEVC.data());
+    }
     Config();
     GetSurface();
     Start();
@@ -240,7 +239,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         return false;
     }
     keyFrameInterval_--;
-    int32_t retryCount = 10;
+    int32_t retryCount = 5;
     while (retryCount > 0) {
         retryCount--;
         std::unique_lock<std::mutex> contextLock(contextMutex_);

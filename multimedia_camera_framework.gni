@@ -14,6 +14,7 @@ graphic_surface_path = "//foundation/graphic/graphic_surface"
 graphic_2d_path = "//foundation/graphic/graphic_2d"
 multimedia_camera_framework_path = "//foundation/multimedia/camera_framework"
 multimedia_image_framework_path = "//foundation/multimedia/image_framework"
+multimedia_media_library_path = "//foundation/multimedia/media_library"
 driver_camera_path = "//drivers/interface/camera"
 third_party_path = "//third_party/googletest"
 driver_peripheral_path = "//drivers/peripheral/camera"
@@ -21,7 +22,6 @@ base_security_path = "//base/security/access_token"
 driver_disply_path = "//drivers/peripheral/display"
 window_manager_path = "//foundation/window/window_manager"
 system_safwk_path = "//utils/system/safwk"
-multimedia_media_library_path = "//foundation/multimedia/media_library"
 
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
@@ -32,6 +32,18 @@ use_thermal_manager = false
 if (defined(global_parts_info) &&
     defined(global_parts_info.powermgr_thermal_manager)) {
   use_thermal_manager = true
+}
+
+use_battery_manager = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.powermgr_battery_manager)) {
+  use_battery_manager = true
+}
+
+use_power_manager = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.powermgr_power_manager)) {
+  use_power_manager = true
 }
 
 gen_camera_picker = true

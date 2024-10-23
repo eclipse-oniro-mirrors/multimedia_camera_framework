@@ -195,7 +195,6 @@ Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange*
 
     return CAMERA_OK;
 }
-
 Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     Camera_ImageRotation* cameraImageRotation)
 {

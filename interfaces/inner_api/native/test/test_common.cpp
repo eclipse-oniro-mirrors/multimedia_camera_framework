@@ -53,48 +53,32 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 {
     char path[PATH_MAX] = {0};
     int32_t retVal;
-
-    if ((buffer == nullptr) || (size == 0)) {
-        MEDIA_ERR_LOG("buffer is null or size is 0");
-        return -1;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG((buffer == nullptr) || (size == 0), -1, "buffer is null or size is 0");
     MEDIA_DEBUG_LOG("TestUtils::SaveYUV(), type: %{public}d", type);
     if (type == SurfaceType::PREVIEW) {
         (void)system("mkdir -p /data/media/preview");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/preview/%s_%lld.yuv", "preview",
                            GetCurrentLocalTimeStamp());
-        if (retVal < 0) {
-            MEDIA_ERR_LOG("Path Assignment failed");
-            return -1;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
     } else if (type == SurfaceType::PHOTO) {
         (void)system("mkdir -p /data/media/photo");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/photo/%s_%lld.jpg", "photo",
                            GetCurrentLocalTimeStamp());
-        if (retVal < 0) {
-            MEDIA_ERR_LOG("Path Assignment failed");
-            return -1;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
     } else if (type == SurfaceType::SECOND_PREVIEW) {
         (void)system("mkdir -p /data/media/preview2");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]), "/data/media/preview2/%s_%lld.yuv", "preview2",
                            GetCurrentLocalTimeStamp());
-        if (retVal < 0) {
-            MEDIA_ERR_LOG("Path Assignment failed");
-            return -1;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Path Assignment failed");
     } else {
         MEDIA_ERR_LOG("Unexpected flow!");
         return -1;
     }
 
-    MEDIA_DEBUG_LOG("%s, saving file to %{private}s", __FUNCTION__, path);
+    MEDIA_DEBUG_LOG("TestUtils::SaveYUV saving file to %{private}s", path);
     int imgFd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
-    if (imgFd == -1) {
-        MEDIA_ERR_LOG("%s, open file failed, errno = %{public}s.", __FUNCTION__, strerror(errno));
-        return -1;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(imgFd == -1, -1, "TestUtils::SaveYUV open file failed, errno = %{public}s.",
+        strerror(errno));
     int ret = write(imgFd, buffer, size);
     if (ret == -1) {
         MEDIA_ERR_LOG("%s, write file failed, error = %{public}s", __FUNCTION__, strerror(errno));
@@ -125,10 +109,7 @@ int32_t TestUtils::SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode
         (void)system("mkdir -p /data/media/video");
         retVal = sprintf_s(path, sizeof(path) / sizeof(path[0]),
                            "/data/media/video/%s_%lld.h264", "video", GetCurrentLocalTimeStamp());
-        if (retVal < 0) {
-            MEDIA_ERR_LOG("Failed to create video file name");
-            return -1;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(retVal < 0, -1, "Failed to create video file name");
         MEDIA_DEBUG_LOG("%{public}s, save video to file %{private}s", __FUNCTION__, path);
         fd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
         if (fd == -1) {
@@ -284,6 +265,11 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
+void TestVideoOutputCallback::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const
+{
+    MEDIA_INFO_LOG("TestVideoOutputCallback:OnDeferredVideoEnhancementInfo()");
+}
+
 TestMetadataOutputObjectCallback::TestMetadataOutputObjectCallback(const char* testName) : testName_(testName) {
 }
 
@@ -304,9 +290,21 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
                                                               const uint8_t* addr,
-                                                              const long bytes)
+                                                              const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
 }
 
 void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)

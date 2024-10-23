@@ -26,7 +26,11 @@ class DeferredPhotoProcessingSessionCallbackProxy : public IRemoteProxy<IDeferre
 public:
     explicit DeferredPhotoProcessingSessionCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~DeferredPhotoProcessingSessionCallbackProxy() = default;
-    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, long bytes) override;
+    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudEnhancementAvailable) override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture)override;
+    int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, long bytes,
+        bool isCloudEnhancementAvailable) override;
     int32_t OnError(const std::string &imageId, ErrorCode errorCode) override;
     int32_t OnStateChanged(StatusCode status) override;
 

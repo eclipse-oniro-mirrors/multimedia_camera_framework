@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 
 #include <list>
+#include <atomic>
 
 #include "ipc_file_descriptor.h"
 #include "safe_map.h"
@@ -67,6 +68,9 @@ private:
     class SessionDeathRecipient;
 
     void OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo);
+
+    void OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo);
+
     void OnError(const std::string& imageId,  DpsError errorCode);
     void OnStateChanged(HdiStatus HdiStatus);
     bool ConnectServiceIfNecessary();

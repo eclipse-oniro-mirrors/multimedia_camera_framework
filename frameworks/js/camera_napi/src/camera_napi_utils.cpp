@@ -413,6 +413,30 @@ napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vecto
     return result;
 }
 
+napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status status,
+    std::vector<int32_t> nativeArray)
+{
+    MEDIA_DEBUG_LOG("CreateJSArray is called");
+    napi_value jsArray = nullptr;
+    napi_value item = nullptr;
+
+    if (nativeArray.empty()) {
+        MEDIA_ERR_LOG("nativeArray is empty");
+    }
+
+    status = napi_create_array(env, &jsArray);
+    if (status == napi_ok) {
+        for (size_t i = 0; i < nativeArray.size(); i++) {
+            napi_create_int32(env, nativeArray[i], &item);
+            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
+                return nullptr;
+            }
+        }
+    }
+    return jsArray;
+}
+
 napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
     std::vector<MetadataObjectType> &metadataObjectTypes)
 {
@@ -430,7 +454,7 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
         if (type != napi_number) {
             return nullptr;
         }
-        if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) &&
+        if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) ||
             metadataType > static_cast<int32_t>(MetadataObjectType::BAR_CODE_DETECTION)) {
             metadataType = invalidType;
         }

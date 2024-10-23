@@ -16,9 +16,6 @@
 #ifndef OHOS_CAMERA_DPS_SCHEDULER_COORDINATOR_H
 #define OHOS_CAMERA_DPS_SCHEDULER_COORDINATOR_H
 
-#include <memory>
-#include <unordered_map>
-
 #include "deferred_photo_controller.h"
 #include "deferred_photo_processor.h"
 
@@ -37,7 +34,7 @@ public:
 private:
     void SwitchController();
 
-    std::map<int, std::shared_ptr<DeferredPhotoController>> photoControllers_;
+    std::map<int, std::shared_ptr<DeferredPhotoController>> photoControllers_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

@@ -28,7 +28,7 @@ namespace {
 void FillSizeListFromStreamInfo(
     vector<Size>& sizeList, const StreamInfo& streamInfo, const camera_format_t targetFormat)
 {
-    for (const auto &detail : streamInfo.detailInfos) {
+    for (const auto& detail : streamInfo.detailInfos) {
         camera_format_t hdi_format = static_cast<camera_format_t>(detail.format);
         if (hdi_format != targetFormat) {
             continue;
@@ -83,9 +83,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromExtendConfig(
     const int32_t modeName, camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS);
-    if (item == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
     ExtendInfo extendInfo = {};
@@ -119,9 +117,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
     auto item = MetadataCommonUtils::GetCapabilityEntry(metadata, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
-    if (item == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(item == nullptr, nullptr);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
     const uint32_t widthOffset = 1;
@@ -147,9 +143,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
 std::shared_ptr<camera_metadata_item_t> MetadataCommonUtils::GetCapabilityEntry(
     const std::shared_ptr<Camera::CameraMetadata> metadata, uint32_t metadataTag)
 {
-    if (metadata == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, nullptr);
     std::shared_ptr<camera_metadata_item_t> item = std::make_shared<camera_metadata_item_t>();
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, item.get());
     if (retCode != CAM_META_SUCCESS || item->count == 0) {
@@ -204,21 +198,14 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
 std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
     const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
 {
-    if (srcMetadata == nullptr) {
-        MEDIA_ERR_LOG("CopyMetadata fail,src is null");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(srcMetadata == nullptr, nullptr, "CopyMetadata fail,src is null");
     auto oldMetadata = srcMetadata->get();
-    if (oldMetadata == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(oldMetadata == nullptr, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> result =
         std::make_shared<OHOS::Camera::CameraMetadata>(oldMetadata->item_capacity, oldMetadata->data_capacity);
     auto newMetadata = result->get();
     int32_t ret = OHOS::Camera::CopyCameraMetadataItems(newMetadata, oldMetadata);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CopyCameraMetadataItems failed ret:%{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != CAM_META_SUCCESS, "CopyCameraMetadataItems failed ret:%{public}d", ret);
     return result;
 }
 
@@ -251,24 +238,18 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
         [currentMode](auto value) -> bool {
             return currentMode == value[0];
         });
-    if (it == modeRanges.end()) {
-        MEDIA_ERR_LOG("ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(it == modeRanges.end(), {},
+        "ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
 
     return *it;
 }
 
 std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_header_t* src, uint32_t tag)
 {
-    if (src == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(src == nullptr, nullptr);
     auto item = std::make_shared<camera_metadata_item_t>();
     int32_t ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(src, tag, item.get());
-    if (ret != CAM_META_SUCCESS) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS, nullptr);
     return item;
 }
 } // namespace CameraStandard

@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_PHOTO_OUTPUT_H
 #define OHOS_CAMERA_PHOTO_OUTPUT_H
 
+#include <atomic>
 #include <cstdint>
 #include <iostream>
 #include <mutex>
@@ -24,7 +25,11 @@
 #include "capture_output.h"
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
+#include "camera_photo_proxy.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
 
@@ -203,7 +208,7 @@ public:
      * @param location value to be set.
      */
     void SetLocation(std::shared_ptr<Location>& location);
-    
+
     /**
      * @brief Get the GPS Location for the photo capture settings.
      *
@@ -217,7 +222,7 @@ public:
      * @param boolean true/false to set/unset mirror respectively.
      */
     void SetMirror(bool enable);
-        
+
     /**
      * @brief Get mirror information for the photo capture settings.
      *
@@ -269,18 +274,25 @@ public:
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
 
     /**
-     * @brief Get the photo rotation.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPhotoRotation(int32_t imageRotation);
-
-    /**
      * @brief Set the Thumbnail profile.
      *
      * @param isEnabled quickThumbnail is enabled.
      */
     int32_t SetThumbnail(bool isEnabled);
+
+    /**
+     * @brief To enable the raw imgage delivery.
+     *
+     * @return Returns the result of the raw imgage delivery enable.
+     */
+    int32_t EnableRawDelivery(bool enabled);
+
+    /**
+     * @brief Get the photo rotation.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPhotoRotation(int32_t imageRotation);
 
     /**
      * @brief Set the Thumbnail profile.
@@ -355,6 +367,13 @@ public:
     int32_t IsQuickThumbnailSupported();
 
     /**
+     * @brief To check the raw image devlivery is supported or not.
+     *
+     * @return Returns true/false if the raw image devlivery is supported/not-supported respectively.
+     */
+    int32_t IsRawDeliverySupported();
+
+    /**
      * @brief Set the deferredImageDelivery type.
      *
      */
@@ -373,9 +392,9 @@ public:
     void SetCallbackFlag(uint8_t callbackFlag);
 
     /**
-     * @brief Set the flag when on native surface.
-     */
-    void SetNativeSurface(bool isNativeSurface);
+    * @brief Set the flag when on native surface.
+    */
+    void SetNativeSurface(bool SetNativeSurface);
 
     /**
      * @brief To check the deferredImageDelivery capability is enable or not.
@@ -408,11 +427,27 @@ public:
     bool IsEnableDeferred();
 
     /**
+     * @brief Check whether the current mode supports auto cloud image enhance.
+     *
+     * @return Return the supported result.
+     */
+    int32_t IsAutoCloudImageEnhancementSupported(bool& isAutoCloudImageEnhancementSupported);
+
+    /**
+     * @brief To enable the auto cloud image enhuance.
+     *
+     * @return Returns the result of the auto cloud image enhuance enable.
+     */
+    int32_t EnableAutoCloudImageEnhancement(bool enabled);
+
+    /**
      * @brief Get default photo capture setting.
      *
      * @return default photo capture setting.
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
+    
+    int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType);
 
     /**
      * @brief Check the depth data delivery capability is supported or not.
@@ -423,13 +458,34 @@ public:
      * @brief Enable the depth data delivery.
      */
     int32_t EnableDepthDataDelivery(bool enabled);
-
+    
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;
 
     sptr<Surface> deferredSurface_;
 
+    sptr<Surface> gainmapSurface_;
+    sptr<Surface> deepSurface_;
+    sptr<Surface> exifSurface_;
+    sptr<Surface> debugSurface_;
+    sptr<SurfaceBuffer> gainmapSurfaceBuffer_;
+    sptr<SurfaceBuffer> deepSurfaceBuffer_;
+    sptr<SurfaceBuffer> exifSurfaceBuffer_;
+    sptr<SurfaceBuffer> debugSurfaceBuffer_;
+    bool IsYuvOrHeifPhoto();
+    void CreateMultiChannel();
+
+    void SetAuxiliaryPhotoHandle(uint32_t handle);
+    uint32_t GetAuxiliaryPhotoHandle();
+    sptr<CameraPhotoProxy> photoProxy_;
+    uint32_t watchDogHandle_;
+    std::mutex watchDogHandleMutex_;
+    std::map<int32_t, int32_t> caputreIdAuxiliaryCountMap_;
+    std::map<int32_t, int32_t> caputreIdCountMap_;
+    std::map<int32_t, uint32_t> caputreIdHandleMap_;
+    std::map<int32_t, std::unique_ptr<Media::Picture>> caputreIdPictureMap_;
+    std::atomic<bool> isRawImageDelivery_ = false;
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;

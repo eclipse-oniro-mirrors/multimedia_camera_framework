@@ -29,6 +29,7 @@ enum {
 
 void SetThreadName(pthread_t tid, const std::string& name);
 void SetThreadPriority(pthread_t tid, int priority);
+int GetThreadPriority(pthread_t tid);
 } //namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

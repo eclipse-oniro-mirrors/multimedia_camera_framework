@@ -25,34 +25,22 @@
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "dps_metadata_info.h"
 #include "hcamera_service_proxy.h"
+#include "deferred_type.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
 namespace OHOS {
 namespace CameraStandard {
-enum DpsErrorCode {
-    // session specific error code
-    ERROR_SESSION_SYNC_NEEDED = 0,
-    ERROR_SESSION_NOT_READY_TEMPORARILY = 1,
-
-    // process error code
-    ERROR_IMAGE_PROC_INVALID_PHOTO_ID = 2,
-    ERROR_IMAGE_PROC_FAILED = 3,
-    ERROR_IMAGE_PROC_TIMEOUT = 4,
-    ERROR_IMAGE_PROC_ABNORMAL = 5,
-    ERROR_IMAGE_PROC_INTERRUPTED = 6,
-};
-
-enum DpsStatusCode {
-    SESSION_STATE_IDLE = 0,
-    SESSION_STATE_RUNNALBE,
-    SESSION_STATE_RUNNING,
-    SESSION_STATE_SUSPENDED,
-};
-
 class IDeferredPhotoProcSessionCallback : public RefBase {
 public:
     IDeferredPhotoProcSessionCallback() = default;
     virtual ~IDeferredPhotoProcSessionCallback() = default;
-    virtual void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes) = 0;
+    virtual void OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudImageEnhanceSupported) = 0;
+    virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture) = 0;
+    virtual void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
+        bool isCloudImageEnhanceSupported) = 0;
     virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
 };
@@ -98,7 +86,10 @@ public:
     }
 
     int32_t OnProcessImageDone(const std::string &imageId, const sptr<IPCFileDescriptor> ipcFileDescriptor,
-        const long bytes) override;
+        const long bytes, const bool isCloudImageEnhanceSupported) override;
+    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+        bool isCloudImageEnhanceSupported) override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture) override;
     int32_t OnError(const std::string &imageId, const DeferredProcessing::ErrorCode errorCode) override;
     int32_t OnStateChanged(const DeferredProcessing::StatusCode status) override;
 

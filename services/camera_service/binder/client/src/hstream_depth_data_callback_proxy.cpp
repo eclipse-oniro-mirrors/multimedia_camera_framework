@@ -43,4 +43,4 @@ int32_t HStreamDepthDataCallbackProxy::OnDepthDataError(int32_t errorCode)
 }
 
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

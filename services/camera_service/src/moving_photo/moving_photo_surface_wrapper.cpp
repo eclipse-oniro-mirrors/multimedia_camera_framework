@@ -29,17 +29,11 @@ namespace CameraStandard {
 sptr<MovingPhotoSurfaceWrapper> MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(
     int32_t width, int32_t height)
 {
-    if (width <= 0 || height <= 0) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper size "
-                      "invalid, width:%{public}d, height:%{public}d",
-            width, height);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(width <= 0 || height <= 0, nullptr,
+        "CreateMovingPhotoSurfaceWrapper size invalid, width:%{public}d, height:%{public}d", width, height);
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper = new (std::nothrow) MovingPhotoSurfaceWrapper();
-    if (movingPhotoSurfaceWrapper == nullptr) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper fail.");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(movingPhotoSurfaceWrapper == nullptr, nullptr,
+        "MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper fail.");
     bool initResult = movingPhotoSurfaceWrapper->Init(width, height);
     if (initResult) {
         return movingPhotoSurfaceWrapper;
@@ -56,9 +50,7 @@ MovingPhotoSurfaceWrapper::~MovingPhotoSurfaceWrapper()
 sptr<OHOS::IBufferProducer> MovingPhotoSurfaceWrapper::GetProducer() const
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    if (videoSurface_ == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(videoSurface_ == nullptr, nullptr);
     return videoSurface_->GetProducer();
 }
 
@@ -66,36 +58,27 @@ bool MovingPhotoSurfaceWrapper::Init(int32_t width, int32_t height)
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
     videoSurface_ = Surface::CreateSurfaceAsConsumer("movingPhoto");
-    if (videoSurface_ == nullptr) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::Init create surface fail.");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(videoSurface_ == nullptr, false, "Init create surface fail.");
+
     auto err = videoSurface_->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::Init SetDefaultUsage fail.");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(err != GSERROR_OK, false, "MovingPhotoSurfaceWrapper::Init SetDefaultUsage fail.");
+
     bufferConsumerListener_ = new (std::nothrow) BufferConsumerListener(this);
+    CHECK_ERROR_RETURN_RET_LOG(bufferConsumerListener_ == nullptr, false, "New bufferConsumerListener failed.");
+
     err = videoSurface_->RegisterConsumerListener(bufferConsumerListener_);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::Init RegisterConsumerListener fail.");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(err != GSERROR_OK, false, "Init RegisterConsumerListener fail.");
+
     err = videoSurface_->SetDefaultWidthAndHeight(width, height);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::Init SetDefaultWidthAndHeight fail.");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(err != GSERROR_OK, false, "Init SetDefaultWidthAndHeight fail.");
+
     return true;
 }
 
 void MovingPhotoSurfaceWrapper::OnBufferArrival()
 {
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
-    if (videoSurface_ == nullptr) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival surface is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(videoSurface_ == nullptr, "MovingPhotoSurfaceWrapper::OnBufferArrival surface is nullptr");
     auto transform = videoSurface_->GetTransform();
     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival queueSize %{public}u, transform %{public}d",
         videoSurface_->GetQueueSize(), transform);
@@ -105,26 +88,21 @@ void MovingPhotoSurfaceWrapper::OnBufferArrival()
     sptr<SurfaceBuffer> buffer;
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     GSError err = videoSurface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to acquire surface buffer");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK, "Failed to acquire surface buffer");
 
     auto surfaceBufferListener = GetSurfaceBufferListener();
     if (surfaceBufferListener == nullptr) {
         MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival surfaceBufferListener_ is nullptr.");
         err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
-        if (err != GSERROR_OK) {
-            MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival ReleaseBuffer fail.");
-        }
+        CHECK_ERROR_PRINT_LOG(err != GSERROR_OK,
+            "MovingPhotoSurfaceWrapper::OnBufferArrival ReleaseBuffer fail.");
         return;
     }
 
     err = videoSurface_->DetachBufferFromQueue(buffer);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK,
+        "MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
+
     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     surfaceBufferListener->OnBufferArrival(buffer, timestamp, transform);
@@ -148,15 +126,9 @@ void MovingPhotoSurfaceWrapper::RecycleBuffer(sptr<SurfaceBuffer> buffer)
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
 
     GSError err = videoSurface_->AttachBufferToQueue(buffer);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to attach buffer %{public}d", err);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK, "Failed to attach buffer %{public}d", err);
     err = videoSurface_->ReleaseBuffer(buffer, SyncFence::INVALID_FENCE);
-    if (err != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to Release Buffer %{public}d", err);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(err != GSERROR_OK, "Failed to Release buffer %{public}d", err);
 }
 } // namespace CameraStandard
 } // namespace OHOS

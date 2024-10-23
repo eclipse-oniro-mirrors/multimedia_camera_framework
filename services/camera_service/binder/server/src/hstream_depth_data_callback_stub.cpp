@@ -45,4 +45,4 @@ int HStreamDepthDataCallbackStub::HandleOnDepthDataError(MessageParcel& data)
 }
 
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

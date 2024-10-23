@@ -14,6 +14,9 @@
  */
 
 #include "camera_device_fuzzer.h"
+#include "camera_log.h"
+#include "camera_xcollie.h"
+#include "input/camera_manager.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "access_token.h"
@@ -27,7 +30,7 @@ namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const size_t LIMITCOUNT = 4;
-const int32_t LIMITSIZE = 2;
+const int32_t NUM_2 = 2;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 bool g_isCameraDevicePermission = false;
@@ -52,7 +55,7 @@ void CameraDeviceFuzzTestGetPermission()
 
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    if (rawData == nullptr || size < NUM_2) {
         return;
     }
     CameraDeviceFuzzTestGetPermission();
@@ -81,9 +84,8 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+        "CameraDeviceFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
@@ -105,7 +107,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
 void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    if (rawData == nullptr || size < NUM_2) {
         return;
     }
     CameraDeviceFuzzTestGetPermission();
@@ -130,21 +132,186 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
-        fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
-        if (fuzzCameraHostManager == nullptr) {
-            return;
-        }
-        fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
-        if (fuzzCameraDevice == nullptr) {
-            return;
-        }
-    }
     if (fuzzCameraDevice) {
+        fuzzCameraDevice->UpdateSettingOnce(ability);
         fuzzCameraDevice->UpdateSetting(ability);
+        auto out = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+        fuzzCameraDevice->GetStatus(ability, out);
+        std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
+        fuzzCameraDevice->UpdateStreams(streamInfos);
+        MessageParcel data;
+        data.WriteRawData(rawData, size);
+        fuzzCameraDevice->CreateAndCommitStreams(streamInfos, ability, data.ReadInt32());
+        vector<uint8_t> result;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(ability, result);
+        fuzzCameraDevice->OnResult(data.ReadUint64(), result);
+        auto type = OHOS::HDI::Camera::V1_0::ErrorType::REQUEST_TIMEOUT;
+        fuzzCameraDevice->OnError(type, data.ReadInt32());
     }
 }
 
+void CameraDeviceFuzzTest2Case1(uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    if (fuzzCameraDevice) {
+        fuzzCameraDevice->GetStreamOperatorCallback();
+        fuzzCameraDevice->GetCallerToken();
+        fuzzCameraDevice->GetDeviceAbility();
+        fuzzCameraDevice->GetCameraType();
+        fuzzCameraDevice->GetCameraId();
+        fuzzCameraDevice->GetStreamOperator();
+    }
+}
+
+void CameraDeviceFuzzTest2Case2(uint8_t *rawData, size_t size)
+{
+    // 运行会出错
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    sptr<ICameraDeviceServiceCallback> callback(new ICameraDeviceServiceCallbackMock());
+    fuzzCameraDevice->SetCallback(callback);
+    wptr<IStreamOperatorCallback> opCallback(new IStreamOperatorCallbackMock());
+    fuzzCameraDevice->SetStreamOperatorCallback(opCallback);
+    vector<int32_t> results{data.ReadInt32()};
+    fuzzCameraDevice->EnableResult(results);
+    fuzzCameraDevice->DisableResult(results);
+    fuzzCameraDevice->CloneCachedSettings();
+    fuzzCameraDevice->DispatchDefaultSettingToHdi();
+    fuzzCameraDevice->Release();
+    fuzzCameraDevice->Close();
+    uint64_t secureSeqId;
+    fuzzCameraDevice->GetSecureCameraSeq(&secureSeqId);
+    fuzzCameraDevice->OpenSecureCamera(&secureSeqId);
+}
+
+void CameraDeviceFuzzTest2Case3(uint8_t *rawData, size_t size)
+{
+    // 运行会出错
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    if (fuzzCameraDevice) {
+        vector<int32_t> streamIds{data.ReadInt32()};
+        fuzzCameraDevice->OnFrameShutter(data.ReadInt32(), streamIds, data.ReadUint64());
+        fuzzCameraDevice->OnFrameShutterEnd(data.ReadInt32(), streamIds, data.ReadUint64());
+        fuzzCameraDevice->OnCaptureReady(data.ReadInt32(), streamIds, data.ReadUint64());
+        vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos{{data.ReadInt32(), data.ReadInt32()}};
+        fuzzCameraDevice->OnCaptureStarted_V1_2(data.ReadInt32(), infos);
+        vector<CaptureEndedInfo> endedInfos{{data.ReadInt32(), data.ReadInt32()}};
+        fuzzCameraDevice->OnCaptureEnded(data.ReadInt32(), endedInfos);
+        vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> endedInfosExt;
+        fuzzCameraDevice->OnCaptureEndedExt(data.ReadInt32(), endedInfosExt);
+        auto err = static_cast<OHOS::HDI::Camera::V1_0::StreamError>(data.ReadInt32());
+        vector<CaptureErrorInfo> errorInfos{{data.ReadInt32(), err}};
+        fuzzCameraDevice->OnCaptureError(data.ReadInt32(), errorInfos);
+        fuzzCameraDevice->OnCaptureStarted(data.ReadInt32(), streamIds);
+    }
+}
+
+void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < NUM_2) {
+        return;
+    }
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    if (fuzzCameraDevice) {
+        fuzzCameraDevice->OperatePermissionCheck(data.ReadUint32());
+        fuzzCameraDevice->CheckMovingPhotoSupported(data.ReadInt32());
+        fuzzCameraDevice->NotifyCameraStatus(data.ReadInt32());
+        fuzzCameraDevice->RemoveResourceWhenHostDied();
+        fuzzCameraDevice->NotifyCameraSessionStatus(data.ReadBool());
+        std::vector<int32_t> releaseStreamIds;
+        fuzzCameraDevice->ReleaseStreams(releaseStreamIds);
+        fuzzCameraDevice->Open();
+        CameraDeviceFuzzTest2Case1(rawData, size);
+        fuzzCameraDevice->ResetDeviceSettings();
+        fuzzCameraDevice->SetDeviceMuteMode(data.ReadBool());
+        fuzzCameraDevice->IsOpenedCameraDevice();
+        fuzzCameraDevice->CloseDevice();
+    }
+    fuzzCameraDevice = nullptr;
+}
+
+void GetPermission()
+{
+    uint64_t tokenId;
+    const char* perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+}
+
+void Test3(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < NUM_2) {
+        return;
+    }
+    GetPermission();
+    auto manager = CameraManager::GetInstance();
+    auto cameras = manager->GetSupportedCameras();
+    CHECK_AND_RETURN_LOG(cameras.size() >= NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    sptr<CameraDevice> camera = cameras[data.ReadUint32() % cameras.size()];
+    camera->GetID();
+    camera->GetMetadata();
+    camera->ResetMetadata();
+    camera->GetCameraAbility();
+    camera->GetPosition();
+    camera->GetCameraType();
+    camera->GetConnectionType();
+    camera->GetCameraFoldScreenType();
+    camera->GetHostName();
+    camera->GetDeviceType();
+    camera->GetNetWorkId();
+    camera->GetCameraOrientation();
+    camera->GetZoomRatioRange();
+    camera->GetExposureBiasRange();
+    camera->GetModuleType();
+    CameraFormat format = static_cast<CameraFormat>(data.ReadInt32());
+    auto capability = manager->GetSupportedOutputCapability(camera);
+    CHECK_AND_RETURN_LOG(capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
+    vector<Profile> profiles = capability->GetPhotoProfiles();
+    camera->GetMaxSizeProfile(profiles, data.ReadFloat(), format);
+    auto profiles2 = capability->GetVideoProfiles();
+    camera->GetMaxSizeProfile(profiles2, data.ReadFloat(), format);
+}
+
+void TestXCollie(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_2);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    string tag = data.ReadString();
+    uint32_t flag = data.ReadInt32();
+    uint32_t timeoutSeconds = data.ReadUint32();
+    auto func = [](void*) {};
+#ifndef HICOLLIE_ENABLE
+#define HICOLLIE_ENABLE
+#endif
+    {
+        CameraXCollie collie(tag, flag, timeoutSeconds, func, nullptr);
+        collie.CancelCameraXCollie();
+    }
+#undef HICOLLIE_ENABLE
+    {
+        CameraXCollie collie(tag, flag, timeoutSeconds, func, nullptr);
+        collie.CancelCameraXCollie();
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -154,6 +321,9 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
     /* Run your code on data */
     OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
     OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(data, size);
+    OHOS::CameraStandard::CameraDeviceFuzzTest2(data, size);
+    OHOS::CameraStandard::Test3(data, size);
+    OHOS::CameraStandard::TestXCollie(data, size);
     return 0;
 }
 

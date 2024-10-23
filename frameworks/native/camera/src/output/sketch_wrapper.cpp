@@ -48,9 +48,7 @@ int32_t SketchWrapper::Init(
     std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, const SceneFeaturesMode& sceneFeaturesMode)
 {
     sptr<IStreamCommon> hostStream = hostStream_.promote();
-    if (hostStream == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(hostStream == nullptr, CAMERA_INVALID_STATE);
     UpdateSketchStaticInfo(deviceMetadata);
     sketchEnableRatio_ = GetSketchEnableRatio(sceneFeaturesMode);
         SceneFeaturesMode dumpSceneFeaturesMode = sceneFeaturesMode;
@@ -63,12 +61,8 @@ int32_t SketchWrapper::Init(
 
 int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
 {
-    if (sketchStream_ == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
-    if (sketchSurface == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET(sketchStream_ == nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(sketchSurface == nullptr, CAMERA_INVALID_ARG);
     return sketchStream_->AddDeferredSurface(sketchSurface->GetProducer());
 }
 
@@ -226,6 +220,9 @@ void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
         rangeFov = std::move(it->second);
     }
     rangeFov.emplace_back(sketchReferenceFovRange);
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE && sceneFeaturesMode.GetFeatures().empty()) {
+        g_sketchReferenceFovRatioMap_[{ CAPTURE, { FEATURE_TRIPOD_DETECTION } }] = rangeFov;
+    }
     g_sketchReferenceFovRatioMap_[sceneFeaturesMode] = rangeFov;
     if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
         g_sketchReferenceFovRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = rangeFov;
@@ -241,6 +238,9 @@ void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeat
     MEDIA_DEBUG_LOG("SketchWrapper::InsertSketchEnableRatioMapValue %{public}s : %{public}f",
         sceneFeaturesMode.Dump().c_str(), ratioValue);
     std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE && sceneFeaturesMode.GetFeatures().empty()) {
+        g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_TRIPOD_DETECTION } }] = ratioValue;
+    }
     g_sketchEnableRatioMap_[sceneFeaturesMode] = ratioValue;
     if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
         g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = ratioValue;

@@ -104,11 +104,9 @@ int32_t HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &r
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadataIn);
 
     int errCode = GetStatus(metadataIn, metadataOut);
-
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadataOut, reply))) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleGetStatus write metadata failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    bool result = OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadataOut, reply);
+    CHECK_ERROR_RETURN_RET_LOG(!result, IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetStatus write metadata failed");
 
     return errCode;
 }
@@ -117,13 +115,10 @@ int32_t HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
 {
     std::vector<int32_t> results;
     int ret = GetEnabledResults(results);
-    if (ret != ERR_NONE) {
-        MEDIA_ERR_LOG("CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", ret);
-        return ret;
-    }
-
-    CHECK_AND_RETURN_RET_LOG(reply.WriteInt32Vector(results), IPC_STUB_WRITE_PARCEL_ERR,
-                             "HCameraDeviceStub::HandleGetEnabledResults write results failed");
+    CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
+        "CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32Vector(results), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraDeviceStub::HandleGetEnabledResults write results failed");
 
     return ret;
 }
@@ -131,13 +126,12 @@ int32_t HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
 int32_t HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
-    CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
-                             "CameraDeviceStub::HandleEnableResult read results failed");
+    CHECK_ERROR_RETURN_RET_LOG(!data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
+        "CameraDeviceStub::HandleEnableResult read results failed");
 
     int ret = EnableResult(results);
-    if (ret != ERR_NONE) {
-        MEDIA_ERR_LOG("CameraDeviceStub::HandleEnableResult EnableResult failed : %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+        "CameraDeviceStub::HandleEnableResult EnableResult failed : %{public}d", ret);
 
     return ret;
 }
@@ -145,13 +139,12 @@ int32_t HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
 int32_t HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
-    CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
-                             "CameraDeviceStub::HandleDisableResult read results failed");
+    CHECK_ERROR_RETURN_RET_LOG(!data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
+        "CameraDeviceStub::HandleDisableResult read results failed");
 
     int ret = DisableResult(results);
-    if (ret != ERR_NONE) {
-        MEDIA_ERR_LOG("CameraDeviceStub::HandleDisableResult DisableResult failed : %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+        "CameraDeviceStub::HandleDisableResult DisableResult failed : %{public}d", ret);
 
     return ret;
 }
@@ -163,11 +156,9 @@ int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, Me
     if (data.ReadBool()) {
         uint64_t secureSeqId = 0L;
         errorCode = OpenSecureCamera(&secureSeqId);
-        if (errorCode != ERR_NONE) {
-            MEDIA_ERR_LOG("CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", errorCode);
-            return errorCode;
-        }
-        CHECK_AND_RETURN_RET_LOG(reply.WriteInt64(secureSeqId), IPC_STUB_WRITE_PARCEL_ERR,
+        CHECK_ERROR_RETURN_RET_LOG(errorCode != ERR_NONE, errorCode,
+            "HCameraDeviceStub::openSecureCamera failed : %{public}d", errorCode);
+        CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt64(secureSeqId), IPC_STUB_WRITE_PARCEL_ERR,
             "HCameraDeviceStub::openSecureCamera write results failed");
     } else {
         errorCode = Open();

@@ -50,21 +50,21 @@ int64_t SharedBuffer::GetSize()
 
 int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
 {
-    DP_CHECK_AND_RETURN_RET_LOG(bytes <= capacity_, DP_INVALID_PARAM,
+    DP_CHECK_ERROR_RETURN_RET_LOG(bytes > capacity_, DP_INVALID_PARAM,
         "buffer failed due to invalid size: %{public}ld, capacity: %{public}ld",
         static_cast<long>(bytes), static_cast<long>(capacity_));
-    DP_CHECK_AND_RETURN_RET_LOG(ashmem_ != nullptr, DP_INIT_FAIL, "ashmem is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL, "ashmem is nullptr.");
     DP_DEBUG_LOG("capacity: %{public}ld, bytes: %{public}ld",
         static_cast<long>(capacity_), static_cast<long>(bytes));
     auto ret = ashmem_->WriteToAshmem(address, bytes, 0);
-    DP_CHECK_AND_RETURN_RET_LOG(ret, DP_ERR, "copy failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_ERR, "copy failed.");
     return DP_OK;
 }
 
 void SharedBuffer::Reset()
 {
     auto offset = lseek(GetFd(), 0, SEEK_SET);
-    DP_CHECK_AND_PRINT_LOG(offset == DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
+    DP_CHECK_ERROR_PRINT_LOG(offset != DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
     DP_INFO_LOG("reset success.");
 }
 
@@ -72,12 +72,12 @@ int32_t SharedBuffer::AllocateAshmemUnlocked()
 {
     std::string_view name = "DPS ShareMemory";
     ashmem_ = Ashmem::CreateAshmem(name.data(), capacity_);
-    DP_CHECK_AND_RETURN_RET_LOG(ashmem_ != nullptr, DP_INIT_FAIL,
+    DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL,
         "buffer create ashmem failed. capacity: %{public}ld", static_cast<long>(capacity_));
     int fd = ashmem_->GetAshmemFd();
     DP_DEBUG_LOG("size: %{public}ld, fd: %{public}d", static_cast<long>(capacity_), fd);
     auto ret = ashmem_->MapReadAndWriteAshmem();
-    DP_CHECK_AND_RETURN_RET_LOG(ret, DP_MEM_MAP_FAILED, "mmap failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_MEM_MAP_FAILED, "mmap failed.");
     return DP_OK;
 }
 

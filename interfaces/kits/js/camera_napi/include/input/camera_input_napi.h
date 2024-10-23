@@ -60,18 +60,23 @@ class OcclusionDetectCallbackListener : public CameraOcclusionDetectCallback,
 public:
     OcclusionDetectCallbackListener(napi_env env) : ListenerBase(env) {}
     ~OcclusionDetectCallbackListener() = default;
-    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const override;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
+                                   const uint8_t isCameraLensDirty) const override;
  
 private:
-    void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusionDetect) const;
-    void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusionDetect) const;
+    void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusion,
+                                           const uint8_t isCameraLensDirty) const;
+    void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusion,
+                                                const uint8_t isCameraLensDirty) const;
 };
  
 struct CameraOcclusionDetectResult {
     uint8_t isCameraOccluded_;
+    uint8_t isCameraLensDirty_;
     weak_ptr<const OcclusionDetectCallbackListener> listener_;
-    CameraOcclusionDetectResult(uint8_t isCameraOccluded, shared_ptr<const OcclusionDetectCallbackListener> listener)
-        : isCameraOccluded_(isCameraOccluded), listener_(listener) {}
+    CameraOcclusionDetectResult(uint8_t isCameraOccluded, uint8_t isCameraLensDirty,
+        shared_ptr<const OcclusionDetectCallbackListener> listener)
+        : isCameraOccluded_(isCameraOccluded), isCameraLensDirty_(isCameraLensDirty), listener_(listener) {}
 };
 
 class CameraInputNapi : public CameraNapiEventEmitter<CameraInputNapi> {

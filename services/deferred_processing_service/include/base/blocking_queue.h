@@ -100,6 +100,21 @@ public:
         cvFull_.notify_one();
         return el;
     }
+    T Front()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!isActive_) {
+            return {};
+        }
+        if (que_.empty()) {
+            cvEmpty_.wait(lock, [this] { return !isActive_ || !que_.empty(); });
+        }
+        if (!isActive_) {
+            return {};
+        }
+        T el = que_.front();
+        return el;
+    }
     T Pop(int timeoutMs)
     {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -115,6 +130,22 @@ public:
         T el = que_.front();
         que_.pop();
         cvFull_.notify_one();
+        return el;
+    }
+    std::optional<T> GetBackElement(int timeoutMs)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!isActive_) {
+            return std::nullopt;
+        }
+        if (que_.empty()) {
+            cvEmpty_.wait_for(lock, std::chrono::milliseconds(timeoutMs),
+                [this] { return !isActive_ || !que_.empty(); });
+        }
+        if (!isActive_ || que_.empty()) {
+            return std::nullopt;
+        }
+        T el = que_.back();
         return el;
     }
     void Clear()

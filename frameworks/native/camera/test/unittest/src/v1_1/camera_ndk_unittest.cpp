@@ -1648,6 +1648,69 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_045, TestSize.Level0)
 
 /*
  * Feature: Framework
+ * Function: Test photo capture with location of capture settings
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo capture with capture settings
+ */
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    EXPECT_NE(PhotoOutput, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+
+    Camera_PhotoCaptureSetting capSettings;
+    capSettings.rotation = IAMGE_ROTATION_90;
+    Camera_Location location = {1.0, 1.0, 1.0};
+    capSettings.location = &location;
+    ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
+    EXPECT_EQ(ret, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+    location = {0, 0, 0};
+    capSettings.location = &location;
+    ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_PhotoOutput_Release(PhotoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
  * Function: Test photo capture with capture settings
  * SubFunction: NA
  * FunctionPoints: NA
@@ -2211,6 +2274,31 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_064, TestSize.Level0)
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
     ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager create input with position and type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager create input with position and type
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_001, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_Input *camInputPosAndType = nullptr;
+    Camera_Position cameraPosition = Camera_Position::CAMERA_POSITION_BACK;
+    Camera_Type cameraType = Camera_Type::CAMERA_TYPE_DEFAULT;
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+                                                                 cameraPosition, cameraType, &camInputPosAndType);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&camInputPosAndType, nullptr);
+
+    cameraPosition  = Camera_Position::CAMERA_POSITION_FRONT;
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+                                                                 cameraPosition, cameraType, &camInputPosAndType);
+    EXPECT_EQ(ret, CAMERA_OK);
 }
 
 /*
@@ -3818,6 +3906,30 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_036, TestSize.Level0)
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test camera orientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camera orientation
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_037, TestSize.Level0)
+{
+    Camera_Input *cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    
+    uint32_t orientation = 0;
+    ret = OH_CameraDevice_GetCameraOrientation(cameraDevice, &orientation);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
 }
 
 /*

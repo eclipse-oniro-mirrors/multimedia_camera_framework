@@ -35,7 +35,7 @@ int DeferredPhotoProcessingSessionStub::OnRemoteRequest(uint32_t code, MessagePa
     MessageParcel& reply, MessageOption& option)
 {
     int errCode = -1;
-    DP_CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    DP_CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     
     switch (code) {
         case static_cast<uint32_t>(DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE): {

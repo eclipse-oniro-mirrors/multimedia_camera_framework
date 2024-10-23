@@ -49,6 +49,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL):
             errCode = HandleSetThumbnail(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY):
+            errCode = HandleEnableRawDelivery(data);
+            break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE):
             errCode = HandleEnableDeferredType(data);
             break;
@@ -58,8 +61,11 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO):
             errCode = IsDeferredVideoEnabled();
             break;
-        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO):
-            errCode = HandleSetRawPhotoInfo(data);
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_VIDEO_CODEC_TYPE):
+            errCode = HandleSetMovingPhotoVideoCodecType(data);
+            break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO):
+            errCode = HandleSetBufferProducerInfo(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
@@ -98,15 +104,25 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
     return ret;
 }
 
-int32_t HStreamCaptureStub::HandleSetRawPhotoInfo(MessageParcel &data)
+int32_t HStreamCaptureStub::HandleEnableRawDelivery(MessageParcel &data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    bool enabled = data.ReadBool();
+    int32_t ret = EnableRawDelivery(enabled);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamCaptureStub::HandleSetBufferProducerInfo(MessageParcel &data)
+{
+    std::string bufferName = data.ReadString();
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
+        "HStreamCaptureStub HandleSetBufferProducerInfo BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    int32_t ret = SetRawPhotoStreamInfo(producer);
-    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamCaptureStub HandleSetBufferProducerInfo producer is null");
+    int32_t ret = SetBufferProducerInfo(bufferName, producer);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetBufferProducerInfo result: %{public}d", ret);
     return ret;
 }
 
@@ -119,6 +135,13 @@ int32_t HStreamCaptureStub::HandleEnableDeferredType(MessageParcel &data)
     return ret;
 }
 
+int32_t HStreamCaptureStub::HandleSetMovingPhotoVideoCodecType(MessageParcel &data)
+{
+    int32_t type = data.ReadInt32();
+    int32_t ret = SetMovingPhotoVideoCodecType(type);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetMovingPhotoVideoCodecType result: %{public}d", ret);
+    return ret;
+}
 
 int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 {

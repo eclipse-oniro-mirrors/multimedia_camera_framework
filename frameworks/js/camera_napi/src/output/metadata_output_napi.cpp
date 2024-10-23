@@ -225,7 +225,6 @@ void MetadataOutputCallback::CreateDogFaceMetaData(napi_env env, sptr<MetadataOb
 void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
     napi_value result[ARGS_TWO];
     napi_value retVal;
 

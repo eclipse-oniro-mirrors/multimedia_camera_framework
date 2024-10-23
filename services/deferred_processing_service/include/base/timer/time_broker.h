@@ -37,7 +37,7 @@ public:
     void Initialize();
     bool RegisterCallback(uint32_t delayTimeMs, std::function<void(uint32_t handle)> timerCallback, uint32_t& handle);
     void DeregisterCallback(uint32_t handle);
-
+    std::function<void(uint32_t handle)> GetExpiredFunc(uint32_t handle);
 private:
     struct TimerInfo {
         TimerInfo(uint32_t handle, uint64_t timestamp, std::function<void(uint32_t handle)> callback)

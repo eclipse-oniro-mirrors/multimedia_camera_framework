@@ -21,7 +21,6 @@
 #include <iostream>
 #include <atomic>
 #include <mutex>
-#include <set>
 
 #include "camera_privacy.h"
 #include "v1_0/icamera_device_callback.h"
@@ -137,12 +136,12 @@ public:
 
     void NotifyCameraStatus(int32_t type);
 
-    bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
-
     int32_t CloseDevice();
 
 private:
     class FoldScreenListener;
+    static const std::vector<std::tuple<uint32_t, std::string, std::string>> reportTagInfos_;
+
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
@@ -202,29 +201,11 @@ private:
     int32_t CheckPermissionBeforeOpenDevice();
     bool HandlePrivacyBeforeOpenDevice();
     void HandlePrivacyAfterCloseDevice();
-    void DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForVideoStabilizationMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
-    void DebugLogForFilter(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautySkinSmooth(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautyFaceSlender(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-
-    void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForExposureTime(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
-    void DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForLightPaintingType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForTriggerLighting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                     uint32_t tag, std::string tagName, std::string dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
 };

@@ -18,6 +18,7 @@
 #include "audio_video_muxer.h"
 #include "camera_log.h"
 #include "native_mfmagic.h"
+#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,10 +32,12 @@ AudioVideoMuxer::~AudioVideoMuxer()
     MEDIA_INFO_LOG("~AudioVideoMuxer enter");
 }
 
-int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy)
+int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy)
 {
     photoAssetProxy_ = photoAssetProxy;
-    fd_ = photoAssetProxy_->GetVideoFd();
+    if (photoAssetProxy) {
+        fd_ = photoAssetProxy_->GetVideoFd();
+    }
     MEDIA_INFO_LOG("CreateAVMuxer with videoFd: %{public}d", fd_);
     muxer_ = AVMuxerFactory::CreateAVMuxer(fd_, static_cast<Plugins::OutputFormat>(format));
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "create muxer failed!");
@@ -71,8 +74,39 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
     return 0;
 }
 
-int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
+int32_t AudioVideoMuxer::SetStartTime(float timems)
 {
+    MEDIA_INFO_LOG("SetStartTime StartTime: %{public}f", timems);
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    constexpr int64_t SEC_TO_MSEC = 1e3;
+    constexpr int64_t MSEC_TO_NSEC = 1e6;
+    struct timespec realTime;
+    struct timespec monotonic;
+    clock_gettime(CLOCK_REALTIME, &realTime);
+    clock_gettime(CLOCK_MONOTONIC, &monotonic);
+    int64_t realTimeStamp = realTime.tv_sec * SEC_TO_MSEC + realTime.tv_nsec / MSEC_TO_NSEC;
+    int64_t monotonicTimeStamp = monotonic.tv_sec * SEC_TO_MSEC + monotonic.tv_nsec / MSEC_TO_NSEC;
+    int64_t firstFrameTime = realTimeStamp - monotonicTimeStamp + int64_t(timems);
+    std::string firstFrameTimeStr = std::to_string(firstFrameTime);
+    MEDIA_INFO_LOG("SetStartTime StartTime end: %{public}s", firstFrameTimeStr.c_str());
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    userMeta->SetData("com.openharmony.starttime", firstFrameTimeStr);
+    int32_t ret = muxer_->SetUserMeta(userMeta);
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "SetStartTime Failed, ret: %{public}d", ret);
+    return 0;
+}
+
+int32_t AudioVideoMuxer::SetTimedMetadata()
+{
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    std::shared_ptr<Meta> param = std::make_shared<Meta>();
+    param->SetData("use_timed_meta_track", 1);
+    return muxer_->SetParameter(param);
+}
+
+int32_t AudioVideoMuxer::WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type)
+{
+    CAMERA_SYNC_TRACE;
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     CHECK_AND_RETURN_RET_LOG(sample != nullptr, AV_ERR_INVALID_VAL, "input sample is nullptr!");
     int32_t ret = AV_ERR_OK;
@@ -90,7 +124,7 @@ int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
-    ret = muxer_->WriteSample(trackId, sample->buffer_);
+    ret = muxer_->WriteSample(trackId, sample);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "WriteSampleBuffer failed, ret: %{public}d", ret);
     return 0;
 }
@@ -100,17 +134,17 @@ int32_t AudioVideoMuxer::GetVideoFd()
     return fd_;
 }
 
-std::shared_ptr<Media::PhotoAssetProxy> AudioVideoMuxer::GetPhotoAssetProxy()
+PhotoAssetIntf* AudioVideoMuxer::GetPhotoAssetProxy()
 {
     return photoAssetProxy_;
 }
 
 
-int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType type)
+int32_t AudioVideoMuxer::AddTrack(int &trackId, std::shared_ptr<Format> format, TrackType type)
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     CHECK_AND_RETURN_RET_LOG(format != nullptr, AV_ERR_INVALID_VAL, "input track format is nullptr!");
-    int32_t ret = muxer_->AddTrack(trackId, format->format_.GetMeta());
+    int32_t ret = muxer_->AddTrack(trackId, format->GetMeta());
     switch (type) {
         case TrackType::AUDIO_TRACK:
             audioTrackId_ = trackId;
@@ -124,7 +158,6 @@ int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType t
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
-    OH_AVFormat_Destroy(format);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK || trackId < 0, 1, "AddTrack failed, ret: %{public}d", ret);
     return 0;
 }

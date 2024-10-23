@@ -27,6 +27,7 @@
 #include "native_avcodec_base.h"
 #include "output/camera_output_capability.h"
 #include "sample_info.h"
+#include "surface_buffer.h"
 #include "surface_type.h"
 
 namespace OHOS {
@@ -40,7 +41,9 @@ public:
     ~FrameRecord() override;
 
     void ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper);
+    void ReleaseMetaBuffer(sptr<Surface> surface, bool reuse);
     void NotifyBufferRelease();
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
 
     inline void SetStatusReadyConvertStatus()
     {
@@ -131,6 +134,23 @@ public:
         return it == transformTypeToValue.end() ? 0 : it->second;
     }
 
+    inline void SetMetaBuffer(sptr<SurfaceBuffer> buffer)
+    {
+        std::unique_lock<std::mutex> lock(metaBufferMutex_);
+        metaBuffer_ = buffer;
+    }
+
+    inline sptr<SurfaceBuffer> GetMetaBuffer()
+    {
+        metaBufferMutex_.lock();
+        return metaBuffer_;
+    }
+
+    inline void UnLockMetaBuffer()
+    {
+        metaBufferMutex_.unlock();
+    }
+
     inline void SetIDRProperty(bool isIDRFrame)
     {
         isIDRFrame_ = isIDRFrame;
@@ -181,6 +201,8 @@ private:
     GraphicTransformType transformType_;
     std::mutex mutex_;
     std::condition_variable canReleased_;
+    std::mutex metaBufferMutex_;
+    sptr<SurfaceBuffer> metaBuffer_;
     bool isIDRFrame_ = false;
 };
 } // namespace CameraStandard

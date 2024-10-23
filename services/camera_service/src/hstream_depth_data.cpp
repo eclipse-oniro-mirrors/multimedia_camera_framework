@@ -65,6 +65,7 @@ void HStreamDepthData::SetStreamInfo(StreamInfo_V1_1& streamInfo)
     HStreamCommon::SetStreamInfo(streamInfo);
     streamInfo.v1_0.intent_ =
         static_cast<OHOS::HDI::Camera::V1_0::StreamIntent>(OHOS::HDI::Camera::V1_3::StreamType::STREAM_TYPE_DEPTH);
+    MEDIA_INFO_LOG("HStreamDepthData::SetStreamInfo intent: %d", streamInfo.v1_0.intent_);
 }
 
 int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
@@ -250,9 +251,7 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
         case StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
+                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken_ is equal now token");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;
@@ -263,4 +262,4 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
     return CAMERA_OK;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

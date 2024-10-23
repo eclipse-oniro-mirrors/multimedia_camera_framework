@@ -48,13 +48,6 @@ enum class PhotoJobType {
     BACKGROUND
 };
 
-enum ExecutionMode {
-    HIGH_PERFORMANCE = 0,
-    LOAD_BALANCE,
-    LOW_POWER,
-    DUMMY
-};
-
 class DeferredPhotoJob {
 public:
     DeferredPhotoJob(const std::string& imageId, bool discardable, DpsMetadata& metadata);

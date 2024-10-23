@@ -24,6 +24,7 @@
 
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
@@ -37,7 +38,6 @@
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "output/photo_output_napi.h"
-#include "camera_napi_object_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -73,6 +73,18 @@ thread_local napi_ref CameraSessionNapi::sConstructor_ = nullptr;
 thread_local sptr<CaptureSession> CameraSessionNapi::sCameraSession_ = nullptr;
 thread_local uint32_t CameraSessionNapi::cameraSessionTaskId = CAMERA_SESSION_TASKID;
 
+const std::map<SceneMode, FunctionsType> CameraSessionNapi::modeToFunctionTypeMap_ = {
+    {SceneMode::CAPTURE, FunctionsType::PHOTO_FUNCTIONS},
+    {SceneMode::VIDEO, FunctionsType::VIDEO_FUNCTIONS},
+    {SceneMode::PORTRAIT, FunctionsType::PORTRAIT_PHOTO_FUNCTIONS}
+};
+
+const std::map<SceneMode, FunctionsType> CameraSessionNapi::modeToConflictFunctionTypeMap_ = {
+    {SceneMode::CAPTURE, FunctionsType::PHOTO_CONFLICT_FUNCTIONS},
+    {SceneMode::VIDEO, FunctionsType::VIDEO_CONFLICT_FUNCTIONS},
+    {SceneMode::PORTRAIT, FunctionsType::PORTRAIT_PHOTO_CONFLICT_FUNCTIONS}
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_props = {
     DECLARE_NAPI_FUNCTION("beginConfig", CameraSessionNapi::BeginConfig),
     DECLARE_NAPI_FUNCTION("commitConfig", CameraSessionNapi::CommitConfig),
@@ -107,7 +119,9 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::flash_props = {
     DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
     DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
     DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
-    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode)
+    DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
+    DECLARE_NAPI_FUNCTION("isLcdFlashSupported", CameraSessionNapi::IsLcdFlashSupported),
+    DECLARE_NAPI_FUNCTION("enableLcdFlash", CameraSessionNapi::EnableLcdFlash)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_props = {
@@ -492,6 +506,12 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     napi_get_boolean(env_, status == FeatureDetectionStatus::ACTIVE, &statusValue);
     napi_set_named_property(env_, result[PARAM1], "detected", statusValue);
 
+    if (feature == SceneFeature::FEATURE_TRIPOD_DETECTION) {
+        napi_value tripodStatusValue;
+        auto fwkTripodStatus = GetFeatureStatus();
+        napi_create_int32(env_, fwkTripodStatus, &tripodStatusValue);
+        napi_set_named_property(env_, result[PARAM1], "tripodStatus", tripodStatusValue);
+    }
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(eventName, callbackNapiPara);
     ExecuteCallback(eventNameOld, callbackNapiPara);
@@ -717,6 +737,64 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestion
 {
     MEDIA_DEBUG_LOG("OnEffectSuggestionChange is called, effectSuggestionType: %{public}d", effectSuggestionType);
     OnEffectSuggestionCallbackAsync(effectSuggestionType);
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallback(LcdFlashStatusInfo lcdFlashStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_value retVal;
+    napi_value propValue;
+    napi_create_object(env_, &result[PARAM1]);
+    napi_get_boolean(env_, lcdFlashStatusInfo.isLcdFlashNeeded, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isLcdFlashNeeded", propValue);
+    napi_create_int32(env_, lcdFlashStatusInfo.lcdCompensation, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "lcdCompensation", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("lcdFlashStatus", callbackNapiPara);
+}
+
+void LcdFlashStatusCallbackListener::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
+{
+    MEDIA_DEBUG_LOG("OnLcdFlashStatusChanged is called, isLcdFlashNeeded: %{public}d, lcdCompensation: %{public}d",
+        lcdFlashStatusInfo.isLcdFlashNeeded, lcdFlashStatusInfo.lcdCompensation);
+    OnLcdFlashStatusCallbackAsync(lcdFlashStatusInfo);
 }
 
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr) {}
@@ -1566,6 +1644,63 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
     return result;
 }
 
+napi_value CameraSessionNapi::IsLcdFlashSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsLcdFlashSupported is called");
+    CAMERA_SYNC_TRACE;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi isLcdFlashSupported is called!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("IsLcdFlashSupported parse parameter occur error");
+        return result;
+    }
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsLcdFlashSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsLcdFlashSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableLcdFlash(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("EnableLcdFlash is called");
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi enableLcdFlash is called!");
+        return result;
+    }
+    bool isEnable;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("EnableLcdFlash parse parameter occur error");
+        return result;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        MEDIA_INFO_LOG("EnableLcdFlash:%{public}d", isEnable);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableLcdFlash(isEnable);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("EnableLcdFlash fail %{public}d", retCode);
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("EnableLcdFlash get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsExposureModeSupported is called");
@@ -1796,7 +1931,7 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         double exposureValue;
-        napi_get_value_double(env, argv[0], &exposureValue);
+        napi_get_value_double(env, argv[PARAM0], &exposureValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
@@ -2310,7 +2445,7 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetSupportedBeautyTypes is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetSupportedBeautyTypes is called");
@@ -2351,7 +2486,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetSupportedBeautyRange is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
@@ -2395,7 +2530,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi GetBeauty is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("GetBeauty is called");
@@ -2424,7 +2559,7 @@ napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        MEDIA_ERR_LOG("SystemApi SetBeauty is called!");
         return nullptr;
     }
     MEDIA_DEBUG_LOG("SetBeauty is called");
@@ -3092,10 +3227,16 @@ napi_value CameraSessionNapi::GetSessionFunctions(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("napi_unwrap failure!");
         return nullptr;
     }
-    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionFunctions(
-        previewProfiles, photoProfiles, videoProfiles);
-    result = CreateAbilitiesJSArray(env, mode, cameraAbilityList, false);
+
+    auto session = cameraSessionNapi->cameraSession_;
+    SceneMode mode = session->GetMode();
+    auto cameraFunctionsList = session->GetSessionFunctions(previewProfiles, photoProfiles, videoProfiles);
+    auto it = modeToFunctionTypeMap_.find(mode);
+    if (it != modeToFunctionTypeMap_.end()) {
+        result = CreateFunctionsJSArray(env, cameraFunctionsList, it->second);
+    } else {
+        MEDIA_ERR_LOG("GetSessionFunctions failed due to unsupported mode: %{public}d", mode);
+    }
     return result;
 }
 
@@ -3118,56 +3259,47 @@ napi_value CameraSessionNapi::GetSessionConflictFunctions(napi_env env, napi_cal
         MEDIA_ERR_LOG("napi_unwrap failure!");
         return nullptr;
     }
-    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
-    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictFunctions();
-    result = CreateAbilitiesJSArray(env, mode, conflictAbilityList, true);
+
+    auto session = cameraSessionNapi->cameraSession_;
+    SceneMode mode = session->GetMode();
+    auto conflictFunctionsList = session->GetSessionConflictFunctions();
+    auto it = modeToConflictFunctionTypeMap_.find(mode);
+    if (it != modeToConflictFunctionTypeMap_.end()) {
+        result = CreateFunctionsJSArray(env, conflictFunctionsList, it->second);
+    } else {
+        MEDIA_ERR_LOG("GetSessionConflictFunctions failed due to unsupported mode: %{public}d", mode);
+    }
     return result;
 }
 
-napi_value CameraSessionNapi::CreateAbilitiesJSArray(
-    napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict)
+napi_value CameraSessionNapi::CreateFunctionsJSArray(
+    napi_env env, std::vector<sptr<CameraAbility>> functionsList, FunctionsType type)
 {
-    MEDIA_DEBUG_LOG("create conflict ability is called");
-    napi_value abilityArray = nullptr;
-    napi_value ability = nullptr;
+    MEDIA_DEBUG_LOG("CreateFunctionsJSArray is called");
+    napi_value functionsArray = nullptr;
+    napi_value functions = nullptr;
     napi_status status;
 
-    if (abilityList.empty()) {
-        MEDIA_ERR_LOG("abilityArray is empty");
+    if (functionsList.empty()) {
+        MEDIA_ERR_LOG("functionsList is empty");
     }
 
-    status = napi_create_array(env, &abilityArray);
+    status = napi_create_array(env, &functionsArray);
     if (status != napi_ok) {
         MEDIA_ERR_LOG("napi_create_array failed");
-        return abilityArray;
-    }
-
-    using CreateFunc = std::function<napi_value(napi_env, sptr<CameraAbility>)>;
-    CreateFunc createFunc;
-    if (mode == SceneMode::PORTRAIT) {
-        createFunc = isConflict ? PortraitPhotoConflictAbilityNapi::CreatePortraitPhotoConflictAbility
-                                : PortraitPhotoAbilityNapi::CreatePortraitPhotoAbility;
-    } else if (mode == SceneMode::CAPTURE) {
-        createFunc = isConflict ? PhotoConflictAbilityNapi::CreatePhotoConflictAbility
-                                : PhotoAbilityNapi::CreatePhotoAbility;
-    } else if (mode == SceneMode::VIDEO) {
-        createFunc = isConflict ? VideoConflictAbilityNapi::CreateVideoConflictAbility
-                                : VideoAbilityNapi::CreateVideoAbility;
-    } else {
-        MEDIA_ERR_LOG("mode: %{public}d not suppport", static_cast<int32_t>(mode));
-        return nullptr;
+        return functionsArray;
     }
 
     size_t j = 0;
-    for (size_t i = 0; i < abilityList.size(); i++) {
-        ability = createFunc(env, abilityList[i]);
-        if ((ability == nullptr) || napi_set_element(env, abilityArray, j++, ability) != napi_ok) {
-            MEDIA_ERR_LOG("failed to create conflict ability object napi wrapper object");
+    for (size_t i = 0; i < functionsList.size(); i++) {
+        functions = CameraFunctionsNapi::CreateCameraFunctions(env, functionsList[i], type);
+        if ((functions == nullptr) || napi_set_element(env, functionsArray, j++, functions) != napi_ok) {
+            MEDIA_ERR_LOG("failed to create functions object napi wrapper object");
             return nullptr;
         }
     }
-    MEDIA_INFO_LOG("create conflict ability count = %{public}zu", j);
-    return abilityArray;
+    MEDIA_INFO_LOG("create functions count = %{public}zu", j);
+    return functionsArray;
 }
 
 napi_value CameraSessionNapi::IsEffectSuggestionSupported(napi_env env, napi_callback_info info)
@@ -3941,6 +4073,17 @@ void CameraSessionNapi::RegisterFeatureDetectionStatusListener(
         featureDetectionStatusCallback_ = std::make_shared<FeatureDetectionStatusCallbackListener>(env);
         cameraSession_->SetFeatureDetectionStatusCallback(featureDetectionStatusCallback_);
     }
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(true);
+        cameraSession_->UnlockForControl();
+    }
+    if (featureType == SceneFeature::FEATURE_TRIPOD_DETECTION) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableTripodDetection(true);
+        cameraSession_->UnlockForControl();
+    }
     featureDetectionStatusCallback_->SaveCallbackReference(eventName + std::to_string(featureType), callback, isOnce);
 }
 
@@ -3968,6 +4111,19 @@ void CameraSessionNapi::UnregisterFeatureDetectionStatusListener(
     }
 
     featureDetectionStatusCallback_->RemoveCallbackRef(eventName + std::to_string(featureType), callback);
+
+    if (featureType == SceneFeature::FEATURE_LOW_LIGHT_BOOST &&
+        !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLowLightDetection(false);
+        cameraSession_->UnlockForControl();
+    }
+    if (featureType == SceneFeature::FEATURE_TRIPOD_DETECTION &&
+        !featureDetectionStatusCallback_->IsFeatureSubscribed(SceneFeature::FEATURE_TRIPOD_DETECTION)) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableTripodDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 
 void CameraSessionNapi::RegisterSessionErrorCallbackListener(
@@ -4185,6 +4341,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "tryAEInfoChange", {
         &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
         &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
+    { "lcdFlashStatus", {
+        &CameraSessionNapi::RegisterLcdFlashStatusCallbackListener,
+        &CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
@@ -4205,6 +4364,42 @@ napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
 napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraSessionNapi>::Off(env, info);
+}
+
+void CameraSessionNapi::RegisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi on LcdFlashStatus is called!");
+        return;
+    }
+    if (cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("cameraSession is null!");
+        return;
+    }
+    if (lcdFlashStatusCallback_ == nullptr) {
+        lcdFlashStatusCallback_ = std::make_shared<LcdFlashStatusCallbackListener>(env);
+        cameraSession_->SetLcdFlashStatusCallback(lcdFlashStatusCallback_);
+    }
+    lcdFlashStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    cameraSession_->LockForControl();
+    cameraSession_->EnableLcdFlashDetection(true);
+    cameraSession_->UnlockForControl();
+}
+
+void CameraSessionNapi::UnregisterLcdFlashStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (lcdFlashStatusCallback_ == nullptr) {
+        MEDIA_ERR_LOG("lcdFlashStatusCallback is null");
+        return;
+    }
+    lcdFlashStatusCallback_->RemoveCallbackRef(eventName, callback);
+    if (lcdFlashStatusCallback_->IsEmpty("lcdFlashStatus")) {
+        cameraSession_->LockForControl();
+        cameraSession_->EnableLcdFlashDetection(false);
+        cameraSession_->UnlockForControl();
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -41,4 +41,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_PROXY_H
+#endif // OHOS_CAMERA_HSTREAM_DEPTH_DATA_PROXY_H

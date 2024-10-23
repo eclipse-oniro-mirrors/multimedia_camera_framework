@@ -34,9 +34,7 @@
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
 #include "task_manager.h"
-
-#include "media_photo_asset_proxy.h"
-
+#include "camera_util.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -46,9 +44,10 @@ using CacheCbFunc = function<void(sptr<FrameRecord>, bool)>;
 constexpr uint32_t DEFAULT_THREAD_NUMBER = 6;
 constexpr uint32_t DEFAULT_ENCODER_THREAD_NUMBER = 1;
 constexpr uint32_t GET_FD_EXPIREATION_TIME = 500;
+
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
-    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession);
+    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type);
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
@@ -56,11 +55,11 @@ public:
     sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
         vector<sptr<FrameRecord>> &choosedBuffer);
     void SubmitTask(function<void()> task);
-    void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy);
+    void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy);
     void Stop();
-    unique_ptr<TaskManager>& GetTaskManager();
-    unique_ptr<TaskManager>& GetEncoderManager();
-
+    void ClearTaskResource();
+    shared_ptr<TaskManager>& GetTaskManager();
+    shared_ptr<TaskManager>& GetEncoderManager();
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
@@ -68,14 +67,16 @@ private:
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
-    unique_ptr<TaskManager> taskManager_ = nullptr;
-    unique_ptr<TaskManager> videoEncoderManager_ = nullptr;
+    shared_ptr<TaskManager> taskManager_ = nullptr;
+    shared_ptr<TaskManager> videoEncoderManager_ = nullptr;
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
     condition_variable cvEmpty_;
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
-    queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
+    std::atomic<bool> isActive_ { true };
+    queue<std::pair<int64_t, PhotoAssetIntf*>> videoFdQueue_;
+    VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
 };
 } // CameraStandard
 } // OHOS

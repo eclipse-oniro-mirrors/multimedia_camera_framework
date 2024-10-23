@@ -21,12 +21,13 @@
 #include "camera_util.h"
 #include "system_ability_definition.h"
 #include "camera_error_code.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes)
+    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
     if (ipcFileDescriptor == nullptr) {
@@ -40,7 +41,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
             deferredPhotoProcSession_->GetCallback()->OnError(imageId, ERROR_IMAGE_PROC_FAILED);
             return 0;
         } else {
-            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes);
+            deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
+                isCloudImageEnhanceSupported);
         }
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
@@ -68,6 +70,34 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
         deferredPhotoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged not set!, Discarding callback");
+    }
+    return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+{
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
+        "called, status:%{public}s", imageId.c_str());
+    if (picture != nullptr) {
+        MEDIA_INFO_LOG("picture is not null");
+    }
+    if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
+    } else {
+        MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
+    }
+    return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
+    std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
+        "called, status:%{public}s", imageId.c_str());
+    if (picture != nullptr) {
+        MEDIA_INFO_LOG("picture is not null");
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, picture);
     }
     return 0;
 }
@@ -173,7 +203,7 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_AND_RETURN_RET_LOG(deathRecipient_ != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
+    CHECK_ERROR_RETURN_RET_LOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
@@ -214,37 +244,21 @@ void DeferredPhotoProcSession::ReconnectDeferredProcessingSession()
 void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ConnectDeferredProcessingSession, enter.");
-    if (remoteSession_ != nullptr) {
-        MEDIA_INFO_LOG("remoteSession_ is not null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(remoteSession_ != nullptr, "remoteSession_ is not null");
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Failed to get System ability manager");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(samgr == nullptr, "Failed to get System ability manager");
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    if (object == nullptr) {
-        MEDIA_ERR_LOG("object is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(object == nullptr, "object is null");
     serviceProxy_ = iface_cast<ICameraService>(object);
-    if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy_ is null.");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(serviceProxy_ == nullptr, "serviceProxy_ is null");
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
     sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback = nullptr;
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, callback_);
-    if (deferredPhotoProcSession == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(deferredPhotoProcSession == nullptr);
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
-    if (remoteCallback == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
     if (session) {
         SetDeferredPhotoSession(session);

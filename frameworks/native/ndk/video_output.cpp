@@ -192,7 +192,6 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
 
     return videoOutput->GetActiveFrameRate(frameRateRange);
 }
-
 /**
  * @since 12
  * @version 1.0

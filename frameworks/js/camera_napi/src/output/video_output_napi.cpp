@@ -64,7 +64,7 @@ thread_local uint32_t VideoOutputNapi::videoOutputTaskId = CAMERA_VIDEO_OUTPUT_T
 
 VideoCallbackListener::VideoCallbackListener(napi_env env) : ListenerBase(env) {}
 
-void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType, const int32_t value) const
+void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType, const VideoCallbackInfo& info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
@@ -79,14 +79,14 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
         return;
     }
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
-        std::make_unique<VideoOutputCallbackInfo>(eventType, value, shared_from_this());
+        std::make_unique<VideoOutputCallbackInfo>(eventType, info, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
-                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
+                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
             }
             delete callbackInfo;
         }
@@ -104,25 +104,74 @@ void VideoCallbackListener::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnFrameStarted is called");
-    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_START, -1);
+    VideoCallbackInfo info;
+    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_START, info);
 }
 
 void VideoCallbackListener::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
-    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_END, frameCount);
+    VideoCallbackInfo info;
+    info.frameCount = frameCount;
+    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_END, info);
 }
 
 void VideoCallbackListener::OnError(const int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
-    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_ERROR, errorCode);
+    VideoCallbackInfo info;
+    info.errorCode = errorCode;
+    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_FRAME_ERROR, info);
 }
 
-void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, const int32_t value) const
+void VideoCallbackListener::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt captureEndedInfo) const
+{
+    MEDIA_DEBUG_LOG("OnDeferredVideoEnhancementInfo is called");
+    VideoCallbackInfo info;
+    info.isDeferredVideoEnhancementAvailable = captureEndedInfo.isDeferredVideoEnhancementAvailable;
+    info.videoId = captureEndedInfo.videoId;
+    MEDIA_INFO_LOG("OnDeferredVideoEnhancementInfo isDeferredVideo:%{public}d videoId:%{public}s ",
+        info.isDeferredVideoEnhancementAvailable, info.videoId.c_str());
+    UpdateJSCallbackAsync(VideoOutputEventType::VIDEO_DEFERRED_ENHANCEMENT, info);
+}
+
+void VideoCallbackListener::ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const
+{
+    MEDIA_INFO_LOG("ExecuteOnDeferredVideoCb");
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value retVal;
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    
+    napi_value propValue;
+    napi_create_object(env_, &result[PARAM1]);
+    napi_get_boolean(env_, info.isDeferredVideoEnhancementAvailable, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isDeferredVideoEnhancementAvailable", propValue);
+    napi_create_string_utf8(env_, info.videoId.c_str(), NAPI_AUTO_LENGTH, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "videoId", propValue);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(CONST_VIDEO_DEFERRED_ENHANCEMENT, callbackNapiPara);
+}
+
+void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
+    switch (eventType) {
+        // case VideoOutputEventType::VIDEO_FRAME_START:
+        // case VideoOutputEventType::VIDEO_FRAME_END:
+        // case VideoOutputEventType::VIDEO_FRAME_ERROR:
+        // case VideoOutputEventType::VIDEO_INVALID_TYPE:
+        //     break;
+        case VideoOutputEventType::VIDEO_DEFERRED_ENHANCEMENT:
+            ExecuteOnDeferredVideoCb(info);
+            break;
+        default:
+            MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
+    }
+
     napi_value result[ARGS_ONE];
     napi_value retVal;
     napi_value propValue;
@@ -134,7 +183,7 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
     }
     if (eventType == VideoOutputEventType::VIDEO_FRAME_ERROR) {
         napi_create_object(env_, &result[PARAM0]);
-        napi_create_int32(env_, value, &propValue);
+        napi_create_int32(env_, info.errorCode, &propValue);
         napi_set_named_property(env_, result[PARAM0], "code", propValue);
     } else {
         napi_get_undefined(env_, &result[PARAM0]);
@@ -181,7 +230,10 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
         DECLARE_NAPI_FUNCTION("getSupportedVideoMetaTypes", GetSupportedVideoMetaTypes),
         DECLARE_NAPI_FUNCTION("attachMetaSurface", AttachMetaSurface),
-        DECLARE_NAPI_FUNCTION("getVideoRotation", GetVideoRotation)
+        DECLARE_NAPI_FUNCTION("getVideoRotation", GetVideoRotation),
+        DECLARE_NAPI_FUNCTION("isAutoDeferredVideoEnhancementSupported", IsAutoDeferredVideoEnhancementSupported),
+        DECLARE_NAPI_FUNCTION("isAutoDeferredVideoEnhancementEnabled", IsAutoDeferredVideoEnhancementEnabled),
+        DECLARE_NAPI_FUNCTION("enableAutoDeferredVideoEnhancement", EnableAutoDeferredVideoEnhancement)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -792,6 +844,26 @@ void VideoOutputNapi::UnregisterErrorCallbackListener(
     videoCallback_->RemoveCallbackRef(CONST_VIDEO_FRAME_ERROR, callback);
 }
 
+void VideoOutputNapi::RegisterDeferredVideoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (videoCallback_ == nullptr) {
+        videoCallback_ = make_shared<VideoCallbackListener>(env);
+        videoOutput_->SetCallback(videoCallback_);
+    }
+    videoCallback_->SaveCallbackReference(CONST_VIDEO_DEFERRED_ENHANCEMENT, callback, isOnce);
+}
+
+void VideoOutputNapi::UnregisterDeferredVideoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (videoCallback_ == nullptr) {
+        MEDIA_ERR_LOG("videoCallback is null");
+        return;
+    }
+    videoCallback_->RemoveCallbackRef(CONST_VIDEO_DEFERRED_ENHANCEMENT, callback);
+}
+
 const VideoOutputNapi::EmitterFunctions& VideoOutputNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -803,7 +875,10 @@ const VideoOutputNapi::EmitterFunctions& VideoOutputNapi::GetEmitterFunctions()
             &VideoOutputNapi::UnregisterFrameEndCallbackListener } },
         { CONST_VIDEO_FRAME_ERROR, {
             &VideoOutputNapi::RegisterErrorCallbackListener,
-            &VideoOutputNapi::UnregisterErrorCallbackListener } } };
+            &VideoOutputNapi::UnregisterErrorCallbackListener } },
+        { CONST_VIDEO_DEFERRED_ENHANCEMENT, {
+            &VideoOutputNapi::RegisterDeferredVideoCallbackListener,
+            &VideoOutputNapi::UnregisterDeferredVideoCallbackListener } }};
     return funMap;
 }
 
@@ -820,6 +895,95 @@ napi_value VideoOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value VideoOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<VideoOutputNapi>::Off(env, info);
+}
+
+napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported(napi_env env, napi_callback_info info)
+{
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoDeferredVideoEnhancementSupported is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported is called");
+ 
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
+    int32_t res = videoOutputNapi->videoOutput_->IsAutoDeferredVideoEnhancementSupported();
+    if (res > 1) {
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail");
+        return result;
+    }
+    napi_get_boolean(env, res, &result);
+    return result;
+}
+
+napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled(napi_env env, napi_callback_info info)
+{
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoDeferredVideoEnhancementEnabled is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled is called");
+ 
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
+    int32_t res = videoOutputNapi->videoOutput_->IsAutoDeferredVideoEnhancementEnabled();
+    if (res > 1) {
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail");
+        return result;
+    }
+    napi_get_boolean(env, res, &result);
+    return result;
+}
+
+napi_value VideoOutputNapi::EnableAutoDeferredVideoEnhancement(napi_env env, napi_callback_info info)
+{
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoDeferredVideoEnhancement is called!");
+        return result;
+    }
+    napi_status status;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (argc != ARGS_ONE) {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "requires one parameter");
+        return result;
+    }
+    int32_t res = 0;
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        bool isEnable;
+        napi_get_value_bool(env, argv[PARAM0], &isEnable);
+        res = videoOutputNapi->videoOutput_->EnableAutoDeferredVideoEnhancement(isEnable);
+    }
+    if (res > 0) {
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail");
+    }
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

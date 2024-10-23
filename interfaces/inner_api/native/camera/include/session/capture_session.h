@@ -152,6 +152,13 @@ typedef struct {
     float y;
 } Point;
 
+enum class FwkTripodStatus {
+    INVALID = 0,
+    ACTIVE,
+    ENTER,
+    EXITING
+};
+
 typedef struct {
     float zoomRatio;
     int32_t equivalentFocalLength;
@@ -243,7 +250,17 @@ public:
         return false;
     }
 
+    inline void SetFeatureStatus(int8_t featureStatus)
+    {
+        featureStatus_ = featureStatus;
+    }
+
+    inline int8_t GetFeatureStatus() const
+    {
+        return featureStatus_;
+    }
 private:
+    std::atomic<int8_t> featureStatus_ = -1;
     std::mutex featureStatusMapMutex_;
     std::unordered_map<SceneFeature, FeatureDetectionStatus> featureStatusMap_;
 };
@@ -299,6 +316,32 @@ public:
     virtual void OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType) = 0;
     bool isFirstReport = true;
     EffectSuggestionType currentType = EffectSuggestionType::EFFECT_SUGGESTION_NONE;
+};
+
+struct LcdFlashStatusInfo {
+    bool isLcdFlashNeeded;
+    int32_t lcdCompensation;
+};
+
+class LcdFlashStatusCallback {
+public:
+    LcdFlashStatusCallback() = default;
+    virtual ~LcdFlashStatusCallback() = default;
+    virtual void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) = 0;
+    void SetLcdFlashStatusInfo(const LcdFlashStatusInfo lcdFlashStatusInfo)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        lcdFlashStatusInfo_ = lcdFlashStatusInfo;
+    }
+    LcdFlashStatusInfo GetLcdFlashStatusInfo()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return lcdFlashStatusInfo_;
+    }
+
+private:
+    LcdFlashStatusInfo lcdFlashStatusInfo_ = { .isLcdFlashNeeded = true, .lcdCompensation = -1 };
+    std::mutex mutex_;
 };
 
 struct EffectSuggestionStatus {
@@ -412,6 +455,9 @@ public:
 
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
                             std::string &burstKey, int64_t timestamp);
+
+    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
 
     /**
      * @brief Get the application callback information.
@@ -781,7 +827,7 @@ public:
      * @param vector of camera_focus_mode_enum_t supported exposure modes.
      * @return Returns errCode.
      */
-    int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes);
+    virtual int32_t GetSupportedFlashModes(std::vector<FlashMode>& flashModes);
 
     /**
      * @brief Check whether camera has flash.
@@ -824,7 +870,7 @@ public:
      * @param current flash mode.
      * @return Returns errCode.
      */
-    int32_t GetFlashMode(FlashMode& flashMode);
+    virtual int32_t GetFlashMode(FlashMode& flashMode);
 
     /**
      * @brief Set flash mode.
@@ -832,7 +878,7 @@ public:
      * @param camera_flash_mode_enum_t flash mode to be set.
      * @return Returns errCode.
      */
-    int32_t SetFlashMode(FlashMode flashMode);
+    virtual int32_t SetFlashMode(FlashMode flashMode);
 
     /**
      * @brief Get the supported Zoom Ratio range.
@@ -1107,6 +1153,29 @@ public:
     void ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
+     * @brief This function is called when there is low light detect status change
+     * and process the low light detect status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessLowLightBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
+     * @brief Check current status is support moon capture boost or not.
+     */
+    bool IsLowLightBoostSupported();
+
+    /**
+     * @brief Enable or disable moon capture boost ability.
+     */
+    int32_t EnableLowLightBoost(bool isEnable);
+
+    /**
+     * @brief Enable or disable moon capture boost ability.
+     */
+    int32_t EnableLowLightDetection(bool isEnable);
+
+    /**
      * @brief Verify that the output configuration is legitimate.
      *
      * @param outputProfile The target profile.
@@ -1373,14 +1442,16 @@ public:
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     void EnableDeferredType(DeferredDeliveryImageType deferredType, bool isEnableByUser);
+    void EnableAutoDeferredVideoEnhancement(bool isEnableByUser);
     void SetUserId();
     bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
-
-    int32_t EnableAutoHighQualityPhoto(bool enabled);
-
+    bool IsVideoDeferred();
     virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+
+    int32_t EnableAutoHighQualityPhoto(bool enabled);
+    int32_t EnableAutoCloudImageEnhancement(bool enabled);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
     // White Balance
@@ -1453,14 +1524,110 @@ public:
         return innerInputDevice_;
     }
 
+    int32_t SetPreviewRotation(std::string &deviceClass);
+
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
         return innerCaptureSession_;
     }
 
-    int32_t SetPreviewRotation(std::string &deviceClass);
+    /**
+     * @brief Checks if the LCD flash feature is supported.
+     *
+     * This function determines whether the current system or device supports the LCD flash feature.
+     * It returns `true` if the feature is supported; otherwise, it returns `false`.
+     *
+     * @return `true` if the LCD flash feature is supported; `false` otherwise.
+     */
+    bool IsLcdFlashSupported();
 
+    /**
+     * @brief Enables or disables the LCD flash feature.
+     *
+     * This function enables or disables the LCD flash feature based on the provided `isEnable` flag.
+     *
+     * @param isEnable A boolean flag indicating whether to enable (`true`) or disable (`false`) the LCD flash feature.
+     *
+     * @return Returns an `int32_t` value indicating the result of the operation.
+     *         Typically, a return value of 0 indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableLcdFlash(bool isEnable);
+
+    /**
+     * @brief Enables or disables LCD flash detection.
+     *
+     * This function enables or disables the detection of the LCD flash feature based on the provided `isEnable` flag.
+     *
+     * @param isEnable A boolean flag indicating whether to enable (`true`) or disable (`false`) LCD flash detection.
+     *
+     * @return Returns an `int32_t` value indicating the outcome of the operation.
+     *         A return value of 0 typically signifies success, while a non-zero value indicates an error.
+     */
+    int32_t EnableLcdFlashDetection(bool isEnable);
+
+    void ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+     * @brief Sets the callback for LCD flash status updates.
+     *
+     * This function assigns a callback to be invoked whenever there is a change in the LCD flash status.
+     * The callback is passed as a shared pointer, allowing for shared ownership and automatic memory management.
+     *
+     * @param lcdFlashStatusCallback A shared pointer to an LcdFlashStatusCallback object. This callback will
+     *        be called to handle updates related to the LCD flash status. If the callback is already set,
+     *        it will be overwritten with the new one.
+     */
+    void SetLcdFlashStatusCallback(std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback);
+
+    /**
+     * @brief Retrieves the current LCD flash status callback.
+     *
+     * This function returns a shared pointer to the `LcdFlashStatusCallback` object that is used for receiving
+     * notifications or callbacks related to the LCD flash status.
+     *
+     * @return A `std::shared_ptr<LcdFlashStatusCallback>` pointing to the current LCD flash status callback.
+     *         If no callback is set, it may return a `nullptr`.
+     */
+    std::shared_ptr<LcdFlashStatusCallback> GetLcdFlashStatusCallback();
+    void EnableFaceDetection(bool enable);
+    /**
+     * @brief Checks if tripod detection is supported.
+     *
+     * This function determines whether the current system or device supports tripod detection functionality.
+     * It returns `true` if the feature is supported, otherwise `false`.
+     *
+     * @return `true` if tripod detection is supported; `false` otherwise.
+     */
+    bool IsTripodDetectionSupported();
+
+    /**
+     * @brief Enables or disables tripod stabilization.
+     *
+     * This function enables or disables the tripod stabilization feature based on the provided `enabled` flag.
+     *
+     * @param enabled A boolean flag that indicates whether to enable or disable tripod stabilization.
+     *
+     * @return Returns an `int32_t` value indicating the success or failure of the operation.
+     *         Typically, a return value of 0 indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableTripodStabilization(bool enabled);
+
+    /**
+     * @brief Enables or disables tripod detection.
+     *
+     * This function enables or disables the tripod detection feature based on the provided `enabled` flag.
+     *
+     * @param enabled A boolean flag that specifies whether to enable or disable tripod detection.
+     *
+     * @return Returns an `int32_t` value indicating the outcome of the operation.
+     *         A return value of 0 typically indicates success, while a non-zero value indicates an error.
+     */
+    int32_t EnableTripodDetection(bool enabled);
+
+    void ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    int32_t EnableRawDelivery(bool enabled);
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -1468,7 +1635,7 @@ protected:
 
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
-
+    static const std::unordered_map<TripodStatus, FwkTripodStatus> metaTripodStatusMap_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;
@@ -1476,6 +1643,8 @@ protected:
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
     bool isImageDeferred_ = false;
+    std::atomic<bool> isRawImageDelivery_ { false };
+    bool isVideoDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
@@ -1537,6 +1706,7 @@ private:
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
     std::shared_ptr<ARCallback> arCallback_;
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
+    std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -1547,7 +1717,9 @@ private:
     sptr<CaptureInput> innerInputDevice_ = nullptr;
     volatile bool isSetMacroEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
+    volatile bool isSetTripodDetectionEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
+    std::atomic<bool> isSetLowLightBoostEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
 
@@ -1557,6 +1729,7 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
+
     sptr<CaptureOutput> metaOutput_ = nullptr;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;

@@ -233,20 +233,13 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     camera_metadata_item_t item;
 
     ret = Camera::FindCameraMetadataItem(baseAbility_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get zoom ratio range with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom ratio range count: %{public}d", item.count);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get zoom ratio range with return code %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {},
+        "Failed to get zoom ratio range with return code %{public}d", ret);
     range = {item.data.f[minIndex], item.data.f[maxIndex]};
-
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG("Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
     MEDIA_DEBUG_LOG("Zoom range min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
 
     zoomRatioRange_ = range;
@@ -282,32 +275,30 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    uint32_t biasRangeCount = 2;
+    std::vector<int32_t> range;
 
     if (!exposureBiasRange_.empty()) {
         return exposureBiasRange_;
     }
 
+    int ret;
+    uint32_t biasRangeCount = 2;
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(GetMetadata()->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
+    auto metadata = GetMetadata();
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};
     }
-    if (item.count != biasRangeCount) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range count: %{public}d", item.count);
-        return {};
-    }
-    int32_t minRange = item.data.i32[minIndex];
-    int32_t maxRange = item.data.i32[maxIndex];
+    CHECK_ERROR_RETURN_RET_LOG(item.count != biasRangeCount, {},
+        "Invalid exposure compensation range count: %{public}d", item.count);
 
-    if (minRange > maxRange) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range. min: %{public}d, max: %{public}d", minRange, maxRange);
-        return {};
-    }
+    range = { item.data.i32[minIndex], item.data.i32[maxIndex] };
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
-    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", minRange, maxRange);
-    exposureBiasRange_ = { static_cast<float>(minRange), static_cast<float>(maxRange) };
+    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
+    exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;
 }
 

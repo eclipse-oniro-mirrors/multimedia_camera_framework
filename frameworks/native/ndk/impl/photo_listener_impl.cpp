@@ -341,6 +341,5 @@ void RawPhotoListener::UnregisterCallback(OH_PhotoOutput_PhotoAvailable callback
         callback_ = nullptr;
     }
 }
-
 }
 }

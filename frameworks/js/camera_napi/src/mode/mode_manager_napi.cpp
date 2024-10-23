@@ -187,10 +187,10 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
     return result;
 }
 
-static napi_value CreateJSArray(napi_env env, napi_status status,
+static napi_value CreateSceneModeJSArray(napi_env env, napi_status status,
     std::vector<SceneMode> nativeArray)
 {
-    MEDIA_DEBUG_LOG("CreateJSArray is called");
+    MEDIA_DEBUG_LOG("CreateSceneModeJSArray is called");
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
 
@@ -234,7 +234,7 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     if (status == napi_ok && modeManagerNapi != nullptr) {
         std::vector<SceneMode> modeObjList = modeManagerNapi->modeManager_->GetSupportedModes(cameraInfo);
         MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
-        jsResult = CreateJSArray(env, status, modeObjList);
+        jsResult = CreateSceneModeJSArray(env, status, modeObjList);
         if (status == napi_ok) {
             return jsResult;
         } else {

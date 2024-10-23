@@ -52,6 +52,7 @@ private:
     MediaLibraryStatus mediaLibraryStatus_;
     SystemPressureLevel systemPressureLevel_;
     std::shared_ptr<PhotoJobRepository> jobRepository_;
+    //Watchdog<std::string> watchdog_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

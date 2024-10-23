@@ -101,18 +101,6 @@ public:
     int32_t Stop();
 
     /**
-     * @brief get the preview rotation angle.
-     *
-     * @return result of the photo rotation angle.
-     */
-    int32_t GetPreviewRotation(int32_t imageRotation);
-
-    /**
-     * @brief set the preview rotation angle.
-     */
-    int32_t SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
-
-    /**
      * @brief Check whether the current preview mode supports sketch.
      *
      * @return Return the supported result.
@@ -125,6 +113,18 @@ public:
      * @return Return the threshold value.
      */
     float GetSketchRatio();
+
+    /**
+     * @brief get the preview rotation angle.
+     *
+     * @return result of the photo rotation angle.
+     */
+    int32_t GetPreviewRotation(int32_t imageRotation);
+
+    /**
+     * @brief set the preview rotation angle.
+     */
+    int32_t SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
     /**
      * @brief Enable sketch
@@ -267,6 +267,8 @@ public:
      * @param status Indicates a {@link SketchStatus} which will give information for preview callback error.
      */
     int32_t OnSketchStatusChanged(SketchStatus status) override;
+
+    int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

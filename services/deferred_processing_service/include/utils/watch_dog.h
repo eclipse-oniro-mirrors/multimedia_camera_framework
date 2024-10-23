@@ -71,6 +71,16 @@ public:
         }
     }
 
+    void DoTimeout(const uint32_t handle)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (timeBroker_) {
+            timeBroker_->GetExpiredFunc(handle)(handle);
+            DP_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
+        } else {
+            DP_ERR_LOG("(%s) failed", name_.c_str());
+        }
+    }
 private:
 
     std::mutex mutex_;

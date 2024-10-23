@@ -138,25 +138,41 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     return error;
 }
 
-int32_t HStreamCaptureProxy::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamCaptureProxy::EnableRawDelivery(bool enabled)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
-        return IPC_PROXY_ERR;
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(enabled);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy EnableRawDelivery failed, error: %{public}d", error);
     }
+    return error;
+}
+
+int32_t HStreamCaptureProxy::SetBufferProducerInfo(const std::string bufName,
+    const sptr<OHOS::IBufferProducer> &producer)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(bufName);
     data.WriteRemoteObject(producer->AsObject());
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo failed, error: %{public}d", error);
-    }
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetBufferProducerInfo failed, error: %{public}d",
+        error);
     return error;
 }
 
@@ -171,9 +187,8 @@ int32_t HStreamCaptureProxy::DeferImageDeliveryFor(int32_t type)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy DeferImageDeliveryFor failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy DeferImageDeliveryFor failed, error: %{public}d",
+        error);
     return error;
 }
 
@@ -187,9 +202,8 @@ int32_t HStreamCaptureProxy::IsDeferredPhotoEnabled()
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_PHOTO), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredPhotoEnabled failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy IsDeferredPhotoEnabled failed, error: %{public}d",
+        error);
     return error;
 }
 
@@ -203,6 +217,22 @@ int32_t HStreamCaptureProxy::IsDeferredVideoEnabled()
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d",
+        error);
+    return error;
+}
+
+int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(videoCodecType);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_VIDEO_CODEC_TYPE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d", error);
     }

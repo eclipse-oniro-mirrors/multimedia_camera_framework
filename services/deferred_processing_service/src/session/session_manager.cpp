@@ -15,9 +15,10 @@
 
 #include "session_manager.h"
 
-#include "system_ability_definition.h"
 #include "dp_log.h"
-#include "dp_utils.h"
+#include "dps.h"
+#include "session_command.h"
+#include "session_coordinator.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,7 +37,8 @@ std::shared_ptr<SessionManager> SessionManager::Create()
 SessionManager::SessionManager()
     : initialized_(false),
       photoSessionInfos_(),
-      coordinator_(std::make_unique<SessionCoordinator>())
+      videoSessionInfos_(),
+      coordinator_(std::make_shared<SessionCoordinator>())
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -47,6 +49,7 @@ SessionManager::~SessionManager()
     initialized_ = false;
     coordinator_ = nullptr;
     photoSessionInfos_.clear();
+    videoSessionInfos_.Clear();
 }
 
 void SessionManager::Initialize()
@@ -72,11 +75,9 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     const sptr<IDeferredPhotoProcessingSessionCallback> callback, std::shared_ptr<DeferredPhotoProcessor> processor,
     TaskManager* taskManager)
 {
+    DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
+
     DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %{public}d", userId);
-    if (initialized_.load() == false) {
-        DP_ERR_LOG("failed due to uninitialized.");
-        return nullptr;
-    }
     for (auto it = photoSessionInfos_.begin(); it != photoSessionInfos_.end(); ++it) {
         DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", it->first);
     }
@@ -100,6 +101,52 @@ std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
 {
     DP_INFO_LOG("SessionManager::GetImageProcCallbacks enter.");
     return coordinator_->GetImageProcCallbacks();
+}
+
+sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const int32_t userId)
+{
+    auto iter = photoSessionInfos_.find(userId);
+    if (iter != photoSessionInfos_.end()) {
+        DP_INFO_LOG("SessionManager::GetCallback");
+        sptr<SessionInfo> sessionInfo = iter->second;
+        return sessionInfo->GetRemoteCallback();
+    }
+    return nullptr;
+}
+
+sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcessingSession(const int32_t userId,
+    const sptr<IDeferredVideoProcessingSessionCallback> callback)
+{
+    DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
+
+    DP_INFO_LOG("create video session for userId: %{public}d", userId);
+    auto sessionInfo = GetSessionInfo(userId);
+    if (sessionInfo == nullptr) {
+        DP_INFO_LOG("video session creat susses");
+        sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId, callback);
+        videoSessionInfos_.Insert(userId, sessionInfo);
+    } else {
+        DP_DEBUG_LOG("video session already existed");
+        sessionInfo->SetCallback(callback);
+    }
+    auto ret = DPS_SendUrgentCommand<AddVideoSessionCommand>(sessionInfo);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, nullptr, "AddVideoSession failed, ret: %{public}d", ret);
+
+    return sessionInfo->GetDeferredVideoProcessingSession();
+}
+
+sptr<VideoSessionInfo> SessionManager::GetSessionInfo(const int32_t userId)
+{
+    sptr<VideoSessionInfo> info;
+    DP_CHECK_RETURN_RET(videoSessionInfos_.Find(userId, info), info);
+    
+    DP_ERR_LOG("not get SessionInfo, userId: %{public}d", userId);
+    return nullptr;
+}
+
+std::shared_ptr<SessionCoordinator> SessionManager::GetSessionCoordinator()
+{
+    return coordinator_;
 }
 
 void SessionManager::OnCallbackDied(const int32_t userId)

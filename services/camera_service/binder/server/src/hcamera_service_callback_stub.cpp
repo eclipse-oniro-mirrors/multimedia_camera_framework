@@ -50,7 +50,7 @@ int HCameraServiceCallbackStub::HandleOnCameraStatusChanged(MessageParcel& data)
     std::string bundleName = data.ReadString();
     MEDIA_INFO_LOG("HCameraServiceCallbackStub::HandleOnCameraStatusChanged called, cameraId = %{public}s, "
                    "status = %{public}d, bundleName = %{public}s", cameraId.c_str(), status, bundleName.c_str());
-    return OnCameraStatusChanged(cameraId, (CameraStatus)status, bundleName);
+    return OnCameraStatusChanged(cameraId, static_cast<CameraStatus>(status), bundleName);
 }
 
 int HCameraServiceCallbackStub::HandleOnFlashlightStatusChanged(MessageParcel& data)
@@ -58,7 +58,7 @@ int HCameraServiceCallbackStub::HandleOnFlashlightStatusChanged(MessageParcel& d
     std::string cameraId = data.ReadString();
     int32_t status = data.ReadInt32();
 
-    return OnFlashlightStatusChanged(cameraId, (FlashStatus)status);
+    return OnFlashlightStatusChanged(cameraId, static_cast<FlashStatus>(status));
 }
 
 int HTorchServiceCallbackStub::OnRemoteRequest(

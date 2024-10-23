@@ -34,8 +34,10 @@ public:
     int32_t HandleConfirmCapture(MessageParcel& data);
     int32_t HandleSetCallback(MessageParcel& data);
     int32_t HandleSetThumbnail(MessageParcel& data);
-    int32_t HandleSetRawPhotoInfo(MessageParcel& data);
+    int32_t HandleEnableRawDelivery(MessageParcel& data);
+    int32_t HandleSetBufferProducerInfo(MessageParcel& data);
     int32_t HandleEnableDeferredType(MessageParcel& data);
+    int32_t HandleSetMovingPhotoVideoCodecType(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -65,4 +65,4 @@ struct DepthDataAsyncContext : public AsyncContext {
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // DEPTH_DATA_NAPI_H_
+#endif // DEPTH_DATA_NAPI_H_

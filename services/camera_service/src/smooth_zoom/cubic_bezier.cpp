@@ -40,14 +40,10 @@ std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const flo
     float duration = GetDuration(currentZoom, targetZoom);
     MEDIA_INFO_LOG("CubicBezier::GetZoomArray duration is:%{public}f", duration);
     std::vector<float> result;
-    if (duration == 0 || frameInterval == 0) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(duration == 0 || frameInterval == 0, result);
     int arraySize = static_cast<int>(duration / frameInterval);
-    if (arraySize > MAX_ZOOM_ARRAY_SIZE) {
-        MEDIA_ERR_LOG("Error size, duration is:%{public}f, interval is:%{public}f", duration, frameInterval);
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(arraySize > MAX_ZOOM_ARRAY_SIZE, result,
+        "Error size, duration is:%{public}f, interval is:%{public}f", duration, frameInterval);
     for (int i = 1; i <= arraySize; i++) {
         float time = frameInterval * i / duration;
         float zoom = (currentZoom + (targetZoom - currentZoom) * GetInterpolation(time));

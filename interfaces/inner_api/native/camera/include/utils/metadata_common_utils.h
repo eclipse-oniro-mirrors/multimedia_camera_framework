@@ -55,6 +55,26 @@ bool AddOrUpdateMetadata(common_metadata_header_t* src, uint32_t tag, const T* d
     return ret == CAM_META_SUCCESS;
 }
 
+template<typename T>
+bool AddOrUpdateMetadata(
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata, uint32_t tag, const T* data, uint32_t dataCount)
+{
+    common_metadata_header_t* src = metadata->get();
+    if (src == nullptr) {
+        return false;
+    }
+
+    uint32_t index = 0;
+    int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItemIndex(src, tag, &index);
+    if (ret == CAM_META_SUCCESS) {
+        ret = OHOS::Camera::CameraMetadata::UpdateCameraMetadataItemByIndex(src, index, data, dataCount, nullptr);
+    } else if (ret == CAM_META_ITEM_NOT_FOUND) {
+        // addEntry can resize if need
+        return metadata->addEntry(tag, data, dataCount);
+    }
+    return ret == CAM_META_SUCCESS;
+}
+
 std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_header_t* src, uint32_t tag);
 
 std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName);

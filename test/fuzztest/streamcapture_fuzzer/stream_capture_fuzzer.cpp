@@ -14,6 +14,7 @@
  */
 
 #include "stream_capture_fuzzer.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "metadata_utils.h"
 #include "iconsumer_surface.h"
 #include "ipc_skeleton.h"
@@ -81,17 +82,14 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+        "StreamCaptureFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     if (fuzzStreamcapture == nullptr) {
         fuzzStreamcapture = new(std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
