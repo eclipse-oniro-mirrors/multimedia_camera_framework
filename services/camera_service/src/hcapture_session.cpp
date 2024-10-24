@@ -1363,6 +1363,9 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         if (repeatType != RepeatStreamType::PREVIEW) {
             continue;
         }
+        if (curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET) {
+            continue;
+        }
         curStreamRepeat->SetUsedAsPosition(cameraPosition);
         errorCode = curStreamRepeat->Start(settings);
         hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
