@@ -763,6 +763,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         imageProcessServiceProxyV1_2->CreateImageProcessSession(userId_, listener_, imageProcessSession);
     }
     session_ = imageProcessSession;
+    DP_CHECK_ERROR_RETURN_RET_LOG(session_ == nullptr, false, "session_ is nullptr");
     for (const auto& imageId : removeNeededList_) {
         int32_t ret = session_->RemoveImage(imageId);
         DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
