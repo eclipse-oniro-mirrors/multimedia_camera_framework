@@ -56,7 +56,7 @@ private:
     int32_t size_ {0};
     Comparator comp_;
     std::vector<DeferredVideoJobPtr> heap_ {};
-    std::unordered_map<DeferredVideoJobPtr, int32_t> indexMap_ {};
+    std::unordered_map<DeferredVideoJobPtr, uint32_t> indexMap_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

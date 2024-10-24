@@ -127,10 +127,6 @@ VideoPostProcessor::~VideoPostProcessor()
     DP_DEBUG_LOG("entered");
     DisconnectService();
     SetVideoSession(nullptr);
-    mpegManager_ = nullptr;
-    serviceListener_ = nullptr;
-    sessionDeathRecipient_ = nullptr;
-    processListener_ = nullptr;
     allStreamInfo_.clear();
     videoId2Handle_.Clear();
 }
@@ -178,7 +174,9 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     DP_CHECK_ERROR_RETURN_LOG(!PrepareStreams(videoId, inFd->GetFd()), "prepaer video failed.");
 
     StartTimer(videoId, work);
-    auto startTime = mpegManager_->GetProcessTimeStamp();
+    auto mpegManager = GetMpegManager();
+    DP_CHECK_ERROR_RETURN_LOG(!mpegManager, "mpegManager is nullptr");
+    auto startTime = mpegManager->GetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
     DP_INFO_LOG("process video to ive, videoId: %{public}s, startTime: %{public}llu, ret: %{public}d",
         videoId.c_str(), static_cast<unsigned long long>(startTime), ret);
@@ -218,7 +216,9 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
     for (const auto& stream : streamDescs) {
         DP_INFO_LOG("streamId: %{public}d, stream type: %{public}d", stream.streamId, stream.type);
         if (stream.type == 0) {
-            auto producer = sptr<BufferProducerSequenceable>::MakeSptr(mpegManager_->GetSurface()->GetProducer());
+            auto mpegManager = GetMpegManager();
+            DP_CHECK_ERROR_RETURN_RET_LOG(!mpegManager, false, "mpegManager is nullptr");
+            auto producer = sptr<BufferProducerSequenceable>::MakeSptr(mpegManager->GetSurface()->GetProducer());
             SetStreamInfo(stream, producer);
         }
     }
@@ -261,19 +261,21 @@ void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<Buf
 
 bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd)
 {
-    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(videoId, inputFd);
-    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpeg manager is nullptr.");
+    auto mpegManager = MpegManagerFactory::GetInstance().Acquire(videoId, inputFd);
+    SetMpegManager(mpegManager);
+    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager == nullptr, false, "mpeg manager is nullptr.");
     return true;
 }
 
 bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work)
 {
-    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpeg manager is nullptr.");
-    mpegManager_->UnInit(result);
+    auto mpegManager = GetMpegManager();
+    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager == nullptr, false, "mpegManager is nullptr");
+    mpegManager->UnInit(result);
 
     bool ret = true;
     if (result == MediaResult::SUCCESS) {
-        auto tempFd = mpegManager_->GetResultFd()->GetFd();
+        auto tempFd = mpegManager->GetResultFd()->GetFd();
         auto outFd = work->GetDeferredVideoJob()->GetOutputFd()->GetFd();
         auto videoId = work->GetDeferredVideoJob()->GetVideoId();
         DP_INFO_LOG("video process done, videoId: %{public}s, tempFd: %{public}d, outFd: %{public}d",
@@ -291,8 +293,10 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 
 void VideoPostProcessor::ReleaseMpeg()
 {
-    MpegManagerFactory::GetInstance().Release(mpegManager_);
-    mpegManager_.reset();
+    auto mpegManager = GetMpegManager();
+    DP_CHECK_ERROR_RETURN_LOG(mpegManager == nullptr, "mpegManager is nullptr");
+    MpegManagerFactory::GetInstance().Release(mpegManager);
+    mpegManager.reset();
     DP_INFO_LOG("release mpeg success.");
 }
 
