@@ -186,7 +186,7 @@ void HStreamRepeat::SetUsedAsPosition(camera_position_enum_t cameraPosition)
     SetStreamTransform();
 }
 
-int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings)
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();

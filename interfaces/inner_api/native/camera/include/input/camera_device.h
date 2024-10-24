@@ -238,6 +238,7 @@ public:
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
+    std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
     CameraPosition usedAsCameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
 private:
     std::string cameraID_;
