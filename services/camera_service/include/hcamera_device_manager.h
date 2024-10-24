@@ -266,6 +266,7 @@ private:
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void UpdateProcessState(int32_t& activeState, int32_t& requestState,
         uint32_t activeAccessTokenId, uint32_t requestAccessTokenId);
+    void UpdateEachProcessState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);
 };
 } // namespace CameraStandard
