@@ -968,6 +968,8 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
             errorType = CAMERA_DEVICE_REQUEST_TIMEOUT;
         } else if (type == OHOS::HDI::Camera::V1_0::DEVICE_PREEMPT) {
             errorType = CAMERA_DEVICE_PREEMPTED;
+        } else if (type == DEVICE_DISCONNECT) {
+            errorType = CAMERA_DEVICE_CLOSED
         } else {
             errorType = CAMERA_UNKNOWN_ERROR;
         }
