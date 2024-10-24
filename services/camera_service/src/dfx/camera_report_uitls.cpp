@@ -16,6 +16,7 @@
 #include <mutex>
 #include <cinttypes>
 #include <unordered_map>
+#include "bms_adapter.h"
 #include "camera_report_uitls.h"
 
 #include "camera_util.h"
@@ -263,9 +264,8 @@ CallerInfo CameraReportUtils::GetCallerInfo()
     callerInfo.pid = IPCSkeleton::GetCallingPid();
     callerInfo.uid = IPCSkeleton::GetCallingUid();
     callerInfo.tokenID = IPCSkeleton::GetCallingTokenID();
-    callerInfo.bundleName = GetClientBundle(callerInfo.uid);
-    MEDIA_DEBUG_LOG("CameraReportUtils::GetCallerInfo pid:%{public}d uid:%{public}d tokenID:%{public}d",
-        callerInfo.pid, callerInfo.uid, callerInfo.tokenID);
+    callerInfo.bundleName = BmsAdapter::GetInstance()->GetBundleName(callerInfo.uid);
+    MEDIA_DEBUG_LOG("CameraReportUtils::GetCallerInfo pid:%{public}d uid:%{public}d", callerInfo.pid, callerInfo.uid);
     return callerInfo;
 }
 

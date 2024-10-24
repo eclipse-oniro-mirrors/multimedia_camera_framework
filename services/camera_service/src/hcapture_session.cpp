@@ -360,8 +360,7 @@ void HCaptureSession::OpenMediaLib()
         CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
         closeTimerId_.reset();
     }
-    std::future<void> futureResult = std::async(std::launch::async,
-        [&] { dynamicLoader_->OpenDynamicHandle(MEDIA_LIB_SO); });
+    CameraTimer::GetInstance()->Register([&] { dynamicLoader_->OpenDynamicHandle(MEDIA_LIB_SO); }, 0, true);
 }
 
 void HCaptureSession::StartMovingPhotoStream()
