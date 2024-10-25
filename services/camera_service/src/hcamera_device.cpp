@@ -1203,9 +1203,7 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT: {
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HCameraDevice::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
+                MEDIA_ERR_LOG("HCameraDevice::OperatePermissionCheck fail, callerToken not legal");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;

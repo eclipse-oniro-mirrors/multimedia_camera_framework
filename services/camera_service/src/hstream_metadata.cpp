@@ -107,9 +107,7 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
         case StreamMetadataInterfaceCode::CAMERA_STREAM_META_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamMetadata::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
+                MEDIA_ERR_LOG("HStreamMetadata::OperatePermissionCheck fail, callerToken not legal");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;

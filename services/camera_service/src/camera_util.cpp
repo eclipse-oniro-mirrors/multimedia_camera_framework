@@ -402,7 +402,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
     int32_t failCount = 0;
     int32_t ret = Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName,
         successCout, failCount);
-    MEDIA_INFO_LOG("AddPermissionUsedRecord tokenId:%{public}d", callingTokenId);
+    MEDIA_INFO_LOG("AddPermissionUsedRecord");
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
     }

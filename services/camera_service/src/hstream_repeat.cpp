@@ -803,9 +803,7 @@ int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
         case CAMERA_FORK_SKETCH_STREAM_REPEAT: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamRepeat::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
+                MEDIA_ERR_LOG("HStreamRepeat::OperatePermissionCheck fail, callerToken not legal");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;

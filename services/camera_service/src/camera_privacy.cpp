@@ -34,8 +34,8 @@ sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    MEDIA_INFO_LOG("enter PermissionStatusChangeNotify permStateChangeType:%{public}d tokenId:%{public}d"
-        " permissionName:%{public}s", result.permStateChangeType, result.tokenID, result.permissionName.c_str());
+    MEDIA_INFO_LOG("enter PermissionStatusChangeNotify permStateChangeType:%{public}d"
+        " permissionName:%{public}s", result.permStateChangeType, result.permissionName.c_str());
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
         auto session = CastToSession(device->GetStreamOperatorCallback());
@@ -50,7 +50,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
+    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
         auto session = CastToSession(device->GetStreamOperatorCallback());
@@ -80,7 +80,7 @@ bool CameraPrivacy::RegisterPermissionCallback()
     scopeInfo.permList = {OHOS_PERMISSION_CAMERA};
     scopeInfo.tokenIDs = {callerToken_};
     permissionCallbackPtr_ = std::make_shared<PermissionStatusChangeCb>(cameraDevice_, scopeInfo);
-    MEDIA_DEBUG_LOG("RegisterPermissionCallback tokenId:%{public}d register", callerToken_);
+    MEDIA_DEBUG_LOG("RegisterPermissionCallback register");
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(permissionCallbackPtr_);
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
     return res == CAMERA_OK;
@@ -89,7 +89,7 @@ bool CameraPrivacy::RegisterPermissionCallback()
 void CameraPrivacy::UnregisterPermissionCallback()
 {
     CHECK_ERROR_RETURN_LOG(permissionCallbackPtr_ == nullptr, "permissionCallbackPtr_ is null.");
-    MEDIA_DEBUG_LOG("UnregisterPermissionCallback tokenId:%{public}d unregister", callerToken_);
+    MEDIA_DEBUG_LOG("UnregisterPermissionCallback unregister");
     int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(permissionCallbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("UnregisterPermissionCallback failed.");
@@ -102,7 +102,7 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
     int32_t successCout = 1;
     int32_t failCount = 0;
     int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
-    MEDIA_DEBUG_LOG("AddCameraPermissionUsedRecord tokenId:%{public}d", callerToken_);
+    MEDIA_DEBUG_LOG("AddCameraPermissionUsedRecord");
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;
 }
@@ -112,14 +112,14 @@ bool CameraPrivacy::StartUsingPermissionCallback()
     CHECK_ERROR_RETURN_RET_LOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>(cameraDevice_);
     int32_t res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
-    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callerToken_);
+    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback");
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StartUsingPermissionCallback failed.");
     return res == CAMERA_OK;
 }
 
 void CameraPrivacy::StopUsingPermissionCallback()
 {
-    MEDIA_DEBUG_LOG("enter StopUsingPermissionCallback tokenId:%{public}d", callerToken_);
+    MEDIA_DEBUG_LOG("enter StopUsingPermissionCallback");
     int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, pid_);
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
     cameraUseCallbackPtr_ = nullptr;

@@ -764,9 +764,7 @@ int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
         case CAMERA_STREAM_CAPTURE_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamCapture::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
+                MEDIA_ERR_LOG("HStreamCapture::OperatePermissionCheck fail, callerToken not legal");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;
