@@ -33,7 +33,7 @@ static const std::string CONST_VIDEO_DEFERRED_ENHANCEMENT = "deferredVideoEnhanc
 
 struct VideoCallbackInfo {
     int32_t frameCount = 0;
-    int32_t errorCode;
+    int32_t errorCode = 0;
     bool isDeferredVideoEnhancementAvailable = false;
     std::string videoId = "";
 };

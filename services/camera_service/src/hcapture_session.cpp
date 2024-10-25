@@ -1633,6 +1633,7 @@ int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
                 MEDIA_INFO_LOG("restart movingphoto stream.");
                 streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
                 // set clear cache flag
+                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 livephotoListener_->SetClearFlag();
                 break;
             }
