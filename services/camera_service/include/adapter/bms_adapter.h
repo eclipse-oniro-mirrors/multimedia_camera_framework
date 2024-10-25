@@ -41,7 +41,7 @@ private:
 class BmsAdapter : public RefBase {
 public:
     ~BmsAdapter();
-    static sptr<BmsAdapter> &GetInstance();
+    static sptr<BmsAdapter> GetInstance();
     std::string GetBundleName(int uid);
     sptr<OHOS::AppExecFwk::IBundleMgr> GetBms();
     void SetBms(sptr<OHOS::AppExecFwk::IBundleMgr> bms);
