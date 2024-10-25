@@ -386,10 +386,10 @@ public:
     bool reportFaceResults_ = false;
     bool reportLastFaceResults_ = false;
     void ProcessMetadata(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
-                               std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
+                               std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror, bool isNeedFlip);
     int32_t ProcessMetaObjects(const int32_t streamId, std::vector<sptr<MetadataObject>> &metaObjects,
                                const std::vector<camera_metadata_item_t>& metadataItem,
-                               const std::vector<uint32_t>& metadataTypes, bool isNeedMirror);
+                               const std::vector<uint32_t>& metadataTypes, bool isNeedMirror, bool isNeedFlip);
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
 
@@ -405,19 +405,19 @@ private:
     void GetMetadataResults(const common_metadata_header_t *metadata,
         std::vector<camera_metadata_item_t>& metadataResults, std::vector<uint32_t>& metadataTypes);
     void GenerateObjects(const camera_metadata_item_t& metadataItem, MetadataObjectType type,
-        std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
+        std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror, bool isNeedFlip);
     Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
-                        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror);
-    void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr,
-        const camera_metadata_item_t& metadataItem, int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror);
-    void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr,
-        const camera_metadata_item_t& metadataItem, int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror);
+                        int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip);
+    void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t& metadataItem,
+        int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
+    void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t& metadataItem,
+        int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
     void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror, bool isNeedFlip);
     void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror, bool isNeedFlip);
     void ProcessDogFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
-        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror);
+        const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror, bool isNeedFlip);
     
     std::mutex surfaceMutex_;
     sptr<IConsumerSurface> surface_;

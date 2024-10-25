@@ -1311,12 +1311,17 @@ int32_t HCaptureSession::Start()
 
         std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
         auto cameraDevice = GetCameraDevice();
+        uint8_t usedAsPositionU8 = OHOS_CAMERA_POSITION_OTHER;
+        MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 default = %{public}d", usedAsPositionU8);
         if (cameraDevice != nullptr) {
             settings = cameraDevice->CloneCachedSettings();
+            usedAsPositionU8 = cameraDevice->GetUsedAsPosition();
+            MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 set %{public}d", usedAsPositionU8);
             DumpMetadata(settings);
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
         }
-        errorCode = StartPreviewStream(settings);
+        camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
+        errorCode = StartPreviewStream(settings, cameraPosition);
         if (errorCode == CAMERA_OK) {
             isSessionStarted_ = true;
         }
@@ -1345,7 +1350,8 @@ void HCaptureSession::StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat)
     });
 }
 
-int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
+    camera_position_enum_t cameraPosition)
 {
     int32_t errorCode = CAMERA_OK;
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
@@ -1360,6 +1366,7 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         if (curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET) {
             continue;
         }
+        curStreamRepeat->SetUsedAsPosition(cameraPosition);
         errorCode = curStreamRepeat->Start(settings);
         hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
         if (isSetMotionPhoto_ && hasDerferedPreview) {

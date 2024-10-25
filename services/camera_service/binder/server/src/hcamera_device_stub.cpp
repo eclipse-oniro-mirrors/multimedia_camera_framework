@@ -36,14 +36,12 @@ int HCameraDeviceStub::OnRemoteRequest(
             errCode =HCameraDeviceStub::HandleOpenSecureCameraResults(data, reply);
             break;
         }
-        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE):
-            {
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE): {
                 CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
                 errCode = Close();
             }
             break;
-        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE):
-            {
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE): {
                 CameraXCollie cameraXCollie("HCameraDeviceStub::Release");
                 errCode = Release();
             }
@@ -53,6 +51,9 @@ int HCameraDeviceStub::OnRemoteRequest(
             break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS):
             errCode = HCameraDeviceStub::HandleUpdateSetting(data);
+            break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS):
+            errCode = HCameraDeviceStub::HandleUsedAsPos(data);
             break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_STATUS):
             errCode = HCameraDeviceStub::HandleGetStatus(data, reply);
@@ -94,6 +95,14 @@ int32_t HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
 
     return UpdateSetting(metadata);
+}
+
+int32_t HCameraDeviceStub::HandleUsedAsPos(MessageParcel &data)
+{
+    uint8_t value = 0;
+    value = data.ReadUint8();
+
+    return SetUsedAsPosition(value);
 }
 
 int32_t HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &reply)

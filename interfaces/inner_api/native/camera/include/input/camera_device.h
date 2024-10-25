@@ -114,6 +114,13 @@ public:
     CameraPosition GetPosition();
 
     /**
+    * @brief Get the ised as position of the camera.
+    *
+    * @return Returns the used as position of the camera.
+    */
+    CameraPosition GetUsedAsPosition();
+
+    /**
     * @brief Get the Camera type of the camera.
     *
     * @return Returns the Camera type of the camera.
@@ -181,6 +188,8 @@ public:
     
     void SetProfile(sptr<CameraOutputCapability> cameraOutputCapability, int32_t modename);
 
+    void SetCameraDeviceUsedAsPosition(CameraPosition usedAsPosition);
+
     /**
     * @brief Get sensor module type
     *
@@ -230,6 +239,7 @@ public:
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
     std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
+    CameraPosition usedAsCameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
 private:
     std::string cameraID_;
     const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;

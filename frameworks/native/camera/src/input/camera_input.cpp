@@ -18,12 +18,15 @@
 #include <cinttypes>
 #include <mutex>
 #include <securec.h>
+#include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "hcamera_device_callback_stub.h"
 #include "icamera_util.h"
 #include "metadata_utils.h"
+#include "metadata_common_utils.h"
 #include "output/metadata_output.h"
 #include "session/capture_session.h"
 
@@ -264,6 +267,35 @@ void CameraInput::SetCameraDeviceInfo(sptr<CameraDevice> cameraObj)
     std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
     cameraObj_ = cameraObj;
     return;
+}
+
+std::map<CameraPosition, camera_position_enum> createPositionMapping()
+{
+    std::map<CameraPosition, camera_position_enum> enumMapping;
+    enumMapping[CameraPosition::CAMERA_POSITION_UNSPECIFIED] = camera_position_enum::OHOS_CAMERA_POSITION_OTHER;
+    enumMapping[CameraPosition::CAMERA_POSITION_BACK] = camera_position_enum::OHOS_CAMERA_POSITION_BACK;
+    enumMapping[CameraPosition::CAMERA_POSITION_FRONT] = camera_position_enum::OHOS_CAMERA_POSITION_FRONT;
+    return enumMapping;
+}
+
+void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
+{
+    MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition params: %{public}u", usedAsPosition);
+    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
+    uint8_t translatePos = OHOS_CAMERA_POSITION_OTHER;
+    if (positionMapping.empty()) {
+        positionMapping = createPositionMapping();
+    }
+    translatePos = positionMapping[usedAsPosition];
+
+    auto metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
+    MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition fr: %{public}u, to: %{public}u", usedAsPosition, translatePos);
+    if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1)) {
+        MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition Failed to set metadata");
+    }
+    deviceObj_->SetUsedAsPosition(translatePos);
+    deviceObj_->UpdateSetting(metadata);
+    cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
 }
 
 void CameraInput::SetOcclusionDetectCallback(
