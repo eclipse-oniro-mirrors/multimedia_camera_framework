@@ -1879,6 +1879,7 @@ private:
     atomic<bool> isDeferTypeSetted_ = false;
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;
+    atomic<bool> canAddFuncToMap_ = true;
 
     // Only for the SceneMode::CAPTURE and SceneMode::VIDEO mode
     map<std::string, std::function<void()>> functionMap;

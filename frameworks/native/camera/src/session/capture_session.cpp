@@ -1459,11 +1459,17 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     if (!(this->changedMetadata_->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count))) {
         MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
     } else {
-        AddFunctionToMap(std::to_string(OHOS_CONTROL_VIDEO_STABILIZATION_MODE),
-            [this, stabilizationMode]() {
-                int32_t retCode = SetVideoStabilizationMode(stabilizationMode);
-                CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-            });
+        wptr<CaptureSession> weakThis(this);
+        AddFunctionToMap(std::to_string(OHOS_CONTROL_VIDEO_STABILIZATION_MODE), [weakThis, stabilizationMode]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetVideoStabilizationMode session is nullptr");
+                return;
+            }
+            int32_t retCode = sharedThis->SetVideoStabilizationMode(stabilizationMode);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
+                          sharedThis->SetDeviceCapabilityChangeStatus(true));
+        });
     }
     int32_t errCode = this->UnlockForControl();
     if (errCode != CameraErrorCode::SUCCESS) {
@@ -1626,11 +1632,18 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_EXPOSURE_MODE),
-        [this, exposureMode]() {
-            int32_t retCode = SetExposureMode(exposureMode);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_EXPOSURE_MODE), [weakThis, exposureMode]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetExposureMode session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetExposureMode(exposureMode);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposureMode Failed to set exposure mode");
 
     return CameraErrorCode::SUCCESS;
@@ -1694,11 +1707,18 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
         status = changedMetadata_->updateEntry(
             OHOS_CONTROL_AE_REGIONS, exposureArea, sizeof(exposureArea) / sizeof(exposureArea[0]));
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_REGIONS),
-        [this, exposurePoint]() {
-            int32_t retCode = SetMeteringPoint(exposurePoint);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_REGIONS), [weakThis, exposurePoint]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetMeteringPoint session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetMeteringPoint(exposurePoint);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposurePoint Failed to set exposure Area");
     return CameraErrorCode::SUCCESS;
 }
@@ -1810,10 +1830,18 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
     }
+    wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION),
-        [this, exposureValue]() {
-            int32_t retCode = SetExposureBias(exposureValue);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        [weakThis, exposureValue]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetExposureBias session is nullptr");
+                return;
+            }
+            sharedThis->LockForControl();
+            int32_t retCode = sharedThis->SetExposureBias(exposureValue);
+            sharedThis->UnlockForControl();
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
         }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposureValue Failed to set exposure compensation");
     return CameraErrorCode::SUCCESS;
@@ -1989,11 +2017,18 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_FOCUS_MODE),
-        [this, focusMode]() {
-            int32_t retCode = SetFocusMode(focusMode);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_FOCUS_MODE), [weakThis, focusMode]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetFocusMode session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetFocusMode(focusMode);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -2060,11 +2095,18 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         status =
             changedMetadata_->updateEntry(OHOS_CONTROL_AF_REGIONS, FocusArea, sizeof(FocusArea) / sizeof(FocusArea[0]));
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AF_REGIONS),
-        [this, focusPoint]() {
-            int32_t retCode = SetFocusPoint(focusPoint);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AF_REGIONS), [weakThis, focusPoint]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetFocusPoint session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetFocusPoint(focusPoint);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusPoint Failed to set Focus Area");
     return CameraErrorCode::SUCCESS;
 }
@@ -2428,11 +2470,19 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     }
 
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFlashMode Failed to set flash mode");
-    AddFunctionToMap(std::to_string(OHOS_CONTROL_FLASH_MODE),
-        [this, flashMode]() {
-            int32_t retCode = SetFlashMode(flashMode);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        });
+    wptr<CaptureSession> weakThis(this);
+    AddFunctionToMap(std::to_string(OHOS_CONTROL_FLASH_MODE), [weakThis, flashMode]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetFlashMode session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetFlashMode(flashMode);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
+                      sharedThis->SetDeviceCapabilityChangeStatus(true));
+    });
     return CameraErrorCode::SUCCESS;
 }
 
@@ -2632,11 +2682,19 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         if (abilityContainer && supportSpecSearch_) {
             abilityContainer->FilterByZoomRatio(zoomRatio);
         }
-        AddFunctionToMap(std::to_string(OHOS_CONTROL_ZOOM_RATIO),
-            [this, zoomRatio]() {
-                int32_t retCode = SetZoomRatio(zoomRatio);
-                CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-            });
+        wptr<CaptureSession> weakThis(this);
+        AddFunctionToMap(std::to_string(OHOS_CONTROL_ZOOM_RATIO), [weakThis, zoomRatio]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetZoomRatio session is nullptr");
+                return;
+            }
+            sharedThis->LockForControl();
+            int32_t retCode = sharedThis->SetZoomRatio(zoomRatio);
+            sharedThis->UnlockForControl();
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
+                          sharedThis->SetDeviceCapabilityChangeStatus(true));
+        });
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -3407,10 +3465,18 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_LENS_FOCUS_DISTANCE, &value, count);
     }
+    wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_LENS_FOCUS_DISTANCE),
-        [this, focusDistance]() {
-            int32_t retCode = SetFocusDistance(focusDistance);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        [weakThis, focusDistance]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetFocusDistance session is nullptr");
+                return;
+            }
+            sharedThis->LockForControl();
+            int32_t retCode = sharedThis->SetFocusDistance(focusDistance);
+            sharedThis->UnlockForControl();
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
         }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDistance Failed to set");
     return CameraErrorCode::SUCCESS;
@@ -3422,10 +3488,16 @@ int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateR
     this->LockForControl();
     bool isSuccess = this->changedMetadata_->addEntry(
         OHOS_CONTROL_FPS_RANGES, videoFrameRateRange.data(), videoFrameRateRange.size());
+    wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(isSuccess, AddFunctionToMap("video" + std::to_string(OHOS_CONTROL_FPS_RANGES),
-        [this, frameRateRange]() {
-            int32_t retCode = SetFrameRateRange(frameRateRange);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
+        [weakThis, frameRateRange]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetFrameRateRange session is nullptr");
+                return;
+            }
+            int32_t retCode = sharedThis->SetFrameRateRange(frameRateRange);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
         }));
     for (size_t i = 0; i < frameRateRange.size(); i++) {
         MEDIA_DEBUG_LOG("CaptureSession::SetFrameRateRange:index:%{public}zu->%{public}d", i, frameRateRange[i]);
@@ -3790,8 +3862,18 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
     }
+    wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_SUPPORTED_COLOR_MODES),
-        [this, colorEffect]() { SetColorEffect(colorEffect); }));
+        [weakThis, colorEffect]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetColorEffect session is nullptr");
+                return;
+            }
+            sharedThis->LockForControl();
+            sharedThis->SetColorEffect(colorEffect);
+            sharedThis->UnlockForControl();
+        }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetColorEffect Failed to set color effect");
     return;
 }
@@ -3869,11 +3951,18 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
     bool res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1);
-    CHECK_EXECUTE(res, AddFunctionToMap(std::to_string(OHOS_CONTROL_SENSOR_EXPOSURE_TIME),
-        [this, exposureTime]() {
-            int32_t retCode = SetSensorExposureTime(exposureTime);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(res, AddFunctionToMap(std::to_string(OHOS_CONTROL_SENSOR_EXPOSURE_TIME), [weakThis, exposureTime]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetSensorExposureTime session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetSensorExposureTime(exposureTime);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!res, "CaptureSession::SetSensorExposureTime Failed to set exposure compensation");
     exposureDurationValue_ = exposureTime;
     return CameraErrorCode::SUCCESS;
@@ -4285,11 +4374,18 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_MOVING_PHOTO),
-        [this, isEnable]() {
-            int32_t retCode = EnableMovingPhoto(isEnable);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_MOVING_PHOTO), [weakThis, isEnable]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("EnableMovingPhoto session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->EnableMovingPhoto(isEnable);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMovingPhoto Failed to enable");
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_PRINT_LOG(captureSession == nullptr, "CaptureSession::EnableMovingPhoto() captureSession is nullptr");
@@ -4657,11 +4753,16 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
         MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed to set type!");
         res = INVALID_ARGUMENT;
     }
-    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_HIGH_QUALITY_MODE),
-        [this, enabled]() {
-            int32_t retCode = EnableAutoHighQualityPhoto(enabled);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        }));
+    wptr<CaptureSession> weakThis(this);
+    CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_HIGH_QUALITY_MODE), [weakThis, enabled]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("EnableAutoHighQualityPhoto session is nullptr");
+            return;
+        }
+        int32_t retCode = sharedThis->EnableAutoHighQualityPhoto(enabled);
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, sharedThis->SetDeviceCapabilityChangeStatus(true));
+    }));
     res = this->UnlockForControl();
     CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoHighQualityPhoto Failed");
     return res;
@@ -5431,11 +5532,19 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     CHECK_ERROR_RETURN_RET_LOG(!AddOrUpdateMetadata(
         changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1),
         CameraErrorCode::SUCCESS, "SetPhysicalAperture Failed to set physical aperture");
-    AddFunctionToMap(std::to_string(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE),
-        [this, physicalAperture]() {
-            int32_t retCode = SetPhysicalAperture(physicalAperture);
-            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS, SetDeviceCapabilityChangeStatus(true));
-        });
+    wptr<CaptureSession> weakThis(this);
+    AddFunctionToMap(std::to_string(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE), [weakThis, physicalAperture]() {
+        auto sharedThis = weakThis.promote();
+        if (!sharedThis) {
+            MEDIA_ERR_LOG("SetPhysicalAperture session is nullptr");
+            return;
+        }
+        sharedThis->LockForControl();
+        int32_t retCode = sharedThis->SetPhysicalAperture(physicalAperture);
+        sharedThis->UnlockForControl();
+        CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
+                      sharedThis->SetDeviceCapabilityChangeStatus(true));
+    });
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }
@@ -5722,8 +5831,8 @@ bool CaptureSession::SwitchDevice()
     CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::AddInput failed.");
     retCode = CommitConfig();
     CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::CommitConfig failed.");
+    ExecuteAllFunctionsInMap();
     retCode = Start();
-    CHECK_EXECUTE(GetDeviceCapabilityChangeStatus(), ExecuteAllFunctionsInMap());
     CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::Start failed.");
     CHECK_EXECUTE(hasVideoOutput, StartVideoOutput());
     return true;
@@ -5792,7 +5901,7 @@ shared_ptr<AutoDeviceSwitchCallback> CaptureSession::GetAutoDeviceSwitchCallback
 
 void CaptureSession::AddFunctionToMap(std::string ctrlTarget, std::function<void()> func)
 {
-    if (!GetIsAutoSwitchDeviceStatus()) {
+    if (!GetIsAutoSwitchDeviceStatus() || !canAddFuncToMap_) {
         MEDIA_INFO_LOG("The automatic switching device is not enabled.");
         return;
     }
@@ -5803,10 +5912,12 @@ void CaptureSession::AddFunctionToMap(std::string ctrlTarget, std::function<void
 void CaptureSession::ExecuteAllFunctionsInMap()
 {
     MEDIA_INFO_LOG("ExecuteAllFunctionsInMap is called.");
+    canAddFuncToMap_ = false;
     std::lock_guard<std::mutex> lock(functionMapMutex_);
     for (const auto& pair : functionMap) {
         pair.second();
     }
+    canAddFuncToMap_ = true;
 }
 
 void CaptureSession::CreateAndSetFoldServiceCallback()
