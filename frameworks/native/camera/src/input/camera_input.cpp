@@ -299,9 +299,13 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1)) {
         MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition Failed to set metadata");
     }
-    deviceObj_->SetUsedAsPosition(translatePos);
-    deviceObj_->UpdateSetting(metadata);
-    cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
+    auto deviceObj = GetCameraDevice();
+    CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+    deviceObj->SetUsedAsPosition(translatePos);
+    deviceObj->UpdateSetting(metadata);
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_LOG(cameraObj == nullptr, "deviceObj is nullptr");
+    cameraObj->SetCameraDeviceUsedAsPosition(usedAsPosition);
 }
 
 void CameraInput::SetOcclusionDetectCallback(
