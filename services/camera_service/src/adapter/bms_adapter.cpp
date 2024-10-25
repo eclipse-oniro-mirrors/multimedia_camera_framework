@@ -41,10 +41,9 @@ BmsAdapter::BmsAdapter()
 BmsAdapter::~BmsAdapter()
 {
     UnRegisterListener();
-    BmsAdapter::bmsAdapter_ = nullptr;
 }
 
-sptr<BmsAdapter> &BmsAdapter::GetInstance()
+sptr<BmsAdapter> BmsAdapter::GetInstance()
 {
     if (BmsAdapter::bmsAdapter_ == nullptr) {
         std::unique_lock<std::mutex> lock(instanceMutex_);
