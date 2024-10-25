@@ -20,8 +20,7 @@ namespace OHOS {
 namespace CameraStandard {
 void CameraWindowManagerAgent::UpdateCameraWindowStatus(uint32_t accessTokenId, bool isShowing)
 {
-    MEDIA_DEBUG_LOG("UpdateCameraWindowStatus get accessTokenId: %{public}d changed, isShowing: %{public}d",
-        accessTokenId, isShowing);
+    MEDIA_DEBUG_LOG("UpdateCameraWindowStatus get accessTokenId changed, isShowing: %{public}d", isShowing);
     accessTokenId_ = isShowing == 1 ? accessTokenId : 0;
 }
  

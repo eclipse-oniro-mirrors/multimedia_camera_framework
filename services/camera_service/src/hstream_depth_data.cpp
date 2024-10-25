@@ -251,7 +251,7 @@ int32_t HStreamDepthData::OperatePermissionCheck(uint32_t interfaceCode)
         case StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken_ is equal now token");
+                MEDIA_ERR_LOG("HStreamDepthData::OperatePermissionCheck fail, callerToken not legal");
                 return CAMERA_OPERATION_NOT_ALLOWED;
             }
             break;
