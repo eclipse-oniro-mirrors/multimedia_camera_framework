@@ -295,14 +295,14 @@ int32_t MetadataOutput::Start()
 {
     MEDIA_DEBUG_LOG("MetadataOutput::Start is called");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SUCCESS,
                                "MetadataOutput Failed to Start!, session not commited");
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SUCCESS,
                                "MetadataOutput Failed to Start!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata *>(stream.GetRefPtr())->Start();
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
-    return ServiceToCameraError(errCode);
+    return CameraErrorCode::SUCCESS;
 }
 
 void MetadataOutput::CameraServerDied(pid_t pid)
