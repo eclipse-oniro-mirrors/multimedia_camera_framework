@@ -160,7 +160,7 @@ int32_t VideoOutput::Stop()
     if (itemStream) {
         errCode = itemStream->Stop();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
-        isVideoStarted_ = true;
+        isVideoStarted_ = false;
     } else {
         MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
