@@ -1407,6 +1407,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         MEDIA_ERR_LOG("HCaptureSession::Release error, session is already released!");
         return CAMERA_INVALID_STATE;
     }
+
     stateMachine_.StateGuard([&errorCode, this, type](CaptureSessionState currentState) {
         MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d). release type is:%{public}d", pid_, type);
         bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_RELEASED);
@@ -1429,10 +1430,8 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         }
 
         // Clear current session
-        MEDIA_DEBUG_LOG(
-            "ClearCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", TotalSessionSize(), pid_);
         TotalSessionErase(pid_);
-        MEDIA_DEBUG_LOG("ClearCaptureSession: camera stub services(%{public}zu).", TotalSessionSize());
+        MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left services(%{public}zu).", TotalSessionSize());
 
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
