@@ -59,6 +59,7 @@ private:
     sptr<Surface> codecSurface_;
     VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
+    int32_t bitrate_ = 0;
     bool successFrame_ = false;
 };
 } // CameraStandard
