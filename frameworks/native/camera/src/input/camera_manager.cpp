@@ -1117,6 +1117,7 @@ sptr<CameraManager>& CameraManager::GetInstance()
     if (CameraManager::g_cameraManager == nullptr) {
         MEDIA_INFO_LOG("Initializing camera manager for first time!");
         CameraManager::g_cameraManager = new CameraManager();
+        CameraManager::g_cameraManager->InitCameraManager();
     } else if (CameraManager::g_cameraManager->GetServiceProxy() == nullptr) {
         CameraManager::g_cameraManager->InitCameraManager();
     }
