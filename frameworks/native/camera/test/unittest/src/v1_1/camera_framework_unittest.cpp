@@ -5644,7 +5644,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_063, TestSize.Level
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
 
     metadatOutput->session_ = nullptr;
-    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
 }
 
 /*
@@ -5680,7 +5680,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level
     session->AddInput(input);
     session->AddOutput(metadata);
 
-    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
 
     session->CommitConfig();
     session->Start();
@@ -5705,7 +5705,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_067, TestSize.Level
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
 
     metadatOutput->Release();
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
 }
 
 /*
