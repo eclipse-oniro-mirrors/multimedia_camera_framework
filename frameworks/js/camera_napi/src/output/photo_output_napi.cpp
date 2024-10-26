@@ -2004,7 +2004,7 @@ napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
     }
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableMirror is called");
     PhotoOutputNapi* photoOutputNapi = nullptr;
-    bool isMirror;
+    bool isMirror = false;
     CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isMirror);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableMirror invalid argument");
