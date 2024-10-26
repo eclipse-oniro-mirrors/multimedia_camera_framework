@@ -145,5 +145,24 @@ const std::unordered_map<BeautyType, camera_device_metadata_tag_t> g_fwkBeautyAb
     {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
     {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES}
 };
+
+const std::unordered_map<PortraitThemeType, CameraPortraitThemeTypes> g_fwkPortraitThemeTypeMap_ = {
+    {PortraitThemeType::NATURAL, OHOS_CAMERA_PORTRAIT_THEME_TYPE_NATURAL},
+    {PortraitThemeType::DELICATE, OHOS_CAMERA_PORTRAIT_THEME_TYPE_DELICATE},
+    {PortraitThemeType::STYLISH, OHOS_CAMERA_PORTRAIT_THEME_TYPE_STYLISH},
+};
+
+const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_metaPortraitThemeTypeMap_ = {
+    {OHOS_CAMERA_PORTRAIT_THEME_TYPE_NATURAL, PortraitThemeType::NATURAL},
+    {OHOS_CAMERA_PORTRAIT_THEME_TYPE_DELICATE, PortraitThemeType::DELICATE},
+    {OHOS_CAMERA_PORTRAIT_THEME_TYPE_STYLISH, PortraitThemeType::STYLISH},
+};
+
+const std::vector<VideoRotation> g_fwkVideoRotationVector_ = {
+    VideoRotation::ROTATION_0,
+    VideoRotation::ROTATION_90,
+    VideoRotation::ROTATION_180,
+    VideoRotation::ROTATION_270
+};
 } // namespace CameraStandard
 } // namespace OHOS
