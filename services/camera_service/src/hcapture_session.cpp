@@ -1903,9 +1903,9 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
-    DeferredProcessing::DeferredProcessingService::GetInstance().
-        NotifyLowQualityImage(photoAssetProxy->GetUserId(), cameraPhotoProxy->GetPhotoId(), picturePtr);
     uri = photoAssetProxy->GetPhotoAssetUri();
+    DeferredProcessing::DeferredProcessingService::GetInstance().
+        NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
     if (isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
