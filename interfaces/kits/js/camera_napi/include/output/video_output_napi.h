@@ -102,6 +102,9 @@ public:
     static napi_value IsAutoDeferredVideoEnhancementSupported(napi_env env, napi_callback_info info);
     static napi_value IsAutoDeferredVideoEnhancementEnabled(napi_env env, napi_callback_info info);
     static napi_value EnableAutoDeferredVideoEnhancement(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedRotations(napi_env env, napi_callback_info info);
+    static napi_value IsRotationSupported(napi_env env, napi_callback_info info);
+    static napi_value SetRotation(napi_env env, napi_callback_info info);
     VideoOutputNapi();
     ~VideoOutputNapi() override;
     sptr<VideoOutput> GetVideoOutput();
