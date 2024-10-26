@@ -1114,9 +1114,11 @@ sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 sptr<CameraManager>& CameraManager::GetInstance()
 {
     std::lock_guard<std::mutex> lock(g_instanceMutex);
-    if (CameraManager::g_cameraManager == nullptr || CameraManager::g_cameraManager->GetServiceProxy() == nullptr) {
+    if (CameraManager::g_cameraManager == nullptr) {
         MEDIA_INFO_LOG("Initializing camera manager for first time!");
         CameraManager::g_cameraManager = new CameraManager();
+        CameraManager::g_cameraManager->InitCameraManager();
+    } else if (CameraManager::g_cameraManager->GetServiceProxy() == nullptr) {
         CameraManager::g_cameraManager->InitCameraManager();
     }
     return CameraManager::g_cameraManager;
