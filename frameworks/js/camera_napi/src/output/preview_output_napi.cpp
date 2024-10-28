@@ -46,7 +46,8 @@ namespace {
 sptr<Surface> GetSurfaceFromSurfaceId(napi_env env, std::string& surfaceId)
 {
     MEDIA_DEBUG_LOG("GetSurfaceFromSurfaceId enter");
-    uint64_t iSurfaceId = std::stoull(surfaceId);
+    char *ptr;
+    uint64_t iSurfaceId = std::strtoull(surfaceId.c_str(), &ptr, 10);
     MEDIA_INFO_LOG("GetSurfaceFromSurfaceId surfaceId %{public}" PRIu64, iSurfaceId);
 
     return SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
