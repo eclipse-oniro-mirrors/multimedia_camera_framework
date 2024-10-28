@@ -249,6 +249,10 @@ public:
     bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
 
+    inline bool GetConflictState() {return isHandleConflict;}
+ 
+    inline void SetConflictState(bool state) {isHandleConflict = state;}
+
     std::mutex mapMutex_;
 private:
     HCameraDeviceManager();
@@ -260,6 +264,7 @@ private:
     std::vector<sptr<HCameraDeviceHolder>> activeCameras_;
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
+    bool isHandleConflict = false;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
