@@ -751,6 +751,7 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         curFoldStatus = FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
+    CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged(curFoldStatus));
     CHECK_ERROR_RETURN_LOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
     for (auto it : foldServiceCallbacks_) {
@@ -843,16 +844,20 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
     return CAMERA_OK;
 }
 
-int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
+int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback)
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     CHECK_EXECUTE((isFoldable && !isFoldRegister), RegisterFoldStatusListener());
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
-        "HCameraService::SetFoldStatusCallback callback is null");
-    foldServiceCallbacks_.insert(make_pair(pid, callback));
+    if (isInnerCallback) {
+        innerFoldCallback_ = callback;
+    } else {
+        pid_t pid = IPCSkeleton::GetCallingPid();
+        MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
+        CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
+            "HCameraService::SetFoldStatusCallback callback is null");
+        foldServiceCallbacks_.insert(make_pair(pid, callback));
+    }
     return CAMERA_OK;
 }
 
@@ -927,12 +932,14 @@ int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
     }
     MEDIA_INFO_LOG("HCameraService::UnSetFoldStatusCallback after erase pid = %{public}d, size = %{public}zu",
         pid, foldServiceCallbacks_.size());
+    innerFoldCallback_ = nullptr;
     return CAMERA_OK;
 }
 
 void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
+    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
     CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
     isFoldRegister = true;
@@ -942,6 +949,7 @@ void HCameraService::UnRegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
+    preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
     isFoldRegister = false;
 }

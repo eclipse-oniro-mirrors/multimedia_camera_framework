@@ -372,7 +372,8 @@ public:
 
     bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
-
+    void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
+    void InitCameraInput();
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;

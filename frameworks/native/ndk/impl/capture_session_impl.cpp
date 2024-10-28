@@ -122,6 +122,29 @@ private:
     OH_CaptureSession_OnSmoothZoomInfo smoothZoomInfoCallback_ = nullptr;
 };
 
+class InnerCaptureSessionAutoDeviceSwitchStatusCallback : public AutoDeviceSwitchCallback {
+public:
+    InnerCaptureSessionAutoDeviceSwitchStatusCallback(Camera_CaptureSession* captureSession,
+        OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusCallback)
+        : captureSession_(captureSession), autoDeviceSwitchStatusCallback_(autoDeviceSwitchStatusCallback) {};
+    ~InnerCaptureSessionAutoDeviceSwitchStatusCallback() = default;
+
+    void OnAutoDeviceSwitchStatusChange(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const override
+    {
+        MEDIA_DEBUG_LOG("OnAutoDeviceSwitchStatusChange is called!");
+        if (captureSession_ != nullptr && autoDeviceSwitchStatusCallback_ != nullptr) {
+            Camera_AutoDeviceSwitchStatusInfo info;
+            info.isDeviceSwitched = isDeviceSwitched;
+            info.isDeviceCapabilityChanged = isDeviceCapabilityChanged;
+            autoDeviceSwitchStatusCallback_(captureSession_, &info);
+        }
+    }
+
+private:
+    Camera_CaptureSession* captureSession_;
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusCallback_ = nullptr;
+};
+
 Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureSession)
     : innerCaptureSession_(innerCaptureSession)
 {
@@ -763,5 +786,37 @@ Camera_ErrorCode Camera_CaptureSession::SetActiveColorSpace(OH_NativeBuffer_Colo
         return CAMERA_INVALID_ARGUMENT;
     }
     int32_t ret = innerCaptureSession_->SetColorSpace(itr->second);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterAutoDeviceSwitchStatusCallback(
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    shared_ptr<InnerCaptureSessionAutoDeviceSwitchStatusCallback> innerDeviceSwitchStatusCallback =
+        make_shared<InnerCaptureSessionAutoDeviceSwitchStatusCallback>(this, autoDeviceSwitchStatusChange);
+    CHECK_AND_RETURN_RET_LOG(innerDeviceSwitchStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerCallback failed!");
+    innerCaptureSession_->SetAutoDeviceSwitchCallback(innerDeviceSwitchStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterAutoDeviceSwitchStatusCallback(
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    innerCaptureSession_->SetAutoDeviceSwitchCallback(nullptr);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::IsAutoDeviceSwitchSupported(bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::IsAutoDeviceSwitchSupported is called");
+    *isSupported = innerCaptureSession_->IsAutoDeviceSwitchSupported();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::EnableAutoDeviceSwitch(bool enabled)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::EnableAutoDeviceSwitch is called");
+    int32_t ret = innerCaptureSession_->EnableAutoDeviceSwitch(enabled);
     return FrameworkToNdkCameraError(ret);
 }

@@ -18,6 +18,57 @@
 #include "camera_log.h"
 #include "hilog/log.h"
 
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_RegisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(autoDeviceSwitchStatusChange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    session->RegisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_UnregisterAutoDeviceSwitchStatusCallback(Camera_CaptureSession* session,
+    OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(autoDeviceSwitchStatusChange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    session->UnregisterAutoDeviceSwitchStatusCallback(autoDeviceSwitchStatusChange);
+    return CAMERA_OK;
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_IsAutoDeviceSwitchSupported(Camera_CaptureSession* session, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsAutoDeviceSwitchSupported is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    return session->IsAutoDeviceSwitchSupported(isSupported);
+}
+
+/**
+ * @since 13
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_EnableAutoDeviceSwitch(Camera_CaptureSession* session, bool enabled)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_EnableAutoDeviceSwitch is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    return session->EnableAutoDeviceSwitch(enabled);
+}
 #ifdef __cplusplus
 extern "C" {
 #endif
