@@ -95,6 +95,11 @@ public:
         fun(currentState_);
     }
 
+    inline bool IsStateNoLock(CaptureSessionState targetState)
+    {
+        return currentState_ == targetState;
+    }
+
 private:
     std::vector<CaptureSessionState> stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_STATE_MAX)];
     std::recursive_mutex sessionStateLock_;
