@@ -5287,7 +5287,10 @@ int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     MEDIA_DEBUG_LOG("CaptureSession::SetWhiteBalanceMode WhiteBalance mode: %{public}d", whiteBalanceMode);
     // no manual wb mode need set maunual value to 0
     if (mode != AWB_MODE_OFF) {
-        SetManualWhiteBalance(0);
+        int32_t wbValue = 0;
+        if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, 1)) {
+            MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance.");
+        }
     }
     res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1);
     CHECK_ERROR_PRINT_LOG(!res, "CaptureSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
