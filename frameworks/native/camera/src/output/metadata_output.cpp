@@ -333,6 +333,7 @@ int32_t MetadataOutput::Release()
         std::lock_guard<std::mutex> lock(outputCallbackMutex_);
         appObjectCallback_ = nullptr;
         appStateCallback_ = nullptr;
+        cameraMetadataCallback_ = nullptr;
     }
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
