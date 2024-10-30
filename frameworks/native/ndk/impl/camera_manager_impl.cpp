@@ -53,25 +53,18 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
 class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
     InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
-        : cameraManager_(cameraManager), callback_(*callback)
-        {
-            camera_ = new Camera_Device;
-        }
-    ~InnerCameraManagerCallback()
-    {
-        if (camera_ != nullptr) {
-            delete camera_;
-            camera_ = nullptr;
-        }
-    }
+        : cameraManager_(cameraManager), callback_(*callback) {}
+    ~InnerCameraManagerCallback() {}
 
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnCameraStatusChanged is called!");
         Camera_StatusInfo statusInfo;
-        statusInfo.camera = camera_;
-        MEDIA_INFO_LOG("cameraId is %{public}s", cameraStatusInfo.cameraDevice->GetID().data());
-        statusInfo.camera->cameraId = cameraStatusInfo.cameraDevice->GetID().data();
+        Camera_Device cameraDevice;
+        statusInfo.camera = &cameraDevice;
+        string cameraId = cameraStatusInfo.cameraDevice->GetID();
+        statusInfo.camera->cameraId = cameraId.data();
+        MEDIA_INFO_LOG("cameraId is %{public}s", statusInfo.camera->cameraId);
         auto itr = g_FwkCameraPositionToNdk_.find(cameraStatusInfo.cameraDevice->GetPosition());
         if (itr != g_FwkCameraPositionToNdk_.end()) {
             statusInfo.camera->cameraPosition = itr->second;
@@ -98,7 +91,6 @@ public:
 private:
     Camera_Manager* cameraManager_;
     CameraManager_Callbacks callback_;
-    Camera_Device* camera_;
 };
 
 class InnerCameraManagerTorchStatusCallback : public TorchListener {
