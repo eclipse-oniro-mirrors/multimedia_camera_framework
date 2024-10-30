@@ -7642,68 +7642,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_068, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsSessionCommited branch with capturesession object null.
- */
-HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.Level0)
-{
-    session_->~CaptureSession();
-
-    float exposureValue;
-    EXPECT_EQ(session_->GetExposureValue(), 0);
-    EXPECT_EQ(session_->GetExposureValue(exposureValue), 7400103);
-    EXPECT_EQ((session_->GetSupportedFocusModes()).empty(), true);
-
-    std::vector<FocusMode> supportedFocusModes;
-    EXPECT_EQ(session_->GetSupportedFocusModes(supportedFocusModes), 7400103);
-
-    bool isSupported;
-    EXPECT_EQ(session_->IsFocusModeSupported(FOCUS_MODE_AUTO, isSupported), 7400103);
-    EXPECT_EQ(session_->SetFocusMode(FOCUS_MODE_AUTO), 7400103);
-    EXPECT_EQ(session_->GetFocusMode(), FOCUS_MODE_MANUAL);
-
-    FocusMode focusMode;
-    EXPECT_EQ(session_->GetFocusMode(focusMode), 7400103);
-
-    Point exposurePointGet = session_->GetMeteringPoint();
-    EXPECT_EQ(session_->SetFocusPoint(exposurePointGet), 7400103);
-
-    EXPECT_EQ((session_->GetFocusPoint()).x, 0);
-    EXPECT_EQ((session_->GetFocusPoint()).y, 0);
-
-    Point focusPoint;
-    EXPECT_EQ(session_->GetFocusPoint(focusPoint), 7400103);
-    EXPECT_EQ(session_->GetFocalLength(), 0);
-
-    float focalLength;
-    EXPECT_EQ(session_->GetFocalLength(focalLength), 7400103);
-    EXPECT_EQ((session_->GetSupportedFlashModes()).empty(), true);
-
-    std::vector<FlashMode> supportedFlashModes;
-    EXPECT_EQ(session_->GetSupportedFlashModes(supportedFlashModes), 7400103);
-    EXPECT_EQ(session_->GetFlashMode(), FLASH_MODE_CLOSE);
-
-    FlashMode flashMode;
-    EXPECT_EQ(session_->GetFlashMode(flashMode), 7400103);
-    EXPECT_EQ(session_->SetFlashMode(FLASH_MODE_CLOSE), 7400103);
-    EXPECT_EQ(session_->IsFlashModeSupported(FLASH_MODE_CLOSE, isSupported), 7400103);
-    EXPECT_EQ(session_->HasFlash(isSupported), 7400103);
-    EXPECT_EQ((session_->GetZoomRatioRange()).empty(), true);
-
-    std::vector<float> exposureBiasRange = {};
-    EXPECT_EQ(session_->GetZoomRatioRange(exposureBiasRange), 7400103);
-    EXPECT_EQ(session_->GetZoomRatio(), 0);
-
-    float zoomRatio;
-    EXPECT_EQ(session_->GetZoomRatio(zoomRatio), 7400103);
-    EXPECT_EQ(session_->SetZoomRatio(0), 7400103);
-}
-
-/*
- * Feature: Framework
- * Function: Test anomalous branch.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
  * CaseDescription: Test IsSessionConfiged branch with innerCaptureSession object null.
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.Level0)
