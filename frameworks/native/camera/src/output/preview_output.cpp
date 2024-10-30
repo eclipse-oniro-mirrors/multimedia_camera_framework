@@ -385,6 +385,17 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
             "PreviewOutput::setFrameRate failed to set stream frame rate");
         SetFrameRateRange(minFrameRate, maxFrameRate);
     }
+    auto session = GetSession();
+    wptr<PreviewOutput> weakThis(this);
+    CHECK_EXECUTE(session != nullptr, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
+        [weakThis, minFrameRate, maxFrameRate]() {
+            auto sharedThis = weakThis.promote();
+            if (!sharedThis) {
+                MEDIA_ERR_LOG("SetFrameRate previewOutput is nullptr.");
+                return;
+            }
+            sharedThis->SetFrameRate(minFrameRate, maxFrameRate);
+        }));
     return CameraErrorCode::SUCCESS;
 }
 

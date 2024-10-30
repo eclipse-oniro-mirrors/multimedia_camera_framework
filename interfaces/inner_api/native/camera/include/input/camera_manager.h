@@ -703,7 +703,12 @@ public:
     }
 
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
-
+    int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
+    inline sptr<ICameraService> GetServiceProxy()
+    {
+        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
+        return serviceProxyPrivate_;
+    }
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -767,7 +772,6 @@ private:
     SceneMode GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper);
     void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
         camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     std::vector<dmDeviceInfo> GetDmDeviceInfo();
     dmDeviceInfo GetDmDeviceInfo(const std::string& cameraId, const std::vector<dmDeviceInfo>& dmDeviceInfoList);
@@ -781,11 +785,6 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
-    inline sptr<ICameraService> GetServiceProxy()
-    {
-        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
-        return serviceProxyPrivate_;
-    }
 
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {

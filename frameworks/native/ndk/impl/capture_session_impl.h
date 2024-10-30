@@ -150,6 +150,16 @@ public:
 
     Camera_ErrorCode PreconfigWithRatio(Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio);
 
+    Camera_ErrorCode RegisterAutoDeviceSwitchStatusCallback(
+        OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange);
+
+    Camera_ErrorCode UnregisterAutoDeviceSwitchStatusCallback(
+        OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusChange);
+
+    Camera_ErrorCode IsAutoDeviceSwitchSupported(bool* isSupported);
+
+    Camera_ErrorCode EnableAutoDeviceSwitch(bool enabled);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

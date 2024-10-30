@@ -142,6 +142,7 @@ int32_t VideoOutput::Start()
     if (itemStream) {
         errCode = itemStream->Start();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+        isVideoStarted_ = true;
     } else {
         MEDIA_ERR_LOG("VideoOutput::Start() itemStream is nullptr");
     }
@@ -159,6 +160,7 @@ int32_t VideoOutput::Stop()
     if (itemStream) {
         errCode = itemStream->Stop();
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+        isVideoStarted_ = false;
     } else {
         MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
@@ -182,6 +184,7 @@ int32_t VideoOutput::Resume()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
+        isVideoStarted_ = true;
     } else {
         MEDIA_ERR_LOG("VideoOutput::Resume() itemStream is nullptr");
     }
@@ -198,6 +201,7 @@ int32_t VideoOutput::Pause()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
+        isVideoStarted_ = false;
     } else {
         MEDIA_ERR_LOG("VideoOutput::Pause() itemStream is nullptr");
     }
@@ -244,6 +248,7 @@ int32_t VideoOutput::Release()
     }
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to release VideoOutput!, errCode: %{public}d", errCode);
     CaptureOutput::Release();
+    isVideoStarted_ = false;
     return ServiceToCameraError(errCode);
 }
 
@@ -541,6 +546,11 @@ int32_t VideoOutput::EnableAutoDeferredVideoEnhancement(bool enabled)
     captureSession->EnableAutoDeferredVideoEnhancement(enabled);
     captureSession->SetUserId();
     return SUCCESS;
+}
+
+bool VideoOutput::IsVideoStarted()
+{
+    return isVideoStarted_;
 }
 } // namespace CameraStandard
 } // namespace OHOS
