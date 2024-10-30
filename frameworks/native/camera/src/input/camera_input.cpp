@@ -303,9 +303,8 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
     deviceObj->SetUsedAsPosition(translatePos);
     deviceObj->UpdateSetting(metadata);
-    auto cameraObj = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_LOG(cameraObj == nullptr, "deviceObj is nullptr");
-    cameraObj->SetCameraDeviceUsedAsPosition(usedAsPosition);
+    CHECK_ERROR_RETURN_LOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
+    cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
 }
 
 void CameraInput::SetOcclusionDetectCallback(
