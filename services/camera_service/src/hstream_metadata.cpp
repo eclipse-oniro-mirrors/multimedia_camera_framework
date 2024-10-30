@@ -87,6 +87,8 @@ int32_t HStreamMetadata::Stop()
 
 int32_t HStreamMetadata::Release()
 {
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamMetadataCallback_ = nullptr;
     return ReleaseStream(false);
 }
 
@@ -142,6 +144,7 @@ int32_t HStreamMetadata::DisableMetadataType(std::vector<int32_t> metadataTypes)
 int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_t>& result)
 {
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
+    std::lock_guard<std::mutex> lock(callbackLock_);
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
     if (streamMetadataCallback_ != nullptr) {
