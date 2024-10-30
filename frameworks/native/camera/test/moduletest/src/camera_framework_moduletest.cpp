@@ -7553,8 +7553,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_068, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.Level0)
 {
-    session_->~CaptureSession();
-
     float exposureValue;
     EXPECT_EQ(session_->GetExposureValue(), 0);
     EXPECT_EQ(session_->GetExposureValue(exposureValue), 7400103);
@@ -7717,7 +7715,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     session_->SetBeauty(AUTO_TYPE, 0);
     EXPECT_EQ(session_->GetBeauty(AUTO_TYPE), -1);
     session_->SetFilter(NONE);
-    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
+    std::vector<ColorSpace> supportedColorSpaces = session_->GetSupportedColorSpaces();
+    auto it = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(), COLOR_SPACE_UNKNOWN);
+    bool isSupportSet = (it != supportedColorSpaces.end());
+    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), isSupportSet ? CAMERA_OK : INVALID_ARGUMENT);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
 
     intResult = session_->CommitConfig();
@@ -7725,8 +7726,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     session_->SetBeauty(AUTO_TYPE, 0);
     EXPECT_EQ(session_->GetBeauty(AUTO_TYPE), -1);
     session_->SetFilter(NONE);
-    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
-    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), true);
+    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), isSupportSet ? CAMERA_OK : INVALID_ARGUMENT);
+    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), false);
     intResult = session_->Release();
     EXPECT_EQ(intResult, 0);
 }

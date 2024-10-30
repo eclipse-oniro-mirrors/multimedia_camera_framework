@@ -83,7 +83,7 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
         uint8_t lensDirty = foundLensDirty ? itemLensDirty.data.u8[0] : 0;
 
         if (foundOcclusion || foundLensDirty) {
-            MEDIA_INFO_LOG("occlusion found:%{public}d val:%{public}u; lensDirty found:%{public}d val:%{public}u",
+            MEDIA_DEBUG_LOG("occlusion found:%{public}d val:%{public}u; lensDirty found:%{public}d val:%{public}u",
                 foundOcclusion, occlusion, foundLensDirty, lensDirty);
             pfnOcclusionDetectCallback->OnCameraOcclusionDetected(occlusion, lensDirty);
         }
