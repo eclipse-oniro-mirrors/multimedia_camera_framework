@@ -1684,6 +1684,7 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetFlashMode mode:%{public}d", value);
         FlashMode flashMode = (FlashMode)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);

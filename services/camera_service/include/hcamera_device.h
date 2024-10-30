@@ -207,6 +207,7 @@ private:
     void HandleFoldableDevice();
     int32_t CheckPermissionBeforeOpenDevice();
     bool HandlePrivacyBeforeOpenDevice();
+    void HandlePrivacyWhenOpenDeviceFail();
     void HandlePrivacyAfterCloseDevice();
     void DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
