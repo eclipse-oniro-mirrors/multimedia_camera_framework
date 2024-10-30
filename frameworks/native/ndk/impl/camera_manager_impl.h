@@ -94,6 +94,10 @@ public:
 
     Camera_ErrorCode DeleteSceneModes(Camera_SceneMode* sceneModes);
 
+    Camera_ErrorCode RegisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback);
+
+    Camera_ErrorCode UnregisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback);
+
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
         std::vector<OHOS::CameraStandard::Profile> &previewProfiles);

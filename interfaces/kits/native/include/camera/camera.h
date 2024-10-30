@@ -979,6 +979,52 @@ typedef struct Camera_FrameShutterEndInfo {
 } Camera_FrameShutterEndInfo;
 
 /**
+* @brief Enum for fold status.
+*
+* @since 13
+* @version 1.0
+*/
+typedef enum Camera_FoldStatus {
+    /**
+     * Non_foldable status.
+     */
+    NON_FOLDABLE = 0,
+
+    /**
+     * Expanded status.
+     */
+    EXPANDED = 1,
+
+    /**
+     * Folded status.
+     */
+    FOLDED = 2
+} Camera_FoldStatus;
+
+/**
+ * @brief Fold status info.
+ *
+ * @since 13
+ * @version 1.0
+ */
+typedef struct Camera_FoldStatusInfo {
+    /**
+     * Camera instance list.
+     */
+    Camera_Device** supportedCameras;
+
+    /**
+     * Size of camera list.
+     */
+    uint32_t cameraSize;
+
+    /**
+     * Current fold status.
+     */
+    Camera_FoldStatus foldStatus;
+} Camera_FoldStatusInfo;
+
+/**
  * @brief Auto device switch status info.
  *
  * @since 13
