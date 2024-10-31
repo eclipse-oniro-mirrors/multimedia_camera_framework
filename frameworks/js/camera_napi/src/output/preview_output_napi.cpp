@@ -871,6 +871,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
     if (previewOutputNapi->previewOutput_ == nullptr) {
         MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
     }
     retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
