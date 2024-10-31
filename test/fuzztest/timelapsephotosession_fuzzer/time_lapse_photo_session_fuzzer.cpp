@@ -177,8 +177,8 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
     session->SetExposure(MAX_UINT);
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
-    uint32_t exposure = data.ReadUint32();
-    AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &exposure, 1);
+    camera_rational_t expT = {.numberator = 1, .denominator = 1000000};
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &expT, 1);
     session->GetExposure(exposure);
     vector<MeteringMode> modes;
     session->GetSupportedMeteringModes(modes);
@@ -215,7 +215,8 @@ void TestManualIso()
             session->GetIso(iso);
         }
     }
-    AddOrUpdateMetadata(meta, OHOS_ABILITY_ISO_VALUES, &isManualIsoSupported, 1);
+    int32_t aIso = 1000;
+    AddOrUpdateMetadata(meta, OHOS_ABILITY_ISO_VALUES, &aIso, 1);
     session->IsManualIsoSupported(isManualIsoSupported);
 }
 
