@@ -709,7 +709,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->SetCameraRotation(true, result);
-        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR,
+        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
             "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
