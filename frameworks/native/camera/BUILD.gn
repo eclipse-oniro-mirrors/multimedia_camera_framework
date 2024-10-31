@@ -214,8 +214,6 @@ ohos_shared_library("camera_framework") {
     "window_manager:libdm",
   ]
 
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
-
   defines = []
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
