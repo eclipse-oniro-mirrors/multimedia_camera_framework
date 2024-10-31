@@ -35,6 +35,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
     class TaskManager;
 }
+
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -479,13 +480,18 @@ public:
 
     void SetAuxiliaryPhotoHandle(uint32_t handle);
     uint32_t GetAuxiliaryPhotoHandle();
-    sptr<CameraPhotoProxy> photoProxy_;
     uint32_t watchDogHandle_ = 0;
     std::mutex watchDogHandleMutex_;
-    std::map<int32_t, int32_t> caputreIdAuxiliaryCountMap_;
-    std::map<int32_t, int32_t> caputreIdCountMap_;
-    std::map<int32_t, uint32_t> caputreIdHandleMap_;
-    std::map<int32_t, std::unique_ptr<Media::Picture>> caputreIdPictureMap_;
+    std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
+    std::map<int32_t, int32_t> captureIdCountMap_;
+    std::map<int32_t, uint32_t> captureIdHandleMap_;
+    std::map<int32_t, std::unique_ptr<Media::Picture>> captureIdPictureMap_;
+
+    std::map<int32_t, sptr<CameraPhotoProxy>> photoProxyMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdGainmapMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 private:

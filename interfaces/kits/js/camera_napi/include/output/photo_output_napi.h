@@ -125,7 +125,9 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener, public ListenerBase {
+class PhotoListener : public IBufferConsumerListener,
+                      public ListenerBase,
+                      public std::enable_shared_from_this<PhotoListener> {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
     virtual ~PhotoListener();
@@ -145,7 +147,8 @@ private:
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+        int32_t captureId) const;
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
@@ -177,7 +180,7 @@ public:
     void OnBufferAvailable() override;
     void ExecuteDeepCopySurfaceBuffer();
 private:
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t) const;
     std::string surfaceName_;
     sptr<Surface> surface_;
     wptr<PhotoOutput> photoOutput_;

@@ -272,7 +272,6 @@ public:
 
     static void OpenMediaLib();
     static void DelayCloseMediaLib();
-    static shared_ptr<CameraDynamicLoader> dynamicLoader_;
     static std::optional<uint32_t> closeTimerId_;
     static std::mutex g_mediaTaskLock_;
 
