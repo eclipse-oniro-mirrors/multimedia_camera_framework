@@ -90,6 +90,8 @@ ohos_shared_library("ohcamera") {
     "resource_management:librawfile",
   ]
 
+  public_external_deps = [ "drivers_interface_camera:metadata" ]
+
   innerapi_tags = [ "ndk" ]
 
   output_extension = "so"
