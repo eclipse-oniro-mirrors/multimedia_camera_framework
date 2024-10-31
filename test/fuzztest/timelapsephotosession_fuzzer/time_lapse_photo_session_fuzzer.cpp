@@ -177,7 +177,8 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
     session->SetExposure(MAX_UINT);
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
-    camera_rational_t expT = {.numberator = 1, .denominator = 1000000};
+    uint32_t exposure = data.ReadUint32();
+    camera_rational_t expT = {.numerator = 1, .denominator = 1000000};
     AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &expT, 1);
     session->GetExposure(exposure);
     vector<MeteringMode> modes;
