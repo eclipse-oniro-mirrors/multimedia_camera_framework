@@ -68,9 +68,9 @@ struct DPSEventInfo {
     uint64_t removeTimeEndTime;
     uint64_t trailingTimeBeginTime;
     uint64_t trailingTimeEndTime;
-    int highJobNum;
-    int normalJobNum;
-    int lowJobNum;
+    int32_t highJobNum;
+    int32_t normalJobNum;
+    int32_t lowJobNum;
     int temperatureLevel;
     ExecutionMode executionMode;
     PhotoJobType photoJobType;
@@ -93,10 +93,6 @@ public:
     void SetEventInfo(const std::string& imageId, int32_t userId);
     void SetEventInfo(DPSEventInfo& dpsEventInfo);
     void RemoveEventInfo(const std::string& imageId, int32_t userId);
-    void UpdateJobNum(const std::string& imageId, int32_t userId, int lowJobNum,
-        int normalJobNum, int highJobNum);
-    void UpdateJobProperty(const std::string& imageId, int32_t userId, bool discardable,
-        PhotoJobType photoJobType, TrigerMode triggermode);
 
     void SetTemperatureLevel(int temperatureLevel);
     void SetExecutionMode(ExecutionMode executionMode);
