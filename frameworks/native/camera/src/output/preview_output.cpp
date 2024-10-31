@@ -713,6 +713,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
             "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
     MEDIA_ERR_LOG("PreviewOutput SetPreviewRotation sucess");
     return CameraErrorCode::SUCCESS;
