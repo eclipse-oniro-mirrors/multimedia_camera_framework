@@ -855,37 +855,33 @@ napi_value PreviewOutputNapi::GetPreviewRotation(napi_env env, napi_callback_inf
 napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetPreviewRotation is called!");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     PreviewOutputNapi* previewOutputNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
-    if (status == napi_ok && previewOutputNapi != nullptr) {
-        int32_t imageRotation;
-        napi_status ret = napi_get_value_int32(env, argv[PARAM0], &imageRotation);
-        bool isDisplayLocked;
-        napi_status boolRet = napi_get_value_bool(env, argv[PARAM1], &isDisplayLocked);
-        if (ret != napi_ok || boolRet != napi_ok) {
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
-                "SetPreviewRotation parameter missing or parameter type incorrect.");
-            return result;
-        }
-        int32_t retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-        if (retCode == SERVICE_FATL_ERROR) {
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR,
-                "SetPreviewRotation Camera service fatal error.");
-            return result;
-        }
+    int32_t imageRotation;
+    bool isDisplayLocked;
+    int32_t retCode;
+    CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, imageRotation, isDisplayLocked);
+    if (jsParamParser.IsStatusOk()) {
         MEDIA_INFO_LOG("PreviewOutputNapi SetPreviewRotation! %{public}d", imageRotation);
     } else {
-        MEDIA_ERR_LOG("PreviewOutputNapi SetPreviewRotation! called failed!");
+        MEDIA_WARNING_LOG("PreviewOutputNapi SetPreviewRotation without isDisplayLocked flag!");
+        jsParamParser = CameraNapiParamParser(env, info, previewOutputNapi, imageRotation);
+        isDisplayLocked = false;
     }
-    return result;
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation invalid argument");
+        return nullptr;
+    }
+    if (previewOutputNapi->previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+    }
+    retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation! %{public}d", retCode);
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::SetPreviewRotation success");
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 
