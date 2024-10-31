@@ -240,7 +240,6 @@ void PhotoJobRepository::SetJobRunning(const std::string imageId)
         UpdateRunningCountUnLocked(statusChanged, jobPtr);
     }
     
-    NotifyJobChanged(false, statusChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
 }
 
