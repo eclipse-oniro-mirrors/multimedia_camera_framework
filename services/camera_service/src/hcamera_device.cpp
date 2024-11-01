@@ -340,13 +340,15 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+        HandlePrivacyWhenOpenDeviceFail();
+        return CAMERA_UNKNOWN_ERROR;
     } else {
         ResetHdiStreamId();
         isOpenedCameraDevice_.store(true);
         HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
     }
     errorCode = InitStreamOperator();
-    CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK,
+    CHECK_ERROR_RETURN_RET_LOG(errorCode != CAMERA_OK, errorCode,
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
     std::lock_guard<std::mutex> lockSetting(opMutex_);
     if (hdiCameraDevice_ != nullptr) {
@@ -386,7 +388,7 @@ int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
 
 bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
-    MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    MEDIA_INFO_LOG("enter HandlePrivacyBeforeOpenDevice");
     CHECK_ERROR_RETURN_RET_LOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
@@ -400,9 +402,22 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     return true;
 }
 
+void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
+{
+    MEDIA_INFO_LOG("enter HandlePrivacyWhenOpenDeviceFail");
+    auto cameraPrivacy = GetCameraPrivacy();
+    if (cameraPrivacy != nullptr) {
+        if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
+            MEDIA_INFO_LOG("do StopUsingPermissionCallback");
+            cameraPrivacy->StopUsingPermissionCallback();
+        }
+        cameraPrivacy->UnregisterPermissionCallback();
+    }
+}
+
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
 {
-    MEDIA_DEBUG_LOG("enter handlePrivacyAfterCloseDevice");
+    MEDIA_INFO_LOG("enter HandlePrivacyAfterCloseDevice");
     auto cameraPrivacy = GetCameraPrivacy();
     if (cameraPrivacy != nullptr) {
         if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {

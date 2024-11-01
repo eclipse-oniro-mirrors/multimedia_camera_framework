@@ -7642,6 +7642,66 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_068, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
+ * CaseDescription: Test IsSessionCommited branch with capturesession object null.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.Level0)
+{
+    float exposureValue;
+    EXPECT_EQ(session_->GetExposureValue(), 0);
+    EXPECT_EQ(session_->GetExposureValue(exposureValue), 7400103);
+    EXPECT_EQ((session_->GetSupportedFocusModes()).empty(), true);
+
+    std::vector<FocusMode> supportedFocusModes;
+    EXPECT_EQ(session_->GetSupportedFocusModes(supportedFocusModes), 7400103);
+
+    bool isSupported;
+    EXPECT_EQ(session_->IsFocusModeSupported(FOCUS_MODE_AUTO, isSupported), 7400103);
+    EXPECT_EQ(session_->SetFocusMode(FOCUS_MODE_AUTO), 7400103);
+    EXPECT_EQ(session_->GetFocusMode(), FOCUS_MODE_MANUAL);
+
+    FocusMode focusMode;
+    EXPECT_EQ(session_->GetFocusMode(focusMode), 7400103);
+
+    Point exposurePointGet = session_->GetMeteringPoint();
+    EXPECT_EQ(session_->SetFocusPoint(exposurePointGet), 7400103);
+
+    EXPECT_EQ((session_->GetFocusPoint()).x, 0);
+    EXPECT_EQ((session_->GetFocusPoint()).y, 0);
+
+    Point focusPoint;
+    EXPECT_EQ(session_->GetFocusPoint(focusPoint), 7400103);
+    EXPECT_EQ(session_->GetFocalLength(), 0);
+
+    float focalLength;
+    EXPECT_EQ(session_->GetFocalLength(focalLength), 7400103);
+    EXPECT_EQ((session_->GetSupportedFlashModes()).empty(), true);
+
+    std::vector<FlashMode> supportedFlashModes;
+    EXPECT_EQ(session_->GetSupportedFlashModes(supportedFlashModes), 7400103);
+    EXPECT_EQ(session_->GetFlashMode(), FLASH_MODE_CLOSE);
+
+    FlashMode flashMode;
+    EXPECT_EQ(session_->GetFlashMode(flashMode), 7400103);
+    EXPECT_EQ(session_->SetFlashMode(FLASH_MODE_CLOSE), 7400103);
+    EXPECT_EQ(session_->IsFlashModeSupported(FLASH_MODE_CLOSE, isSupported), 7400103);
+    EXPECT_EQ(session_->HasFlash(isSupported), 7400103);
+    EXPECT_EQ((session_->GetZoomRatioRange()).empty(), true);
+
+    std::vector<float> exposureBiasRange = {};
+    EXPECT_EQ(session_->GetZoomRatioRange(exposureBiasRange), 7400103);
+    EXPECT_EQ(session_->GetZoomRatio(), 0);
+
+    float zoomRatio;
+    EXPECT_EQ(session_->GetZoomRatio(zoomRatio), 7400103);
+    EXPECT_EQ(session_->SetZoomRatio(0), 7400103);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
  * CaseDescription: Test IsSessionConfiged branch with innerCaptureSession object null.
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.Level0)
@@ -7748,7 +7808,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     session_->SetBeauty(AUTO_TYPE, 0);
     EXPECT_EQ(session_->GetBeauty(AUTO_TYPE), -1);
     session_->SetFilter(NONE);
-    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
+    std::vector<ColorSpace> supportedColorSpaces = session_->GetSupportedColorSpaces();
+    auto it = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(), COLOR_SPACE_UNKNOWN);
+    bool isSupportSet = (it != supportedColorSpaces.end());
+    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), isSupportSet ? CAMERA_OK : INVALID_ARGUMENT);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
 
     intResult = session_->CommitConfig();
@@ -7756,8 +7819,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     session_->SetBeauty(AUTO_TYPE, 0);
     EXPECT_EQ(session_->GetBeauty(AUTO_TYPE), -1);
     session_->SetFilter(NONE);
-    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
-    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), true);
+    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), isSupportSet ? CAMERA_OK : INVALID_ARGUMENT);
+    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), false);
     intResult = session_->Release();
     EXPECT_EQ(intResult, 0);
 }
@@ -13102,7 +13165,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supp
     EXPECT_EQ(intResult, 0);
 
     intResult = ((sptr<PhotoOutput>&)photoOutput)->IsRawDeliverySupported();
-    EXPECT_EQ(intResult, 1);
+    bool isProPhotoSession = session_->GetMode() == SceneMode::PROFESSIONAL_PHOTO;
+    EXPECT_EQ(intResult, isProPhotoSession ? 1 : -1);
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -626,24 +626,15 @@ int32_t ProfessionSession::SetFlashMode(FlashMode flashMode)
         "ProfessionSession::SetFlashMode Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFlashMode Need to call LockForControl() before setting camera properties");
+    MEDIA_INFO_LOG("ProfessionSession::SetFlashMode flashMode:%{public}d", flashMode);
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
     if (itr == g_fwkFlashModeMap_.end()) {
-        MEDIA_ERR_LOG("ProfessionSession::SetExposureMode Unknown exposure mode");
+        MEDIA_ERR_LOG("ProfessionSession::SetFlashMode Unknown exposure mode");
     } else {
         flash = itr->second;
     }
-
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FLASH_MODE, &flash, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFlashMode Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
 }
