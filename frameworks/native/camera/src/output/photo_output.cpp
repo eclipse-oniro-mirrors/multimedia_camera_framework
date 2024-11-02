@@ -743,18 +743,18 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     return isQuickThumbnailEnabled;
 }
 
-int32_t PhotoOutput::IsRawDeliverySupported()
+int32_t PhotoOutput::IsRawDeliverySupported(bool &isRawDeliveryEnabled)
 {
     MEDIA_DEBUG_LOG("enter into IsRawDeliverySupported");
-    int32_t isRawDevliveryEnabled = -1;
+    isRawDeliveryEnabled = false;
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsRawDeliverySupported error!, session is nullptr");
     const int32_t professionalPhotoMode = 11;
     if ((session->GetMode() == professionalPhotoMode)) {
-        isRawDevliveryEnabled = 1;
+        isRawDeliveryEnabled = true;
     }
-    return isRawDevliveryEnabled;
+    return CAMERA_OK;
 }
 
 int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)

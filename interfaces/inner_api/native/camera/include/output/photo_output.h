@@ -371,7 +371,7 @@ public:
      *
      * @return Returns true/false if the raw image devlivery is supported/not-supported respectively.
      */
-    int32_t IsRawDeliverySupported();
+    int32_t IsRawDeliverySupported(bool &isRawDeliveryEnabled);
 
     /**
      * @brief Set the deferredImageDelivery type.

@@ -13135,11 +13135,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_enable_raw_delivery,
 }
 /*
  * Feature: Framework
- * Function: Test IsRawDeliverySupported Methodology
+ * Function: Test non professional IsRawDeliverySupported Methodology
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsRawDeliverySupported Methodology
+ * CaseDescription: Test non professional IsRawDeliverySupported Methodology
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supported, TestSize.Level0)
 {
@@ -13164,9 +13164,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supp
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsRawDeliverySupported();
-    bool isProPhotoSession = session_->GetMode() == SceneMode::PROFESSIONAL_PHOTO;
-    EXPECT_EQ(intResult, isProPhotoSession ? 1 : -1);
+    bool isSupported;
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsRawDeliverySupported(isSupported);
+    EXPECT_EQ(intResult, CAMERA_OK);
+    EXPECT_EQ(isSupported, false);
 }
 } // namespace CameraStandard
 } // namespace OHOS
