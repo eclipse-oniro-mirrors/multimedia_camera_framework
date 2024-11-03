@@ -19,7 +19,6 @@
 #include "camera_util.h"
 #include "display_manager.h"
 #include "hcamera_device.h"
-#include "hcamera_device_manager.h"
 #include "icamera_service_callback.h"
 #include "ipc_skeleton.h"
 #include "iproxy_broker.h"
@@ -786,7 +785,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
     }
     cameraDevices_.erase(cameraId);
     auto statusCallback = statusCallback_.lock();
-    if (statusCallback && !HCameraDeviceManager::GetInstance()->GetConflictState()) {
+    if (statusCallback) {
         statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
     }
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice end");

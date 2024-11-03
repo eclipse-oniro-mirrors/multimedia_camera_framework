@@ -1207,10 +1207,8 @@ bool HCameraDevice::CanOpenCamera()
         // close evicted clients
         for (auto &camera : evictedClients) {
             MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close");
-            HCameraDeviceManager::GetInstance()->SetConflictState(true);
             camera->GetDevice()->OnError(DEVICE_PREEMPT, 0);
             camera->GetDevice()->CloseDevice();
-            HCameraDeviceManager::GetInstance()->SetConflictState(false);
         }
         return ret;
     }
@@ -1218,10 +1216,8 @@ bool HCameraDevice::CanOpenCamera()
     bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
     if (cameraNeedEvict != nullptr) {
         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
-        HCameraDeviceManager::GetInstance()->SetConflictState(true);
         cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
         cameraNeedEvict->CloseDevice();
-        HCameraDeviceManager::GetInstance()->SetConflictState(false);
     }
     return ret;
 }
