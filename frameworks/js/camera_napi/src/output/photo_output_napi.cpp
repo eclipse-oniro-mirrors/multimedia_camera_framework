@@ -2347,8 +2347,10 @@ napi_value PhotoOutputNapi::IsRawDeliverySupported(napi_env env, napi_callback_i
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     if (status == napi_ok && photoOutputNapi != nullptr) {
-        int32_t retCode = photoOutputNapi->photoOutput_->IsRawDeliverySupported();
-        isSupported = (retCode == 1);
+        int32_t retCode = photoOutputNapi->photoOutput_->IsRawDeliverySupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
     }
     napi_get_boolean(env, isSupported, &result);
     return result;
