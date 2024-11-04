@@ -178,7 +178,6 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
-    "drivers_interface_camera:metadata",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.2",
     "graphic_2d:librender_service_client",
@@ -204,7 +203,12 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
   ]
 
-  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "e2fsprogs:libext2_uuid",
+  ]
 
   defines = []
   if (use_sensor) {

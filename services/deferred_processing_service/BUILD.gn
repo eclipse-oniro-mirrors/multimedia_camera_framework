@@ -200,6 +200,9 @@ ohos_shared_library("deferred_processing_service") {
     "window_manager:libdm",
   ]
 
+  public_external_deps =
+      [ "drivers_interface_camera:libmap_data_sequenceable_1.0" ]
+
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",

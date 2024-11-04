@@ -109,6 +109,12 @@ ohos_shared_library("camera_napi") {
     "napi:ace_napi",
   ]
 
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+  ]
+
   defines = []
 
   if (hicollie_enable) {
@@ -174,6 +180,11 @@ if (gen_camera_picker) {
       "hilog:libhilog",
       "hitrace:hitrace_meter",
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
+    ]
+    public_external_deps = [
+      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+      "drivers_interface_camera:libmap_data_sequenceable_1.0",
+      "drivers_interface_camera:metadata",
     ]
     sanitize = {
       cfi = true
