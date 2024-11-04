@@ -347,7 +347,7 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_WIDTH, size_->width);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_HEIGHT, size_->height);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_ROTATION, rotation_);
-    OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, VIDOE_FRAME_RATE);
+    OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, VBR);
     OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, bitrate_);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);

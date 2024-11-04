@@ -131,7 +131,7 @@ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProx
 }
 
 sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
-    vector<sptr<FrameRecord>> &choosedBuffer)
+    vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
@@ -147,20 +147,19 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     int64_t timestamp = videoFdQueue_.front().first;
     shared_ptr<PhotoAssetProxy> photoAssetProxy = videoFdQueue_.front().second;
     videoFdQueue_.pop();
-    ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp);
+    ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
     if (!choosedBuffer.empty()) {
         muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp()));
-        muxer->SetStartTime(NanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
     }
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
         == VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
+    formatVideo->PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);
     int videoTrackId = -1;
     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
     int audioTrackId = -1;
@@ -200,18 +199,18 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
 }
 
 void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
-    int32_t captureRotation) __attribute__((no_sanitize("cfi")))
+    int32_t captureRotation, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_LOG(frameRecords.empty(), "DoMuxerVideo error of empty encoded frame");
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto taskManager = GetTaskManager();
     CHECK_ERROR_RETURN_LOG(taskManager == nullptr, "GetTaskManager is null");
-    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation]() {
+    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu", frameRecords.size());
         vector<sptr<FrameRecord>> choosedBuffer;
-        sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer);
+        sptr<AudioVideoMuxer> muxer = thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId);
         CHECK_ERROR_RETURN_LOG(muxer == nullptr, "CreateAVMuxer failed");
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
@@ -251,23 +250,48 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
 }
 
 void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords,
-    vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime)
+    vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
     choosedBuffer.clear();
-    int64_t nanosecRange = 1500000000LL;
+    std::unique_lock<mutex> startTimeLock(startTimeMutex_);
+    int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
+    if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime) {
+        clearVideoStartTime = mPStartTimeMap_[captureId];
+    }
+    mPStartTimeMap_.erase(captureId);
+    startTimeLock.unlock();
+    std::unique_lock<mutex> endTimeLock(endTimeMutex_);
+    int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
+    if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime) {
+        clearVideoEndTime = mPEndTimeMap_[captureId];
+    }
+    mPEndTimeMap_.erase(captureId);
+    endTimeLock.unlock();
+    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}lld, "
+        "clearVideoStartTime : %{public}lld, clearVideoEndTime : %{public}lld",
+        captureId, shutterTime, clearVideoStartTime, clearVideoEndTime);
+    size_t idrIndex = frameRecords.size();
     for (size_t index = 0; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
-        int64_t timestamp = frame->GetTimeStamp();
-        if (timestamp >= (shutterTime - nanosecRange) && timestamp <= (shutterTime + nanosecRange)) {
-            choosedBuffer.push_back(frame);
+        if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
+            idrIndex = index;
         }
     }
-    if (!choosedBuffer.empty()) {
-        // Find the first IDR frame in the buffer
-        auto it = find_if(choosedBuffer.begin(), choosedBuffer.end(),
-            [](const sptr<FrameRecord>& frame) { return frame->IsIDRFrame(); });
-        if (it != choosedBuffer.end()) {
-            choosedBuffer.erase(choosedBuffer.begin(), it);
+    if (idrIndex == frameRecords.size()) {
+        for (size_t index = 0; index < frameRecords.size(); ++index) {
+            auto frame = frameRecords[index];
+            if (frame->IsIDRFrame()) {
+                idrIndex = index;
+                break;
+            }
+            idrIndex = 0;
+        }
+    }
+    for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
+        auto frame = frameRecords[index];
+        int64_t timestamp = frame->GetTimeStamp();
+        if (timestamp <= clearVideoEndTime) {
+            choosedBuffer.push_back(frame);
         }
     }
     if (choosedBuffer.empty()) {
@@ -356,7 +380,22 @@ void AvcodecTaskManager::ClearTaskResource()
             videoEncoderManager_.reset();
         }
     }
+    {
+        lock_guard<mutex> lock(startTimeMutex_);
+        mPStartTimeMap_.clear();
+    }
+    {
+        lock_guard<mutex> lock(endTimeMutex_);
+        mPEndTimeMap_.clear();
+    }
     MEDIA_INFO_LOG("AvcodecTaskManager ClearTaskResource end");
+}
+
+void AvcodecTaskManager::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
+{
+    MEDIA_INFO_LOG("AvcodecTaskManager SetVideoBufferCount enter");
+    preBufferDuration_ = static_cast<int64_t>(preBufferCount) * ONE_BILLION / VIDEO_FRAME_RATE;
+    postBufferDuration_ = static_cast<int64_t>(postBufferCount) * ONE_BILLION / VIDEO_FRAME_RATE;
 }
 } // namespace CameraStandard
 } // namespace OHOS
