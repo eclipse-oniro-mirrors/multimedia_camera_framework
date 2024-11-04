@@ -68,68 +68,6 @@ using namespace OHOS::HDI::Camera::V1_0;
 
 namespace OHOS {
 namespace CameraStandard {
-namespace {
-enum class CAM_PHOTO_EVENTS {
-    CAM_PHOTO_CAPTURE_START = 0,
-    CAM_PHOTO_CAPTURE_END,
-    CAM_PHOTO_CAPTURE_ERR,
-    CAM_PHOTO_FRAME_SHUTTER,
-    CAM_PHOTO_MAX_EVENT,
-    CAM_PHOTO_FRAME_SHUTTER_END,
-    CAM_PHOTO_CAPTURE_READY,
-    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION
-};
-
-enum class CAM_PREVIEW_EVENTS {
-    CAM_PREVIEW_FRAME_START = 0,
-    CAM_PREVIEW_FRAME_END,
-    CAM_PREVIEW_FRAME_ERR,
-    CAM_PREVIEW_SKETCH_STATUS_CHANGED,
-    CAM_PREVIEW_MAX_EVENT
-};
-
-enum class CAM_VIDEO_EVENTS {
-    CAM_VIDEO_FRAME_START = 0,
-    CAM_VIDEO_FRAME_END,
-    CAM_VIDEO_FRAME_ERR,
-    CAM_VIDEO_MAX_EVENT
-};
-
-enum class CAM_MACRO_DETECT_EVENTS {
-    CAM_MACRO_EVENT_IDLE = 0,
-    CAM_MACRO_EVENT_ACTIVE,
-    CAM_MACRO_EVENT_MAX_EVENT
-};
-
-enum class CAM_MOON_CAPTURE_BOOST_EVENTS {
-    CAM_MOON_CAPTURE_BOOST_EVENT_IDLE = 0,
-    CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE,
-    CAM_MOON_CAPTURE_BOOST_EVENT_MAX_EVENT
-};
-
-const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
-const int32_t WAIT_TIME_AFTER_DEFERRED_CAPTURE = 2;
-const int32_t WAIT_TIME_AFTER_RECORDING = 3;
-const int32_t WAIT_TIME_AFTER_START = 2;
-const int32_t WAIT_TIME_BEFORE_STOP = 1;
-const int32_t WAIT_TIME_AFTER_CLOSE = 1;
-const int32_t WAIT_TIME_CALLBACK = 1;
-const int32_t CAMERA_NUMBER = 2;
-const int32_t MIN_FRAME_RATE = 15;
-const int32_t MAX_FRAME_RATE = 30;
-const int32_t SKETCH_PREVIEW_MIN_HEIGHT = 720;
-const int32_t SKETCH_PREVIEW_MAX_WIDTH = 3000;
-const int32_t SKETCH_DEFAULT_WIDTH = 640;
-const int32_t SKETCH_DEFAULT_HEIGHT = 480;
-const int32_t PRVIEW_WIDTH_176 = 176;
-const int32_t PRVIEW_HEIGHT_144 = 144;
-const int32_t PRVIEW_WIDTH_640 = 640;
-const int32_t PRVIEW_WIDTH_4096 = 4096;
-const int32_t PRVIEW_HEIGHT_3072 = 3072;
-const int32_t PRVIEW_WIDTH_4160 = 4160;
-const int32_t PRVIEW_HEIGHT_3120 = 3120;
-const int32_t PRVIEW_WIDTH_8192 = 8192;
-const int32_t PRVIEW_HEIGHT_6144 = 6144;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
@@ -150,309 +88,286 @@ std::unordered_map<std::string, int> g_camStatusMap;
 std::unordered_map<std::string, bool> g_camFlashMap;
 TorchStatusInfo g_torchInfo;
 
-class AppCallback : public CameraManagerCallback,
-                    public TorchListener,
-                    public ErrorCallback,
-                    public PhotoStateCallback,
-                    public PreviewStateCallback,
-                    public ResultCallback,
-                    public SlowMotionStateCallback,
-                    public MacroStatusCallback,
-                    public FeatureDetectionStatusCallback,
-                    public FoldListener,
-                    public LcdFlashStatusCallback,
-                    public BrightnessStatusCallback {
-public:
-    void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
-    {
-        const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
-        const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
-        EXPECT_TRUE(true)<<"OnCameraStatusChanged:CameraId="<<cameraID<<",CameraStatus="<<cameraDeviceInfo.cameraStatus
-            <<",bundleName="<<cameraDeviceInfo.bundleName<<endl;
-        switch (cameraStatus) {
-            case CAMERA_STATUS_UNAVAILABLE: {
-                MEDIA_DEBUG_LOG(
-                    "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_UNAVAILABLE", cameraID.c_str());
-                g_camStatusMap[cameraID] = CAMERA_STATUS_UNAVAILABLE;
-                break;
-            }
-            case CAMERA_STATUS_AVAILABLE: {
-                MEDIA_DEBUG_LOG(
-                    "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_AVAILABLE", cameraID.c_str());
-                g_camStatusMap[cameraID] = CAMERA_STATUS_AVAILABLE;
-                break;
-            }
-            default: {
-                MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: unknown", cameraID.c_str());
-                EXPECT_TRUE(false);
-            }
-        }
-        return;
-    }
-
-    void OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged() is called!");
-        switch (flashStatus) {
-            case FLASH_STATUS_OFF: {
-                MEDIA_DEBUG_LOG(
-                    "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_OFF", cameraID.c_str());
-                g_camFlashMap[cameraID] = false;
-                break;
-            }
-            case FLASH_STATUS_ON: {
-                MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_ON", cameraID.c_str());
-                g_camFlashMap[cameraID] = true;
-                break;
-            }
-            case FLASH_STATUS_UNAVAILABLE: {
-                MEDIA_DEBUG_LOG(
-                    "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_UNAVAILABLE", cameraID.c_str());
-                g_camFlashMap.erase(cameraID);
-                break;
-            }
-            default: {
-                MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: unknown", cameraID.c_str());
-                EXPECT_TRUE(false);
-            }
-        }
-        return;
-    }
-
-    void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override
-    {
-        MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
-            torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
-        g_torchInfo = torchStatusInfo;
-        return;
-    }
-
-    void OnError(const int32_t errorType, const int32_t errorMsg) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnError errorType: %{public}d, errorMsg: %{public}d", errorType, errorMsg);
-        g_camInputOnError = true;
-        if (errorType == CAMERA_DEVICE_PREEMPTED) {
-            g_sessionclosed = true;
-        }
-        return;
-    }
-
-    void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) const override
-    {
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
-
-        if (result != nullptr) {
-            g_metaResult = result;
-            common_metadata_header_t* data = result->get();
-            std::vector<int32_t> fpsRange;
-            camera_metadata_item_t entry;
-            int ret = OHOS::Camera::FindCameraMetadataItem(data, OHOS_ABILITY_FPS_RANGES, &entry);
-            MEDIA_INFO_LOG("CameraDeviceServiceCallback::FindCameraMetadataItem() %{public}d", ret);
-            if (ret != 0) {
-                MEDIA_INFO_LOG("demo test: get OHOS_ABILITY_FPS_RANGES error");
-            }
-            uint32_t count = entry.count;
-            MEDIA_INFO_LOG("demo test: fpsRange count  %{public}d", count);
-            for (uint32_t i = 0; i < count; i++) {
-                fpsRange.push_back(*(entry.data.i32 + i));
-            }
-            for (auto it = fpsRange.begin(); it != fpsRange.end(); it++) {
-                MEDIA_INFO_LOG("demo test: fpsRange %{public}d ", *it);
-            }
-        }
-    }
-
-    void OnCaptureStarted(const int32_t captureId) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-        return;
-    }
-
-    void OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-        return;
-    }
-
-    void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
-                        captureId, frameCount);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
-        return;
-    }
-
-    void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
-    {
+void AppCallback::OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const
+{
+    const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
+    const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
+    EXPECT_TRUE(true)<<"OnCameraStatusChanged:CameraId="<<cameraID<<",CameraStatus="<<cameraDeviceInfo.cameraStatus
+        <<",bundleName="<<cameraDeviceInfo.bundleName<<endl;
+    switch (cameraStatus) {
+        case CAMERA_STATUS_UNAVAILABLE: {
         MEDIA_DEBUG_LOG(
-            "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
-        return;
-    }
-
-    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override
-    {
-        MEDIA_DEBUG_LOG(
-            "AppCallback::OnFrameShutterEnd captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER_END)] = 1;
-        return;
-    }
-
-    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override
-    {
-        MEDIA_DEBUG_LOG(
-            "AppCallback::OnCaptureReady captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_READY)] = 1;
-        return;
-    }
-
-    void OnEstimatedCaptureDuration(const int32_t duration) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnEstimatedCaptureDuration duration: %{public}d", duration);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_ESTIMATED_CAPTURE_DURATION)] = 1;
-        return;
-    }
-
-    void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override
-    {
-        MEDIA_DEBUG_LOG(
-            "AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d", captureId, errorCode);
-        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
-        return;
-    }
-
-    void OnFrameStarted() const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
-        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
-        return;
-    }
-    void OnFrameEnded(const int32_t frameCount) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
-        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
-        return;
-    }
-    void OnError(const int32_t errorCode) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
-        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
-        return;
-    }
-    void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
-        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
-        g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
-        return;
-    }
-    void OnMacroStatusChanged(MacroStatus status) override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnMacroStatusChanged");
-        if (status == MacroStatus::IDLE) {
-            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 1;
-            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 0;
-        } else if (status == MacroStatus::ACTIVE) {
-            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
-            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
+                "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_UNAVAILABLE", cameraID.c_str());
+            g_camStatusMap[cameraID] = CAMERA_STATUS_UNAVAILABLE;
+            break;
         }
-        return;
-    }
-
-    void OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status) override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnFeatureDetectionStatusChanged");
-        if (feature == SceneFeature::FEATURE_MOON_CAPTURE_BOOST) {
-            if (status == FeatureDetectionStatus::IDLE) {
-                g_moonCaptureBoostEvents[static_cast<int>(
-                    CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 1;
-                g_moonCaptureBoostEvents[static_cast<int>(
-                    CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 0;
-            } else if (status == FeatureDetectionStatus::ACTIVE) {
-                g_moonCaptureBoostEvents[static_cast<int>(
-                    CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 1;
-                g_moonCaptureBoostEvents[static_cast<int>(
-                    CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 0;
-            }
+        case CAMERA_STATUS_AVAILABLE: {
+            MEDIA_DEBUG_LOG(
+                "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_AVAILABLE", cameraID.c_str());
+            g_camStatusMap[cameraID] = CAMERA_STATUS_AVAILABLE;
+            break;
+        }
+        default: {
+            MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: unknown", cameraID.c_str());
+            EXPECT_TRUE(false);
         }
     }
+    return;
+}
 
-    bool IsFeatureSubscribed(SceneFeature feature) override
-    {
-        return true;
+void AppCallback::OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged() is called!");
+    switch (flashStatus) {
+        case FLASH_STATUS_OFF: {
+            MEDIA_DEBUG_LOG(
+                "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_OFF", cameraID.c_str());
+            g_camFlashMap[cameraID] = false;
+            break;
+        }
+        case FLASH_STATUS_ON: {
+            MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_ON", cameraID.c_str());
+            g_camFlashMap[cameraID] = true;
+            break;
+        }
+        case FLASH_STATUS_UNAVAILABLE: {
+            MEDIA_DEBUG_LOG(
+                "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_UNAVAILABLE", cameraID.c_str());
+            g_camFlashMap.erase(cameraID);
+            break;
+        }
+        default: {
+            MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: unknown", cameraID.c_str());
+            EXPECT_TRUE(false);
+        }
     }
+    return;
+}
 
-    void OnBrightnessStatusChanged(bool state) override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnBrightnessStatusChanged");
-        g_brightnessStatusChanged = true;
-    }
+void AppCallback::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
+        torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
+    g_torchInfo = torchStatusInfo;
+    return;
+}
 
-    void OnSlowMotionState(const SlowMotionState state) override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnSlowMotionState");
-        g_slowMotionStatusChanged = true;
+void AppCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnError errorType: %{public}d, errorMsg: %{public}d", errorType, errorMsg);
+    g_camInputOnError = true;
+    if (errorType == CAMERA_DEVICE_PREEMPTED) {
+        g_sessionclosed = true;
     }
-    void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
-        return;
-    }
-    void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override
-    {
-        MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
-    }
-};
+    return;
+}
 
-class AppVideoCallback : public VideoStateCallback {
-    void OnFrameStarted() const override
-    {
-        MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
-        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)] = 1;
-        return;
-    }
-    void OnFrameEnded(const int32_t frameCount) const override
-    {
-        MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameEnded frameCount: %{public}d", frameCount);
-        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)] = 1;
-        return;
-    }
-    void OnError(const int32_t errorCode) const override
-    {
-        MEDIA_DEBUG_LOG("AppVideoCallback::OnError errorCode: %{public}d", errorCode);
-        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
-        return;
-    }
-    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override
-    {
-        MEDIA_DEBUG_LOG("AppVideoCallback::OnDeferredVideoEnhancementInfo");
-        return;
-    }
-};
+void AppCallback::OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) const
+{
+    MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
 
-class AppMetadataCallback : public MetadataObjectCallback, public MetadataStateCallback {
-public:
-    void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
-    {
-        MEDIA_DEBUG_LOG("AppMetadataCallback::OnMetadataObjectsAvailable received");
+    if (result != nullptr) {
+        g_metaResult = result;
+        common_metadata_header_t* data = result->get();
+        std::vector<int32_t> fpsRange;
+        camera_metadata_item_t entry;
+        int ret = OHOS::Camera::FindCameraMetadataItem(data, OHOS_ABILITY_FPS_RANGES, &entry);
+        MEDIA_INFO_LOG("CameraDeviceServiceCallback::FindCameraMetadataItem() %{public}d", ret);
+        if (ret != 0) {
+            MEDIA_INFO_LOG("demo test: get OHOS_ABILITY_FPS_RANGES error");
+        }
+        uint32_t count = entry.count;
+        MEDIA_INFO_LOG("demo test: fpsRange count  %{public}d", count);
+        for (uint32_t i = 0; i < count; i++) {
+            fpsRange.push_back(*(entry.data.i32 + i));
+        }
+        for (auto it = fpsRange.begin(); it != fpsRange.end(); it++) {
+            MEDIA_INFO_LOG("demo test: fpsRange %{public}d ", *it);
+        }
     }
-    void OnError(int32_t errorCode) const
-    {
-        MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
-    }
-};
+}
 
-class AppSessionCallback : public SessionCallback {
-public:
-    void OnError(int32_t errorCode)
-    {
-        MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
-        return;
+void AppCallback::OnCaptureStarted(const int32_t captureId) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
+    return;
+}
+
+void AppCallback::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
+    return;
+}
+
+void AppCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
+                    captureId, frameCount);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
+    return;
+}
+
+void AppCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
+{
+    MEDIA_DEBUG_LOG(
+        "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
+    return;
+}
+
+void AppCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const
+{
+    MEDIA_DEBUG_LOG(
+        "AppCallback::OnFrameShutterEnd captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER_END)] = 1;
+    return;
+}
+
+void AppCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
+{
+    MEDIA_DEBUG_LOG(
+        "AppCallback::OnCaptureReady captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_READY)] = 1;
+    return;
+}
+
+void AppCallback::OnEstimatedCaptureDuration(const int32_t duration) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnEstimatedCaptureDuration duration: %{public}d", duration);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_ESTIMATED_CAPTURE_DURATION)] = 1;
+    return;
+}
+
+void AppCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
+{
+    MEDIA_DEBUG_LOG(
+        "AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d", captureId, errorCode);
+    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
+    return;
+}
+
+void AppCallback::OnFrameStarted() const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
+    g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
+    return;
+}
+void AppCallback::OnFrameEnded(const int32_t frameCount) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
+    g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
+    return;
+}
+void AppCallback::OnError(const int32_t errorCode) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
+    g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
+    return;
+}
+void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
+    g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
+    g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
+    return;
+}
+void AppCallback::OnMacroStatusChanged(MacroStatus status)
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnMacroStatusChanged");
+    if (status == MacroStatus::IDLE) {
+        g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 1;
+        g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 0;
+    } else if (status == MacroStatus::ACTIVE) {
+        g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
+        g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
     }
-};
-} // namespace
+    return;
+}
+
+void AppCallback::OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status)
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnFeatureDetectionStatusChanged");
+    if (feature == SceneFeature::FEATURE_MOON_CAPTURE_BOOST) {
+        if (status == FeatureDetectionStatus::IDLE) {
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 1;
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 0;
+        } else if (status == FeatureDetectionStatus::ACTIVE) {
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 1;
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 0;
+        }
+    }
+}
+
+bool AppCallback::IsFeatureSubscribed(SceneFeature feature)
+{
+    return true;
+}
+
+void AppCallback::OnBrightnessStatusChanged(bool state)
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnBrightnessStatusChanged");
+    g_brightnessStatusChanged = true;
+}
+
+void AppCallback::OnSlowMotionState(const SlowMotionState state)
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnSlowMotionState");
+    g_slowMotionStatusChanged = true;
+}
+void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
+    return;
+}
+void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
+}
+
+void AppVideoCallback::OnFrameStarted() const
+{
+    MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
+    g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)] = 1;
+    return;
+}
+void AppVideoCallback::OnFrameEnded(const int32_t frameCount) const
+{
+    MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameEnded frameCount: %{public}d", frameCount);
+    g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)] = 1;
+    return;
+}
+void AppVideoCallback::OnError(const int32_t errorCode) const
+{
+    MEDIA_DEBUG_LOG("AppVideoCallback::OnError errorCode: %{public}d", errorCode);
+    g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
+    return;
+}
+void AppVideoCallback::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const
+{
+    MEDIA_DEBUG_LOG("AppVideoCallback::OnDeferredVideoEnhancementInfo");
+    return;
+}
+
+void AppMetadataCallback::OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
+{
+    MEDIA_DEBUG_LOG("AppMetadataCallback::OnMetadataObjectsAvailable received");
+}
+void AppMetadataCallback::OnError(int32_t errorCode) const
+{
+    MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+}
+
+void AppSessionCallback::OnError(int32_t errorCode)
+{
+    MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+    return;
+}
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
@@ -1379,67 +1294,6 @@ sptr<CameraDevice> CameraFrameworkModuleTest::ChooseCamerasByPositionAndType(Cam
         }
     }
     return choosedCamera;
-}
-
-/*
- * Feature: Framework
- * Function: Test Result Callback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Result Callback
- */
-
-HWTEST_F(CameraFrameworkModuleTest, Camera_ResultCallback_moduletest, TestSize.Level0)
-{
-    int32_t intResult = session_->BeginConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-
-    // Register error callback
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    std::shared_ptr<ResultCallback> resultCallback = callback;
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->SetResultCallback(resultCallback);
-    EXPECT_EQ(g_camInputOnError, false);
-
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-
-    intResult = session_->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-
-    intResult = session_->AddOutput(videoOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-    EXPECT_NE(g_metaResult, nullptr);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
-    EXPECT_EQ(intResult, 0);
-
-    TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
-
-    sleep(WAIT_TIME_BEFORE_STOP);
-    ((sptr<PreviewOutput>&)previewOutput)->Stop();
-    session_->Stop();
 }
 
 /*
@@ -3660,7 +3514,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
         session->GetIsoRange(isoRange);
         ASSERT_EQ(isoRange.empty(), false);
         session->LockForControl();
-        intResult = session->SetISO(isoRange[1]+1);
+        intResult = session->SetISO(isoRange[1] + 1);
         EXPECT_NE(intResult, 0);
         session->UnlockForControl();
 
