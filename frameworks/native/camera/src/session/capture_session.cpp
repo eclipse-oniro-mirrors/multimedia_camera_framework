@@ -3968,7 +3968,7 @@ int32_t CaptureSession::GetSensorExposureTime(uint32_t &exposureTime)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     if (!inputDeviceInfo) {
         MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTime camera deviceInfo is null");
-        return CameraErrorCode::SUCCESS;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
