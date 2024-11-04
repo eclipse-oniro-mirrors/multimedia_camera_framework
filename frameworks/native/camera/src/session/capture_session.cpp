@@ -5818,5 +5818,20 @@ void CaptureSession::CreateAndSetFoldServiceCallback()
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
         "CreateAndSetFoldServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
 }
+
+void CaptureSession::SetUsage(UsageType usageType, bool enabled)
+{
+    CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
+        "CaptureSession::SetUsage Need to call LockForControl() before setting camera properties");
+    std::vector<int32_t> mode;
+ 
+    mode.push_back(static_cast<int32_t>(usageType));
+    mode.push_back(
+        static_cast<int32_t>(enabled ? OHOS_CAMERA_SESSION_USAGE_ENABLE : OHOS_CAMERA_SESSION_USAGE_DISABLE));
+ 
+    bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
+ 
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
+}
 } // namespace CameraStandard
 } // namespace OHOS
