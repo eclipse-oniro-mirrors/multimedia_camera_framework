@@ -44,6 +44,8 @@ using CacheCbFunc = function<void(sptr<FrameRecord>, bool)>;
 constexpr uint32_t DEFAULT_THREAD_NUMBER = 6;
 constexpr uint32_t DEFAULT_ENCODER_THREAD_NUMBER = 1;
 constexpr uint32_t GET_FD_EXPIREATION_TIME = 2000;
+constexpr int64_t NANOSEC_RANGE = 1500000000LL;
+constexpr int64_t ONE_BILLION = 1000000000LL;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
@@ -51,19 +53,26 @@ public:
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
-    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation);
+    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation,
+        int32_t captureId);
     sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
-        vector<sptr<FrameRecord>> &choosedBuffer);
+        vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId);
     void SubmitTask(function<void()> task);
     void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy);
     void Stop();
     void ClearTaskResource();
+    void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
     shared_ptr<TaskManager>& GetTaskManager();
     shared_ptr<TaskManager>& GetEncoderManager();
+    mutex startTimeMutex_;
+    mutex endTimeMutex_;
+    std::map<int32_t, int64_t> mPStartTimeMap_ = {};
+    std::map<int32_t, int64_t> mPEndTimeMap_ = {};
+
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
-        int64_t shutterTime);
+        int64_t shutterTime, int32_t captureId);
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
@@ -77,6 +86,8 @@ private:
     std::atomic<bool> isActive_ { true };
     queue<std::pair<int64_t, PhotoAssetIntf*>> videoFdQueue_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    int64_t preBufferDuration_ = NANOSEC_RANGE;
+    int64_t postBufferDuration_ = NANOSEC_RANGE;
 };
 } // CameraStandard
 } // OHOS

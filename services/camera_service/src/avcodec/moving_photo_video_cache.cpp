@@ -61,7 +61,7 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
 }
 
 void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
-    int32_t rotation)
+    int32_t rotation, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("DoMuxerVideo enter");
@@ -71,7 +71,7 @@ void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRec
     });
     std::lock_guard<std::mutex> lock(taskManagerLock_);
     if (taskManager_) {
-        taskManager_->DoMuxerVideo(frameRecords, taskName, rotation);
+        taskManager_->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
         auto thisPtr = sptr<MovingPhotoVideoCache>(this);
         taskManager_->SubmitTask([thisPtr]() {
             thisPtr->ClearCallbackHandler();
@@ -94,12 +94,12 @@ void MovingPhotoVideoCache::OnImageEncoded(sptr<FrameRecord> frameRecord, bool e
 }
 
 void MovingPhotoVideoCache::GetFrameCachedResult(std::vector<sptr<FrameRecord>> frameRecords,
-    EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation)
+    EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation, int32_t captureId)
 {
     callbackVecLock_.lock();
     MEDIA_INFO_LOG("GetFrameCachedResult enter frameRecords size: %{public}zu", frameRecords.size());
     sptr<CachedFrameCallbackHandle> cacheFrameHandler =
-        new CachedFrameCallbackHandle(frameRecords, encodedEndCbFunc, taskName, rotation);
+        new CachedFrameCallbackHandle(frameRecords, encodedEndCbFunc, taskName, rotation, captureId);
     cachedFrameCallbackHandles_.push_back(cacheFrameHandler);
     callbackVecLock_.unlock();
     for (auto frameRecord : frameRecords) {
@@ -133,8 +133,9 @@ void MovingPhotoVideoCache::ClearCache()
 }
 
 CachedFrameCallbackHandle::CachedFrameCallbackHandle(std::vector<sptr<FrameRecord>> frameRecords,
-    EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation)
-    : encodedEndCbFunc_(encodedEndCbFunc), isAbort_(false), taskName_(taskName), rotation_(rotation)
+    EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation, int32_t captureId)
+    : encodedEndCbFunc_(encodedEndCbFunc), isAbort_(false), taskName_(taskName), rotation_(rotation),
+      captureId_(captureId)
 {
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     cacheRecords_.insert(frameRecords.begin(), frameRecords.end());
@@ -169,7 +170,7 @@ void CachedFrameCallbackHandle::OnCacheFrameFinish(sptr<FrameRecord> frameRecord
         MEDIA_INFO_LOG("encodedEndCbFunc_ is called success count: %{public}zu", successCacheRecords_.size());
         // All buffer have been encoded
         if (encodedEndCbFunc_ != nullptr) {
-            encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_);
+            encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
             encodedEndCbFunc_ = nullptr;
         }
     }
@@ -182,7 +183,7 @@ void CachedFrameCallbackHandle::AbortCapture()
     isAbort_ = true;
     cacheRecords_.clear();
     if (encodedEndCbFunc_ != nullptr) {
-        encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_);
+        encodedEndCbFunc_(successCacheRecords_, taskName_, rotation_, captureId_);
         encodedEndCbFunc_ = nullptr;
     }
 }
