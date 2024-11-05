@@ -193,7 +193,6 @@ ohos_shared_library("camera_service") {
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
     "media_library:media_library",
-    "media_library:media_library_manager",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
@@ -241,6 +240,47 @@ ohos_shared_library("camera_service") {
       cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_shared_library("camera_dynamic_medialibrary") {
+  install_enable = true
+  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
+
+  external_deps = [
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_single",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "samgr:samgr_proxy",
+  ]
 
   cflags_cc = cflags
 

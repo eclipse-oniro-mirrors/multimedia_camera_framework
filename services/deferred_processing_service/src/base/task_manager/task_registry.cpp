@@ -102,6 +102,18 @@ void TaskRegistry::CancelAllTasks(TaskGroupHandle handle)
     it->second->CancelAllTasks();
 }
 
+size_t TaskRegistry::GetTaskCount(TaskGroupHandle handle)
+{
+    DP_DEBUG_LOG("Get task count %{public}d", static_cast<int>(handle));
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = registry_.find(handle);
+    if (it == registry_.end()) {
+        DP_DEBUG_LOG("failed due to task group %{public}d non-exist!", static_cast<int>(handle));
+        return 0;
+    }
+    return it->second->GetTaskCount();
+}
+
 bool TaskRegistry::IsTaskGroupAlreadyRegistered(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(mutex_);

@@ -33,6 +33,7 @@
 #include "avcodec_task_manager.h"
 #include "blocking_queue.h"
 #include "bundle_mgr_interface.h"
+#include "camera_dynamic_loader.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
@@ -57,7 +58,7 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_common.h"
-#include "media_library_manager.h"
+#include "media_library/photo_asset_interface.h"
 #include "metadata_utils.h"
 #include "moving_photo/moving_photo_surface_wrapper.h"
 #include "moving_photo_video_cache.h"
@@ -71,11 +72,14 @@
 #include "deferred_processing_service.h"
 #include "picture.h"
 #include "fixed_size_list.h"
+#include "camera_timer.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
+std::optional<uint32_t> HCaptureSession::closeTimerId_ = std::nullopt;
+std::mutex HCaptureSession::g_mediaTaskLock_;
 
 namespace {
 static std::map<pid_t, sptr<HCaptureSession>> g_totalSessions;
@@ -178,9 +182,11 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 
 HCaptureSession::~HCaptureSession()
 {
+    CAMERA_SYNC_TRACE;
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
     if (displayListener_) {
         OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+        displayListener_ = nullptr;
     }
 }
 
@@ -321,6 +327,7 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
 
 int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
 {
+    CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG,
         "HCaptureSession::AddOutputStream stream is null");
     MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d",
@@ -335,10 +342,22 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
         captureStream->SetColorSpace(currCaptureColorSpace_);
+        HCaptureSession::OpenMediaLib();
     } else {
         stream->SetColorSpace(currColorSpace_);
     }
     return CAMERA_OK;
+}
+
+void HCaptureSession::OpenMediaLib()
+{
+    std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
+    if (closeTimerId_.has_value()) {
+        CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
+        closeTimerId_.reset();
+    }
+    CameraTimer::GetInstance()->Register(
+        [&] { CameraDynamicLoader::GetInstance()->OpenDynamicHandle(MEDIA_LIB_SO); }, 0, true);
 }
 
 void HCaptureSession::StartMovingPhotoStream()
@@ -562,6 +581,17 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
     return CAMERA_OK;
 }
 
+void HCaptureSession::DelayCloseMediaLib()
+{
+    std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
+    constexpr uint32_t waitMs = 30 * 1000;
+    if (!closeTimerId_.has_value()) {
+        closeTimerId_ = CameraTimer::GetInstance()->Register([]() {
+            CameraDynamicLoader::GetInstance()->CloseDynamicHandle(MEDIA_LIB_SO);
+        }, waitMs, true);
+    }
+}
+
 int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon> stream)
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
@@ -580,6 +610,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         }
         if (streamType == StreamType::CAPTURE) {
             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+            HCaptureSession::DelayCloseMediaLib();
         } else if (streamType == StreamType::REPEAT) {
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
             if (enableStreamRotate_ && repeatSteam != nullptr &&
@@ -1431,6 +1462,7 @@ void HCaptureSession::ReleaseStreams()
     if ((cameraDevice != nullptr) && !hdiStreamIds.empty()) {
         cameraDevice->ReleaseStreams(hdiStreamIds);
     }
+    HCaptureSession::DelayCloseMediaLib();
 }
 
 int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
@@ -1473,6 +1505,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         SetCallback(emptyCallback);
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
+        if (displayListener_) {
+            OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+            displayListener_ = nullptr;
+        }
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
         livephotoListener_ = nullptr;
         videoCache_ = nullptr;
@@ -1480,7 +1516,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             taskManager_->ClearTaskResource();
             taskManager_ = nullptr;
         }
-        audioCapturerSession_ = nullptr;
+        HCaptureSession::DelayCloseMediaLib();
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
     return errorCode;
@@ -1685,16 +1721,16 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
     return formattedTime;
 }
 
-void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraServerPhotoProxy,
+void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     int32_t &cameraShotType, bool &isBursting, std::string &burstKey)
 {
-    auto type = isSetMotionPhoto_ ? CameraShotType::MOVING_PHOTO : CameraShotType::IMAGE;
-    cameraShotType = static_cast<int32_t>(type);
+    cameraPhotoProxy->SetShootingMode(opMode_);
     isBursting = false;
-    cameraServerPhotoProxy->SetShootingMode(opMode_);
-    int32_t captureId = cameraServerPhotoProxy->GetCaptureId();
-    std::string imageId = cameraServerPhotoProxy->GetPhotoId();
+    cameraPhotoProxy->SetShootingMode(opMode_);
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
+    std::string imageId = cameraPhotoProxy->GetPhotoId();
     bool isCoverPhoto = false;
+    const int32_t burstSeqIdMask = 0xFFFF;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
         MEDIA_INFO_LOG("for captureStreams");
@@ -1709,75 +1745,49 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
             streamCapture->SetBurstImages(captureId, imageId);
             isCoverPhoto = streamCapture->IsBurstCover(captureId);
             int32_t imageSeq = streamCapture->GetCurBurstSeq(captureId);
-            cameraServerPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeq));
+            int32_t burstSeqId = captureId & burstSeqIdMask;
+            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(isBursting ? burstSeqId : imageSeq));
             streamCapture->CheckResetBurstKey(captureId);
             MEDIA_INFO_LOG("CreateMediaLibrary isBursting burstKey:%{public}s isCoverPhoto:%{public}d",
                 burstKey.c_str(), isCoverPhoto);
-            type = CameraShotType::BURST;
-            cameraShotType = static_cast<int32_t>(CameraShotType::BURST);
-            cameraServerPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
+            int32_t burstShotType = 3;
+            cameraShotType = burstShotType;
+            cameraPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
             break;
         }
         MEDIA_INFO_LOG("CreateMediaLibrary not Bursting");
     }
 }
 
+typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t, int32_t);
+
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    sptr<IRemoteObject> object = nullptr;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get System ability manager");
-    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CAMERA_UNKNOWN_ERROR, "object is null");
-    auto mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
-    CHECK_ERROR_RETURN_RET_LOG(mediaLibraryManager == nullptr, CAMERA_UNKNOWN_ERROR,
-        "Error to init mediaLibraryManager");
-    mediaLibraryManager->InitMediaLibraryManager(object);
-    const static int32_t INVALID_UID = -1;
-    const static int32_t BASE_USER_RANGE = 200000;
-    int uid = IPCSkeleton::GetCallingUid();
-    CHECK_ERROR_PRINT_LOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
-    int32_t userId = uid / BASE_USER_RANGE;
-    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d", uid, userId);
-
+    constexpr int32_t movingPhotoShotType = 2;
+    constexpr int32_t imageShotType = 0;
+    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
     MessageParcel data;
     photoProxy->WriteToParcel(data);
     photoProxy->CameraFreeBufferHandle();
-    sptr<CameraServerPhotoProxy> cameraServerPhotoProxy = new CameraServerPhotoProxy();
-    cameraServerPhotoProxy->ReadFromParcel(data);
-    cameraServerPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->ReadFromParcel(data);
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     bool isBursting = false;
-    SetCameraPhotoProxyInfo(cameraServerPhotoProxy, cameraShotType, isBursting, burstKey);
-    if (cameraServerPhotoProxy->GetPhotoQuality() == Media::PhotoQuality::HIGH) {
-        MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoQuality::HIGH");
-    }
-    if (cameraServerPhotoProxy->GetFormat() == Media::PhotoFormat::JPG) {
-        MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoFormat::JPG");
-    }
-    CameraShotType type = static_cast<CameraShotType>(cameraShotType);
-    auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
+    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
+        MEDIA_LIB_SO, "createPhotoAssetIntf"));
+    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
+    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
         taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+    } else {
+        delete photoAssetProxy;
     }
     return CAMERA_OK;
-}
-
-inline MediaLibraryManager* GetMediaLibraryManager()
-{
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, nullptr, "Failed to get System ability manager");
-    sptr<IRemoteObject> object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, nullptr, "object is null");
-    auto mediaLibraryManager =  Media::MediaLibraryManager::GetMediaLibraryManager();
-    if (mediaLibraryManager) {
-        mediaLibraryManager->InitMediaLibraryManager(object);
-    }
-    return mediaLibraryManager;
 }
 
 std::unordered_map<std::string, float> exifOrientationDegree = {
@@ -1840,46 +1850,38 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
-    CAMERA_SYNC_TRACE;
-    auto mediaLibraryManager = GetMediaLibraryManager();
-    if (mediaLibraryManager == nullptr) {
-        MEDIA_ERR_LOG("Error to init mediaLibraryManager");
-        return CAMERA_UNKNOWN_ERROR;
-    }
-    const static int32_t INVALID_UID = -1;
-    const static int32_t BASE_USER_RANGE = 200000;
-    int uid = IPCSkeleton::GetCallingUid();
-    if (uid <= INVALID_UID) {
-        MEDIA_ERR_LOG("Get INVALID_UID UID %{public}d", uid);
-    }
-    int32_t userId = uid / BASE_USER_RANGE;
-    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d", uid, userId);
+    constexpr int32_t movingPhotoShotType = 2;
+    constexpr int32_t imageShotType = 0;
+    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
     MessageParcel data;
     photoProxy->WriteToParcel(data);
     photoProxy->CameraFreeBufferHandle();
-    sptr<CameraServerPhotoProxy> cameraServerPhotoProxy = new CameraServerPhotoProxy();
-    cameraServerPhotoProxy->ReadFromParcel(data);
-    PhotoFormat photoFormat = cameraServerPhotoProxy->GetFormat();
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->ReadFromParcel(data);
+    PhotoFormat photoFormat = cameraPhotoProxy->GetFormat();
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
-    cameraServerPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
-    cameraServerPhotoProxy->SetShootingMode(opMode_);
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
     bool isBursting = false;
-    SetCameraPhotoProxyInfo(cameraServerPhotoProxy, cameraShotType, isBursting, burstKey);
-    CameraShotType type = static_cast<CameraShotType>(cameraShotType);
-    auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
+    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
+        MEDIA_LIB_SO, "createPhotoAssetIntf"));
+    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
+    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
     if (!isBursting && picturePtr) {
         RotatePicture(picturePtr);
     }
-    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(userId, uri, picturePtr);
-    if (!isBursting && isSetMotionPhoto_) {
+    DeferredProcessing::DeferredProcessingService::GetInstance().
+        NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
+    if (isBursting && isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
         if (taskManager_) {
             taskManager_->SetVideoFd(timestamp, photoAssetProxy);
         }
+    } else {
+        delete photoAssetProxy;
     }
     return CAMERA_OK;
 }
