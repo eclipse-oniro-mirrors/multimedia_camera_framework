@@ -39,6 +39,7 @@ ohos_moduletest("camera_framework_moduletest") {
 
   sources = [
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/camera_framework_a_result_callback.cpp",
     "src/camera_framework_moduletest.cpp",
   ]
 
