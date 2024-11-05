@@ -267,6 +267,10 @@ public:
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
+
+    void DumpSessionInfo(CameraInfoDumper& infoDumper);
+    static void DumpSessions(CameraInfoDumper& infoDumper);
+    static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
     void ReleaseStreams();
     void StopMovingPhoto();
 
@@ -274,9 +278,6 @@ public:
     static void DelayCloseMediaLib();
     static std::optional<uint32_t> closeTimerId_;
     static std::mutex g_mediaTaskLock_;
-    void DumpSessionInfo(CameraInfoDumper& infoDumper);
-    static void DumpSessions(CameraInfoDumper& infoDumper);
-    static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
 

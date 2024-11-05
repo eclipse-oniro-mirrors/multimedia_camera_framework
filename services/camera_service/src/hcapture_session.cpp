@@ -1383,7 +1383,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->startTimeMutex_);
         if (sessionPtr->taskManager_->mPStartTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}ld",
+            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}lld",
                 captureId, startTimeStamp);
             sessionPtr->taskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
         }
@@ -1395,7 +1395,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->endTimeMutex_);
         if (sessionPtr->taskManager_->mPEndTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}ld",
+            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}lld",
                 captureId, endTimeStamp);
             sessionPtr->taskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
         }
