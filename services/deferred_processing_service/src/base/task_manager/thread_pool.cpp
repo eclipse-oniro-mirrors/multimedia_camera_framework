@@ -59,7 +59,7 @@ void ThreadPool::Initialize()
 {
     DP_DEBUG_LOG("entered.");
     workers_.reserve(numThreads_);
-    std::string threadNamePrefix = "DPS_Worker_";
+    std::string threadNamePrefix = name_ + "_DPS_Worker_";
     for (uint32_t i = 0; i < numThreads_; ++i) {
         auto threadName = threadNamePrefix + std::to_string(i);
         workers_.emplace_back(threadName, [this, threadName]() { WorkerLoop(threadName); });
@@ -77,6 +77,7 @@ void ThreadPool::WorkerLoop(const std::string& threadName)
         if (task) {
             DP_DEBUG_LOG("(%s) task excuting entered.", threadName.c_str());
             task();
+            DP_DEBUG_LOG("(%s) task excuting complete.", threadName.c_str());
         } else {
             DP_DEBUG_LOG("empty task.");
         }

@@ -29,6 +29,7 @@
 #include <unordered_set>
 #include "camera_util.h"
 #include "fixed_size_list.h"
+#include "camera_dynamic_loader.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
@@ -303,12 +304,10 @@ private:
     int32_t LinkInputAndOutputs();
     int32_t UnlinkInputAndOutputs();
 
-    void ReleaseStreams();
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
     void ClearMovingPhotoRepeatStream();
-    void StopMovingPhoto();
     int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height,
         sptr<OHOS::IBufferProducer> producer);
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
@@ -365,8 +364,6 @@ private:
     std::mutex displayListenerLock_;
     sptr<DisplayRotationListener> displayListener_;
 };
-
-
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_H_CAPTURE_SESSION_H

@@ -175,6 +175,12 @@ ohos_shared_library("camera_framework") {
     "${window_manager_path}/interfaces/innerkits/dm",
   ]
 
+  public_external_deps = [
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+  ]
+
   external_deps = [
     "access_token:libtokenid_sdk",
     "bundle_framework:appexecfwk_base",
@@ -182,13 +188,10 @@ ohos_shared_library("camera_framework") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
-    "drivers_interface_camera:metadata",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",

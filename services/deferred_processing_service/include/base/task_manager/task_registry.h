@@ -38,7 +38,7 @@ public:
     bool DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle);
     bool SubmitTask(TaskGroupHandle handle, std::any param);
     void CancelAllTasks(TaskGroupHandle handle);
-
+    size_t GetTaskCount(TaskGroupHandle handle);
 private:
 
     bool IsTaskGroupAlreadyRegistered(const std::string& name);

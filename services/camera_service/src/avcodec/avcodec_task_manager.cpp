@@ -121,7 +121,7 @@ void AvcodecTaskManager::SubmitTask(function<void()> task)
     }
 }
 
-void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy)
+void AvcodecTaskManager::SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy)
 {
     lock_guard<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64, timestamp);
@@ -145,7 +145,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
     int64_t timestamp = videoFdQueue_.front().first;
-    shared_ptr<PhotoAssetProxy> photoAssetProxy = videoFdQueue_.front().second;
+    auto photoAssetProxy = videoFdQueue_.front().second;
     videoFdQueue_.pop();
     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
     muxer->Create(format, photoAssetProxy);
@@ -190,10 +190,11 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
     if (muxer) {
         muxer->Stop();
         muxer->Release();
-        shared_ptr<PhotoAssetProxy> proxy = muxer->GetPhotoAssetProxy();
+        PhotoAssetIntf* proxy = muxer->GetPhotoAssetProxy();
         MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
         if (proxy) {
             proxy->NotifyVideoSaveFinished();
+            delete proxy;
         }
     }
 }
@@ -340,8 +341,12 @@ void AvcodecTaskManager::Release()
     unique_lock<mutex> lock(videoFdMutex_);
     while (!videoFdQueue_.empty()) {
         int32_t fd = videoFdQueue_.front().first;
+        PhotoAssetIntf* photoAssetProxy = videoFdQueue_.front().second;
         MEDIA_INFO_LOG("close with videoFd: %{public}d", fd);
         close(fd);
+        if (photoAssetProxy) {
+            delete photoAssetProxy;
+        }
         videoFdQueue_.pop();
     }
     MEDIA_INFO_LOG("AvcodecTaskManager release end");

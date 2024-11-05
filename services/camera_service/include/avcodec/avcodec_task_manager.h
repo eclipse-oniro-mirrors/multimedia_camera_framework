@@ -34,8 +34,6 @@
 #include "iconsumer_surface.h"
 #include "blocking_queue.h"
 #include "task_manager.h"
-
-#include "media_photo_asset_proxy.h"
 #include "camera_util.h"
 namespace OHOS {
 namespace CameraStandard {
@@ -60,7 +58,7 @@ public:
     sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
         vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId);
     void SubmitTask(function<void()> task);
-    void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy);
+    void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy);
     void Stop();
     void ClearTaskResource();
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
@@ -86,7 +84,7 @@ private:
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
     std::atomic<bool> isActive_ { true };
-    queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
+    queue<std::pair<int64_t, PhotoAssetIntf*>> videoFdQueue_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     int64_t preBufferDuration_ = NANOSEC_RANGE;
     int64_t postBufferDuration_ = NANOSEC_RANGE;

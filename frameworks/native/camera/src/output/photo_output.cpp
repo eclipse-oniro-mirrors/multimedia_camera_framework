@@ -25,12 +25,14 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
+#include "image_type.h"
 #include "input/camera_device.h"
 #include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
 #include "camera_report_dfx_uitls.h"
 #include "picture.h"
+#include "task_manager.h"
 using namespace std;
 
 namespace OHOS {
@@ -322,13 +324,18 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
-    photoProxy_ = nullptr;
+    taskManager_ = nullptr;
 }
 
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
 }
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
@@ -660,6 +667,11 @@ int32_t PhotoOutput::Release()
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
     return ServiceToCameraError(errCode);
 }
 

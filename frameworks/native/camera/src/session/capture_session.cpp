@@ -36,7 +36,6 @@
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
-#include "media_photo_asset_proxy.h"
 #include "os_account_manager.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
