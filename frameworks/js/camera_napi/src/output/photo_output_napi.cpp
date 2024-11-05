@@ -712,8 +712,8 @@ std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSett
 
 int32_t GetBurstSeqId(int32_t captureId)
 {
-    const int32_t burstSeqIdMask = 0xFFFF;
-    return captureId & burstSeqIdMask;
+    const uint32_t burstSeqIdMask = 0xFFFF;
+    return captureId > 0 ? (captureId & burstSeqIdMask) : captureId;
 }
 
 void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
