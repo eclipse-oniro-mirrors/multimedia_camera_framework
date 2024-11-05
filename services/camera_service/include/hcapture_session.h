@@ -267,7 +267,13 @@ public:
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
+    void ReleaseStreams();
+    void StopMovingPhoto();
 
+    static void OpenMediaLib();
+    static void DelayCloseMediaLib();
+    static std::optional<uint32_t> closeTimerId_;
+    static std::mutex g_mediaTaskLock_;
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
     static void DumpSessions(CameraInfoDumper& infoDumper);
     static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
