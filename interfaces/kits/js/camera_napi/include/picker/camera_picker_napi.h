@@ -25,7 +25,7 @@
 #include "camera_napi_utils.h"
 #include "context.h"
 #include "ui_content.h"
-#include "ui_extension_ability/ui_extension_context.h"
+#include "ui_extension_base/ui_extension_context.h"
 
 namespace OHOS {
 namespace CameraStandard {
