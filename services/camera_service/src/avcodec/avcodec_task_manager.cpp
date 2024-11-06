@@ -268,8 +268,8 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     }
     mPEndTimeMap_.erase(captureId);
     endTimeLock.unlock();
-    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}lld, "
-        "clearVideoStartTime : %{public}lld, clearVideoEndTime : %{public}lld",
+    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRId64 ", "
+        "clearVideoStartTime : %{public}" PRId64 ", clearVideoEndTime : %{public}" PRId64,
         captureId, shutterTime, clearVideoStartTime, clearVideoEndTime);
     size_t idrIndex = frameRecords.size();
     for (size_t index = 0; index < frameRecords.size(); ++index) {
