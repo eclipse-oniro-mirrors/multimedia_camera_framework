@@ -1324,6 +1324,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
+    HandlePrivacyAfterCloseDevice();
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
 }
 
