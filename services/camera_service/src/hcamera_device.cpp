@@ -32,6 +32,9 @@
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#endif
 #include "metadata_utils.h"
 #include "v1_0/types.h"
 #include "os_account_manager.h"
@@ -349,6 +352,9 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     bool canOpenDevice = CanOpenCamera();
     CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT, "HCameraDevice::Refuse to turn on the camera");
     CHECK_ERROR_RETURN_RET_LOG(!HandlePrivacyBeforeOpenDevice(), CAMERA_OPERATION_NOT_ALLOWED, "privacy not allow!");
+#ifdef MEMMGR_OVERRID
+    RequireMemory();
+#endif
     CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
@@ -386,6 +392,18 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice end cameraId: %{public}s", cameraID_.c_str());
     return errorCode;
 }
+
+#ifdef MEMMGR_OVERRID
+int32_t HCameraDevice::RequireMemory()
+{
+    int32_t pid = getpid();
+    std::string killReason = "CAMERA_START";
+    int32_t requiredMemSizeKB = 0;
+    int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, killReason, requiredMemSizeKB);
+    MEDIA_INFO_LOG("HCameraDevice::RequireMemory ret:%{public}d", ret);
+    return ret;
+}
+#endif
 
 int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
 {
