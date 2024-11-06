@@ -2069,10 +2069,6 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
 napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi EnableMirror is called!");
-        return nullptr;
-    }
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableMirror is called");
     bool isMirror = false;
     PhotoOutputNapi* photoOutputNapi = nullptr;
