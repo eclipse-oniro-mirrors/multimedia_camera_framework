@@ -297,6 +297,7 @@ void VideoPostProcessor::ReleaseMpeg()
     DP_CHECK_ERROR_RETURN_LOG(mpegManager == nullptr, "mpegManager is nullptr");
     MpegManagerFactory::GetInstance().Release(mpegManager);
     mpegManager.reset();
+    SetMpegManager(nullptr);
     DP_INFO_LOG("release mpeg success.");
 }
 
