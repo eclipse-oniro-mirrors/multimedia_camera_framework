@@ -853,9 +853,9 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
 {
     MEDIA_DEBUG_LOG("SetPreviewRotation is called!");
     PreviewOutputNapi* previewOutputNapi = nullptr;
-    int32_t imageRotation;
+    int32_t imageRotation = 0;
     bool isDisplayLocked;
-    int32_t retCode;
+    int32_t retCode = 0;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, imageRotation, isDisplayLocked);
     if (jsParamParser.IsStatusOk()) {
         MEDIA_INFO_LOG("PreviewOutputNapi SetPreviewRotation! %{public}d", imageRotation);
