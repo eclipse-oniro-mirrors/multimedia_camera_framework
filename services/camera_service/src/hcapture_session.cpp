@@ -1794,7 +1794,6 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     std::string imageId = cameraPhotoProxy->GetPhotoId();
     bool isCoverPhoto = false;
-    const uint32_t burstSeqIdMask = 0xFFFF;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
         MEDIA_INFO_LOG("for captureStreams");
