@@ -133,41 +133,28 @@ public:
                 MEDIA_ERR_LOG("Invalid size.");
                 return;
             }
-            Camera_Device** supportedCameras = new Camera_Device* [cameraSize];
-            bool operatorFlag = true;
+            Camera_Device supportedCameras[cameraSize];
+            auto outSize = 0;
+            string cameraIds[cameraSize];
             for (size_t index = 0; index < cameraSize; index++) {
-                Camera_Device* cameraDevice = new Camera_Device;
-                const string cameraId = foldStatusInfo.supportedCameras[index]->GetID();
-                const char* src = cameraId.c_str();
-                size_t dstSize = strlen(src) + 1;
-                char* dst = new char[dstSize];
-                if (!dst) {
-                    MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
-                    delete[] supportedCameras;
-                    operatorFlag = false;
-                    return;
-                }
-                strlcpy(dst, src, dstSize);
-                cameraDevice->cameraId = dst;
+                Camera_Device* cameraDevice = &supportedCameras[outSize];
                 auto itr = g_FwkCameraPositionToNdk_.find(foldStatusInfo.supportedCameras[index]->GetPosition());
                 if (itr != g_FwkCameraPositionToNdk_.end()) {
                     cameraDevice->cameraPosition = itr->second;
+                    outSize++;
                 } else {
                     MEDIA_ERR_LOG("Camera_Manager::OnFoldStatusChanged cameraPosition not found!");
-                    cameraSize = cameraSize - 1;
                     continue;
                 }
+                cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
+                cameraDevice->cameraId = cameraIds[outSize].data();
                 cameraDevice->cameraType =
                     static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
                 cameraDevice->connectionType =
                     static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
-                supportedCameras[index] = cameraDevice;
             }
-            if (!operatorFlag) {
-                cameraSize = 0;
-            }
-            statusInfo.supportedCameras = supportedCameras;
-            statusInfo.cameraSize = cameraSize;
+            statusInfo.supportedCameras = reinterpret_cast<Camera_Device**>(&supportedCameras);
+            statusInfo.cameraSize = outSize;
             statusInfo.foldStatus = (Camera_FoldStatus)foldStatusInfo.foldStatus;
             foldStatusCallback_(cameraManager_, &statusInfo);
         }
