@@ -20,6 +20,7 @@
 #include "camera_util.h"
 #include "accesstoken_kit.h"
 #include "perm_state_change_callback_customize.h"
+#include "privacy_error.h"
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
 
