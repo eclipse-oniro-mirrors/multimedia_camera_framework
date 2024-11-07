@@ -18,6 +18,11 @@
 #include "camera_napi_utils.h"
 #include "napi/native_common.h"
 #include "napi/native_api.h"
+#include "js_native_api_types.h"
+#include "camera_napi_security_utils.h"
+#include "camera_napi_param_parser.h"
+#include "camera_napi_security_utils.h"
+#include "camera_error_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -75,6 +80,11 @@ const std::vector<napi_property_descriptor> CameraFunctionsNapi::macro_query_pro
     DECLARE_NAPI_FUNCTION("isMacroSupported", CameraFunctionsNapi::IsMacroSupported)
 };
 
+const std::vector<napi_property_descriptor> CameraFunctionsNapi::depth_fusion_query_props = {
+    DECLARE_NAPI_FUNCTION("isDepthFusionSupported", CameraFunctionsNapi::IsDepthFusionSupported),
+    DECLARE_NAPI_FUNCTION("getDepthFusionThreshold", CameraFunctionsNapi::GetDepthFusionThreshold)
+};
+
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::portrait_query_props = {
     DECLARE_NAPI_FUNCTION("getSupportedPortraitEffects", CameraFunctionsNapi::GetSupportedPortraitEffects)
 };
@@ -99,7 +109,7 @@ const std::vector<napi_property_descriptor> CameraFunctionsNapi::features_query_
 const std::map<FunctionsType, Descriptor> CameraFunctionsNapi::functionsDescMap_ = {
     {FunctionsType::PHOTO_FUNCTIONS, {flash_query_props, auto_exposure_query_props, focus_query_props, zoom_query_props,
         beauty_query_props, color_effect_query_props, color_management_query_props, macro_query_props,
-        manual_exposure_query_props, features_query_props}},
+        depth_fusion_query_props, manual_exposure_query_props, features_query_props}},
     {FunctionsType::PORTRAIT_PHOTO_FUNCTIONS, {flash_query_props, auto_exposure_query_props, focus_query_props,
         zoom_query_props, beauty_query_props, color_effect_query_props, color_management_query_props,
         portrait_query_props, aperture_query_props, features_query_props}},
@@ -464,6 +474,46 @@ napi_value CameraFunctionsNapi::IsMacroSupported(napi_env env, napi_callback_inf
 
     return HandleQuery(env, info, thisVar, [](auto ability) {
         return ability->IsMacroSupported();
+    });
+}
+
+napi_value CameraFunctionsNapi::IsDepthFusionSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsDepthFusionSupported is called!");
+        return nullptr;
+    }
+    napi_value thisVar = nullptr;
+    CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
+        return nullptr;
+    }
+    thisVar = jsParamParser.GetThisVar();
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->IsDepthFusionSupported();
+    });
+}
+
+napi_value CameraFunctionsNapi::GetDepthFusionThreshold(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetDepthFusionThreshold is called!");
+        return nullptr;
+    }
+    napi_value thisVar = nullptr;
+    CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetDepthFusionThreshold parse parameter occur error");
+        return nullptr;
+    }
+    thisVar = jsParamParser.GetThisVar();
+
+    return HandleQuery(env, info, thisVar, [](auto ability) {
+        return ability->GetDepthFusionThreshold();
     });
 }
 

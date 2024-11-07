@@ -46,8 +46,8 @@ napi_value PhotoSessionForSysNapi::Init(napi_env env, napi_value exports)
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, flash_props,
         auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props, macro_props,
-        moon_capture_boost_props, features_props, color_management_props, preconfig_props, effect_suggestion_props,
-        camera_output_capability_props, camera_ability_props };
+        depth_fusion_props, moon_capture_boost_props, features_props, color_management_props, preconfig_props,
+        effect_suggestion_props, camera_output_capability_props, camera_ability_props };
     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PHOTO_SESSION_FOR_SYS_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PhotoSessionForSysNapiConstructor, nullptr,

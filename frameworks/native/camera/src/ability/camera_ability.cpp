@@ -104,6 +104,16 @@ bool CameraAbility::IsMacroSupported()
     return isMacroSupported_.value_or(false);
 }
 
+bool CameraAbility::IsDepthFusionSupported()
+{
+    return isDepthFusionSupported_.value_or(false);
+}
+
+std::vector<float> CameraAbility::GetDepthFusionThreshold()
+{
+    return getDepthFusionThreshold_.value_or(std::vector<float>{1.0f, 1.0f});
+}
+
 std::vector<PortraitEffect> CameraAbility::GetSupportedPortraitEffects()
 {
     return supportedPortraitEffects_;
@@ -187,6 +197,18 @@ void CameraAbility::DumpCameraAbilityInfo()
         MEDIA_DEBUG_LOG("Macro Supported: %{public}d", isMacroSupported_.value());
     } else {
         MEDIA_DEBUG_LOG("Macro Supported: Not supported");
+    }
+
+    if (isDepthFusionSupported_.has_value()) {
+        MEDIA_DEBUG_LOG("Depth Fusion Supported: %{public}d", isDepthFusionSupported_.value());
+    } else {
+        MEDIA_DEBUG_LOG("Depth Fusion Supported: Not supported");
+    }
+
+    if (getDepthFusionThreshold_.has_value()) {
+        logFunc("Depth Fusion Threshold", getDepthFusionThreshold_.value());
+    } else {
+        MEDIA_DEBUG_LOG("Depth Fusion Threshold: Not supported");
     }
 }
 

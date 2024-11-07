@@ -1097,6 +1097,36 @@ public:
     int32_t EnableMacro(bool isEnable);
 
     /**
+     * @brief Check current status is support depth fusion or not.
+     */
+    bool IsDepthFusionSupported();
+
+    /**
+     * @brief Get the depth fusion supported Zoom Ratio range,
+     *
+     * @return Returns vector<float> of depth fusion supported Zoom ratio range.
+     */
+    std::vector<float> GetDepthFusionThreshold();
+
+    /**
+     * @brief Get the depth fusion supported Zoom ratio range.
+     *
+     * @param vector<float> of depth fusion supported Zoom ratio range.
+     * @return Returns errCode.
+     */
+    int32_t GetDepthFusionThreshold(std::vector<float>& depthFusionThreshold);
+
+    /**
+    * @brief Check curernt status is enabled depth fusion.
+    */
+    bool IsDepthFusionEnabled();
+
+    /**
+     * @brief Enable depth fusion.
+     */
+    int32_t EnableDepthFusion(bool isEnable);
+
+    /**
     * @brief Check current status is support motion photo.
     */
     bool IsMovingPhotoSupported();
@@ -1827,6 +1857,7 @@ private:
     std::mutex inputDeviceMutex_;
     sptr<CaptureInput> innerInputDevice_ = nullptr;
     volatile bool isSetMacroEnable_ = false;
+    volatile bool isDepthFusionEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
     volatile bool isSetTripodDetectionEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
