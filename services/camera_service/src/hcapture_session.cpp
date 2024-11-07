@@ -1809,9 +1809,7 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
             streamCapture->SetBurstImages(captureId, imageId);
             isCoverPhoto = streamCapture->IsBurstCover(captureId);
             int32_t imageSeq = streamCapture->GetCurBurstSeq(captureId);
-            uint32_t burstCaptureId = captureId > 0 ? captureId : 0;
-            int32_t burstSeqId = burstCaptureId & burstSeqIdMask;
-            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(isBursting ? burstSeqId : imageSeq));
+            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeq));
             streamCapture->CheckResetBurstKey(captureId);
             MEDIA_INFO_LOG("CreateMediaLibrary isBursting burstKey:%{public}s isCoverPhoto:%{public}d",
                 burstKey.c_str(), isCoverPhoto);
