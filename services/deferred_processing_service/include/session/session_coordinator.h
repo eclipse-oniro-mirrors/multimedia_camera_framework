@@ -100,6 +100,7 @@ private:
     void ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback);
     void ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback);
 
+    std::mutex remoteImageCallbacksMapMutex_;
     std::mutex mutex_;
     std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
     std::map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
