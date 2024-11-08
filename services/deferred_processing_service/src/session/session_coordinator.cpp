@@ -286,6 +286,7 @@ void SessionCoordinator::OnStateChanged(const int32_t userId, DpsStatus statusCo
 void SessionCoordinator::NotifySessionCreated(const int32_t userId,
     sptr<IDeferredPhotoProcessingSessionCallback> callback, TaskManager* taskManager)
 {
+    std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
     if (callback) {
         remoteImageCallbacksMap_[userId] = callback;
         taskManager->SubmitTask([this, callback]() {
@@ -317,6 +318,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
 
 void SessionCoordinator::NotifyCallbackDestroyed(const int32_t userId)
 {
+    std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
     if (remoteImageCallbacksMap_.count(userId) != 0) {
         DP_INFO_LOG("session userId: %{public}d destroyed.", userId);
         remoteImageCallbacksMap_.erase(userId);
