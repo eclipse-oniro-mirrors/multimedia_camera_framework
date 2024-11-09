@@ -1034,17 +1034,165 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_002, TestSize.Level0
 
 /*
  * Feature: Framework
+ * Function: Test create input with null camera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create input with null camera
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_003, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    ASSERT_TRUE(cameras.size() != 0);
+    cameras[0] = nullptr;
+    sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    EXPECT_EQ(input, nullptr);
+}
+
+/*
+ * Feature: Framework
  * Function: Test create session
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test create session
  */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_003, TestSize.Level0)
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_004, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create session with SceneMode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create session with SceneMode
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_005, TestSize.Level0)
+{
+    SceneMode mode = NORMAL;
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = CAPTURE;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = VIDEO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = PORTRAIT;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = NIGHT;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = PROFESSIONAL;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = SLOW_MOTION;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = SCAN;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = CAPTURE_MACRO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = VIDEO_MACRO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = PROFESSIONAL_PHOTO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = PROFESSIONAL_VIDEO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = HIGH_FRAME_RATE;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = HIGH_RES_PHOTO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = SECURE;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = LIGHT_PAINTING;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = FLUORESCENCE_PHOTO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = PANORAMA_PHOTO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = TIMELAPSE_PHOTO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+    mode = APERTURE_VIDEO;
+    session = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create session with sptr<CaptureSession>*
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create session with sptr<CaptureSession>*
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_006, TestSize.Level0)
+{
+    sptr<CaptureSession> *session = new (std::nothrow) sptr<CaptureSession>;
+    cameraManager->CreateCaptureSession(session);
+    ASSERT_NE(*session, nullptr);
+    sptr<CaptureSession>psession = *session;
+    EXPECT_EQ(psession->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create two sessions with same cameraManager
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create two sessions with same cameraManager
+ *(After the second session is created, the first session is not left empty.
+ * Waiting for subsequent development)
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_007, TestSize.Level0)
+{
+    //  sptr<CaptureSession> session1 = cameraManager->CreateCaptureSession(); Not supported
+    // ASSERT_NE(session1, nullptr); Not supported
+    sptr<CaptureSession> session2 = cameraManager->CreateCaptureSession();
+    // ASSERT_NE(session1, nullptr); Not supported
+    ASSERT_NE(session2, nullptr);
+    // EXPECT_EQ(session1->Release(), 0); Not supported
+    EXPECT_EQ(session2->Release(), 0);
 }
 
 /*
@@ -1055,7 +1203,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_003, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test create preview output
  */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_004, TestSize.Level0)
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_008, TestSize.Level0)
 {
     int32_t width = PREVIEW_DEFAULT_WIDTH;
     int32_t height = PREVIEW_DEFAULT_HEIGHT;
@@ -1078,7 +1226,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_004, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test create preview output with surface as null
  */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_005, TestSize.Level0)
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_009, TestSize.Level0)
 {
     int32_t width = PREVIEW_DEFAULT_WIDTH;
     int32_t height = PREVIEW_DEFAULT_HEIGHT;
@@ -1092,6 +1240,31 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_005, TestSize.Level0
     ASSERT_EQ(preview, nullptr);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test two create preview output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test two create preview output
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_010, TestSize.Level0)
+{
+    int32_t width = PREVIEW_DEFAULT_WIDTH;
+    int32_t height = PREVIEW_DEFAULT_HEIGHT;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> preview1 = cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(preview1, nullptr);
+    sptr<CaptureOutput> preview2 = cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(preview2, nullptr);
+    preview1->Release();
+    preview2->Release();
+}
 
 /*
  * Feature: Framework
