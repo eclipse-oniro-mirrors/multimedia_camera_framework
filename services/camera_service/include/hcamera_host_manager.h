@@ -141,6 +141,7 @@ private:
     std::map<std::string, sptr<HCameraRestoreParam>> transitentParamMap_;
     ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> registerServStatListener_;
     bool muteMode_;
+    bool isHasSavedParam = false;
 };
 
 class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
