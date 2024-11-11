@@ -65,13 +65,7 @@ public:
         string cameraId = cameraStatusInfo.cameraDevice->GetID();
         statusInfo.camera->cameraId = cameraId.data();
         MEDIA_INFO_LOG("cameraId is %{public}s", statusInfo.camera->cameraId);
-        auto itr = g_FwkCameraPositionToNdk_.find(cameraStatusInfo.cameraDevice->GetPosition());
-        if (itr != g_FwkCameraPositionToNdk_.end()) {
-            statusInfo.camera->cameraPosition = itr->second;
-        } else {
-            MEDIA_ERR_LOG("OnCameraStatusChanged cameraPosition not found!");
-            return;
-        }
+        statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
@@ -138,14 +132,8 @@ public:
             string cameraIds[cameraSize];
             for (size_t index = 0; index < cameraSize; index++) {
                 Camera_Device* cameraDevice = &supportedCameras[outSize];
-                auto itr = g_FwkCameraPositionToNdk_.find(foldStatusInfo.supportedCameras[index]->GetPosition());
-                if (itr != g_FwkCameraPositionToNdk_.end()) {
-                    cameraDevice->cameraPosition = itr->second;
-                    outSize++;
-                } else {
-                    MEDIA_ERR_LOG("Camera_Manager::OnFoldStatusChanged cameraPosition not found!");
-                    continue;
-                }
+                cameraDevice->cameraPosition =
+                    static_cast<Camera_Position>(foldStatusInfo.supportedCameras[index]->GetPosition());
                 cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
                 cameraDevice->cameraId = cameraIds[outSize].data();
                 cameraDevice->cameraType =
@@ -230,13 +218,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         }
         strlcpy(dst, src, dstSize);
         outCameras[index].cameraId = dst;
-        auto itr = g_FwkCameraPositionToNdk_.find(cameraObjList[index]->GetPosition());
-        if (itr != g_FwkCameraPositionToNdk_.end()) {
-            outCameras[index].cameraPosition = itr->second;
-        } else {
-            MEDIA_ERR_LOG("Camera_Manager::GetSupportedCameras cameraPosition not found!");
-            continue;
-        }
+        outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
     }
