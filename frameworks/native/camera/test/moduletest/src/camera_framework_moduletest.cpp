@@ -1225,6 +1225,7 @@ void CameraFrameworkModuleTest::ProcessPreviewProfiles(sptr<CameraOutputCapabili
     std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
     for (const auto& profile : tempPreviewProfiles) {
         if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
+            (profile.size_.width == PRVIEW_WIDTH_480 && profile.size_.height == PRVIEW_HEIGHT_480) ||
             (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
             (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
             (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
@@ -2638,8 +2639,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     if (!(((sptr<PhotoOutput>&)photoOutput)->IsMirrorSupported())) {
         return;
     }
+    
+    SelectProfiles wanted;
+    wanted.preview.size_ = {PRVIEW_WIDTH_640, PRVIEW_HEIGHT_480};
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session_->AddOutput(previewOutput);
@@ -6347,7 +6352,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_038, TestSize.L
 {
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
-    sptr<CameraDevice> camdeviceObj = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    auto metaData = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    sptr<CameraDevice> camdeviceObj = new (std::nothrow) CameraDevice(cameraId, metaData, deviceInfo);
     ASSERT_NE(camdeviceObj, nullptr);
 
     std::vector<float> zoomRatioRange = camdeviceObj->GetZoomRatioRange();
@@ -7190,11 +7196,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
 
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
-    sptr<CameraDevice> camdeviceObj_1 = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    auto metaData = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    sptr<CameraDevice> camdeviceObj_1 = new (std::nothrow) CameraDevice(cameraId, metaData, deviceInfo);
     ASSERT_NE(camdeviceObj_1, nullptr);
 
     cameraId = cameras_[0]->GetID();
-    sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, metaData, deviceInfo);
     ASSERT_NE(camdeviceObj_2, nullptr);
 
     sptr<CameraDevice> camdeviceObj_3 = nullptr;
@@ -10459,11 +10466,17 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Le
         EXPECT_EQ(previewProfile.get(), nullptr);
         return;
     }
-    auto output = CreatePreviewOutput(*previewProfile);
+    SelectProfiles wanted;
+    wanted.preview.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.video.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.video.framerates_ = {MAX_FRAME_RATE, MAX_FRAME_RATE};
+    sptr<CaptureOutput> output = CreatePreviewOutput(wanted.preview);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     session_ = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
@@ -12511,12 +12524,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_time_machine, Te
  */
 HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
 {
-    auto previewProfile = GetSketchPreviewProfile();
-    if (previewProfile == nullptr) {
-        EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
-    }
-    auto previewOutput = CreatePreviewOutput(*previewProfile);
+    auto previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
     auto photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -12786,13 +12794,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, T
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
-                                                  MetadataObjectType::CAT_FACE };
+    std::vector<MetadataObjectType> typeToAdd = {MetadataObjectType::CAT_FACE};
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
-    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
     SetNativeToken();
 }
 
@@ -12829,13 +12836,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
-                                                  MetadataObjectType::CAT_FACE };
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
 
     intResult = metaOutput->Start();
     EXPECT_EQ(intResult, 0);
@@ -12883,13 +12889,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, T
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
-                                                  MetadataObjectType::CAT_FACE };
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
 
     std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
     metaOutput->SetCallback(metadataObjectCallback);

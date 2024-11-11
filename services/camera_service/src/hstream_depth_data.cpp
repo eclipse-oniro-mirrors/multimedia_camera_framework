@@ -78,6 +78,9 @@ int32_t HStreamDepthData::SetDataAccuracy(int32_t accuracy)
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
         std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+        if (dynamicSetting == nullptr) {
+            dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        }
         camera_metadata_item_t item;
         CHECK_AND_RETURN_RET_LOG(dynamicSetting != nullptr, CAMERA_INVALID_ARG,
             "HStreamDepthData::SetDataAccuracy dynamicSetting is nullptr.");
