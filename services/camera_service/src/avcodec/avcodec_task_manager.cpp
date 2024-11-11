@@ -339,6 +339,7 @@ void AvcodecTaskManager::Release()
         audioEncoder_->Release();
     }
     unique_lock<mutex> lock(videoFdMutex_);
+    MEDIA_INFO_LOG("videoFdQueue_ size is %{public}zu", videoFdQueue_.size());
     while (!videoFdQueue_.empty()) {
         int32_t fd = videoFdQueue_.front().first;
         PhotoAssetIntf* photoAssetProxy = videoFdQueue_.front().second;
