@@ -211,6 +211,9 @@ private:
                      uint32_t tag, std::string tagName, std::string dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
+#ifdef MEMMGR_OVERRID
+    int32_t RequireMemory(const std::string& reason);
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

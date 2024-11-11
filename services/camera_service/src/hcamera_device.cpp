@@ -32,6 +32,10 @@
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#include "mem_mgr_constant.h"
+#endif
 #include "metadata_utils.h"
 #include "v1_0/types.h"
 #include "os_account_manager.h"
@@ -333,6 +337,13 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     bool canOpenDevice = CanOpenCamera();
     CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT, "HCameraDevice::Refuse to turn on the camera");
     CHECK_ERROR_RETURN_RET_LOG(!HandlePrivacyBeforeOpenDevice(), CAMERA_OPERATION_NOT_ALLOWED, "privacy not allow!");
+    int pid = IPCSkeleton::GetCallingPid();
+    int uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
+    clientName_ = GetClientBundle(uid);
+#ifdef MEMMGR_OVERRID
+    RequireMemory(Memory::CAMERA_START);
+#endif
     CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
@@ -360,16 +371,25 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
         }
     }
     HandleFoldableDevice();
-    int pid = IPCSkeleton::GetCallingPid();
-    int uid = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
-    clientName_ = GetClientBundle(uid);
     POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
     NotifyCameraSessionStatus(true);
     NotifyCameraStatus(CAMERA_OPEN);
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice end cameraId: %{public}s", cameraID_.c_str());
     return errorCode;
 }
+
+#ifdef MEMMGR_OVERRID
+int32_t HCameraDevice::RequireMemory(const std::string& reason)
+{
+    int32_t pid = getpid();
+    int32_t requiredMemSizeKB = 0;
+    int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, reason,
+        requiredMemSizeKB, clientName_);
+    MEDIA_INFO_LOG("HCameraDevice::RequireMemory reason:%{public}s, clientName:%{public}s, ret:%{public}d",
+        reason.c_str(), clientName_.c_str(), ret);
+    return ret;
+}
+#endif
 
 int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
 {
@@ -479,6 +499,9 @@ int32_t HCameraDevice::CloseDevice()
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
+#ifdef MEMMGR_OVERRID
+    RequireMemory(Memory::CAMERA_END);
+#endif
     return CAMERA_OK;
 }
 
@@ -1326,6 +1349,9 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
+#ifdef MEMMGR_OVERRID
+    RequireMemory(Memory::CAMERA_END);
+#endif
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
 }
 
