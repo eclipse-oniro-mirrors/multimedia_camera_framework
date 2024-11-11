@@ -403,8 +403,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     // report capture performance dfx
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
-    if (cameraResult == nullptr) {
-        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    if (captureMetadataSetting_ == nullptr) {
+        captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     }
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
