@@ -240,6 +240,9 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraHostVersion()
 int32_t HCameraHostManager::CameraHostInfo::GetCameras(std::vector<std::string>& cameraIds)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    for (auto id : cameraIds_) {
+        MEDIA_INFO_LOG("CameraHostInfo::GetCameras, current camera %{public}s", id.c_str());
+    }
     cameraIds.insert(cameraIds.end(), cameraIds_.begin(), cameraIds_.end());
     return CAMERA_OK;
 }
@@ -684,10 +687,14 @@ void HCameraHostManager::CameraHostInfo::AddDevice(const std::string& cameraId)
 void HCameraHostManager::CameraHostInfo::RemoveDevice(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_INFO_LOG("CameraHostInfo::RemoveDevice, camera %{public}s removed", cameraId.c_str());
     cameraIds_.erase(std::remove(cameraIds_.begin(), cameraIds_.end(), cameraId), cameraIds_.end());
     devices_.erase(std::remove_if(devices_.begin(), devices_.end(),
         [&cameraId](const auto& devInfo) { return devInfo->cameraId == cameraId; }),
         devices_.end());
+    for (auto id : cameraIds_) {
+        MEDIA_INFO_LOG("CameraHostInfo::RemoveDevice, current camera %{public}s", id.c_str());
+    }
 }
 
 HCameraHostManager::HCameraHostManager(std::shared_ptr<StatusCallback> statusCallback)
