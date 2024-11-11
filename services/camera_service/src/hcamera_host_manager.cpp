@@ -266,8 +266,8 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
                 return HdiToServiceError(rc);
             }
             OHOS::Camera::MetadataUtils::ConvertVecToMetadata(cameraAbility, ability);
-            if (cameraResult == nullptr) {
-                cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+            if (ability == nullptr) {
+                ability = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
             }
             deviceInfo->ability = ability;
         }
