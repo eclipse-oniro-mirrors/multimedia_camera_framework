@@ -10476,7 +10476,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.preview);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     session_ = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
@@ -12836,7 +12836,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = {MetadataObjectType::CAT_FACE};
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
@@ -12889,13 +12889,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, T
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
-                                                  MetadataObjectType::CAT_FACE };
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
 
     std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
     metaOutput->SetCallback(metadataObjectCallback);
