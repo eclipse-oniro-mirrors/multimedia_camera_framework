@@ -581,8 +581,8 @@ int32_t HStreamCapture::ConfirmCapture()
         std::shared_ptr<OHOS::Camera::CameraMetadata> burstCaptureSettings = nullptr;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, settingVector);
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
-        if (cameraResult == nullptr) {
-            cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        if (burstCaptureSettings == nullptr) {
+            burstCaptureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
         }
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
