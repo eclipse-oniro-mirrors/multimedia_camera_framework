@@ -2886,9 +2886,11 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
     }
 
     int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoCloudImageEnhancement(isEnable);
-    if (CameraNapiUtils::CheckError(env, retCode)) {
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement fail %{public}d", retCode);
+        return result;
     }
+    MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement success");
     return result;
 }
 
