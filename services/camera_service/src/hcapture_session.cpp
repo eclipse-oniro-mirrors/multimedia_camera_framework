@@ -584,12 +584,15 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
 void HCaptureSession::DelayCloseMediaLib()
 {
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
-    constexpr uint32_t waitMs = 30 * 1000;
-    if (!closeTimerId_.has_value()) {
-        closeTimerId_ = CameraTimer::GetInstance()->Register([]() {
+    constexpr uint32_t waitMs = 60 * 1000;
+    if (closeTimerId_.has_value()) {
+        CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
+        MEDIA_INFO_LOG("delete closeDynamicHandle task id: %{public}d", closeTimerId_.value());
+    }
+    closeTimerId_ = CameraTimer::GetInstance()->Register([]() {
             CameraDynamicLoader::GetInstance()->CloseDynamicHandle(MEDIA_LIB_SO);
         }, waitMs, true);
-    }
+    MEDIA_INFO_LOG("create closeDynamicHandle task id: %{public}d", closeTimerId_.value());
 }
 
 int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon> stream)
