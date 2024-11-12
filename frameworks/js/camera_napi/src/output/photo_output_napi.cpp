@@ -2890,7 +2890,7 @@ napi_value PhotoOutputNapi::EnableAutoCloudImageEnhancement(napi_env env, napi_c
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement fail %{public}d", retCode);
         return result;
     }
-    MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement success");
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoCloudImageEnhancement success");
     return result;
 }
 
