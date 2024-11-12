@@ -14,6 +14,7 @@
  */
 
 #include "session_coordinator.h"
+#include <mutex>
 
 #include "dp_log.h"
 #include "buffer_info.h"
@@ -172,8 +173,6 @@ private:
 
 SessionCoordinator::SessionCoordinator()
     : imageProcCallbacks_(nullptr),
-      remoteImageCallbacksMap_(),
-      pendingImageResults_(),
       videoProcCallbacks_(nullptr),
       remoteVideoCallbacksMap_(),
       pendingRequestResults_()
@@ -185,8 +184,6 @@ SessionCoordinator::~SessionCoordinator()
 {
     DP_DEBUG_LOG("entered.");
     imageProcCallbacks_ = nullptr;
-    remoteImageCallbacksMap_.clear();
-    pendingImageResults_.clear();
     videoProcCallbacks_ = nullptr;
     remoteVideoCallbacksMap_.clear();
     pendingRequestResults_.clear();
@@ -221,19 +218,15 @@ std::shared_ptr<IVideoProcessCallbacks> SessionCoordinator::GetVideoProcCallback
 void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
     const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported)
 {
-    DP_INFO_LOG("entered, userId: %{public}d, map size: %{public}d.",
-        userId, static_cast<int32_t>(remoteImageCallbacksMap_.size()));
-    auto iter = remoteImageCallbacksMap_.find(userId);
-    if (iter != remoteImageCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
+    sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
+    if (spCallback != nullptr) {
         DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
         spCallback->OnProcessImageDone(imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
     } else {
         DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
-        pendingImageResults_.push_back({CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
-            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE,
-            isCloudImageEnhanceSupported});
+        std::lock_guard<std::mutex> lock(pendingImageResultsMutex_);
+        pendingImageResults_.push_back({ CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
+            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, isCloudImageEnhanceSupported });
     }
     return;
 }
@@ -241,10 +234,8 @@ void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& 
 void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
     std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
 {
-    auto iter = remoteImageCallbacksMap_.find(userId);
-    if (iter != remoteImageCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
+    sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
+    if (spCallback != nullptr) {
         DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
         spCallback->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
     } else {
@@ -255,42 +246,43 @@ void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId
 
 void SessionCoordinator::OnError(const int userId, const std::string& imageId, DpsError errorCode)
 {
-    auto iter = remoteImageCallbacksMap_.find(userId);
-    if (iter != remoteImageCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
+    sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
+    if (spCallback != nullptr) {
         DP_INFO_LOG("entered, userId: %{public}d", userId);
         spCallback->OnError(imageId, MapDpsErrorCode(errorCode));
     } else {
-        DP_INFO_LOG("callback is null, cache request, imageId: %{public}s, errorCode: %{public}d.",
-            imageId.c_str(), errorCode);
-        pendingImageResults_.push_back({CallbackType::ON_ERROR, userId, imageId, nullptr, 0, errorCode});
+        DP_INFO_LOG(
+            "callback is null, cache request, imageId: %{public}s, errorCode: %{public}d.", imageId.c_str(), errorCode);
+        std::lock_guard<std::mutex> lock(pendingImageResultsMutex_);
+        pendingImageResults_.push_back({ CallbackType::ON_ERROR, userId, imageId, nullptr, 0, errorCode });
     }
 }
 
 void SessionCoordinator::OnStateChanged(const int32_t userId, DpsStatus statusCode)
 {
-    auto iter = remoteImageCallbacksMap_.find(userId);
-    if (iter != remoteImageCallbacksMap_.end()) {
-        auto wpCallback = iter->second;
-        sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
+    sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
+    if (spCallback != nullptr) {
         DP_INFO_LOG("entered, userId: %{public}d", userId);
         spCallback->OnStateChanged(MapDpsStatus(statusCode));
     } else {
         DP_INFO_LOG("cache request, statusCode: %{public}d.", statusCode);
+        std::lock_guard<std::mutex> lock(pendingImageResultsMutex_);
         pendingImageResults_.push_back({CallbackType::ON_STATE_CHANGED, userId, "", nullptr, 0,
             DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL, statusCode});
     }
 }
 
-void SessionCoordinator::NotifySessionCreated(const int32_t userId,
-    sptr<IDeferredPhotoProcessingSessionCallback> callback, TaskManager* taskManager)
+void SessionCoordinator::NotifySessionCreated(
+    const int32_t userId, sptr<IDeferredPhotoProcessingSessionCallback> callback, TaskManager* taskManager)
 {
-    std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
-    if (callback) {
+    if (callback != nullptr) {
+        std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
         remoteImageCallbacksMap_[userId] = callback;
-        taskManager->SubmitTask([this, callback]() {
-            this->ProcessPendingResults(callback);
+        auto thisPtr = shared_from_this();
+        taskManager->SubmitTask([thisPtr, callback]() {
+            if (thisPtr != nullptr) {
+                thisPtr->ProcessPendingResults(callback);
+            }
         });
     }
 }
@@ -298,6 +290,7 @@ void SessionCoordinator::NotifySessionCreated(const int32_t userId,
 void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback)
 {
     DP_INFO_LOG("entered.");
+    std::lock_guard<std::mutex> lock(pendingImageResultsMutex_);
     while (!pendingImageResults_.empty()) {
         auto result = pendingImageResults_.front();
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
