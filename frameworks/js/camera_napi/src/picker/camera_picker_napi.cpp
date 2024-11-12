@@ -50,16 +50,6 @@ thread_local napi_ref CameraPickerNapi::sConstructor_ = nullptr;
 thread_local napi_ref CameraPickerNapi::mediaTypeRef_ = nullptr;
 thread_local uint32_t CameraPickerNapi::cameraPickerTaskId = CAMERA_PICKER_TASKID;
 
-CameraPickerNapi::CameraPickerNapi() : env_(nullptr)
-{
-    CAMERA_SYNC_TRACE;
-}
-
-CameraPickerNapi::~CameraPickerNapi()
-{
-    MEDIA_DEBUG_LOG("~CameraPickerNapi is called");
-}
-
 static std::shared_ptr<PickerContextProxy> GetAbilityContext(napi_env env, napi_value value)
 {
     MEDIA_DEBUG_LOG("GetAbilityContext is called");
@@ -500,7 +490,6 @@ napi_value CameraPickerNapi::CameraPickerNapiConstructor(napi_env env, napi_call
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraPickerNapi> obj = std::make_unique<CameraPickerNapi>();
-        obj->env_ = env;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             CameraPickerNapi::CameraPickerNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

@@ -169,11 +169,8 @@ public:
 
     static napi_value CameraPickerNapiConstructor(napi_env env, napi_callback_info info);
     static void CameraPickerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    CameraPickerNapi();
-    ~CameraPickerNapi();
 
 private:
-    napi_env env_;
     static thread_local uint32_t cameraPickerTaskId;
     static thread_local napi_ref sConstructor_;
     static thread_local napi_ref mediaTypeRef_;
