@@ -215,7 +215,7 @@ AuxiliaryPhotoListener::AuxiliaryPhotoListener(const std::string surfaceName, co
 int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
 {
     int32_t captureId;
-    int32_t burstSeqId;
+    int32_t burstSeqId = -1;
     int32_t maskBurstSeqId;
     int32_t invalidSeqenceId = -1;
     int32_t captureIdMask = 0x0000FFFF;
@@ -440,11 +440,16 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     int64_t imageId = 0;
     int32_t deferredProcessingType;
     int32_t captureId;
+    int32_t burstSeqId = -1;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    // When not in burst mode, burstSequenceId is invalid (-1); otherwise,
+    // it is an incrementing serial number starting from 1
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy imageId:%{public}" PRId64 ", "
-        "deferredProcessingType:%{public}d, captureId = %{public}d", imageId, deferredProcessingType, captureId);
+        "deferredProcessingType:%{public}d, captureId = %{public}d, burstSeqId = %{public}d",
+        imageId, deferredProcessingType, captureId, burstSeqId);
     // get buffer handle and photo info
     int32_t photoWidth;
     int32_t photoHeight;
@@ -470,7 +475,7 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
         "size:%{public}" PRId64, deferredImageFormat, isHighQuality, size);
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
-        nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId);
+        nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
     std::string imageIdStr = std::to_string(imageId);
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     return photoProxy;
@@ -716,6 +721,24 @@ int32_t GetBurstSeqId(int32_t captureId)
     return captureId > 0 ? (captureId & burstSeqIdMask) : captureId;
 }
 
+void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
+{
+    if (!photoOutput) {
+        MEDIA_ERR_LOG("CleanAfterTransPicture photoOutput is nullptr");
+        return;
+    }
+    photoOutput->photoProxyMap_[captureId] = nullptr;
+    photoOutput->photoProxyMap_.erase(captureId);
+    photoOutput->captureIdPictureMap_.erase(captureId);
+    photoOutput->captureIdGainmapMap_.erase(captureId);
+    photoOutput->captureIdDepthMap_.erase(captureId);
+    photoOutput->captureIdExifMap_.erase(captureId);
+    photoOutput->captureIdDebugMap_.erase(captureId);
+    photoOutput->captureIdAuxiliaryCountMap_.erase(captureId);
+    photoOutput->captureIdCountMap_.erase(captureId);
+    photoOutput->captureIdHandleMap_.erase(captureId);
+}
+
 void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto begin captureId %{public}d, burstSeqId %{public}d",
@@ -766,13 +789,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
                 uri, cameraShotType, burstKey, timestamp);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
             UpdatePictureJSCallback(uri, cameraShotType, burstKey);
-            photoOutput->photoProxyMap_[captureId] = nullptr;
-            photoOutput->photoProxyMap_.erase(captureId);
-            photoOutput->captureIdPictureMap_.erase(captureId);
-            photoOutput->captureIdGainmapMap_.erase(captureId);
-            photoOutput->captureIdDepthMap_.erase(captureId);
-            photoOutput->captureIdExifMap_.erase(captureId);
-            photoOutput->captureIdDebugMap_.erase(captureId);
+            CleanAfterTransPicture(photoOutput, captureId);
         } else {
             MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
         }
@@ -933,14 +950,16 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     // get buffer handle and photo info
     int32_t captureId;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    int32_t burstSeqId = -1;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     int64_t imageId = 0;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
     MEDIA_INFO_LOG(
         "PhotoListener ExecutePhotoAsset captureId:%{public}d "
-        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
-        captureId, imageId, deferredProcessingType);
+        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d, burstSeqId:%{public}d",
+        captureId, imageId, deferredProcessingType, burstSeqId);
     int32_t photoWidth;
     int32_t photoHeight;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
@@ -967,7 +986,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight,
-                                                    isHighQuality, captureId);
+                                                    isHighQuality, captureId, burstSeqId);
     if (photoProxy == nullptr) {
         MEDIA_ERR_LOG("failed to new photoProxy");
         return;

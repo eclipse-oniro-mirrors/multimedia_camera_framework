@@ -27,6 +27,8 @@ public:
     CameraPhotoProxy();
     CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
         int32_t photoHeight, bool isHighQuality, int32_t captureId);
+    CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
+        int32_t photoHeight, bool isHighQuality, int32_t captureId, int32_t burstSeqId);
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
@@ -47,6 +49,7 @@ public:
     double latitude_;
     double longitude_;
     int32_t captureId_;
+    int32_t burstSeqId_;
     sptr<Surface> photoSurface_;
     int32_t imageFormat_;
 };

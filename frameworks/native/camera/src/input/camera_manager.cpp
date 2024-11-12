@@ -1016,7 +1016,8 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
         "CameraManager::CreateCameraDevice serviceProxy is null or CameraID is empty: %{public}s", cameraId.c_str());
     sptr<ICameraDeviceService> device = nullptr;
     int32_t retCode = serviceProxy->CreateCameraDevice(cameraId, device);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK,
+        retCode == CAMERA_NO_PERMISSION ? CAMERA_NO_PERMISSION: ServiceToCameraError(retCode),
         "CameraManager::CreateCameraDevice Failed to create camera device from hcamera service! %{public}d", retCode);
     *pICameraDeviceService = device;
     return CameraErrorCode::SUCCESS;

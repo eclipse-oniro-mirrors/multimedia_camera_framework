@@ -1342,6 +1342,10 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
     sptr<CameraInput> cameraInput = nullptr;
     int retCode = cameraManagerNapi->cameraManager_->CreateCameraInput(cameraInfo, &cameraInput);
+    if (retCode == CAMERA_NO_PERMISSION) {
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "not allowed, because have no permission.");
+        return nullptr;
+    }
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }

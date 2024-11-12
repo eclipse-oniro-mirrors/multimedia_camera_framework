@@ -1761,20 +1761,20 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
     struct tm currentTime;
     std::string formattedTime = "";
     std::stringstream ss;
+    ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
+        << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
+        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
+        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
+        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
+        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
+        << connector << burstTag;
+    lastBurstPrefix_ = ss.str();
+    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
     if (seqId == 1) {
         if (!GetSystemCurrentTime(&currentTime)) {
             MEDIA_ERR_LOG("Failed to get current time.");
             return formattedTime;
         }
-        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
-            << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
-            << connector << burstTag;
-        lastBurstPrefix_ = ss.str();
-        MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
         ss  << std::setw(burstWidth) << std::setfill(placeholder) << seqId
             << coverTag;
     } else {
@@ -1794,6 +1794,7 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     std::string imageId = cameraPhotoProxy->GetPhotoId();
     bool isCoverPhoto = false;
+    int32_t invalidBurstSeqId = -1;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
         MEDIA_INFO_LOG("for captureStreams");
@@ -1807,8 +1808,10 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
             burstKey = streamCapture->GetBurstKey(captureId);
             streamCapture->SetBurstImages(captureId, imageId);
             isCoverPhoto = streamCapture->IsBurstCover(captureId);
-            int32_t imageSeq = streamCapture->GetCurBurstSeq(captureId);
-            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeq));
+            int32_t burstSeqId = cameraPhotoProxy->GetBurstSeqId();
+            int32_t imageSeqId = streamCapture->GetCurBurstSeq(captureId);
+            int32_t displaySeqId = (burstSeqId != invalidBurstSeqId) ? burstSeqId : imageSeqId;
+            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(displaySeqId));
             streamCapture->CheckResetBurstKey(captureId);
             MEDIA_INFO_LOG("CreateMediaLibrary isBursting burstKey:%{public}s isCoverPhoto:%{public}d",
                 burstKey.c_str(), isCoverPhoto);
