@@ -25,6 +25,7 @@ namespace {
     constexpr int32_t TEMP_PTS_SIZE = 50;
     constexpr int32_t DEFAULT_CHANNEL_COUNT = 1;
     constexpr int32_t DEFAULT_AUDIO_INPUT_SIZE = 1024 * DEFAULT_CHANNEL_COUNT * sizeof(short);
+    constexpr uint32_t DPS_FLAG_SYNC_FRAME = 10;
 }
 
 MediaManagerError MediaManager::Create(int32_t inFd, int32_t outFd, int32_t tempFd)
@@ -153,10 +154,13 @@ MediaManagerError MediaManager::Recover(const int64_t size)
     DP_CHECK_ERROR_RETURN_RET_LOG(sample == nullptr, ERROR_FAIL, "create avbuffer failed.");
     while (true) {
         ret = recoverReader_->Read(TrackType::AV_KEY_VIDEO_TYPE, sample);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "read temp data failed.");
-        DP_CHECK_BREAK_LOG(sample->pts_ == pausePts_, "recovering finished.");
+        if (ret == ERROR_FAIL) {
+            DP_ERR_LOG("read temp data failed.");
+            return ERROR_FAIL;
+        }
+        DP_CHECK_BREAK_LOG(ret == EOS, "recovering finished.");
 
-        if (sample->flag_ == AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
+        if (sample->flag_ == DPS_FLAG_SYNC_FRAME) {
             resumePts_ = sample->pts_;
             finalFrameNum_ = frameNum;
         }
@@ -164,7 +168,10 @@ MediaManagerError MediaManager::Recover(const int64_t size)
         ++frameNum;
         DP_DEBUG_LOG("pts: %{public}lld, frame-num(%{public}d)", static_cast<long long>(sample->pts_), frameNum);
         ret = outputWriter_->Write(TrackType::AV_KEY_VIDEO_TYPE, sample);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "write temp data failed.");
+        if (ret == ERROR_FAIL) {
+            DP_ERR_LOG("write temp data failed.");
+            return ERROR_FAIL;
+        }
     }
     DP_INFO_LOG("recover sync end, process total num: %{public}d, resume pts: %{public}lld",
         finalFrameNum_, static_cast<long long>(resumePts_));
@@ -186,11 +193,17 @@ MediaManagerError MediaManager::CopyAudioTrack()
 
     while (true) {
         auto ret = inputReader_->Read(TrackType::AV_KEY_AUDIO_TYPE, sample);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "read audio data failed.");
+        if (ret == ERROR_FAIL) {
+            DP_ERR_LOG("read audio data failed.");
+            return ERROR_FAIL;
+        }
         DP_CHECK_BREAK_LOG(ret == EOS, "read audio data finished.");
 
         ret = outputWriter_->Write(TrackType::AV_KEY_AUDIO_TYPE, sample);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "write audio data failed.");
+        if (ret == ERROR_FAIL) {
+            DP_ERR_LOG("write audio data failed.");
+            return ERROR_FAIL;
+        }
     }
     return OK;
 }
