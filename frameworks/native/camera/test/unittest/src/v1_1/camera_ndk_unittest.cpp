@@ -37,6 +37,8 @@ static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
 static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
 static constexpr int32_t RECEIVER_TEST_FORMAT = 4;
 static constexpr int32_t CAMERA_DEVICE_INDEX = 0;
+static constexpr int32_t PREVIEW_WIDTH_480 = 480;
+static constexpr int32_t PREVIEW_WIDTH_640 = 640;
 Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
     uint32_t photo_width = width;
@@ -82,6 +84,9 @@ Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int3
     EXPECT_EQ(ret, CAMERA_OK);
     preview_width = OutputCapability->previewProfiles[0]->size.width;
     preview_height = OutputCapability->previewProfiles[0]->size.height;
+    if (preview_width == PREVIEW_WIDTH_480) {
+        preview_width = PREVIEW_WIDTH_640;
+    }
     format = OutputCapability->previewProfiles[0]->format;
     delete OutputCapability;
     Camera_Size previewSize = {

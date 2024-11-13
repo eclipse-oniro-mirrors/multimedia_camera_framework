@@ -12794,12 +12794,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_abnormal, T
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = {MetadataObjectType::CAT_FACE};
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
-    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(intResult, CameraErrorCode::SESSION_NOT_CONFIG);
     SetNativeToken();
 }
 
@@ -12836,12 +12837,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->Start();
     EXPECT_EQ(intResult, 0);
@@ -12889,12 +12891,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_meta_callback, T
     EXPECT_EQ(intResult, 0);
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
-    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE};
+    std::vector<MetadataObjectType> typeToAdd = { MetadataObjectType::FACE, MetadataObjectType::HUMAN_BODY,
+                                                  MetadataObjectType::CAT_FACE };
     intResult = metaOutput->AddMetadataObjectTypes(typeToAdd);
     EXPECT_EQ(intResult, 0);
 
     intResult = metaOutput->RemoveMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::CAT_FACE});
-    EXPECT_EQ(intResult, CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(intResult, 0);
 
     std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
     metaOutput->SetCallback(metadataObjectCallback);
