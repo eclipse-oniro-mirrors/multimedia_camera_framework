@@ -713,6 +713,10 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
     int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
                 break;
@@ -733,6 +737,10 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
     } else {
         streamRotation = STREAM_ROTATE_360 - sensorOrientation;
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
                 break;
