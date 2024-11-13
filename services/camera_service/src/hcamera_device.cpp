@@ -121,7 +121,6 @@ HCameraDevice::HCameraDevice(
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
-    CameraTimer::GetInstance()->IncreaseUserCount();
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
     cameraPid_ = IPCSkeleton::GetCallingPid();
@@ -130,8 +129,7 @@ HCameraDevice::HCameraDevice(
 HCameraDevice::~HCameraDevice()
 {
     UnPrepareZoom();
-    CameraTimer::GetInstance()->Unregister(zoomTimerId_);
-    CameraTimer::GetInstance()->DecreaseUserCount();
+    CameraTimer::GetInstance().Unregister(zoomTimerId_);
     SetCameraPrivacy(nullptr);
     {
         std::lock_guard<std::mutex> lock(movingPhotoStartTimeCallbackLock_);
@@ -599,14 +597,14 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
 
 void HCameraDevice::ResetZoomTimer()
 {
-    CameraTimer::GetInstance()->Unregister(zoomTimerId_);
+    CameraTimer::GetInstance().Unregister(zoomTimerId_);
     if (!inPrepareZoom_) {
         return;
     }
     MEDIA_INFO_LOG("register zoom timer callback");
     uint32_t waitMs = 5 * 1000;
     auto thisPtr = wptr<HCameraDevice>(this);
-    zoomTimerId_ = CameraTimer::GetInstance()->Register([thisPtr]() {
+    zoomTimerId_ = CameraTimer::GetInstance().Register([thisPtr]() {
         auto devicePtr = thisPtr.promote();
         if (devicePtr != nullptr) {
             devicePtr->UnPrepareZoom();
