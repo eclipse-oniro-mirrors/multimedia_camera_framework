@@ -1349,6 +1349,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
+    HandlePrivacyAfterCloseDevice();
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);
 #endif
