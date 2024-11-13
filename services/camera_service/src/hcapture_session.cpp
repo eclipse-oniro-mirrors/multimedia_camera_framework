@@ -353,10 +353,10 @@ void HCaptureSession::OpenMediaLib()
 {
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
     if (closeTimerId_.has_value()) {
-        CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
+        CameraTimer::GetInstance().Unregister(closeTimerId_.value());
         closeTimerId_.reset();
     }
-    CameraTimer::GetInstance()->Register(
+    CameraTimer::GetInstance().Register(
         [&] { CameraDynamicLoader::GetInstance()->OpenDynamicHandle(MEDIA_LIB_SO); }, 0, true);
 }
 
@@ -586,10 +586,10 @@ void HCaptureSession::DelayCloseMediaLib()
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
     constexpr uint32_t waitMs = 60 * 1000;
     if (closeTimerId_.has_value()) {
-        CameraTimer::GetInstance()->Unregister(closeTimerId_.value());
+        CameraTimer::GetInstance().Unregister(closeTimerId_.value());
         MEDIA_INFO_LOG("delete closeDynamicHandle task id: %{public}d", closeTimerId_.value());
     }
-    closeTimerId_ = CameraTimer::GetInstance()->Register([]() {
+    closeTimerId_ = CameraTimer::GetInstance().Register([]() {
             CameraDynamicLoader::GetInstance()->CloseDynamicHandle(MEDIA_LIB_SO);
         }, waitMs, true);
     MEDIA_INFO_LOG("create closeDynamicHandle task id: %{public}d", closeTimerId_.value());

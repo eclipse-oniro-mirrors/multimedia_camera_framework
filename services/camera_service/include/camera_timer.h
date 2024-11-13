@@ -15,27 +15,21 @@
 #ifndef CAMERA_TIMER_H
 #define CAMERA_TIMER_H
 
-#include <memory>
-#include <atomic>
-#include <commonlibrary/c_utils/base/include/timer.h>
+#include "commonlibrary/c_utils/base/include/timer.h"
+#include "singleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using TimerCallback = std::function<void()>;
 
-class CameraTimer {
-public:
-    CameraTimer();
-    ~CameraTimer();
+class CameraTimer : public Singleton<CameraTimer> {
+    DECLARE_SINGLETON(CameraTimer)
 
-    static CameraTimer *GetInstance();
-    void IncreaseUserCount();
-    void DecreaseUserCount();
+public:
     uint32_t Register(const TimerCallback& callback, uint32_t interval, bool once);
     void Unregister(uint32_t timerId);
 
 private:
-    std::atomic<int32_t> userCount_;
     std::unique_ptr<OHOS::Utils::Timer> timer_;
 };
 } // namespace CameraStandard
