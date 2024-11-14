@@ -582,7 +582,7 @@ int32_t PreviewOutput::OnResultMetadataChanged(
 
 std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
-    std::lock_guard<std::mutex>lock(outputCallbackMutex_);
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 

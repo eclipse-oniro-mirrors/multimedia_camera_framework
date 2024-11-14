@@ -67,7 +67,7 @@ void DPS_Destroy()
     }
     g_dpsInfo.server.reset();
     g_dpsInfo.initialized_ = false;
-    DP_INFO_LOG("DPS_Destory success.");
+    DP_INFO_LOG("DPS_Destroy success.");
 }
 
 std::shared_ptr<CommandServer> DPS_GetCommandServer()

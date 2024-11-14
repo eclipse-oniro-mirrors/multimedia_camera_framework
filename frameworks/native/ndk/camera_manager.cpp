@@ -25,7 +25,7 @@ extern "C" {
 Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     *cameraManager = new Camera_Manager();
     return CAMERA_OK;
 }
@@ -33,7 +33,7 @@ Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager)
 Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     delete cameraManager;
     return CAMERA_OK;
 }
@@ -41,11 +41,11 @@ Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager)
 Camera_ErrorCode OH_CameraManager_RegisterCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus != nullptr,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onCameraStatus is null!");
+        CAMERA_INVALID_ARGUMENT, "lnvalid argument, callback onCameraStatus is null!");
 
     cameraManager->RegisterCallback(callback);
     return CAMERA_OK;
@@ -54,11 +54,11 @@ Camera_ErrorCode OH_CameraManager_RegisterCallback(Camera_Manager* cameraManager
 Camera_ErrorCode OH_CameraManager_UnregisterCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onCameraStatus != nullptr,
-        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onCameraStatus is null!");
+        CAMERA_INVALID_ARGUMENT, "lnvalid argument, callback onCameraStatus is null!");
 
     cameraManager->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -68,9 +68,9 @@ Camera_ErrorCode OH_CameraManager_RegisterTorchStatusCallback(Camera_Manager* ca
     OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(torchStatusCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     cameraManager->RegisterTorchStatusCallback(torchStatusCallback);
     return CAMERA_OK;
 }
@@ -79,9 +79,9 @@ Camera_ErrorCode OH_CameraManager_UnregisterTorchStatusCallback(Camera_Manager* 
     OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(torchStatusCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     cameraManager->UnregisterTorchStatusCallback(torchStatusCallback);
     return CAMERA_OK;
 }
@@ -90,11 +90,11 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraMana
     Camera_Device** cameras, uint32_t* size)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameras != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameras is null!");
+        "lnvalid argument, cameras is null!");
     CHECK_AND_RETURN_RET_LOG(size!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, size is null!");
+        "lnvalid argument, size is null!");
 
     return cameraManager->GetSupportedCameras(cameras, size);
 }
@@ -103,13 +103,13 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraM
     Camera_Device* cameras, uint32_t size)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameras != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameras is null!");
+        "lnvalid argument, cameras is null!");
     uint32_t sizeMax = 0;
     cameraManager->GetSupportedCameras(&cameras, &sizeMax);
     CHECK_AND_RETURN_RET_LOG(size <= sizeMax, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument,size is invaild");
+        "lnvalid argument,size is lnvalid");
 
     return cameraManager->DeleteSupportedCameras(cameras, size);
 }
@@ -118,11 +118,11 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
     const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraOutputCapability is null!");
+        "lnvalid argument, cameraOutputCapability is null!");
     CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument,camera is null!");
+        "lnvalid argument,camera is null!");
 
     return cameraManager->GetSupportedCameraOutputCapability(camera, cameraOutputCapability);
 }
@@ -132,11 +132,11 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMod
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMode is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, camera is null!");
+        "lnvalid argument, camera is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraOutputCapability is null!");
+        "lnvalid argument, cameraOutputCapability is null!");
 
     return cameraManager->GetSupportedCameraOutputCapabilityWithSceneMode(camera, sceneMode, cameraOutputCapability);
 }
@@ -145,9 +145,9 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameraOutputCapability(Camera_M
     Camera_OutputCapability* cameraOutputCapability)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraOutputCapability is null!");
+        "lnvalid argument, cameraOutputCapability is null!");
 
     return cameraManager->DeleteSupportedCameraOutputCapability(cameraOutputCapability);
 }
@@ -156,7 +156,7 @@ Camera_ErrorCode OH_CameraManager_IsCameraMuted(Camera_Manager* cameraManager, b
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_IsCameraMuted is called");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
 
     return cameraManager->IsCameraMuted(isCameraMuted);
 }
@@ -165,9 +165,9 @@ Camera_ErrorCode OH_CameraManager_CreateCaptureSession(Camera_Manager* cameraMan
     Camera_CaptureSession** captureSession)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, captureSession is null!");
+        "lnvalid argument, captureSession is null!");
 
     return cameraManager->CreateCaptureSession(captureSession);
 }
@@ -176,11 +176,11 @@ Camera_ErrorCode OH_CameraManager_CreateCameraInput(Camera_Manager* cameraManage
     const Camera_Device* camera, Camera_Input** cameraInput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraDevice is null!");
+        "lnvalid argument, cameraDevice is null!");
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraInput is null!");
+        "lnvalid argument, cameraInput is null!");
 
     return cameraManager->CreateCameraInput(camera, cameraInput);
 }
@@ -190,9 +190,9 @@ Camera_ErrorCode OH_CameraManager_CreateCameraInput_WithPositionAndType(Camera_M
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreateCameraInput_WithPositionAndType is called");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraInput is null!");
+        "lnvalid argument, cameraInput is null!");
     return cameraManager->CreateCameraInputWithPositionAndType(position, type, cameraInput);
 }
 
@@ -200,13 +200,13 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
     const char* surfaceId, Camera_PreviewOutput** previewOutput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+        "lnvalid argument, profile is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, previewOutput is null!");
+        "lnvalid argument, previewOutput is null!");
 
     return cameraManager->CreatePreviewOutput(profile, surfaceId, previewOutput);
 }
@@ -216,11 +216,11 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutputUsedInPreconfig(Camera_Mana
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreatePreviewOutputUsedInPreconfig is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, previewOutput is null!");
+        "lnvalid argument, previewOutput is null!");
 
     return cameraManager->CreatePreviewOutputUsedInPreconfig(surfaceId, previewOutput);
 }
@@ -230,13 +230,13 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutput is called");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+        "lnvalid argument, profile is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+        "lnvalid argument, photoOutput is null!");
 
     return cameraManager->CreatePhotoOutput(profile, surfaceId, photoOutput);
 }
@@ -246,11 +246,11 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutputWithoutSurface(Camera_Manager
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutputWithoutSurface is called");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+        "lnvalid argument, profile is null!");
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+        "lnvalid argument, photoOutput is null!");
 
     return cameraManager->CreatePhotoOutputWithoutSurface(profile, photoOutput);
 }
@@ -260,11 +260,11 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manage
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutputUsedInPreconfig is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+        "lnvalid argument, photoOutput is null!");
 
     return cameraManager->CreatePhotoOutputUsedInPreconfig(surfaceId, photoOutput);
 }
@@ -273,13 +273,13 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManage
     const char* surfaceId, Camera_VideoOutput** videoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+        "lnvalid argument, profile is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, videoOutput is null!");
+        "lnvalid argument, videoOutput is null!");
 
     return cameraManager->CreateVideoOutput(profile, surfaceId, videoOutput);
 }
@@ -289,11 +289,11 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutputUsedInPreconfig(Camera_Manage
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_CreateVideoOutputUsedInPreconfig is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, surfaceId is null!");
+        "lnvalid argument, surfaceId is null!");
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, videoOutput is null!");
+        "lnvalid argument, videoOutput is null!");
 
     return cameraManager->CreateVideoOutputUsedInPreconfig(surfaceId, videoOutput);
 }
@@ -302,11 +302,11 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraMan
     const Camera_MetadataObjectType* type, Camera_MetadataOutput** metadataOutput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(type != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, type is null!");
+        "lnvalid argument, type is null!");
     CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, metadataOutput is null!");
+        "lnvalid argument, metadataOutput is null!");
 
     return cameraManager->CreateMetadataOutput(type, metadataOutput);
 }
@@ -314,9 +314,9 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraMan
 Camera_ErrorCode OH_CameraDevice_GetCameraOrientation(Camera_Device* camera, uint32_t* orientation)
 {
     CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraDevice is null!");
+        "lnvalid argument, cameraDevice is null!");
     CHECK_AND_RETURN_RET_LOG(orientation!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, orientation is null!");
+        "lnvalid argument, orientation is null!");
     return Camera_Manager::GetCameraOrientation(camera, orientation);
 }
 
@@ -325,11 +325,11 @@ Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_GetSupportedSceneModes is called.");
     CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, camera is null!");
+        "lnvalid argument, camera is null!");
     CHECK_AND_RETURN_RET_LOG(sceneModes != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, sceneModes is null!");
+        "lnvalid argument, sceneModes is null!");
     CHECK_AND_RETURN_RET_LOG(size != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, size is null!");
+        "lnvalid argument, size is null!");
 
     return Camera_Manager::GetSupportedSceneModes(camera, sceneModes, size);
 }
@@ -338,9 +338,9 @@ Camera_ErrorCode OH_CameraManager_DeleteSceneModes(Camera_Manager* cameraManager
 {
     MEDIA_DEBUG_LOG("OH_CameraManager_DeleteSceneModes is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(sceneModes != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, sceneModes is null!");
+        "lnvalid argument, sceneModes is null!");
 
     return cameraManager->DeleteSceneModes(sceneModes);
 }
@@ -353,9 +353,9 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupported(Camera_Manager* cameraManager
     bool* isTorchSupported)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(isTorchSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isTorchSupported is null!");
+        "lnvalid argument, isTorchSupported is null!");
 
     return cameraManager->IsTorchSupported(isTorchSupported);
 }
@@ -368,9 +368,9 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupportedByTorchMode(Camera_Manager* ca
     Camera_TorchMode torchMode, bool* isTorchSupported)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null");
+        "lnvalid argument, cameraManager is null");
     CHECK_AND_RETURN_RET_LOG(isTorchSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isTorchSupported is null");
+        "lnvalid argument, isTorchSupported is null");
 
     return cameraManager->IsTorchSupportedByTorchMode(torchMode, isTorchSupported);
 }
@@ -382,7 +382,7 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupportedByTorchMode(Camera_Manager* ca
 Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager, Camera_TorchMode torchMode)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
 
     return cameraManager->SetTorchMode(torchMode);
 }
@@ -391,9 +391,9 @@ Camera_ErrorCode OH_CameraManager_RegisterFoldStatusInfoCallback(Camera_Manager*
     OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     cameraManager->RegisterFoldStatusCallback(foldStatusInfoCallback);
     return CAMERA_OK;
 }
@@ -402,9 +402,9 @@ Camera_ErrorCode OH_CameraManager_UnregisterFoldStatusInfoCallback(Camera_Manage
     OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
+        "lnvalid argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+        "lnvalid argument, callback is null!");
     cameraManager->UnregisterFoldStatusCallback(foldStatusInfoCallback);
     return CAMERA_OK;
 }
