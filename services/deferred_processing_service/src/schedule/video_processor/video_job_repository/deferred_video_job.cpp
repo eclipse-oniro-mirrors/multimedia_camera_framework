@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,7 +32,6 @@ DeferredVideoWork::DeferredVideoWork(const DeferredVideoJobPtr& jobPtr, Executio
 DeferredVideoWork::~DeferredVideoWork()
 {
     DP_DEBUG_LOG("entered");
-    jobPtr_ = nullptr;
 }
 
 DeferredVideoJob::DeferredVideoJob(const std::string& videoId, const sptr<IPCFileDescriptor>& srcFd,
@@ -49,8 +48,6 @@ DeferredVideoJob::DeferredVideoJob(const std::string& videoId, const sptr<IPCFil
 DeferredVideoJob::~DeferredVideoJob()
 {
     DP_DEBUG_LOG("entered");
-    srcFd_ = nullptr;
-    dstFd_ = nullptr;
 }
 
 bool DeferredVideoJob::SetJobStatus(VideoJobStatus status)

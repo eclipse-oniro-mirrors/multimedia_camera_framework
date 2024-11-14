@@ -36,6 +36,7 @@ public:
     // controller向任务仓库注册任务监听（关注任务添加、任务running个数改变）+向事件监听模块注册监听
     std::shared_ptr<DeferredPhotoProcessor> GetPhotoProcessor(const int32_t userId,
         TaskManager* taskManager, std::shared_ptr<IImageProcessCallbacks> callbacks);
+    std::shared_ptr<VideoPostProcessor> GetVideoPostProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoProcessor> GetVideoProcessor(const int32_t userId);
     std::shared_ptr<DeferredVideoController> GetVideoController(const int32_t userId);
     void CreateVideoProcessor(const int32_t userId, const std::shared_ptr<IVideoProcessCallbacks>& callbacks);
@@ -46,6 +47,7 @@ private:
 
     std::unordered_map<int32_t, std::shared_ptr<DeferredPhotoProcessor>> photoProcessors_ {};
     std::unordered_map<int32_t, std::shared_ptr<DeferredPhotoController>> photoController_ {};
+    std::unordered_map<int32_t, std::shared_ptr<VideoPostProcessor>> videoPosts_ {};
     std::unordered_map<int32_t, std::shared_ptr<DeferredVideoProcessor>> videoProcessors_ {};
     std::unordered_map<int32_t, std::shared_ptr<DeferredVideoController>> videoController_ {};
     std::shared_ptr<SchedulerCoordinator> schedulerCoordinator_ {nullptr};

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,7 +38,7 @@ DeferredVideoProcessingSession::~DeferredVideoProcessingSession()
 int32_t DeferredVideoProcessingSession::BeginSynchronize()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered.");
+    DP_INFO_LOG("DPS_VIDEO: BeginSynchronize.");
     inSync_.store(true);
     return DP_OK;
 }
@@ -47,7 +47,7 @@ int32_t DeferredVideoProcessingSession::EndSynchronize()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (inSync_.load()) {
-        DP_INFO_LOG("entered, video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
+        DP_INFO_LOG("DPS_VIDEO: EndSynchronize video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
         auto ret = DPS_SendCommand<VideoSyncCommand>(userId_, videoIds_);
         inSync_.store(false);
         DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "video synchronize failed, ret: %{public}d", ret);
@@ -70,7 +70,7 @@ int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId,
     }
 
     auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, infd, outFd);
-    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "add videoId: %{public}s failed. ret: %{public}d", videoId.c_str(), ret);
+    DP_INFO_LOG("DPS_VIDEO: AddVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     DfxVideoReport::GetInstance().ReportAddVideoEvent(videoId, GetDpsCallerInfo());
     return ret;
 }
@@ -80,8 +80,7 @@ int32_t DeferredVideoProcessingSession::RemoveVideo(const std::string& videoId, 
     DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RemoveVideo error, inSync!");
 
     auto ret = DPS_SendCommand<RemoveVideoCommand>(userId_, videoId, restorable);
-    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "remove videoId: %{public}s failed. ret: %{public}d", videoId.c_str(), ret);
-    
+    DP_INFO_LOG("DPS_VIDEO: RemoveVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     DfxVideoReport::GetInstance().ReportRemoveVideoEvent(videoId, GetDpsCallerInfo());
     return ret;
 }
@@ -91,7 +90,7 @@ int32_t DeferredVideoProcessingSession::RestoreVideo(const std::string& videoId)
     DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RestoreVideo error, inSync!");
 
     auto ret = DPS_SendCommand<RestoreCommand>(userId_, videoId);
-    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "restore videoId: %{public}s failed. ret: %{public}u", videoId.c_str(), ret);
+    DP_INFO_LOG("DPS_VIDEO: RestoreVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     return ret;
 }
 

@@ -26,7 +26,7 @@ namespace DeferredProcessing {
 SharedBuffer::SharedBuffer(int64_t capacity)
     : capacity_(capacity)
 {
-    DP_DEBUG_LOG("entered, capacity = %{public}ld", static_cast<long>(capacity_));
+    DP_DEBUG_LOG("entered, capacity = %{public}" PRId64, capacity_);
 }
 
 SharedBuffer::~SharedBuffer()
@@ -51,11 +51,9 @@ int64_t SharedBuffer::GetSize()
 int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(bytes > capacity_, DP_INVALID_PARAM,
-        "buffer failed due to invalid size: %{public}ld, capacity: %{public}ld",
-        static_cast<long>(bytes), static_cast<long>(capacity_));
+        "buffer failed due to invalid size: %{public}" PRId64 ", capacity: %{public}" PRId64, bytes, capacity_);
     DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL, "ashmem is nullptr.");
-    DP_DEBUG_LOG("capacity: %{public}ld, bytes: %{public}ld",
-        static_cast<long>(capacity_), static_cast<long>(bytes));
+    DP_DEBUG_LOG("capacity: %{public}" PRId64 ", bytes: %{public}" PRId64, capacity_, bytes);
     auto ret = ashmem_->WriteToAshmem(address, bytes, 0);
     DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_ERR, "copy failed.");
     return DP_OK;
@@ -73,9 +71,9 @@ int32_t SharedBuffer::AllocateAshmemUnlocked()
     std::string_view name = "DPS ShareMemory";
     ashmem_ = Ashmem::CreateAshmem(name.data(), capacity_);
     DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL,
-        "buffer create ashmem failed. capacity: %{public}ld", static_cast<long>(capacity_));
+        "buffer create ashmem failed. capacity: %{public}" PRId64, capacity_);
     int fd = ashmem_->GetAshmemFd();
-    DP_DEBUG_LOG("size: %{public}ld, fd: %{public}d", static_cast<long>(capacity_), fd);
+    DP_DEBUG_LOG("size: %{public}" PRId64 ", fd: %{public}d", capacity_, fd);
     auto ret = ashmem_->MapReadAndWriteAshmem();
     DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_MEM_MAP_FAILED, "mmap failed.");
     return DP_OK;
@@ -87,7 +85,7 @@ void SharedBuffer::DeallocAshmem()
         ashmem_->UnmapAshmem();
         ashmem_->CloseAshmem();
         ashmem_ = nullptr;
-        DP_DEBUG_LOG("dealloc ashmem capacity(%{public}ld) success.", static_cast<long>(capacity_));
+        DP_DEBUG_LOG("dealloc ashmem capacity(%{public}" PRId64 ") success.", capacity_);
     }
 }
 

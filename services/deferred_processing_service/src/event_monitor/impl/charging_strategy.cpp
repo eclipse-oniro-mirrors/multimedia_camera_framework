@@ -41,7 +41,7 @@ void ChargingStrategy::handleEvent(const EventFwk::CommonEventData& data)
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_DISCHARGING) {
         chargeState = ChargingStatus::DISCHARGING;
     }
-    DP_INFO_LOG("OnChargingStatusChanged state:%{public}d", chargeState);
+    DP_INFO_LOG("DPS_EVENT: ChargingStatusChanged state:%{public}d", chargeState);
     EventsMonitor::GetInstance().NotifyChargingStatus(chargeState);
 }
 } // namespace DeferredProcessing

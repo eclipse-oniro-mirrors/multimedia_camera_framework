@@ -16,6 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_LOG_H
 #define OHOS_CAMERA_DPS_LOG_H
 
+#include <cinttypes>
+
 #include "hilog/log.h"
 #include "hisysevent.h"
 #include "hitrace_meter.h"
@@ -124,7 +126,7 @@
         }                                                   \
     } while (0)
 
-#define DP_CHECK_BREAK_LOG(cond, fmt, ...)                  \
+#define DP_LOOP_BREAK_LOG(cond, fmt, ...)                   \
     if (1) {                                                \
         if (cond) {                                         \
             DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
@@ -132,11 +134,19 @@
         }                                                   \
     } else void (0)
 
-#define DP_CHECK_CONTINUE_LOG(cond, fmt, ...)               \
+#define DP_LOOP_CONTINUE_LOG(cond, fmt, ...)                \
     if (1) {                                                \
         if (cond) {                                         \
             DP_INFO_LOG(fmt, ##__VA_ARGS__);                \
             continue;                                       \
+        }                                                   \
+    } else void (0)
+
+#define DP_LOOP_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)   \
+    if (1) {                                                \
+        if (cond) {                                         \
+            DP_ERR_LOG(fmt, ##__VA_ARGS__);                 \
+            return ret;                                     \
         }                                                   \
     } else void (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

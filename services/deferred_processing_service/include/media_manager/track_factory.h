@@ -26,7 +26,8 @@ namespace DeferredProcessing {
 class TrackFactory : public Singleton<TrackFactory> {
     DECLARE_SINGLETON(TrackFactory)
 public:
-    std::shared_ptr<Track> CreateTrack(const std::shared_ptr<AVSource>& source, int trackIndex);
+    std::shared_ptr<Track> CreateTrack(const std::shared_ptr<AVSource>& source, int32_t trackIndex);
+    bool CheckTrackFormat(Media::Plugins::MediaType type);
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

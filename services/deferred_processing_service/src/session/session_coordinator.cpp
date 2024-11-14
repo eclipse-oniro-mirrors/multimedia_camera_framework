@@ -64,7 +64,7 @@ ErrorCode MapDpsErrorCode(DpsError errorCode)
             code = ErrorCode::ERROR_VIDEO_PROC_INTERRUPTED;
             break;
         default:
-            DP_WARNING_LOG("unexpected error code: %{public}d.", errorCode);
+            DP_WARNING_LOG("unexpected error code: %{public}d", errorCode);
             break;
     }
     return code;
@@ -87,7 +87,7 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
             code = StatusCode::SESSION_STATE_SUSPENDED;
             break;
         default:
-            DP_WARNING_LOG("unexpected error code: %{public}d.", statusCode);
+            DP_WARNING_LOG("unexpected error code: %{public}d", statusCode);
             break;
     }
     return code;
@@ -321,32 +321,27 @@ void SessionCoordinator::NotifyCallbackDestroyed(const int32_t userId)
 void SessionCoordinator::AddSession(const sptr<VideoSessionInfo>& sessionInfo)
 {
     int32_t userId = sessionInfo->GetUserId();
-    DP_INFO_LOG("add session userId: %{public}d", userId);
+    DP_INFO_LOG("Add Video Session userId: %{public}d", userId);
     auto callback = sessionInfo->GetRemoteCallback();
     if (callback != nullptr) {
         remoteVideoCallbacksMap_[userId] = callback;
-        ProcessVideoResults(callback);
     }
 }
 
 void SessionCoordinator::DeleteSession(const int32_t userId)
 {
-    if (remoteVideoCallbacksMap_.count(userId) != 0) {
-        DP_INFO_LOG("delete session userId: %{public}d", userId);
-        remoteVideoCallbacksMap_.erase(userId);
+    if (remoteVideoCallbacksMap_.erase(userId) > 0) {
+        DP_INFO_LOG("Delete Video Session userId: %{public}d", userId);
     }
 }
 
 void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::string& videoId,
     const sptr<IPCFileDescriptor> &ipcFd)
 {
-    DP_INFO_LOG("userId: %{public}d, map size: %{public}d.",
+    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, userMap size: %{public}d",
         userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
-    auto iter = remoteVideoCallbacksMap_.find(userId);
-    if (iter != remoteVideoCallbacksMap_.end()) {
-        auto spCallback = iter->second.promote();
-        DP_CHECK_ERROR_RETURN_LOG(spCallback == nullptr, "OnVideoProcessDone callback is nullptr.");
-        DP_INFO_LOG("videoId: %{public}s", videoId.c_str());
+    auto spCallback = GetRemoteVideoCallback(userId);
+    if (spCallback != nullptr) {
         spCallback->OnProcessVideoDone(videoId, ipcFd);
     } else {
         DP_INFO_LOG("callback is null, videoId: %{public}s.", videoId.c_str());
@@ -355,18 +350,15 @@ void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::str
 
 void SessionCoordinator::OnVideoError(const int32_t userId, const std::string& videoId, DpsError errorCode)
 {
-    DP_INFO_LOG("userId: %{public}d, map size: %{public}d.",
+    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, map size: %{public}d",
         userId, static_cast<int32_t>(remoteVideoCallbacksMap_.size()));
-    auto iter = remoteVideoCallbacksMap_.find(userId);
-    if (iter != remoteVideoCallbacksMap_.end()) {
-        auto spCallback = iter->second.promote();
-        DP_CHECK_ERROR_RETURN_LOG(spCallback == nullptr, "OnVideoError callback is nullptr.");
+    auto spCallback = GetRemoteVideoCallback(userId);
+    if (spCallback != nullptr) {
         auto error = MapDpsErrorCode(errorCode);
         DP_INFO_LOG("videoId: %{public}s, error: %{public}d", videoId.c_str(), error);
         spCallback->OnError(videoId, error);
     } else {
-        DP_INFO_LOG("callback is null, videoId: %{public}s, errorCode: %{public}d.",
-            videoId.c_str(), errorCode);
+        DP_INFO_LOG("callback is null, videoId: %{public}s, errorCode: %{public}d", videoId.c_str(), errorCode);
     }
 }
 
@@ -389,7 +381,7 @@ void SessionCoordinator::ProcessVideoResults(sptr<IDeferredVideoProcessingSessio
         if (result.callbackType == CallbackType::ON_STATE_CHANGED) {
             callback->OnStateChanged(MapDpsStatus(result.statusCode));
         }
-        pendingRequestResults_.pop_back();
+        pendingRequestResults_.pop_front();
     }
 }
 } // namespace DeferredProcessing

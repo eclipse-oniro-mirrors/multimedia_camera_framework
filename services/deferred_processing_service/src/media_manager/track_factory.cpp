@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,14 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+namespace {
+    static const std::unordered_set<Media::Plugins::MediaType> TRCAK_TYPES = {
+        Media::Plugins::MediaType::AUDIO,
+        Media::Plugins::MediaType::VIDEO,
+        Media::Plugins::MediaType::TIMEDMETA
+    };
+}
+
 TrackFactory::TrackFactory()
 {
     DP_DEBUG_LOG("entered.");
@@ -32,26 +40,31 @@ TrackFactory::~TrackFactory()
     DP_DEBUG_LOG("entered.");
 }
 
-std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>& source, int trackIndex)
+std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>& source, int32_t trackIndex)
 {
     DP_DEBUG_LOG("entered.");
     Format trackFormat;
     int32_t trackType = -1;
     auto ret = source->GetTrackFormat(trackFormat, trackIndex);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "get track format failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "Get track format failed.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType),
-        nullptr, "get track type failed.");
+        nullptr, "Get track type failed.");
 
     DP_INFO_LOG("CreateTrack type: %{public}d", trackType);
+    auto type = static_cast<Media::Plugins::MediaType>(trackType);
+    DP_CHECK_ERROR_RETURN_RET_LOG(!CheckTrackFormat(type), nullptr, "Track type: %{public}d is not supported.", type);
+
     auto track = std::make_shared<Track>();
-    if (static_cast<TrackType>(trackType) == TrackType::AV_KEY_AUDIO_TYPE ||
-        static_cast<TrackType>(trackType) == TrackType::AV_KEY_VIDEO_TYPE) {
-        TrackFormat formatOfIndex;
-        formatOfIndex.format = std::make_shared<Format>(trackFormat);
-        formatOfIndex.trackId = trackIndex;
-        track->SetFormat(formatOfIndex, static_cast<TrackType>(trackType));
-    }
+    TrackFormat formatOfIndex;
+    formatOfIndex.format = std::make_shared<Format>(trackFormat);
+    formatOfIndex.trackId = trackIndex;
+    track->SetFormat(formatOfIndex, type);
     return track;
+}
+
+bool TrackFactory::CheckTrackFormat(Media::Plugins::MediaType type)
+{
+    return TRCAK_TYPES.find(type) != TRCAK_TYPES.end();
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

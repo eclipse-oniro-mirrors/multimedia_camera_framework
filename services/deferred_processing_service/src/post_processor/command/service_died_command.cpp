@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,9 +36,12 @@ int32_t ServiceDiedCommand::Executing()
 {
     auto schedulerManager = DPS_GetSchedulerManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
-
+    auto videoPostProcessor = schedulerManager->GetVideoPostProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(videoPostProcessor == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
     auto controller = schedulerManager->GetVideoController(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(controller == nullptr, DP_NULL_POINTER, "VideoController is nullptr.");
+
+    videoPostProcessor->OnSessionDied();
     controller->HandleServiceDied();
     return DP_OK;
 }

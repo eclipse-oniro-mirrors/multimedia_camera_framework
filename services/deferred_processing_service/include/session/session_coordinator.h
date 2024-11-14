@@ -112,6 +112,15 @@ private:
         return nullptr;
     }
 
+    inline sptr<IDeferredVideoProcessingSessionCallback> GetRemoteVideoCallback(int32_t userId)
+    {
+        auto iter = remoteVideoCallbacksMap_.find(userId);
+        if (iter != remoteVideoCallbacksMap_.end()) {
+            return iter->second.promote();
+        }
+        return nullptr;
+    }
+
     std::mutex mutex_;
     std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
 
@@ -122,7 +131,7 @@ private:
     std::deque<ImageResult> pendingImageResults_;
 
     std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_;
-    std::map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> remoteVideoCallbacksMap_;
+    std::unordered_map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> remoteVideoCallbacksMap_;
     std::deque<RequestResult> pendingRequestResults_;
 };
 } // namespace DeferredProcessing

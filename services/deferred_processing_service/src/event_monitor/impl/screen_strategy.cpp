@@ -41,7 +41,7 @@ void ScreenStrategy::handleEvent(const EventFwk::CommonEventData& data)
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
         screenState = ScreenStatus::SCREEN_OFF;
     }
-    DP_INFO_LOG("OnScreenStatusChanged state:%{public}d", screenState);
+    DP_INFO_LOG("DPS_EVENT: ScreenStatusChanged state:%{public}d", screenState);
     EventsMonitor::GetInstance().NotifyScreenStatus(screenState);
 }
 } // namespace DeferredProcessing

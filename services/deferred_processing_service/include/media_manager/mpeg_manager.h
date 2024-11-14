@@ -35,21 +35,30 @@ public:
     MediaManagerError Init(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd);
     MediaManagerError UnInit(const MediaResult result);
     sptr<Surface> GetSurface();
+    sptr<Surface> GetMakerSurface();
     uint64_t GetProcessTimeStamp();
     MediaManagerError NotifyEnd();
-    MediaManagerError ReleaseBuffer(uint32_t index);
     sptr<IPCFileDescriptor> GetResultFd();
 
 private:
     class VideoCodecCallback;
+    class VideoMakerListener;
 
     MediaManagerError InitVideoCodec();
     void UnInitVideoCodec();
+    MediaManagerError ReleaseBuffer(uint32_t index);
+    MediaManagerError InitVideoMakerSurface();
+    void UnInitVideoMaker();
+    sptr<SurfaceBuffer> AcquireMakerBuffer(int64_t& timestamp);
+    MediaManagerError ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer);
+    void OnMakerBufferAvailable();
     sptr<IPCFileDescriptor> GetFileFd(const std::string& requestId, int flags, const std::string& tag);
 
+    std::mutex makerMutex_;
     std::unique_ptr<MediaManager> mediaManager_ {nullptr};
     sptr<Surface> codecSurface_ {nullptr};
+    sptr<Surface> makerSurface_ {nullptr};
     std::shared_ptr<AVCodecVideoEncoder> encoder_ {nullptr};
     std::atomic_bool isRunning_ {false};
     std::unique_ptr<std::thread> processThread_ {nullptr};

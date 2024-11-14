@@ -41,7 +41,7 @@ void BatteryStrategy::handleEvent(const EventFwk::CommonEventData& data)
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_OKAY) {
         batteryState = BatteryStatus::BATTERY_OKAY;
     }
-    DP_INFO_LOG("OnBatteryStatusChanged state:%{public}d", batteryState);
+    DP_INFO_LOG("DPS_EVENT: BatteryStatusChanged state:%{public}d", batteryState);
     EventsMonitor::GetInstance().NotifyBatteryStatus(batteryState);
 }
 } // namespace DeferredProcessing

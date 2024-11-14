@@ -40,7 +40,7 @@ private:
     ChargingStatus chargingState_ {DISCHARGING};
     BatteryLevel batteryLevel_ {BATTERY_LEVEL_LOW};
     SystemPressureLevel photoThermalLevel_ {SEVERE};
-    ThermalLevel thermalLevel_ {LEVEL_0};
+    ThermalLevel thermalLevel_ {LEVEL_2};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

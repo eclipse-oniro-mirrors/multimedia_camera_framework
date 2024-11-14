@@ -65,7 +65,7 @@ void EventsMonitor::RegisterEventsListener(const int32_t userId, const std::vect
 void EventsMonitor::NotifyThermalLevel(int32_t level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("notify : %{public}d.", level);
+    DP_INFO_LOG("DPS_EVENT: ThermalLevel: %{public}d", level);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -77,13 +77,13 @@ void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
     const std::string& cameraId, bool running, bool isSystemCamera)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",
+    DP_INFO_LOG("DPS_EVENT: userId: %{public}d, cameraId: %{public}s, running: %{public}d, isSystemCamera: %{public}d",
         userId, cameraId.c_str(), running, isSystemCamera);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     CameraSessionStatus cameraSessionStatus;
     running ? numActiveSessions_++ : numActiveSessions_--;
-    DP_INFO_LOG("numActiveSessions_: %{public}d", static_cast<int>(numActiveSessions_.load()));
+    DP_INFO_LOG("numActiveSessions: %{public}d", static_cast<int>(numActiveSessions_.load()));
     bool currSessionRunning = running;
     if (currSessionRunning) {
         cameraSessionStatus = isSystemCamera ?
@@ -102,7 +102,7 @@ void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
 void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("mediaLibrary available: %{public}d.", available);
+    DP_INFO_LOG("DPS_EVENT: MediaLibraryStatus: %{public}d", available);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -113,7 +113,7 @@ void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", status);
+    DP_INFO_LOG("DPS_EVENT: ImageEnhanceStatus: %{public}d", status);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -121,10 +121,21 @@ void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
     }
 }
 
+void EventsMonitor::NotifyVideoEnhanceStatus(int32_t status)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_EVENT: VideoEnhanceStatus: %{public}d", status);
+    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
+
+    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
+        NotifyObserversUnlocked(it->first, EventType::VIDEO_HDI_STATUS_EVENT, status);
+    }
+}
+
 void EventsMonitor::NotifyScreenStatus(int32_t status)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", status);
+    DP_INFO_LOG("DPS_EVENT: ScreenStatus: %{public}d", status);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -135,7 +146,7 @@ void EventsMonitor::NotifyScreenStatus(int32_t status)
 void EventsMonitor::NotifyChargingStatus(int32_t status)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", status);
+    DP_INFO_LOG("DPS_EVENT: ChargingStatus: %{public}d", status);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -146,7 +157,7 @@ void EventsMonitor::NotifyChargingStatus(int32_t status)
 void EventsMonitor::NotifyBatteryStatus(int32_t status)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", status);
+    DP_INFO_LOG("DPS_EVENT: BatteryStatus: %{public}d", status);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -157,7 +168,7 @@ void EventsMonitor::NotifyBatteryStatus(int32_t status)
 void EventsMonitor::NotifyBatteryLevel(int32_t level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", level);
+    DP_INFO_LOG("DPS_EVENT: BatteryLevel: %{public}d", level);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -168,21 +179,21 @@ void EventsMonitor::NotifyBatteryLevel(int32_t level)
 void EventsMonitor::NotifySystemPressureLevel(SystemPressureLevel level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered: %{public}d.", level);
+    DP_INFO_LOG("DPS_EVENT: SystemPressureLevel: %{public}d", level);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
         NotifyObserversUnlocked(it->first, EventType::SYSTEM_PRESSURE_LEVEL_EVENT, level);
     }
 }
-void EventsMonitor::NotifyPhotoProcessSize(int32_t size)
+void EventsMonitor::NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, image job size: %{public}d.", size);
+    DP_INFO_LOG("DPS_EVENT: PhotoProcessSize offline: %{public}d, background: %{public}d", offlineSize, backSize);
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::PHOTO_PROCESS_STATUS_EVENT, size);
+        NotifyObserversUnlocked(it->first, EventType::PHOTO_PROCESS_STATUS_EVENT, offlineSize + backSize);
     }
 }
 

@@ -73,7 +73,6 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
             DP_INFO_LOG("add offline job, imageId: %s", imageId.c_str());
             offlineJobList_.push_back(jobPtr);
             offlineJobMap_.emplace(imageId, jobPtr);
-            EventsMonitor::GetInstance().NotifyPhotoProcessSize(offlineJobList_.size());
         }
         jobPtr->SetPhotoJobType(type);
         priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
@@ -84,8 +83,8 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
     NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
     RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
-    int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
-    EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
+    EventsMonitor::GetInstance().NotifyPhotoProcessSize(static_cast<int32_t>(offlineJobList_.size()),
+        static_cast<int32_t>(backgroundJobMap_.size()));
 }
 
 void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool restorable)
@@ -128,8 +127,10 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
     NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
     RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
-    int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
-    EventsMonitor::GetInstance().NotifyPhotoProcessSize(imageSize);
+    if (!restorable) {
+        EventsMonitor::GetInstance().NotifyPhotoProcessSize(static_cast<int32_t>(offlineJobList_.size()),
+            static_cast<int32_t>(backgroundJobMap_.size()));
+    }
 }
 
 bool PhotoJobRepository::RequestJob(const std::string& imageId)

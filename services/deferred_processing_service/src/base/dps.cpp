@@ -66,6 +66,8 @@ void DPS_Destroy()
         return;
     }
     g_dpsInfo.server.reset();
+    g_dpsInfo.session.reset();
+    g_dpsInfo.scheduler.reset();
     g_dpsInfo.initialized_ = false;
     DP_INFO_LOG("DPS_Destory success.");
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,7 +33,7 @@ VideoJobRepository::~VideoJobRepository()
 void VideoJobRepository::AddVideoJob(const std::string& videoId,
     const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: AddVideoJob videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind != nullptr, "already existed, videoId: %{public}s", videoId.c_str());
 
@@ -41,14 +41,13 @@ void VideoJobRepository::AddVideoJob(const std::string& videoId,
     jobPtr->SetJobStatus(VideoJobStatus::PENDING);
     jobMap_.emplace(videoId, jobPtr);
     jobQueue_->Push(jobPtr);
-    DP_INFO_LOG("add video job size: %{public}d, videoId: %{public}s, srcFd: %{public}d",
+    DP_INFO_LOG("DPS_VIDEO: Add video job size: %{public}d, videoId: %{public}s, srcFd: %{public}d",
         static_cast<int>(jobQueue_->GetSize()), videoId.c_str(), srcFd->GetFd());
 }
 
 bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restorable)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s, restorable: %{public}d", videoId.c_str(), restorable);
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: RemoveVideoJob videoId: %{public}s, restorable: %{public}d", videoId.c_str(), restorable);
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     bool isNeedStop = false;
     DP_CHECK_RETURN_RET_LOG(jobPtrFind == nullptr, isNeedStop,
@@ -56,10 +55,10 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
 
     isNeedStop = jobPtrFind->GetCurStatus() == VideoJobStatus::RUNNING;
     if (!restorable) {
-        DP_INFO_LOG("remove video job size: %{public}d, videoId: %{public}s",
-            static_cast<int>(jobQueue_->GetSize()), videoId.c_str());
         jobMap_.erase(videoId);
         jobQueue_->Remove(jobPtrFind);
+        DP_INFO_LOG("DPS_VIDEO: Remove video job size: %{public}d, videoId: %{public}s",
+            static_cast<int>(jobQueue_->GetSize()), videoId.c_str());
     }
     bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::DELETED);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
@@ -68,8 +67,7 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
 
 void VideoJobRepository::RestoreVideoJob(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: RestoreVideoJob videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -79,8 +77,7 @@ void VideoJobRepository::RestoreVideoJob(const std::string& videoId)
 
 void VideoJobRepository::SetJobPending(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobPending videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -91,8 +88,7 @@ void VideoJobRepository::SetJobPending(const std::string& videoId)
 
 void VideoJobRepository::SetJobRunning(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobRunning videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -102,8 +98,7 @@ void VideoJobRepository::SetJobRunning(const std::string& videoId)
 
 void VideoJobRepository::SetJobCompleted(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobCompleted videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -114,8 +109,7 @@ void VideoJobRepository::SetJobCompleted(const std::string& videoId)
 
 void VideoJobRepository::SetJobFailed(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobFailed videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -126,8 +120,7 @@ void VideoJobRepository::SetJobFailed(const std::string& videoId)
 
 void VideoJobRepository::SetJobPause(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobPause videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -137,8 +130,7 @@ void VideoJobRepository::SetJobPause(const std::string& videoId)
 
 void VideoJobRepository::SetJobError(const std::string& videoId)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", videoId.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_INFO_LOG("DPS_VIDEO: SetJobError videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind == nullptr, "does not existed, videoId: %{public}s", videoId.c_str());
 
@@ -148,12 +140,10 @@ void VideoJobRepository::SetJobError(const std::string& videoId)
 
 DeferredVideoJobPtr VideoJobRepository::GetJob()
 {
-    DP_INFO_LOG("entered, video job size: %{public}d, running num: %{public}d",
+    DP_INFO_LOG("DPS_VIDEO: Video job size: %{public}d, running num: %{public}d",
         jobQueue_->GetSize(), static_cast<int32_t>(runningSet_.size()));
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto jobPtr = jobQueue_->Peek();
-    DP_CHECK_RETURN_RET(jobPtr == nullptr || jobPtr->GetCurStatus() == VideoJobStatus::COMPLETED ||
-        jobPtr->GetCurStatus() == VideoJobStatus::ERROR, nullptr);
+    DP_CHECK_RETURN_RET(jobPtr == nullptr || jobPtr->GetCurStatus() >= VideoJobStatus::RUNNING, nullptr);
 
     if (jobPtr->GetCurStatus() == VideoJobStatus::FAILED) {
         jobPtr->SetJobStatus(VideoJobStatus::PENDING);
@@ -165,41 +155,37 @@ DeferredVideoJobPtr VideoJobRepository::GetJob()
 
 int32_t VideoJobRepository::GetRunningJobCounts()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DP_DEBUG_LOG("video running jobs num: %{public}d", static_cast<int32_t>(runningSet_.size()));
+    DP_DEBUG_LOG("Video running jobs num: %{public}d", static_cast<int32_t>(runningSet_.size()));
     return static_cast<int32_t>(runningSet_.size());
 }
 
 void VideoJobRepository::GetRunningJobList(std::vector<std::string>& list)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DP_DEBUG_LOG("video running jobs num: %{public}d", static_cast<int32_t>(runningSet_.size()));
+    DP_DEBUG_LOG("Video running jobs num: %{public}d", static_cast<int32_t>(runningSet_.size()));
     list.clear();
     list.reserve(runningSet_.size());
-    for (auto& item : runningSet_) {
-        list.emplace_back(item);
-    }
+    std::copy(runningSet_.begin(), runningSet_.end(), std::back_inserter(list));
 }
 
 void VideoJobRepository::RegisterJobListener(const std::weak_ptr<IVideoJobRepositoryListener>& listener)
 {
-    DP_INFO_LOG("entered");
+    DP_DEBUG_LOG("entered.");
     jobListener_ = listener;
 }
 
 DeferredVideoJobPtr VideoJobRepository::GetJobUnLocked(const std::string& videoId)
 {
-    DeferredVideoJobPtr jobPtr = nullptr;
-    if (jobMap_.count(videoId) == 1) {
-        DP_DEBUG_LOG("video job, videoId: %{public}s", videoId.c_str());
-        jobPtr = jobMap_.find(videoId)->second;
+    auto it = jobMap_.find(videoId);
+    if (it != jobMap_.end()) {
+        DP_DEBUG_LOG("video job videoId: %{public}s", videoId.c_str());
+        return it->second;
     }
-    return jobPtr;
+    return nullptr;
 }
 
 void VideoJobRepository::NotifyJobChangedUnLocked(bool statusChanged, DeferredVideoJobPtr jobPtr)
 {
-    DP_DEBUG_LOG("entered, statusChanged: %{public}d, videoId: %{public}s",
+    DP_INFO_LOG("DPS_VIDEO: JobStatusChanged: %{public}d, videoId: %{public}s",
         statusChanged, jobPtr->GetVideoId().c_str());
     if (auto listenerSptr = jobListener_.lock()) {
         listenerSptr->OnVideoJobChanged(jobPtr);
@@ -216,7 +202,7 @@ void VideoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, const De
     if (statusChanged && (jobPtr->GetCurStatus() == VideoJobStatus::RUNNING)) {
         runningSet_.emplace(jobPtr->GetVideoId());
     }
-    DP_INFO_LOG("video running jobs num: %{public}d, videoId: %{public}s",
+    DP_INFO_LOG("DPS_VIDEO: Video running jobs num: %{public}d, videoId: %{public}s",
         static_cast<int32_t>(runningSet_.size()), jobPtr->GetVideoId().c_str());
 }
 

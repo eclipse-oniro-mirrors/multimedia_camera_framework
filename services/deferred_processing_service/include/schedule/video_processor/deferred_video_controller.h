@@ -28,12 +28,12 @@ public:
 
     void Initialize();
     void HandleServiceDied();
-    void HandleSuccess(const int32_t userId, const DeferredVideoWorkPtr& work);
-    void HandleError(const int32_t userId, const DeferredVideoWorkPtr& work, DpsError errorCode);
+    void HandleSuccess(const DeferredVideoWorkPtr& work);
+    void HandleError(const DeferredVideoWorkPtr& work, DpsError errorCode);
 
 protected:
-    DeferredVideoController(const int32_t userId, std::shared_ptr<VideoJobRepository> repository,
-        std::shared_ptr<DeferredVideoProcessor> processor);
+    DeferredVideoController(const int32_t userId, const std::shared_ptr<VideoJobRepository>& repository,
+        const std::shared_ptr<DeferredVideoProcessor>& processor);
 
 private:
     class StateListener;
@@ -50,11 +50,10 @@ private:
     void HandleNormalSchedule(const DeferredVideoWorkPtr& work);
     void OnTimerOut();
 
-    std::recursive_mutex mutex_;
     const int32_t userId_;
     uint32_t normalTimeId_ {0};
     std::shared_ptr<DeferredVideoProcessor> videoProcessor_;
-    std::shared_ptr<VideoJobRepository> videoJobRepository_;
+    std::shared_ptr<VideoJobRepository> repository_;
     std::shared_ptr<VideoStrategyCenter> videoStrategyCenter_ {nullptr};
     std::shared_ptr<StateListener> videoStateChangeListener_ {nullptr};
     std::shared_ptr<VideoJobRepositoryListener> videoJobChangeListener_ {nullptr};

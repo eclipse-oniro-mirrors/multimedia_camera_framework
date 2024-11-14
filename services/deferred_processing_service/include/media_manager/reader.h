@@ -30,11 +30,11 @@ public:
     virtual ~Reader();
 
     MediaManagerError Create(int32_t inputFd);
-    MediaManagerError Read(TrackType trackType, std::shared_ptr<AVBuffer>& sample);
+    MediaManagerError Read(Media::Plugins::MediaType trackType, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo);
     MediaManagerError Reset(int64_t resetPts);
 
-    inline const std::map<TrackType, const std::shared_ptr<Track>>& GetTracks() const
+    inline const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& GetTracks()
     {
         return tracks_;
     };
@@ -52,7 +52,7 @@ private:
     std::shared_ptr<Format> userFormat_ {nullptr};
     std::shared_ptr<Demuxer> inputDemuxer_ {nullptr};
     int32_t trackCount_ {0};
-    std::map<TrackType, const std::shared_ptr<Track>> tracks_ {};
+    std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>> tracks_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

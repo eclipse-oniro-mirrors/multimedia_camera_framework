@@ -41,7 +41,7 @@ void ThermalStrategy::handleEvent(const EventFwk::CommonEventData& data)
     AAFwk::Want want = data.GetWant();
     int level = want.GetIntParam(THERMAL_EVENT_ID, DEFAULT_LEVEL);
     DPSEventReport::GetInstance().SetTemperatureLevel(level);
-    DP_INFO_LOG("OnThermalLevelChanged level:%{public}d", level);
+    DP_INFO_LOG("DPS_EVENT: ThermalLevelChanged level:%{public}d", level);
     // 需要整改归一化图片和视频接收到温度事件的出来
     EventsMonitor::GetInstance().NotifySystemPressureLevel(MapEventThermalLevel(level));
     EventsMonitor::GetInstance().NotifyThermalLevel(level);

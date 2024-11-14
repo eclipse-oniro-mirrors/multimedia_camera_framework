@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,7 +52,7 @@ std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requ
         return nullptr;
     }
 
-    DP_INFO_LOG("Initialized MpegManager successfully.");
+    DP_DEBUG_LOG("Initialized MpegManager success.");
     requestId_ = requestId;
     refCount_ = 1;
     return mpegManager_;
