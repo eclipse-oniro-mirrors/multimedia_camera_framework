@@ -18,6 +18,7 @@
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <atomic>
 #include <mutex>
@@ -93,6 +94,7 @@ public:
     void SetDeviceMuteMode(bool muteMode);
     uint8_t GetUsedAsPosition();
     bool GetDeviceMuteMode();
+    void EnableMovingPhoto(bool isMovingPhotoEnabled);
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
     {
@@ -139,6 +141,10 @@ public:
     void NotifyCameraStatus(int32_t type);
 
     int32_t CloseDevice();
+
+    void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
+
+    void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
 private:
     class FoldScreenListener;
@@ -214,6 +220,12 @@ private:
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
+    void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    bool isMovingPhotoEnabled_ = false;
+    std::mutex movingPhotoStartTimeCallbackLock_;
+    std::mutex movingPhotoEndTimeCallbackLock_;
+    std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
+    std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
