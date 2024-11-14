@@ -84,6 +84,7 @@ std::mutex HCaptureSession::g_mediaTaskLock_;
 namespace {
 static std::map<pid_t, sptr<HCaptureSession>> g_totalSessions;
 static std::mutex g_totalSessionLock;
+const char *CAMERA_BUNDLE_NAME = "com.huawei.hmos.camera";
 static size_t TotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
@@ -223,7 +224,8 @@ void HCaptureSession::DynamicConfigStream()
         GetSessionState().c_str());
     auto currentState = stateMachine_.GetCurrentState();
     if (currentState == CaptureSessionState::SESSION_STARTED) {
-        isDynamicConfiged_ = true;
+        std::string bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
+        isDynamicConfiged_ = (bundleName == CAMERA_BUNDLE_NAME);
         MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
     }
 }
