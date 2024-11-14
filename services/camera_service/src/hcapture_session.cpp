@@ -991,19 +991,21 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
 
             currColorSpace_ = colorSpace;
             currCaptureColorSpace_ = captureColorSpace;
-            MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace %{public}d, captureColorSpace %{public}d, "
-                "isNeedUpdate %{public}d", colorSpace, captureColorSpace, isNeedUpdate);
-
             result = CheckIfColorSpaceMatchesFormat(colorSpace);
-            if (result != CAMERA_OK && isNeedUpdate) {
-                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() Failed, format and colorSpace not match.");
-                return;
+            if (result != CAMERA_OK) {
+                if (isNeedUpdate) {
+                    MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() Failed, format and colorSpace not match.");
+                    return;
+                } else {
+                    MEDIA_ERR_LOG(
+                        "HCaptureSession::SetColorSpace() %{public}d, format and colorSpace: %{public}d not match.",
+                        result, colorSpace);
+                    currColorSpace_ = ColorSpace::BT709;
+                }
             }
-            if (result != CAMERA_OK && !isNeedUpdate) {
-                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() %{public}d, format and colorSpace not match.", result);
-                currColorSpace_ = ColorSpace::BT709;
-            }
-
+            MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace: %{public}d, captureColorSpace: %{public}d, "
+                           "isNeedUpdate: %{public}d",
+                currColorSpace_, captureColorSpace, isNeedUpdate);
             SetColorSpaceForStreams();
 
             if (isNeedUpdate) {
