@@ -18,17 +18,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
-CameraTimer *CameraTimer::GetInstance()
-{
-    static CameraTimer instance;
-    return &instance;
-}
-
-CameraTimer::CameraTimer()
-    : userCount_(0),
-      timer_(nullptr)
+CameraTimer::CameraTimer() : timer_(std::make_unique<OHOS::Utils::Timer>("CameraServiceTimer"))
 {
     MEDIA_INFO_LOG("entered.");
+    timer_->Setup();
 };
 
 CameraTimer::~CameraTimer()
@@ -40,34 +33,9 @@ CameraTimer::~CameraTimer()
     }
 }
 
-void CameraTimer::IncreaseUserCount()
-{
-    MEDIA_INFO_LOG("entered, num of user: %d + 1", static_cast<int>(userCount_.load()));
-    if (timer_ == nullptr) {
-        timer_ = std::make_unique<OHOS::Utils::Timer>("CameraServiceTimer");
-        timer_->Setup();
-        MEDIA_INFO_LOG("create timer thread");
-    }
-    ++userCount_;
-    return;
-}
-
-void CameraTimer::DecreaseUserCount()
-{
-    MEDIA_INFO_LOG("entered, num of user: %u - 1", userCount_.load());
-    --userCount_;
-    if (userCount_.load() == 0 && timer_ != nullptr) {
-        MEDIA_INFO_LOG("delete timer thread");
-    }
-    return;
-}
-
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
 {
-    if (timer_ == nullptr) {
-        MEDIA_ERR_LOG("timer is nullptr");
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(timer_ == nullptr, 0, "timer is nullptr");
 
     uint32_t timerId = timer_->Register(callback, interval, once);
     MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);
@@ -77,12 +45,9 @@ uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval,
 void CameraTimer::Unregister(uint32_t timerId)
 {
     MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
-    if (timer_) {
-        MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
-        timer_->Unregister(timerId);
-        return;
-    }
-    return;
+    CHECK_ERROR_RETURN_LOG(timer_ == nullptr, "timer is nullptr");
+
+    timer_->Unregister(timerId);
 }
 } // namespace CameraStandard
 } // namespace OHOS
