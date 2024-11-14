@@ -827,10 +827,22 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface/profile is null");
     CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CreateVideoOutput invalid fomrat or width or height is zero");
+        "CreateVideoOutput invalid format or width or height is zero");
 
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
-    MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
+    auto [width, height] = profile.GetSize();
+    auto frames = profile.GetFrameRates();
+    const int32_t VALID_FRAME_SIZE = 2;
+    bool isExistFrames = frames.size() >= VALID_FRAME_SIZE;
+    if (isExistFrames) {
+        MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
+                       "frameRateMin: %{public}d, frameRateMax: %{public}d, surfaceId: %{public}llu",
+            static_cast<int32_t>(metaFormat), width, height, frames[0], frames[1], surface->GetUniqueId());
+    } else {
+        MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
+                       "surfaceId: %{public}llu",
+            static_cast<int32_t>(metaFormat), width, height, surface->GetUniqueId());
+    }
     sptr<IStreamRepeat> streamRepeat = nullptr;
     int32_t retCode = serviceProxy->CreateVideoOutput(
         surface->GetProducer(), metaFormat, profile.GetSize().width, profile.GetSize().height, streamRepeat);
