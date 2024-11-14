@@ -102,6 +102,7 @@ public:
             return;
         }
         mLastFoldStatus = currentFoldStatus;
+        MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
     }
 private:
