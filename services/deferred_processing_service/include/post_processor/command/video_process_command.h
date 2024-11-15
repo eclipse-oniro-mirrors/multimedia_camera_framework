@@ -18,6 +18,7 @@
 
 #include "command.h"
 #include "scheduler_manager.h"
+#include "video_post_processor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,39 +26,46 @@ namespace DeferredProcessing {
 class VideoProcessCommand : public Command {
 public:
     VideoProcessCommand(const int32_t userId);
-    ~VideoProcessCommand();
+    ~VideoProcessCommand() = default;
 
 protected:
     int32_t Initialize();
 
     const int32_t userId_;
     std::atomic<bool> initialized_ {false};
-    std::shared_ptr<SchedulerManager> schedulerManager_ {nullptr};
-    std::shared_ptr<DeferredVideoController> controller_ {nullptr};
+    std::shared_ptr<VideoPostProcessor> videdPostProcess_ {nullptr};
 };
 
 class VideoProcessSuccessCommand : public VideoProcessCommand {
     DECLARE_CMD_CLASS(VideoProcessSuccessCommand);
 public:
-    VideoProcessSuccessCommand(const int32_t userId, const DeferredVideoWorkPtr& work);
-    ~VideoProcessSuccessCommand() override;
+    VideoProcessSuccessCommand(const int32_t userId, const std::string& videoId)
+        : VideoProcessCommand(userId), videoId_(videoId)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+    ~VideoProcessSuccessCommand() = default;
 
 protected:
     int32_t Executing() override;
 
-    DeferredVideoWorkPtr work_;
+    const std::string videoId_;
 };
 
 class VideoProcessFailedCommand : public VideoProcessCommand {
     DECLARE_CMD_CLASS(VideoProcessFailedCommand);
 public:
-    VideoProcessFailedCommand(const int32_t userId, const DeferredVideoWorkPtr& work, DpsError errorCode);
-    ~VideoProcessFailedCommand() override;
+    VideoProcessFailedCommand(const int32_t userId, const std::string& videoId, DpsError errorCode)
+        : VideoProcessCommand(userId), videoId_(videoId), error_(errorCode)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+    ~VideoProcessFailedCommand() = default;
 
 protected:
     int32_t Executing() override;
 
-    DeferredVideoWorkPtr work_;
+    const std::string videoId_;
     DpsError error_;
 };
 
@@ -69,7 +77,7 @@ public:
     {
         DP_DEBUG_LOG("entered.");
     }
-    ~VideoStateChangedCommand() override = default;
+    ~VideoStateChangedCommand() = default;
 
 protected:
     int32_t Executing() override;

@@ -32,8 +32,8 @@ public:
     MediaManagerError Create(int32_t inFd, int32_t outFd, int32_t tempFd);
     MediaManagerError Pause();
     MediaManagerError Stop();
-    MediaManagerError ReadSample(TrackType type, std::shared_ptr<AVBuffer>& sample);
-    MediaManagerError WriteSample(TrackType type, const std::shared_ptr<AVBuffer>& sample);
+    MediaManagerError ReadSample(Media::Plugins::MediaType type, std::shared_ptr<AVBuffer>& sample);
+    MediaManagerError WriteSample(Media::Plugins::MediaType type, const std::shared_ptr<AVBuffer>& sample);
 
     inline void GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
     {
@@ -44,6 +44,7 @@ private:
     MediaManagerError InitReader();
     MediaManagerError InitWriter();
     MediaManagerError Recover(const int64_t size);
+    MediaManagerError RecoverDebugInfo();
     MediaManagerError CopyAudioTrack();
     MediaManagerError InitRecoverReader(const int64_t size, int64_t& duration, int64_t& bitRate);
     MediaManagerError GetRecoverInfo(const int64_t size);
@@ -54,8 +55,7 @@ private:
     int32_t finalFrameNum_ {0};
     int64_t resumePts_ {-1};
     int64_t pausePts_ {-1};
-    int64_t curProcessPts_ {-1};
-    int64_t finalSyncPts_ {-1};
+    int64_t curProcessSyncPts_ {-1};
     bool hasAudio_ {false};
     bool started_ {false};
     std::shared_ptr<Reader> inputReader_ {nullptr};

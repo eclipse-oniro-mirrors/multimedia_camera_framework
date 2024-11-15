@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,7 +36,7 @@ public:
     void OnSchedulerChanged(const ScheduleType& type, const ScheduleInfo& scheduleInfo) override
     {
         auto controller = controller_.lock();
-        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "video controller is nullptr.");
+        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "VideoController is nullptr.");
         controller->OnSchedulerChanged(type, scheduleInfo);
     }
 
@@ -60,7 +60,7 @@ public:
     void OnVideoJobChanged(const DeferredVideoJobPtr& jobPtr) override
     {
         auto controller = controller_.lock();
-        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "video controller is nullptr.");
+        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "Video controller is nullptr.");
         controller->OnVideoJobChanged(jobPtr);
     }
 
@@ -68,11 +68,9 @@ private:
     std::weak_ptr<DeferredVideoController> controller_;
 };
 
-DeferredVideoController::DeferredVideoController(const int32_t userId, std::shared_ptr<VideoJobRepository> repository,
-    std::shared_ptr<DeferredVideoProcessor> processor)
-    : userId_(userId),
-      videoProcessor_(processor),
-      videoJobRepository_(repository)
+DeferredVideoController::DeferredVideoController(const int32_t userId,
+    const std::shared_ptr<VideoJobRepository>& repository, const std::shared_ptr<DeferredVideoProcessor>& processor)
+    : userId_(userId), videoProcessor_(processor), repository_(repository)
 {
     DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
 }
@@ -80,11 +78,6 @@ DeferredVideoController::DeferredVideoController(const int32_t userId, std::shar
 DeferredVideoController::~DeferredVideoController()
 {
     DP_DEBUG_LOG("entered.");
-    videoProcessor_ = nullptr;
-    videoJobRepository_ = nullptr;
-    videoStrategyCenter_ = nullptr;
-    videoStateChangeListener_ = nullptr;
-    videoJobChangeListener_ = nullptr;
     StopSuspendLock();
 }
 
@@ -92,53 +85,56 @@ void DeferredVideoController::Initialize()
 {
     DP_DEBUG_LOG("entered.");
     videoJobChangeListener_ = std::make_shared<VideoJobRepositoryListener>(weak_from_this());
-    videoJobRepository_->RegisterJobListener(videoJobChangeListener_);
-    videoStrategyCenter_ = CreateShared<VideoStrategyCenter>(userId_, videoJobRepository_);
-    
+    repository_->RegisterJobListener(videoJobChangeListener_);
+    videoStrategyCenter_ = CreateShared<VideoStrategyCenter>(userId_, repository_);
     videoStrategyCenter_->Initialize();
     videoStateChangeListener_ = std::make_shared<StateListener>(weak_from_this());
     videoStrategyCenter_->RegisterStateChangeListener(videoStateChangeListener_);
+    videoProcessor_->Initialize();
 }
 
 void DeferredVideoController::HandleServiceDied()
 {
     DP_DEBUG_LOG("entered.");
-    std::vector<std::string> errorTasks;
-    videoJobRepository_->GetRunningJobList(errorTasks);
-    if (!errorTasks.empty()) {
+    auto running = repository_->GetRunningJobCounts();
+    if (running > 0) {
         StopSuspendLock();
     }
 }
 
-void DeferredVideoController::HandleSuccess(const int32_t userId, const DeferredVideoWorkPtr& work)
+void DeferredVideoController::HandleSuccess(const DeferredVideoWorkPtr& work)
 {
+    DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "Video work is nullptr.");
+
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
     auto out = work->GetDeferredVideoJob()->GetOutputFd();
-    DP_INFO_LOG("handle success, videoId: %{public}s, outFd: %{public}d", videoId.c_str(), out->GetFd());
+    DP_INFO_LOG("DPS_VIDEO: HandleSuccess videoId: %{public}s, outFd: %{public}d", videoId.c_str(), out->GetFd());
     HandleNormalSchedule(work);
-    videoProcessor_->OnProcessDone(userId, videoId, out);
+    videoProcessor_->OnProcessDone(userId_, videoId, out);
 }
 
-void DeferredVideoController::HandleError(const int32_t userId, const DeferredVideoWorkPtr& work, DpsError errorCode)
+void DeferredVideoController::HandleError(const DeferredVideoWorkPtr& work, DpsError errorCode)
 {
+    DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "Video work is nullptr.");
+
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
-    DP_INFO_LOG("handle error videoId: %{public}s", videoId.c_str());
+    DP_INFO_LOG("DPS_VIDEO: HandleError videoId: %{public}s", videoId.c_str());
     if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) {
         StopSuspendLock();
     }
     HandleNormalSchedule(work);
-    videoProcessor_->OnError(userId, videoId, errorCode);
+    videoProcessor_->OnError(userId_, videoId, errorCode);
 }
 
 void DeferredVideoController::OnVideoJobChanged(const DeferredVideoJobPtr& jobPtr)
 {
-    DP_INFO_LOG("entered, videoId: %{public}s", jobPtr->GetVideoId().c_str());
+    DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", jobPtr->GetVideoId().c_str());
     TryDoSchedule();
 }
 
 void DeferredVideoController::OnSchedulerChanged(const ScheduleType& type, const ScheduleInfo& scheduleInfo)
 {
-    DP_INFO_LOG("video schedule isNeedStop: %{public}d, isCharging: %{public}d",
+    DP_INFO_LOG("DPS_VIDEO: Video isNeedStop: %{public}d, isCharging: %{public}d",
         scheduleInfo.isNeedStop, scheduleInfo.isCharging);
     if (scheduleInfo.isNeedStop) {
         PauseRequests(type);
@@ -150,9 +146,8 @@ void DeferredVideoController::OnSchedulerChanged(const ScheduleType& type, const
 void DeferredVideoController::TryDoSchedule()
 {
     DP_DEBUG_LOG("entered.");
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto work = videoStrategyCenter_->GetWork();
-    DP_INFO_LOG("strategy get work: %{public}d", work != nullptr);
+    DP_INFO_LOG("DPS_VIDEO: strategy get work: %{public}d", work != nullptr);
     if (work == nullptr) {
         StopSuspendLock();
         return;
@@ -164,7 +159,8 @@ void DeferredVideoController::TryDoSchedule()
 
 void DeferredVideoController::PauseRequests(const ScheduleType& type)
 {
-    DP_CHECK_RETURN(videoJobRepository_->GetRunningJobCounts() == 0);
+    DP_DEBUG_LOG("entered.");
+    DP_CHECK_RETURN(repository_->GetRunningJobCounts() <= 0);
     videoProcessor_->PauseRequest(type);
 }
 
@@ -193,8 +189,8 @@ void DeferredVideoController::StartSuspendLock()
 
 void DeferredVideoController::StopSuspendLock()
 {
-    DPSProwerManager::GetInstance().SetAutoSuspend(true);
     DP_CHECK_RETURN(normalTimeId_ == INVALID_TIMEID);
+    DPSProwerManager::GetInstance().SetAutoSuspend(true);
     DP_INFO_LOG("DpsTimer stop: normal schedule timeId: %{public}d.", normalTimeId_);
     DpsTimer::GetInstance().StopTimer(normalTimeId_);
 }
@@ -203,14 +199,15 @@ void DeferredVideoController::HandleNormalSchedule(const DeferredVideoWorkPtr& w
 {
     DP_CHECK_RETURN(!work->IsSuspend());
 
-    DP_DEBUG_LOG("handle normal schedule videoId: %{public}s", work->GetDeferredVideoJob()->GetVideoId().c_str());
+    DP_INFO_LOG("DPS_VIDEO: HandleNormalSchedule videoId: %{public}s",
+        work->GetDeferredVideoJob()->GetVideoId().c_str());
     auto usedTime = static_cast<int32_t>(work->GetExecutionTime());
     videoStrategyCenter_->UpdateAvailableTime(false, usedTime);
 }
 
 void DeferredVideoController::OnTimerOut()
 {
-    DP_INFO_LOG("DpsTimer executed: normal schedule time out.");
+    DP_INFO_LOG("DpsTimer end: normal schedule time out.");
     normalTimeId_ = INVALID_TIMEID;
     videoStrategyCenter_->UpdateSingleTime(false);
     PauseRequests(NORMAL_TIME_STATE);

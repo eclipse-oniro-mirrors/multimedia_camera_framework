@@ -30,6 +30,7 @@ SchedulerManager::~SchedulerManager()
     DP_DEBUG_LOG("entered.");
     photoController_.clear();
     photoProcessors_.clear();
+    videoPosts_.clear();
     videoController_.clear();
     videoProcessors_.clear();
     schedulerCoordinator_ = nullptr;
@@ -67,20 +68,34 @@ void SchedulerManager::CreatePhotoProcessor(const int32_t userId, TaskManager* t
     return;
 }
 
+std::shared_ptr<VideoPostProcessor> SchedulerManager::GetVideoPostProcessor(const int32_t userId)
+{
+    DP_DEBUG_LOG("entered.");
+    auto it = videoPosts_.find(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoPosts_.end(), nullptr,
+        "VideoPostProcessor not found for userId: %{public}d", userId);
+
+    return it->second;
+}
+
 std::shared_ptr<DeferredVideoProcessor> SchedulerManager::GetVideoProcessor(const int32_t userId)
 {
     DP_DEBUG_LOG("entered.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(videoProcessors_.find(userId) == videoProcessors_.end(), nullptr,
-        "VideoProcessors is nullptr.");
-    return videoProcessors_[userId];
+    auto it = videoProcessors_.find(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoProcessors_.end(), nullptr,
+        "VideoProcessor not found for userId: %{public}d", userId);
+
+    return it->second;
 }
 
 std::shared_ptr<DeferredVideoController> SchedulerManager::GetVideoController(const int32_t userId)
 {
     DP_DEBUG_LOG("entered.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(videoController_.find(userId) == videoController_.end(), nullptr,
-        "VideoController is nullptr.");
-    return videoController_[userId];
+    auto it = videoController_.find(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoController_.end(), nullptr,
+        "VideoController not found for userId: %{public}d", userId);
+
+    return it->second;
 }
 
 void SchedulerManager::CreateVideoProcessor(const int32_t userId,
@@ -88,10 +103,11 @@ void SchedulerManager::CreateVideoProcessor(const int32_t userId,
 {
     DP_DEBUG_LOG("entered.");
     auto videoRepository = std::make_shared<VideoJobRepository>(userId);
-    auto videoProcessor = std::make_shared<DeferredVideoProcessor>(userId, videoRepository, callbacks);
+    auto videoPost = CreateShared<VideoPostProcessor>(userId);
+    auto videoProcessor = CreateShared<DeferredVideoProcessor>(videoRepository, videoPost, callbacks);
     auto videoController = CreateShared<DeferredVideoController>(userId, videoRepository, videoProcessor);
     videoController->Initialize();
-    videoProcessor->Initialize();
+    videoPosts_[userId] = videoPost;
     videoProcessors_[userId] = videoProcessor;
     videoController_[userId] = videoController;
 }

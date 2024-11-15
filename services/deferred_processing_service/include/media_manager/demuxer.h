@@ -30,16 +30,21 @@ public:
     virtual ~Demuxer();
 
     MediaManagerError Create(const std::shared_ptr<AVSource>& source,
-        const std::map<TrackType, const std::shared_ptr<Track>>& tracks);
-    MediaManagerError ReadStream(TrackType trackType, std::shared_ptr<AVBuffer>& sample);
+        const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& tracks);
+    MediaManagerError ReadStream(Media::Plugins::MediaType trackType, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError SeekToTime(int64_t lastPts);
 
 private:
     MediaManagerError SeletctTrackByID(int32_t trackID);
+    int32_t GetTrackId(Media::Plugins::MediaType trackType);
+    void SetTrackId(Media::Plugins::MediaType trackType, int32_t trackId);
 
     std::shared_ptr<AVDemuxer> demuxer_ {nullptr};
-    int32_t videoTrackId_ {-1};
-    int32_t audioTrackId_ {-1};
+    std::unordered_map<Media::Plugins::MediaType, int32_t> trackIds_ = {
+        {Media::Plugins::MediaType::AUDIO, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::VIDEO, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID}
+    };
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

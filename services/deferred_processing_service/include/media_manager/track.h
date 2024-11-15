@@ -17,17 +17,12 @@
 #define OHOS_CAMERA_DPS_TRACK_H
 
 #include "av_common.h"
+#include "media_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 using namespace MediaAVCodec;
-
-enum class TrackType : int32_t {
-    AV_KEY_DEFAULT_TYPE = -1,
-    AV_KEY_AUDIO_TYPE = 0,
-    AV_KEY_VIDEO_TYPE = 1
-};
 
 struct TrackFormat {
     std::shared_ptr<Format> format;
@@ -39,15 +34,16 @@ public:
     Track() = default;
     virtual ~Track();
     const TrackFormat& GetFormat();
-    void SetFormat(const TrackFormat& format, TrackType type);
-    TrackType GetType()
+    void SetFormat(const TrackFormat& format, Media::Plugins::MediaType type);
+    
+    inline Media::Plugins::MediaType GetType()
     {
         return trackType_;
     };
 
 private:
     TrackFormat trackFormat_ {nullptr};
-    TrackType trackType_ {TrackType::AV_KEY_DEFAULT_TYPE};
+    Media::Plugins::MediaType trackType_ {Media::Plugins::MediaType::UNKNOWN};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

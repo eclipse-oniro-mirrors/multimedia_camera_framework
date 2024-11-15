@@ -119,14 +119,14 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
-    DP_INFO_LOG("create video session for userId: %{public}d", userId);
+    DP_INFO_LOG("Create DeferredVideoProcessingSession for userId: %{public}d", userId);
     auto sessionInfo = GetSessionInfo(userId);
     if (sessionInfo == nullptr) {
-        DP_INFO_LOG("video session creat susses");
+        DP_INFO_LOG("DeferredVideoProcessingSession susses");
         sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId, callback);
         videoSessionInfos_.Insert(userId, sessionInfo);
     } else {
-        DP_DEBUG_LOG("video session already existed");
+        DP_INFO_LOG("DeferredVideoProcessingSession already existed");
         sessionInfo->SetCallback(callback);
     }
     auto ret = DPS_SendUrgentCommand<AddVideoSessionCommand>(sessionInfo);

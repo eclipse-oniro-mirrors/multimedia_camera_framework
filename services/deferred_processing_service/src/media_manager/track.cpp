@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,14 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-void Track::SetFormat(const TrackFormat &format, TrackType type)
+Track::~Track()
+{
+    if (trackFormat_.format != nullptr) {
+        trackFormat_.format = nullptr;
+    }
+}
+
+void Track::SetFormat(const TrackFormat &format, Media::Plugins::MediaType type)
 {
     trackFormat_ = format;
     trackType_ = type;
@@ -27,13 +34,6 @@ void Track::SetFormat(const TrackFormat &format, TrackType type)
 const TrackFormat& Track::GetFormat()
 {
     return trackFormat_;
-}
-
-Track::~Track()
-{
-    if (trackFormat_.format != nullptr) {
-        trackFormat_.format = nullptr;
-    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

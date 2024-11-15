@@ -27,8 +27,9 @@ public:
     Writer() = default;
     virtual ~Writer();
 
-    MediaManagerError Create(int32_t outputFd, const std::map<TrackType, const std::shared_ptr<Track>>& trackMap);
-    MediaManagerError Write(TrackType type, const std::shared_ptr<AVBuffer>& sample);
+    MediaManagerError Create(int32_t outputFd,
+        const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& trackMap);
+    MediaManagerError Write(Media::Plugins::MediaType type, const std::shared_ptr<AVBuffer>& sample);
     MediaManagerError Start();
     MediaManagerError Stop();
     MediaManagerError AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInfo);

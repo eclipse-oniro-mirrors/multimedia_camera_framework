@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,31 +45,31 @@ MediaManagerError Reader::Create(int32_t inputFd)
     DP_CHECK_ERROR_RETURN_RET_LOG(inputFd == INVALID_FD, ERROR_FAIL, "inputFd is invalid: %{public}d.", inputFd);
 
     auto off = lseek(inputFd, DEFAULT_OFFSET, SEEK_END);
-    DP_CHECK_ERROR_RETURN_RET_LOG(off == static_cast<off_t>(ERROR_FAIL), ERROR_FAIL, "reader lseek failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(off == static_cast<off_t>(ERROR_FAIL), ERROR_FAIL, "Reader lseek failed.");
     source_ = MediaAVCodec::AVSourceFactory::CreateWithFD(inputFd, DEFAULT_OFFSET, off);
-    DP_CHECK_ERROR_RETURN_RET_LOG(source_ == nullptr, ERROR_FAIL, "create avsource failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(source_ == nullptr, ERROR_FAIL, "Create avsource failed.");
 
     auto ret = GetSourceFormat();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "get avsource format failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Get avsource format failed.");
 
     ret = InitTracksAndDemuxer();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "init tracks and demuxer failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Init tracks and demuxer failed.");
     return OK;
 }
 
 MediaManagerError Reader::GetSourceFormat()
 {
     DP_DEBUG_LOG("entered.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(source_ == nullptr, ERROR_FAIL, "avsource is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(source_ == nullptr, ERROR_FAIL, "AVSource is nullptr.");
 
     Format sourceFormat;
     auto ret = source_->GetSourceFormat(sourceFormat);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "get avsource format failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource format failed.");
     sourceFormat_ = std::make_shared<Format>(sourceFormat);
 
     Format userMeta;
     ret = source_->GetUserMeta(userMeta);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "get avsource user meta failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource user meta failed.");
     userFormat_ = std::make_shared<Format>(userMeta);
     return OK;
 }
@@ -78,29 +78,28 @@ MediaManagerError Reader::InitTracksAndDemuxer()
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!sourceFormat_->GetIntValue(Tag::MEDIA_TRACK_COUNT, trackCount_), ERROR_FAIL,
-        "get track count failed.");
+        "Get track count failed.");
 
     for (int32_t index = 0; index < trackCount_; ++index) {
         auto track = TrackFactory::GetInstance().CreateTrack(source_, index);
-        DP_CHECK_ERROR_RETURN_RET_LOG(track == nullptr, ERROR_FAIL, "track: %{public}d is nullptr", index);
-        DP_DEBUG_LOG("track type: %{public}d", track->GetType());
+        DP_LOOP_CONTINUE_LOG(track == nullptr, "Track type: %{public}d is nullptr.", track->GetType());
         tracks_.emplace(std::pair(track->GetType(), track));
     }
-    DP_DEBUG_LOG("trackCount num: %{public}d, trackMap size: %{public}d",
+    DP_DEBUG_LOG("TrackCount num: %{public}d, trackMap size: %{public}d",
         trackCount_, static_cast<int32_t>(tracks_.size()));
     inputDemuxer_ = std::make_shared<Demuxer>();
     auto ret = inputDemuxer_->Create(source_, tracks_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "audio demuxer init failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Audio demuxer init failed.");
     return OK;
 }
 
-MediaManagerError Reader::Read(TrackType trackType, std::shared_ptr<AVBuffer>& sample)
+MediaManagerError Reader::Read(Media::Plugins::MediaType trackType, std::shared_ptr<AVBuffer>& sample)
 {
-    DP_CHECK_ERROR_RETURN_RET_LOG(inputDemuxer_ == nullptr, ERROR_FAIL, "demuxer is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(inputDemuxer_ == nullptr, ERROR_FAIL, "Demuxer is nullptr.");
     auto ret = inputDemuxer_->ReadStream(trackType, sample);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL,
-        "read sample failed, track type: %{public}d", trackType);
-    DP_CHECK_RETURN_RET_LOG(ret == EOS, EOS, "reading finished.");
+        "Read sample failed, track type: %{public}d", trackType);
+    DP_CHECK_RETURN_RET_LOG(ret == EOS, EOS, "Reading finished.");
     return ret;
 }
 
@@ -109,8 +108,8 @@ MediaManagerError Reader::GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
     GetSourceMediaInfo(mediaInfo);
     mediaInfo->streamCount = trackCount_;
 
-    auto it = tracks_.find(TrackType::AV_KEY_VIDEO_TYPE);
-    DP_CHECK_ERROR_RETURN_RET_LOG(it == tracks_.end(), ERROR_FAIL, "no video track.");
+    auto it = tracks_.find(Media::Plugins::MediaType::VIDEO);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == tracks_.end(), ERROR_FAIL, "Not find video track.");
     
     auto videoFormat = it->second->GetFormat();
     GetTrackMediaInfo(videoFormat, mediaInfo);
@@ -120,11 +119,11 @@ MediaManagerError Reader::GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
 MediaManagerError Reader::Reset(int64_t resetPts)
 {
     DP_DEBUG_LOG("entered.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(resetPts < 0, ERROR_FAIL, "invalid reset pts.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(inputDemuxer_ == nullptr, ERROR_FAIL, "demuxer is null.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(resetPts < 0, ERROR_FAIL, "Invalid reset pts.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(inputDemuxer_ == nullptr, ERROR_FAIL, "Demuxer is null.");
 
     auto ret = inputDemuxer_->SeekToTime(resetPts);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "reset pts failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Reset pts failed.");
     return OK;
 }
 
@@ -197,11 +196,11 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
     }
 
     DP_DEBUG_LOG("colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
-        "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}lld, "
+        "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
         "fps: %{public}d, rotation: %{public}d, frame count: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
         mediaInfo->codecInfo.colorTransferCharacter, mediaInfo->codecInfo.profile, mediaInfo->codecInfo.level,
-        static_cast<long long>(mediaInfo->codecInfo.bitRate), mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
+        mediaInfo->codecInfo.bitRate, mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
         mediaInfo->codecInfo.numFrames, mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
     return OK;
 }

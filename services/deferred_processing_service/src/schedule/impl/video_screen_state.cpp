@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,7 +36,7 @@ VideoScreenState::VideoSchedulerInfo VideoScreenState::ReevaluateSchedulerInfo()
     bool ignore = system::GetBoolParameter(IGNORE_SCREEN, false);
     DP_CHECK_ERROR_RETURN_RET_LOG(ignore, {false}, "ignore VideoScreenState: %{public}d", stateValue_);
 
-    DP_INFO_LOG("entered, VideoScreenState: %{public}d", stateValue_);
+    DP_DEBUG_LOG("VideoScreenState: %{public}d", stateValue_);
     bool isNeedStop = stateValue_ == ScreenStatus::SCREEN_ON;
     return {isNeedStop, false};
 }

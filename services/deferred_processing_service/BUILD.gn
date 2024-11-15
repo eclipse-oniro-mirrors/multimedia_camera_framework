@@ -69,6 +69,7 @@ ohos_shared_library("deferred_processing_service") {
     "src/post_processor/command/video_process_command.cpp",
     "src/post_processor/photo_post_processor.cpp",
     "src/post_processor/video_post_processor.cpp",
+    "src/post_processor/video_process_result.cpp",
     "src/schedule/base/ischeduler_video_state.cpp",
     "src/schedule/impl/video_battery_level_state.cpp",
     "src/schedule/impl/video_battery_state.cpp",

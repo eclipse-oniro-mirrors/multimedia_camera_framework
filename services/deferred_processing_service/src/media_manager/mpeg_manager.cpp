@@ -18,11 +18,15 @@
 #include <fcntl.h>
 
 #include "dp_log.h"
+#include "sync_fence.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr int64_t DEFAULT_TIME_TAMP = 0;
+namespace {
+    const std::string VIDEO_MAKER_NAME = "DpsVideoMaker";
+    constexpr int64_t DEFAULT_TIME_TAMP = 0;
+}
 
 class MpegManager::VideoCodecCallback : public MediaCodecCallback {
 public:
@@ -31,44 +35,53 @@ public:
         DP_DEBUG_LOG("entered.");
     }
 
-    ~VideoCodecCallback()
+    ~VideoCodecCallback() = default;
+
+    void OnError(AVCodecErrorType errorType, int32_t errorCode) override
+    {
+        DP_ERR_LOG("entered, errorType: %{public}d, errorCode: %{public}d", errorType, errorCode);
+    }
+
+    void OnOutputFormatChanged(const Format &format) override
     {
         DP_DEBUG_LOG("entered.");
     }
 
-    void OnError(AVCodecErrorType errorType, int32_t errorCode) override;
-    void OnOutputFormatChanged(const Format &format) override;
-    void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
-    void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
+    void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override
+    {
+        DP_DEBUG_LOG("entered, index: %{public}u", index);
+    }
+
+    void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override
+    {
+        DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "OutputBuffer is null");
+        auto manager = mpegManager_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(manager == nullptr, "MpegManager is nullptr.");
+        manager->OnBufferAvailable(index, buffer);
+    }
 
 private:
     std::weak_ptr<MpegManager> mpegManager_;
 };
 
-void MpegManager::VideoCodecCallback::OnError(AVCodecErrorType errorType, int32_t errorCode)
-{
-    DP_ERR_LOG("entered, errorType: %{public}d, errorCode: %{public}d", errorType, errorCode);
-}
-
-void MpegManager::VideoCodecCallback::OnOutputFormatChanged(const Format &format)
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-void MpegManager::VideoCodecCallback::OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer)
-{
-    DP_DEBUG_LOG("entered.");
-    (void)index;
-}
-
-void MpegManager::VideoCodecCallback::OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer)
-{
-    DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "OutputBuffer is null");
-    auto manager = mpegManager_.lock();
-    if (manager != nullptr) {
-        manager->OnBufferAvailable(index, buffer);
+class MpegManager::VideoMakerListener : public IBufferConsumerListener {
+public:
+    explicit VideoMakerListener(const std::weak_ptr<MpegManager>& mpegManager) : mpegManager_(mpegManager)
+    {
+        DP_DEBUG_LOG("entered.");
     }
-}
+    ~VideoMakerListener() = default;
+
+    void OnBufferAvailable() override
+    {
+        auto manager = mpegManager_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(manager == nullptr, "MpegManager is nullptr.");
+        manager->OnMakerBufferAvailable();
+    }
+
+private:
+    std::weak_ptr<MpegManager> mpegManager_;
+};
 
 MpegManager::MpegManager()
 {
@@ -78,21 +91,15 @@ MpegManager::MpegManager()
 
 MpegManager::~MpegManager()
 {
-    DP_DEBUG_LOG("entered.");
-    mediaManager_ = nullptr;
-    codecSurface_ = nullptr;
-    processThread_ = nullptr;
-    mediaInfo_ = nullptr;
-    outputFd_ = nullptr;
-    tempFd_ = nullptr;
+    DP_INFO_LOG("entered.");
     remove(tempPath_.c_str());
     if (result_ == MediaResult::PAUSE) {
         int ret = rename(outPath_.c_str(), tempPath_.c_str());
         if (ret != 0) {
-            DP_ERR_LOG("rename %{public}s to %{public}s failde, ret: %{public}d",
+            DP_ERR_LOG("Rename %{public}s to %{public}s failde, ret: %{public}d",
                 outPath_.c_str(), tempPath_.c_str(), ret);
         } else {
-            DP_INFO_LOG("rename %{public}s to %{public}s success.", outPath_.c_str(), tempPath_.c_str());
+            DP_INFO_LOG("Rename %{public}s to %{public}s success.", outPath_.c_str(), tempPath_.c_str());
         }
     }
 }
@@ -101,17 +108,18 @@ MediaManagerError MpegManager::Init(const std::string& requestId, const sptr<IPC
 {
     DP_DEBUG_LOG("entered.");
     outputFd_ = GetFileFd(requestId, O_CREAT | O_RDWR, OUT_TAG);
-    DP_CHECK_ERROR_RETURN_RET_LOG(outputFd_ == nullptr, ERROR_FAIL, "output video create failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(outputFd_ == nullptr, ERROR_FAIL, "Output video create failde.");
 
     tempFd_ = GetFileFd(requestId, O_RDONLY, TEMP_TAG);
-    DP_CHECK_ERROR_RETURN_RET_LOG(tempFd_ == nullptr, ERROR_FAIL, "temp video create failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(tempFd_ == nullptr, ERROR_FAIL, "Temp video create failde.");
 
     auto ret = mediaManager_->Create(inputFd->GetFd(), outputFd_->GetFd(), tempFd_->GetFd());
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "media manager create failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Media manager create failde.");
 
     mediaManager_->GetMediaInfo(mediaInfo_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(InitVideoCodec() != OK, ERROR_FAIL, "init video codec failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(InitVideoCodec() != OK, ERROR_FAIL, "Init video codec failde.");
 
+    DP_CHECK_ERROR_RETURN_RET_LOG(InitVideoMakerSurface() != OK, ERROR_FAIL, "Init video maker surface failde.");
     isRunning_.store(true);
     return OK;
 }
@@ -138,6 +146,11 @@ sptr<Surface> MpegManager::GetSurface()
     return codecSurface_;
 }
 
+sptr<Surface> MpegManager::GetMakerSurface()
+{
+    return makerSurface_;
+}
+
 uint64_t MpegManager::GetProcessTimeStamp()
 {
     DP_CHECK_RETURN_RET(mediaInfo_->recoverTime < DEFAULT_TIME_TAMP, DEFAULT_TIME_TAMP);
@@ -147,14 +160,7 @@ uint64_t MpegManager::GetProcessTimeStamp()
 MediaManagerError MpegManager::NotifyEnd()
 {
     auto ret = encoder_->NotifyEos();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "video codec notify end failde.");
-    return OK;
-}
-
-MediaManagerError MpegManager::ReleaseBuffer(uint32_t index)
-{
-    auto ret = encoder_->ReleaseOutputBuffer(index);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "video codec release buffer failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Video codec notify end failde.");
     return OK;
 }
 
@@ -165,14 +171,15 @@ sptr<IPCFileDescriptor> MpegManager::GetResultFd()
 
 MediaManagerError MpegManager::InitVideoCodec()
 {
-    DP_INFO_LOG("entered.");
+    DP_INFO_LOG("DPS_VIDEO: Create video codec.");
     auto codecInfo = mediaInfo_->codecInfo;
     encoder_ = VideoEncoderFactory::CreateByMime(codecInfo.mimeType);
-    DP_CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, ERROR_FAIL, "video codec create failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, ERROR_FAIL, "Video codec create failde.");
 
     auto callback = std::make_shared<VideoCodecCallback>(weak_from_this());
     auto ret = encoder_->SetCallback(callback);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "video codec set callback failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
+        "Video codec set callback failde, ret:%{public}d.", ret);
 
     Format videoFormat;
     if (codecInfo.mimeType == MINE_VIDEO_HEVC) {
@@ -194,14 +201,14 @@ MediaManagerError MpegManager::InitVideoCodec()
 
     ret = encoder_->Configure(videoFormat);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
-        "video codec configure failde, ret: %{public}d.", ret);
+        "Video codec configure failde, ret: %{public}d.", ret);
 
     codecSurface_ = encoder_->CreateInputSurface();
     ret = encoder_->Prepare();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "video codec prepare failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Video codec prepare failde.");
 
     ret = encoder_->Start();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "video codec start failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Video codec start failde.");
 
     return OK;
 }
@@ -214,15 +221,88 @@ void MpegManager::UnInitVideoCodec()
     }
     DP_CHECK_RETURN(encoder_ == nullptr);
     encoder_->Release();
-    encoder_ = nullptr;
+}
+
+MediaManagerError MpegManager::InitVideoMakerSurface()
+{
+    DP_INFO_LOG("DPS_VIDEO: Create video maker surface.");
+    makerSurface_ = Surface::CreateSurfaceAsConsumer(VIDEO_MAKER_NAME);
+    DP_CHECK_ERROR_RETURN_RET_LOG(makerSurface_ == nullptr, ERROR_FAIL, "Video maker surface create failde.");
+
+    auto listener = sptr<VideoMakerListener>::MakeSptr(weak_from_this());
+    auto ret = makerSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
+        "Video maker surface set callback failde, ret:%{public}d.", ret);
+
+    return OK;
+}
+
+void MpegManager::UnInitVideoMaker()
+{
+    DP_DEBUG_LOG("entered.");
 }
 
 void MpegManager::OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer)
 {
-    auto ret = mediaManager_->WriteSample(TrackType::AV_KEY_VIDEO_TYPE, buffer);
-    DP_CHECK_ERROR_RETURN_LOG(ret != OK, "video codec write failde.");
+    DP_DEBUG_LOG("OnBufferAvailable: pts: %{public}" PRId64 ", duration: %{public}" PRId64,
+        buffer->pts_, buffer->duration_);
+    auto ret = mediaManager_->WriteSample(Media::Plugins::MediaType::VIDEO, buffer);
+    DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video codec write failde.");
+
     ret = ReleaseBuffer(index);
-    DP_CHECK_ERROR_RETURN_LOG(ret != OK, "video codec release buffer failde.");
+    DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video codec release buffer failde.");
+}
+
+MediaManagerError MpegManager::ReleaseBuffer(uint32_t index)
+{
+    auto ret = encoder_->ReleaseOutputBuffer(index);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Video codec release buffer failde.");
+    return OK;
+}
+
+void MpegManager::OnMakerBufferAvailable()
+{
+    DP_CHECK_ERROR_RETURN_LOG(makerSurface_ == nullptr, "MakerSurface is nullptr.");
+    DP_DEBUG_LOG("OnMakerBufferAvailable: surface size: %{public}u", makerSurface_->GetQueueSize());
+
+    int64_t timestamp;
+    auto buffer = AcquireMakerBuffer(timestamp);
+    DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "MakerBuffer is nullptr");
+
+    std::lock_guard<std::mutex> lock(makerMutex_);
+    auto makerBuffer = AVBuffer::CreateAVBuffer(buffer);
+    makerBuffer->pts_ = timestamp;
+    DP_DEBUG_LOG("MakerBuffer pts %{public}" PRId64, makerBuffer->pts_);
+    auto ret = mediaManager_->WriteSample(Media::Plugins::MediaType::TIMEDMETA, makerBuffer);
+    DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video maker data write failde.");
+
+    ret = ReleaseMakerBuffer(buffer);
+    DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video maker data release buffer failde.");
+}
+
+sptr<SurfaceBuffer> MpegManager::AcquireMakerBuffer(int64_t& timestamp)
+{
+    OHOS::Rect damage;
+    sptr<SurfaceBuffer> buffer;
+    sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+    auto surfaceRet = makerSurface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
+    DP_CHECK_ERROR_RETURN_RET_LOG(surfaceRet != SURFACE_ERROR_OK, nullptr,
+        "Acquire maker buffer failed, ret: %{public}d", surfaceRet);
+
+    surfaceRet = makerSurface_->DetachBufferFromQueue(buffer);
+    DP_CHECK_ERROR_RETURN_RET_LOG(surfaceRet != SURFACE_ERROR_OK, nullptr,
+        "Detach maker buffer failed, ret: %{public}d", surfaceRet);
+    return buffer;
+}
+
+MediaManagerError MpegManager::ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer)
+{
+    auto ret = makerSurface_->AttachBufferToQueue(buffer);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ERROR_FAIL, "Attach maker buffer failde.");
+
+    ret = makerSurface_->ReleaseBuffer(buffer, -1);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != SURFACE_ERROR_OK, ERROR_FAIL, "Release maker buffer failde.");
+    return OK;
 }
 
 sptr<IPCFileDescriptor> MpegManager::GetFileFd(const std::string& requestId, int flags, const std::string& tag)

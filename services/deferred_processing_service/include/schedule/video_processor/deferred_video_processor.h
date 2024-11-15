@@ -23,10 +23,9 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredVideoProcessor : public IVideoProcessCallbacks {
+class DeferredVideoProcessor : public IVideoProcessCallbacks,
+    public std::enable_shared_from_this<DeferredVideoProcessor> {
 public:
-    DeferredVideoProcessor(const int32_t userId, std::shared_ptr<VideoJobRepository> repository,
-        std::shared_ptr<IVideoProcessCallbacks> callbacks);
     ~DeferredVideoProcessor();
     void Initialize();
 
@@ -44,13 +43,17 @@ public:
     void SetDefaultExecutionMode();
     bool GetPendingVideos(std::vector<std::string>& pendingVideos);
 
+protected:
+    DeferredVideoProcessor(const std::shared_ptr<VideoJobRepository>& repository,
+        const std::shared_ptr<VideoPostProcessor>& postProcessor,
+        const std::shared_ptr<IVideoProcessCallbacks>& callback);
+
 private:
     bool IsFatalError(DpsError errorCode);
 
-    const int32_t userId_;
     std::shared_ptr<VideoJobRepository> repository_;
-    std::shared_ptr<IVideoProcessCallbacks> callbacks_;
     std::shared_ptr<VideoPostProcessor> postProcessor_;
+    std::shared_ptr<IVideoProcessCallbacks> callback_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

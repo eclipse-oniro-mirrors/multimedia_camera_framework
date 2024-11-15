@@ -105,7 +105,7 @@ void EventSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventData& data
 {
     AAFwk::Want want = data.GetWant();
     auto action = want.GetAction();
-    DP_INFO_LOG("EventSubscriber::OnReceiveEvent: %{public}s.", action.c_str());
+    DP_DEBUG_LOG("DPS_EVENT: %{public}s.", action.c_str());
     auto entry = eventStrategy_.find(action);
     if (entry != eventStrategy_.end()) {
         auto strategy = entry->second;
@@ -113,7 +113,6 @@ void EventSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventData& data
             strategy->handleEvent(data);
         }
     }
-    DP_DEBUG_LOG("EventSubscriber::OnReceiveEvent: end");
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

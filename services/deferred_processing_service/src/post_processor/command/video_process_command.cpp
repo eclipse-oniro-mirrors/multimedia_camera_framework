@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,36 +27,17 @@ VideoProcessCommand::VideoProcessCommand(const int32_t userId) : userId_(userId)
     DP_DEBUG_LOG("entered. userId: %{public}d", userId_);
 }
 
-VideoProcessCommand::~VideoProcessCommand()
-{
-    DP_DEBUG_LOG("entered.");
-    schedulerManager_ = nullptr;
-    controller_ = nullptr;
-}
-
 int32_t VideoProcessCommand::Initialize()
 {
     DP_CHECK_RETURN_RET(initialized_.load(), DP_OK);
-    schedulerManager_ = DPS_GetSchedulerManager();
-    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager_ == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
+    auto schedulerManager = DPS_GetSchedulerManager();
+    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
 
-    controller_ = schedulerManager_->GetVideoController(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(controller_ == nullptr, DP_NULL_POINTER, "VideoController is nullptr.");
+    videdPostProcess_ = schedulerManager->GetVideoPostProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(videdPostProcess_ == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
+
     initialized_.store(true);
     return DP_OK;
-}
-
-VideoProcessSuccessCommand::VideoProcessSuccessCommand(const int32_t userId, const DeferredVideoWorkPtr& work)
-    : VideoProcessCommand(userId),
-      work_(work)
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-VideoProcessSuccessCommand::~VideoProcessSuccessCommand()
-{
-    DP_DEBUG_LOG("entered.");
-    work_ = nullptr;
 }
 
 int32_t VideoProcessSuccessCommand::Executing()
@@ -65,23 +46,8 @@ int32_t VideoProcessSuccessCommand::Executing()
         return ret;
     }
 
-    controller_->HandleSuccess(userId_, work_);
+    videdPostProcess_->OnProcessDone(videoId_);
     return DP_OK;
-}
-
-VideoProcessFailedCommand::VideoProcessFailedCommand(const int32_t userId,
-    const DeferredVideoWorkPtr& work, DpsError errorCode)
-    : VideoProcessCommand(userId),
-      work_(work),
-      error_(errorCode)
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-VideoProcessFailedCommand::~VideoProcessFailedCommand()
-{
-    DP_DEBUG_LOG("entered.");
-    work_ = nullptr;
 }
 
 int32_t VideoProcessFailedCommand::Executing()
@@ -90,7 +56,7 @@ int32_t VideoProcessFailedCommand::Executing()
         return ret;
     }
 
-    controller_->HandleError(userId_, work_, error_);
+    videdPostProcess_->OnError(videoId_, error_);
     return DP_OK;
 }
 

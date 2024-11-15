@@ -31,16 +31,21 @@ public:
     virtual ~Muxer();
 
     MediaManagerError Create(int32_t outputFd, Plugins::OutputFormat format);
-    MediaManagerError AddTracks(const std::map<TrackType, const std::shared_ptr<Track>>& trackMap);
-    MediaManagerError WriteStream(TrackType trackType, const std::shared_ptr<AVBuffer>& sample);
+    MediaManagerError AddTracks(const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& trackMap);
+    MediaManagerError WriteStream(Media::Plugins::MediaType trackType, const std::shared_ptr<AVBuffer>& sample);
     MediaManagerError Start();
     MediaManagerError Stop();
     MediaManagerError AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInfo);
 
 private:
+    int32_t GetTrackId(Media::Plugins::MediaType trackType);
+
     std::shared_ptr<AVMuxer> muxer_ {nullptr};
-    int32_t videoTrackId_ {-1};
-    int32_t audioTrackId_ {-1};
+    std::unordered_map<Media::Plugins::MediaType, int32_t> trackIds_ = {
+        {Media::Plugins::MediaType::AUDIO, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::VIDEO, INVALID_TRACK_ID},
+        {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID}
+    };
 };
 
 } // namespace DeferredProcessing

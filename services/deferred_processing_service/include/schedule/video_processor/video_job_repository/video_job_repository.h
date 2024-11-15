@@ -52,7 +52,6 @@ private:
     DeferredVideoJobPtr GetJobUnLocked(const std::string& videoId);
     void ClearCatch();
 
-    std::recursive_mutex mutex_;
     const int32_t userId_;
     std::shared_ptr<VideoJobQueue> jobQueue_ {nullptr};
     std::unordered_map<std::string, DeferredVideoJobPtr> jobMap_ {};

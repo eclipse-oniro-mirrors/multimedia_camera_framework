@@ -30,7 +30,7 @@ void SetThreadName(pthread_t tid, const std::string& name)
         DP_DEBUG_LOG("task name %s exceed max size: %{public}d", name.c_str(), threadNameMaxSize);
     }
     int ret = pthread_setname_np(tid, threadName.c_str());
-    DP_DEBUG_LOG("threadId: %ld, threadName: %s, pthread_setname_np ret = %{public}d.",
+    DP_DEBUG_LOG("threadId: %{public}ld, threadName: %s, pthread_setname_np ret = %{public}d.",
         static_cast<long>(pthread_gettid_np(tid)), threadName.c_str(), ret);
 }
 

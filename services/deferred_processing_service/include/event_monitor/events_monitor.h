@@ -42,13 +42,14 @@ public:
         const std::string& cameraId, bool running, bool isSystemCamera);
     void NotifyMediaLibraryStatus(bool available);
     void NotifyImageEnhanceStatus(int32_t status);
+    void NotifyVideoEnhanceStatus(int32_t status);
     void NotifyScreenStatus(int32_t status);
     void NotifyChargingStatus(int32_t status);
     void NotifyBatteryStatus(int32_t status);
     void NotifyBatteryLevel(int32_t level);
     void NotifySystemPressureLevel(SystemPressureLevel level);
     void NotifyThermalLevel(int level);
-    void NotifyPhotoProcessSize(int32_t size);
+    void NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize);
     void NotifyEventToObervers(int userId, EventType event, int value);
     void RegisterEventsListener(int userId, const std::vector<EventType>& events,
         const std::weak_ptr<IEventsListener>& listener);

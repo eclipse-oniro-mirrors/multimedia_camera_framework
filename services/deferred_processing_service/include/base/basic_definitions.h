@@ -26,6 +26,7 @@ constexpr int32_t DEFAULT_OFFSET = 0;
 constexpr int32_t TOTAL_PROCESS_TIME = 10 * 60 * 1000;
 constexpr int32_t ONCE_PROCESS_TIME = 5 * 60 * 1000;
 constexpr uint32_t DELAY_TIME = 1000;
+constexpr int32_t INVALID_TRACK_ID = -1;
 const std::string PATH = "/data/service/el1/public/camera_service/";
 const std::string TEMP_TAG = "_vid_temp";
 const std::string OUT_TAG = "_vid";
@@ -33,6 +34,7 @@ const std::string OUT_TAG = "_vid";
 enum EventType : int32_t {
     CAMERA_SESSION_STATUS_EVENT = 1,
     HDI_STATUS_EVENT,
+    VIDEO_HDI_STATUS_EVENT,
     MEDIA_LIBRARY_STATUS_EVENT,
     SCREEN_STATUS_EVENT,
     CHARGING_STATUS_EVENT,
@@ -192,7 +194,7 @@ enum ScheduleType : int32_t {
 };
 
 enum MediaManagerError : int32_t {
-    ERROR_NO_INITED = -2,
+    ERROR_DEBUG_INFO = -2,
     ERROR_FAIL = -1,
     OK = 0,
     EOS = 1,

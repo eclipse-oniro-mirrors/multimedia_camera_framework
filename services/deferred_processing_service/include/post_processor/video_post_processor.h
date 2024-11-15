@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,11 +19,12 @@
 #include "basic_definitions.h"
 #include "deferred_video_job.h"
 #include "iservstat_listener_hdi.h"
+#include "ivideo_process_callbacks.h"
 #include "mpeg_manager.h"
-#include "safe_map.h"
 #include "v1_3/ivideo_process_service.h"
 #include "v1_3/ivideo_process_session.h"
 #include "v1_3/ivideo_process_callback.h"
+#include "video_process_result.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -44,6 +45,11 @@ public:
     void ProcessRequest(const DeferredVideoWorkPtr& work);
     void RemoveRequest(const std::string& videoId);
     void PauseRequest(const std::string& videoId, const ScheduleType& type);
+    DeferredVideoWorkPtr GetRunningWork(const std::string& videoId);
+    void OnProcessDone(const std::string& videoId);
+    void OnError(const std::string& videoId, DpsError errorCode);
+    void OnStateChanged(HdiStatus hdiStatus);
+    void OnSessionDied();
 
 protected:
     explicit VideoPostProcessor(const int32_t userId);
@@ -56,20 +62,15 @@ private:
     void ConnectService();
     void DisconnectService();
     bool PrepareStreams(const std::string& videoId, const int inputFd);
-    void CreateSurface(const std::string& name, const StreamDescription& stream, sptr<Surface>& surface);
+    bool ProcessStream(const StreamDescription& stream);
     void SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer);
     bool StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd);
     bool StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work);
     void ReleaseMpeg();
     void StartTimer(const std::string& videoId, const DeferredVideoWorkPtr& work);
-    void StopTimer(const std::string& videoId);
+    void StopTimer(const DeferredVideoWorkPtr& work);
     void OnTimerOut(const std::string& videoId);
     void OnServiceChange(const HDI::ServiceManager::V1_0::ServiceStatus& status);
-    void OnSessionDied();
-    void OnProcessDone(const std::string& videoId);
-    void OnError(const std::string& videoId, DpsError errorCode);
-    void OnStateChanged(HdiStatus hdiStatus);
-    DeferredVideoWorkPtr GetRunningWork(const std::string& videoId);
     void copyFileByFd(const int srcFd, const int dstFd);
     DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode);
 
@@ -84,31 +85,17 @@ private:
         std::lock_guard<std::mutex> lock(sessionMutex_);
         session_ = session;
     }
-    
-    inline std::shared_ptr<MpegManager> GetMpegManager()
-    {
-        std::lock_guard<std::mutex> lock(mpegManagerMutex_);
-        return mpegManager_;
-    }
-    
-    inline void SetMpegManager(const std::shared_ptr<MpegManager>& mpegManager)
-    {
-        std::lock_guard<std::mutex> lock(mpegManagerMutex_);
-        mpegManager_ = mpegManager;
-        return;
-    }
 
-    std::mutex mpegManagerMutex_;
     std::mutex sessionMutex_;
     const int32_t userId_;
-    int32_t timeoutCount_ {0};
     sptr<IVideoProcessSession> session_ {nullptr};
     std::shared_ptr<MpegManager> mpegManager_ {nullptr};
+    std::shared_ptr<VideoProcessResult> processResult_ {nullptr};
     sptr<VideoServiceListener> serviceListener_;
     sptr<SessionDeathRecipient> sessionDeathRecipient_;
     sptr<VideoProcessListener> processListener_;
     std::vector<StreamInfo_V1_1> allStreamInfo_ {};
-    SafeMap<std::string, DeferredVideoWorkPtr> videoId2Handle_ {};
+    std::unordered_map<std::string, DeferredVideoWorkPtr> runningWork_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

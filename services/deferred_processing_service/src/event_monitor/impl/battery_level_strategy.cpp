@@ -50,7 +50,7 @@ void BatteryLevelStrategy::handleEvent(const EventFwk::CommonEventData& data)
     DP_CHECK_RETURN(batteryLevel == preLevel_);
 
     preLevel_ = batteryLevel;
-    DP_INFO_LOG("OnBatteryLevelChanged level:%{public}d", preLevel_);
+    DP_INFO_LOG("DPS_EVENT: BatteryLevelChanged level:%{public}d", preLevel_);
     EventsMonitor::GetInstance().NotifyBatteryLevel(preLevel_);
 }
 } // namespace DeferredProcessing

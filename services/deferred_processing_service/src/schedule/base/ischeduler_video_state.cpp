@@ -50,10 +50,11 @@ bool ISchedulerVideoState::UpdateSchedulerInfo(ScheduleType type, int32_t stateV
     int32_t preStateValue = stateValue_;
     stateValue_ = stateValue;
     auto info = ReevaluateSchedulerInfo();
-    DP_CHECK_ERROR_RETURN_RET_LOG(scheduleInfo_ == info, false,
-        "VideoSchedulerInfo(%{public}d) state : %{public}d is not change.", type, stateValue);
+    DP_CHECK_RETURN_RET_LOG(scheduleInfo_ == info, false,
+        "DPS_EVENT: VideoSchedulerInfo(%{public}d) is not change, state: %{public}d", type, stateValue);
 
-    DP_INFO_LOG("VideoSchedulerInfo(%{public}d) state from %{public}d to %{public}d", type, preStateValue, stateValue);
+    DP_INFO_LOG("DPS_EVENT: VideoSchedulerInfo(%{public}d) state from %{public}d to %{public}d",
+        type, preStateValue, stateValue);
     scheduleInfo_ = info;
     return true;
 }

@@ -50,19 +50,19 @@ public:
 
     inline bool IsReady()
     {
-        DP_INFO_LOG("isSchedulerOk is: %{public}d",  !isNeedStop_);
+        DP_INFO_LOG("DPS_VIDEO: SchedulerOk is: %{public}d",  !isNeedStop_);
         return !isNeedStop_;
     }
 
     inline bool IsTimeReady()
     {
-        DP_INFO_LOG("isTimeOk is: 0x%{public}x", isTimeOk_);
+        DP_INFO_LOG("DPS_VIDEO: TimeOk is: 0x%{public}x", isTimeOk_);
         return isTimeOk_ == TIME_OK;
     }
 
     inline bool isCharging()
     {
-        DP_INFO_LOG("isCharging is: %{public}d", isCharging_);
+        DP_INFO_LOG("DPS_VIDEO: Charging is: %{public}d", isCharging_);
         return isCharging_;
     }
 
