@@ -103,7 +103,7 @@ int32_t HStreamMetadataProxy::EnableMetadataType(std::vector<int32_t> metadataTy
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_ENABLE_RESULTS), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::Start failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamMetadataProxy::EnableMetadataType Start failed, error: %{public}d", error);
     }
     return error;
 }
@@ -119,7 +119,7 @@ int32_t HStreamMetadataProxy::DisableMetadataType(std::vector<int32_t> metadataT
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_DISABLE_RESULTS), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::Start failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamMetadataProxy::DisableMetadataType Start failed, error: %{public}d", error);
     }
     return error;
 }

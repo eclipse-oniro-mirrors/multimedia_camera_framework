@@ -29,7 +29,6 @@
 #include "foundation/multimedia/camera_framework/interfaces/kits/native/include/camera/camera.h"
 #include "input/camera_input.h"
 #include "session/capture_session.h"
-#include "camera_error_code.h"
 
 namespace OHOS {
 namespace CameraStandard {

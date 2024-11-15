@@ -104,12 +104,12 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(Mes
 
 int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(MessageParcel& data)
 {
-    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone enter");
     std::string imageId = data.ReadString();
     bool isCloudImageEnhanceSupported = data.ReadBool();
     std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
     int32_t ret = OnProcessImageDone(imageId, picturePtr, isCloudImageEnhanceSupported);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone result: %{public}d", ret);
     return ret;
 }
 } // namespace DeferredProcessing

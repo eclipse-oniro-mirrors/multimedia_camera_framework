@@ -31,7 +31,7 @@ int HStreamDepthDataCallbackStub::OnRemoteRequest(
             errCode = HStreamDepthDataCallbackStub::HandleOnDepthDataError(data);
             break;
         default:
-            MEDIA_ERR_LOG("HStreamDrpthDataCallbackStub request code %{public}u not handled", code);
+            MEDIA_ERR_LOG("HStreamDepthDataCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
             break;
     }
@@ -45,4 +45,4 @@ int HStreamDepthDataCallbackStub::HandleOnDepthDataError(MessageParcel& data)
 }
 
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

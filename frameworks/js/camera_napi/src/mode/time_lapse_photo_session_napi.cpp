@@ -360,9 +360,9 @@ napi_value TimeLapsePhotoSessionNapi::StartTryAE(napi_env env, napi_callback_inf
         MEDIA_ERR_LOG("%{public}s: StartTryAE() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::StopTryAE(napi_env env, napi_callback_info info)
@@ -383,9 +383,9 @@ napi_value TimeLapsePhotoSessionNapi::StopTryAE(napi_env env, napi_callback_info
         MEDIA_ERR_LOG("%{public}s: StopTryAE() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::GetSupportedTimeLapseIntervalRange(napi_env env, napi_callback_info info)
@@ -460,9 +460,9 @@ napi_value TimeLapsePhotoSessionNapi::SetTimeLapseInterval(napi_env env, napi_ca
         MEDIA_ERR_LOG("%{public}s: SetTimeLapseInterval() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::SetTimeLapseRecordState(napi_env env, napi_callback_info info)
@@ -483,9 +483,9 @@ napi_value TimeLapsePhotoSessionNapi::SetTimeLapseRecordState(napi_env env, napi
         MEDIA_ERR_LOG("%{public}s: SetTimeLapseRecordState() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::SetTimeLapsePreviewType(napi_env env, napi_callback_info info)
@@ -506,9 +506,9 @@ napi_value TimeLapsePhotoSessionNapi::SetTimeLapsePreviewType(napi_env env, napi
         MEDIA_ERR_LOG("%{public}s: SetTimeLapsePreviewType() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 // ManualExposure
@@ -554,9 +554,9 @@ napi_value TimeLapsePhotoSessionNapi::SetExposure(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("%{public}s: setExposure() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::GetSupportedExposureRange(napi_env env, napi_callback_info info)
@@ -683,9 +683,9 @@ napi_value TimeLapsePhotoSessionNapi::SetExposureMeteringMode(napi_env env, napi
         MEDIA_ERR_LOG("%{public}s: SetExposureMeteringMode() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 // ManualIso
@@ -731,9 +731,9 @@ napi_value TimeLapsePhotoSessionNapi::SetIso(napi_env env, napi_callback_info in
         MEDIA_ERR_LOG("%{public}s: setIso() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::IsManualIsoSupported(napi_env env, napi_callback_info info)
@@ -891,9 +891,9 @@ napi_value TimeLapsePhotoSessionNapi::SetWhiteBalanceMode(napi_env env, napi_cal
         MEDIA_ERR_LOG("%{public}s: setWhiteBalanceMode() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::GetWhiteBalance(napi_env env, napi_callback_info info)
@@ -938,9 +938,9 @@ napi_value TimeLapsePhotoSessionNapi::SetWhiteBalance(napi_env env, napi_callbac
         MEDIA_ERR_LOG("%{public}s: setWhiteBalance() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value reslut;
-    napi_get_undefined(env, &reslut);
-    return reslut;
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value TimeLapsePhotoSessionNapi::Constructor(napi_env env, napi_callback_info info)
