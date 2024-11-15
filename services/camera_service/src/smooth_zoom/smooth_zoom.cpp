@@ -26,7 +26,7 @@ std::shared_ptr<IZoomAlgorithm> SmoothZoom::GetZoomAlgorithm(SmoothZoomType mode
             algorithm = std::make_shared<CubicBezier>();
             break;
         default:
-            algorithm = nullptr;
+            algorithm = std::make_shared<CubicBezier>();
             break;
     }
     return algorithm;
