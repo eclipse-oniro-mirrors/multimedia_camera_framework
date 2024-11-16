@@ -35,7 +35,7 @@ AudioVideoMuxer::~AudioVideoMuxer()
 int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy)
 {
     photoAssetProxy_ = photoAssetProxy;
-    if (photoAssetProxy) {
+    if (photoAssetProxy_) {
         fd_ = photoAssetProxy_->GetVideoFd();
     }
     MEDIA_INFO_LOG("CreateAVMuxer with videoFd: %{public}d", fd_);

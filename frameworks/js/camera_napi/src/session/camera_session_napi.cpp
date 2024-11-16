@@ -2717,7 +2717,7 @@ napi_value CameraSessionNapi::SetPortraitThemeType(napi_env env, napi_callback_i
         return nullptr;
     }
     MEDIA_DEBUG_LOG("CameraSessionNapi::SetPortraitThemeType is called");
-    int32_t type;
+    int32_t type = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, type);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {

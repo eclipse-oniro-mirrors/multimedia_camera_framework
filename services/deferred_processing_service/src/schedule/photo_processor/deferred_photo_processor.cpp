@@ -61,12 +61,15 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
     if (requestedImages_.count(imageId) != 0) {
         requestedImages_.erase(imageId);
     }
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "repository_ is nullptr");
     repository_->RemoveDeferredJob(imageId, restorable);
 
     if (restorable == false) {
         if (repository_->GetJobStatus(imageId) == PhotoJobStatus::RUNNING) {
+            DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "postProcessor_ is nullptr, RemoveImage failed.");
             postProcessor_->Interrupt();
         }
+        DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "postProcessor_ is nullptr, RemoveImage failed.");
         postProcessor_->RemoveImage(imageId);
     }
     return;
@@ -233,6 +236,10 @@ int DeferredPhotoProcessor::GetConcurrency(ExecutionMode mode)
 bool DeferredPhotoProcessor::GetPendingImages(std::vector<std::string>& pendingImages)
 {
     DP_INFO_LOG("entered");
+    if (postProcessor_ = nullptr) {
+        DP_ERR_LOG("postProcessor_ is nullptr");
+        return false;
+    }
     bool isSuccess = postProcessor_->GetPendingImages(pendingImages);
     if (isSuccess) {
         return true;

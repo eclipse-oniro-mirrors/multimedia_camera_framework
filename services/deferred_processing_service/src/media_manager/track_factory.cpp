@@ -45,6 +45,7 @@ std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>
     DP_DEBUG_LOG("entered.");
     Format trackFormat;
     int32_t trackType = -1;
+    DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "source is nullptr.");
     auto ret = source->GetTrackFormat(trackFormat, trackIndex);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "Get track format failed.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType),
