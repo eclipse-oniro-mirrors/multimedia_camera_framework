@@ -554,7 +554,7 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
                     "captureId=%{public}d", static_cast<int>(handle), captureId);
                 AssembleAuxiliaryPhoto(timestamp, captureId);
                 auto photoOutput = photoOutput_.promote();
-                if (photoOutput) {
+                if (photoOutput && photoOutput->captureIdAuxiliaryCountMap_.count(captureId)) {
                     photoOutput->captureIdAuxiliaryCountMap_[captureId] = -1;
                     MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto captureIdAuxiliaryCountMap_ = -1, "
                         "captureId=%{public}d", captureId);
@@ -1516,8 +1516,121 @@ ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photo
 void ThumbnailListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("ThumbnailListener:OnBufferAvailable() called");
-    UpdateJSCallbackAsync();
+    MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
+    ExecuteDeepCopySurfaceBuffer();
+    MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
+}
+
+void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
+{
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput == nullptr && photoOutput->thumbnailSurface_ == nullptr) {
+        MEDIA_ERR_LOG("ThumbnailListener photoOutput or thumbnailSurface_ is nullptr");
+        return;
+    }
+    auto surface = photoOutput->thumbnailSurface_;
+    string surfaceName = "Thumbnail";
+    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
+        surfaceName.c_str());
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
+    SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to acquire surface buffer");
+        return;
+    }
+    int32_t thumbnailWidth;
+    int32_t thumbnailHeight;
+    int32_t burstSeqId = -1;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
+        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
+    if (burstSeqId != -1) {
+        surface->ReleaseBuffer(surfaceBuffer, -1);
+        return;
+    }
+    Media::InitializationOptions opts {
+        .size = { .width = thumbnailWidth, .height = thumbnailHeight },
+        .srcPixelFormat = Media::PixelFormat::RGBA_8888,
+        .pixelFormat = Media::PixelFormat::RGBA_8888,
+    };
+    const int32_t formatSize = 4;
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
+        thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
+    surface->ReleaseBuffer(surfaceBuffer, -1);
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
+    UpdateJSCallbackAsync(std::move(pixelMap));
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
+        surfaceName.c_str(), captureId);
+}
+
+void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelMap)
+{
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
+        std::make_unique<ThumbnailListenerInfo>(this, std::move(pixelMap));
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(work->data);
+            if (callbackInfo) {
+                auto listener = callbackInfo->listener_.promote();
+                if (listener != nullptr) {
+                    listener->UpdateJSCallback(std::move(callbackInfo->pixelMap_));
+                    MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
+                }
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) const
+{
+    if (pixelMap == nullptr) {
+        MEDIA_ERR_LOG("ThumbnailListener::UpdateJSCallback surfaceBuffer is nullptr");
+        return;
+    }
+    napi_value result[ARGS_TWO] = { 0 };
+    napi_get_undefined(env_, &result[0]);
+    napi_get_undefined(env_, &result[1]);
+    napi_value retVal;
+    MEDIA_INFO_LOG("enter ImageNapi::Create start");
+    napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
+    if (valueParam == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &valueParam);
+    }
+    MEDIA_INFO_LOG("enter ImageNapi::Create end");
+    result[1] = valueParam;
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
 }
 
 void ThumbnailListener::UpdateJSCallback() const
@@ -1579,7 +1692,7 @@ void ThumbnailListener::UpdateJSCallbackAsync()
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this);
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, nullptr);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
