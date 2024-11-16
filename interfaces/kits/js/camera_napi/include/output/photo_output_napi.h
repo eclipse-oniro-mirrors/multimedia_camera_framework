@@ -28,6 +28,9 @@
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
 
+namespace OHOS::Media {
+    class PixelMap;
+}
 namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
@@ -247,12 +250,16 @@ private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
     void UpdateJSCallbackAsync();
+    void UpdateJSCallback(unique_ptr<Media::PixelMap>) const;
+    void UpdateJSCallbackAsync(unique_ptr<Media::PixelMap>);
+    void ExecuteDeepCopySurfaceBuffer();
 };
 
 struct ThumbnailListenerInfo {
     wptr<ThumbnailListener> listener_;
-    ThumbnailListenerInfo(sptr<ThumbnailListener> listener)
-        : listener_(listener)
+    unique_ptr<Media::PixelMap> pixelMap_;
+    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, unique_ptr<Media::PixelMap> pixelMap)
+        : listener_(listener), pixelMap_(std::move(pixelMap))
     {}
 };
 

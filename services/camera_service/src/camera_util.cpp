@@ -384,7 +384,7 @@ int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
 
     if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
-        return CAMERA_OPERATION_NOT_ALLOWED;
+        return CAMERA_NO_PERMISSION;
     } else {
         MEDIA_DEBUG_LOG("HCameraService::CheckPermission: Permission to Access Camera Granted!!!!");
     }
