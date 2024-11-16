@@ -718,7 +718,7 @@ std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSett
 int32_t GetBurstSeqId(int32_t captureId)
 {
     const uint32_t burstSeqIdMask = 0xFFFF;
-    return captureId > 0 ? (captureId & burstSeqIdMask) : captureId;
+    return captureId > 0 ? (static_cast<uint32_t>(captureId) & burstSeqIdMask) : captureId;
 }
 
 void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
