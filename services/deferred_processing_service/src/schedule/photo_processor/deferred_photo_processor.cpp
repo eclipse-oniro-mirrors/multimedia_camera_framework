@@ -236,7 +236,7 @@ int DeferredPhotoProcessor::GetConcurrency(ExecutionMode mode)
 bool DeferredPhotoProcessor::GetPendingImages(std::vector<std::string>& pendingImages)
 {
     DP_INFO_LOG("entered");
-    if (postProcessor_ = nullptr) {
+    if (postProcessor_ == nullptr) {
         DP_ERR_LOG("postProcessor_ is nullptr");
         return false;
     }
