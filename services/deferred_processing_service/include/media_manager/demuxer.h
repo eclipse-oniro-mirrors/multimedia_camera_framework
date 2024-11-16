@@ -30,7 +30,7 @@ public:
     virtual ~Demuxer();
 
     MediaManagerError Create(const std::shared_ptr<AVSource>& source,
-        const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& tracks);
+        const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& tracks);
     MediaManagerError ReadStream(Media::Plugins::MediaType trackType, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError SeekToTime(int64_t lastPts);
 
