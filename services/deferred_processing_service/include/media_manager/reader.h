@@ -34,7 +34,7 @@ public:
     MediaManagerError GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo);
     MediaManagerError Reset(int64_t resetPts);
 
-    inline const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& GetTracks()
+    inline const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& GetTracks()
     {
         return tracks_;
     };
@@ -52,7 +52,7 @@ private:
     std::shared_ptr<Format> userFormat_ {nullptr};
     std::shared_ptr<Demuxer> inputDemuxer_ {nullptr};
     int32_t trackCount_ {0};
-    std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>> tracks_ {};
+    std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

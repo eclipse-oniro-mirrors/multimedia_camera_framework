@@ -31,7 +31,7 @@ public:
     virtual ~Muxer();
 
     MediaManagerError Create(int32_t outputFd, Plugins::OutputFormat format);
-    MediaManagerError AddTracks(const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& trackMap);
+    MediaManagerError AddTracks(const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& trackMap);
     MediaManagerError WriteStream(Media::Plugins::MediaType trackType, const std::shared_ptr<AVBuffer>& sample);
     MediaManagerError Start();
     MediaManagerError Stop();

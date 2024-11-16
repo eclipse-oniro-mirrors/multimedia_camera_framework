@@ -23,7 +23,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
-    static const std::unordered_set<Media::Plugins::MediaType> TRCAK_TYPES = {
+    static const std::unordered_set<Media::Plugins::MediaType> TRACK_TYPES = {
         Media::Plugins::MediaType::AUDIO,
         Media::Plugins::MediaType::VIDEO,
         Media::Plugins::MediaType::TIMEDMETA
@@ -43,6 +43,7 @@ TrackFactory::~TrackFactory()
 std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>& source, int32_t trackIndex)
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "AVSource is nullptr.");
     Format trackFormat;
     int32_t trackType = -1;
     DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "source is nullptr.");
@@ -65,7 +66,7 @@ std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>
 
 bool TrackFactory::CheckTrackFormat(Media::Plugins::MediaType type)
 {
-    return TRCAK_TYPES.find(type) != TRCAK_TYPES.end();
+    return TRACK_TYPES.find(type) != TRACK_TYPES.end();
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

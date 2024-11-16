@@ -28,7 +28,7 @@ Demuxer::~Demuxer()
 }
 
 MediaManagerError Demuxer::Create(const std::shared_ptr<AVSource>& source,
-    const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& tracks)
+    const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& tracks)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, ERROR_FAIL, "AVSource is nullptr.");
 

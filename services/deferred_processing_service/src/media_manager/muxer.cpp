@@ -37,7 +37,7 @@ MediaManagerError Muxer::Create(int32_t outputFd, Plugins::OutputFormat format)
     return OK;
 }
 
-MediaManagerError Muxer::AddTracks(const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& trackMap)
+MediaManagerError Muxer::AddTracks(const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& trackMap)
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(trackMap.empty(), ERROR_FAIL, "Invalid track map: trackMap is empty.");

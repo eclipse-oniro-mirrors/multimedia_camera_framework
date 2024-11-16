@@ -26,7 +26,7 @@ Writer::~Writer()
 }
 
 MediaManagerError Writer::Create(int32_t outputFd,
-    const std::map<Media::Plugins::MediaType, const std::shared_ptr<Track>>& trackMap)
+    const std::map<Media::Plugins::MediaType, std::shared_ptr<Track>>& trackMap)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(outputFd == INVALID_FD, ERROR_FAIL, "outputFd is invalid: %{public}d.", outputFd);
     DP_CHECK_ERROR_RETURN_RET_LOG(trackMap.empty(), ERROR_FAIL, "Finvalid track map.");
