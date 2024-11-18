@@ -231,6 +231,8 @@ ohos_shared_library("camera_service") {
     defines += [ "HICOLLIE_ENABLE" ]
   }
 
+  defines += [ "MOVING_PHOTO_ADD_AUDIO" ]
+
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc",
