@@ -163,6 +163,8 @@ protected:
 
 private:
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
+    bool SetMuteModeFromDataShareHelper();
+    void OnReceiveEvent(const EventFwk::CommonEventData &data);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
 #ifdef DEVICE_MANAGER
@@ -205,7 +207,9 @@ private:
         ~CameraDataShareHelper() = default;
         int32_t QueryOnce(const std::string key, std::string &value);
         int32_t UpdateOnce(const std::string key, std::string value);
+        bool IsDataShareReady();
     private:
+        bool isDataShareReady_ = false;
         std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
     };
 

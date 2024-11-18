@@ -53,6 +53,7 @@ ohos_shared_library("camera_service") {
     "src/avcodec/moving_photo_video_cache.cpp",
     "src/avcodec/sample_callback.cpp",
     "src/avcodec/video_encoder.cpp",
+    "src/camera_common_event_manager.cpp",
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
