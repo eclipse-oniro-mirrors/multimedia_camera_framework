@@ -838,11 +838,11 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     bool isExistFrames = frames.size() >= 2;
     if (isExistFrames) {
         MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
-                       "frameRateMin: %{public}d, frameRateMax: %{public}d, surfaceId: %{public}llu",
+                       "frameRateMin: %{public}d, frameRateMax: %{public}d, surfaceId: %{public}" PRIu64,
             static_cast<int32_t>(metaFormat), width, height, frames[0], frames[1], surface->GetUniqueId());
     } else {
         MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
-                       "surfaceId: %{public}llu",
+                       "surfaceId: %{public}" PRIu64,
             static_cast<int32_t>(metaFormat), width, height, surface->GetUniqueId());
     }
     sptr<IStreamRepeat> streamRepeat = nullptr;
