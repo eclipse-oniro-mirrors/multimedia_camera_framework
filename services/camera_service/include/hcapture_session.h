@@ -54,6 +54,11 @@
 #include "drain_manager.h"
 #include "audio_capturer_session.h"
 #include "safe_map.h"
+#ifdef CAMERA_USE_SENSOR
+#include "sensor_agent.h"
+#include "sensor_agent_type.h"
+#endif
+
 namespace OHOS::Media {
     class Picture;
 }
@@ -344,12 +349,23 @@ private:
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
 
+    #ifdef CAMERA_USE_SENSOR
+        std::mutex sensorLock_;
+        bool isRegisterSensorSuccess_ = false;
+        void RegisterSensorCallback();
+        void UnRegisterSensorCallback();
+        static void GravityDataCallbackImpl(SensorEvent *event);
+        static int32_t CalcSensorRotation(int32_t sensorDegree);
+        static int32_t CalcRotationDegree(GravityData data);
+    #endif
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
     std::mutex cameraDeviceLock_;
     sptr<HCameraDevice> cameraDevice_;
 
     StreamContainer streamContainer_;
-
+    #ifdef CAMERA_USE_SENSOR
+        SensorUser user;
+    #endif
     pid_t pid_;
     uid_t uid_;
     uint32_t callerToken_;
