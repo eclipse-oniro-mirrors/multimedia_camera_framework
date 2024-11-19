@@ -30,6 +30,7 @@ public:
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
 private:
+    std::mutex eventSubscriberMutex_;
     std::shared_ptr<EventSubscriber> eventSubscriber_ {nullptr};
 };
 
