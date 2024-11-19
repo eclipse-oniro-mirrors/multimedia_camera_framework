@@ -181,6 +181,9 @@ int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
 
 bool HCameraService::SetMuteModeFromDataShareHelper()
 {
+    if (GetServiceStatus() == CameraServiceStatus::SERVICE_READY) {
+        return true;
+    }
     this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
     bool muteMode = false;
     int32_t ret = GetMuteModeFromDataShareHelper(muteMode);
@@ -221,11 +224,10 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
     switch (systemAbilityId) {
         case DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility RegisterObserver start");
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             if (cameraDataShareHelper_->IsDataShareReady()) {
                 SetMuteModeFromDataShareHelper();
-            } else {
-                CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_DATA_SHARE_READY,
-                    std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             }
             break;
         default:
