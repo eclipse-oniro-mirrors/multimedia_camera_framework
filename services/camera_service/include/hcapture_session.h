@@ -153,7 +153,7 @@ public:
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
-    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format) = 0;
+    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) = 0;
 
 private:
     std::mutex cbMutex_;
@@ -164,7 +164,8 @@ using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
 public:
     explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
-        shared_ptr<FixedSizeList<MetaElementType>> metaCache);
+        shared_ptr<FixedSizeList<MetaElementType>> metaCache, uint32_t preCacheFrameCount,
+        uint32_t postCacheFrameCount);
     ~MovingPhotoListener() override;
     void OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform) override;
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
@@ -182,6 +183,7 @@ private:
     std::atomic<bool> isNeededClear_ { false };
     std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
+    uint64_t postCacheFrameCount_;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
@@ -200,7 +202,8 @@ public:
                                        wptr<MovingPhotoListener> listener,
                                        wptr<MovingPhotoVideoCache> cache,
                                        uint64_t timestamp,
-                                       int32_t rotation);
+                                       int32_t rotation,
+                                       int32_t captureId);
     ~SessionDrainImageCallback();
     void OnDrainImage(sptr<FrameRecord> frame) override;
     void OnDrainImageFinish(bool isFinished) override;
@@ -212,6 +215,7 @@ private:
     wptr<MovingPhotoVideoCache> videoCache_;
     uint64_t timestamp_;
     int32_t rotation_;
+    int32_t captureId_;
 };
 
 class CameraInfoDumper;
@@ -264,8 +268,8 @@ public:
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
-    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format) override;
-    void StartRecord(uint64_t timestamp, int32_t rotation);
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) override;
+    void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
 
@@ -280,6 +284,8 @@ public:
     static shared_ptr<CameraDynamicLoader> dynamicLoader_;
     static std::optional<uint32_t> closeTimerId_;
     static std::mutex g_mediaTaskLock_;
+    uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
+    uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
@@ -328,11 +334,13 @@ private:
     bool InitAudioCapture();
     bool StartAudioCapture();
     void ProcessAudioBuffer();
-    void StartOnceRecord(uint64_t timestamp, int32_t rotation);
+    void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
         camera_position_enum_t cameraPosition);
     void UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     int32_t GetSensorOritation();
+    int32_t GetMovingPhotoBufferDuration();
+    void GetMovingPhotoStartAndEndTime();
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
 
     std::string GetSessionState();

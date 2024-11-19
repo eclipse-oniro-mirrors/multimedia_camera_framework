@@ -38,7 +38,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 using CachedFrameSet = unordered_set<sptr<FrameRecord>, FrameRecord::HashFunction, FrameRecord::EqualFunction>;
-using EncodedEndCbFunc = function<void(vector<sptr<FrameRecord>>, uint64_t, int32_t)>;
+using EncodedEndCbFunc = function<void(vector<sptr<FrameRecord>>, uint64_t, int32_t, int32_t)>;
 class CachedFrameCallbackHandle;
 class MovingPhotoVideoCache : public RefBase {
 public:
@@ -47,8 +47,8 @@ public:
     void CacheFrame(sptr<FrameRecord> frameRecord);
     void OnImageEncoded(sptr<FrameRecord> frameRecord, bool encodeResult);
     void GetFrameCachedResult(vector<sptr<FrameRecord>> frameRecords,
-        EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation);
-    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation);
+        EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation, int32_t captureId);
+    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation, int32_t captureId_);
     void ClearCallbackHandler();
     void ClearCache();
 private:
@@ -61,7 +61,7 @@ private:
 class CachedFrameCallbackHandle : public RefBase {
 public:
     CachedFrameCallbackHandle(vector<sptr<FrameRecord>> frameRecords,
-        EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation);
+        EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation, int32_t captureId);
     ~CachedFrameCallbackHandle();
     void OnCacheFrameFinish(sptr<FrameRecord> frameRecord, bool cachedSuccess);
     void AbortCapture();
@@ -75,6 +75,7 @@ private:
     mutex cacheFrameMutex_;
     uint64_t taskName_;
     int32_t rotation_;
+    int32_t captureId_;
 };
 } // CameraStandard
 } // OHOS
