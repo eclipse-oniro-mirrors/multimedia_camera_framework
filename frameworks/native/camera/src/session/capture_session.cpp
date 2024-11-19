@@ -2578,7 +2578,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     uint32_t minOffset = 1;
     uint32_t maxOffset = 2;
     for (uint32_t i = 0; i < item.count; i += step) {
-        MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d", item.data.i32[i],
+        MEDIA_DEBUG_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d", item.data.i32[i],
             item.data.i32[i + minOffset], item.data.i32[i + maxOffset]);
         if (GetFeaturesMode().GetFeaturedMode() == item.data.i32[i]) {
             minZoom = item.data.i32[i + minOffset] / factor;
