@@ -1871,22 +1871,23 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
     struct tm currentTime;
     std::string formattedTime = "";
     std::stringstream ss;
-    ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
-        << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
-        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
-        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
-        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
-        << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
-        << connector << burstTag;
-    lastBurstPrefix_ = ss.str();
-    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
+    // a group of burst capture use the same prefix
     if (seqId == 1) {
         if (!GetSystemCurrentTime(&currentTime)) {
             MEDIA_ERR_LOG("Failed to get current time.");
             return formattedTime;
         }
-        ss  << std::setw(burstWidth) << std::setfill(placeholder) << seqId
-            << coverTag;
+        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
+           << connector << burstTag;
+        lastBurstPrefix_ = ss.str();
+        MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
+        ss << std::setw(burstWidth) << std::setfill(placeholder) << seqId
+           << coverTag;
     } else {
         ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
     }
