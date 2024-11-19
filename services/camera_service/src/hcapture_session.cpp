@@ -84,6 +84,12 @@ std::mutex HCaptureSession::g_mediaTaskLock_;
 namespace {
 static std::map<pid_t, sptr<HCaptureSession>> g_totalSessions;
 static std::mutex g_totalSessionLock;
+#ifdef CAMERA_USE_SENSOR
+constexpr int32_t POSTURE_INTERVAL = 100000000; //100ms;
+constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
+#endif
+static GravityData gravityData = {0.0, 0.0, 0.0};
+static int32_t sensorRotation = 0;
 const char *CAMERA_BUNDLE_NAME = "com.huawei.hmos.camera";
 static size_t TotalSessionSize()
 {
@@ -1315,6 +1321,13 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 {
     isSetMotionPhoto_ = isEnable;
     StartMovingPhotoStream();
+    #ifdef CAMERA_USE_SENSOR
+    if (isSetMotionPhoto_) {
+        RegisterSensorCallback();
+    } else {
+        UnRegisterSensorCallback();
+    }
+    #endif
     auto device = GetCameraDevice();
     if (device != nullptr) {
         device->EnableMovingPhoto(isEnable);
@@ -1574,6 +1587,11 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
 
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
+        #ifdef CAMERA_USE_SENSOR
+        if (isSetMotionPhoto_) {
+            UnRegisterSensorCallback();
+        }
+        #endif
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
         if (displayListener_) {
@@ -1684,26 +1702,25 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
 
 int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
 {
-    if (!isSetMotionPhoto_) {
+    if (!isSetMotionPhoto_ || isMirror == isMovingPhotoMirror_) {
         return CAMERA_OK;
     }
-    if (isMirror != isMovingPhotoMirror_) {
-        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-        for (auto& stream : repeatStreams) {
-            if (stream == nullptr) {
-                continue;
-            }
-            auto streamRepeat = CastStream<HStreamRepeat>(stream);
-            if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
-                MEDIA_INFO_LOG("restart movingphoto stream.");
-                streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& stream : repeatStreams) {
+        if (stream == nullptr) {
+            continue;
+        }
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
+            MEDIA_INFO_LOG("restart movingphoto stream.");
+            if (streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_)) {
+                isMovingPhotoMirror_ = isMirror;
                 // set clear cache flag
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 livephotoListener_->SetClearFlag();
-                break;
             }
+            break;
         }
-        isMovingPhotoMirror_ = isMirror;
     }
     return CAMERA_OK;
 }
@@ -1725,13 +1742,99 @@ void HCaptureSession::GetOutputStatus(int32_t &status)
     }
 }
 
+#ifdef CAMERA_USE_SENSOR
+void HCaptureSession::RegisterSensorCallback()
+{
+    std::lock_guard<std::mutex> lock(sensorLock_);
+    if (isRegisterSensorSuccess_) {
+        MEDIA_INFO_LOG("HCaptureSession::RegisterSensorCallback isRegisterSensorSuccess return");
+        return;
+    }
+    MEDIA_INFO_LOG("HCaptureSession::RegisterSensorCallback start");
+    user.callback = GravityDataCallbackImpl;
+    int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_GRAVITY, &user);
+    MEDIA_INFO_LOG("RegisterSensorCallback, subscribeRet: %{public}d", subscribeRet);
+    int32_t setBatchRet = SetBatch(SENSOR_TYPE_ID_GRAVITY, &user, POSTURE_INTERVAL, 0);
+    MEDIA_INFO_LOG("RegisterSensorCallback, setBatchRet: %{public}d", setBatchRet);
+    int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_GRAVITY, &user);
+    MEDIA_INFO_LOG("RegisterSensorCallback, activateRet: %{public}d", activateRet);
+    if (subscribeRet != CAMERA_OK || setBatchRet != CAMERA_OK || activateRet != CAMERA_OK) {
+        isRegisterSensorSuccess_ = false;
+        MEDIA_INFO_LOG("RegisterSensorCallback failed.");
+    } else {
+        isRegisterSensorSuccess_ = true;
+    }
+}
+
+void HCaptureSession::UnRegisterSensorCallback()
+{
+    std::lock_guard<std::mutex> lock(sensorLock_);
+    int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_GRAVITY, &user);
+    int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_GRAVITY, &user);
+    if (deactivateRet == CAMERA_OK && unsubscribeRet == CAMERA_OK) {
+        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
+        isRegisterSensorSuccess_ = false;
+    } else {
+        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback failed.");
+    }
+}
+
+void HCaptureSession::GravityDataCallbackImpl(SensorEvent* event)
+{
+    MEDIA_INFO_LOG("GravityDataCallbackImpl prepare execute");
+    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event->sensorTypeId != SENSOR_TYPE_ID_GRAVITY, "SensorCallback error type.");
+    // this data will be delete when callback execute finish
+    GravityData* nowGravityData = reinterpret_cast<GravityData*>(event->data);
+    gravityData = { nowGravityData->x, nowGravityData->y, nowGravityData->z };
+    sensorRotation = CalcSensorRotation(CalcRotationDegree(gravityData));
+}
+
+int32_t HCaptureSession::CalcSensorRotation(int32_t sensorDegree)
+{
+    // Use ROTATION_0 when degree range is [0, 30]∪[330, 359]
+    if (sensorDegree >= 0 && (sensorDegree <= 30 || sensorDegree >= 330)) {
+        return STREAM_ROTATE_0;
+    } else if (sensorDegree >= 60 && sensorDegree <= 120) { // Use ROTATION_90 when degree range is [60, 120]
+        return STREAM_ROTATE_90;
+    } else if (sensorDegree >= 150 && sensorDegree <= 210) { // Use ROTATION_180 when degree range is [150, 210]
+        return STREAM_ROTATE_180;
+    } else if (sensorDegree >= 240 && sensorDegree <= 300) { // Use ROTATION_270 when degree range is [240, 300]
+        return STREAM_ROTATE_270;
+    } else {
+        return sensorRotation;
+    }
+}
+
+int32_t HCaptureSession::CalcRotationDegree(GravityData data)
+{
+    float x = data.x;
+    float y = data.y;
+    float z = data.z;
+    int degree = -1;
+    if ((x * x + y * y) * VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT < z * z) {
+        return degree;
+    }
+    // arccotx = pi / 2 - arctanx, 90 is used to calculate acot(in degree); degree = rad / pi * 180
+    degree = 90 - static_cast<int>(round(atan2(y, -x) / M_PI * 180));
+    // Normalize the degree to the range of 0~360
+    return degree >= 0 ? degree % 360 : degree % 360 + 360;
+}
+#endif
+
 void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
     if (!isSetMotionPhoto_) {
         return;
     }
-    int32_t realRotation = GetSensorOritation() + rotation;
-    realRotation = realRotation > ROTATION_360 ? realRotation - ROTATION_360 : realRotation;
+    int32_t addMirrorRotation = 0;
+    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
+    if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+        addMirrorRotation = STREAM_ROTATE_180;
+    }
+    int32_t realRotation = GetSensorOritation() + rotation + addMirrorRotation;
+    realRotation = realRotation % ROTATION_360;
     StartRecord(timestamp, realRotation, captureId);
 }
 
