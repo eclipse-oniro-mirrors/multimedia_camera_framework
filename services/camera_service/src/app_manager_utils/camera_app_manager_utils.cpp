@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
- #include "camera_app_manager_utils.h"
+#include "camera_app_manager_utils.h"
 #include "camera_log.h"
 
 #include <app_mgr_interface.h>
