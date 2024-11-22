@@ -57,14 +57,15 @@ public:
         }
         if (paramSize > 1) {
             napi_typeof(env_, paramValue[paramSize - 1], &valueNapiType);
-            if (valueNapiType != napi_function) {
-                napiError = napi_status::napi_invalid_arg;
-                return;
-            }
-            callbackFunction_ = paramValue[paramSize - 1];
-            if (paramSize > CALLBACK_ARGS_MIN + 1) {
+            if (valueNapiType == napi_function) {
+                callbackFunction_ = paramValue[paramSize - 1];
+                if (paramSize > CALLBACK_ARGS_MIN + 1) {
+                    callbackFunctionParameters_ =
+                        std::vector<napi_value>(paramValue.begin() + 1, paramValue.begin() + paramSize - 1);
+                }
+            } else {
                 callbackFunctionParameters_ =
-                    std::vector<napi_value>(paramValue.begin() + 1, paramValue.begin() + paramSize - 1);
+                    std::vector<napi_value>(paramValue.begin() + 1, paramValue.begin() + paramSize);
             }
         }
         size_t stringSize = 0;
