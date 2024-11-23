@@ -48,6 +48,7 @@ public:
 
 private:
     wptr<HCameraDevice> cameraDevice_;
+    std::mutex mutex;
 };
 
 class CameraPrivacy : public RefBase {
