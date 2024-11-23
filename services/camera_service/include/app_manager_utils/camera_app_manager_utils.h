@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraAppManagerUtils : public RefBase {
+class CameraAppManagerUtils {
 public:
     static sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerInstance();
     static void GetForegroundApplications(std::vector<OHOS::AppExecFwk::AppStateData>& appsData);

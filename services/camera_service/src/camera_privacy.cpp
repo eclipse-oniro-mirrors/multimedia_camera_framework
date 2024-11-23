@@ -31,6 +31,7 @@ using OHOS::Security::AccessToken::AccessTokenKit;
 
 static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 std::condition_variable g_canClose;
+std::mutex g_mutex;
 
 sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 {
@@ -59,7 +60,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
-    std::unique_lock<std::mutex> lock<mutex>;
+    std::unique_lock<std::mutex> lock(g_mutex);
     auto waitStatus = g_canClose.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
     if (waitStatus == std::cv_status::timeout) {
         MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
@@ -137,6 +138,7 @@ void CameraPrivacy::StopUsingPermissionCallback()
     MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback res:%{public}d", res);
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
     cameraUseCallbackPtr_ = nullptr;
+    std::lock_guard<std::mutex> lock(g_mutex);
     g_canClose.notify_one();
 }
 } // namespace CameraStandard
