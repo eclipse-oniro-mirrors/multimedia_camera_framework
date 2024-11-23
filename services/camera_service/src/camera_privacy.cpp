@@ -29,7 +29,7 @@ namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
 
-static const int32_t WAIT_RELEASE_STREAM_MS = 5000; // 5s
+static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 std::condition_variable g_canClose;
 std::mutex g_mutex;
 
