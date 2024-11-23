@@ -22,11 +22,25 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class CameraAppManagerUtils::CameraAppManagerUtilsDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        explicit CameraAppManagerUtilsDeathRecipient() {}
+        ~CameraAppManagerUtilsDeathRecipient() {}
+
+        void OnRemoteDied(const wptr<IRemoteObject> &remote) override
+        {
+            MEDIA_ERR_LOG("Remote died.");
+            CameraAppManagerUtils::OnRemoveInstance();
+        }
+};
+
 static constexpr uint32_t APP_MGR_SERVICE_ID = 501;
+static std::mutex g_cameraAppManagerInstanceMutex;
 sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::appManagerInstance_ = nullptr;
 
 sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::GetAppManagerInstance()
 {
+    std::lock_guard<std::mutex> lock(g_cameraAppManagerInstanceMutex);
     if (appManagerInstance_) {
         return appManagerInstance_;
     }
@@ -47,6 +61,9 @@ sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::GetAppManagerInstance()
         MEDIA_ERR_LOG("Failed to get app manager proxy");
         return nullptr;
     }
+    sptr<CameraAppManagerUtilsDeathRecipient> CameraAppManagerUtilsDeathRecipient_ =
+        new CameraAppManagerUtilsDeathRecipient();
+    remoteObject->AddDeathRecipient(CameraAppManagerUtilsDeathRecipient_);
     appManagerInstance_ = appMgrProxy;
     return appManagerInstance_;
 }
@@ -77,5 +94,10 @@ bool CameraAppManagerUtils::IsForegroundApplication(const uint32_t tokenId)
     return IsForeground;
 }
 
+void CameraAppManagerUtils::OnRemoveInstance()
+{
+    std::lock_guard<std::mutex> lock(g_cameraAppManagerInstanceMutex);
+    appManagerInstance_ = nullptr;
+}
 } // namespace PowerMgr
 } // namespace OHOS

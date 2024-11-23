@@ -20,17 +20,19 @@
 #include <vector>
 
 #include "app_mgr_interface.h"
-#include "refbase.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraAppManagerUtils : public RefBase {
+class CameraAppManagerUtils {
 public:
     static sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerInstance();
     static void GetForegroundApplications(std::vector<OHOS::AppExecFwk::AppStateData>& appsData);
     static bool IsForegroundApplication(const uint32_t tokenId);
 
 private:
+    static void OnRemoveInstance();
+
+    class CameraAppManagerUtilsDeathRecipient;
     static sptr<OHOS::AppExecFwk::IAppMgr> appManagerInstance_;
 };
 
