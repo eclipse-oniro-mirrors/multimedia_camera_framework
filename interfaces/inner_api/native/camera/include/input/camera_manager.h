@@ -856,6 +856,7 @@ private:
     std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
+    std::mutex saListenerMuxtex_;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
     std::string foldScreenType_;
     bool isSystemApp_ = false;
