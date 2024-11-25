@@ -886,9 +886,9 @@ int32_t CameraManager::RefreshServiceProxy()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::RefreshServiceProxy Failed to get System ability manager");
-    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    object = samgr->CheckSystemAbility(CAMERA_SERVICE_ID);
     CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CameraManager::RefreshServiceProxy Init GetSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
+        "CameraManager::RefreshServiceProxy Init CheckSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
     auto serviceProxy = iface_cast<ICameraService>(object);
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::RefreshServiceProxy serviceProxy is null");
@@ -902,7 +902,12 @@ int32_t CameraManager::SubscribeSystemAbility()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::SubscribeSystemAbility Failed to get System ability manager");
-    saListener_ = new CameraServiceSystemAbilityListener();
+    {
+        std::lock_guard<std::mutex> lock(saListenerMuxtex_);
+        if (saListener_ == nullptr ) {
+            saListener_ = new CameraServiceSystemAbilityListener();
+        }
+    }
     CHECK_ERROR_RETURN_RET_LOG(saListener_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::SubscribeSystemAbility saListener_ is null");
     int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
