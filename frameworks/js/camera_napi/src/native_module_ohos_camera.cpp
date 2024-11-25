@@ -93,6 +93,7 @@ static napi_value Export(napi_env env, napi_value exports)
     LightPaintingSessionNapi::Init(env, exports);
     TimeLapsePhotoSessionNapi::Init(env, exports);
     TryAEInfoNapi::Init(env, exports);
+    MEDIA_INFO_LOG("Export is end");
     return exports;
 }
 

@@ -207,6 +207,7 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
 
     napi_get_undefined(env, &result);
     result = CameraManagerNapi::CreateCameraManager(env);
+    MEDIA_INFO_LOG("CreateCameraManagerInstance::CreateCameraManager() is end");
     return result;
 }
 
