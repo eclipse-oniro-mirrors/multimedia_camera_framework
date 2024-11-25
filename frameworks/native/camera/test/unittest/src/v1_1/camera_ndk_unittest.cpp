@@ -28,6 +28,7 @@
 #include "native_image.h"
 #include "image_kits.h"
 #include "photo_native_impl.h"
+#include "camera_util.h"
 using namespace testing::ext;
 
 namespace OHOS {
@@ -111,6 +112,15 @@ Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int3
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(previewOutput, nullptr);
     return previewOutput;
+}
+
+Camera_MetadataOutput* CameraNdkUnitTest::CreateMetadataOutput(Camera_MetadataObjectType type)
+{
+    Camera_MetadataOutput* metadataOutput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateMetadataOutput(cameraManager, &type, &metadataOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(metadataOutput, nullptr);
+    return metadataOutput;
 }
 
 Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t height)
@@ -248,7 +258,18 @@ void CameraNdkUnitTest::SetUp(void)
     EXPECT_EQ(ret, 0);
 }
 
-void CameraNdkUnitTest::TearDown(void) {}
+void CameraNdkUnitTest::TearDown(void)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    if (cameraDevice != nullptr) {
+        ret = OH_CameraManager_DeleteSupportedCameras(cameraManager, cameraDevice, cameraDeviceSize);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    if (cameraManager != nullptr) {
+        ret = OH_Camera_DeleteCameraManager(cameraManager);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+}
 
 void CameraNdkUnitTest::ReleaseImageReceiver(void)
 {
@@ -370,6 +391,23 @@ static void CameraVideoOutptOnFrameEndCb(Camera_VideoOutput* videoOutput, int32_
 }
 
 static void CameraVideoOutptOnErrorCb(Camera_VideoOutput* videoOutput, Camera_ErrorCode errorCode)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+static void CameraMetadataOutputOnMetadataObjectAvailableCb(Camera_MetadataOutput* metadataOutput,
+    Camera_MetadataObject* metadataObject, uint32_t size)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+static void CameraMetadataOutputOnErrorCb(Camera_MetadataOutput* metadataOutput, Camera_ErrorCode errorCode)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
+static void CameraManagerOnFoldStatusInfoChangeCb(Camera_Manager* cameraManager,
+    Camera_FoldStatusInfo* foldStatusInfo)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
@@ -1698,10 +1736,6 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
     ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
     EXPECT_EQ(ret, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
-    location = {0, 0, 0};
-    capSettings.location = &location;
-    ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
-    EXPECT_EQ(ret, 0);
 
     ret = OH_PhotoOutput_Release(PhotoOutput);
     EXPECT_EQ(ret, 0);
@@ -2326,13 +2360,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_002, TestSize.Level0)
     ret = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager, cameraDevice, &OutputCapability);
     EXPECT_EQ(ret, CAMERA_OK);
 
-    ret = OH_CameraManager_DeleteSupportedCameras(cameraManager, cameraDevice, cameraDeviceSize);
-    EXPECT_EQ(ret, 0);
-
     ret = OH_CameraManager_DeleteSupportedCameraOutputCapability(cameraManager, OutputCapability);
-    EXPECT_EQ(ret, 0);
-
-    ret = OH_Camera_DeleteCameraManager(cameraManager);
     EXPECT_EQ(ret, 0);
 }
 
@@ -2361,9 +2389,6 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_004, TestSize.Level0)
     OutputCapability->videoProfiles = nullptr;
     OutputCapability->supportedMetadataObjectTypes = nullptr;
     ret = OH_CameraManager_DeleteSupportedCameraOutputCapability(cameraManager, OutputCapability);
-    EXPECT_EQ(ret, 0);
-
-    ret = OH_Camera_DeleteCameraManager(cameraManager);
     EXPECT_EQ(ret, 0);
 }
 
@@ -2394,9 +2419,6 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_005, TestSize.Level0)
     OutputCapability = nullptr;
     ret = OH_CameraManager_DeleteSupportedCameraOutputCapability(cameraManager, OutputCapability);
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
-
-    ret = OH_Camera_DeleteCameraManager(cameraManager);
-    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -2455,6 +2477,8 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_008, TestSize.Level0)
     float minExposureBias = 0.0f;
     ret = OH_CaptureSession_SetExposureBias(captureSession, minExposureBias);
     EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 
 /*
@@ -2478,12 +2502,9 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_009, TestSize.Level0)
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(&cameraInput, nullptr);
 
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, 0);
 
@@ -2506,25 +2527,26 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_009, TestSize.Level0)
     ret = OH_CaptureSession_IsFocusModeSupported(captureSession, focusMode, &isSupportedFocusMode);
     EXPECT_EQ(ret, 0);
 
-    Camera_FocusMode focus = Camera_FocusMode::FOCUS_MODE_AUTO;
-    ret = OH_CaptureSession_SetFocusMode(captureSession, focus);
+    if (isSupportedFocusMode) {
+        ret = OH_CaptureSession_GetFocusMode(captureSession, &focusMode);
+        EXPECT_EQ(ret, CAMERA_OK);
+        ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    ret = OH_CaptureSession_SetFlashMode(captureSession, Camera_FlashMode::FLASH_MODE_ALWAYS_OPEN);
     EXPECT_EQ(ret, 0);
 
-    Camera_FlashMode flash = Camera_FlashMode::FLASH_MODE_ALWAYS_OPEN;
-    ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
-    EXPECT_EQ(ret, 0);
-
-    Camera_ExposureMode exposureMode = Camera_ExposureMode::EXPOSURE_MODE_AUTO;
     bool isSupportedExposureMode = true;
-    ret = OH_CaptureSession_IsExposureModeSupported(captureSession, exposureMode, &isSupportedExposureMode);
+    ret = OH_CaptureSession_IsExposureModeSupported(captureSession,
+        Camera_ExposureMode::EXPOSURE_MODE_AUTO, &isSupportedExposureMode);
     EXPECT_EQ(ret, 0);
 
-    Camera_ExposureMode exposure = Camera_ExposureMode::EXPOSURE_MODE_AUTO;
-    ret = OH_CaptureSession_SetExposureMode(captureSession, exposure);
-    EXPECT_EQ(ret, 0);
-
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, 0);
+    if (isSupportedExposureMode) {
+        ret = OH_CaptureSession_SetExposureMode(captureSession, Camera_ExposureMode::EXPOSURE_MODE_AUTO);
+        EXPECT_EQ(ret, 0);
+    }
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
     ReleaseImageReceiver();
 }
 
@@ -2576,6 +2598,8 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_010, TestSize.Level0)
     Camera_ExposureMode exposure = Camera_ExposureMode::EXPOSURE_MODE_AUTO;
     ret = OH_CaptureSession_SetExposureMode(captureSession, exposure);
     EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -3911,6 +3935,30 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_036, TestSize.Level0)
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test camera orientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camera orientation
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_037, TestSize.Level0)
+{
+    Camera_Input *cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    uint32_t orientation = 0;
+    ret = OH_CameraDevice_GetCameraOrientation(cameraDevice, &orientation);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -5653,5 +5701,1363 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_074, TestSize.Level0)
     EXPECT_EQ(OH_PhotoNative_Release(photoNative), CAMERA_OK);
     EXPECT_EQ(OH_PhotoNative_Release(nullptr), CAMERA_INVALID_ARGUMENT);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test unregister camera state change event callback,
+ * unregister failed when invalid parameter was entered
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test unregister camera state change event callback,
+ * unregister failed when invalid parameter was entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_075, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    CameraInput_Callbacks setCameraInputResultCallback = {
+        .onError = &OnCameraInputError
+    };
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_UnregisterCallback(nullptr, &setCameraInputResultCallback);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CameraInput_UnregisterCallback(cameraInput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setCameraInputResultCallback.onError = nullptr;
+    ret = OH_CameraInput_UnregisterCallback(cameraInput, &setCameraInputResultCallback);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test open and close camera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test open and close capture session. When valid parameters are entered,
+ * the camera open and close successfully
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_076, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Stop(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Close(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test whether camera is muted
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When a valid parameter is entered, test whether the camera is silent,
+ * and return whether it is silent by the form of the parameter, when the input invalid
+ * parameters, can't get if muted results through parameters
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_077, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    bool isCameraMuted = false;
+    ret = OH_CameraManager_IsCameraMuted(cameraManager, &isCameraMuted);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_IsCameraMuted(nullptr, &isCameraMuted);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_FALSE(isCameraMuted);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create metadata output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to create a metadata output instance. When entering valid parameters,
+ * a valid metadata output instance can be created
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_078, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_MetadataObjectType type = FACE_DETECTION;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_MetadataOutput *metadataOutput = nullptr;
+    ret = OH_CameraManager_CreateMetadataOutput(cameraManager, &type, &metadataOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(metadataOutput, nullptr);
+    ret = OH_CaptureSession_AddMetadataOutput(captureSession, metadataOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_MetadataOutput_Release(metadataOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Torch supported or not and supported or not with torch mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test whether the device is a torch and the abnormal branch of the torch mode.
+ * When an invalid parameter is entered, the result cannot be returned through the parameter
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_079, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    bool isTorchSupported = false;
+    ret = OH_CameraManager_IsTorchSupported(nullptr, &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CameraManager_IsTorchSupported(cameraManager, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_IsTorchSupportedByTorchMode(nullptr, Camera_TorchMode::ON, &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CameraManager_IsTorchSupportedByTorchMode(cameraManager,
+        static_cast<Camera_TorchMode>(-1), &isTorchSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CameraManager_IsTorchSupportedByTorchMode(cameraManager, Camera_TorchMode::ON, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_CameraManager_SetTorchMode(nullptr, Camera_TorchMode::ON);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CameraManager_SetTorchMode(cameraManager, static_cast<Camera_TorchMode>(-1));
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test capture session about zoom and mode with commit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get all the supported zoom ratio range and set the zoom ratio,
+ * when the input of valid parameters, can successfully get and set the zoom ratio
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_080, TestSize.Level0)
+{
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_NE(photoOutput, nullptr);
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float minZoom = 0.0f, maxZoom = 0.0f;
+    ret = OH_CaptureSession_GetZoomRatioRange(captureSession, &minZoom, &maxZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float zoom = 0.0f;
+    ret = OH_CaptureSession_SetZoomRatio(captureSession, zoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_GetZoomRatio(captureSession, &zoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test capture session about zoom and mode with not commit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get all the supported zoom ratio range and set the zoom ratio,
+ * when the session is not committed, an internal error is returned
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_081, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    float minZoom = 0.0f, maxZoom = 0.0f;
+    ret = OH_CaptureSession_GetZoomRatioRange(captureSession, &minZoom, &maxZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float zoom = 0.0f;
+    ret = OH_CaptureSession_SetZoomRatio(captureSession, zoom);
+    EXPECT_NE(ret, CAMERA_OK);
+    ret = OH_CaptureSession_GetZoomRatio(captureSession, &zoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Check whether the device has a flash and supports the specified flash mode,
+ *           and obtain and set the flash mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test whether the device has a flash. If yes, test whether the device supports
+ * the specified flash mode, when entering valid parameters, get and set successfully
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_082, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    bool hasFlash = false;
+    bool isSupported = false;
+    Camera_FlashMode flashMode = Camera_FlashMode::FLASH_MODE_CLOSE;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_HasFlash(captureSession, &hasFlash);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flashMode, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_GetFlashMode(captureSession, &flashMode);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_CaptureSession_SetFlashMode(captureSession, flashMode);
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        ret = OH_CaptureSession_SetFlashMode(captureSession, flashMode);
+        EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    }
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetExposureValue, GetExposureBiasRange and SetExposureBias
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test query exposure bias range, get bias and set exposure bias with value less than the range,
+ * when input valid parameters, can be get and set successfully
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_083, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    EXPECT_NE(PhotoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    float exposureBiasValue = 0.0f;
+    ret = OH_CaptureSession_GetExposureBias(captureSession, &exposureBiasValue);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetExposureBias(captureSession, minExposureBias-1.0);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_Capture(PhotoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test can preconfig or not
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The test checks whether the specified pre-configuration type is supported. And
+ * the pre-configuration type is set. When invalid parameters are entered, the setting fail
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_084, TestSize.Level0)
+{
+    imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
+                                                              RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    std::string receiverKey = imageReceiver->iraContext_->GetReceiverKey();
+    const char* surfaceId = nullptr;
+    surfaceId = receiverKey.c_str();
+    ASSERT_NE(surfaceId, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    bool canPreconfig = false;
+    ret = OH_CaptureSession_CanPreconfig(nullptr, Camera_PreconfigType::PRECONFIG_720P, &canPreconfig);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_CanPreconfig(captureSession, static_cast<Camera_PreconfigType>(-1), &canPreconfig);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_CanPreconfig(captureSession, Camera_PreconfigType::PRECONFIG_720P, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_Preconfig(nullptr, Camera_PreconfigType::PRECONFIG_720P);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_Preconfig(captureSession, static_cast<Camera_PreconfigType>(-1));
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    Camera_PhotoOutput *photoOutput = nullptr;
+    ret = OH_CameraManager_CreatePhotoOutputUsedInPreconfig(nullptr, surfaceId, &photoOutput);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ASSERT_EQ(photoOutput, nullptr);
+    ret = OH_CameraManager_CreatePhotoOutputUsedInPreconfig(cameraManager, nullptr, &photoOutput);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ASSERT_EQ(photoOutput, nullptr);
+    ret = OH_CameraManager_CreatePhotoOutputUsedInPreconfig(cameraManager, surfaceId, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ASSERT_EQ(photoOutput, nullptr);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test can preconfig or not with ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The test checks whether the pre-configuration type with ratio is supported and
+ * the pre-configuration type with ratio is set. When inalid parameters are entered, the setting failed
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_085, TestSize.Level0)
+{
+    imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
+                                                              RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    std::string receiverKey = imageReceiver->iraContext_->GetReceiverKey();
+    const char* surfaceId = nullptr;
+    surfaceId = receiverKey.c_str();
+    ASSERT_NE(surfaceId, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+
+    bool canPreconfig = false;
+    Camera_PreconfigRatio preconfigRatio = PRECONFIG_RATIO_1_1;
+    Camera_PreconfigType preconfigType = Camera_PreconfigType::PRECONFIG_720P;
+    ret = OH_CaptureSession_CanPreconfigWithRatio(nullptr, preconfigType, preconfigRatio, &canPreconfig);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_FALSE(canPreconfig);
+    ret = OH_CaptureSession_CanPreconfigWithRatio(captureSession,
+        static_cast<Camera_PreconfigType>(-1), preconfigRatio, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_FALSE(canPreconfig);
+    ret = OH_CaptureSession_CanPreconfigWithRatio(captureSession, preconfigType,
+        static_cast<Camera_PreconfigRatio>(-1), &canPreconfig);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_FALSE(canPreconfig);
+    ret = OH_CaptureSession_CanPreconfigWithRatio(captureSession, preconfigType, preconfigRatio, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_FALSE(canPreconfig);
+    ret = OH_CaptureSession_PreconfigWithRatio(nullptr, preconfigType, preconfigRatio);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_PreconfigWithRatio(captureSession, static_cast<Camera_PreconfigType>(-1), preconfigRatio);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_PreconfigWithRatio(captureSession, preconfigType, static_cast<Camera_PreconfigRatio>(-1));
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get supported color space
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to set and get the color space, When the session is not committed,
+ * the error that the session is not configured is returned
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_086, TestSize.Level0)
+{
+    uint32_t size = 0;
+    OH_NativeBuffer_ColorSpace* colorSpace = nullptr;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_GetSupportedColorSpaces(captureSession, &colorSpace, &size);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetActiveColorSpace(captureSession, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_FULL);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    OH_NativeBuffer_ColorSpace activeColorSpace;
+    ret = OH_CaptureSession_GetActiveColorSpace(captureSession, &activeColorSpace);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get and set preview rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get and set preview rotation, get and set successfully when valid parameters are entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_087, TestSize.Level0)
+{
+    int displayRotation = 0;
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    bool isDisplayLocked = false;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, IAMGE_ROTATION_180, isDisplayLocked);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get and set preview rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get and set preview rotation, get and set failed when session is null
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_088, TestSize.Level0)
+{
+    int displayRotation = 0;
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    bool isDisplayLocked = false;
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    Camera_ErrorCode ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
+    EXPECT_NE(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, IAMGE_ROTATION_180, isDisplayLocked);
+    EXPECT_NE(ret, CAMERA_OK);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register and unregister photo available callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register and unregister photo available callback,
+ * register and unregister successfully when valid parameter was entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_089, TestSize.Level0)
+{
+    Camera_Size photoSize = {
+        .width = 10,
+        .height = 10
+    };
+    Camera_Profile profile = {
+        .format = Camera_Format::CAMERA_FORMAT_JPEG,
+        .size = photoSize
+    };
+    Camera_PhotoOutput *photoOutput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutputWithoutSurface(cameraManager, &profile, &photoOutput);
+    EXPECT_NE(photoOutput, nullptr);
+    ret = OH_PhotoOutput_RegisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_UnregisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Abnormal branch register photo available callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register photo available callback,
+ * when not using the photoOutput created without surfaceId, registration will fail, return operation is not allowed
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_090, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_NE(photoOutput, nullptr);
+    ret = OH_PhotoOutput_RegisterPhotoAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAvailableCb);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register photo asset available callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register and unregister photo asset available callback,
+ * register and unregister successfully when valid parameter was entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_091, TestSize.Level0)
+{
+    Camera_Size photoSize = {
+        .width = 10,
+        .height = 10
+    };
+    Camera_Profile profile = {
+        .format = Camera_Format::CAMERA_FORMAT_JPEG,
+        .size = photoSize
+    };
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = nullptr;
+    ret = OH_CameraManager_CreatePhotoOutputWithoutSurface(cameraManager, &profile, &photoOutput);
+    EXPECT_NE(photoOutput, nullptr);
+    ret = OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(photoOutput, CameraPhotoOutptOnPhotoAssetAvailableCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_UnregisterPhotoAssetAvailableCallback(photoOutput,
+        CameraPhotoOutptOnPhotoAssetAvailableCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register photo asset available callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register photo asset available callback,
+ * when not using the photoOutput created without surfaceId, registration will fail, return invalid argument
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_092, TestSize.Level0)
+{
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_NE(photoOutput, nullptr);
+    Camera_ErrorCode ret = OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(photoOutput,
+        CameraPhotoOutptOnPhotoAssetAvailableCb);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register photo asset available callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: The test checks whether mirror photography is supported.
+ * When a valid parameter is entered, the test returns whether the parameter is supported
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_093, TestSize.Level0)
+{
+    bool isSupported = false;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_IsMirrorSupported(photoOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal branch of enable moving photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test enable moving photo, which returns an internal system error
+ * when the device does not support moving photo
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_094, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photooutput = CreatePhotoOutput();
+    ASSERT_NE(photooutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photooutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_PhotoOutput_IsMovingPhotoSupported(photooutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (!isSupported) {
+        ret = OH_PhotoOutput_EnableMovingPhoto(photooutput, true);
+        EXPECT_NE(ret, CAMERA_OK);
+        ret = OH_PhotoOutput_EnableMovingPhoto(photooutput, false);
+        EXPECT_NE(ret, CAMERA_OK);
+    }
+    EXPECT_EQ(OH_PhotoOutput_Release(photooutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get photo rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get photo rotation,  when entered valid parameters, get success
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_095, TestSize.Level0)
+{
+    int deviceDegree = 0;
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    ret = OH_PhotoOutput_GetPhotoRotation(photoOutput, deviceDegree, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get video rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get video rotation,  when entered valid parameters, get success
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_096, TestSize.Level0)
+{
+    int deviceDegree = 0;
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    ret = OH_VideoOutput_GetVideoRotation(videoOutput, deviceDegree, &imageRotation);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get video rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get video and photo rotation, an internal system error is
+ * returned when the session is not committed
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_097, TestSize.Level0)
+{
+    int deviceDegree = 0;
+    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_NE(videoOutput, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    Camera_ErrorCode ret = OH_VideoOutput_GetVideoRotation(videoOutput, deviceDegree, &imageRotation);
+    EXPECT_NE(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_GetPhotoRotation(photoOutput, deviceDegree, &imageRotation);
+    EXPECT_NE(ret, CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register and unregister metadata output change event callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register and unregister metadata output change event callback,
+ * when valid parameters are entered, registration and deregistration are successful
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_098, TestSize.Level0)
+{
+    Camera_MetadataObjectType type = Camera_MetadataObjectType::FACE_DETECTION;
+    Camera_MetadataOutput* metadataOutput = CreateMetadataOutput(type);
+    EXPECT_NE(metadataOutput, nullptr);
+    MetadataOutput_Callbacks metadataOutputCb = {
+        .onMetadataObjectAvailable = &CameraMetadataOutputOnMetadataObjectAvailableCb,
+        .onError = &CameraMetadataOutputOnErrorCb
+    };
+    Camera_ErrorCode ret = OH_MetadataOutput_RegisterCallback(metadataOutput, &metadataOutputCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_MetadataOutput_UnregisterCallback(metadataOutput, &metadataOutputCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_MetadataOutput_Release(metadataOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal branch stops metadata output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal branch stops metadata output,
+ * when the session starts metadata output without committing, it will fail to stop
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_099, TestSize.Level0)
+{
+    Camera_MetadataObjectType type = Camera_MetadataObjectType::FACE_DETECTION;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(&cameraInput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_MetadataOutput* metadataOutput = CreateMetadataOutput(type);
+    EXPECT_NE(metadataOutput, nullptr);
+    ret = OH_CaptureSession_AddMetadataOutput(captureSession, metadataOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    OH_MetadataOutput_Start(metadataOutput);
+    ret = OH_MetadataOutput_Stop(metadataOutput);
+    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+    EXPECT_EQ(OH_MetadataOutput_Release(metadataOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register and unregister camera status change event callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the normal function of the registered and
+ * unregistered camera state change event callbacks when valid parameters are entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_100, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    CameraManager_Callbacks setCameraManagerResultCallback = {
+        .onCameraStatus = &CameraManagerOnCameraStatusCb
+    };
+    ret = OH_CameraManager_RegisterCallback(cameraManager, &setCameraManagerResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_UnregisterCallback(cameraManager, &setCameraManagerResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager create input with position and type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager create input with position and type,
+ * failure is returned when an invalid parameter is entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_101, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_Input *camInputPosAndType = nullptr;
+    Camera_Position cameraPosition = Camera_Position::CAMERA_POSITION_BACK;
+    Camera_Type cameraType = Camera_Type::CAMERA_TYPE_DEFAULT;
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(nullptr,
+        cameraPosition, cameraType, &camInputPosAndType);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(camInputPosAndType, nullptr);
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+        static_cast<Camera_Position>(-1), cameraType, &camInputPosAndType);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(camInputPosAndType, nullptr);
+
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+        cameraPosition, cameraType, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(camInputPosAndType, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create preview output used in preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to create a preview output instance used in a pre-configured flow,
+ * Create preview output instances for use in the pre-configured flow
+ * when the pre-configured type with scale is not supported
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_102, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(previewProducer);
+    int64_t surfaceIdInt = previewProducer->GetUniqueId();
+    string surfaceIdStr = std::to_string(surfaceIdInt);
+    const char *surfaceId = nullptr;
+    surfaceId = surfaceIdStr.c_str();
+    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
+    ASSERT_NE(surfaceId, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    Camera_PreviewOutput* previewOutput = nullptr;
+    ret = OH_CameraManager_CreatePreviewOutputUsedInPreconfig(cameraManager, surfaceId, &previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test register and unregister camera fold status change event callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the normal function of the registered and unregistered
+ * camera fold state change event callbacks when valid parameters are entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_103, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    ret = OH_CameraManager_RegisterFoldStatusInfoCallback(cameraManager, CameraManagerOnFoldStatusInfoChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_UnregisterFoldStatusInfoCallback(cameraManager, CameraManagerOnFoldStatusInfoChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test capture session with Video Stabilization Mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Check whether the specified video stabilization mode is supported,
+ * and obtain and set the video stabilization mode.
+ * When the session is not committed, the error that the session is not configured is returned
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_104, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(captureSession, nullptr);
+    bool isSupported=false;
+    Camera_VideoStabilizationMode mode = STABILIZATION_MODE_AUTO;
+    ret = OH_CaptureSession_IsVideoStabilizationModeSupported(captureSession, STABILIZATION_MODE_MIDDLE, &isSupported);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    ret = OH_CaptureSession_SetVideoStabilizationMode(captureSession, STABILIZATION_MODE_MIDDLE);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    ret = OH_CaptureSession_GetVideoStabilizationMode(captureSession, &mode);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get supported color space
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to obtain the supported color space list and set color space
+ * when enter invalid parameters, will set the color space failed
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_105, TestSize.Level0)
+{
+    uint32_t size = 0;
+    OH_NativeBuffer_ColorSpace* colorSpace = nullptr;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_GetSupportedColorSpaces(nullptr, &colorSpace, &size);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_GetSupportedColorSpaces(captureSession, nullptr, &size);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_GetSupportedColorSpaces(captureSession, &colorSpace, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    OH_NativeBuffer_ColorSpace setColorSpace = OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL;
+    ret = OH_CaptureSession_SetActiveColorSpace(nullptr, setColorSpace);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_SetActiveColorSpace(captureSession, static_cast<OH_NativeBuffer_ColorSpace>(-1));
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test enable moving photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test enable moving photo, when the session is not committed, an internal error is returned
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_106, TestSize.Level0)
+{
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    Camera_ErrorCode ret = OH_PhotoOutput_EnableMovingPhoto(photoOutput, true);
+    EXPECT_NE(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_EnableMovingPhoto(photoOutput, false);
+    EXPECT_NE(ret, CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create photo output used in preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create photo output used in preconfig,
+ * Create preview output instances for use in the pre-configured flow
+ * when the pre-configured type with scale is not supported
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_107, TestSize.Level0)
+{
+    imageReceiver = Media::ImageReceiver::CreateImageReceiver(RECEIVER_TEST_WIDTH, RECEIVER_TEST_HEIGHT,
+                                                              RECEIVER_TEST_FORMAT, RECEIVER_TEST_CAPACITY);
+    std::string receiverKey = imageReceiver->iraContext_->GetReceiverKey();
+    const char* surfaceId = nullptr;
+    surfaceId = receiverKey.c_str();
+    ASSERT_NE(surfaceId, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = nullptr;
+    ret = OH_CameraManager_CreatePhotoOutputUsedInPreconfig(cameraManager, surfaceId, &photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test create video output used in preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test create video output used in preconfig,
+ * Create preview output instances for use in the pre-configured flow
+ * when the pre-configured type with scale is not supported
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_108, TestSize.Level0)
+{
+    sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(videoProducer);
+    int64_t surfaceIdInt = videoProducer->GetUniqueId();
+    string surfaceIdStr = std::to_string(surfaceIdInt);
+    const char *surfaceId = nullptr;
+    surfaceId = surfaceIdStr.c_str();
+    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
+    ASSERT_NE(surfaceId, nullptr);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_VideoOutput *videoOutput = nullptr;
+    ret = OH_CameraManager_CreateVideoOutputUsedInPreconfig(cameraManager, surfaceId, &videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test to query exposure bias ranges when there is no session configuration and session commit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to query exposure bias ranges when there is no session configuration and session commit
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_109, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test to get and delete the current color space, when entered a valid parameter, delete and get successful
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get and delete the current color space,
+ * when entered a valid parameter, delete and get successful
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_110, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput* photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    OH_NativeBuffer_ColorSpace* activeColorSpace = new OH_NativeBuffer_ColorSpace;
+    ret = OH_CaptureSession_GetActiveColorSpace(captureSession, activeColorSpace);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (activeColorSpace != nullptr) {
+        ret = OH_CaptureSession_DeleteColorSpaces(captureSession, activeColorSpace);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test enable mirror
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test whether mirror photography is enabled.
+ * If mirror photography is supported, it will be enabled successfully when valid parameters are entered
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_112, TestSize.Level0)
+{
+    bool isSupported = false;
+    bool enabled = true;
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PhotoOutput_IsMirrorSupported(photoOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_PhotoOutput_EnableMirror(photoOutput, enabled);
+    }
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+    ReleaseImageReceiver();
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test to get and delete the current preview output frame rate
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get and delete the current preview output frame rate.
+ * When a valid parameter is entered, the get and delete are successful
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_113, TestSize.Level0)
+{
+    Camera_FrameRateRange* activeframeRateRange = new Camera_FrameRateRange;
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    Camera_ErrorCode ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, activeframeRateRange);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (activeframeRateRange != nullptr) {
+        ret = OH_PreviewOutput_DeleteFrameRates(previewOutput, activeframeRateRange);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test to get and delete the current video output frame rate
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get and delete the current video output frame rate,
+ * when entered valid parameters, get and delete successfully
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_114, TestSize.Level0)
+{
+    Camera_FrameRateRange* activeframeRateRange = new Camera_FrameRateRange;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_NE(videoOutput, nullptr);
+    Camera_ErrorCode ret = OH_VideoOutput_GetActiveFrameRate(videoOutput, activeframeRateRange);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (activeframeRateRange != nullptr) {
+        ret = OH_VideoOutput_DeleteFrameRates(videoOutput, activeframeRateRange);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test different branches of error code
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test different branches of error code
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_115, TestSize.Level0)
+{
+   int32_t err = 202;
+   Camera_ErrorCode ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+   err = 7400101;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+   err = 7400106;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_DEVICE_SETTING_LOCKED);
+   err = 7400107;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_CONFLICT_CAMERA);
+   err = 7400108;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_DEVICE_DISABLED);
+   err = 7400109;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_DEVICE_PREEMPTED);
+   err = 7400110;
+   ret = FrameworkToNdkCameraError(err);
+   EXPECT_EQ(ret, CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS);
+}
+
 } // CameraStandard
 } // OHOS
