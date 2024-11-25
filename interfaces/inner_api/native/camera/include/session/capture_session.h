@@ -475,10 +475,10 @@ public:
      */
 
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-                            std::string &burstKey, int64_t timestamp);
+                            std::string &burstKey, int64_t timestamp, int32_t captureId);
 
     void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId);
 
     /**
      * @brief Get the application callback information.

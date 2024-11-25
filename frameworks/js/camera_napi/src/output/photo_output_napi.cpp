@@ -786,7 +786,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
             int32_t cameraShotType;
             std::string burstKey = "";
             photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
-                uri, cameraShotType, burstKey, timestamp);
+                uri, cameraShotType, burstKey, timestamp, captureId);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
             UpdatePictureJSCallback(uri, cameraShotType, burstKey);
             CleanAfterTransPicture(photoOutput, captureId);
@@ -1002,7 +1002,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         }
         CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
         CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo();
-        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
         CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo();
     }
 }

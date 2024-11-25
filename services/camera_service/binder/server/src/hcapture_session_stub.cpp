@@ -268,12 +268,13 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, Messa
     sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
     photoProxy->ReadFromParcel(data);
     int64_t timestamp = data.ReadInt64();
+    int32_t captureId = data.ReadInt32();
     CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
-    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
     CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType) && reply.WriteString(burstKey),
         IPC_STUB_WRITE_PARCEL_ERR, "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
     return ret;
@@ -290,10 +291,12 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& d
     CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
     int64_t timestamp = data.ReadInt64();
+    int32_t captureId = data.ReadInt32();
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
-    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
+    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp,
+        captureId);
     CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType) && reply.WriteString(burstKey),
         IPC_STUB_WRITE_PARCEL_ERR, "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
     return ret;
