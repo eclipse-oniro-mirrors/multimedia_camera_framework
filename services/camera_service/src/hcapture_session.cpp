@@ -1938,7 +1938,7 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
 typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t, int32_t);
 
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     constexpr int32_t movingPhotoShotType = 2;
@@ -1959,7 +1959,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
-        taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
     } else {
         delete photoAssetProxy;
     }
@@ -2024,7 +2024,7 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     constexpr int32_t movingPhotoShotType = 2;
     constexpr int32_t imageShotType = 0;
@@ -2054,7 +2054,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
         if (taskManager_) {
-            taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }
     } else {
         delete photoAssetProxy;

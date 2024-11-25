@@ -361,7 +361,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
 }
 
 int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -371,6 +371,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     data.WriteInterfaceToken(GetDescriptor());
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
+    data.WriteInt32(captureId);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
         data, reply, option);
@@ -384,7 +385,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
 
 int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
     sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
-    std::string &burstKey, int64_t timestamp)
+    std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -397,6 +398,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
     CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
+    data.WriteInt32(captureId);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
         data, reply, option);
