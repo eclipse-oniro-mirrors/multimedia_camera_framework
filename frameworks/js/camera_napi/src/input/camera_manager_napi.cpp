@@ -692,6 +692,7 @@ napi_value CameraManagerNapi::CreateCameraManager(napi_env env)
     if (status == napi_ok) {
         status = napi_new_instance(env, ctor, 0, nullptr, &result);
         if (status == napi_ok) {
+            MEDIA_INFO_LOG("CreateCameraManager is ok");
             return result;
         } else {
             MEDIA_ERR_LOG("New instance could not be obtained");

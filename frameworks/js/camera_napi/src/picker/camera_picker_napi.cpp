@@ -378,6 +378,7 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
                 napi_define_properties(env, exports,
                     sizeof(camera_picker_static_props) / sizeof(camera_picker_static_props[PARAM0]),
                     camera_picker_static_props) == napi_ok) {
+                MEDIA_INFO_LOG("CameraPickerNapi::Init is ok");
                 return exports;
             }
         }
