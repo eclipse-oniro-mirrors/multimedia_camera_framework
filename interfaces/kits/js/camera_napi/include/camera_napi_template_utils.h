@@ -84,6 +84,10 @@ public:
             MEDIA_ERR_LOG("On get invalid argument");
             return nullptr;
         }
+        if (jsCallbackParamParser.GetCallbackFunction() == nullptr) {
+            napi_throw_error(env, std::to_string(INVALID_ARGUMENT).c_str(), "callback invalid argument");
+            return nullptr;
+        }
         MEDIA_INFO_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
 
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
@@ -99,7 +103,10 @@ public:
             MEDIA_ERR_LOG("On get invalid argument");
             return nullptr;
         }
-
+        if (jsCallbackParamParser.GetCallbackFunction() == nullptr) {
+            napi_throw_error(env, std::to_string(INVALID_ARGUMENT).c_str(), "callback invalid argument");
+            return nullptr;
+        }
         MEDIA_INFO_LOG("Once eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         return targetInstance->RegisterCallback(env, jsCallbackParamParser, true);
     }
