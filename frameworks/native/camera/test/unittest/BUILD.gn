@@ -417,3 +417,1242 @@ ohos_unittest("camera_framework_deferred_unittest") {
 
   cflags_cc = cflags
 }
+
+ohos_unittest("camera_utils_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_utils_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_framework_output_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_output_capability_unittest.cpp",
+    "src/v1_1/capture_output_unittest.cpp",
+    "src/v1_1/deferred_photo_proxy_unittest.cpp",
+    "src/v1_1/depth_data_output_unittest.cpp",
+    "src/v1_1/metadata_output_unittest.cpp",
+    "src/v1_1/photo_output_unittest.cpp",
+    "src/v1_1/preview_output_unittest.cpp",
+    "src/v1_1/sketch_wrapper_unittest.cpp",
+    "src/v1_1/video_output_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "libuv:uv",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "--coverage",
+  ]
+
+  ldflags = [ "--coverage" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+  cflags_cc += [ "-fno-access-control" ]
+}
+
+ohos_unittest("camera_framework_input_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_device_unittest.cpp",
+    "src/v1_1/camera_input_unittest.cpp",
+    "src/v1_1/camera_manager_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+  cflags_cc += [ "-fno-access-control" ]
+}
+
+ohos_unittest("camera_service_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
+    "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
+    "${multimedia_camera_framework_path}/interfaces",
+  ]
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_app_manager_client_unittest.cpp",
+    "src/v1_1/camera_fwk_metadata_utils_unittest.cpp",
+    "src/v1_1/camera_info_dumper_unittest.cpp",
+    "src/v1_1/camera_privacy_unittest.cpp",
+    "src/v1_1/camera_timer_unittest.cpp",
+    "src/v1_1/camera_util_unittest.cpp",
+    "src/v1_1/hcamera_device_manager_unittest.cpp",
+    "src/v1_1/hcamera_device_unittest.cpp",
+    "src/v1_1/hcamera_service_unittest.cpp",
+    "src/v1_1/hcapture_session_unittest.cpp",
+    "src/v1_1/hstream_capture_unittest.cpp",
+    "src/v1_1/hstream_depth_data_unittest.cpp",
+    "src/v1_1/hstream_repeat_unittest.cpp",
+    "src/v1_1/hstream_metadata_unittest.cpp",
+    "src/v1_1/hcamera_host_manager_unittest.cpp",
+    "src/v1_1/icamera_util_unittest.cpp",
+    "src/v1_1/photo_asset_adapter_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_dynamic_medialibrary",
+  ]
+
+  external_deps = [
+    "ability_runtime:app_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "memmgr:memmgrclient",
+    "napi:ace_napi",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "resource_management:librawfile",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "sensor:sensor_interface_native",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_proc_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "./include/camera_deferred_unittest",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${base_security_path}/interfaces/innerkits/accesstoken/include",
+    "${base_security_path}/interfaces/innerkits/token_setproc/include",
+    "${multimedia_media_library_path}/interfaces/kits/c",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_deferred_unittest/camera_deferred_proc_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${third_party_path}:gmock_main",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
+    "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "libuv:uv",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_processing_service_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include/camera_deferred_unittest",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
+    "${multimedia_camera_framework_path}/interfaces",
+  ]
+  sources = [
+    "src/v1_1/camera_deferred_unittest/dps_event_report_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "memmgr:memmgrclient",
+    "napi:ace_napi",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "resource_management:librawfile",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "sensor:sensor_interface_native",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_session_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include/camera_deferred_unittest",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+  ]
+
+  sources = [
+    "src/v1_1/camera_deferred_unittest/camera_deferred_session_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "googletest:gmock_main",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "ipc:ipc_single",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_photo_processor_stratety_unittest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "${graphic_surface_path}/surface/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "./include",
+    "./include/camera_deferred_unittest",
+  ]
+
+  sources = [
+    "src/v1_1/camera_deferred_unittest/deferred_photo_processor_stratety_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
+    "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  defines = [ "private=public" ]
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/include",
+  ]
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_video_processor_stratety_unittest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "${graphic_surface_path}/surface/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "./include",
+    "./include/camera_deferred_unittest",
+  ]
+
+  sources = [
+    "src/v1_1/camera_deferred_unittest/deferred_video_processor_stratety_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
+    "drivers_interface_camera:libcamera_proxy_1.3",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  defines = [ "private=public" ]
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/include",
+  ]
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_framework_session_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/capture_session_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+  cflags_cc += [ "-fno-access-control" ]
+}
+ohos_unittest("deferred_processing_service_unittest")
+{
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include/camera_deferred_unittest",
+    "${graphic_surface_path}/surface/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+  ]
+
+  sources = [
+    "src/v1_1/camera_deferred_unittest/deferred_photo_job_unittest.cpp",
+    "src/v1_1/camera_deferred_unittest/deferred_video_job_unittest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "googletest:gmock_main",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokensetproc_shared",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm",
+  ]
+
+  defines = [ "private=public" ]
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+}
+
+ohos_unittest("camera_deferred_base_unittest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include/camera_deferred_unittest",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
+    "${multimedia_camera_framework_path}/interfaces",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager/",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server/",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+  ]
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_deferred_unittest/camera_deferred_base_unittest.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/basic_definitions.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_info.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/dps.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/scheduler_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_coordinator.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/scheduler_coordinator.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_2d:librender_service_client",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "memmgr:memmgrclient",
+    "napi:ace_napi",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "resource_management:librawfile",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "sensor:sensor_interface_native",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",
+    "--coverage",
+  ]
+
+  ldflags = [ "--coverage" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
+  }
+
+  cflags_cc = cflags
+}
