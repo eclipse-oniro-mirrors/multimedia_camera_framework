@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "app_mgr_interface.h"
-#include "refbase.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,6 +30,9 @@ public:
     static bool IsForegroundApplication(const uint32_t tokenId);
 
 private:
+    static void OnRemoveInstance();
+
+    class CameraAppManagerUtilsDeathRecipient;
     static sptr<OHOS::AppExecFwk::IAppMgr> appManagerInstance_;
 };
 
