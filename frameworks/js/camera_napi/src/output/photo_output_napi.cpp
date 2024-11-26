@@ -1524,14 +1524,8 @@ void ThumbnailListener::OnBufferAvailable()
 void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
 {
     auto photoOutput = photoOutput_.promote();
-    if (photoOutput == nullptr) {
-        MEDIA_ERR_LOG("ThumbnailListener photoOutput is nullptr");
-        return;
-    }
-    if (photoOutput->thumbnailSurface_ == nullptr) {
-        MEDIA_ERR_LOG("ThumbnailListener thumbnailSurface_ is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "ThumbnailListener photoOutput is nullptr");
+    CHECK_ERROR_RETURN_LOG(photoOutput->thumbnailSurface_ == nullptr, "ThumbnailListener thumbnailSurface_ is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
     string surfaceName = "Thumbnail";
     MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
