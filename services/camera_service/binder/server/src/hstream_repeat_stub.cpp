@@ -184,5 +184,19 @@ int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
 
     return errCode;
 }
+<<<<<<< HEAD
+=======
+
+int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+    int32_t rotation = data.ReadInt32();
+    uint32_t apiCompatibleVersion = data.ReadUint32();
+
+    int ret = SetCameraRotation(isEnable, rotation, apiCompatibleVersion);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
+    return ret;
+}
+>>>>>>> c9fc29f4 (旋转平板api隔离)
 } // namespace CameraStandard
 } // namespace OHOS

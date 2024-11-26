@@ -45,7 +45,7 @@ public:
 
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
 
-    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) override;
 
     int32_t EnableSecure(bool isEnable = false) override;
 
