@@ -70,6 +70,7 @@ int32_t AudioEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
+    CHECK_AND_RETURN_RET_LOG(isStarted_, 1, "Encoder is not started");
     int32_t ret = AV_ERR_OK;
     ret = OH_AVBuffer_SetBufferAttr(info->buffer, &info->attr);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set avbuffer attr failed, ret: %{public}d", ret);
