@@ -890,7 +890,7 @@ int32_t CameraManager::SubscribeSystemAbility()
         "CameraManager::SubscribeSystemAbility Failed to get System ability manager");
     {
         std::lock_guard<std::mutex> lock(saListenerMuxtex_);
-        if (saListener_ == nullptr ) {
+        if (saListener_ == nullptr) {
             saListener_ = new CameraServiceSystemAbilityListener();
         }
     }
