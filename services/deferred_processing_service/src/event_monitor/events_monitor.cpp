@@ -232,6 +232,7 @@ void EventsMonitor::NotifyObservers(EventType event, int value, int32_t userId)
 
 void CommonEventListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
+    std::lock_guard<std::mutex> lock(eventSubscriberMutex_);
     DP_CHECK_RETURN(eventSubscriber_ != nullptr);
     DP_DEBUG_LOG("saId: %{public}d", systemAbilityId);
     eventSubscriber_ = EventSubscriber::Create();
@@ -241,6 +242,7 @@ void CommonEventListener::OnAddSystemAbility(int32_t systemAbilityId, const std:
 
 void CommonEventListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
+    std::lock_guard<std::mutex> lock(eventSubscriberMutex_);
     DP_CHECK_RETURN(eventSubscriber_ == nullptr);
     DP_DEBUG_LOG("saId: %{public}d", systemAbilityId);
     DP_CHECK_ERROR_RETURN_LOG(eventSubscriber_ == nullptr, "UnRegisterEventStatus failed, eventSubscriber is nullptr");

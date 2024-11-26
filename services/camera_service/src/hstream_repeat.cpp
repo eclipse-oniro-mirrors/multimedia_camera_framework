@@ -552,14 +552,14 @@ int32_t HStreamRepeat::SetMirror(bool isEnable)
     return CAMERA_OK;
 }
  
-void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
+bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
 {
     camera_metadata_item_t item;
     const int32_t canMirrorVideoAndPhoto = 2;
     int32_t res;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        CHECK_ERROR_RETURN(cameraAbility_ == nullptr);
+        CHECK_ERROR_RETURN_RET(cameraAbility_ == nullptr, false);
         res = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(),
             OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     }
@@ -577,10 +577,11 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     }
     if (isMirrorSupported) {
         enableMirror_ = isEnable;
+        Start(nullptr, true);
     } else {
         MEDIA_ERR_LOG("HStreamRepeat::SetMirrorForLivePhoto not supported mirror with mode:%{public}d", mode);
     }
-    Start(nullptr, true);
+    return isMirrorSupported;
 }
 
 int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)

@@ -54,6 +54,11 @@
 #include "drain_manager.h"
 #include "audio_capturer_session.h"
 #include "safe_map.h"
+#ifdef CAMERA_USE_SENSOR
+#include "sensor_agent.h"
+#include "sensor_agent_type.h"
+#endif
+
 namespace OHOS::Media {
     class Picture;
 }
@@ -254,10 +259,11 @@ public:
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t EnableMovingPhotoMirror(bool isMirror) override;
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy,
-        std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp) override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+        std::string& burstKey, int64_t timestamp, int32_t captureId) override;
     int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
+        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp,
+        int32_t captureId) override;
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
@@ -344,12 +350,23 @@ private:
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
 
+    #ifdef CAMERA_USE_SENSOR
+        std::mutex sensorLock_;
+        bool isRegisterSensorSuccess_ = false;
+        void RegisterSensorCallback();
+        void UnRegisterSensorCallback();
+        static void GravityDataCallbackImpl(SensorEvent *event);
+        static int32_t CalcSensorRotation(int32_t sensorDegree);
+        static int32_t CalcRotationDegree(GravityData data);
+    #endif
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
     std::mutex cameraDeviceLock_;
     sptr<HCameraDevice> cameraDevice_;
 
     StreamContainer streamContainer_;
-
+    #ifdef CAMERA_USE_SENSOR
+        SensorUser user;
+    #endif
     pid_t pid_;
     uid_t uid_;
     uint32_t callerToken_;

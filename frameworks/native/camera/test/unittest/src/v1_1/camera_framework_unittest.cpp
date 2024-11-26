@@ -45,6 +45,7 @@
 #include "surface.h"
 #include "test_common.h"
 #include "token_setproc.h"
+#include "uv.h"
 #include "video_session.h"
 #include "os_account_manager.h"
 #include "output/metadata_output.h"
@@ -9081,6 +9082,124 @@ HWTEST_F(CameraFrameworkUnitTest, get_supported_cameras_foldable_half_fold, Test
     mockCameraManager->cameraDeviceList_ = expectedCameraList;
     auto result = mockCameraManager->GetSupportedCameras();
     ASSERT_EQ(result.size(), 1);
+}
+
+typedef struct {
+    uv_loop_t* loop;
+    uv_work_t* workReq;
+} Param;
+
+enum class PhotoOutputEventType : int32_t {
+    CAPTURE_START = 1,
+    CAPTURE_FRAME_SHUTTER = 2,
+};
+
+static bool g_semInit = false;
+static uv_sem_t g_pause_sems;
+std::vector<int32_t> g_eventOrder {};
+
+static void WorkCb(uv_work_t* req)
+{
+    if (req == nullptr) {
+        return;
+    }
+    int32_t ret = 0;
+    PhotoOutputEventType data = *static_cast<PhotoOutputEventType*>(req->data);
+    if (data == PhotoOutputEventType::CAPTURE_START) {
+    } else if (data == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+        ret = fprintf(stdout, "WorkCb uv_sem_wait before data:%d\n", data);
+        EXPECT_GE(ret, 0);
+        uv_sem_wait(&g_pause_sems);
+        ret = fprintf(stdout, "WorkCb uv_sem_wait end data:%d\n", data);
+        EXPECT_GE(ret, 0);
+    }
+    ret = fprintf(stdout, "WorkCb data:%d, thread_id:%lu, end\n", data, uv_thread_self());
+    EXPECT_GE(ret, 0);
+    ret = fflush(stdout);
+    EXPECT_EQ(ret, 0);
+}
+
+static void AfterWorkCb(uv_work_t* req, int status)
+{
+    if (req == nullptr) {
+        return;
+    }
+    int32_t ret = 0;
+    PhotoOutputEventType data = *static_cast<PhotoOutputEventType*>(req->data);
+    if (data == PhotoOutputEventType::CAPTURE_START) {
+        uv_sem_post(&g_pause_sems);
+        ret = fprintf(stdout, "AfterWorkCb uv_sem_post data:%d\n", data);
+        EXPECT_GE(ret, 0);
+    } else if (data == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+        uv_sem_destroy(&g_pause_sems);
+        g_semInit = false;
+        ret = fprintf(stdout, "AfterWorkCb uv_sem_destroy data:%d\n", data);
+        EXPECT_GE(ret, 0);
+    }
+    g_eventOrder.push_back(static_cast<int32_t>(data));
+    ret = fprintf(stdout, "AfterWorkCb data:%d, thread_id:%lu, end\n", data, uv_thread_self());
+    EXPECT_GE(ret, 0);
+    ret = fflush(stdout);
+    EXPECT_EQ(ret, 0);
+}
+
+void ThreadFunc(void* arg)
+{
+    if (arg == nullptr) {
+        return;
+    }
+    Param* param = static_cast<Param*>(arg);
+    if (!g_semInit) {
+        uv_sem_init(&g_pause_sems, 0);
+        g_semInit = true;
+    }
+    if (!param->workReq) {
+        return;
+    }
+    int32_t ret = 0;
+    PhotoOutputEventType eventType = *static_cast<PhotoOutputEventType*>(param->workReq->data);
+    ret = fprintf(stdout, "ThreadFunc event:%d\n", eventType);
+    EXPECT_GE(ret, 0);
+    ret = uv_queue_work(param->loop, param->workReq, WorkCb, AfterWorkCb);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test using libuv semaphores to sync after work callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test using libuv semaphores to sync after work callback
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_libuv_sem_sync, TestSize.Level0)
+{
+    uv_loop_t* loop = uv_default_loop();
+    PhotoOutputEventType captureStartEvent = PhotoOutputEventType::CAPTURE_START;
+    PhotoOutputEventType frameShutterEvent = PhotoOutputEventType::CAPTURE_FRAME_SHUTTER;
+    uv_work_t workReqCaptureStart { .data = &captureStartEvent, };
+    uv_work_t workReqFrameShutter { .data = &frameShutterEvent, };
+    Param paramCaptureStart {
+        .loop = loop,
+        .workReq = &workReqCaptureStart,
+    };
+    Param paramFrameShutter {
+        .loop = loop,
+        .workReq = &workReqFrameShutter,
+    };
+    uv_thread_t threadCaptureStart;
+    uv_thread_t threadFrameShutter;
+    uv_thread_create(&threadFrameShutter, ThreadFunc, &paramFrameShutter);
+    uv_thread_create(&threadCaptureStart, ThreadFunc, &paramCaptureStart);
+    uv_thread_join(&threadFrameShutter);
+    uv_thread_join(&threadCaptureStart);
+    EXPECT_EQ(uv_run(loop, UV_RUN_DEFAULT), 0);
+    sleep(1);
+    std::vector<int32_t> expectOrder {
+        static_cast<int32_t>(PhotoOutputEventType::CAPTURE_START),
+        static_cast<int32_t>(PhotoOutputEventType::CAPTURE_FRAME_SHUTTER)
+    };
+    EXPECT_EQ(expectOrder, g_eventOrder);
 }
 } // CameraStandard
 } // OHOS

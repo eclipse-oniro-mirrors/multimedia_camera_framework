@@ -13,16 +13,25 @@
  * limitations under the License.
  */
 
+#include <condition_variable>
+#include <cstdint>
+#include <mutex>
+#include "camera_app_manager_utils.h"
 #include "camera_privacy.h"
 #include "camera_log.h"
 #include "hcamera_device.h"
 #include "hcapture_session.h"
+#include "ipc_skeleton.h"
 #include "types.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
+
+static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
+std::condition_variable g_canClose;
+std::mutex g_mutex;
 
 sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 {
@@ -51,14 +60,20 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
-    auto device = cameraDevice_.promote();
-    if ((isShowing == false) && (device != nullptr)) {
-        auto session = CastToSession(device->GetStreamOperatorCallback());
-        if (session) {
-            session->ReleaseStreams();
-            session->StopMovingPhoto();
+    std::unique_lock<std::mutex> lock(g_mutex);
+    auto waitStatus = g_canClose.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
+    if (waitStatus == std::cv_status::timeout) {
+        MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
+        auto device = cameraDevice_.promote();
+        bool isForeground = CameraAppManagerUtils::IsForegroundApplication(tokenId);
+        if ((isShowing == false) && (device != nullptr) && !isForeground) {
+            auto session = CastToSession(device->GetStreamOperatorCallback());
+            if (session) {
+                session->ReleaseStreams();
+                session->StopMovingPhoto();
+            }
+            device->CloseDevice();
         }
-        device->CloseDevice();
     }
 }
 
@@ -123,6 +138,8 @@ void CameraPrivacy::StopUsingPermissionCallback()
     MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback res:%{public}d", res);
     CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
     cameraUseCallbackPtr_ = nullptr;
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_canClose.notify_one();
 }
 } // namespace CameraStandard
 } // namespace OHOS

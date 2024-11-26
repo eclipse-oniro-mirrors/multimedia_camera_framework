@@ -1166,14 +1166,14 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
 }
 
 void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-                                        std::string &burstKey, int64_t timestamp)
+                                        std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
         CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
             errorCode);
     } else {
@@ -1182,14 +1182,14 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
 }
 
 void CaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
 {
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     auto captureSession = GetCaptureSession();
     if (captureSession) {
         errorCode = captureSession->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
-            burstKey, timestamp);
+            burstKey, timestamp, captureId);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
         }
@@ -2578,7 +2578,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     uint32_t minOffset = 1;
     uint32_t maxOffset = 2;
     for (uint32_t i = 0; i < item.count; i += step) {
-        MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d", item.data.i32[i],
+        MEDIA_DEBUG_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d", item.data.i32[i],
             item.data.i32[i + minOffset], item.data.i32[i + maxOffset]);
         if (GetFeaturesMode().GetFeaturedMode() == item.data.i32[i]) {
             minZoom = item.data.i32[i + minOffset] / factor;
