@@ -4525,7 +4525,8 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMovingPhoto Failed to enable");
     auto captureSession = GetCaptureSession();
-    CHECK_ERROR_PRINT_LOG(captureSession == nullptr, "CaptureSession::EnableMovingPhoto() captureSession is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::EnableMovingPhoto() captureSession is nullptr");
     int32_t errCode = captureSession->EnableMovingPhoto(isEnable);
     CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "Failed to EnableMovingPhoto!, %{public}d", errCode);
     isMovingPhotoEnabled_ = isEnable;
