@@ -15,8 +15,11 @@ group("cameraframeworktest") {
   testonly = true
   deps = [
     "moduletest:camera_framework_moduletest",
+    "unittest:camera_framework_input_unittest",
+    "unittest:camera_framework_output_unittest",
     "unittest:camera_framework_unittest_v1_1",
     "unittest:camera_ndk_unittest_v1_1",
     "unittest:camera_service_unittest",
+    "unittest:camera_utils_unittest",
   ]
 }

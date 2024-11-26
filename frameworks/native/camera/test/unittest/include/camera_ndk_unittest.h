@@ -63,6 +63,7 @@ public:
     Camera_PhotoOutput* CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
     Camera_PreviewOutput* CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH,
                                               int32_t height = PREVIEW_DEFAULT_HEIGHT);
+    Camera_MetadataOutput* CreateMetadataOutput(Camera_MetadataObjectType type);
     Camera_VideoOutput* CreateVideoOutput(int32_t width = VIDEO_DEFAULT_WIDTH, int32_t height = VIDEO_DEFAULT_HEIGHT);
 };
 } // CameraStandard
