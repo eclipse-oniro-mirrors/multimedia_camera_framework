@@ -711,16 +711,16 @@ uint32_t PreviewOutput::GetApiCompatibleVersion()
         systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     if (iBundleMgr == nullptr) {
-        WLOGFW("IBundleMgr is null");
+        MEDIA_INFO_LOG("PreviewOutput GetApiCompatibleVersion iBundleMgr is null");
         return apiCompatibleVersion;
     }
     AppExecFwk::BundleInfo bundleInfo;
     if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {
         apiCompatibleVersion = bundleInfo.targetVersion % API_VERSION_MOD;
-        WLOGFD("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
+        MEDIA_INFO_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
             apiCompatibleVersion);
     } else {
-        WLOGFW("Call for GetApiCompatibleVersion failed");
+        MEDIA_INFO_LOG("PreviewOutput Call for GetApiCompatibleVersion failed");
     }
     return apiCompatibleVersion;
 }
