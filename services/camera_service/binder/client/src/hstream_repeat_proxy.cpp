@@ -257,7 +257,7 @@ int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>&
     return error;
 }
 
-int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
+int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -266,6 +266,7 @@ int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isEnable);
     data.WriteInt32(rotation);
+    data.WriteUint32(apiCompatibleVersion);
  
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION), data, reply, option);

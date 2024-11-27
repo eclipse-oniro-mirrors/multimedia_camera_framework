@@ -28,6 +28,8 @@
 #include "istream_repeat_callback.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
+#include "parameters.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
@@ -584,11 +586,12 @@ bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     return isMirrorSupported;
 }
 
-int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
+int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
 {
     enableCameraRotation_ = isEnable;
     CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
     setCameraRotation_ = STREAM_ROTATE_360 - rotation;
+    apiCompatibleVersion_ = apiCompatibleVersion;
     SetStreamTransform();
     return CAMERA_OK;
 }
@@ -661,6 +664,10 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     if (enableCameraRotation_) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
+    if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+        return;
+    }
     std::lock_guard<std::mutex> lock(producerLock_);
     if (producer_ == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
@@ -676,7 +683,45 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
+        ProcessFixedTransform(sensorOrientation, cameraPosition);
+    }
+}
+
+void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+{
+    if (enableCameraRotation_) {
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+        return;
+    }
+    bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
+    bool isNeedChangeRotation = system::GetBoolParameter("const.multimedia.enable_camera_rotation_change", 0);
+    if (isTableFlag) {
+        ProcessFixedDiffDeviceTransform(cameraPosition);
+        return;
+    }
+    if (isNeedChangeRotation) {
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+        return;
+    }
+    if (IsVerticalDevice()) {
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
+    } else {
+        ProcessFixedDiffDeviceTransform(cameraPosition);
+    }
+}
+
+void HStreamRepeat::ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition)
+{
+    int ret = SurfaceError::SURFACE_ERROR_OK;
+    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
+    } else {
+        ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
+    }
+    if (ret != SurfaceError::SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
     }
 }
 
