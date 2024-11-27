@@ -44,8 +44,8 @@ using CacheCbFunc = function<void(sptr<FrameRecord>, bool)>;
 constexpr uint32_t DEFAULT_THREAD_NUMBER = 6;
 constexpr uint32_t DEFAULT_ENCODER_THREAD_NUMBER = 1;
 constexpr uint32_t GET_FD_EXPIREATION_TIME = 2000;
-constexpr int64_t NANOSEC_RANGE = 1500000000LL;
 constexpr int64_t ONE_BILLION = 1000000000LL;
+constexpr uint32_t MAX_FRAME_COUNT = 90;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:

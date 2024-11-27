@@ -61,6 +61,7 @@ private:
     VideoCodecType videoCodecType_ = VIDEO_ENCODE_TYPE_AVC;
     int32_t bitrate_ = 0;
     bool successFrame_ = false;
+    int64_t preFrameTimestamp_ = 0;
 };
 } // CameraStandard
 } // OHOS

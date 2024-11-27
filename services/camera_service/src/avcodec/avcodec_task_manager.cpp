@@ -122,7 +122,7 @@ void AvcodecTaskManager::SubmitTask(function<void()> task)
 void AvcodecTaskManager::SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy, int32_t captureId)
 {
     lock_guard<mutex> lock(videoFdMutex_);
-    MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64 ", captureId: %{public}d", timestamp, captureId);
+    MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
     MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
     cvEmpty_.notify_all();
@@ -220,7 +220,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
             OH_AVBuffer_GetBufferAttr(buffer, &attr);
             attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-            MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRId64, attr.pts);
+            MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
             OH_AVBuffer_SetBufferAttr(buffer, &attr);
             muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
             sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
@@ -252,44 +252,53 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
     choosedBuffer.clear();
+    bool isDeblurStartTime = false;
     std::unique_lock<mutex> startTimeLock(startTimeMutex_);
     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
-    if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime) {
+    if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime
+        && mPStartTimeMap_[captureId] > clearVideoStartTime) {
+        MEDIA_DEBUG_LOG("set deblur start time is %{public}" PRIu64, mPStartTimeMap_[captureId]);
         clearVideoStartTime = mPStartTimeMap_[captureId];
+        isDeblurStartTime = true;
     }
     mPStartTimeMap_.erase(captureId);
     startTimeLock.unlock();
     std::unique_lock<mutex> endTimeLock(endTimeMutex_);
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
-    if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime) {
+    if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime
+        && mPEndTimeMap_[captureId] < clearVideoEndTime) {
+        MEDIA_DEBUG_LOG("set deblur end time is %{public}" PRIu64, mPEndTimeMap_[captureId]);
         clearVideoEndTime = mPEndTimeMap_[captureId];
     }
     mPEndTimeMap_.erase(captureId);
     endTimeLock.unlock();
-    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRId64 ", "
-        "clearVideoStartTime : %{public}" PRId64 ", clearVideoEndTime : %{public}" PRId64,
+    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
+        "clearVideoStartTime : %{public}" PRIu64 ", clearVideoEndTime : %{public}" PRIu64,
         captureId, shutterTime, clearVideoStartTime, clearVideoEndTime);
     size_t idrIndex = frameRecords.size();
-    for (size_t index = 0; index < frameRecords.size(); ++index) {
-        auto frame = frameRecords[index];
-        if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
-            idrIndex = index;
+    if (isDeblurStartTime) {
+        for (size_t index = 0; index < frameRecords.size(); ++index) {
+            auto frame = frameRecords[index];
+            if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
+                idrIndex = index;
+            }
         }
     }
     if (idrIndex == frameRecords.size()) {
         for (size_t index = 0; index < frameRecords.size(); ++index) {
             auto frame = frameRecords[index];
-            if (frame->IsIDRFrame()) {
+            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
                 idrIndex = index;
                 break;
             }
             idrIndex = 0;
         }
     }
+    size_t frameCount = 0;
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
         int64_t timestamp = frame->GetTimeStamp();
-        if (timestamp <= clearVideoEndTime) {
+        if (timestamp <= clearVideoEndTime && ++frameCount <= MAX_FRAME_COUNT) {
             choosedBuffer.push_back(frame);
         }
     }
