@@ -19,6 +19,7 @@ group("cameraframeworktest") {
     "unittest:camera_framework_output_unittest",
     "unittest:camera_framework_unittest_v1_1",
     "unittest:camera_ndk_unittest_v1_1",
+    "unittest:camera_service_unittest",
     "unittest:camera_utils_unittest",
   ]
 }
