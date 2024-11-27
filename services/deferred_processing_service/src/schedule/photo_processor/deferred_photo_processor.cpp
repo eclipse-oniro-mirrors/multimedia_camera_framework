@@ -62,7 +62,6 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
         requestedImages_.erase(imageId);
     }
     DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "repository_ is nullptr");
-    repository_->RemoveDeferredJob(imageId, restorable);
 
     if (restorable == false) {
         if (repository_->GetJobStatus(imageId) == PhotoJobStatus::RUNNING) {
@@ -72,7 +71,7 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
         DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "postProcessor_ is nullptr, RemoveImage failed.");
         postProcessor_->RemoveImage(imageId);
     }
-    return;
+    repository_->RemoveDeferredJob(imageId, restorable);
 }
 
 void DeferredPhotoProcessor::RestoreImage(const std::string& imageId)
