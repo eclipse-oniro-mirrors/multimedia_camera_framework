@@ -26,6 +26,11 @@
 #include "token_setproc.h"
 using namespace std;
 
+const uint8_t TEST_NUM = 5;
+const uint8_t TEST_INDEX_ONE = 1;
+const uint8_t TEST_INDEX_TWO = 2;
+const uint8_t TEST_INDEX_THREE = 3;
+
 namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
@@ -374,11 +379,25 @@ void TestCameraDeviceServiceCallback(uint8_t *rawData, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
-    OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
-    OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(data, size);
-    OHOS::CameraStandard::CameraDeviceFuzzTest2(data, size);
-    OHOS::CameraStandard::Test3(data, size);
-    OHOS::CameraStandard::TestXCollie(data, size);
+    uint8_t firstByte = *data;
+    firstByte = firstByte % TEST_NUM;
+    switch (firstByte) {
+        case 0:
+            OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
+            break;
+        case TEST_INDEX_ONE:
+            OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(data, size);
+            break;
+        case TEST_INDEX_TWO:
+            OHOS::CameraStandard::CameraDeviceFuzzTest2(data, size);
+            break;
+        case TEST_INDEX_THREE:
+            OHOS::CameraStandard::Test3(data, size);
+            break;
+        default:
+            OHOS::CameraStandard::TestXCollie(data, size);
+            break;
+    }
     return 0;
 }
 
