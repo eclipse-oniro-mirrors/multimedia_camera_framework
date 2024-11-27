@@ -60,8 +60,11 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
-    std::unique_lock<std::mutex> lock(g_mutex);
-    auto waitStatus = g_canClose.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
+    std::cv_status waitStatus;
+    {
+        std::unique_lock<std::mutex> lock(g_mutex);
+        waitStatus = g_canClose.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
+    }
     if (waitStatus == std::cv_status::timeout) {
         MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
         auto device = cameraDevice_.promote();
