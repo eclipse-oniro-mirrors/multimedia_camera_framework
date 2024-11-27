@@ -703,7 +703,7 @@ int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
     return imageRotation;
 }
 
-uint32_t SysCapUtil::GetApiCompatibleVersion()
+uint32_t PreviewOutput::GetApiCompatibleVersion()
 {
     uint32_t apiCompatibleVersion = 0;
     OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
