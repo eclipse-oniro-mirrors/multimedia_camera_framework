@@ -344,7 +344,7 @@ void CaptureSession::CheckSpecSearch()
     CHECK_AND_RETURN_LOG(inputDevice && inputDevice->GetCameraDeviceInfo(), "camera device is null");
     camera_metadata_item_t item;
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_AND_RETURN_LOG(metadata == nullptr, "CheckSpecSearch camera metadata is null");
+    CHECK_AND_RETURN_LOG(metadata != nullptr, "CheckSpecSearch camera metadata is null");
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
     if (retCode != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("specSearch is not support");
