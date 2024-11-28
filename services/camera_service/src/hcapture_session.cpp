@@ -1966,7 +1966,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     return CAMERA_OK;
 }
 
-std::unordered_map<std::string, float> exifOrientationDegree = {
+static std::unordered_map<std::string, float> exifOrientationDegree = {
     {"Top-left", 0},
     {"Top-right", 90},
     {"Bottom-right", 180},

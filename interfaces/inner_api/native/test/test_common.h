@@ -159,6 +159,13 @@ public:
     void OnStateChanged(const DpsStatusCode status);
 };
 
+class TestDeferredVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {
+public:
+    void OnProcessVideoDone(const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd);
+    void OnError(const std::string& videoId, const DpsErrorCode errorCode);
+    void OnStateChanged(const DpsStatusCode status);
+};
+
 class SurfaceListener : public IBufferConsumerListener {
 public:
     SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<IConsumerSurface> surface);
