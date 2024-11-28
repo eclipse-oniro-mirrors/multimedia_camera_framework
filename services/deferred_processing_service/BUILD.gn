@@ -110,8 +110,12 @@ ohos_shared_library("deferred_processing_service") {
   cflags = [
     "-fPIC",
     "-Wall",
-    "-fvisibility=hidden",
   ]
+
+  if (!use_clang_coverage) {
+    cflags += [ "-fvisibility=hidden" ]
+  }
+
   sanitize = {
     cfi = true
     cfi_cross_dso = true

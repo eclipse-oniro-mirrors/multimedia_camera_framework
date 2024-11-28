@@ -336,6 +336,22 @@ void TestDeferredPhotoProcSessionCallback::OnStateChanged(const DpsStatusCode st
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnStateChanged.");
 }
 
+void TestDeferredVideoProcSessionCallback::OnProcessVideoDone(
+    const std::string& videoId, const sptr<IPCFileDescriptor> ipcFd)
+{
+    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnProcessImageDone Picture.");
+}
+
+void TestDeferredVideoProcSessionCallback::OnError(const std::string& videoId, const DpsErrorCode errorCode)
+{
+    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnError.");
+}
+
+void TestDeferredVideoProcSessionCallback::OnStateChanged(const DpsStatusCode status)
+{
+    MEDIA_INFO_LOG("TestDeferredVideoProcSessionCallback OnStateChanged.");
+}
+
 SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<IConsumerSurface> surface)
     : testName_(testName), surfaceType_(type), fd_(fd), surface_(surface) {
 }

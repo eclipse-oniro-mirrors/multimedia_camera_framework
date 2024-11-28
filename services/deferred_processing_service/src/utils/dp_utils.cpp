@@ -29,7 +29,7 @@ Watchdog& GetGlobalWatchdog()
     static Watchdog instance("DPSGlobalWatchdog");
     return instance;
 }
-std::unordered_map<std::string, float> exifOrientationDegree = {
+static std::unordered_map<std::string, float> exifOrientationDegree = {
     {"Top-left", 0},
     {"Top-right", 90},
     {"Bottom-right", 180},
