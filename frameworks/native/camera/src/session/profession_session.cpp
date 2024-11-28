@@ -28,6 +28,9 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t DEFAULT_ITEMS = 10;
+constexpr int32_t DEFAULT_DATA_LENGTH = 100;
+
 ProfessionSession::~ProfessionSession()
 {
     exposureInfoCallback_ = nullptr;
@@ -895,16 +898,19 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
         MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata physicalCameraId: device/%{public}s", phyCameraId.c_str());
         if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE && !isRawImageDelivery_) {
             auto inputDevice = GetInputDevice();
-            CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
+            CHECK_ERROR_RETURN_RET(inputDevice == nullptr,
+                                   std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
             auto info = inputDevice->GetCameraDeviceInfo();
-            CHECK_ERROR_RETURN_RET(info == nullptr, nullptr);
+            CHECK_ERROR_RETURN_RET(info == nullptr,
+                                   std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
             MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata using main sensor: %{public}s", info->GetID().c_str());
             return info->GetMetadata();
         }
         return (*physicalCameraDevice)->GetMetadata();
     }
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
+    CHECK_ERROR_RETURN_RET(inputDevice == nullptr,
+                           std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
         inputDevice->GetCameraDeviceInfo()->GetID().c_str());
     return inputDevice->GetCameraDeviceInfo()->GetMetadata();
