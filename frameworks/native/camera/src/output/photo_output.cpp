@@ -1024,9 +1024,9 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     sensorOrientation = item.data.i32[0];
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
-        result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
+        result = (ImageRotation)((imageRotation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
-        result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+        result = (ImageRotation)((CAPTURE_ROTATION_BASE - imageRotation) % CAPTURE_ROTATION_BASE);
     }
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
