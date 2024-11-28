@@ -44,6 +44,7 @@ ohos_shared_library("camera_service") {
     "binder/server/src/window_manager_service_callback_stub_impl/hcamera_window_manager_callback_stub.cpp",
     "src/adapter/bms_adapter.cpp",
     "src/app_manager_utils/camera_app_manager_client.cpp",
+    "src/app_manager_utils/camera_app_manager_utils.cpp",
     "src/avcodec/audio_capturer_session.cpp",
     "src/avcodec/audio_encoder.cpp",
     "src/avcodec/audio_video_muxer.cpp",
