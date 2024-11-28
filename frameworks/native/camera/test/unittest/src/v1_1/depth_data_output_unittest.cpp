@@ -95,6 +95,7 @@ void DepthDataOutputUnit::NativeAuthorization()
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -143,6 +144,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_001, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -193,6 +195,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_002, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -241,6 +244,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_003, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -265,7 +269,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level0)
     session->CommitConfig();
     session->Start();
 
-    auto appCallback = std::make_shared<DepthDataStateCallbackTest>();
+    std::shared_ptr<DepthDataStateCallback> appCallback = std::make_shared<DepthDataStateCallbackTest>();
     depthDataOutput->appCallback_ = appCallback;
     depthDataOutput->svcCallback_ = nullptr;
     depthDataOutput->SetCallback(appCallback);
@@ -296,6 +300,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_004, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -320,7 +325,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level0)
     session->CommitConfig();
     session->Start();
 
-    auto appCallback = nullptr;
+    std::shared_ptr<DepthDataStateCallback> appCallback = nullptr;
     depthDataOutput->appCallback_ = appCallback;
     depthDataOutput->svcCallback_ = nullptr;
     depthDataOutput->SetCallback(appCallback);
@@ -347,6 +352,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_005, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -371,9 +377,10 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level0)
     session->CommitConfig();
     session->Start();
 
-    auto appCallback = std::make_shared<DepthDataStateCallbackTest>();
+    std::shared_ptr<DepthDataStateCallback> appCallback = std::make_shared<DepthDataStateCallbackTest>();
     depthDataOutput->appCallback_ = appCallback;
     depthDataOutput->svcCallback_ = new (std::nothrow) DepthDataOutputCallbackImpl(depthDataOutput);
+    ASSERT_NE(depthDataOutput->svcCallback_, nullptr);
     depthDataOutput->SetCallback(appCallback);
     EXPECT_EQ(depthDataOutput->GetApplicationCallback(), appCallback);
 
@@ -381,6 +388,9 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level0)
     depthDataOutput->CameraServerDied(pid);
     EXPECT_EQ(depthDataOutput->Release(), 0);
 
+    if (depthDataOutput->svcCallback_) {
+        depthDataOutput->svcCallback_ = nullptr;
+    }
     input->Close();
     session->Stop();
     session->Release();
@@ -398,6 +408,7 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_006, TestSize.Level0)
 HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -412,21 +423,31 @@ HWTEST_F(DepthDataOutputUnit, depth_data_output_unittest_007, TestSize.Level0)
     sptr<DepthDataOutput> depthDataOutput = cameraManager_->CreateDepthDataOutput(depthProfile, surfaceProducer);
     ASSERT_NE(depthDataOutput, nullptr);
 
-    auto appCallback = std::make_shared<DepthDataStateCallbackTest>();
+    std::shared_ptr<DepthDataStateCallback> appCallback = std::make_shared<DepthDataStateCallbackTest>();
     depthDataOutput->appCallback_ = appCallback;
     depthDataOutput->svcCallback_ = new (std::nothrow) DepthDataOutputCallbackImpl(depthDataOutput);
+    ASSERT_NE(depthDataOutput->svcCallback_, nullptr);
     int32_t errCode = 0;
     EXPECT_EQ(depthDataOutput->svcCallback_->OnDepthDataError(errCode), 0);
 
     depthDataOutput->appCallback_ = nullptr;
     EXPECT_EQ(depthDataOutput->svcCallback_->OnDepthDataError(errCode), 0);
 
-    auto depthDataOutputCallbackImpl = new (std::nothrow) DepthDataOutputCallbackImpl(depthDataOutput);
+    sptr<DepthDataOutputCallbackImpl> depthDataOutputCallbackImpl =
+        new (std::nothrow) DepthDataOutputCallbackImpl(depthDataOutput);
+    ASSERT_NE(depthDataOutputCallbackImpl, nullptr);
     depthDataOutputCallbackImpl->depthDataOutput_ = nullptr;
     EXPECT_EQ(depthDataOutputCallbackImpl->OnDepthDataError(errCode), 0);
 
+    if (depthDataOutput->svcCallback_) {
+        depthDataOutput->svcCallback_ = nullptr;
+    }
+    if (depthDataOutputCallbackImpl) {
+        depthDataOutputCallbackImpl = nullptr;
+    }
     input->Close();
     input->Release();
 }
+
 }
 }

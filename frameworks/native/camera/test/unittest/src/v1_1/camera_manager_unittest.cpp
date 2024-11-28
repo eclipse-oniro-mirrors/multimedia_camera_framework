@@ -38,6 +38,13 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 using OHOS::HDI::Camera::V1_3::OperationMode;
 
+void TorchListenerImpl::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
+        torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
+    return;
+}
+
 void CameraManagerUnitTest::SetUpTestCase(void) {}
 
 void CameraManagerUnitTest::TearDownTestCase(void) {}
@@ -46,6 +53,7 @@ void CameraManagerUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraManagerUnitTest::TearDown()
@@ -228,6 +236,37 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_007, TestSize.
         return manager->PrelaunchCamera();
     }();
     EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with FillSupportPhotoFormats
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test FillSupportPhotoFormats for (photoFormats_.size() == 0 || photoProfiles.size() == 0)
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_008, TestSize.Level0)
+{
+    cameraManager_->photoFormats_.clear();
+    std::vector<Profile> photoProfiles = {};
+    cameraManager_->FillSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 0);
+
+    cameraManager_->photoFormats_ = {
+        CAMERA_FORMAT_YCBCR_420_888,
+        CAMERA_FORMAT_RGBA_8888,
+        CAMERA_FORMAT_DNG
+    };
+    cameraManager_->FillSupportPhotoFormats(photoProfiles);
+    EXPECT_EQ(photoProfiles.size(), 0);
+
+    photoProfiles = {
+        Profile(CAMERA_FORMAT_JPEG, {1920, 1080}),
+        Profile(CAMERA_FORMAT_YCBCR_420_888, {1280, 720})
+    };
+    cameraManager_->FillSupportPhotoFormats(photoProfiles);
+    EXPECT_NE(photoProfiles.size(), 0);
 }
 
 /*
@@ -559,6 +598,117 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_022, TestSize.
     cameraManager_->ParseProfileLevel(profilesWrapper, modeNameRet1, item);
     EXPECT_TRUE((profilesWrapper.photoProfiles.empty()) && (profilesWrapper.previewProfiles.empty())
         && (profilesWrapper.vidProfiles.empty()));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with CreateProfileLevel4StreamType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateProfileLevel4StreamType for abnormal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_023, TestSize.Level0)
+{
+    CameraManager::ProfilesWrapper profilesWrapper = {};
+    int32_t specId = 0;
+    ProfileDetailInfo profile1 = {
+        CAMERA_FORMAT_INVALID,
+        PHOTO_DEFAULT_WIDTH,
+        PHOTO_DEFAULT_HEIGHT,
+        FIXEDFPS_DEFAULT,
+        MINFPS_DEFAULT,
+        MAXFPS_DEFAULT,
+        {1, 2, 3}
+    };
+    ProfileDetailInfo profile2 = {
+        CAMERA_FORMAT_INVALID,
+        PHOTO_DEFAULT_WIDTH,
+        PHOTO_DEFAULT_HEIGHT,
+        FIXEDFPS_DEFAULT,
+        MINFPS_DEFAULT,
+        MAXFPS_DEFAULT,
+        {4, 5, 6}
+    };
+    StreamInfo streamInfo = {
+        OutputCapStreamType::PREVIEW,
+        {profile1, profile2}
+    };
+    cameraManager_->CreateProfileLevel4StreamType(profilesWrapper, specId, streamInfo);
+    EXPECT_EQ(profilesWrapper.previewProfiles.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with GetSupportPhotoFormat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportPhotoFormat for metadata == nullptr
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_024, TestSize.Level0)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
+    int32_t modeName = SceneMode::NORMAL;
+
+    vector<CameraFormat> cameraFormat = cameraManager_->GetSupportPhotoFormat(modeName, metadata);
+    EXPECT_EQ(cameraFormat.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TorchServiceCallback with OnTorchStatusChange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnTorchStatusChange for status is TORCH_STATUS_UNAVAILABLE and TORCH_STATUS_ON
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_025, TestSize.Level0)
+{
+    TorchServiceCallback torchServiceCallback(cameraManager_);
+    TorchStatus status1 = TorchStatus::TORCH_STATUS_UNAVAILABLE;
+    TorchStatus status2 = TorchStatus::TORCH_STATUS_ON;
+
+    EXPECT_NE(torchServiceCallback.cameraManager_, nullptr);
+    EXPECT_TRUE(cameraManager_->torchListenerMap_.IsEmpty());
+    auto ret = torchServiceCallback.OnTorchStatusChange(status1);
+    EXPECT_EQ(cameraManager_->torchMode_, TORCH_MODE_OFF);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerImpl>();
+    cameraManager_->RegisterTorchListener(listener);
+    auto listenerMap = cameraManager_->GetTorchListenerMap();
+    EXPECT_FALSE(listenerMap.IsEmpty());
+    ret = torchServiceCallback.OnTorchStatusChange(status2);
+    EXPECT_EQ(cameraManager_->torchMode_, TORCH_MODE_ON);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TorchServiceCallback with OnFoldStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnFoldStatusChanged for listenerMap is empty and not empty
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_026, TestSize.Level0)
+{
+    cameraManager_->torchListenerMap_.Clear();
+    FoldServiceCallback foldServiceCallback(cameraManager_);
+    FoldStatus status = FoldStatus::UNKNOWN_FOLD;
+
+    EXPECT_NE(foldServiceCallback.cameraManager_, nullptr);
+    EXPECT_TRUE(foldServiceCallback.cameraManager_->torchListenerMap_.IsEmpty());
+    auto ret = foldServiceCallback.OnFoldStatusChanged(status);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerImpl>();
+    cameraManager_->RegisterTorchListener(listener);
+    auto listenerMap = cameraManager_->GetTorchListenerMap();
+    EXPECT_FALSE(listenerMap.IsEmpty());
+    ret = foldServiceCallback.OnFoldStatusChanged(status);
+    EXPECT_EQ(ret, CAMERA_OK);
 }
 }
 }

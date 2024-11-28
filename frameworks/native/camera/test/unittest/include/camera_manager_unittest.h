@@ -21,14 +21,24 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class TorchListenerImpl : public TorchListener {
+public:
+    void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override;
+};
+
 class CameraManagerUnitTest : public testing::Test {
 public:
+    static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
+    static const int32_t PHOTO_DEFAULT_HEIGHT = 960;
     static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
-    uint64_t tokenId_;
-    int32_t uid_;
-    int32_t userId_;
-    sptr<CameraManager> cameraManager_;
+    static const int32_t FIXEDFPS_DEFAULT = 30;
+    static const int32_t MINFPS_DEFAULT = 12;
+    static const int32_t MAXFPS_DEFAULT = 30;
+    uint64_t tokenId_ = 0;
+    int32_t uid_ = 0;
+    int32_t userId_ = 0;
+    sptr<CameraManager> cameraManager_ = nullptr;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);

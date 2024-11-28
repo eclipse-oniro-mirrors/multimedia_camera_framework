@@ -43,6 +43,7 @@ void CameraInputUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraInputUnitTest::TearDown()

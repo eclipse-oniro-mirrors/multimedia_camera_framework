@@ -16,7 +16,10 @@
 #ifndef HCAPTURE_SESSION_UNITTEST_H
 #define HCAPTURE_SESSION_UNITTEST_H
 
-#include "camera_framework_mock.h"
+#include <cstdint>
+#include <vector>
+#include "gtest/gtest.h"
+#include "hcamera_service.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -42,8 +45,8 @@ protected:
     int32_t userId_;
 
 private:
-    sptr<CameraManager> cameraManager_;
-    sptr<MockHCameraHostManager> mockCameraHostManager_;
+    sptr<HCameraService> cameraService_;
+    sptr<HCameraHostManager> cameraHostManager_;
 };
 } // CameraStandard
 } // OHOS

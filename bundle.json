@@ -157,10 +157,19 @@
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
             "//foundation/multimedia/camera_framework/test:camera_fuzz_test",
-            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_output_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_photo_processor_stratety_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_processing_service_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_session_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_video_processor_stratety_unittest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_input_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_output_unittest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_service_unittest",
-            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_utils_unittest"
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_proc_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_profession_session_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_utils_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_session_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:deferred_processing_service_unittest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_deferred_base_unittest"
           ]
         }
     }

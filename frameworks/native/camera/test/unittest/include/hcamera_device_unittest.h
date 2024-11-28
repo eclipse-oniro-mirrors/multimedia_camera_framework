@@ -20,22 +20,16 @@
 #include "input/camera_manager.h"
 #include "portrait_session.h"
 #include "hcamera_device.h"
-#include "camera_framework_mock.h"
 
 namespace OHOS {
 namespace CameraStandard {
 class HCameraDeviceUnitTest : public testing::Test {
 public:
+    uint64_t tokenId_ = 0;
+    int32_t uid_ = 0;
+    int32_t userId_ = 0;
     sptr<HCameraHostManager> cameraHostManager_ = nullptr;
-    uint64_t g_tokenId_;
-    int32_t g_uid_;
-    int32_t g_userId_;
-    sptr<MockStreamOperator> mockStreamOperator;
-    sptr<MockCameraDevice> mockCameraDevice;
-    sptr<MockHCameraHostManager> mockCameraHostManager;
-    sptr<CameraManager> cameraManager;
-    sptr<MockCameraManager> mockCameraManager;
-    sptr<FakeHCameraService> mockHCameraService;
+    sptr<CameraManager> cameraManager_ = nullptr;
     void NativeAuthorization();
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */

@@ -13,24 +13,39 @@
  * limitations under the License.
  */
 
-#ifndef VEDIO_OUTPUT_UNITTEST_H
-#define VEDIO_OUTPUT_UNITTEST_H
+#ifndef CAPTURE_SESSION_UNITTEST_H
+#define CAPTURE_SESSION_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "hcamera_service.h"
-#include "input/camera_manager.h"
-#include "video_output.h"
+#include "capture_session.h"
+#include "camera_manager.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraVedioOutputUnit : public testing::Test {
+class AppAbilityCallback : public AbilityCallback {
 public:
-    static const int32_t VIDEO_DEFAULT_WIDTH = 640;
-    static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
+    void OnAbilityChange() override {}
+};
+
+class AppSessionCallback : public SessionCallback {
+public:
+    void OnError(int32_t errorCode)
+    {
+        MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+        return;
+    }
+};
+
+class CaptureSessionUnitTest : public testing::Test {
+public:
+    static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
+    static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
+    std::vector<sptr<CameraDevice>> cameras_;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
@@ -42,9 +57,14 @@ public:
     void TearDown(void);
 
     void NativeAuthorization(void);
+
+    void UpdataCameraOutputCapability(int32_t modeName = 0);
+
+    sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile);
+
+protected:
+    std::vector<Profile> previewProfile_ = {};
 };
-
 }
 }
-
 #endif

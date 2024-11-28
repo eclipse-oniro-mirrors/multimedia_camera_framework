@@ -13,25 +13,17 @@
  * limitations under the License.
  */
 
-#ifndef VEDIO_OUTPUT_UNITTEST_H
-#define VEDIO_OUTPUT_UNITTEST_H
+#ifndef FRAME_RECORD_UNITTEST_H
+#define FRAME_RECORD_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "hcamera_service.h"
-#include "input/camera_manager.h"
-#include "video_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraVedioOutputUnit : public testing::Test {
+class FrameRecordtUnit : public testing::Test {
 public:
-    static const int32_t VIDEO_DEFAULT_WIDTH = 640;
-    static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
-    uint64_t tokenId_ = 0;
-    int32_t uid_ = 0;
-    int32_t userId_ = 0;
-    sptr<CameraManager> cameraManager_ = nullptr;
 
+    static const int64_t VIDEO_FRAMERATE = 1280;
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
     /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
@@ -40,11 +32,7 @@ public:
     void SetUp(void);
     /* TearDown:Execute after each test case */
     void TearDown(void);
-
-    void NativeAuthorization(void);
 };
-
 }
 }
-
 #endif

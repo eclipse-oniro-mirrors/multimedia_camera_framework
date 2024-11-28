@@ -33,6 +33,8 @@ static constexpr int32_t TEST_INT32_VALUE = 32;
 static constexpr int64_t TEST_INT64_VALUE = 64;
 static constexpr double TEST_DOUBLE_VALUE = 10.0;
 static constexpr char TEST_STRING_VALUE[] = "testValue";
+static constexpr int32_t BUFFER_HANDLE_RESERVE_MAX_SIZE = 1024;
+static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
 
 void CameraUtilsUnitTest::SetUpTestCase(void)
 {
@@ -286,6 +288,126 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level0)
         OHOS_CAMERA_FORMAT_YCRCB_420_SP, metadata);
     ASSERT_NE(sizeList, nullptr);
     EXPECT_EQ(sizeList->size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraCloneBufferHandle when param is nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraCloneBufferHandle when param is nullptr.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level0)
+{
+    BufferHandle *testBufferHandle = CameraCloneBufferHandle(nullptr);
+    EXPECT_EQ(testBufferHandle, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraCloneBufferHandle when reserveFds and reserveInts is out of range.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraCloneBufferHandle when reserveFds and reserveInts is out of range.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level0)
+{
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(sizeof(BufferHandle)));
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_MAX_SIZE + 1;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_MAX_SIZE + 1;
+    BufferHandle *testBufferHandle = CameraCloneBufferHandle(handle);
+    EXPECT_EQ(testBufferHandle, nullptr);
+    free(handle);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraCloneBufferHandle when reserveInts is 0.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraCloneBufferHandle when reserveInts is 0.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level0)
+{
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = -1;
+    handle->width = 640;
+    handle->height = 480;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = 0;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE; i++) {
+        handle->reserve[i] = 0;
+    }
+    BufferHandle *testBufferHandle = CameraCloneBufferHandle(handle);
+    EXPECT_EQ(testBufferHandle->width, 640);
+    EXPECT_EQ(testBufferHandle->height, 480);
+    free(handle);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraCloneBufferHandle when reserveInts is not 0.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraCloneBufferHandle when reserveInts is not 0.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level0)
+{
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = -1;
+    handle->width = 640;
+    handle->height = 480;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = 0;
+    }
+    BufferHandle *testBufferHandle = CameraCloneBufferHandle(handle);
+    EXPECT_EQ(testBufferHandle->width, 640);
+    EXPECT_EQ(testBufferHandle->height, 480);
+    free(handle);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFreeBufferHandle when param is nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level0)
+{
+    int32_t ret = CameraFreeBufferHandle(nullptr);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFreeBufferHandle when param is nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level0)
+{
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = -1;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = 0;
+    }
+    int32_t ret = CameraFreeBufferHandle(handle);
+    EXPECT_EQ(ret, 0);
 }
 } // CameraStandard
 } // OHOS
