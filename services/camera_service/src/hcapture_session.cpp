@@ -1783,6 +1783,7 @@ void HCaptureSession::GravityDataCallbackImpl(SensorEvent* event)
     // this data will be delete when callback execute finish
     GravityData* nowGravityData = reinterpret_cast<GravityData*>(event->data);
     gravityData = { nowGravityData->x, nowGravityData->y, nowGravityData->z };
+    sensorRotation = CalcSensorRotation(CalcRotationDegree(gravityData));
 }
 
 int32_t HCaptureSession::CalcSensorRotation(int32_t sensorDegree)
@@ -1797,7 +1798,7 @@ int32_t HCaptureSession::CalcSensorRotation(int32_t sensorDegree)
     } else if (sensorDegree >= 240 && sensorDegree <= 300) { // Use ROTATION_270 when degree range is [240, 300]
         return STREAM_ROTATE_270;
     } else {
-        return 0;
+        return sensorRotation;
     }
 }
 
@@ -1823,9 +1824,6 @@ void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
         return;
     }
     int32_t addMirrorRotation = 0;
-    #ifdef CAMERA_USE_SENSOR
-    sensorRotation = CalcSensorRotation(CalcRotationDegree(gravityData));
-    #endif
     MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
     if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
         addMirrorRotation = STREAM_ROTATE_180;
