@@ -95,6 +95,7 @@ void CameraVedioOutputUnit::NativeAuthorization()
 HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -136,6 +137,262 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level0)
 
     EXPECT_EQ(input->Release(), 0);
     session->Stop();
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test start in videoOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test start in videoOutput
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = VIDEO_DEFAULT_WIDTH;
+    videoSize.height = VIDEO_DEFAULT_HEIGHT;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile profile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(profile, surface);
+    ASSERT_NE(video, nullptr);
+
+    sptr<CaptureOutput> output = video;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(output);
+    session->CommitConfig();
+    session->Start();
+
+    video->stream_ = nullptr;
+    int32_t ret = video->CreateStream();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    wptr<IStreamCommon> stream_;
+    sptr<IStreamCommon> stream = stream_.promote();
+    video->SetStream(stream);
+
+    ret = video->Start();
+    EXPECT_NE(ret, CameraErrorCode::CONFLICT_CAMERA);
+
+    int32_t minFrameRate = 200;
+    int32_t maxFrameRate = 300;
+    video->SetFrameRateRange(minFrameRate, maxFrameRate);
+    ret = video->Start();
+    EXPECT_NE(ret, CameraErrorCode::CONFLICT_CAMERA);
+
+    minFrameRate = 100;
+    video->SetFrameRateRange(minFrameRate, maxFrameRate);
+    ret = video->Start();
+    EXPECT_NE(ret, CameraErrorCode::CONFLICT_CAMERA);
+
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test stop in videoOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test stop in videoOutput
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = VIDEO_DEFAULT_WIDTH;
+    videoSize.height = VIDEO_DEFAULT_HEIGHT;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile profile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(profile, surface);
+    ASSERT_NE(video, nullptr);
+
+    sptr<CaptureOutput> output = video;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(output);
+    session->CommitConfig();
+    session->Start();
+
+    video->stream_ = nullptr;
+    int32_t ret = video->CreateStream();
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    wptr<IStreamCommon> stream_;
+    sptr<IStreamCommon> stream = stream_.promote();
+    video->SetStream(stream);
+
+    ret = video->Start();
+    EXPECT_NE(ret, CameraErrorCode::CONFLICT_CAMERA);
+    ret = video->Stop();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    int32_t minFrameRate = 200;
+    int32_t maxFrameRate = 300;
+    video->SetFrameRateRange(minFrameRate, maxFrameRate);
+    ret = video->Stop();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    minFrameRate = 100;
+    video->SetFrameRateRange(minFrameRate, maxFrameRate);
+    ret = video->Stop();
+    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsMirrorSupported in videoOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsMirrorSupported in videoOutput
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = VIDEO_DEFAULT_WIDTH;
+    videoSize.height = VIDEO_DEFAULT_HEIGHT;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile profile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(profile, surface);
+    ASSERT_NE(video, nullptr);
+
+    sptr<CaptureOutput> output = video;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(output);
+    session->CommitConfig();
+    session->Start();
+
+    bool ret = video->IsMirrorSupported();
+    EXPECT_EQ(ret, false);
+
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedVideoMetaTypes in videoOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedVideoMetaTypes in videoOutput
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = VIDEO_DEFAULT_WIDTH;
+    videoSize.height = VIDEO_DEFAULT_HEIGHT;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile profile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(profile, surface);
+    ASSERT_NE(video, nullptr);
+
+    sptr<CaptureOutput> output = video;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<VideoMetaType> supportedVideoMetaTypes = video->GetSupportedVideoMetaTypes();
+    EXPECT_EQ(supportedVideoMetaTypes.size(), 0);
+
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraServerDied in videoOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraServerDied in videoOutput
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = VIDEO_DEFAULT_WIDTH;
+    videoSize.height = VIDEO_DEFAULT_HEIGHT;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile profile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(profile, surface);
+    ASSERT_NE(video, nullptr);
+
+    sptr<CaptureOutput> output = video;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(output);
+    session->CommitConfig();
+    session->Start();
+
+    pid_t pid = 0;
+    video->CameraServerDied(pid);
+    video->appCallback_ = nullptr;
+    video->CameraServerDied(pid);
+
+    EXPECT_EQ(input->Release(), 0);
     EXPECT_EQ(session->Release(), 0);
 }
 

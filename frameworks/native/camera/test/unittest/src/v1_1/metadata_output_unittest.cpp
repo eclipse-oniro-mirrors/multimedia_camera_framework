@@ -107,6 +107,7 @@ void CameraMetadataOutputUnit::NativeAuthorization()
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -151,6 +152,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -195,6 +197,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -236,6 +239,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -263,6 +267,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_004, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -294,6 +299,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_005, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -325,6 +331,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_006, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -345,6 +352,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_007, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_008, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -366,6 +374,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_008, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
     ASSERT_NE(output, nullptr);
@@ -389,6 +398,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -419,6 +429,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -463,6 +474,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -495,6 +507,9 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level0
     metadatOutput->SetCallback(appObjectCallback);
     EXPECT_EQ(metadatOutput->GetAppObjectCallback(), appObjectCallback);
 
+    if (cameraMetadataCallback) {
+        cameraMetadataCallback = nullptr;
+    }
     input->Close();
     session->Stop();
     session->Release();
@@ -512,6 +527,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -560,6 +576,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -614,6 +631,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -635,7 +653,8 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level0
     int32_t streamId = 0;
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = session->GetMetadata();
     EXPECT_NE(result, nullptr);
-    auto hstreamMetadataCallbackImpl = std::make_shared<HStreamMetadataCallbackImpl>(metadatOutput);
+    std::shared_ptr<HStreamMetadataCallbackImpl> hstreamMetadataCallbackImpl =
+        std::make_shared<HStreamMetadataCallbackImpl>(metadatOutput);
     int32_t ret = hstreamMetadataCallbackImpl->OnMetadataResult(streamId, result);
     EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
 
@@ -655,7 +674,8 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level0
  */
 HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level0)
 {
-    auto factory = std::make_shared<MetadataObjectFactory>();
+    std::shared_ptr<MetadataObjectFactory> factory = std::make_shared<MetadataObjectFactory>();
+    ASSERT_NE(factory, nullptr);
     factory->ResetParameters();
     ASSERT_NE(factory, nullptr);
 

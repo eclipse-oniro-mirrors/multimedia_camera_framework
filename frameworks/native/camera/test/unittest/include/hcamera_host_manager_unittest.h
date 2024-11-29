@@ -13,38 +13,39 @@
  * limitations under the License.
  */
 
-#ifndef VEDIO_OUTPUT_UNITTEST_H
-#define VEDIO_OUTPUT_UNITTEST_H
+#ifndef HCAMERA_HOST_MANAGER_UNITTEST_H
+#define HCAMERA_HOST_MANAGER_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "hcamera_service.h"
 #include "input/camera_manager.h"
-#include "video_output.h"
+#include "portrait_session.h"
+#include "hcamera_device.h"
+#include "camera_manager.h"
+
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraVedioOutputUnit : public testing::Test {
+class HCameraHostManagerUnitTest : public testing::Test {
 public:
-    static const int32_t VIDEO_DEFAULT_WIDTH = 640;
-    static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
+    /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
+    static void SetUpTestCase(void);
+
+    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
+    static void TearDownTestCase(void);
+
+    /* SetUp:Execute before each test case */
+    void SetUp(void);
+
+    /* TearDown:Execute after each test case */
+    void TearDown(void);
+
+private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
-
-    /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
-    static void SetUpTestCase(void);
-    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
-    static void TearDownTestCase(void);
-    /* SetUp:Execute before each test case */
-    void SetUp(void);
-    /* TearDown:Execute after each test case */
-    void TearDown(void);
-
     void NativeAuthorization(void);
 };
-
-}
-}
-
-#endif
+} // CameraStandard
+} // OHOS
+#endif // HCAMERA_HOST_MANAGER_UNITTEST_H

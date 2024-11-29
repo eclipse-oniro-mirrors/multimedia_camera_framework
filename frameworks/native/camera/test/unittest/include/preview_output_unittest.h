@@ -25,12 +25,12 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraPreviewOutputUnit : public testing::Test {
 public:
-    uint64_t tokenId_;
-    int32_t uid_;
-    int32_t userId_;
     static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
-    sptr<CameraManager> cameraManager_;
+    uint64_t tokenId_ = 0;
+    int32_t uid_ = 0;
+    int32_t userId_ = 0;
+    sptr<CameraManager> cameraManager_ = nullptr;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);

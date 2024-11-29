@@ -95,6 +95,7 @@ void CameraSketchWrapperOutputUnit::NativeAuthorization()
 HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -125,13 +126,173 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Le
     EXPECT_NE(sketchWrapper->previewStateCallback_.lock(), nullptr);
 
     SketchStatus sketchStatus = SketchStatus::STARTING;
-    auto sceneFeaturesMode = std::make_shared<SceneFeaturesMode>();
+    std::shared_ptr<SceneFeaturesMode> sceneFeaturesMode = std::make_shared<SceneFeaturesMode>();
     EXPECT_NE(sceneFeaturesMode, nullptr);
     sketchWrapper->OnSketchStatusChanged(sketchStatus, *sceneFeaturesMode);
     sketchWrapper->AutoStream();
 
+    if (sketchWrapper) {
+        sketchWrapper = nullptr;
+    }
     EXPECT_EQ(previewOutput->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test Destroy StartSketchStream StopSketchStream while sketchStream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Destroy StartSketchStream StopSketchStream while sketchStream_ is nullptr
+ */
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    sketchWrapper->sketchStream_ = nullptr;
+    int32_t ret = sketchWrapper->Destroy();
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = sketchWrapper->StartSketchStream();
+    EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
+    ret = sketchWrapper->StopSketchStream();
+    EXPECT_EQ(ret, CAMERA_UNKNOWN_ERROR);
+
+    if (sketchWrapper) {
+        sketchWrapper = nullptr;
+    }
+    EXPECT_EQ(previewOutput->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AutoStream while currentZoomRatio_ < 0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AutoStream while currentZoomRatio_ < 0
+ */
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+    SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    sketchWrapper->currentZoomRatio_ = -1.0f;
+    sketchWrapper->AutoStream();
+    if (sketchWrapper) {
+        sketchWrapper = nullptr;
+    }
+    EXPECT_EQ(previewOutput->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnSketchStatusChanged while status != sketchStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnSketchStatusChanged while status != sketchStatus
+ */
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    sketchWrapper->currentSketchStatusData_.status = SketchStatus::STARTED;
+    sketchWrapper->currentSketchStatusData_.sketchRatio = 1.0f;
+    SketchStatus sketchStatus = SketchStatus::STOPED;
+    SceneFeaturesMode sceneFeaturesMode {};
+    sketchWrapper->OnSketchStatusChanged(sketchStatus, sceneFeaturesMode);
+    sketchStatus = SketchStatus::STARTED;
+    sketchWrapper->OnSketchStatusChanged(sketchStatus, sceneFeaturesMode);
+
+    if (sketchWrapper) {
+        sketchWrapper = nullptr;
+    }
+    EXPECT_EQ(previewOutput->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+}
+
 }
 }

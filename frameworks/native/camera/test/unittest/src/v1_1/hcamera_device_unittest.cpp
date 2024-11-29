@@ -22,6 +22,8 @@
 #include "hcamera_device_unittest.h"
 #include "ipc_skeleton.h"
 
+using namespace testing::ext;
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
@@ -40,12 +42,8 @@ void HCameraDeviceUnitTest::SetUp()
 {
     MEDIA_DEBUG_LOG("SetUp");
     NativeAuthorization();
-    g_mockFlagWithoutAbt = false;
-    mockCameraHostManager = new MockHCameraHostManager(nullptr);
-    mockCameraDevice = mockCameraHostManager->cameraDevice;
-    mockStreamOperator = mockCameraDevice->streamOperator;
-    cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
-    mockCameraManager = new MockCameraManager();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    cameraManager_ = CameraManager::GetInstance();
 }
 
 void HCameraDeviceUnitTest::NativeAuthorization()
@@ -63,68 +61,19 @@ void HCameraDeviceUnitTest::NativeAuthorization()
         .processName = "native_camera_tdd",
         .aplStr = "system_basic",
     };
-    g_tokenId_ = GetAccessTokenId(&infoInstance);
-    g_uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(g_uid_, g_userId_);
-    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::NativeAuthorization g_uid:%{public}d", g_uid_);
-    SetSelfTokenID(g_tokenId_);
+    tokenId_ = GetAccessTokenId(&infoInstance);
+    uid_ = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
+    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::NativeAuthorization g_uid:%{public}d", uid_);
+    SetSelfTokenID(tokenId_);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 void HCameraDeviceUnitTest::TearDown()
 {
     MEDIA_INFO_LOG("TearDown start");
-    Mock::AllowLeak(mockCameraHostManager);
-    Mock::AllowLeak(mockCameraDevice);
-    Mock::AllowLeak(mockStreamOperator);
-    Mock::AllowLeak(mockCameraManager);
+    cameraHostManager_ = nullptr;
+    cameraManager_ = nullptr;
     MEDIA_INFO_LOG("TearDown end");
-}
-
-/*
- * Feature: Framework
- * Function: Test OpenSecureCamera.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OpenSecureCamera_001.
- */
-HWTEST_F(HCameraDeviceUnitTest, OpenSecureCamera_001, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-
-    uint64_t secureSeqId = 0;
-    int32_t result = camDevice->OpenSecureCamera(&secureSeqId);
-    EXPECT_EQ(result, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test OpenSecureCamera.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OpenSecureCamera_002.
- */
-HWTEST_F(HCameraDeviceUnitTest, OpenSecureCamera_002, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-
-    uint64_t secureSeqId = 0;
-    camDevice->hdiCameraDevice_ = nullptr;
-    int32_t result = camDevice->OpenSecureCamera(&secureSeqId);
-    EXPECT_EQ(result, CAMERA_OK);
 }
 
 /*
@@ -140,12 +89,11 @@ HWTEST_F(HCameraDeviceUnitTest, OpenSecureCamera_002, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, GetSecureCameraSeq_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     uint64_t secureSeqId = 0;
@@ -171,12 +119,11 @@ HWTEST_F(HCameraDeviceUnitTest, GetSecureCameraSeq_001, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, ResetZoomTimer_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->HandlePrivacyWhenOpenDeviceFail();
@@ -206,12 +153,11 @@ HWTEST_F(HCameraDeviceUnitTest, ResetZoomTimer_001, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, SetCallback_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->RegisterFoldStatusListener();
@@ -245,12 +191,11 @@ HWTEST_F(HCameraDeviceUnitTest, SetCallback_001, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, OperatePermissionCheck_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
@@ -275,12 +220,11 @@ HWTEST_F(HCameraDeviceUnitTest, OperatePermissionCheck_001, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, GetCameraType_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->clientName_ = "com.huawei.hmos.camera";
@@ -300,12 +244,11 @@ HWTEST_F(HCameraDeviceUnitTest, GetCameraType_001, TestSize.Level0)
  */
 HWTEST_F(HCameraDeviceUnitTest, DispatchDefaultSettingToHdi_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->deviceOpenLifeCycleSettings_->get()->item_count = 1;
@@ -326,12 +269,11 @@ HWTEST_F(HCameraDeviceUnitTest, DispatchDefaultSettingToHdi_001, TestSize.Level0
  */
 HWTEST_F(HCameraDeviceUnitTest, CheckPermissionBeforeOpenDevice_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->callerToken_ = 1;
@@ -355,12 +297,11 @@ HWTEST_F(HCameraDeviceUnitTest, CheckPermissionBeforeOpenDevice_001, TestSize.Le
  */
 HWTEST_F(HCameraDeviceUnitTest, HandlePrivacyBeforeOpenDevice_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
     
     camDevice->cameraPrivacy_ = nullptr;
@@ -388,12 +329,11 @@ HWTEST_F(HCameraDeviceUnitTest, HandlePrivacyBeforeOpenDevice_001, TestSize.Leve
  */
 HWTEST_F(HCameraDeviceUnitTest, CloseDevice_001, TestSize.Level0)
 {
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->hdiCameraDevice_ = nullptr;

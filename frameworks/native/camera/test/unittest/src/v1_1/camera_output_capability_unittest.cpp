@@ -138,7 +138,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_003, Test
     Profile photoProfile_2 = Profile(photoFormat, size);
     Profile photoProfile_3 = Profile(CAMERA_FORMAT_INVALID, size);
 
-    auto capability = std::make_shared<CameraOutputCapability>();
+    std::shared_ptr<CameraOutputCapability> capability = std::make_shared<CameraOutputCapability>();
     ASSERT_NE(capability, nullptr);
 
     capability->SetPhotoProfiles({photoProfile_1, photoProfile_2});
@@ -163,7 +163,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_004, Test
     Profile previewProfile_2 = Profile(previewFormat, size);
     Profile previewProfile_3 = Profile(CAMERA_FORMAT_INVALID, size);
 
-    auto capability = std::make_shared<CameraOutputCapability>();
+    std::shared_ptr<CameraOutputCapability> capability = std::make_shared<CameraOutputCapability>();
     ASSERT_NE(capability, nullptr);
 
     capability->SetPreviewProfiles({previewProfile_1, previewProfile_2});
@@ -188,7 +188,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_005, Test
     Profile profile_2 = Profile(format, size_2);
     Profile profile_3 = Profile(CAMERA_FORMAT_INVALID, size_2);
 
-    auto capability = std::make_shared<CameraOutputCapability>();
+    std::shared_ptr<CameraOutputCapability> capability = std::make_shared<CameraOutputCapability>();
     ASSERT_NE(capability, nullptr);
 
     std::vector<Profile> profiles = {};

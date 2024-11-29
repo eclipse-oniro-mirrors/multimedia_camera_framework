@@ -120,6 +120,7 @@ MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -164,6 +165,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -206,6 +208,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -232,6 +235,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -239,6 +243,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
 
     bool ret = phtOutput->IsYuvOrHeifPhoto();
     EXPECT_FALSE(ret);
+
+    phtOutput->photoProfile_ = nullptr;
+    ret = phtOutput->IsYuvOrHeifPhoto();
+    EXPECT_EQ(ret, false);
 }
 
 /*
@@ -252,6 +260,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -274,6 +283,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -324,6 +334,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -375,6 +386,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -429,6 +441,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -442,6 +455,10 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
     phtOutput->thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("thumbnailSurface");
     phtOutput->SetThumbnailListener(listener);
     EXPECT_NE(phtOutput->thumbnailSurface_, nullptr);
+
+    if (listener) {
+        listener = nullptr;
+    }
 }
 
 /*
@@ -455,6 +472,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -506,6 +524,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -550,6 +569,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -591,6 +611,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -643,6 +664,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -655,6 +677,9 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
     EXPECT_NE(phtOutput->appCallback_, nullptr);
     phtOutput->ProcessSnapshotDurationUpdates(snapshotDuration);
     EXPECT_NE(phtOutput, nullptr);
+
+    pid_t pid = 0;
+    phtOutput->CameraServerDied(pid);
 }
 
 /*
@@ -668,12 +693,13 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
 
-    auto settings = std::make_shared<PhotoCaptureSetting>();
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
     phtOutput->defaultCaptureSetting_ = settings;
     std::shared_ptr<PhotoCaptureSetting> ret = phtOutput->GetDefaultCaptureSetting();
     EXPECT_EQ(ret, settings);
@@ -690,6 +716,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -711,6 +738,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
@@ -733,6 +761,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level0)
 HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -751,14 +780,218 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
     session->CommitConfig();
     session->Start();
 
+    sptr<CameraDevice> cameraObj = phtOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
+    cameraObj->cameraPosition_ = CAMERA_POSITION_BACK;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION);
+    int32_t value = 90;
+    metadata->addEntry(OHOS_SENSOR_ORIENTATION, &value, sizeof(int32_t));
     int32_t imageRotation = 90;
     int32_t ret = phtOutput->GetPhotoRotation(imageRotation);
-    EXPECT_NE(ret, 90);
+    EXPECT_EQ(ret, 180);
 
     input->Close();
     session->Stop();
     session->Release();
     input->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoCaptureSetting with GetQuality
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with Quality and Rotation
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+
+    session->CommitConfig();
+    session->Start();
+
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
+    settings->captureMetadataSetting_ = session->GetMetadata();
+    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM;
+    settings->SetQuality(quality);
+    PhotoCaptureSetting::QualityLevel ret = settings->GetQuality();
+    EXPECT_EQ(ret, PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+
+    quality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
+    settings->SetQuality(quality);
+    ret = settings->GetQuality();
+    EXPECT_EQ(ret, PhotoCaptureSetting::QUALITY_LEVEL_HIGH);
+
+    PhotoCaptureSetting::RotationConfig rotationValue = PhotoCaptureSetting::RotationConfig::Rotation_0;
+    settings->SetRotation(rotationValue);
+    PhotoCaptureSetting::RotationConfig ret_2 = settings->GetRotation();
+    EXPECT_EQ(ret_2, PhotoCaptureSetting::RotationConfig::Rotation_0);
+
+    uint8_t burstState = 1;
+    settings->captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(16, 128);
+    settings->SetBurstCaptureState(burstState);
+    camera_metadata_item_t item;
+    int ret_3 = OHOS::Camera::FindCameraMetadataItem(settings->captureMetadataSetting_->get(),
+        OHOS_CONTROL_BURST_CAPTURE, &item);
+    ASSERT_TRUE(ret_3 == CAM_META_SUCCESS && item.count > 0);
+    EXPECT_EQ(item.data.u8[0], 1);
+    settings->SetBurstCaptureState(2);
+    ret_3 = OHOS::Camera::FindCameraMetadataItem(settings->captureMetadataSetting_->get(),
+        OHOS_CONTROL_BURST_CAPTURE, &item);
+    ASSERT_TRUE(ret_3 == CAM_META_SUCCESS && item.count > 0);
+    EXPECT_EQ(item.data.u8[0], 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackImpl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamCaptureCallbackImpl
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+
+    session->CommitConfig();
+    session->Start();
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    int32_t time = 1;
+    metadata->addEntry(OHOS_ABILITY_CAPTURE_EXPECT_TIME, &time, sizeof(int32_t));
+    session->currentMode_ = SceneMode::HIGH_RES_PHOTO;
+    phtOutput->appCallback_ = std::make_shared<TestPhotoOutputCallback>("PhotoStateCallback");
+    int32_t captureId = 1;
+    sptr<HStreamCaptureCallbackImpl> callback = new (std::nothrow) HStreamCaptureCallbackImpl(phtOutput);
+    ASSERT_NE(callback, nullptr);
+    EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
+
+    phtOutput->appCallback_ = nullptr;
+    pid_t pid = 0;
+    phtOutput->CameraServerDied(pid);
+
+    if (callback) {
+        callback = nullptr;
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput when destruction
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput when destruction
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+
+    session->CommitConfig();
+    session->Start();
+
+    int32_t numThreads = 1;
+    phtOutput->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
+        numThreads, false);
+    EXPECT_EQ(phtOutput->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsQuickThumbnailSupported when Mode is different
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with IsQuickThumbnailSupported when Mode is different
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(photoOutput);
+
+    session->CommitConfig();
+    session->Start();
+
+    session->GetInputDevice()->GetCameraDeviceInfo()->cameraPosition_ = CAMERA_POSITION_BACK;
+    session->currentMode_ =SceneMode::NIGHT;
+    int32_t ret = phtOutput->IsQuickThumbnailSupported();
+    EXPECT_EQ(ret, -1);
+
+    session->currentMode_ = SceneMode::LIGHT_PAINTING;
+    ret = phtOutput->IsQuickThumbnailSupported();
+    EXPECT_EQ(ret, -1);
+
+    int32_t isAutoHighQualityPhotoSupported = 1;
+    ret = phtOutput->IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+
+    input->Close();
+    session->Release();
+    input->Release();
+}
+
 }
 }

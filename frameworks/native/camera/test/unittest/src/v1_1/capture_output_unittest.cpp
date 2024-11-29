@@ -54,11 +54,14 @@ void CameraCaptureOutputUnit::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraCaptureOutputUnit::TearDown()
 {
-    cameraManager_ = nullptr;
+    if (cameraManager_) {
+        cameraManager_ = nullptr;
+    }
 }
 
 void CameraCaptureOutputUnit::NativeAuthorization()
@@ -111,6 +114,7 @@ sptr<CaptureOutput> CameraCaptureOutputUnit::CreatePhotoOutput(int32_t width, in
 HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
@@ -131,7 +135,7 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
     session->Start();
 
     pid_t pid = 0;
-    auto deathRecipient = new CameraDeathRecipient(pid);
+    sptr<CameraDeathRecipient> deathRecipient = new CameraDeathRecipient(pid);
     captureOutput->deathRecipient_ = deathRecipient;
     captureOutput->RegisterStreamBinderDied();
     EXPECT_NE(captureOutput->deathRecipient_, nullptr);
@@ -140,10 +144,14 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
     captureOutput->UnregisterStreamBinderDied();
     EXPECT_EQ(captureOutput->stream_, nullptr);
 
+    if (deathRecipient) {
+        deathRecipient = nullptr;
+    }
     input->Close();
     session->Stop();
     session->Release();
     input->Release();
 }
+
 }
 }
