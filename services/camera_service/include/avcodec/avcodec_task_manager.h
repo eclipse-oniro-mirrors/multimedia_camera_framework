@@ -73,6 +73,9 @@ private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime, int32_t captureId);
+    int32_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime, int32_t captureId);
+    void IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
+        int64_t shutterTime);
     void Release();
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
