@@ -699,7 +699,7 @@ int HCameraServiceStub::HandleProxyForFreeze(MessageParcel& data, MessageParcel&
     std::set<int32_t> pidList;
     int32_t size = data.ReadInt32();
     int32_t maxSize = 100;
-    CHECK_ERROR_RETURN_RET(size >= maxSize, CAMERA_UNKNOWN_ERROR);
+    CHECK_ERROR_RETURN_RET((size >= maxSize || size <= 0), CAMERA_UNKNOWN_ERROR);
 
     for (int32_t i = 0; i < size; i++) {
         pidList.insert(data.ReadInt32());
