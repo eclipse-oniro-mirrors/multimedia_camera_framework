@@ -184,7 +184,7 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
-        MEDIA_DEBUG_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64,
+        MEDIA_DEBUG_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64,
             context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
         lock.unlock();
         contextLock.unlock();
