@@ -1399,7 +1399,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->startTimeMutex_);
         if (sessionPtr->taskManager_->mPStartTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRId64,
+            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRIu64,
                 captureId, startTimeStamp);
             sessionPtr->taskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
         }
@@ -1411,7 +1411,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->endTimeMutex_);
         if (sessionPtr->taskManager_->mPEndTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRId64,
+            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRIu64,
                 captureId, endTimeStamp);
             sessionPtr->taskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
         }
@@ -2187,7 +2187,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
 int32_t StreamOperatorCallback::OnFrameShutter(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRId64, timestamp);
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
@@ -2208,7 +2208,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(
 int32_t StreamOperatorCallback::OnFrameShutterEnd(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRId64, timestamp);
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
