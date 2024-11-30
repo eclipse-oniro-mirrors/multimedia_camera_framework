@@ -118,7 +118,6 @@ struct Index {
 
   async aboutToDisAppear() {
     await cameraDemo.releaseCamera();
-    // await CameraService.releaseCamera();
   }
   // 获取权限
   async requestPermissionsFn() {

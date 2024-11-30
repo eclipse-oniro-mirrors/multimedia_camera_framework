@@ -99,60 +99,11 @@ export struct modeSwitchPage {
   @State modelBagCol: string = 'photo'
   // 选择相机或者拍照
   @State @Watch('onChangeIsModeBol') isModeBol: boolean = true
-  // 录像开始暂停
-  // @State @Watch('onChangeRecord') isRecording: boolean = true
   // 视频缩略图
   @State videoThumbnail: image.PixelMap = undefined
-  // 确定是否停止录制的弹框
-  // private isRecodeStopDialogController: CustomDialogController = new CustomDialogController({
-  //   builder: isRecodeStopDialog({
-  //     isModeBol: $isModeBol,
-  //     videoRecodeTime: $videoRecodeTime,
-  //     isRecording: $isRecording,
-  //     timer: this.timer
-  //   }),
-  //   autoCancel: false,
-  //   customStyle: true
-  // })
-  // // 多机位弹框
-  // private MultiCameraDialogController: CustomDialogController = new CustomDialogController({
-  //   builder: MultiCameraDialog({}),
-  //   autoCancel: false,
-  //   customStyle: true
-  // })
-  // // 人像弹窗
-  // private PortraitCameraDialogController: CustomDialogController = new CustomDialogController({
-  //   builder: PortraitCameraDialog({}),
-  //   autoCancel: false,
-  //   customStyle: true
-  // })
   // // 暂停后点击停止 需要将暂停回复默认
   onChangeIsModeBol() {
-  //   this.isRecording = true
   }
-  // // 恢复视频录制
-  // resumeVideo() {
-  //   CameraService.resumeVideo().then(() => {
-  //     this.timer = setInterval(() => {
-  //       this.videoRecodeTime += 1000
-  //     }, 1000)
-  //   })
-  // }
-  // // 录制 暂停/开始
-  // onChangeRecord() {
-  //
-  //   Logger.info(this.tag, ` isRecording: ${this.isRecording}`)
-  //   if (this.isRecording) {
-  //     // 开始
-  //     this.resumeVideo()
-  //   } else {
-  //     // 暂停
-  //     if (this.timer) {
-  //       clearInterval(this.timer)
-  //     }
-  //     CameraService.pauseVideo()
-  //   }
-  // }
    // 倒计时拍照和录像
    countTakeVideoFn() {
      if (this.countdownNum) {
@@ -315,7 +266,6 @@ export struct modeSwitchPage {
    }
 
   aboutToAppear() {
-    // CameraService.setTakePictureCallback(this.handleTakePicture.bind(this))
   }
 
   handleTakePicture = (thumbnail: string) => {
@@ -355,32 +305,6 @@ export struct modeSwitchPage {
             this.modelBagCol = 'video'
           })
       }.position({ x: '40%', y: '75%' })
-
-      // Column() {
-      //   Text('多机位')
-      //     .size({ width: 64, height: 28 })
-      //     .fontSize(14)
-      //     .fontColor(Color.White)
-      //     .backgroundColor(this.modelBagCol === 'multi' ? $r('app.color.theme_color') : '')
-      //     .onClick(() => {
-      //       this.modelBagCol = 'multi'
-      //       this.MultiCameraDialogController.open()
-      //     })
-      //     .borderRadius(14)
-      // }.position({ x: '60%', y: '75%' })
-      //
-      // Column() {
-      //   Text('人像')
-      //     .size({ width: 64, height: 28 })
-      //     .fontSize(14)
-      //     .fontColor(Color.White)
-      //     .backgroundColor(this.modelBagCol === 'portrait' ? $r('app.color.theme_color') : '')
-      //     .onClick(() => {
-      //       this.modelBagCol = 'portrait'
-      //       this.PortraitCameraDialogController.open()
-      //     })
-      //     .borderRadius(14)
-      // }.position({ x: '80%', y: '75%' })
 
       // 图库
       Column() {
@@ -442,7 +366,6 @@ export struct modeSwitchPage {
             this.countTakeVideoFn()
           })
         }
-        //.margin({ top: 32 })
       }.position({ x: '40%', y: '82%' })
 
       // 前后置摄像头切换
@@ -461,10 +384,8 @@ export struct modeSwitchPage {
               this.cameraDeviceIndex ? this.cameraDeviceIndex = 0 : this.cameraDeviceIndex = 1
               // 清除配置
               cameraDemo.releaseSession()
-              // await CameraService.releaseSession()
               // 开始预览
               cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
-              // await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex)
             })
           }
       }.position({ x: '70%', y: '82%' })
@@ -507,8 +428,6 @@ export struct modeSwitchPage {
                if (this.timer) {
                  clearInterval(this.timer)
                }
-               // 弹框无法响应
-               // CameraService.pauseVideo()
                // 停止录制
                  this.stopVideo().then(async (fileAsset) => {
                  this.videoRecodeTime = 0
@@ -523,8 +442,6 @@ export struct modeSwitchPage {
                    Logger.info(this.tag, 'videoThumbnail err----------:' + JSON.stringify(err.message))
                  }
                })
-               // 打开停止弹框
-               // this.isRecodeStopDialogController.open()
              })
            }
            .width('180px')
@@ -540,36 +457,6 @@ export struct modeSwitchPage {
          .backgroundColor('rgba(255,255,255,0.20)')
        }.position({ x: '40%', y: '82%' })
 
-//       Column() {
-//         Row() {
-//           Column() {
-//             // 录像暂停-播放键
-//             Button() {
-//               Image(this.isRecording ? $r('app.media.ic_camera_video_on') : $r('app.media.ic_camera_video_off'))
-//                 .size({
-//                   width: 25,
-//                   height: 25
-//                 })
-//             }
-//             .width('120px')
-//             .height('120px')
-//             .backgroundColor($r('app.color.theme_color'))
-//             .onClick(() => {
-//               this.isRecording = !this.isRecording
-//             })
-//           }
-//           .width('180px')
-//           .height('180px')
-//           .borderRadius('60px')
-//           .backgroundColor($r('app.color.theme_color'))
-//           .justifyContent(FlexAlign.SpaceAround)
-//         }
-//         .justifyContent(FlexAlign.Center)
-//         .border({ width: 3, color: 0xFFFFFF, radius: 70 })
-//         .width('200px')
-//         .height('200px')
-//         .backgroundColor('rgba(255,255,255,0.20)')
-//       }.position({ x: '70%', y: '82%' })
     }
   }
 
@@ -585,8 +472,6 @@ export struct modeSwitchPage {
         return this.fileAsset
       }
       Logger.info(this.tag, 'stopVideo end')
-//                   弹框开始需要注释
-//       await this.videoOutput.stop()
     } catch (err) {
       Logger.info(this.tag, 'stopVideo err: ' + JSON.stringify(err))
     }
