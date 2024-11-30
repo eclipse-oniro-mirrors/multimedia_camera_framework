@@ -1941,7 +1941,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
-        taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
     } else {
         delete photoAssetProxy;
     }
@@ -1963,6 +1963,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
     cameraPhotoProxy->SetShootingMode(opMode_);
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
     MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
         cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetLongitude());
 
@@ -1978,7 +1979,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
         if (taskManager_) {
-            taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }
     } else {
         delete photoAssetProxy;
