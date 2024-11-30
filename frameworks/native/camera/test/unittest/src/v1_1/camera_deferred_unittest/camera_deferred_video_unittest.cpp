@@ -124,8 +124,6 @@ void DeferredVideoUnitTest::PauseSchedule()
 }
 
 constexpr int VIDEO_REQUEST_FD_ID1 = 111;
-// constexpr int VIDEO_REQUEST_FD_ID2 = 222;
-// constexpr int VIDEO_REQUEST_FD_ID3 = 333;
 constexpr int VIDEO_REQUEST_FD_TEMP = 888;
 
 constexpr int64_t TIME_PROCESS = 200;

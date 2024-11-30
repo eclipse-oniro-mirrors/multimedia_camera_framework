@@ -25,7 +25,7 @@ namespace CameraStandard {
 DpsMetadataError DpsMetadata::ReadFromParcel(MessageParcel &parcel)
 {
     int32_t size = parcel.ReadInt32();
-    if (size > DPS_MAX_USER_DATA_COUNT) {
+    if (size > DPS_MAX_USER_DATA_COUNT || size < 0) {
         return DPS_METADATA_INTERNAL_ERROR;
     }
 
