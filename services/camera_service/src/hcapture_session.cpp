@@ -1866,30 +1866,32 @@ std::string HCaptureSession::CreateDisplayName(const std::string& suffix)
     return formattedTime;
 }
 
-std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
+std::string HCaptureSession::CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId)
 {
     struct tm currentTime;
     std::string formattedTime = "";
     std::stringstream ss;
     // a group of burst capture use the same prefix
-    if (seqId == 1) {
+    if (imageSeqId == 1) {
         if (!GetSystemCurrentTime(&currentTime)) {
             MEDIA_ERR_LOG("Failed to get current time.");
             return formattedTime;
         }
         ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
-           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
-           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
-           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
-           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
-           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1) << std::setw(otherWidth)
+           << std::setfill(placeholder) << currentTime.tm_mday << connector << std::setw(otherWidth)
+           << std::setfill(placeholder) << currentTime.tm_hour << std::setw(otherWidth) << std::setfill(placeholder)
+           << currentTime.tm_min << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
            << connector << burstTag;
         lastBurstPrefix_ = ss.str();
-        MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
-        ss << std::setw(burstWidth) << std::setfill(placeholder) << seqId
-           << coverTag;
+        ss << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
     } else {
         ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
+    }
+    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
+
+    if (seqId == 1) {
+        ss << coverTag;
     }
     formattedTime = ss.str();
     MEDIA_INFO_LOG("CreateBurstDisplayName is %{private}s", formattedTime.c_str());
@@ -1900,18 +1902,14 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
     int32_t &cameraShotType, bool &isBursting, std::string &burstKey)
 {
     cameraPhotoProxy->SetShootingMode(opMode_);
-    isBursting = false;
-    cameraPhotoProxy->SetShootingMode(opMode_);
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     std::string imageId = cameraPhotoProxy->GetPhotoId();
+    isBursting = false;
     bool isCoverPhoto = false;
     int32_t invalidBurstSeqId = -1;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
-        MEDIA_INFO_LOG("for captureStreams");
-        if (stream == nullptr) {
-            continue;
-        }
+        CHECK_AND_CONTINUE_LOG(stream != nullptr, "stream is null");
         MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
         auto streamCapture = CastStream<HStreamCapture>(stream);
         isBursting = streamCapture->IsBurstCapture(captureId);
@@ -1922,10 +1920,9 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
             int32_t burstSeqId = cameraPhotoProxy->GetBurstSeqId();
             int32_t imageSeqId = streamCapture->GetCurBurstSeq(captureId);
             int32_t displaySeqId = (burstSeqId != invalidBurstSeqId) ? burstSeqId : imageSeqId;
-            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(displaySeqId));
+            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeqId, displaySeqId));
             streamCapture->CheckResetBurstKey(captureId);
-            MEDIA_INFO_LOG("CreateMediaLibrary isBursting burstKey:%{public}s isCoverPhoto:%{public}d",
-                burstKey.c_str(), isCoverPhoto);
+            MEDIA_INFO_LOG("isBursting burstKey:%{public}s isCoverPhoto:%{public}d", burstKey.c_str(), isCoverPhoto);
             int32_t burstShotType = 3;
             cameraShotType = burstShotType;
             cameraPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);

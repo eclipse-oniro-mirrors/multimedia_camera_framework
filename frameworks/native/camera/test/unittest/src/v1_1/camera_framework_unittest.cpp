@@ -8885,14 +8885,14 @@ HWTEST_F(CameraFrameworkUnitTest, test_CreateBurstDisplayName, TestSize.Level0)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = CAPTURE;
     sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
-    std::string displayName = session->CreateBurstDisplayName(1);
+    std::string displayName = session->CreateBurstDisplayName(1, 1);
     cout << "displayName: " << displayName <<endl;
     ASSERT_NE(displayName, "");
     ASSERT_THAT(displayName, testing::EndsWith("_COVER"));
-    displayName = session->CreateBurstDisplayName(2);
+    displayName = session->CreateBurstDisplayName(2, 2);
     cout << "displayName: " << displayName <<endl;
     ASSERT_THAT(displayName, Not(testing::EndsWith("_COVER")));
-    displayName = session->CreateBurstDisplayName(-1);
+    displayName = session->CreateBurstDisplayName(-1, -1);
     cout << "displayName: " << displayName <<endl;
 }
 
