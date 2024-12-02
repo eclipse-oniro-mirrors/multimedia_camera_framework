@@ -1432,16 +1432,16 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
 void CameraManagerNapi::RegisterTorchStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (torchListener_ == nullptr) {
-        shared_ptr<TorchListenerNapi> torchListener =
-            std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
-        if (torchListener == nullptr) {
-            torchListener = make_shared<TorchListenerNapi>(env);
-            cameraManager_->RegisterTorchListener(torchListener);
-        }
-        torchListener_ = torchListener;
+    if (cameraManager_ == nullptr) {
+        MEDIA_ERR_LOG("cameraManager_ is null!");
+        return;
     }
-    torchListener_->SaveCallbackReference(eventName, callback, isOnce);
+    auto torchListener = std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
+    if (torchListener == nullptr) {
+        torchListener = make_shared<TorchListenerNapi>(env);
+        cameraManager_->RegisterTorchListener(torchListener);
+    }
+    torchListener->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
