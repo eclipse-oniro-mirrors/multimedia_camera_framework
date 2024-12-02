@@ -24,7 +24,8 @@ namespace CameraStandard {
 static const char TIME_LAPSE_PHOTO_SESSION_NAPI_CLASS_NAME[] = "TimeLapsePhotoSessionNapi";
 static const char TRY_AE_INFO_NAPI_CLASS_NAME[] = "TryAEInfo";
 
-class TryAEInfoCallbackListener : public TryAEInfoCallback, public ListenerBase {
+class TryAEInfoCallbackListener : public TryAEInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<TryAEInfoCallbackListener> {
 public:
     TryAEInfoCallbackListener(napi_env env) : ListenerBase(env) {}
     ~TryAEInfoCallbackListener() = default;
@@ -37,8 +38,8 @@ private:
 
 struct TryAEInfoChangedCallback {
     TryAEInfo info_;
-    const TryAEInfoCallbackListener* listener_;
-    TryAEInfoChangedCallback(TryAEInfo info, const TryAEInfoCallbackListener* listener)
+    weak_ptr<const TryAEInfoCallbackListener> listener_;
+    TryAEInfoChangedCallback(TryAEInfo info, shared_ptr<const TryAEInfoCallbackListener> listener)
         : info_(info), listener_(listener) {}
 };
 

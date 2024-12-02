@@ -276,12 +276,16 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<ExposureCallbackInfo> callbackInfo = std::make_unique<ExposureCallbackInfo>(state, this);
+    std::unique_ptr<ExposureCallbackInfo> callbackInfo =
+        std::make_unique<ExposureCallbackInfo>(state, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ExposureCallbackInfo* callbackInfo = reinterpret_cast<ExposureCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnExposureStateCallback(callbackInfo->state_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnExposureStateCallback(callbackInfo->state_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -326,12 +330,15 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, this);
+    std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         FocusCallbackInfo* callbackInfo = reinterpret_cast<FocusCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnFocusStateCallback(callbackInfo->state_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnFocusStateCallback(callbackInfo->state_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -375,14 +382,17 @@ void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status)
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, this);
+    auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(work->data);
             if (callbackInfo) {
-                callbackInfo->listener_->OnMacroStatusCallback(callbackInfo->status_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnMacroStatusCallback(callbackInfo->status_);
+                }
                 delete callbackInfo;
             }
             delete work;
@@ -427,14 +437,17 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(Moo
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    auto callbackInfo = std::make_unique<MoonCaptureBoostStatusCallbackInfo>(status, this);
+    auto callbackInfo = std::make_unique<MoonCaptureBoostStatusCallbackInfo>(status, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<MoonCaptureBoostStatusCallbackInfo*>(work->data);
             if (callbackInfo) {
-                callbackInfo->listener_->OnMoonCaptureBoostStatusCallback(callbackInfo->status_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnMoonCaptureBoostStatusCallback(callbackInfo->status_);
+                }
                 delete callbackInfo;
             }
             delete work;
@@ -480,15 +493,17 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    auto callbackInfo = std::make_unique<FeatureDetectionStatusCallbackInfo>(feature, status, this);
+    auto callbackInfo = std::make_unique<FeatureDetectionStatusCallbackInfo>(feature, status, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<FeatureDetectionStatusCallbackInfo*>(work->data);
             if (callbackInfo) {
-                callbackInfo->listener_->OnFeatureDetectionStatusChangedCallback(
-                    callbackInfo->feature_, callbackInfo->status_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnFeatureDetectionStatusChangedCallback(callbackInfo->feature_, callbackInfo->status_);
+                }
                 delete callbackInfo;
             }
             delete work;
@@ -563,12 +578,16 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<SessionCallbackInfo> callbackInfo = std::make_unique<SessionCallbackInfo>(errorCode, this);
+    std::unique_ptr<SessionCallbackInfo> callbackInfo =
+        std::make_unique<SessionCallbackInfo>(errorCode, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         SessionCallbackInfo* callbackInfo = reinterpret_cast<SessionCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnErrorCallback(callbackInfo->errorCode_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnErrorCallback(callbackInfo->errorCode_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -615,12 +634,16 @@ void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) con
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<SmoothZoomCallbackInfo> callbackInfo = std::make_unique<SmoothZoomCallbackInfo>(duration, this);
+    std::unique_ptr<SmoothZoomCallbackInfo> callbackInfo =
+        std::make_unique<SmoothZoomCallbackInfo>(duration, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         SmoothZoomCallbackInfo* callbackInfo = reinterpret_cast<SmoothZoomCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnSmoothZoomCallback(callbackInfo->duration_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnSmoothZoomCallback(callbackInfo->duration_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -669,12 +692,15 @@ void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<AbilityCallbackInfo> callbackInfo = std::make_unique<AbilityCallbackInfo>(this);
+    std::unique_ptr<AbilityCallbackInfo> callbackInfo = std::make_unique<AbilityCallbackInfo>(shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         AbilityCallbackInfo* callbackInfo = reinterpret_cast<AbilityCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnAbilityChangeCallback();
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnAbilityChangeCallback();
+            }
             delete callbackInfo;
         }
         delete work;
@@ -720,12 +746,15 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSug
         return;
     }
     std::unique_ptr<EffectSuggestionCallbackInfo> callbackInfo =
-        std::make_unique<EffectSuggestionCallbackInfo>(effectSuggestionType, this);
+        std::make_unique<EffectSuggestionCallbackInfo>(effectSuggestionType, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         EffectSuggestionCallbackInfo* callbackInfo = reinterpret_cast<EffectSuggestionCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnEffectSuggestionCallback(callbackInfo->effectSuggestionType_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnEffectSuggestionCallback(callbackInfo->effectSuggestionType_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -769,14 +798,17 @@ void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatu
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, this);
+    auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(work->data);
             if (callbackInfo) {
-                callbackInfo->listener_->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_);
+                }
                 delete callbackInfo;
             }
             delete work;
@@ -829,15 +861,18 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
         return;
     }
     auto callbackInfo = std::make_unique<AutoDeviceSwitchCallbackListenerInfo>(
-        isDeviceSwitched, isDeviceCapabilityChanged, this);
+        isDeviceSwitched, isDeviceCapabilityChanged, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<AutoDeviceSwitchCallbackListenerInfo*>(work->data);
             if (callbackInfo) {
-                callbackInfo->listener_->OnAutoDeviceSwitchCallback(
-                    callbackInfo->isDeviceSwitched_, callbackInfo->isDeviceCapabilityChanged_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnAutoDeviceSwitchCallback(
+                        callbackInfo->isDeviceSwitched_, callbackInfo->isDeviceCapabilityChanged_);
+                }
                 delete callbackInfo;
             }
             delete work;

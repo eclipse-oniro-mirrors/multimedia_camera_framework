@@ -289,12 +289,15 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
         return;
     }
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
-        std::make_unique<CameraMuteCallbackInfo>(muteMode, this);
+        std::make_unique<CameraMuteCallbackInfo>(muteMode, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->muteMode_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnCameraMuteCallback(callbackInfo->muteMode_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -351,12 +354,15 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
         return;
     }
     std::unique_ptr<TorchStatusChangeCallbackInfo> callbackInfo =
-        std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, this);
+        std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         TorchStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<TorchStatusChangeCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnTorchStatusChangeCallback(callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnTorchStatusChangeCallback(callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -429,12 +435,15 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
         return;
     }
     std::unique_ptr<FoldStatusChangeCallbackInfo> callbackInfo =
-        std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, this);
+        std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         FoldStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<FoldStatusChangeCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnFoldStatusChangedCallback(callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnFoldStatusChangedCallback(callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -1374,32 +1383,25 @@ void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, co
 void CameraManagerNapi::RegisterCameraStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
+    if (cameraManagerCallback_ == nullptr) {
+        shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
+            std::static_pointer_cast<CameraManagerCallbackNapi>(cameraManager_->GetApplicationCallback());
+        if (cameraManagerCallback == nullptr) {
+            cameraManagerCallback = make_shared<CameraManagerCallbackNapi>(env);
+            cameraManager_->SetCallback(cameraManagerCallback);
+        }
+        cameraManagerCallback_ = cameraManagerCallback;
     }
-    auto cameraManagerCallback =
-        std::static_pointer_cast<CameraManagerCallbackNapi>(cameraManager_->GetApplicationCallback());
-    if (cameraManagerCallback == nullptr) {
-        cameraManagerCallback = make_shared<CameraManagerCallbackNapi>(env);
-        cameraManager_->SetCallback(cameraManagerCallback);
-    }
-    cameraManagerCallback->SaveCallbackReference(eventName, callback, isOnce);
+    cameraManagerCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterCameraStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
-    }
-    auto cameraManagerCallback = std::static_pointer_cast<CameraManagerCallbackNapi>(cameraManager_->
-        GetApplicationCallback());
-    if (cameraManagerCallback == nullptr) {
+    if (cameraManagerCallback_ == nullptr) {
         MEDIA_ERR_LOG("cameraManagerCallback is null");
     } else {
-        cameraManagerCallback->RemoveCallbackRef(eventName, callback);
+        cameraManagerCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
@@ -1410,17 +1412,16 @@ void CameraManagerNapi::RegisterCameraMuteCallbackListener(
         MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
         return;
     }
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
-    }
-    auto cameraMuteListener =
+    if (cameraMuteListener_ == nullptr) {
+        shared_ptr<CameraMuteListenerNapi> cameraMuteListener =
             std::static_pointer_cast<CameraMuteListenerNapi>(cameraManager_->GetCameraMuteListener());
-    if (cameraMuteListener == nullptr) {
-        cameraMuteListener = make_shared<CameraMuteListenerNapi>(env);
-        cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
+        if (cameraMuteListener == nullptr) {
+            cameraMuteListener = make_shared<CameraMuteListenerNapi>(env);
+            cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
+        }
+        cameraMuteListener_ = cameraMuteListener;
     }
-    cameraMuteListener->SaveCallbackReference(eventName, callback, isOnce);
+    cameraMuteListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
@@ -1430,76 +1431,60 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
         MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
         return;
     }
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
-    }
-    auto cameraMuteListener =
-            std::static_pointer_cast<CameraMuteListenerNapi>(cameraManager_->GetCameraMuteListener());
-    if (cameraMuteListener == nullptr) {
+    if (cameraMuteListener_ == nullptr) {
         MEDIA_ERR_LOG("cameraMuteListener is null");
     } else {
-        cameraMuteListener->RemoveCallbackRef(eventName, callback);
+        cameraMuteListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void CameraManagerNapi::RegisterTorchStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
+    if (torchListener_ == nullptr) {
+        shared_ptr<TorchListenerNapi> torchListener =
+            std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
+        if (torchListener == nullptr) {
+            torchListener = make_shared<TorchListenerNapi>(env);
+            cameraManager_->RegisterTorchListener(torchListener);
+        }
+        torchListener_ = torchListener;
     }
-    auto torchListener = std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
-    if (torchListener == nullptr) {
-        torchListener = make_shared<TorchListenerNapi>(env);
-        cameraManager_->RegisterTorchListener(torchListener);
-    }
-    torchListener->SaveCallbackReference(eventName, callback, isOnce);
+    torchListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
-    }
-    auto torchListener = std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
-    if (torchListener == nullptr) {
-        MEDIA_ERR_LOG("torchListener is null");
+    if (torchListener_ == nullptr) {
+        MEDIA_ERR_LOG("torchListener_ is null");
     } else {
-        torchListener->RemoveCallbackRef(eventName, callback);
+        torchListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void CameraManagerNapi::RegisterFoldStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
+    if (foldListener_ == nullptr) {
+        shared_ptr<FoldListenerNapi> foldListener =
+            std::static_pointer_cast<FoldListenerNapi>(cameraManager_->GetFoldListener());
+        if (foldListener == nullptr) {
+            foldListener = make_shared<FoldListenerNapi>(env);
+            cameraManager_->RegisterFoldListener(foldListener);
+        }
+        foldListener_ = foldListener;
     }
-    auto foldListener = std::static_pointer_cast<FoldListenerNapi>(cameraManager_->GetFoldListener());
-    if (foldListener == nullptr) {
-        foldListener = make_shared<FoldListenerNapi>(env);
-        cameraManager_->RegisterFoldListener(foldListener);
-    }
-    foldListener->SaveCallbackReference(eventName, callback, isOnce);
+    foldListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterFoldStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null!");
-        return;
-    }
-    auto foldListener = std::static_pointer_cast<FoldListenerNapi>(cameraManager_->GetFoldListener());
-    if (foldListener == nullptr) {
-        MEDIA_ERR_LOG("foldListener is null");
+    if (foldListener_ == nullptr) {
+        MEDIA_ERR_LOG("torchListener_ is null");
     } else {
-        foldListener->RemoveCallbackRef(eventName, callback);
+        foldListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 
