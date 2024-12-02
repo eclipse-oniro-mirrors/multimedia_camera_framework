@@ -161,8 +161,7 @@ private:
     uint8_t callbackFlag_ = 0;
 };
 
-class RawPhotoListener : public IBufferConsumerListener, public ListenerBase,
-    public std::enable_shared_from_this<RawPhotoListener> {
+class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
     ~RawPhotoListener() = default;
@@ -266,8 +265,8 @@ struct ThumbnailListenerInfo {
 
 struct PhotoListenerInfo {
     sptr<Surface> photoSurface_;
-    weak_ptr<const PhotoListener> listener_;
-    PhotoListenerInfo(sptr<Surface> photoSurface, shared_ptr<const PhotoListener> listener)
+    const PhotoListener* listener_;
+    PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
     std::string uri = "";
@@ -279,8 +278,8 @@ struct PhotoListenerInfo {
 
 struct RawPhotoListenerInfo {
     sptr<Surface> rawPhotoSurface_;
-    weak_ptr<const RawPhotoListener> listener_;
-    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, shared_ptr<const RawPhotoListener> listener)
+    const RawPhotoListener* listener_;
+    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, const RawPhotoListener* listener)
         : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
     {}
 };
