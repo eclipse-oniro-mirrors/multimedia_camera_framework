@@ -1065,6 +1065,9 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     if (IsCameraDebugOn()) {
         CameraFwkMetadataUtils::DumpMetadataInfo(cameraResult);
     }
@@ -1086,6 +1089,9 @@ int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& re
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     auto streamOperatorCallback = GetStreamOperatorCallback();
     if (streamOperatorCallback != nullptr) {
         streamOperatorCallback->OnResult(streamId, result);
