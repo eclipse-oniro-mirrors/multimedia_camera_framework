@@ -717,8 +717,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
-    int32_t captureId = 1;
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
+    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 
     EXPECT_EQ(session->Release(), CAMERA_OK);
 
@@ -747,9 +746,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
-    int32_t captureId = 1;
     session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
-        burstKey, timestamp, captureId);
+        burstKey, timestamp);
 
     EXPECT_EQ(session->Release(), CAMERA_OK);
 
