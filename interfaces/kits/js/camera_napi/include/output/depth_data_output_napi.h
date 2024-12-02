@@ -65,7 +65,7 @@ private:
 };
 
 class DepthDataListener : public IBufferConsumerListener, public ListenerBase,
-                              public std::enable_shared_from_this<DepthDataListener > {
+    public std::enable_shared_from_this<DepthDataListener > {
 public:
     explicit DepthDataListener(napi_env env, const sptr<Surface> depthSurface, sptr<DepthDataOutput> depthDataOutput);
     ~DepthDataListener() = default;
@@ -171,4 +171,4 @@ struct DepthDataOutputAsyncContext : public AsyncContext {
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* DEPTH_DATA_OUTPUT_NAPI_H_ */
+#endif /* DEPTH_DATA_OUTPUT_NAPI_H_ */
