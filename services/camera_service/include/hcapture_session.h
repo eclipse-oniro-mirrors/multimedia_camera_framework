@@ -260,10 +260,9 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t EnableMovingPhotoMirror(bool isMirror) override;
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
-        std::string& burstKey, int64_t timestamp, int32_t captureId) override;
+        std::string& burstKey, int64_t timestamp) override;
     int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp,
-        int32_t captureId) override;
+        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;

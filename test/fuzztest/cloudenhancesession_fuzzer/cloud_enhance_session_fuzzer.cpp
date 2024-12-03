@@ -147,9 +147,8 @@ void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size
     int32_t cameraShotType;
     string burstKey = data.ReadString();
     int64_t timestamp = data.ReadInt64();
-    int32_t captureId = data.ReadInt32();
     session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
-        burstKey, timestamp, captureId);
+        burstKey, timestamp);
 }
 
 void Test(uint8_t *rawData, size_t size)

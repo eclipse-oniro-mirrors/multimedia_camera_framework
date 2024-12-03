@@ -216,12 +216,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_005, TestSize.Level0)
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
-    int32_t captureId = 0;
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
+    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 
     std::string deviceClass;
     session->SetCaptureSession(nullptr);
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp, captureId);
+    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
     EXPECT_EQ(session->SetPreviewRotation(deviceClass), CAMERA_OK);
 
     session->Release();

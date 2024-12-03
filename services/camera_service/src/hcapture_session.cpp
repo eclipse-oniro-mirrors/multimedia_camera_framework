@@ -1935,7 +1935,7 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
 typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t, int32_t);
 
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     constexpr int32_t movingPhotoShotType = 2;
@@ -1947,6 +1947,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->ReadFromParcel(data);
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
@@ -2021,7 +2022,7 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp, int32_t captureId)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     constexpr int32_t movingPhotoShotType = 2;
     constexpr int32_t imageShotType = 0;
@@ -2034,6 +2035,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     PhotoFormat photoFormat = cameraPhotoProxy->GetFormat();
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
