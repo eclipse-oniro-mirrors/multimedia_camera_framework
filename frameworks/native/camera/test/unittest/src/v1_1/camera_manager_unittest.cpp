@@ -387,7 +387,6 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_011, TestSize.
 
     mode = APERTURE_VIDEO;
     EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
-
 }
 
 /*
