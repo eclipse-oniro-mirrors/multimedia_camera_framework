@@ -77,13 +77,13 @@ bool AudioCapturerSession::StartAudioCapture()
         return false;
     }
     if (audioThread_ && audioThread_->joinable()) {
-        MEDIA_DEBUG_LOG("audioThread_ is already start");
+        MEDIA_INFO_LOG("audioThread_ is already start, reset");
         startAudioCapture_ = false;
         audioThread_->join();
         audioThread_.reset();
     }
-    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     startAudioCapture_ = true;
+    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     if (audioThread_ == nullptr) {
         MEDIA_ERR_LOG("Create auido thread failed");
         return false;
