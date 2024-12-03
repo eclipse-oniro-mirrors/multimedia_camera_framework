@@ -295,6 +295,8 @@ std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
         std::string defalutExifOrientation = "1";
         exifData->SetValue("Orientation", defalutExifOrientation);
         DP_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
+        exifData->RemoveExifThumbnail();
+        DP_INFO_LOG("RemoveExifThumbnail");
     } else {
         DP_ERR_LOG("GetExifOrientation exifData is nullptr");
     }
