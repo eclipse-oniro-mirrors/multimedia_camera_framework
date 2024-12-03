@@ -326,7 +326,7 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_010, TestSize.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CreateCaptureSessionImpl for tow branches of switch
+ * CaseDescription: Test CreateCaptureSessionImpl for all branches of switch
  */
 HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_011, TestSize.Level0)
 {
@@ -338,6 +338,54 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_011, TestSize.
     SceneMode mode = FLUORESCENCE_PHOTO;
     EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
     mode = QUICK_SHOT_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = VIDEO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = CAPTURE;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = PORTRAIT;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = NIGHT;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = SLOW_MOTION;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = SCAN;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = CAPTURE_MACRO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = VIDEO_MACRO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = PROFESSIONAL_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = PROFESSIONAL_VIDEO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = HIGH_RES_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = SECURE;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = LIGHT_PAINTING;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = PANORAMA_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = TIMELAPSE_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
+
+    mode = APERTURE_VIDEO;
     EXPECT_NE(cameraManager_->CreateCaptureSessionImpl(mode, session), nullptr);
 }
 
@@ -358,6 +406,60 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_012, TestSize.
     EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
 
     mode = QUICK_SHOT_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = NORMAL;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = CAPTURE;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = VIDEO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = PORTRAIT;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = NIGHT;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = SLOW_MOTION;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = SCAN;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = CAPTURE_MACRO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = VIDEO_MACRO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = PROFESSIONAL_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = PROFESSIONAL_VIDEO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = HIGH_FRAME_RATE;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = HIGH_RES_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = SECURE;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = LIGHT_PAINTING;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = PANORAMA_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = TIMELAPSE_PHOTO;
+    EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
+
+    mode = APERTURE_VIDEO;
     EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
 }
 
@@ -710,5 +812,145 @@ HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_026, TestSize.
     ret = foldServiceCallback.OnFoldStatusChanged(status);
     EXPECT_EQ(ret, CAMERA_OK);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreatePhotoOutputWithoutProfile
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreatePhotoOutputWithoutProfile for Not normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_027, TestSize.Level0)
+{
+    int ret = 0;
+    sptr<IConsumerSurface> surface = nullptr;
+    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+    sptr<PhotoOutput> photoOutput = nullptr;
+    ret = cameraManager_->CreatePhotoOutputWithoutProfile(surfaceProducer, &photoOutput);
+    ASSERT_EQ(photoOutput, nullptr);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreateVideoOutputWithoutProfile
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateVideoOutputWithoutProfile for Not normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_028, TestSize.Level0)
+{
+    int ret = 0;
+    sptr<Surface> surface = nullptr;
+    sptr<VideoOutput> videoOutput = nullptr;
+    ret = cameraManager_->CreateVideoOutputWithoutProfile(surface, &videoOutput);
+    ASSERT_EQ(videoOutput, nullptr);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreatePreviewOutputWithoutProfile
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreatePreviewOutputWithoutProfile for Not normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_029, TestSize.Level0)
+{
+    int ret = 0;
+    sptr<Surface> surface = nullptr;
+    sptr<PreviewOutput> previewOutput = nullptr;
+    ret = cameraManager_->CreatePreviewOutputWithoutProfile(surface, &previewOutput);
+    ASSERT_EQ(previewOutput, nullptr);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreateDeferredPreviewOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDeferredPreviewOutput for Not normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_030, TestSize.Level0)
+{
+    int ret = 0;
+    int32_t width = PREVIEW_DEFAULT_WIDTH;
+    int32_t height = PREVIEW_DEFAULT_HEIGHT;
+    Size previewsize;
+    previewsize.width = width;
+    previewsize.height = height;
+    CameraFormat previewFormat = CAMERA_FORMAT_INVALID;
+    Profile profile = Profile(previewFormat, previewsize);
+    sptr<PreviewOutput> previewOutput = nullptr;
+    ret = cameraManager_->CreateDeferredPreviewOutput(profile, &previewOutput);
+    ASSERT_EQ(previewOutput, nullptr);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreateDeferredPreviewOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDeferredPreviewOutput for Not normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_031, TestSize.Level0)
+{
+    int ret = 0;
+    Size previewsize;
+    previewsize.width = 0;
+    previewsize.height = 0;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Profile profile = Profile(previewFormat, previewsize);
+    sptr<PreviewOutput> previewOutput = nullptr;
+    ret = cameraManager_->CreateDeferredPreviewOutput(profile, &previewOutput);
+    ASSERT_EQ(previewOutput, nullptr);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with CreateDeferredPreviewOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateDeferredPreviewOutput for Normal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_032, TestSize.Level0)
+{
+    int32_t width = PREVIEW_DEFAULT_WIDTH;
+    int32_t height = PREVIEW_DEFAULT_HEIGHT;
+    Size previewsize;
+    previewsize.width = width;
+    previewsize.height = height;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Profile profile = Profile(previewFormat, previewsize);
+    sptr<PreviewOutput> previewOutput = nullptr;
+    previewOutput = cameraManager_->CreateDeferredPreviewOutput(profile);
+    ASSERT_NE(previewOutput, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with PrelaunchCamera and IsPrelaunchSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PrelaunchCamera and IsPrelaunchSupported for abnormal branches
+ */
+HWTEST_F(CameraManagerUnitTest, camera_framework_manager_unittest_033, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    auto camera0 = new CameraDevice("device0", nullptr);
+    EXPECT_FALSE(cameraManager_->IsPrelaunchSupported(camera0));
+}
+
 }
 }
