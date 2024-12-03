@@ -2043,5 +2043,20 @@ bool HCameraService::CameraDataShareHelper::IsDataShareReady()
     return true;
 }
 
+int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
+{
+    #ifdef MEMMGR_OVERRID
+    int32_t pid = getpid();
+    const std::string reason = "HW_CAMERA_TO_PHOTO";
+    std::string clientName = SYSTEM_CAMERA;
+    int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, reason, requiredMemSizeKB, clientName);
+    MEDIA_INFO_LOG("HCameraDevice::RequireMemory reason:%{public}s, clientName:%{public}s, ret:%{public}d",
+        reason.c_str(), clientName.c_str(), ret);
+    if (ret == 0) {
+        return CAMERA_OK;
+    }
+    #endif
+    return CAMERA_UNKNOWN_ERROR;
+}
 } // namespace CameraStandard
 } // namespace OHOS
