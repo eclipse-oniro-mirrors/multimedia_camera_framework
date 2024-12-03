@@ -39,7 +39,8 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
-class ExposureCallbackListener : public ExposureCallback, public ListenerBase {
+class ExposureCallbackListener : public ExposureCallback, public ListenerBase,
+    public std::enable_shared_from_this<ExposureCallbackListener> {
 public:
     ExposureCallbackListener(napi_env env) : ListenerBase(env) {}
     ~ExposureCallbackListener() = default;
@@ -52,12 +53,13 @@ private:
 
 struct ExposureCallbackInfo {
     ExposureCallback::ExposureState state_;
-    const ExposureCallbackListener* listener_;
-    ExposureCallbackInfo(ExposureCallback::ExposureState state, const ExposureCallbackListener* listener)
+    weak_ptr<const ExposureCallbackListener> listener_;
+    ExposureCallbackInfo(ExposureCallback::ExposureState state, shared_ptr<const ExposureCallbackListener> listener)
         : state_(state), listener_(listener) {}
 };
 
-class FocusCallbackListener : public FocusCallback, public ListenerBase {
+class FocusCallbackListener : public FocusCallback, public ListenerBase,
+    public std::enable_shared_from_this<FocusCallbackListener> {
 public:
     FocusCallbackListener(napi_env env) : ListenerBase(env)
     {
@@ -73,12 +75,13 @@ private:
 
 struct FocusCallbackInfo {
     FocusCallback::FocusState state_;
-    const FocusCallbackListener* listener_;
-    FocusCallbackInfo(FocusCallback::FocusState state, const FocusCallbackListener* listener)
+    weak_ptr<const FocusCallbackListener> listener_;
+    FocusCallbackInfo(FocusCallback::FocusState state, shared_ptr<const FocusCallbackListener> listener)
         : state_(state), listener_(listener) {}
 };
 
-class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase {
+class MacroStatusCallbackListener : public MacroStatusCallback, public ListenerBase,
+    public std::enable_shared_from_this<MacroStatusCallbackListener> {
 public:
     MacroStatusCallbackListener(napi_env env) : ListenerBase(env) {}
     ~MacroStatusCallbackListener() = default;
@@ -91,13 +94,16 @@ private:
 
 struct MacroStatusCallbackInfo {
     MacroStatusCallback::MacroStatus status_;
-    const MacroStatusCallbackListener* listener_;
-    MacroStatusCallbackInfo(MacroStatusCallback::MacroStatus status, const MacroStatusCallbackListener* listener)
+    weak_ptr<const MacroStatusCallbackListener> listener_;
+    MacroStatusCallbackInfo(
+        MacroStatusCallback::MacroStatus status,
+            shared_ptr<const MacroStatusCallbackListener> listener)
         : status_(status), listener_(listener)
     {}
 };
 
-class MoonCaptureBoostCallbackListener : public MoonCaptureBoostStatusCallback, public ListenerBase {
+class MoonCaptureBoostCallbackListener : public MoonCaptureBoostStatusCallback, public ListenerBase,
+    public std::enable_shared_from_this<MoonCaptureBoostCallbackListener> {
 public:
     MoonCaptureBoostCallbackListener(napi_env env) : ListenerBase(env) {}
     ~MoonCaptureBoostCallbackListener() = default;
@@ -110,14 +116,16 @@ private:
 
 struct MoonCaptureBoostStatusCallbackInfo {
     MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus status_;
-    const MoonCaptureBoostCallbackListener* listener_;
+    weak_ptr<const MoonCaptureBoostCallbackListener> listener_;
     MoonCaptureBoostStatusCallbackInfo(
-        MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus status, const MoonCaptureBoostCallbackListener* listener)
+        MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus status,
+            shared_ptr<const MoonCaptureBoostCallbackListener> listener)
         : status_(status), listener_(listener)
     {}
 };
 
-class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback, public ListenerBase {
+class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback, public ListenerBase,
+    public std::enable_shared_from_this<FeatureDetectionStatusCallbackListener> {
 public:
     FeatureDetectionStatusCallbackListener(napi_env env) : ListenerBase(env) {};
     ~FeatureDetectionStatusCallbackListener() = default;
@@ -132,15 +140,16 @@ private:
 struct FeatureDetectionStatusCallbackInfo {
     SceneFeature feature_;
     FeatureDetectionStatusCallback::FeatureDetectionStatus status_;
-    const FeatureDetectionStatusCallbackListener* listener_;
+    weak_ptr<const FeatureDetectionStatusCallbackListener> listener_;
     FeatureDetectionStatusCallbackInfo(SceneFeature feature,
         FeatureDetectionStatusCallback::FeatureDetectionStatus status,
-        const FeatureDetectionStatusCallbackListener* listener)
+        shared_ptr<const FeatureDetectionStatusCallbackListener> listener)
         : feature_(feature), status_(status), listener_(listener)
     {}
 };
 
-class SessionCallbackListener : public SessionCallback, public ListenerBase {
+class SessionCallbackListener : public SessionCallback, public ListenerBase,
+    public std::enable_shared_from_this<SessionCallbackListener> {
 public:
     SessionCallbackListener(napi_env env) : ListenerBase(env) {}
     ~SessionCallbackListener() = default;
@@ -153,12 +162,13 @@ private:
 
 struct SessionCallbackInfo {
     int32_t errorCode_;
-    const SessionCallbackListener* listener_;
-    SessionCallbackInfo(int32_t errorCode, const SessionCallbackListener* listener)
+    weak_ptr<const SessionCallbackListener> listener_;
+    SessionCallbackInfo(int32_t errorCode, shared_ptr<const SessionCallbackListener> listener)
         : errorCode_(errorCode), listener_(listener) {}
 };
 
-class SmoothZoomCallbackListener : public SmoothZoomCallback, public ListenerBase {
+class SmoothZoomCallbackListener : public SmoothZoomCallback, public ListenerBase,
+    public std::enable_shared_from_this<SmoothZoomCallbackListener> {
 public:
     SmoothZoomCallbackListener(napi_env env) : ListenerBase(env) {}
     ~SmoothZoomCallbackListener() = default;
@@ -171,12 +181,13 @@ private:
 
 struct SmoothZoomCallbackInfo {
     int32_t duration_;
-    const SmoothZoomCallbackListener* listener_;
-    SmoothZoomCallbackInfo(int32_t duration, const SmoothZoomCallbackListener* listener)
+    weak_ptr<const SmoothZoomCallbackListener> listener_;
+    SmoothZoomCallbackInfo(int32_t duration, shared_ptr<const SmoothZoomCallbackListener> listener)
         : duration_(duration), listener_(listener) {}
 };
 
-class AbilityCallbackListener : public AbilityCallback, public ListenerBase {
+class AbilityCallbackListener : public AbilityCallback, public ListenerBase,
+    public std::enable_shared_from_this<AbilityCallbackListener> {
 public:
     AbilityCallbackListener(napi_env env) : ListenerBase(env) {}
     ~AbilityCallbackListener() = default;
@@ -188,11 +199,12 @@ private:
 };
 
 struct AbilityCallbackInfo {
-    const AbilityCallbackListener* listener_;
-    AbilityCallbackInfo(const AbilityCallbackListener* listener) : listener_(listener) {}
+    weak_ptr<const AbilityCallbackListener> listener_;
+    AbilityCallbackInfo(shared_ptr<const AbilityCallbackListener> listener) : listener_(listener) {}
 };
 
-class EffectSuggestionCallbackListener : public EffectSuggestionCallback, public ListenerBase {
+class EffectSuggestionCallbackListener : public EffectSuggestionCallback, public ListenerBase,
+    public std::enable_shared_from_this<EffectSuggestionCallbackListener> {
 public:
     EffectSuggestionCallbackListener(napi_env env) : ListenerBase(env) {}
     ~EffectSuggestionCallbackListener() = default;
@@ -205,13 +217,14 @@ private:
 
 struct EffectSuggestionCallbackInfo {
     EffectSuggestionType effectSuggestionType_;
-    const EffectSuggestionCallbackListener* listener_;
+    weak_ptr<const EffectSuggestionCallbackListener> listener_;
     EffectSuggestionCallbackInfo(EffectSuggestionType effectSuggestionType,
-    const EffectSuggestionCallbackListener* listener)
+    shared_ptr<const EffectSuggestionCallbackListener> listener)
         : effectSuggestionType_(effectSuggestionType), listener_(listener) {}
 };
 
-class LcdFlashStatusCallbackListener : public LcdFlashStatusCallback, public ListenerBase {
+class LcdFlashStatusCallbackListener : public LcdFlashStatusCallback, public ListenerBase,
+    public std::enable_shared_from_this<LcdFlashStatusCallbackListener> {
 public:
     LcdFlashStatusCallbackListener(napi_env env) : ListenerBase(env) {}
     ~LcdFlashStatusCallbackListener() = default;
@@ -224,13 +237,14 @@ private:
 
 struct LcdFlashStatusStatusCallbackInfo {
     LcdFlashStatusInfo lcdFlashStatusInfo_;
-    const LcdFlashStatusCallbackListener* listener_;
+    weak_ptr<const LcdFlashStatusCallbackListener> listener_;
     LcdFlashStatusStatusCallbackInfo(LcdFlashStatusInfo lcdFlashStatusInfo,
-    const LcdFlashStatusCallbackListener* listener)
+    shared_ptr<const LcdFlashStatusCallbackListener> listener)
         : lcdFlashStatusInfo_(lcdFlashStatusInfo), listener_(listener) {}
 };
 
-class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase {
+class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase,
+    public std::enable_shared_from_this<AutoDeviceSwitchCallbackListener> {
 public:
     AutoDeviceSwitchCallbackListener(napi_env env) : ListenerBase(env) {}
     ~AutoDeviceSwitchCallbackListener() = default;
@@ -243,9 +257,9 @@ private:
 struct AutoDeviceSwitchCallbackListenerInfo {
     bool isDeviceSwitched_;
     bool isDeviceCapabilityChanged_;
-    const AutoDeviceSwitchCallbackListener* listener_;
+    weak_ptr<const AutoDeviceSwitchCallbackListener> listener_;
     AutoDeviceSwitchCallbackListenerInfo(bool isDeviceSwitched, bool isDeviceCapabilityChanged,
-        const AutoDeviceSwitchCallbackListener* listener)
+        shared_ptr<const AutoDeviceSwitchCallbackListener> listener)
         : isDeviceSwitched_(isDeviceSwitched), isDeviceCapabilityChanged_(isDeviceCapabilityChanged),
         listener_(listener) {}
 };

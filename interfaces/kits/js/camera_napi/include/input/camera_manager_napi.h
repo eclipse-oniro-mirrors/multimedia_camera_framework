@@ -61,7 +61,8 @@ struct CameraStatusCallbackInfo {
     }
 };
 
-class CameraMuteListenerNapi : public CameraMuteListener, public ListenerBase {
+class CameraMuteListenerNapi : public CameraMuteListener, public ListenerBase,
+    public std::enable_shared_from_this<CameraMuteListenerNapi> {
 public:
     explicit CameraMuteListenerNapi(napi_env env);
     virtual ~CameraMuteListenerNapi();
@@ -73,16 +74,17 @@ private:
 
 struct CameraMuteCallbackInfo {
     bool muteMode_;
-    const CameraMuteListenerNapi* listener_;
-    CameraMuteCallbackInfo(bool muteMode, const CameraMuteListenerNapi* listener)
+    weak_ptr<const CameraMuteListenerNapi> listener_;
+    CameraMuteCallbackInfo(bool muteMode, shared_ptr<const CameraMuteListenerNapi> listener)
         : muteMode_(muteMode), listener_(listener) {}
     ~CameraMuteCallbackInfo()
     {
-        listener_ = nullptr;
+        listener_.reset();
     }
 };
 
-class TorchListenerNapi : public TorchListener, public ListenerBase {
+class TorchListenerNapi : public TorchListener, public ListenerBase,
+    public std::enable_shared_from_this<TorchListenerNapi> {
 public:
     explicit TorchListenerNapi(napi_env env);
     virtual ~TorchListenerNapi();
@@ -94,16 +96,17 @@ private:
 
 struct TorchStatusChangeCallbackInfo {
     TorchStatusInfo info_;
-    const TorchListenerNapi* listener_;
-    TorchStatusChangeCallbackInfo(TorchStatusInfo info, const TorchListenerNapi* listener)
+    weak_ptr<const TorchListenerNapi> listener_;
+    TorchStatusChangeCallbackInfo(TorchStatusInfo info, shared_ptr<const TorchListenerNapi> listener)
         : info_(info), listener_(listener) {}
     ~TorchStatusChangeCallbackInfo()
     {
-        listener_ = nullptr;
+        listener_.reset();
     }
 };
 
-class FoldListenerNapi : public FoldListener, public ListenerBase {
+class FoldListenerNapi : public FoldListener, public ListenerBase,
+    public std::enable_shared_from_this<FoldListenerNapi> {
 public:
     explicit FoldListenerNapi(napi_env env);
     virtual ~FoldListenerNapi();
@@ -115,12 +118,12 @@ private:
 
 struct FoldStatusChangeCallbackInfo {
     FoldStatusInfo info_;
-    const FoldListenerNapi* listener_;
-    FoldStatusChangeCallbackInfo(FoldStatusInfo info, const FoldListenerNapi* listener)
+    weak_ptr<const FoldListenerNapi> listener_;
+    FoldStatusChangeCallbackInfo(FoldStatusInfo info, shared_ptr<const FoldListenerNapi> listener)
         : info_(info), listener_(listener) {}
     ~FoldStatusChangeCallbackInfo()
     {
-        listener_ = nullptr;
+        listener_.reset();
     }
 };
 

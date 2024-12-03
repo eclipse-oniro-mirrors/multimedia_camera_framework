@@ -1124,13 +1124,16 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) 
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    auto callback = make_unique<TryAEInfoChangedCallback>(info, this);
+    auto callback = make_unique<TryAEInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {},
         [] (uv_work_t* work, int status) {
             TryAEInfoChangedCallback* callback = reinterpret_cast<TryAEInfoChangedCallback *>(work->data);
             if (callback) {
-                callback->listener_->OnTryAEInfoChangedCallback(callback->info_);
+                auto listener = callback->listener_.lock();
+                if (listener != nullptr) {
+                    listener->OnTryAEInfoChangedCallback(callback->info_);
+                }
                 delete callback;
             }
             delete work;
