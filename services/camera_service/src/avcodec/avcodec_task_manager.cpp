@@ -248,7 +248,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     });
 }
 
-int32_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime,
+size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime,
     int32_t captureId)
 {
     bool isDeblurStartTime = false;
@@ -308,7 +308,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
     choosedBuffer.clear();
-    int32_t idrIndex = FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    size_t idrIndex = FindIdrFrameIndex(frameRecords, shutterTime, captureId);
     std::unique_lock<mutex> endTimeLock(endTimeMutex_);
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
     if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime
@@ -324,8 +324,9 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
         int64_t timestamp = frame->GetTimeStamp();
-        if (timestamp <= clearVideoEndTime && ++frameCount <= MAX_FRAME_COUNT) {
+        if (timestamp <= clearVideoEndTime && frameCount < MAX_FRAME_COUNT) {
             choosedBuffer.push_back(frame);
+            ++frameCount;
         }
     }
     if (choosedBuffer.empty() || !frameRecords[idrIndex]->IsIDRFrame()) {
