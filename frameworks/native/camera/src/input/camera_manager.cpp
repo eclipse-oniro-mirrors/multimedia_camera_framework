@@ -2329,5 +2329,14 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
     return CameraErrorCode::SUCCESS;
 }
+
+int32_t CameraManager::RequireMemorySize(int32_t memSize)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "RequireMemorySize serviceProxy is null");
+    int32_t retCode = serviceProxy->RequireMemorySize(memSize);
+    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "RequireMemorySize call failed, retCode: %{public}d", retCode);
+    return retCode;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -28,6 +28,7 @@
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_napi_const.h"
 #include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
@@ -1432,6 +1433,9 @@ void ThumbnailListener::OnBufferAvailable()
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ThumbnailListener:OnBufferAvailable() called");
     UpdateJSCallbackAsync();
+    constexpr int32_t memSize = 20 * 1024;
+    int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
+    CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
 }
 
 void ThumbnailListener::UpdateJSCallback() const

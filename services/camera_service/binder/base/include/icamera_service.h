@@ -143,6 +143,8 @@ public:
     
     virtual int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) = 0;
 
+    virtual int32_t RequireMemorySize(int32_t memSize) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard

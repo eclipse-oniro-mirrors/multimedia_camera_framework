@@ -25,6 +25,10 @@
 #include "input/i_standard_camera_listener.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#include "mem_mgr_constant.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -147,6 +151,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_OUTPUT_STATUS):
             errCode = HCameraServiceStub::HandleGetCameraOutputStatus(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_REQUIRE_MEMORY_SIZE):
+            errCode = HCameraServiceStub::HandleRequireMemorySize(data, reply);
             break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
@@ -733,6 +740,15 @@ int HCameraServiceStub::HandleGetCameraOutputStatus(MessageParcel& data, Message
     int ret = GetCameraOutputStatus(pid, status);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(status), IPC_STUB_WRITE_PARCEL_ERR,
         "GetCameraOutputStatus failed");
+    return ret;
+}
+
+int HCameraServiceStub::HandleRequireMemorySize(MessageParcel& data, MessageParcel& reply)
+{
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
+    int32_t memSize = data.ReadInt32();
+    int ret = RequireMemorySize(memSize);
+    CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret, "RequireMemorySize failed : %{public}d", ret);
     return ret;
 }
 } // namespace CameraStandard
