@@ -88,6 +88,7 @@ ohos_shared_library("ohcamera") {
     "media_library:native_media_asset_manager",
     "napi:ace_napi",
     "resource_management:librawfile",
+    "samgr:samgr_proxy",
   ]
 
   public_external_deps = [ "drivers_interface_camera:metadata" ]
