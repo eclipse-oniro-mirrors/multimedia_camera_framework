@@ -1123,7 +1123,7 @@ void PhotoListener::RemoveCallback(const std::string eventName, napi_value callb
     } else if (eventName == CONST_CAPTURE_PHOTO_ASSET_AVAILABLE) {
         auto photoOutput = photoOutput_.promote();
         if (photoOutput != nullptr) {
-            photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
+            photoOutput->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
         }
         callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
     }
@@ -1982,13 +1982,14 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
         }
+        if (surfaceId == "") {
+            sPhotoOutput_->SetNativeSurface(true);
+        }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             MEDIA_DEBUG_LOG("Success to create photo output instance");
             return result;
-        } else {
-            MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
