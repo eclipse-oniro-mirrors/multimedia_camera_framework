@@ -4733,6 +4733,31 @@ declare namespace camera {
   }
 
   /**
+   * Enum for quality prioritization.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 14
+   */
+  enum QualityPrioritization {
+    /**
+     * High quality priority.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 14
+     */
+    HIGH_QUALITY = 0,
+
+    /**
+     * Power balance priority.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 14
+     */
+    POWER_BALANCE = 1
+  }
+
+  /**
    * Video session object.
    *
    * @interface VideoSession
@@ -4874,6 +4899,21 @@ declare namespace camera {
      * @since 12
      */
     getSessionConflictFunctions(): Array<VideoConflictFunctions>;
+
+    /**
+     * Sets quality prioritization.
+     *
+     * @param { QualityPrioritization } quality - Target quality prioritization.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes:
+     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
+     * 3. Parameter verification failed.     
+     * @throws { BusinessError } 7400103 - Session not config.
+
+
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 14
+     */
+    setQualityPrioritization(quality: QualityPrioritization): void;
   }
 
   /**
