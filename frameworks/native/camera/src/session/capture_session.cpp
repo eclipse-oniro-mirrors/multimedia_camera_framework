@@ -6178,5 +6178,41 @@ void CaptureSession::CreateAndSetFoldServiceCallback()
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
         "CreateAndSetFoldServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
 }
+
+int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPrioritization)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetQualityPrioritization Session is not Commited");
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG(
+            "CaptureSession::SetQualityPrioritization Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    uint8_t quality = HIGH_QUALITY;
+    auto itr = g_fwkQualityPrioritizationMap_.find(qualityPrioritization);
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkQualityPrioritizationMap_.end(), CameraErrorCode::PARAMETER_ERROR,
+        "CaptureSession::SetColorSpace() map failed, %{public}d", static_cast<int32_t>(qualityPrioritization));
+    quality = itr->second;
+
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG(
+        "CaptureSession::SetQualityPrioritization quality prioritization: %{public}d", qualityPrioritization);
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_QUALITY_PRIORITIZATION, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
+    return CameraErrorCode::SUCCESS;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

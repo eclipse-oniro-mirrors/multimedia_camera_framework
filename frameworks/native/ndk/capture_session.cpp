@@ -716,6 +716,20 @@ Camera_ErrorCode OH_CaptureSession_EnableAutoDeviceSwitch(Camera_CaptureSession*
         "Invaild argument, session is null!");
     return session->EnableAutoDeviceSwitch(enabled);
 }
+
+/**
+ * @since 14
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_SetQualityPrioritization(
+    Camera_CaptureSession* session, Camera_QualityPrioritization qualityPrioritization)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetQualityPrioritization is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+
+    return session->SetQualityPrioritization(qualityPrioritization);
+}
+
 #ifdef __cplusplus
 }
 #endif

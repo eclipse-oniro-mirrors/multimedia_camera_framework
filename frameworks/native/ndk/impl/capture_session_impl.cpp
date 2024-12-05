@@ -822,3 +822,13 @@ Camera_ErrorCode Camera_CaptureSession::EnableAutoDeviceSwitch(bool enabled)
     int32_t ret = innerCaptureSession_->EnableAutoDeviceSwitch(enabled);
     return FrameworkToNdkCameraError(ret);
 }
+
+Camera_ErrorCode Camera_CaptureSession::SetQualityPrioritization(Camera_QualityPrioritization qualityPrioritization)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::SetQualityPrioritization is called");
+    QualityPrioritization innerQualityPrioritization = static_cast<QualityPrioritization>(qualityPrioritization);
+    innerCaptureSession_->LockForControl();
+    int32_t ret = innerCaptureSession_->SetQualityPrioritization(innerQualityPrioritization);
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
+}

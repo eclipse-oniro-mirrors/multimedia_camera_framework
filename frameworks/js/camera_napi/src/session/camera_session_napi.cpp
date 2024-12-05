@@ -145,6 +145,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::quality_prioritization_props = {
+    DECLARE_NAPI_FUNCTION("setQualityPrioritization", CameraSessionNapi::SetQualityPrioritization),
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::manual_focus_props = {
     DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
     DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
@@ -2232,6 +2236,38 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         }
     } else {
         MEDIA_ERR_LOG("SetFocusMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetQualityPrioritization(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetQualityPrioritization is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        QualityPrioritization qualityPrioritization = (QualityPrioritization)value;
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetQualityPrioritization(
+            static_cast<QualityPrioritization>(qualityPrioritization));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetQualityPrioritization call Failed!");
     }
     return result;
 }
