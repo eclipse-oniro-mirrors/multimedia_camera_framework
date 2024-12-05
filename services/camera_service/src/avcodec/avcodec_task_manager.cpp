@@ -121,12 +121,12 @@ void AvcodecTaskManager::SubmitTask(function<void()> task)
     }
 }
 
-void AvcodecTaskManager::SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy)
+void AvcodecTaskManager::SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy, int32_t captureId)
 {
     lock_guard<mutex> lock(videoFdMutex_);
-    MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64, timestamp);
-    videoFdQueue_.push(std::make_pair(timestamp, photoAssetProxy));
-    MEDIA_DEBUG_LOG("video queue size:%{public}zu", videoFdQueue_.size());
+    MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
+    videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
+    MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
     cvEmpty_.notify_all();
 }
 
@@ -135,18 +135,18 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
 {
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
-    if (videoFdQueue_.empty()) {
+    if (videoFdMap_.empty()) {
         bool waitResult = false;
         auto thisPtr = sptr<AvcodecTaskManager>(this);
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
-            [thisPtr] { return !thisPtr->videoFdQueue_.empty(); });
-        CHECK_ERROR_RETURN_RET(!waitResult || videoFdQueue_.empty(), nullptr);
+            [thisPtr] { return !thisPtr->videoFdMap_.empty(); });
+        CHECK_ERROR_RETURN_RET(!waitResult || videoFdMap_.empty(), nullptr);
     }
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
-    int64_t timestamp = videoFdQueue_.front().first;
-    auto photoAssetProxy = videoFdQueue_.front().second;
-    videoFdQueue_.pop();
+    int64_t timestamp = videoFdMap_[captureId].first;
+    auto photoAssetProxy = videoFdMap_[captureId].second;
+    videoFdMap_.erase(captureId);
     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
@@ -339,17 +339,14 @@ void AvcodecTaskManager::Release()
         audioEncoder_->Release();
     }
     unique_lock<mutex> lock(videoFdMutex_);
-    MEDIA_INFO_LOG("videoFdQueue_ size is %{public}zu", videoFdQueue_.size());
-    while (!videoFdQueue_.empty()) {
-        int32_t fd = videoFdQueue_.front().first;
-        PhotoAssetIntf* photoAssetProxy = videoFdQueue_.front().second;
-        MEDIA_INFO_LOG("close with videoFd: %{public}d", fd);
-        close(fd);
+    MEDIA_INFO_LOG("AvcodecTaskManager::Release videoFdMap_ size is %{public}zu", videoFdMap_.size());
+    for (auto videoFdPair : videoFdMap_) {
+        PhotoAssetIntf* photoAssetProxy = videoFdPair.second.second;
         if (photoAssetProxy) {
             delete photoAssetProxy;
         }
-        videoFdQueue_.pop();
     }
+    videoFdMap_.clear();
     MEDIA_INFO_LOG("AvcodecTaskManager release end");
 }
 
