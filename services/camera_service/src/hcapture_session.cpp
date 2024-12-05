@@ -2040,14 +2040,19 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    // RotatePicture can be processed in parallel
+    std::thread rotateTask;
+    std::shared_ptr<Media::Picture> picturePtr(picture.release());
+    if (!isBursting && picturePtr) {
+        rotateTask = std::thread(RotatePicture, std::ref(picturePtr));
+    }
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
         MEDIA_LIB_SO, "createPhotoAssetIntf"));
     PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    std::shared_ptr<Media::Picture> picturePtr(picture.release());
-    if (!isBursting && picturePtr) {
-        RotatePicture(picturePtr);
+    if (rotateTask.joinable()) {
+        rotateTask.join();
     }
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
