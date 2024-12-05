@@ -162,6 +162,7 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& data)
 {
     int32_t captureId = data.ReadInt32();
@@ -170,6 +171,9 @@ int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& dat
                           "HStreamCaptureStub::HandleAcquireBufferToPrepareProxy failed : %{public}d", ret);
 =======
 int32_t HStreamRepeatStub::HandleSetCameraPhotoRotation(MessageParcel& data)
+=======
+int32_t HStreamCaptureStub::HandleSetCameraPhotoRotation(MessageParcel& data)
+>>>>>>> a71f6b4d (fix)
 {
     bool isEnable = data.ReadBool();
 
