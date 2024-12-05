@@ -20,6 +20,7 @@
 #include "blocking_queue.h"
 #include "refbase.h"
 #include "audio_record.h"
+#include "audio_deferred_process.h"
 #include <atomic>
 #include <cstdint>
 
@@ -38,6 +39,8 @@ public:
     void Stop();
     void Release();
     void GetAudioRecords(int64_t startTime, int64_t endTime, vector<sptr<AudioRecord>> &audioRecords);
+    sptr<AudioDeferredProcess> GetAudioDeferredProcess();
+    AudioChannel getMicNum();
 
 private:
     bool CreateAudioCapturer();
@@ -46,6 +49,7 @@ private:
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
+    sptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
 };
 } // CameraStandard
 } // OHOS
