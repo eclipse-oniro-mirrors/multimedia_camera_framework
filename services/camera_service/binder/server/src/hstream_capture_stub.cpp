@@ -158,7 +158,7 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int32_t HStreamRepeatStub::HandleSetCameraPhotoRotation(MessageParcel& data)
+int32_t HStreamCaptureStub::HandleSetCameraPhotoRotation(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
 
