@@ -51,6 +51,8 @@ public:
 
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
 
+    int32_t SetCameraPhotoRotation(bool isEnable) override;
+
 private:
     static inline BrokerDelegator<HStreamCaptureProxy> delegator_;
 };
