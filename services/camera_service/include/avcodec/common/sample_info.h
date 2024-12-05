@@ -61,6 +61,7 @@ constexpr int32_t KEY_FRAME_INTERVAL = 10;
 constexpr int32_t DEFAULT_SIZE = 1920 * 1440;
 constexpr float VIDEO_BITRATE_CONSTANT = 0.7;
 constexpr float HEVC_TO_AVC_FACTOR = 1.5;
+constexpr int64_t NANOSEC_RANGE = 1600000000LL;
 
 class CodecAVBufferInfo : public RefBase {
 public:
