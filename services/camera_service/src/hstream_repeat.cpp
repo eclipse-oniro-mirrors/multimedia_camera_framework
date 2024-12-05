@@ -715,8 +715,13 @@ void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_pos
         return;
     }
     bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
+    bool isNeedChangeRotation = system::GetBoolParameter("const.multimedia.enable_camera_rotation_change", 0);
     if (isTableFlag) {
         ProcessFixedDiffDeviceTransform(cameraPosition);
+        return;
+    }
+    if (isNeedChangeRotation) {
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
         return;
     }
     if (IsVerticalDevice()) {

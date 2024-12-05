@@ -968,9 +968,19 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     sensorOrientation = item.data.i32[0];
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
-        result = (ImageRotation)((imageRotation) % CAPTURE_ROTATION_BASE);
+        result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     } else if (cameraPosition == CAMERA_POSITION_FRONT || cameraPosition == CAMERA_POSITION_FOLD_INNER) {
-        result = (ImageRotation)((CAPTURE_ROTATION_BASE - imageRotation) % CAPTURE_ROTATION_BASE);
+        result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
+    }
+    auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (streamCapturePtr) {
+        errCode = streamCapturePtr->SetCameraPhotoRotation(true);
+        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
+            "Failed to SetCameraPhotoRotation!, errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::SetCameraPhotoRotation() streamCapturePtr is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     MEDIA_INFO_LOG("PhotoOutput GetPhotoRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);

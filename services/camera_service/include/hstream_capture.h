@@ -76,7 +76,11 @@ public:
     std::string GetBurstKey(int32_t captureId) const;
     void SetBurstImages(int32_t captureId, std::string imageId);
     void CheckResetBurstKey(int32_t captureId);
+<<<<<<< HEAD
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
+=======
+    int32_t SetCameraPhotoRotation(bool isEnable) override;
+>>>>>>> e44a6624 (拍照旋转预览配置项fix)
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -100,6 +104,7 @@ private:
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
+    bool enableCameraPhotoRotation_ = false;
     std::atomic<bool> isCaptureReady_ = true;
     std::string curBurstKey_ = BURST_UUID_UNSET;
     bool isBursting_ = false;

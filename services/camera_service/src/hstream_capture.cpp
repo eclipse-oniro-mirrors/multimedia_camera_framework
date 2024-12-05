@@ -529,9 +529,13 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     MEDIA_INFO_LOG("set rotation app rotationValue %{public}d", rotationValue);
     rotationMap_.EnsureInsert(captureId, rotationValue);
     // real rotation
-    int32_t rotation = sensorOrientation + rotationValue;
-    if (rotation >= CAPTURE_ROTATE_360) {
-        rotation = rotation - CAPTURE_ROTATE_360;
+    if (enableCameraPhotoRotation_) {
+        rotation = rotationValue
+    } else {
+        int32_t rotation = sensorOrientation + rotationValue;
+        if (rotation >= CAPTURE_ROTATE_360) {
+            rotation = rotation - CAPTURE_ROTATE_360;
+        }
     }
     {
         uint8_t connectType = 0;
@@ -828,6 +832,12 @@ int32_t HStreamCapture::SetMovingPhotoVideoCodecType(int32_t videoCodecType)
 {
     MEDIA_INFO_LOG("HStreamCapture SetMovingPhotoVideoCodecType videoCodecType_: %{public}d", videoCodecType);
     videoCodecType_ = videoCodecType;
+    return 0;
+}
+
+int32_t HStreamCapture::SetCameraPhotoRotation(bool isEnable)
+{
+    enableCameraPhotoRotation_ = isEnable;
     return 0;
 }
 } // namespace CameraStandard

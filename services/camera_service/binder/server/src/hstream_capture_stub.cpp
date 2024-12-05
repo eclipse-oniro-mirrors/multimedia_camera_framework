@@ -67,6 +67,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO):
             errCode = HandleSetBufferProducerInfo(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_PHOTO_ROTATION):
+            errCode = HandleSetCameraPhotoRotation(data);
+            break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX):
             errCode = HandleAcquireBufferToPrepareProxy(data);
             break;
@@ -158,12 +161,21 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
+<<<<<<< HEAD
 int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& data)
 {
     int32_t captureId = data.ReadInt32();
     int32_t ret = AcquireBufferToPrepareProxy(captureId);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
                           "HStreamCaptureStub::HandleAcquireBufferToPrepareProxy failed : %{public}d", ret);
+=======
+int32_t HStreamRepeatStub::HandleSetCameraPhotoRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+
+    int ret = SetCameraPhotoRotation(isEnable);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::SetCameraPhotoRotation failed : %{public}d", ret);
+>>>>>>> e44a6624 (拍照旋转预览配置项fix)
     return ret;
 }
 } // namespace CameraStandard
