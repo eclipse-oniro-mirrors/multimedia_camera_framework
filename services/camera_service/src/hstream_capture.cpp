@@ -515,7 +515,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     rotationMap_.EnsureInsert(captureId, rotationValue);
     // real rotation
     if (enableCameraPhotoRotation_) {
-        rotation = rotationValue
+        rotation = rotationValue;
     } else {
         rotation = sensorOrientation + rotationValue;
         if (rotation >= CAPTURE_ROTATE_360) {
