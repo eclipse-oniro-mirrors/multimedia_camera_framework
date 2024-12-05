@@ -239,7 +239,7 @@ int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType
     return error;
 }
 
-int32_t HStreamRepeatProxy::SetCameraPhotoRotation(bool isEnable)
+int32_t HStreamCaptureProxy::SetCameraPhotoRotation(bool isEnable)
 {
     MessageParcel data;
     MessageParcel reply;
