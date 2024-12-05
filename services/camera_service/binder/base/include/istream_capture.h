@@ -49,6 +49,8 @@ public:
 
     virtual int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) = 0;
 
+    virtual int32_t SetCameraPhotoRotation(bool isEnable) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };
 } // namespace CameraStandard
