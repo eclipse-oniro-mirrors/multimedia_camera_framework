@@ -65,6 +65,8 @@ private:
     int32_t pid_;
     uint32_t callerToken_;
     wptr<HCameraDevice> cameraDevice_;
+    std::mutex permissionCbMutex_;
+    std::mutex cameraUseCbMutex_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
 };
