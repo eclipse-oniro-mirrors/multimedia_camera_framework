@@ -129,5 +129,242 @@ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_004, TestSize.Level0)
 
     EXPECT_EQ(cameras[0]->GetSupportedFoldStatus(), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice isFindModuleTypeTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test isFindModuleTypeTag
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+
+    uint32_t tag = 0;
+    bool ret = cameras[0]->isFindModuleTypeTag(tag);
+
+    EXPECT_EQ(ret, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetID()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetID()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    string ret = cameras[0]->GetID();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetMetadata()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMetadata()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    cameras[0]->GetMetadata();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetMetadata()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMetadata()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_008, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraPtr = cameras[0]->GetCameraAbility();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetPosition()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetPosition()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_009, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetPosition();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetUsedAsPosition()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetUsedAsPosition()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_010, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetUsedAsPosition();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetCameraType()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraType()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_011, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetCameraType();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetConnectionType()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetConnectionType()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_012, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetConnectionType();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetCameraFoldScreenType()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraFoldScreenType()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_013, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetCameraFoldScreenType();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetCameraFoldScreenType()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraFoldScreenType()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_014, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetCameraOrientation();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetCameraFoldScreenType()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraFoldScreenType()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_015, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    int ret = cameras[0]->GetModuleType();
+
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice SetProfile(sptr<CameraOutputCapability> capability) with nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetProfile(sptr<CameraOutputCapability> capability) with nullptr
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_016, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CameraOutputCapability> capabilityRet = nullptr;
+    
+    cameras[0]->SetProfile(capabilityRet);
+    EXPECT_FALSE(cameras[0]->modePreviewProfiles_.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetExposureBiasRange()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetExposureBiasRange()
+ */
+HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_017, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    vector<float>cameDev_ExpBiaRange = cameras[0]->GetExposureBiasRange();
+
+    EXPECT_EQ(cameDev_ExpBiaRange.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice SetCameraDeviceUsedAsPosition
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraDeviceUsedAsPosition
+ */
+ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_018, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    cameras[0]->SetCameraDeviceUsedAsPosition(CameraPosition::CAMERA_POSITION_FRONT);
+
+    EXPECT_EQ(cameras[0]->GetUsedAsPosition(), CameraPosition::CAMERA_POSITION_FRONT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice GetSupportedFoldStatus()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedFoldStatus()
+ */
+ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_019, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    uint32_t ret = cameras[0]->GetSupportedFoldStatus();
+
+    EXPECT_EQ(ret, 0);
+}
 }
 }
