@@ -3084,17 +3084,16 @@ napi_value PhotoOutputNapi::IsAutoCloudImageEnhancementSupported(napi_env env, n
         return result;
     }
 
-    bool isAutoCloudImageEnhanceSupported = false;
-    int32_t retCode = photoOutputNapi->photoOutput_->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhanceSupported);
+    bool isAutoCloudImageEnhancementSupported = false;
+    int32_t retCode =
+        photoOutputNapi->photoOutput_->IsAutoCloudImageEnhancementSupported(
+            isAutoCloudImageEnhancementSupported);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }
-    if (retCode == 0 && isAutoCloudImageEnhanceSupported != false) {
-        napi_get_boolean(env, true, &result);
-        return result;
-    }
-    MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoCloudImageEnhancementSupported is not supported");
-    napi_get_boolean(env, false, &result);
+    napi_get_boolean(env, isAutoCloudImageEnhancementSupported, &result);
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoCloudImageEnhancementSupported is %{public}d",
+        isAutoCloudImageEnhancementSupported);
     return result;
 }
 
