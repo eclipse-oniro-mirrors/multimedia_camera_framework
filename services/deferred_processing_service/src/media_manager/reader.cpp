@@ -82,7 +82,7 @@ MediaManagerError Reader::InitTracksAndDemuxer()
 
     for (int32_t index = 0; index < trackCount_; ++index) {
         auto track = TrackFactory::GetInstance().CreateTrack(source_, index);
-        DP_LOOP_CONTINUE_LOG(track == nullptr, "Track type: %{public}d is nullptr.", track->GetType());
+        DP_LOOP_CONTINUE_LOG(track == nullptr, "Track index: %{public}d is nullptr.", index);
         tracks_.emplace(std::pair(track->GetType(), track));
     }
     DP_DEBUG_LOG("TrackCount num: %{public}d, trackMap size: %{public}d",

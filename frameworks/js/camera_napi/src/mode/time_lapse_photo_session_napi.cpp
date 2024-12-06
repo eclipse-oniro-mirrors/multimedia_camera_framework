@@ -1081,10 +1081,6 @@ void TimeLapsePhotoSessionNapi::UnregisterTryAEInfoCallbackListener(const std::s
 void TryAEInfoCallbackListener::OnTryAEInfoChanged(TryAEInfo info)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
-    MEDIA_DEBUG_LOG("isTryAEDone = %{isTryAEDone}d", info.isTryAEDone);
-    MEDIA_DEBUG_LOG("isTryAEHintNeeded = %{isTryAEHintNeeded}d", info.isTryAEHintNeeded);
-    MEDIA_DEBUG_LOG("previewType = %{previewType}d", info.previewType);
-    MEDIA_DEBUG_LOG("captureInterval = %{captureInterval}d", info.captureInterval);
     OnTryAEInfoChangedCallbackAsync(info);
 }
 
@@ -1099,10 +1095,6 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(TryAEInfo info) const
     TryAEInfoNapi *obj = Unwrap<TryAEInfoNapi>(env_, result[PARAM1]);
     if (obj) {
         obj->tryAEInfo_ = make_unique<TryAEInfo>(info);
-        MEDIA_DEBUG_LOG("isTryAEDone = %{isTryAEDone}d", obj->tryAEInfo_->isTryAEDone);
-        MEDIA_DEBUG_LOG("isTryAEHintNeeded = %{isTryAEHintNeeded}d", obj->tryAEInfo_->isTryAEHintNeeded);
-        MEDIA_DEBUG_LOG("previewType = %{previewType}d", obj->tryAEInfo_->previewType);
-        MEDIA_DEBUG_LOG("captureInterval = %{captureInterval}d", obj->tryAEInfo_->captureInterval);
     } else {
         MEDIA_ERR_LOG("%{public}s: Enter, TryAEInfoNapi* is nullptr", __FUNCTION__);
     }
