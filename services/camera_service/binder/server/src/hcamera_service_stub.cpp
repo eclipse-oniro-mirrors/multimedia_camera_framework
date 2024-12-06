@@ -431,6 +431,9 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel& data, MessageParc
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
+    MEDIA_INFO_LOG(
+        "HCameraServiceStub::HandleCreatePhotoOutput, format: %{public}d, width: %{public}d, height: %{public}d",
+        format, width, height);
     int ret = CreatePhotoOutput(producer, format, width, height, photoOutput);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
         "HCameraServiceStub::HandleCreatePhotoOutput Create photo output failed : %{public}d", ret);

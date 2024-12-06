@@ -646,11 +646,11 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
     if (cameraUsedAsPosition_ != OHOS_CAMERA_POSITION_OTHER) {
         cameraPosition = cameraUsedAsPosition_;
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position as %{public}d", cameraPosition);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
     if (enableCameraRotation_) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
