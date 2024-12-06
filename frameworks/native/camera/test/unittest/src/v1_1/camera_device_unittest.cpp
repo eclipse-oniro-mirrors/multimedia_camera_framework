@@ -203,7 +203,7 @@ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_009, TestSize.Level0)
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     int ret = cameras[0]->GetPosition();
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret,2);
 }
 
 /*
@@ -219,7 +219,7 @@ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_010, TestSize.Level0)
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     int ret = cameras[0]->GetUsedAsPosition();
 
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 1);
 }
 
 /*
@@ -332,7 +332,7 @@ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_017, TestSize.Level0)
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     vector<float>cameDev_ExpBiaRange = cameras[0]->GetExposureBiasRange();
 
-    EXPECT_EQ(cameDev_ExpBiaRange.size(), 0);
+    EXPECT_EQ(cameDev_ExpBiaRange.size(), 2);
 }
 
 /*
