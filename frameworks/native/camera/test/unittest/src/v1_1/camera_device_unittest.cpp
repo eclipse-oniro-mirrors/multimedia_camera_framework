@@ -203,7 +203,7 @@ HWTEST_F(CameraDeviceUnitTest, camera_device_unittest_009, TestSize.Level0)
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     int ret = cameras[0]->GetPosition();
 
-    EXPECT_EQ(ret,2);
+    EXPECT_EQ(ret, 2);
 }
 
 /*
