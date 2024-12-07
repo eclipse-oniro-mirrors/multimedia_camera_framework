@@ -143,11 +143,11 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         context_->inputBufferInfoQueue_.pop();
         context_->inputFrameCount_++;
         bufferInfo->attr.pts = audioRecord->GetTimeStamp();
-        bufferInfo->attr.size = DEFAULT_MAX_INPUT_SIZE;
+        bufferInfo->attr.size = INPUT_SIZE_1280;
         bufferInfo->attr.flags = AVCODEC_BUFFER_FLAGS_NONE;
         auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
         int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
-        errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
+        errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, INPUT_SIZE_1280);
         CHECK_AND_RETURN_RET_LOG(cpyRet == 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
         int32_t ret = PushInputData(bufferInfo);
         CHECK_AND_RETURN_RET_LOG(ret == 0, false, "Push data failed");
@@ -235,11 +235,11 @@ int32_t AudioEncoder::Configure()
     CHECK_AND_RETURN_RET_LOG(format != nullptr, 1, "AVFormat create failed");
 
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_AUD_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_AUD_SAMPLE_RATE, DEFAULT_SAMPLERATE);
+    OH_AVFormat_SetIntValue(format, OH_MD_KEY_AUD_SAMPLE_RATE, SAMPLERATE_32000);
     OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, DEFAULT_BITRATE);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_AUDIO_SAMPLE_FORMAT, SAMPLE_FORMAT);
     OH_AVFormat_SetLongValue(format, OH_MD_KEY_CHANNEL_LAYOUT, CHANNEL_LAYOUT);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_MAX_INPUT_SIZE, DEFAULT_MAX_INPUT_SIZE);
+    OH_AVFormat_SetIntValue(format, OH_MD_KEY_MAX_INPUT_SIZE, INPUT_SIZE_1280);
     int ret = OH_AudioCodec_Configure(encoder_, format);
     OH_AVFormat_Destroy(format);
     format = nullptr;
