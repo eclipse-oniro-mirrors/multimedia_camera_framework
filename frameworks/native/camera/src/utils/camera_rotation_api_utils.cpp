@@ -48,7 +48,7 @@ uint32_t GetApiVersion()
     }
     AppExecFwk::BundleInfo bundleInfo;
     if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {
-        g_apiCompatibleVersion = bundleInfo.targetVersion % API_VERSION_MOD;
+        g_apiCompatibleVersion = bundleInfo.targetVersion % API_DEFAULT_VERSION;
         MEDIA_INFO_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
             g_apiCompatibleVersion);
     } else {
