@@ -36,7 +36,6 @@ uint32_t GetApiVersion()
     if (g_apiCompatibleVersion != API_DEFAULT_VERSION) {
         return g_apiCompatibleVersion;
     }
-    uint32_t apiCompatibleVersion = 0;
     OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     OHOS::sptr<OHOS::IRemoteObject> remoteObject =
