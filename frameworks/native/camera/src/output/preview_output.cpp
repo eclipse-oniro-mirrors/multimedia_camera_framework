@@ -680,7 +680,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
-    uint32_t apiCompatibleVersion = GetApiCompatibleVersion();
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     if (apiCompatibleVersion < API_SEGREGATE_MOD) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
@@ -703,29 +703,6 @@ int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
     return imageRotation;
 }
 
-uint32_t PreviewOutput::GetApiCompatibleVersion()
-{
-    uint32_t apiCompatibleVersion = 0;
-    OHOS::sptr<OHOS::ISystemAbilityManager> systemAbilityManager =
-        OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    OHOS::sptr<OHOS::IRemoteObject> remoteObject =
-        systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
-    if (iBundleMgr == nullptr) {
-        MEDIA_INFO_LOG("PreviewOutput GetApiCompatibleVersion iBundleMgr is null");
-        return apiCompatibleVersion;
-    }
-    AppExecFwk::BundleInfo bundleInfo;
-    if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {
-        apiCompatibleVersion = bundleInfo.targetVersion % API_VERSION_MOD;
-        MEDIA_INFO_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
-            apiCompatibleVersion);
-    } else {
-        MEDIA_INFO_LOG("PreviewOutput Call for GetApiCompatibleVersion failed");
-    }
-    return apiCompatibleVersion;
-}
-
 int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation is called");
@@ -744,7 +721,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
-    uint32_t apiCompatibleVersion = GetApiCompatibleVersion();
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
