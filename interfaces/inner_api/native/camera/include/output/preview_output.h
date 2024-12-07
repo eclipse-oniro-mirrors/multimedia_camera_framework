@@ -235,7 +235,6 @@ private:
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
     int32_t JudegRotationFunc(int32_t imageRotation);
-    uint32_t GetApiCompatibleVersion();
 };
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
