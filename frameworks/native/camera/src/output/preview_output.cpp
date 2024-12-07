@@ -43,7 +43,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-const uint32_t API_VERSION_MOD = 1000;
 const uint32_t API_SEGREGATE_MOD = 14;
 camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
 {
