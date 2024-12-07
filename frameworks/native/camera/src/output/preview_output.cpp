@@ -38,6 +38,7 @@
 #include "bundle_mgr_interface.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "camera_rotation_api_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
