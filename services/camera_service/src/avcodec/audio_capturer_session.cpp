@@ -42,10 +42,24 @@ AudioChannel AudioCapturerSession::getMicNum()
     std::vector<std::string> subKeys = {"hardware_info#mic_num"};
     std::vector<std::pair<std::string, std::string>> result = {};
     AudioSystemManager* audioSystemMgr = AudioSystemManager::GetInstance();
+    if (audioSystemMgr == nullptr) {
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetAudioSystemManagerInstance err");
+        return AudioChannel::STEREO;
+    }
     int32_t ret = audioSystemMgr->GetExtraParameters(mainKey, subKeys, result);
     if (ret != 0) {
-        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum err");
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetExtraParameters err");
         return AudioChannel::STEREO;
+    }
+    if (result.empty()) {
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result empty");
+        return AudioChannel::STEREO;
+    }
+    for (auto i: result[0].second) {
+        if (!std::isdigit(i)) {
+            MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result illegal");
+            return AudioChannel::STEREO;
+        }
     }
     int32_t micNum = std::stoi(result[0].second);
     MEDIA_INFO_LOG("AudioCapturerSession::getMicNum %{public}d + %{public}d", micNum, micNum % I32_TWO);

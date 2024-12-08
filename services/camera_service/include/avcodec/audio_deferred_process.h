@@ -22,7 +22,6 @@
 #include "audio_session_manager.h"
 #include "offline_audio_effect_manager.h"
 #include <cstdint>
-#include <map>
 #include <mutex>
 
 namespace OHOS {
@@ -52,7 +51,6 @@ private:
     std::mutex mutex_;
     std::unique_ptr<OfflineAudioEffectManager> offlineAudioEffectManager_ = nullptr;
     std::unique_ptr<OfflineAudioEffectChain> offlineEffectChain_ = nullptr;
-    map<sptr<AudioRecord>, bool> computedMap_;
     uint32_t maxUnprocessedBufferSize_ = 0;
     uint32_t maxProcessedBufferSize_ = 0;
     AudioStreamInfo inputOptions_;
