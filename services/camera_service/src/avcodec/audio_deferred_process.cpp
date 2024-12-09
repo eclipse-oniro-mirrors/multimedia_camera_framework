@@ -134,7 +134,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords)
             processedArr.get(), oneProcessedSize_ * batchSize);
         for (uint32_t j = 0; j < batchSize; ++ j) {
             if (ret == 0) {
-                computedMap_.emplace(audioRecords[i - batchSize + 1 + j], true);
+                audioRecords[i - batchSize + 1 + j]->SetDeferredProcessedResult(true);
             }
             audioRecords[i - batchSize + 1 + j]->ReleaseAudioBuffer();
             uint8_t* temp = new uint8_t[oneProcessedSize_];
@@ -144,7 +144,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords)
     };
 
     for (uint32_t i = 0; i < audioRecordsLen; i ++) {
-        if (computedMap_[audioRecords[i]]) {
+        if (audioRecords[i]->IsDeferredProcessed()) {
             continue;
         }
         int32_t result = memcpy_s(rawArr.get() + count * oneUnprocessedSize_, oneUnprocessedSize_,
