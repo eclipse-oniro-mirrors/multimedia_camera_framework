@@ -181,6 +181,7 @@ public:
 
     OH_AVBuffer* encodedBuffer = nullptr;
     std::string frameId_;
+    std::mutex bufferMutex_;
 
 private:
     static const int32_t STATUS_NONE = 0;
