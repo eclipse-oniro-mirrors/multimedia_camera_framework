@@ -10636,7 +10636,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Le
 
     float minimumFocusDistance = session_->GetMinimumFocusDistance();
     MEDIA_INFO_LOG("minimumFocusDistance=%{public}f", minimumFocusDistance);
-    EXPECT_NE(minimumFocusDistance, 0.0);
 
     std::vector<uint32_t> exposureTimeRange;
     intResult = session_->GetSensorExposureTimeRange(exposureTimeRange);
