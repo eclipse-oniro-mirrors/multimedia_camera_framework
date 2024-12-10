@@ -300,8 +300,6 @@ int HCameraServiceStub::HandleSetPrelaunchConfig(MessageParcel& data, MessagePar
 
 int HCameraServiceStub::HandleIsCameraMuted(MessageParcel& data, MessageParcel& reply)
 {
-    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
-
     bool isMuted = false;
     int32_t ret = IsCameraMuted(isMuted);
     MEDIA_INFO_LOG("HCameraServiceStub HandleIsCameraMuted result: %{public}d, isMuted: %{public}d", ret, isMuted);
