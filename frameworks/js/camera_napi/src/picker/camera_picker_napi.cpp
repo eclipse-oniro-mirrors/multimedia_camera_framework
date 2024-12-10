@@ -259,6 +259,7 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
     Ace::ModalUIExtensionConfig config;
+    config.prohibitedRemoveByNavigation = false;
     auto uiContent = pickerContextProxy->GetUIContent();
     if (uiContent == nullptr) {
         MEDIA_ERR_LOG("StartCameraAbility fail uiContent is null");
