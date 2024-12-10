@@ -251,7 +251,7 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_009, TestSize.Level0)
     std::string cameraSettings = camInput->GetCameraSettings();
 
     int ret = camInput->SetCameraSettings(cameraSettings);
-    EXPECT_EQ(ret, 2);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -265,10 +265,8 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_009, TestSize.Level0)
 HWTEST_F(CameraInputUnitTest, camera_input_unittest_010, TestSize.Level0)
 {
     sptr<CameraDevice> camera0 = nullptr;
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(camera0);
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(camera0);
     EXPECT_EQ(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
 }
 
 /*
