@@ -124,7 +124,7 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
 void PreviewOutputCallback::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnFrameStarted is called");
+    MEDIA_INFO_LOG("OnFrameStarted is called");
     UpdateJSCallbackAsync(PreviewOutputEventType::PREVIEW_FRAME_START, -1);
 }
 
