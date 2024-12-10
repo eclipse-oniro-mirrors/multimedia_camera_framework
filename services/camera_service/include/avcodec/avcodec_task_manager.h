@@ -52,6 +52,8 @@ public:
     explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type);
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
+    void PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, vector<sptr<AudioRecord>>& audioRecords,
+        vector<sptr<AudioRecord>>& processedRecords)
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
     void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation,
         int32_t captureId);
