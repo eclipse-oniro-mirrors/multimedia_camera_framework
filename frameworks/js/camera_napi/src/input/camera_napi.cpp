@@ -89,6 +89,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY(
             "ExposureState", CreateObjectWithMap(env, "ExposureState", mapExposureState, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusMode", CreateObjectWithMap(env, "FocusMode", mapFocusMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("QualityPrioritization",
+            CreateObjectWithMap(env, "QualityPrioritization", mapQualityPrioritization, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusState", CreateObjectWithMap(env, "FocusState", mapFocusState, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "CameraPosition", CreateObjectWithMap(env, "CameraPosition", mapCameraPosition, g_ignoreRef_)),

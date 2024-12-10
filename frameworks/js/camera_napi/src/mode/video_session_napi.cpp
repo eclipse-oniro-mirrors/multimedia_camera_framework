@@ -44,7 +44,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
     napi_value ctorObj;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, flash_props,
         auto_exposure_props, focus_props, zoom_props, filter_props, stabilization_props, preconfig_props,
-        color_management_props, auto_switch_props };
+        color_management_props, auto_switch_props, quality_prioritization_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionNapiConstructor, nullptr,

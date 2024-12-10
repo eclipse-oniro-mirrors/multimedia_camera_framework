@@ -293,6 +293,7 @@ public:
     static napi_value IsFocusModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFocusMode(napi_env env, napi_callback_info info);
     static napi_value SetFocusMode(napi_env env, napi_callback_info info);
+    static napi_value SetQualityPrioritization(napi_env env, napi_callback_info info);
     static napi_value SetFocusPoint(napi_env env, napi_callback_info info);
     static napi_value GetFocusPoint(napi_env env, napi_callback_info info);
     static napi_value GetFocalLength(napi_env env, napi_callback_info info);
@@ -437,6 +438,7 @@ public:
     static const std::vector<napi_property_descriptor> auto_wb_props;
     static const std::vector<napi_property_descriptor> manual_wb_props;
     static const std::vector<napi_property_descriptor> auto_switch_props;
+    static const std::vector<napi_property_descriptor> quality_prioritization_props;
 
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,

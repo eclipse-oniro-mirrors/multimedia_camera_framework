@@ -87,6 +87,8 @@ public:
 
     Camera_ErrorCode SetFocusMode(Camera_FocusMode focusMode);
 
+    Camera_ErrorCode SetQualityPrioritization(Camera_QualityPrioritization qualityPrioritization);
+
     Camera_ErrorCode SetFocusPoint(Camera_Point focusPoint);
 
     Camera_ErrorCode GetFocusPoint(Camera_Point* focusPoint);

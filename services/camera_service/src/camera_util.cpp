@@ -120,6 +120,11 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
     {1, "True"},
 };
 
+std::map<int, std::string> g_cameraQualityPrioritization = {
+    {0, "HighQuality "},
+    {1, "PowerBalance "},
+};
+
 bool g_cameraDebugOn = false;
 
 int32_t HdiToCameraErrorType(OHOS::HDI::Camera::V1_3::ErrorType type)

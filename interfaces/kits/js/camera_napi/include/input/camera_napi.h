@@ -226,6 +226,7 @@ static const std::unordered_map<std::string, int32_t> mapTorchMode = {
 
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"NO_SYSTEM_APP_PERMISSION", 202},
+    {"PARAMETER_ERROR", 401},
     {"INVALID_ARGUMENT", 7400101},
     {"OPERATION_NOT_ALLOWED", 7400102},
     {"SESSION_NOT_CONFIG", 7400103},
@@ -389,6 +390,11 @@ static const std::unordered_map<std::string, int32_t> mapPortraitThemeType = {
     {"NATURAL", 0},
     {"DELICATE", 1},
     {"STYLISH", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapQualityPrioritization = {
+    {"HIGH_QUALITY", 0},
+    {"POWER_BALANCE", 1},
 };
 
 enum CreateAsyncCallbackModes {
