@@ -90,7 +90,6 @@ constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
 #endif
 static GravityData gravityData = {0.0, 0.0, 0.0};
 static int32_t sensorRotation = 0;
-const char *CAMERA_BUNDLE_NAME = "com.huawei.hmos.camera";
 static size_t TotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
@@ -230,8 +229,7 @@ void HCaptureSession::DynamicConfigStream()
         GetSessionState().c_str());
     auto currentState = stateMachine_.GetCurrentState();
     if (currentState == CaptureSessionState::SESSION_STARTED) {
-        std::string bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
-        isDynamicConfiged_ = (bundleName == CAMERA_BUNDLE_NAME);
+        isDynamicConfiged_ = (CheckSystemApp() ? true : false);
         MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
     }
 }
