@@ -657,6 +657,11 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
+    std::lock_guard<std::mutex> lock(producerLock_);
+    if (producer_ == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
+        return;
+    }
     if (cameraUsedAsPosition_ != OHOS_CAMERA_POSITION_OTHER) {
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
@@ -666,11 +671,6 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
         ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
-        return;
-    }
-    std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
     int mOritation = disPlayRotation;
