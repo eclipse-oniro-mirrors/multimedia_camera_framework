@@ -44,7 +44,6 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "safe_map.h"
-#include "system_ability_status_change_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -125,12 +124,6 @@ public:
     FoldListener() = default;
     virtual ~FoldListener() = default;
     virtual void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const = 0;
-};
-
-class CameraServiceSystemAbilityListener : public SystemAbilityStatusChangeStub {
-public:
-    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
-    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 };
 class CameraManager : public RefBase {
 public:
@@ -873,7 +866,7 @@ private:
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     std::mutex saListenerMuxtex_;
-    sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
+    sptr<IRemoteBroker> saListener_ = nullptr;
     std::string foldScreenType_;
     bool isSystemApp_ = false;
 };
