@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-VideoStrategyCenter *VideoStrategyCenterFuzzer::fuzz = nullptr;
+VideoStrategyCenter *VideoStrategyCenterFuzzer::fuzz_ = nullptr;
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
@@ -72,7 +72,7 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    if(repository == nullptr){
+    if (repository == nullptr) {
         repository = std::make_shared<VideoJobRepository>(userId);
     }
     repository->SetJobPending(videoId);
@@ -82,21 +82,21 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
 
-    if(fuzz == nullptr){
-        fuzz = new DeferredProcessing::VideoStrategyCenter(userId, repository);
+    if (fuzz_ == nullptr) {
+        fuzz_ = new DeferredProcessing::VideoStrategyCenter(userId, repository);
     }
-    fuzz->GetWork();
-    fuzz->GetJob();
-    fuzz->GetExecutionMode();
+    fuzz_->GetWork();
+    fuzz_->GetJob();
+    fuzz_->GetExecutionMode();
     auto value = GetData<int32_t>();
-    fuzz->HandleCameraEvent(value);
-    fuzz->HandleMedialLibraryEvent(value);
-    fuzz->HandleScreenEvent(value);
-    fuzz->HandleChargingEvent(value);
-    fuzz->HandleBatteryEvent(value);
+    fuzz_->HandleCameraEvent(value);
+    fuzz_->HandleMedialLibraryEvent(value);
+    fuzz_->HandleScreenEvent(value);
+    fuzz_->HandleChargingEvent(value);
+    fuzz_->HandleBatteryEvent(value);
     auto isNeedReset = GetData<bool>();
     auto useTime = GetData<int32_t>();
-    fuzz->UpdateAvailableTime(isNeedReset, useTime);
+    fuzz_->UpdateAvailableTime(isNeedReset, useTime);
 }
 
 void Test()

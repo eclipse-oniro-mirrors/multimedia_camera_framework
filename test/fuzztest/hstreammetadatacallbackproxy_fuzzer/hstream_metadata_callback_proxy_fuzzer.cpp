@@ -28,7 +28,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-HStreamMetadataCallbackProxy *HStreamMetadataCallbackProxyFuzzer::fuzz = nullptr;
+HStreamMetadataCallbackProxy *HStreamMetadataCallbackProxyFuzzer::fuzz_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -65,13 +65,13 @@ void HStreamMetadataCallbackProxyFuzzer::HStreamMetadataCallbackProxyFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         sptr<IRemoteObject> impl;
-        fuzz = new HStreamMetadataCallbackProxy(impl);
+        fuzz_ = new HStreamMetadataCallbackProxy(impl);
     }
     int32_t streamId = GetData<int32_t>();
     const std::shared_ptr<OHOS::Camera::CameraMetadata> result;
-    fuzz->OnMetadataResult(streamId, result);
+    fuzz_->OnMetadataResult(streamId, result);
 }
 
 void Test()

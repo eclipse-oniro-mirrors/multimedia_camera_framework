@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MPEG_MANAGER_FUZZER_H
-#define MPEG_MANAGER_FUZZER_H
+#ifndef MOON_CAPTURE_BOOST_FEATURE_FUZZER_H
+#define MOON_CAPTURE_BOOST_FEATURE_FUZZER_H
 
 #include "moon_capture_boost_feature.h"
 
@@ -23,9 +23,9 @@ namespace CameraStandard {
 
 class MoonCaptureBoostFeatureFuzzer {
 public:
-static MoonCaptureBoostFeature *fuzz;
+static MoonCaptureBoostFeature *fuzz_;
 static void MoonCaptureBoostFeatureFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //MOON_CAPTURE_BOOST_FEATURE_FUZZER_H

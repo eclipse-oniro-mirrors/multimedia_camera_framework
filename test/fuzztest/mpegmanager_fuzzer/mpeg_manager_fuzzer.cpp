@@ -29,7 +29,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-MpegManager *MpegManagerFuzzer::fuzz = nullptr;
+MpegManager *MpegManagerFuzzer::fuzz_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -66,17 +66,17 @@ void MpegManagerFuzzer::MpegManagerFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz == nullptr) {
-        fuzz = new MpegManager();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new MpegManager();
     }
-    fuzz->GetSurface();
-    fuzz->GetResultFd();
+    fuzz_->GetSurface();
+    fuzz_->GetResultFd();
     int flags = 1;
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
-    fuzz->GetFileFd(requestId, flags, "_vid_temp");
-    fuzz->GetFileFd(requestId, flags, "_vid");
+    fuzz_->GetFileFd(requestId, flags, "_vid_temp");
+    fuzz_->GetFileFd(requestId, flags, "_vid");
 }
 
 void Test()

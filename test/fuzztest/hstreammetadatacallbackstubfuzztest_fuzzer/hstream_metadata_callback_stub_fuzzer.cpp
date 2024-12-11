@@ -34,7 +34,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 static constexpr int32_t MAX_CODE_NUM = 1;
-HStreamMetadataCallbackStubFuzz *HStreamMetadataCallbackStubFuzzer::fuzz = nullptr;
+HStreamMetadataCallbackStubFuzz *HStreamMetadataCallbackStubFuzzer::fuzz_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -71,8 +71,8 @@ void HStreamMetadataCallbackStubFuzzer::OnRemoteRequest(int32_t code)
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz == nullptr) {
-        fuzz = new HStreamMetadataCallbackStubFuzz();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new HStreamMetadataCallbackStubFuzz();
     }
     MessageParcel reply;
     MessageOption option;
@@ -80,8 +80,8 @@ void HStreamMetadataCallbackStubFuzzer::OnRemoteRequest(int32_t code)
     dataMessageParcel.WriteInterfaceToken(HStreamMetadataCallbackStubFuzz::GetDescriptor());
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
-    fuzz->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz->HandleMetadataResult(dataMessageParcel);
+    fuzz_->OnRemoteRequest(code, dataMessageParcel, reply, option);
+    fuzz_->HandleMetadataResult(dataMessageParcel);
 }
 
 void Test()

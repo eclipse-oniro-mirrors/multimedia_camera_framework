@@ -30,7 +30,7 @@ static DeferredVideoWork *work;
 static void VideoPostProcessorFuzzTest1();
 static void VideoPostProcessorFuzzTest2();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //VIDEOPOSTPROCESSOR_FUZZER_H
 

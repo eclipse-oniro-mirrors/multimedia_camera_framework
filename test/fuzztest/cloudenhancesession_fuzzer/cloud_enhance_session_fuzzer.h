@@ -24,7 +24,7 @@ namespace CloudEnhanceSessionFuzzer {
 
 void Test(uint8_t *rawData, size_t size);
 
-}
-}
-}
-#endif
+} //CloudEnhanceSessionFuzzer
+} //CameraStandard
+} //OHOS
+#endif //CLOUD_ENHANCE_SESSION_FUZZER_H

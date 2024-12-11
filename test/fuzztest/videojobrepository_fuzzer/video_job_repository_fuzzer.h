@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef DEFERREDPROCESSING_FUZZER_H
-#define DEFERREDPROCESSING_FUZZER_H
+#ifndef VIDEO_JOB_REPOSITORY_FUZZER_H
+#define VIDEO_JOB_REPOSITORY_FUZZER_H
 
 #include "video_job_repository.h"
 
@@ -23,9 +23,9 @@ namespace CameraStandard {
 
 class VideoJobRepositoryFuzzer {
 public:
-static DeferredProcessing::VideoJobRepository *fuzz;
+static DeferredProcessing::VideoJobRepository *fuzz_;
 static void VideoJobRepositoryFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //VIDEO_JOB_REPOSITORY_FUZZER_H

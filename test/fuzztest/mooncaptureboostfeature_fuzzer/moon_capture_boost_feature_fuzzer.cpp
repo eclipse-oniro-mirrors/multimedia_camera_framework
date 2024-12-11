@@ -28,7 +28,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-MoonCaptureBoostFeature *MoonCaptureBoostFeatureFuzzer::fuzz = nullptr;
+MoonCaptureBoostFeature *MoonCaptureBoostFeatureFuzzer::fuzz_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -65,14 +65,14 @@ void MoonCaptureBoostFeatureFuzzer::MoonCaptureBoostFeatureFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         SceneMode relatedMode = SceneMode::CAPTURE;
         auto deviceAbility = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-        fuzz = new MoonCaptureBoostFeature(relatedMode, deviceAbility);
+        fuzz_ = new MoonCaptureBoostFeature(relatedMode, deviceAbility);
     }
-    fuzz->GetSketchEnableRatio();
+    fuzz_->GetSketchEnableRatio();
     auto inputZoomRatio = GetData<float>();
-    fuzz->GetSketchReferenceFovRatio(inputZoomRatio);
+    fuzz_->GetSketchReferenceFovRatio(inputZoomRatio);
 }
 
 void Test()

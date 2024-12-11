@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MPEG_MANAGER_FUZZER_H
-#define MPEG_MANAGER_FUZZER_H
+#ifndef HSTREAM_METADATA_CALLBACK_PROXY_FUZZER_H
+#define HSTREAM_METADATA_CALLBACK_PROXY_FUZZER_H
 
 #include "hstream_metadata_callback_proxy.h"
 
@@ -23,9 +23,9 @@ namespace CameraStandard {
 
 class HStreamMetadataCallbackProxyFuzzer {
 public:
-static HStreamMetadataCallbackProxy *fuzz;
+static HStreamMetadataCallbackProxy *fuzz_;
 static void HStreamMetadataCallbackProxyFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //HSTREAM_METADATA_CALLBACK_PROXY_FUZZER_H

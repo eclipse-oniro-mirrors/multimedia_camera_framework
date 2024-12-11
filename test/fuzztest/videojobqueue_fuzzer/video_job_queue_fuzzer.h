@@ -30,9 +30,9 @@ static void Initialization();
 
 class VideoJobQueueFuzzer {
 public:
-static DeferredProcessing::VideoJobQueue *fuzz;
+static DeferredProcessing::VideoJobQueue *fuzz_;
 static void VideoJobQueueFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //DeferredVideoWorkFuzzer

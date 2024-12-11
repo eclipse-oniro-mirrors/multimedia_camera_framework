@@ -27,11 +27,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-// const int64_t RECOVERTIME = 60;
-// const int32_t STREAMCOUNT = 100;
-// const std::string  RECORDERTIME = "recorder_time";
-// const std::string CREATIONTIME = "creation_time";
-MediaManager *MediaManagerFuzzer::fuzz = nullptr;
+MediaManager *MediaManagerFuzzer::fuzz_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -68,15 +64,15 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz == nullptr) {
-        fuzz = new MediaManager();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new MediaManager();
     }
     auto inFd = GetData<int32_t>();
     auto outFd = GetData<int32_t>();
     auto tempFd = GetData<int32_t>();
-    fuzz->Create(inFd, outFd, tempFd);
-    fuzz->Pause();
-    fuzz->Stop();
+    fuzz_->Create(inFd, outFd, tempFd);
+    fuzz_->Pause();
+    fuzz_->Stop();
     std::vector<uint8_t> memoryFlags = {
         static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
         static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
@@ -99,17 +95,17 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
         AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
     int32_t capacity = GetData<int32_t>();
     std::shared_ptr<AVBuffer> buffer = AVBuffer::CreateAVBuffer(avAllocator, capacity);
-    fuzz->WriteSample(selectedMediaType, buffer);
-    fuzz->ReadSample(selectedMediaType, buffer);
+    fuzz_->WriteSample(selectedMediaType, buffer);
+    fuzz_->ReadSample(selectedMediaType, buffer);
     auto size_ = GetData<int64_t>();
-    fuzz->Recover(size_);
-    fuzz->CopyAudioTrack();
-    fuzz->InitReader();
-    fuzz->InitWriter();
+    fuzz_->Recover(size_);
+    fuzz_->CopyAudioTrack();
+    fuzz_->InitReader();
+    fuzz_->InitWriter();
     auto duration = GetData<int64_t>();
     auto bitRate = GetData<int64_t>();
-    fuzz->InitRecoverReader(size_, duration, bitRate);
-    fuzz->GetRecoverInfo(size_);
+    fuzz_->InitRecoverReader(size_, duration, bitRate);
+    fuzz_->GetRecoverInfo(size_);
 }
 
 void MediaManagerFuzzer::ReaderFuzzTest()
@@ -117,8 +113,6 @@ void MediaManagerFuzzer::ReaderFuzzTest()
     std::shared_ptr<Reader> inputReader_ {nullptr};
     inputReader_ = std::make_shared<Reader>();
     inputReader_->GetSourceFormat();
-    // std::shared_ptr<MediaInfo> mediaInfo = std::make_shared<MediaInfo>();
-    // inputReader_->GetMediaInfo(mediaInfo);
 }
 
 void MediaManagerFuzzer::TrackFuzzTest()
@@ -156,10 +150,6 @@ void MediaManagerFuzzer::WriterFuzzTest()
     auto outputFd = GetData<int32_t>();
     std::shared_ptr<AVSourceFuzz> source = std::make_shared<AVSourceFuzz>();
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;
-    // auto audioTrack = std::make_shared<Track>();
-    // TrackFormat audioFormat;
-    // audioTrack->SetFormat(audioFormat, Media::Plugins::MediaType::AUDIO);
-    // tracks[Media::Plugins::MediaType::AUDIO] = audioTrack;
     writer->Create(outputFd, tracks);
 
     std::vector<uint8_t> memoryFlags = {
@@ -175,32 +165,6 @@ void MediaManagerFuzzer::WriterFuzzTest()
     int32_t capacity_ = GetData<int32_t>();
     std::shared_ptr<AVBuffer> sample = AVBuffer::CreateAVBuffer(avAllocator_, capacity_);
     writer->Start();
-    // std::shared_ptr<MediaInfo> mediaInfo = std::make_shared<MediaInfo>();
-    // mediaInfo->latitude = *(reinterpret_cast<const float*>(rawData));
-    // mediaInfo->longitude = *(reinterpret_cast<const float*>(rawData));
-    // mediaInfo->recoverTime = RECOVERTIME;
-    // mediaInfo->recorderTime = RECORDERTIME;
-    // mediaInfo->streamCount = STREAMCOUNT;
-    // mediaInfo->creationTime = CREATIONTIME;
-    // MessageParcel parcel;
-    // parcel.WriteRawData(rawData, size);
-    // mediaInfo->codecInfo.mimeType = parcel.ReadString();
-    // mediaInfo->codecInfo.profile = parcel.ReadInt32();
-    // mediaInfo->codecInfo.level = parcel.ReadInt32();
-    // mediaInfo->codecInfo.bitRate = parcel.ReadInt64();
-    // mediaInfo->codecInfo.fps = parcel.ReadInt32();
-    // mediaInfo->codecInfo.duration = parcel.ReadInt64();
-    // mediaInfo->codecInfo.numFrames = parcel.ReadInt32();
-    // mediaInfo->codecInfo.width = parcel.ReadInt32();
-    // mediaInfo->codecInfo.height = parcel.ReadInt32();
-    // mediaInfo->codecInfo.rotation = parcel.ReadInt32();
-    // mediaInfo->codecInfo.isHdrvivid = parcel.ReadInt32();
-    // mediaInfo->codecInfo.bitMode = parcel.ReadInt32();
-    // mediaInfo->codecInfo.colorRange = ColorRange::COL_RANGE_MPEG;
-    // mediaInfo->codecInfo.pixelFormat = PixelFormat::PIX_FMT_NONE;
-    // mediaInfo->codecInfo.colorPrimary = ColorPrimaries::COL_PRI_BT2020;
-    // mediaInfo->codecInfo.colorTransferCharacter = ColorTransferCharacteristic::COL_TRC_ARIB_STD_B67;
-    // writer->AddMediaInfo(mediaInfo);
 }
 
 void MediaManagerFuzzer::MuxerFuzzTest()

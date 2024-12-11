@@ -19,15 +19,15 @@
 #include "video_process_command.h"
 namespace OHOS {
 namespace CameraStandard {
-namespace DeferredProcessing{
+namespace DeferredProcessing {
 
 class VideoProcessCommandFuzzer {
 public:
 static void VideoProcessCommandFuzzTest();
 
-class VideoProcessCommandFuzz : public VideoProcessCommand{
+class VideoProcessCommandFuzz : public VideoProcessCommand {
 public:
-    VideoProcessCommandFuzz(const int32_t userId) : VideoProcessCommand(userId) {}
+    explicit VideoProcessCommandFuzz(const int32_t userId) : VideoProcessCommand(userId) {}
     int32_t Executing() override
     {
         return 0;
@@ -38,7 +38,7 @@ public:
     }
 };
 
-class VideoProcessSuccessFuzz : public VideoProcessSuccessCommand{
+class VideoProcessSuccessFuzz : public VideoProcessSuccessCommand {
 public:
     VideoProcessSuccessFuzz(const int32_t userId,
         const std::string& videoId) : VideoProcessSuccessCommand(userId, videoId) {}
@@ -52,7 +52,7 @@ public:
     }
 };
 
-class VideoProcessFailedFuzz : public VideoProcessFailedCommand{
+class VideoProcessFailedFuzz : public VideoProcessFailedCommand {
 public:
     VideoProcessFailedFuzz(const int32_t userId, const std::string& videoId,
         DpsError errorCode) : VideoProcessFailedCommand(userId, videoId, errorCode) {}
@@ -66,8 +66,8 @@ public:
     }
 };
 };
-}
-}
-}
-#endif
+} //DeferredProcessing
+} //CameraStandard
+} //OHOS
+#endif //VIDEO_PROCESS_COMMAND_FUZZER_H
 

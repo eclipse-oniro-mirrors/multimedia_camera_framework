@@ -29,7 +29,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-VideoJobQueue *VideoJobQueueFuzzer::fuzz = nullptr;
+VideoJobQueue *VideoJobQueueFuzzer::fuzz_ = nullptr;
 DeferredVideoWork *DeferredVideoWorkFuzzer::fuzz_ = nullptr;
 
 /*
@@ -95,22 +95,22 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         DeferredProcessing::VideoJobQueue::Comparator comp =
             [](DeferredVideoJobPtr a, DeferredVideoJobPtr b) {
                 return a->GetVideoId() < b->GetVideoId();
             };
-        fuzz = new DeferredProcessing::VideoJobQueue(comp);
+        fuzz_ = new DeferredProcessing::VideoJobQueue(comp);
     }
-    fuzz->Contains(jobPtr);
-    fuzz->Peek();
-    fuzz->Push(jobPtr);
-    fuzz->GetAllElements();
-    fuzz->Pop();
-    fuzz->Remove(jobPtr);
+    fuzz_->Contains(jobPtr);
+    fuzz_->Peek();
+    fuzz_->Push(jobPtr);
+    fuzz_->GetAllElements();
+    fuzz_->Pop();
+    fuzz_->Remove(jobPtr);
     auto x = (GetData<uint32_t>());
     auto y = (GetData<uint32_t>());
-    fuzz->Swap(x, y);
+    fuzz_->Swap(x, y);
 }
 
 void Test()

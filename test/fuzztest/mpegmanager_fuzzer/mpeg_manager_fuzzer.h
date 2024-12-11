@@ -23,10 +23,10 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class MpegManagerFuzzer {
 public:
-static MpegManager *fuzz;
+static MpegManager *fuzz_;
 static void MpegManagerFuzzTest();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //MPEG_MANAGER_FUZZER_H

@@ -37,9 +37,9 @@ public:
 
 class HStreamMetadataCallbackStubFuzzer {
 public:
-static HStreamMetadataCallbackStubFuzz *fuzz;
+static HStreamMetadataCallbackStubFuzz *fuzz_;
 static void OnRemoteRequest(int32_t code);
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //HSTREAM_METADATA_CALLBACK_STUB_FUZZER_H

@@ -23,7 +23,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
-DeferredProcessing::VideoJobRepository *VideoJobRepositoryFuzzer::fuzz = nullptr;
+DeferredProcessing::VideoJobRepository *VideoJobRepositoryFuzzer::fuzz_ = nullptr;
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
@@ -67,29 +67,29 @@ void VideoJobRepositoryFuzzer::VideoJobRepositoryFuzzTest()
         return;
     }
 
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         int32_t userId = GetData<int32_t>();
-        fuzz = new DeferredProcessing::VideoJobRepository(userId);
+        fuzz_ = new DeferredProcessing::VideoJobRepository(userId);
     }
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    fuzz->SetJobPending(videoId);
-    fuzz->SetJobRunning(videoId);
-    fuzz->SetJobCompleted(videoId);
-    fuzz->SetJobFailed(videoId);
-    fuzz->SetJobPause(videoId);
-    fuzz->SetJobError(videoId);
-    fuzz->GetJob();
-    fuzz->GetRunningJobCounts();
+    fuzz_->SetJobPending(videoId);
+    fuzz_->SetJobRunning(videoId);
+    fuzz_->SetJobCompleted(videoId);
+    fuzz_->SetJobFailed(videoId);
+    fuzz_->SetJobPause(videoId);
+    fuzz_->SetJobError(videoId);
+    fuzz_->GetJob();
+    fuzz_->GetRunningJobCounts();
     std::vector<std::string> list = {"fuzz1", "fuzz2"};
-    fuzz->GetRunningJobList(list);
+    fuzz_->GetRunningJobList(list);
     auto statusChanged = GetData<bool>();
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
-    fuzz->NotifyJobChangedUnLocked(statusChanged, jobPtr);
+    fuzz_->NotifyJobChangedUnLocked(statusChanged, jobPtr);
 }
 
 void Test()

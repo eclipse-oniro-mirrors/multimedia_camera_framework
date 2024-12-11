@@ -23,7 +23,7 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class MediaManagerFuzzer {
 public:
-static MediaManager *fuzz;
+static MediaManager *fuzz_;
 
 class AVSourceFuzz : public AVSource {
 public:
@@ -47,6 +47,6 @@ static void TrackFuzzTest();
 static void ReaderFuzzTest();
 static void MuxerFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //MEDIA_MANAGER_FUZZER_H

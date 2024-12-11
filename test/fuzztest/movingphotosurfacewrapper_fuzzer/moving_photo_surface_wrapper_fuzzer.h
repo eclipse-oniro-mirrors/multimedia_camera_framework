@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef CAPTURE_SESSION_FUZZER_H
-#define CAPTURE_SESSION_FUZZER_H
+#ifndef MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H
+#define MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H
 
 #include "moving_photo_surface_wrapper.h"
 
@@ -23,10 +23,10 @@ namespace CameraStandard {
 
 class MovingPhotoSurfaceWrapperFuzzer {
 public:
-static MovingPhotoSurfaceWrapper *fuzz;
-static MovingPhotoSurfaceWrapper::BufferConsumerListener *listener;
+static MovingPhotoSurfaceWrapper *fuzz_;
+static MovingPhotoSurfaceWrapper::BufferConsumerListener *listener_;
 static void MovingPhotoSurfaceWrapperFuzzTest();
 };
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H

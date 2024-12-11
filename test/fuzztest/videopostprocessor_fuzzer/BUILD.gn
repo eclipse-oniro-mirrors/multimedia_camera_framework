@@ -80,7 +80,6 @@ ohos_fuzztest("VideoPostProcessorFuzzTest") {
   defines = []
 
   sources = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/basic_definitions.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
