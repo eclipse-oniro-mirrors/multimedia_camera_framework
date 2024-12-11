@@ -1,0 +1,152 @@
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/features.gni")
+import("//build/test.gni")
+import("./../../../multimedia_camera_framework.gni")
+
+ohos_fuzztest("VideoStrategyCenterFuzzTest") {
+  module_out_path = "camera_framework/camera_framework"
+  fuzz_config_file = "../videostrategycenter_fuzzer"
+
+  include_dirs = [
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output/",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/common/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/input",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/video_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/video_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/media_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
+  ]
+
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-fno-access-control",
+  ]
+
+  defines = []
+
+  sources = [
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/basic_definitions.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/dps.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/dfx/dps_event_report.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/command/event_status_change_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_info.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_monitor.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_subscriber.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/battery_level_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/battery_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/charging_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/screen_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/thermal_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/base/ischeduler_video_state.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/strategy/video_strategy_center.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/deferred_video_job.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_queue.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_repository.cpp",
+    "video_strategy_center_fuzzer.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "av_codec:av_codec_client",
+    "av_codec:av_codec_media_engine_modules",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_2d:librender_service_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "ipc:ipc_single",
+    "media_foundation:media_foundation",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  if (use_battery_manager) {
+    external_deps += [ "battery_manager:batterysrv_client" ]
+    defines += [ "CAMERA_USE_BATTERY" ]
+  }
+}
+
+group("fuzztest") {
+  testonly = true
+  deps = [ ":VideoStrategyCenterFuzzTest" ]
+}
