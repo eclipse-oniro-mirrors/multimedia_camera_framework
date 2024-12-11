@@ -50,6 +50,11 @@ public:
         status = STATUS_READY_CONVERT;
     }
 
+    inline void SetFinishStatus()
+    {
+        status = STATUS_FINISH_ENCODE;
+    }
+
     inline void SetCoverFrame()
     {
         isCover_ = true;

@@ -101,6 +101,7 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
         }
         frameRecord->SetEncodedResult(isEncodeSuccess);
+        frameRecord->SetFinishStatus();
         if (isEncodeSuccess) {
             MEDIA_INFO_LOG("encode image success %{public}s, refCount: %{public}d", frameRecord->GetFrameId().c_str(),
                 frameRecord->GetSptrRefCount());
