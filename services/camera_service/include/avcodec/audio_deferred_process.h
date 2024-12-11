@@ -39,7 +39,7 @@ public:
     int32_t GetOutputSampleRate();
     int32_t GetOutputChannelCount();
     int32_t GetOneUnprocessedSize();
-    int32_t Process(vector<sptr<AudioRecord>>& audioRecords);
+    int32_t Process(vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedRecords);
     void Release();
     
     static constexpr int32_t ONE_THOUSAND = 1000;

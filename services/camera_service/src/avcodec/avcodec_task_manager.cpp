@@ -239,13 +239,9 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         #ifdef MOVING_PHOTO_ADD_AUDIO
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
-        if (thisPtr->audioCapturerSession_) {
-            int64_t startTime = NanosecToMillisec(videoStartTime);
-            int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
-            thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
-            thisPtr->audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords);
-        }
-        thisPtr->CollectAudioBuffer(audioRecords, muxer);
+        vector<sptr<AudioRecord>> processedAudioRecords;
+        thisPtr->PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords);
+        thisPtr->CollectAudioBuffer(processedAudioRecords, muxer);
         #endif
         thisPtr->FinishMuxer(muxer);
     });
@@ -336,6 +332,22 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
         IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
     }
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
+}
+
+void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
+    vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
+{
+    auto thisPtr = sptr<AvcodecTaskManager>(this);
+    int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
+    if (thisPtr->audioCapturerSession_) {
+        int64_t startTime = NanosecToMillisec(videoStartTime);
+        int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
+        thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
+        for (auto ptr: audioRecords) {
+            processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
+        }
+        thisPtr->audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
+    }
 }
 
 void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer)
