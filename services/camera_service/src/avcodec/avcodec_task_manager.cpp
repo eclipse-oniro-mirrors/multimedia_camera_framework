@@ -281,7 +281,6 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
                 idrIndex = index;
                 break;
             }
-            MEDIA_ERR_LOG("FindIdrFrameIndex error");
             idrIndex = 0;
         }
     }
