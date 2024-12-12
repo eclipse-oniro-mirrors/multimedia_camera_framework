@@ -76,7 +76,8 @@ void DeferredVideoProcessor::OnError(const int32_t userId, const std::string& vi
     DP_CHECK_EXECUTE(IsFatalError(errorCode), callback_->OnError(userId, videoId, errorCode));
     if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) {
         repository_->SetJobPause(videoId);
-    } else if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID) {
+    } else if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID ||
+        errorCode == DpsError::DPS_ERROR_VIDEO_PROC_FAILED) {
         repository_->SetJobError(videoId);
     } else {
         repository_->SetJobFailed(videoId);

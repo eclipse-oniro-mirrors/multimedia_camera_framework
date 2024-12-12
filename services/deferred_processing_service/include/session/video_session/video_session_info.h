@@ -39,6 +39,7 @@ private:
     class CallbackDeathRecipient;
 
     const int32_t userId_;
+    std::mutex callbackMutex_;
     sptr<IDeferredVideoProcessingSession> session_ {nullptr};
     sptr<IDeferredVideoProcessingSessionCallback> callback_;
     sptr<CallbackDeathRecipient> deathRecipient_;

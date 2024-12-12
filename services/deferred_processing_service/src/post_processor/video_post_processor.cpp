@@ -425,7 +425,7 @@ void VideoPostProcessor::OnStateChanged(HdiStatus hdiStatus)
 void VideoPostProcessor::OnTimerOut(const std::string& videoId)
 {
     DP_INFO_LOG("DpsTimer end, videoId: %{public}s", videoId.c_str());
-    OnError(videoId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    OnError(videoId, DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT);
 }
 
 void VideoPostProcessor::ConnectService()

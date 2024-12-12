@@ -47,9 +47,10 @@ public:
 
 private:
     std::mutex mutex_;
+    std::mutex videoSessionMutex_;
     std::atomic<bool> initialized_;
     std::unordered_map<int32_t, sptr<SessionInfo>> photoSessionInfos_;
-    SafeMap<int32_t, sptr<VideoSessionInfo>> videoSessionInfos_;
+    std::unordered_map<int32_t, sptr<VideoSessionInfo>> videoSessionInfos_ {};
     std::shared_ptr<SessionCoordinator> coordinator_;
 };
 } // namespace DeferredProcessing
