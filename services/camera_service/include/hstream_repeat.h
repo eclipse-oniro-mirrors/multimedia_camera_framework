@@ -98,6 +98,7 @@ private:
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
+    void SyncTransformToSketch();
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
