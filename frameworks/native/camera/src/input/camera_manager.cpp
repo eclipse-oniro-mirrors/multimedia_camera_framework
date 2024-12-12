@@ -21,14 +21,16 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <ostream>
-#include <sstream>
 #include <parameters.h>
+#include <sstream>
 
+#include "ability/camera_ability_parse_util.h"
 #include "aperture_video_session.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_security_utils.h"
+#include "camera_service_system_ability_listener.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
@@ -52,12 +54,11 @@
 #include "session/portrait_session.h"
 #include "session/profession_session.h"
 #include "session/scan_session.h"
-#include "session/slow_motion_session.h"
-#include "session/video_session.h"
 #include "session/secure_camera_session.h"
+#include "session/slow_motion_session.h"
 #include "session/time_lapse_photo_session.h"
+#include "session/video_session.h"
 #include "system_ability_definition.h"
-#include "ability/camera_ability_parse_util.h"
 
 using namespace std;
 namespace OHOS {
@@ -285,17 +286,6 @@ int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string
         }
     });
     return CAMERA_OK;
-}
-
-void CameraServiceSystemAbilityListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
-{
-    MEDIA_INFO_LOG("OnAddSystemAbility,id: %{public}d", systemAbilityId);
-    CameraManager::GetInstance()->OnCameraServerAlive();
-}
-
-void CameraServiceSystemAbilityListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
-{
-    MEDIA_INFO_LOG("OnRemoveSystemAbility,id: %{public}d", systemAbilityId);
 }
 
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
@@ -905,14 +895,16 @@ int32_t CameraManager::SubscribeSystemAbility()
     {
         std::lock_guard<std::mutex> lock(saListenerMuxtex_);
         if (saListener_ == nullptr) {
-            saListener_ = new CameraServiceSystemAbilityListener();
+            auto listener = new(std::nothrow) CameraServiceSystemAbilityListener();
+            saListener_ = listener;
+            CHECK_ERROR_RETURN_RET_LOG(saListener_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+                "CameraManager::SubscribeSystemAbility saListener_ is null");
+            int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, listener);
+            MEDIA_INFO_LOG("SubscribeSystemAbility ret = %{public}d", ret);
+            return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
         }
     }
-    CHECK_ERROR_RETURN_RET_LOG(saListener_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CameraManager::SubscribeSystemAbility saListener_ is null");
-    int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
-    MEDIA_INFO_LOG("SubscribeSystemAbility ret = %{public}d", ret);
-    return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CameraManager::UnSubscribeSystemAbility()
@@ -921,7 +913,8 @@ int32_t CameraManager::UnSubscribeSystemAbility()
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::UnSubscribeSystemAbility Failed to get System ability manager");
     CHECK_ERROR_RETURN_RET(saListener_ == nullptr, CameraErrorCode::SUCCESS);
-    int32_t ret = samgr->UnSubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
+    sptr<ISystemAbilityStatusChange> listener = static_cast<ISystemAbilityStatusChange*>(saListener_.GetRefPtr());
+    int32_t ret = samgr->UnSubscribeSystemAbility(CAMERA_SERVICE_ID, listener);
     MEDIA_INFO_LOG("UnSubscribeSystemAbility ret = %{public}d", ret);
     saListener_ = nullptr;
     return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;

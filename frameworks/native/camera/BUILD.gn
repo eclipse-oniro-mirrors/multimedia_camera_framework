@@ -108,6 +108,7 @@ ohos_shared_library("camera_framework") {
     "src/input/camera_device.cpp",
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
+    "src/input/camera_service_system_ability_listener.cpp",
     "src/input/prelaunch_config.cpp",
     "src/output/camera_output_capability.cpp",
     "src/output/camera_photo_proxy.cpp",
