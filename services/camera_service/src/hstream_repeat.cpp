@@ -16,6 +16,7 @@
 #include "hstream_repeat.h"
 
 #include <cstdint>
+#include <mutex>
 
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -430,7 +431,20 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
             "HStreamRepeat::AddDeferredSurface producer is null");
         producer_ = producer;
     }
-    SetStreamTransform();
+
+    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
+        MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface sketch add deferred surface");
+        auto parent = parentStreamRepeat_.promote();
+        if (parent != nullptr) {
+            std::lock_guard<std::mutex> lock(parent->producerLock_);
+            parent->SyncTransformToSketch();
+        } else {
+            MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface sketch add deferred surface parent is nullptr");
+        }
+    } else {
+        SetStreamTransform();
+    }
+
     auto streamOperator = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
@@ -631,10 +645,25 @@ void HStreamRepeat::DumpStreamInfo(CameraInfoDumper& infoDumper)
     HStreamCommon::DumpStreamInfo(infoDumper);
 }
 
+void HStreamRepeat::SyncTransformToSketch()
+{
+    CHECK_ERROR_RETURN_LOG(producer_ == nullptr, "HStreamRepeat::SyncTransformToSketch producer_ is null");
+    GraphicTransformType previewTransform = GraphicTransformType::GRAPHIC_ROTATE_NONE;
+    int ret = producer_->GetTransform(previewTransform);
+    MEDIA_INFO_LOG("HStreamRepeat::SyncTransformToSketch previewTransform is %{public}d", previewTransform);
+    CHECK_ERROR_RETURN_LOG(ret != GSERROR_OK, "HStreamRepeat::SyncTransformToSketch GetTransform fail %{public}d", ret);
+    auto sketchStream = GetSketchStream();
+    CHECK_ERROR_RETURN_LOG(sketchStream == nullptr, "HStreamRepeat::SyncTransformToSketch sketchStream is null");
+    std::lock_guard<std::mutex> lock(sketchStream->producerLock_);
+    CHECK_ERROR_RETURN_LOG(
+        sketchStream->producer_ == nullptr, "HStreamRepeat::SyncTransformToSketch sketchStream->producer_ is null");
+    ret = sketchStream->producer_->SetTransform(previewTransform);
+    CHECK_ERROR_RETURN_LOG(ret != GSERROR_OK, "HStreamRepeat::SyncTransformToSketch SetTransform fail %{public}d", ret);
+}
+
 void HStreamRepeat::SetStreamTransform(int disPlayRotation)
 {
     camera_metadata_item_t item;
-    int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
@@ -645,7 +674,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         if (cameraAbility_ == nullptr) {
             return;
         }
-        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get sensor orientation failed");
         sensorOrientation = item.data.i32[0];
@@ -685,6 +714,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     } else {
         ProcessFixedTransform(sensorOrientation, cameraPosition);
     }
+    SyncTransformToSketch();
 }
 
 void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
