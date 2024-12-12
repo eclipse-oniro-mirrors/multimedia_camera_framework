@@ -155,7 +155,6 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
         CHECK_AND_RETURN_RET_LOG(cpyRet == 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
         lock.unlock();
-        contextLock.unlock();
         int32_t ret = PushInputData(bufferInfo);
         CHECK_AND_RETURN_RET_LOG(ret == 0, false, "Push data failed");
         MEDIA_DEBUG_LOG("Success frame id is : %{public}s", audioRecord->GetFrameId().c_str());
