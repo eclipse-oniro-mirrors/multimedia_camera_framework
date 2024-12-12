@@ -2131,7 +2131,9 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
     if (frame->IsIdle() && videoCache) {
         videoCache->CacheFrame(frame);
     } else if (frame->IsFinishCache() && videoCache) {
-        videoCache->OnImageEncoded(frame, true);
+        videoCache->OnImageEncoded(frame, frame->IsEncoded());
+    } else if (frame->IsReadyConvert()) {
+        MEDIA_DEBUG_LOG("frame is ready convert");
     } else {
         MEDIA_INFO_LOG("videoCache and frame is not useful");
     }
