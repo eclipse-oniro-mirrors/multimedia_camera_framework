@@ -51,7 +51,7 @@ AudioChannel AudioCapturerSession::getMicNum()
         MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetExtraParameters err");
         return AudioChannel::STEREO;
     }
-    if (result.empty()) {
+    if (result.empty() || result[0].second.empty() || result[0].first.empty()) {
         MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result empty");
         return AudioChannel::STEREO;
     }
