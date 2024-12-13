@@ -291,7 +291,7 @@ bool ProfessionSession::IsManualIsoSupported()
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
         "ProfessionSession::IsManualIsoSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, false,
@@ -911,9 +911,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr,
                            std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
+    auto cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET(!cameraObj,
+                           std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
-        inputDevice->GetCameraDeviceInfo()->GetID().c_str());
-    return inputDevice->GetCameraDeviceInfo()->GetMetadata();
+        cameraObj->GetID().c_str());
+    return cameraObj->GetMetadata();
 }
 
 void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbacks(
