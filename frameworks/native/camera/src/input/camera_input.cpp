@@ -413,7 +413,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
             "Failed to get metadata item at index: %{public}d", index);
         bool status = false;
         uint32_t currentIndex;
-        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
+        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstMetadata->get(), srcItem.item, &currentIndex);
         if (ret == CAM_META_ITEM_NOT_FOUND) {
             status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         } else if (ret == CAM_META_SUCCESS) {
