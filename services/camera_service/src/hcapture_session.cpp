@@ -229,7 +229,7 @@ void HCaptureSession::DynamicConfigStream()
         GetSessionState().c_str());
     auto currentState = stateMachine_.GetCurrentState();
     if (currentState == CaptureSessionState::SESSION_STARTED) {
-        isDynamicConfiged_ = (CheckSystemApp() ? true : false);
+        isDynamicConfiged_ = CheckSystemApp(); // System applications support dynamic config stream.
         MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
     }
 }
