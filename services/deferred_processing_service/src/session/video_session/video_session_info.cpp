@@ -99,6 +99,7 @@ sptr<IDeferredVideoProcessingSession> VideoSessionInfo::GetDeferredVideoProcessi
 
 sptr<IDeferredVideoProcessingSessionCallback> VideoSessionInfo::GetRemoteCallback()
 {
+    std::lock_guard lock(callbackMutex_);
     return callback_;
 }
 
@@ -115,7 +116,8 @@ void VideoSessionInfo::OnCallbackDied()
 
 void VideoSessionInfo::SetCallback(const sptr<IDeferredVideoProcessingSessionCallback>& callback)
 {
-    DP_INFO_LOG("reset callback");
+    DP_INFO_LOG("Reset video callback");
+    std::lock_guard lock(callbackMutex_);
     callback_ = callback;
     auto ret = deathRecipient_->Initialize(callback_);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "Set DeathRecipient failed.");

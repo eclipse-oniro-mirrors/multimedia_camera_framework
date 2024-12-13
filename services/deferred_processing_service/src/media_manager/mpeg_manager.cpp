@@ -267,10 +267,12 @@ void MpegManager::OnMakerBufferAvailable()
 
     int64_t timestamp;
     auto buffer = AcquireMakerBuffer(timestamp);
-    DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "MakerBuffer is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "MakerBuffer is nullptr.");
 
     std::lock_guard<std::mutex> lock(makerMutex_);
     auto makerBuffer = AVBuffer::CreateAVBuffer(buffer);
+    DP_CHECK_ERROR_RETURN_LOG(makerBuffer == nullptr, "CreateAVBuffer is failde.");
+
     makerBuffer->pts_ = timestamp;
     DP_DEBUG_LOG("MakerBuffer pts %{public}" PRId64, makerBuffer->pts_);
     auto ret = mediaManager_->WriteSample(Media::Plugins::MediaType::TIMEDMETA, makerBuffer);

@@ -37,7 +37,6 @@ std::shared_ptr<SessionManager> SessionManager::Create()
 SessionManager::SessionManager()
     : initialized_(false),
       photoSessionInfos_(),
-      videoSessionInfos_(),
       coordinator_(std::make_shared<SessionCoordinator>())
 {
     DP_DEBUG_LOG("entered.");
@@ -49,7 +48,7 @@ SessionManager::~SessionManager()
     initialized_ = false;
     coordinator_ = nullptr;
     photoSessionInfos_.clear();
-    videoSessionInfos_.Clear();
+    videoSessionInfos_.clear();
 }
 
 void SessionManager::Initialize()
@@ -120,11 +119,12 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
     DP_INFO_LOG("Create DeferredVideoProcessingSession for userId: %{public}d", userId);
+    std::lock_guard<std::mutex> lock(videoSessionMutex_);
     auto sessionInfo = GetSessionInfo(userId);
     if (sessionInfo == nullptr) {
         DP_INFO_LOG("DeferredVideoProcessingSession susses");
         sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId, callback);
-        videoSessionInfos_.Insert(userId, sessionInfo);
+        videoSessionInfos_.emplace(userId, sessionInfo);
     } else {
         DP_INFO_LOG("DeferredVideoProcessingSession already existed");
         sessionInfo->SetCallback(callback);
@@ -137,11 +137,11 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
 
 sptr<VideoSessionInfo> SessionManager::GetSessionInfo(const int32_t userId)
 {
-    sptr<VideoSessionInfo> info;
-    DP_CHECK_RETURN_RET(videoSessionInfos_.Find(userId, info), info);
+    auto it = videoSessionInfos_.find(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == videoSessionInfos_.end(), nullptr,
+        "Not find VideoSessionInfo for userId: %{public}d", userId);
     
-    DP_ERR_LOG("not get SessionInfo, userId: %{public}d", userId);
-    return nullptr;
+    return it->second;
 }
 
 std::shared_ptr<SessionCoordinator> SessionManager::GetSessionCoordinator()
