@@ -623,6 +623,7 @@ void CaptureSession::UpdateDeviceDeferredability()
                 static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
         }
     }
+
     auto cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!cameraObj, nullptr, "cameraObj is nullptr");
     cameraObj->modeVideoDeferredType_ = {};
