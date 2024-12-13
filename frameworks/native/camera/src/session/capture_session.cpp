@@ -625,7 +625,10 @@ void CaptureSession::UpdateDeviceDeferredability()
     }
     
     auto cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!cameraObj, nullptr, "cameraObj is nullptr");
+    if (!cameraObj) {
+         MEDIA_ERR_LOG("cameraObj is nullptr");
+         return;
+    }
     cameraObj->modeVideoDeferredType_ = {};
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
     MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
