@@ -218,18 +218,21 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
-            OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
             OH_AVBuffer* buffer = choosedBuffer[index]->encodedBuffer;
-            CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
-            OH_AVBuffer_GetBufferAttr(buffer, &attr);
-            attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-            MEDIA_DEBUG_LOG("choosed buffer pts: %{public}" PRIu64, attr.pts);
-            OH_AVBuffer_SetBufferAttr(buffer, &attr);
-            muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
+            {
+                std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
+                OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
+                CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
+                OH_AVBuffer_GetBufferAttr(buffer, &attr);
+                attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+                MEDIA_DEBUG_LOG("choosed buffer pts: %{public}" PRIu64, attr.pts);
+                OH_AVBuffer_SetBufferAttr(buffer, &attr);
+                muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
+            }
             sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
             if (metaSurfaceBuffer) {
                 shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
-                metaAvBuffer->pts_ = attr.pts;
+                metaAvBuffer->pts_ = buffer->buffer_->pts_;
                 MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
                     (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
                 muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
