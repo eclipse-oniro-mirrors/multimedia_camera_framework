@@ -36,9 +36,15 @@ public:
     DeferredPhotoWorkPtr GetWork() override;
     DeferredPhotoJobPtr GetJob() override;
     ExecutionMode GetExecutionMode() override;
+    void NotifyHdiStatusChanged(HdiStatus status);
+    void NotifyMediaLibStatusChanged(MediaLibraryStatus status);
+    void NotifyCameraStatusChanged(CameraSessionStatus status);
 
 private:
     std::shared_ptr<PhotoJobRepository> photoJobRepository_;
+    CameraSessionStatus cameraSessionStatus_ {CameraSessionStatus::NORMAL_CAMERA_CLOSED};
+    HdiStatus hdiStatus_ {HdiStatus::HDI_READY};
+    MediaLibraryStatus mediaLibraryStatus_ {MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

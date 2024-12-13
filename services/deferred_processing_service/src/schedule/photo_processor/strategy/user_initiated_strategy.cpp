@@ -52,7 +52,34 @@ DeferredPhotoJobPtr UserInitiatedStrategy::GetJob()
 
 ExecutionMode UserInitiatedStrategy::GetExecutionMode()
 {
+    if (cameraSessionStatus_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN
+        || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
+        || !(hdiStatus_ == HdiStatus::HDI_READY || hdiStatus_ == HdiStatus::HDI_READY_SPACE_LIMIT_REACHED)
+        || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
+        DP_INFO_LOG("cameraSessionStatus_: %{public}d, hdiStatus_: %{public}d, mediaLibraryStatus_: %{public}d, ",
+            cameraSessionStatus_, hdiStatus_, mediaLibraryStatus_);
+        return ExecutionMode::DUMMY;
+    }
+
     return ExecutionMode::HIGH_PERFORMANCE;
+}
+
+void UserInitiatedStrategy::NotifyHdiStatusChanged(HdiStatus status)
+{
+    DP_INFO_LOG("previous hdi status %{public}d, new status: %{public}d", hdiStatus_, status);
+    hdiStatus_ = status;
+}
+
+void UserInitiatedStrategy::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
+{
+    DP_INFO_LOG("previous media lib status %{public}d, new status: %{public}d", mediaLibraryStatus_, status);
+    mediaLibraryStatus_ = status;
+}
+
+void UserInitiatedStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
+{
+    DP_INFO_LOG("previous camera session status %{public}d, new status: %{public}d", cameraSessionStatus_, status);
+    cameraSessionStatus_ = status;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
