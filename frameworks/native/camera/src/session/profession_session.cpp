@@ -902,7 +902,8 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!cameraObj, nullptr, "cameraObj is nullptr");
+    CHECK_ERROR_RETURN_RET(!cameraObj,
+                           std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH));
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
         cameraObj->GetID().c_str());
     return cameraObj->GetMetadata();
