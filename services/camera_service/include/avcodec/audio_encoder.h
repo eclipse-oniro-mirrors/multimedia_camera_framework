@@ -43,6 +43,7 @@ private:
     bool EnqueueBuffer(sptr<AudioRecord> audioRecord);
     bool EncodeAudioBuffer(sptr<AudioRecord> audioRecord);
     std::atomic<bool> isStarted_ { false };
+    std::atomic<bool> isEncoding_ { false };
     std::mutex encoderMutex_;
     OH_AVCodec *encoder_ = nullptr;
     sptr<CodecUserData> context_ = nullptr;
