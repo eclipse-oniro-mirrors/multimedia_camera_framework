@@ -137,7 +137,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
         for (uint32_t j = 0; j < batchSize; ++ j) {
             uint8_t* temp = new uint8_t[oneProcessedSize_];
             ret = memcpy_s(temp, oneProcessedSize_, processedArr.get() + j * oneProcessedSize_, oneProcessedSize_);
-            CHECK_AND_PRINT_LOG(ret == 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
+            CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
             processedRecords[i - batchSize + 1 + j]->SetAudioBuffer(temp);
         }
     };
