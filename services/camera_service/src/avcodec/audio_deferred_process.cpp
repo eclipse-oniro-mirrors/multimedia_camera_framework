@@ -133,7 +133,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     auto returnToRecords = [this, &processedRecords, &rawArr, &processedArr](uint32_t i, uint32_t batchSize)->void {
         int32_t ret = offlineEffectChain_->Process(rawArr.get(), oneUnprocessedSize_ * batchSize,
             processedArr.get(), oneProcessedSize_ * batchSize);
-        CHECK_AND_PRINT_LOG(ret == 0, "AudioDeferredProcess::Process err");
+        CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process err");
         for (uint32_t j = 0; j < batchSize; ++ j) {
             uint8_t* temp = new uint8_t[oneProcessedSize_];
             memcpy_s(temp, oneProcessedSize_, processedArr.get() + j * oneProcessedSize_, oneProcessedSize_);
@@ -144,7 +144,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     for (uint32_t i = 0; i < audioRecordsLen; i ++) {
         int32_t ret = memcpy_s(rawArr.get() + count * oneUnprocessedSize_, oneUnprocessedSize_,
             audioRecords[i]->GetAudioBuffer(), oneUnprocessedSize_);
-        CHECK_AND_PRINT_LOG(ret == 0, "AudioDeferredProcess::Process memcpy_s err");
+        CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err");
         if (count == PROCESS_BATCH_SIZE - 1) {
             returnToRecords(i, PROCESS_BATCH_SIZE);
         } else if (i == audioRecordsLen - 1) { // last

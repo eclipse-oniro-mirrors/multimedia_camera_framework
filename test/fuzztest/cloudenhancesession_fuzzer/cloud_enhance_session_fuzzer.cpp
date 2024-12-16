@@ -74,11 +74,12 @@ sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
     MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_AND_RETURN_RET_LOG(cameras.size() >= NUM_2, nullptr, "CloudEnhanceSessionFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_2,
+        nullptr, "CloudEnhanceSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     camera = cameras[data.ReadUint32() % cameras.size()];
-    CHECK_AND_RETURN_RET_LOG(camera, nullptr, "CloudEnhanceSessionFuzzer: Camera is null Error");
+    CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CloudEnhanceSessionFuzzer: Camera is null Error");
     return manager->CreateCameraInput(camera);
 }
 
@@ -86,19 +87,19 @@ sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
-    CHECK_AND_RETURN_RET_LOG(manager, nullptr, "CloudEnhanceSessionFuzzer: CameraManager::GetInstance Error");
+    CHECK_ERROR_RETURN_RET_LOG(!manager, nullptr, "CloudEnhanceSessionFuzzer: CameraManager::GetInstance Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    CHECK_AND_RETURN_RET_LOG(camera, nullptr, "CloudEnhanceSessionFuzzer: Camera is null Error");
+    CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CloudEnhanceSessionFuzzer: Camera is null Error");
     auto capability = manager->GetSupportedOutputCapability(camera, g_sceneMode);
-    CHECK_AND_RETURN_RET_LOG(capability, nullptr, "CloudEnhanceSessionFuzzer: GetSupportedOutputCapability Error");
+    CHECK_ERROR_RETURN_RET_LOG(!capability, nullptr, "CloudEnhanceSessionFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
-    CHECK_AND_RETURN_RET_LOG(!profiles.empty(), nullptr, "CloudEnhanceSessionFuzzer: GetPhotoProfiles empty");
+    CHECK_ERROR_RETURN_RET_LOG(profiles.empty(), nullptr, "CloudEnhanceSessionFuzzer: GetPhotoProfiles empty");
     profile = profiles[data.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_RET_LOG(photoSurface, nullptr, "CloudEnhanceSessionFuzzer: create photoSurface Error");
+    CHECK_ERROR_RETURN_RET_LOG(!photoSurface, nullptr, "CloudEnhanceSessionFuzzer: create photoSurface Error");
     surface = photoSurface->GetProducer();
-    CHECK_AND_RETURN_RET_LOG(surface, nullptr, "CloudEnhanceSessionFuzzer: surface GetProducer Error");
+    CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "CloudEnhanceSessionFuzzer: surface GetProducer Error");
     return manager->CreatePhotoOutput(profile, surface);
 }
 
@@ -107,7 +108,7 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
     sptr<CaptureInput> input = GetCameraInput(rawData, size);
     sptr<CaptureOutput> output = GetCaptureOutput(rawData, size);
-    CHECK_AND_RETURN_LOG(input && output && session, "CloudEnhanceSessionFuzzer: input/output/session is null");
+    CHECK_ERROR_RETURN_LOG(!input || !output || !session, "CloudEnhanceSessionFuzzer: input/output/session is null");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     session->SetMode(g_sceneMode);
@@ -163,7 +164,7 @@ void Test(uint8_t *rawData, size_t size)
         data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2));
     auto manager = CameraManager::GetInstance();
     auto session = manager->CreateCaptureSession(g_sceneMode);
-    CHECK_AND_RETURN_LOG(manager, "CloudEnhanceSessionFuzzer: CreateCaptureSession Error");
+    CHECK_ERROR_RETURN_LOG(!manager, "CloudEnhanceSessionFuzzer: CreateCaptureSession Error");
     TestSession(session, rawData, size);
     TestCreateMediaLibrary(session, rawData, size);
     session->EnableAutoCloudImageEnhancement(data.ReadBool());

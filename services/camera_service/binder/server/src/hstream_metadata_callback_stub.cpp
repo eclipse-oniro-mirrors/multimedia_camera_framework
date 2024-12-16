@@ -25,7 +25,7 @@ int HStreamMetadataCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamMetadataCallbackInterfaceCode::CAMERA_META_OPERATOR_ON_RESULT):
             errCode = HStreamMetadataCallbackStub::HandleMetadataResult(data);

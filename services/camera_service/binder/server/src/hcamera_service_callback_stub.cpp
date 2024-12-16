@@ -24,7 +24,7 @@ int HCameraServiceCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case CAMERA_CALLBACK_STATUS_CHANGED:
             errCode = HCameraServiceCallbackStub::HandleOnCameraStatusChanged(data);
@@ -66,7 +66,7 @@ int HTorchServiceCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(TorchServiceCallbackInterfaceCode::TORCH_CALLBACK_TORCH_STATUS_CHANGE):
             errCode = HTorchServiceCallbackStub::HandleOnTorchStatusChange(data);
@@ -91,7 +91,7 @@ int HFoldServiceCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     int errCode = -1;
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE):
             errCode = HFoldServiceCallbackStub::HandleOnFoldStatusChanged(data);
@@ -116,7 +116,7 @@ int HCameraMuteServiceCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE):
             errCode = HCameraMuteServiceCallbackStub::HandleOnCameraMute(data);

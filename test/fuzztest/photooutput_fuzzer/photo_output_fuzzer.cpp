@@ -61,25 +61,25 @@ void Test(uint8_t *rawData, size_t size)
     }
     GetPermission();
     auto manager = CameraManager::GetInstance();
-    CHECK_AND_RETURN_LOG(manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
+    CHECK_ERROR_RETURN_LOG(!manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_AND_RETURN_LOG(cameras.size() >= NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     auto camera = cameras[data.ReadUint32() % cameras.size()];
-    CHECK_AND_RETURN_LOG(camera, "PhotoOutputFuzzer: camera is null");
+    CHECK_ERROR_RETURN_LOG(!camera, "PhotoOutputFuzzer: camera is null");
     int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
-    CHECK_AND_RETURN_LOG(capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
+    CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
-    CHECK_AND_RETURN_LOG(!profiles.empty(), "PhotoOutputFuzzer: GetPhotoProfiles empty");
+    CHECK_ERROR_RETURN_LOG(profiles.empty(), "PhotoOutputFuzzer: GetPhotoProfiles empty");
     Profile profile = profiles[data.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    CHECK_AND_RETURN_LOG(producer, "PhotoOutputFuzzer: GetProducer Error");
+    CHECK_ERROR_RETURN_LOG(!producer, "PhotoOutputFuzzer: GetProducer Error");
     auto output = manager->CreatePhotoOutput(profile, producer);
-    CHECK_AND_RETURN_LOG(output, "PhotoOutputFuzzer: CreatePhotoOutput Error");
+    CHECK_ERROR_RETURN_LOG(!output, "PhotoOutputFuzzer: CreatePhotoOutput Error");
     TestOutput(output, rawData, size);
 }
 
@@ -94,9 +94,9 @@ void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     data.RewindRead(0);
     output->SetThumbnail(data.ReadBool());
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: Create photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "PhotoOutputFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    CHECK_AND_RETURN_LOG(producer, "PhotoOutputFuzzer: GetProducer Error");
+    CHECK_ERROR_RETURN_LOG(!producer, "PhotoOutputFuzzer: GetProducer Error");
     sptr<Surface> sf = Surface::CreateSurfaceAsProducer(producer);
     output->SetRawPhotoInfo(sf);
     output->Capture(make_shared<PhotoCaptureSetting>());

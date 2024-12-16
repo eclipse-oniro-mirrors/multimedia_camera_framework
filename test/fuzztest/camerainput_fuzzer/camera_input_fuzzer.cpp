@@ -61,15 +61,15 @@ void Test(uint8_t *rawData, size_t size)
     }
     GetPermission();
     auto manager = CameraManager::GetInstance();
-    CHECK_AND_RETURN_LOG(manager, "CameraInputFuzzer: Get CameraManager instance Error");
+    CHECK_ERROR_RETURN_LOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_AND_RETURN_LOG(cameras.size() >= CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     auto camera = cameras[data.ReadUint32() % cameras.size()];
-    CHECK_AND_RETURN_LOG(camera, "CameraInputFuzzer: Camera is null Error");
+    CHECK_ERROR_RETURN_LOG(!camera, "CameraInputFuzzer: Camera is null Error");
     auto input = manager->CreateCameraInput(camera);
-    CHECK_AND_RETURN_LOG(input, "CameraInputFuzzer: CreateCameraInput Error");
+    CHECK_ERROR_RETURN_LOG(!input, "CameraInputFuzzer: CreateCameraInput Error");
     TestInput(input, rawData, size);
 }
 

@@ -157,13 +157,13 @@ void AudioCapturerSession::ProcessAudioBuffer()
     CHECK_ERROR_RETURN_LOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
     size_t bufferLen = audioDeferredProcess_->GetOneUnprocessedSize();
     while (true) {
-        CHECK_AND_BREAK_LOG(startAudioCapture_, "Audio capture work done, thread out");
+        CHECK_WARNING_BREAK_LOG(!startAudioCapture_, "Audio capture work done, thread out");
         auto buffer = std::make_unique<uint8_t[]>(bufferLen);
         CHECK_ERROR_RETURN_LOG(buffer == nullptr, "Failed to allocate buffer");
         size_t bytesRead = 0;
         while (bytesRead < bufferLen) {
             MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
-            CHECK_AND_BREAK_LOG(startAudioCapture_, "ProcessAudioBuffer loop, break out");
+            CHECK_WARNING_BREAK_LOG(!startAudioCapture_, "ProcessAudioBuffer loop, break out");
             int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);

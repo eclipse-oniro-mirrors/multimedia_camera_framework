@@ -219,7 +219,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
                 OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
-                CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
+                CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "video encodedBuffer is null");
                 OH_AVBuffer_GetBufferAttr(buffer, &attr);
                 attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
                 MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
@@ -363,7 +363,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
     for (size_t index = 0; index < maxFrameCount; index++) {
         OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
         OH_AVBuffer* buffer = audioRecordVec[index]->encodedBuffer;
-        CHECK_AND_CONTINUE_LOG(buffer != nullptr, "audio encodedBuffer is null");
+        CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "audio encodedBuffer is null");
         OH_AVBuffer_GetBufferAttr(buffer, &attr);
         attr.pts = static_cast<int64_t>(index * AUDIO_FRAME_INTERVAL);
         if (audioRecordVec.size() > 0) {

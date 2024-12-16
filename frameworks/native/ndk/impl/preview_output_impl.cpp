@@ -120,16 +120,16 @@ sptr<PreviewOutput> Camera_PreviewOutput::GetInnerPreviewOutput()
 Camera_ErrorCode Camera_PreviewOutput::GetActiveProfile(Camera_Profile** profile)
 {
     auto previewOutputProfile = innerPreviewOutput_->GetPreviewProfile();
-    CHECK_AND_RETURN_RET_LOG(previewOutputProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(previewOutputProfile == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PreviewOutput::GetActiveProfile failed to get preview profile!");
 
     CameraFormat cameraFormat = previewOutputProfile->GetCameraFormat();
     auto itr = g_fwToNdkCameraFormat.find(cameraFormat);
-    CHECK_AND_RETURN_RET_LOG(itr != g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PreviewOutput::GetActiveProfile Unsupported camera format %{public}d", cameraFormat);
 
     Camera_Profile* newProfile = new Camera_Profile;
-    CHECK_AND_RETURN_RET_LOG(newProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(newProfile == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PreviewOutput::GetActiveProfile failed to allocate memory for camera profile!");
 
     newProfile->format = itr->second;
@@ -149,7 +149,7 @@ Camera_ErrorCode Camera_PreviewOutput::GetSupportedFrameRates(Camera_FrameRateRa
     }
 
     Camera_FrameRateRange* newframeRateRange =  new Camera_FrameRateRange[frameRate.size()];
-    CHECK_AND_RETURN_RET_LOG(newframeRateRange != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(newframeRateRange == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Failed to allocate memory for Camera_FrameRateRange!");
 
     for (size_t index = 0; index < frameRate.size(); ++index) {
@@ -187,7 +187,7 @@ Camera_ErrorCode Camera_PreviewOutput::SetFrameRate(int32_t minFps, int32_t maxF
 Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange* frameRateRange)
 {
     std::vector<int32_t> activeFrameRate = innerPreviewOutput_->GetFrameRateRange();
-    CHECK_AND_RETURN_RET_LOG(activeFrameRate.size() > 1, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR,
         "invalid activeFrameRate size!");
 
     frameRateRange->min = static_cast<uint32_t>(activeFrameRate[0]);
@@ -199,12 +199,12 @@ Camera_ErrorCode Camera_PreviewOutput::GetActiveFrameRate(Camera_FrameRateRange*
 Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
     Camera_ImageRotation* cameraImageRotation)
 {
-    CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "GetCameraImageRotation failed");
     int32_t cameraOutputRotation = innerPreviewOutput_->GetPreviewRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PreviewOutput::GetPreviewRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraOutputRotation == CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
         "Camera_PreviewOutput::GetPreviewRotation camera invalid argument! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;
@@ -213,9 +213,9 @@ Camera_ErrorCode Camera_PreviewOutput::GetPreviewRotation(int32_t imageRotation,
 Camera_ErrorCode Camera_PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
     int32_t ret = innerPreviewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
-    CHECK_AND_RETURN_RET_LOG(ret != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(ret == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_PhotoOutput::SetPreviewRotation camera service fatal error! ret: %{public}d", ret);
-    CHECK_AND_RETURN_RET_LOG(ret != CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(ret == CAMERA_INVALID_ARGUMENT, CAMERA_INVALID_ARGUMENT,
         "Camera_PreviewOutput::SetPreviewRotation camera invalid argument! ret: %{public}d", ret);
     return CAMERA_OK;
 }

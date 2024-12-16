@@ -27,9 +27,9 @@ int HStreamCaptureStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START):
             errCode = HStreamCaptureStub::HandleCapture(data);
@@ -89,18 +89,18 @@ int32_t HStreamCaptureStub::HandleCapture(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleConfirmCapture(MessageParcel &data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     return ConfirmCapture();
 }
 
 int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamCaptureStub HandleSetThumbnail producer is null");
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamCaptureStub HandleSetThumbnail producer is null");
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
@@ -119,11 +119,11 @@ int32_t HStreamCaptureStub::HandleSetBufferProducerInfo(MessageParcel &data)
 {
     std::string bufferName = data.ReadString();
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleSetBufferProducerInfo BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamCaptureStub HandleSetBufferProducerInfo producer is null");
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamCaptureStub HandleSetBufferProducerInfo producer is null");
     int32_t ret = SetBufferProducerInfo(bufferName, producer);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetBufferProducerInfo result: %{public}d", ret);
     return ret;
@@ -131,7 +131,7 @@ int32_t HStreamCaptureStub::HandleSetBufferProducerInfo(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleEnableDeferredType(MessageParcel &data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     int32_t type = data.ReadInt32();
     int32_t ret = DeferImageDeliveryFor(type);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableDeferredType result: %{public}d", ret);
@@ -149,12 +149,12 @@ int32_t HStreamCaptureStub::HandleSetMovingPhotoVideoCodecType(MessageParcel &da
 int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamCaptureStub HandleSetCallback StreamCaptureCallback is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamCaptureStub HandleSetCallback StreamCaptureCallback is null");
 
     auto callback = iface_cast<IStreamCaptureCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamCaptureStub HandleSetCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamCaptureStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 

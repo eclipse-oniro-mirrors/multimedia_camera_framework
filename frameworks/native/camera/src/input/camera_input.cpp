@@ -115,7 +115,7 @@ void CameraInput::InitCameraInput()
     CHECK_ERROR_RETURN(object == nullptr);
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+    CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
     auto thisPtr = wptr<CameraInput>(this);
     deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
         auto ptr = thisPtr.promote();

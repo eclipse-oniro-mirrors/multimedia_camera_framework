@@ -163,7 +163,7 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
 bool PhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoSession::CanAddOutput");
-    CHECK_AND_RETURN_RET(output != nullptr, false);
+    CHECK_ERROR_RETURN_RET(output == nullptr, false);
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 

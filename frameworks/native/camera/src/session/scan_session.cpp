@@ -45,12 +45,12 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     sptr<CameraOutputCapability> outputCapability = nullptr;
 
-    CHECK_AND_RETURN_RET_LOG(device != nullptr && cameraManager != nullptr, CameraErrorCode::DEVICE_DISABLED,
+    CHECK_ERROR_RETURN_RET_LOG(device == nullptr || cameraManager == nullptr, CameraErrorCode::DEVICE_DISABLED,
         "ScanSession::AddOutput get nullptr to device or cameraManager");
     outputCapability = cameraManager->GetSupportedOutputCapability(device, SceneMode::SCAN);
 
-    CHECK_AND_RETURN_RET_LOG((outputCapability != nullptr && outputCapability->GetPreviewProfiles().size() != 0 &&
-        output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW), CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_ERROR_RETURN_RET_LOG((outputCapability == nullptr || outputCapability->GetPreviewProfiles().size() == 0 ||
+        output->GetOutputType() != CAPTURE_OUTPUT_TYPE_PREVIEW), CameraErrorCode::SESSION_NOT_CONFIG,
         "ScanSession::AddOutput can not add current type of output");
     result = CaptureSession::AddOutput(output);
     return result;

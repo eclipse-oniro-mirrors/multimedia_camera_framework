@@ -193,7 +193,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = GetPreparedCaptureId();
     CHECK_ERROR_RETURN_RET_LOG(!isUpdateSeetings && preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
         "HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
@@ -521,7 +521,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         if (dynamicSetting == nullptr) {
             dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
         }
-        CHECK_AND_RETURN_RET_LOG(dynamicSetting != nullptr, CAMERA_INVALID_ARG,
+        CHECK_ERROR_RETURN_RET_LOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
             "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
         camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
@@ -920,7 +920,7 @@ int32_t HStreamRepeat::EnableSecure(bool isEnabled)
 
 void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
-    CHECK_AND_RETURN_LOG(settings != nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
+    CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
     bool status = false;
     camera_metadata_item_t item;
 

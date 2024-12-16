@@ -25,7 +25,7 @@ int HStreamDepthDataCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR):
             errCode = HStreamDepthDataCallbackStub::HandleOnDepthDataError(data);

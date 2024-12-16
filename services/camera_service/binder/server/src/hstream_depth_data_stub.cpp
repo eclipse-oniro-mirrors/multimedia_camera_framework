@@ -28,9 +28,9 @@ int HStreamDepthDataStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Me
     DisableJeMalloc();
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START):
             errCode = Start();
@@ -59,12 +59,12 @@ int HStreamDepthDataStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Me
 int32_t HStreamDepthDataStub::HandleSetCallback(MessageParcel& data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamDepthDataStub HandleSetCallback StreamDepthDataCallback is null");
 
     auto callback = iface_cast<IStreamDepthDataCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamDepthDataStub HandleSetCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamDepthDataStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 
