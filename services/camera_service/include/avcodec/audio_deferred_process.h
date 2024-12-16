@@ -43,8 +43,8 @@ public:
     void Release();
     
     static constexpr int32_t ONE_THOUSAND = 1000;
-    static constexpr int32_t DURATION_EACH_AUDIO_FRAME = 20;
-    static constexpr int32_t PROCESS_BATCH_SIZE = 8;
+    static constexpr int32_t DURATION_EACH_AUDIO_FRAME = 32;
+    static constexpr int32_t PROCESS_BATCH_SIZE = 5;
 
 private:
     std::string chainName_ = "offline_record_algo";

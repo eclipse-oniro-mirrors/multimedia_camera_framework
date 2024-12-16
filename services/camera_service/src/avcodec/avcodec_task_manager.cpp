@@ -337,16 +337,15 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
 void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
-    auto thisPtr = sptr<AvcodecTaskManager>(this);
     int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-    if (thisPtr->audioCapturerSession_) {
+    if (audioCapturerSession_) {
         int64_t startTime = NanosecToMillisec(videoStartTime);
         int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
-        thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
+        audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        thisPtr->audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
+        audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
     }
 }
 
