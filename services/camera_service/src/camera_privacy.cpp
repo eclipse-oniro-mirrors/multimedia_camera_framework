@@ -60,6 +60,11 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
+    auto device = cameraDevice_.promote();
+    if ((isShowing == true) || (device == nullptr)) {
+        MEDIA_ERR_LOG("abnormal callback from privacy.");
+        return;
+    }
     std::cv_status waitStatus;
     {
         std::unique_lock<std::mutex> lock(g_mutex);
@@ -67,7 +72,7 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     }
     if (waitStatus == std::cv_status::timeout) {
         MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
-        auto device = cameraDevice_.promote();
+        device = cameraDevice_.promote();
         bool isForeground = CameraAppManagerUtils::IsForegroundApplication(tokenId);
         if ((isShowing == false) && (device != nullptr) && !isForeground) {
             auto session = CastToSession(device->GetStreamOperatorCallback());
