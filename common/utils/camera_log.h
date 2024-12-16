@@ -52,14 +52,6 @@
 #define MEDIA_ERR (-3)
 #define MEDIA_PERMISSION_DENIED (-4)
 
-#define CHECK_AND_RETURN_RET_LOG(cond, ret, fmt, ...)  \
-    do {                                               \
-        if (!(cond)) {                                 \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-            return ret;                                \
-        }                                              \
-    } while (0)
-
 #define CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
     do {                                                 \
         if (cond) {                                      \
@@ -75,26 +67,11 @@
         }                                             \
     } while (0)
 
-#define CHECK_AND_RETURN_LOG(cond, fmt, ...)           \
-    do {                                               \
-        if (!(cond)) {                                 \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-            return;                                    \
-        }                                              \
-    } while (0)
-
 #define CHECK_ERROR_RETURN_LOG(cond, fmt, ...)         \
     do {                                               \
         if (cond) {                                    \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
             return;                                    \
-        }                                              \
-    } while (0)
-
-#define CHECK_AND_PRINT_LOG(cond, fmt, ...)            \
-    do {                                               \
-        if (!(cond)) {                                 \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
         }                                              \
     } while (0)
 
@@ -105,13 +82,6 @@
         }                                              \
     } while (0)
 
-#define CHECK_AND_RETURN_RET(cond, ret)                \
-    do {                                               \
-        if (!(cond)) {                                 \
-            return ret;                                \
-        }                                              \
-    } while (0)
-
 #define CHECK_ERROR_RETURN_RET(cond, ret)              \
     do {                                               \
         if (cond) {                                    \
@@ -119,17 +89,17 @@
         }                                              \
     } while (0)
 
-#define CHECK_AND_BREAK_LOG(cond, fmt, ...)                                 \
+#define CHECK_WARNING_BREAK_LOG(cond, fmt, ...)                             \
     if (1) {                                                                \
-        if (!(cond)) {                                                      \
+        if (cond) {                                                         \
             MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
             break;                                                          \
         }                                                                   \
     } else void (0)
 
-#define CHECK_AND_CONTINUE_LOG(cond, fmt, ...)                              \
+#define CHECK_WARNING_CONTINUE_LOG(cond, fmt, ...)                          \
     if (1) {                                                                \
-        if (!(cond)) {                                                      \
+        if (cond) {                                                         \
             MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
             continue;                                                       \
         }                                                                   \

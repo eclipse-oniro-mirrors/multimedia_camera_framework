@@ -353,12 +353,12 @@ int HCameraServiceStub::HandleSetTorchCallback(MessageParcel& data, MessageParce
 int HCameraServiceStub::HandleSetFoldStatusCallback(MessageParcel& data, MessageParcel& reply)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleSetFoldStatusCallback FoldServiceCallback is null");
 
     auto callback = iface_cast<IFoldServiceCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraServiceStub HandleSetFoldStatusCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleSetFoldStatusCallback callback is null");
     bool isInnerCallback = data.ReadBool();
     return SetFoldStatusCallback(callback, isInnerCallback);
 }
@@ -407,16 +407,16 @@ int HCameraServiceStub::HandleCreateDeferredVideoProcessingSession(MessageParcel
 
     int32_t userId = data.ReadInt32();
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HandleCreateDeferredVideoProcessingSession DeferredVideoProcessingSessionCallback is null");
 
     auto callback = iface_cast<DeferredProcessing::IDeferredVideoProcessingSessionCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateDeferredVideoProcessingSession callback is null");
     int ret = CreateDeferredVideoProcessingSession(userId, callback, session);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,
         "HandleCreateDeferredVideoProcessingSession create failed : %{public}d", ret);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteRemoteObject(session->AsObject())), IPC_STUB_WRITE_PARCEL_ERR,
         "HandleCreateDeferredVideoProcessingSession Write HandleCreateDeferredVideoProcessingSession obj failed");
 
     return ret;
@@ -497,7 +497,7 @@ int HCameraServiceStub::HandleCreateDepthDataOutput(MessageParcel& data, Message
     sptr<IStreamDepthData> depthDataOutput = nullptr;
 
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateDepthDataOutput BufferProducer is null");
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
@@ -505,14 +505,14 @@ int HCameraServiceStub::HandleCreateDepthDataOutput(MessageParcel& data, Message
     MEDIA_INFO_LOG(
         "CreateDepthDataOutput, format: %{public}d, width: %{public}d, height: %{public}d", format, width, height);
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraServiceStub HandleCreateDepthDataOutput producer is null");
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleCreateDepthDataOutput producer is null");
     int errCode = CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HandleCreateDepthDataOutput CreateDepthDataOutput failed : %{public}d", errCode);
         return errCode;
     }
-    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(depthDataOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteRemoteObject(depthDataOutput->AsObject())), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateDepthDataOutput Write previewOutput obj failed");
     return errCode;
 }
@@ -530,7 +530,7 @@ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel& data, MessageP
  
     int32_t format = data.ReadInt32();
     std::vector<int32_t> metadataTypes;
-    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+    CHECK_ERROR_PRINT_LOG(!data.ReadInt32Vector(&metadataTypes),
         "HStreamMetadataStub Start metadataTypes is null");
     int ret = CreateMetadataOutput(producer, format, metadataTypes, metadataOutput);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret,

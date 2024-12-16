@@ -191,7 +191,7 @@ Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_To
 {
     shared_ptr<InnerCameraManagerTorchStatusCallback> innerTorchStatusCallback =
                 make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
-    CHECK_AND_RETURN_RET_LOG(innerTorchStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerTorchStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerTorchStatusCallback failed!");
     cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
     return CAMERA_OK;
@@ -251,10 +251,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     Camera_OutputCapability** cameraOutputCapability)
 {
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapability get cameraDevice fail!");
     Camera_OutputCapability* outCapability = new Camera_OutputCapability;
-    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
 
     sptr<CameraOutputCapability> innerCameraOutputCapability =
@@ -393,22 +393,22 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode
     Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability)
 {
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode get cameraDevice fail!");
 
     auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
-    CHECK_AND_RETURN_RET_LOG(itr != g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode "
         "sceneMode = %{public}d not supported!", sceneMode);
 
     SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice, innerSceneMode);
-    CHECK_AND_RETURN_RET_LOG(innerCameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(innerCameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode innerCameraOutputCapability is null!");
 
     Camera_OutputCapability* outCapability = new Camera_OutputCapability;
-    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode failed to allocate memory for outCapability!");
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
     std::vector<Profile> uniquePreviewProfiles;
@@ -479,7 +479,7 @@ Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** captureSession)
 {
     sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::NORMAL);
-    CHECK_AND_RETURN_RET_LOG(innerCaptureSession != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerCaptureSession == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreateCaptureSession create innerCaptureSession fail!");
     Camera_CaptureSession* outSession = new Camera_CaptureSession(innerCaptureSession);
     *captureSession = outSession;
@@ -490,7 +490,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, 
 {
     MEDIA_INFO_LOG("CameraId is: %{public}s", camera->cameraId);
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreateCameraInput get cameraDevice fail!");
 
     sptr<CameraInput> innerCameraInput = nullptr;
@@ -572,12 +572,12 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutputUsedInPreconfig(const char* 
     if (!surface) {
         surface = Media::ImageReceiver::getSurfaceById(surfaceId);
     }
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig get previewOutput surface fail!");
     int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &innerPreviewOutput);
-    CHECK_AND_RETURN_RET_LOG(retCode == CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig create innerPreviewOutput fail!");
-    CHECK_AND_RETURN_RET_LOG(innerPreviewOutput != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerPreviewOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePreviewOutputUsedInPreconfig create innerPreviewOutput fail!");
     Camera_PreviewOutput* out = new Camera_PreviewOutput(innerPreviewOutput);
     *previewOutput = out;
@@ -622,22 +622,22 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Pr
     Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
 
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer(DEFAULT_SURFACEID);
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Failed to get photoOutput surface");
 
     photoSurface_ = surface;
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    CHECK_AND_RETURN_RET_LOG(surfaceProducer != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
+    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
 
     int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile,
         surfaceProducer, &innerPhotoOutput);
-    CHECK_AND_RETURN_RET_LOG((retCode == CameraErrorCode::SUCCESS && innerPhotoOutput != nullptr),
+    CHECK_ERROR_RETURN_RET_LOG((retCode != CameraErrorCode::SUCCESS || innerPhotoOutput == nullptr),
         CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
 
     innerPhotoOutput->SetNativeSurface(true);
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
-    CHECK_AND_RETURN_RET_LOG(out != nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
+    CHECK_ERROR_RETURN_RET_LOG(out == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Create Camera_PhotoOutput failed");
     out->SetPhotoSurface(surface);
     *photoOutput = out;
     return CAMERA_OK;
@@ -653,16 +653,16 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
     } else {
         surface = Surface::CreateSurfaceAsConsumer("photoOutput");
     }
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig get photoOutput surface fail!");
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    CHECK_AND_RETURN_RET_LOG(surfaceProducer != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
     int32_t retCode =
         CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput);
-    CHECK_AND_RETURN_RET_LOG(retCode == CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
-    CHECK_AND_RETURN_RET_LOG(innerPhotoOutput != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
     *photoOutput = out;
@@ -709,12 +709,12 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutputUsedInPreconfig(const char* su
     std::istringstream iss(surfaceId);
     iss >> iSurfaceId;
     sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreateVideoOutputUsedInPreconfig get videoOutput surface fail!");
     int32_t retCode = CameraManager::GetInstance()->CreateVideoOutputWithoutProfile(surface, &innerVideoOutput);
-    CHECK_AND_RETURN_RET_LOG(retCode == CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreateVideoOutputUsedInPreconfig create innerVideoOutput fail!");
-    CHECK_AND_RETURN_RET_LOG(innerVideoOutput != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreateVideoOutputUsedInPreconfig create innerVideoOutput fail!");
     Camera_VideoOutput* out = new Camera_VideoOutput(innerVideoOutput);
     *videoOutput = out;
@@ -765,7 +765,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
     Camera_SceneMode** sceneModes, uint32_t* size)
 {
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedSceneModes get cameraDevice fail!");
 
     std::vector<SceneMode> innerSceneMode = CameraManager::GetInstance()->GetSupportedModes(cameraDevice);
@@ -790,7 +790,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
     }
 
     Camera_SceneMode* sceneMode = new Camera_SceneMode[cameraSceneMode.size()];
-    CHECK_AND_RETURN_RET_LOG(sceneMode != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(sceneMode == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedSceneModes allocate memory for sceneMode fail!");
     for (size_t index = 0; index < cameraSceneMode.size(); index++) {
         sceneMode[index] = cameraSceneMode[index];
@@ -850,7 +850,7 @@ Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnF
 {
     shared_ptr<InnerCameraManagerFoldStatusCallback> innerFoldStatusCallback =
                 make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
-    CHECK_AND_RETURN_RET_LOG(innerFoldStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerFoldStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerFoldStatusCallback failed!");
     cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
     return CAMERA_OK;

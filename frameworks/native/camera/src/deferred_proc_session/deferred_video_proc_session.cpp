@@ -137,7 +137,7 @@ int32_t DeferredVideoProcSession::SetDeferredVideoSession(
     sptr<IRemoteObject> object = remoteSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_AND_RETURN_RET_LOG(deathRecipient_ != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
+    CHECK_ERROR_RETURN_RET_LOG(deathRecipient_ == nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb(std::bind(&DeferredVideoProcSession::CameraServerDied, this, std::placeholders::_1));
     bool result = object->AddDeathRecipient(deathRecipient_);

@@ -28,9 +28,9 @@ int HCameraDeviceStub::OnRemoteRequest(
 {
     DisableJeMalloc();
     int errCode = -1;
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN): {
             errCode =HCameraDeviceStub::HandleOpenSecureCameraResults(data, reply);
@@ -79,12 +79,12 @@ int HCameraDeviceStub::OnRemoteRequest(
 int32_t HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraDeviceStub HandleSetCallback CameraDeviceServiceCallback is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraDeviceStub HandleSetCallback CameraDeviceServiceCallback is null");
 
     auto callback = iface_cast<ICameraDeviceServiceCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraDeviceStub HandleSetCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraDeviceStub HandleSetCallback callback is null");
 
     return SetCallback(callback);
 }

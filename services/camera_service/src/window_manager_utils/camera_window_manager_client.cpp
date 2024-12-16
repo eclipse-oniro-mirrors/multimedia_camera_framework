@@ -146,7 +146,7 @@ int32_t CameraWindowManagerClient::SubscribeSystemAbility()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get system ability manager");
     saStatusChangeCallback_ = new CameraWindowManagerClient::WMSSaStatusChangeCallback();
-    CHECK_AND_RETURN_RET_LOG(saStatusChangeCallback_ != nullptr, CAMERA_UNKNOWN_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(saStatusChangeCallback_ == nullptr, CAMERA_UNKNOWN_ERROR,
         "saStatusChangeCallback_ init error");
     int32_t ret = samgr->SubscribeSystemAbility(WINDOW_MANAGER_SERVICE_ID, saStatusChangeCallback_);
     MEDIA_DEBUG_LOG("SubscribeSystemAbility ret = %{public}d", ret);

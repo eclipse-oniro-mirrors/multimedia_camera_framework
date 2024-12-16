@@ -94,7 +94,7 @@ void Test(uint8_t *rawData, size_t size)
 
     if (fuzz == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
+        CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         fuzz = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
@@ -121,7 +121,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     data.RewindWrite(0);
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     auto metadata = MakeMetadata(rawData, size);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data),
+    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data)),
         "StreamCaptureStubFuzzer: EncodeCameraMetadata Error");
     MessageParcel reply;
     MessageOption option;
@@ -167,7 +167,7 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
@@ -179,7 +179,7 @@ void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);

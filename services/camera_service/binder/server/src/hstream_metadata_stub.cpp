@@ -27,9 +27,9 @@ int HStreamMetadataStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START):
             errCode = Start();
@@ -61,19 +61,19 @@ int HStreamMetadataStub::OnRemoteRequest(
 int32_t HStreamMetadataStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamMetadataStub HandleSetCallback remoteObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamMetadataStub HandleSetCallback remoteObject is null");
 
     auto callback = iface_cast<IStreamMetadataCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamMetadataStub HandleSetCallback remoteCallback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamMetadataStub HandleSetCallback remoteCallback is null");
     return SetCallback(callback);
 }
 
 int32_t HStreamMetadataStub::HandleEnableMetadataType(MessageParcel& data)
 {
     std::vector<int32_t> metadataTypes;
-    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+    CHECK_ERROR_PRINT_LOG(!data.ReadInt32Vector(&metadataTypes),
         "HStreamMetadataStub Start metadataTypes is null");
     int ret = EnableMetadataType(metadataTypes);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamMetadataStub HandleStart failed : %{public}d", ret);
@@ -82,7 +82,7 @@ int32_t HStreamMetadataStub::HandleEnableMetadataType(MessageParcel& data)
 int32_t HStreamMetadataStub::HandleDisableMetadataType(MessageParcel& data)
 {
     std::vector<int32_t> metadataTypes;
-    CHECK_AND_PRINT_LOG(data.ReadInt32Vector(&metadataTypes),
+    CHECK_ERROR_PRINT_LOG(!data.ReadInt32Vector(&metadataTypes),
         "HStreamMetadataStub Start metadataTypes is null");
     int ret = DisableMetadataType(metadataTypes);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamMetadataStub HandleStart failed : %{public}d", ret);

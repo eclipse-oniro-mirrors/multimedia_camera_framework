@@ -122,20 +122,20 @@ sptr<VideoOutput> Camera_VideoOutput::GetInnerVideoOutput()
 Camera_ErrorCode Camera_VideoOutput::GetVideoProfile(Camera_VideoProfile** profile)
 {
     auto videoOutputProfile = innerVideoOutput_->GetVideoProfile();
-    CHECK_AND_RETURN_RET_LOG(videoOutputProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutputProfile == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoProfile failed to get video profile!");
 
     CameraFormat cameraFormat = videoOutputProfile->GetCameraFormat();
     auto itr = g_fwToNdkCameraFormat.find(cameraFormat);
-    CHECK_AND_RETURN_RET_LOG(itr != g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoProfile unsupported camera format %{public}d", cameraFormat);
 
     auto frames = videoOutputProfile->GetFrameRates();
-    CHECK_AND_RETURN_RET_LOG(frames.size() > 1, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(frames.size() <= 1, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoProfile the current video profile is not configured correctly!");
 
     Camera_VideoProfile* newProfile = new Camera_VideoProfile;
-    CHECK_AND_RETURN_RET_LOG(newProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(newProfile == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoProfile failed to allocate memory for video profile!");
 
     newProfile->format = itr->second;
@@ -157,7 +157,7 @@ Camera_ErrorCode Camera_VideoOutput::GetSupportedFrameRates(Camera_FrameRateRang
     }
 
     Camera_FrameRateRange* newframeRateRange =  new Camera_FrameRateRange[frameRate.size()];
-    CHECK_AND_RETURN_RET_LOG(newframeRateRange != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(newframeRateRange == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Failed to allocate memory for Camera_FrameRateRange!");
 
     for (size_t index = 0; index < frameRate.size(); ++index) {
@@ -195,7 +195,7 @@ Camera_ErrorCode Camera_VideoOutput::SetFrameRate(int32_t minFps, int32_t maxFps
 Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* frameRateRange)
 {
     std::vector<int32_t> activeFrameRate = innerVideoOutput_->GetFrameRateRange();
-    CHECK_AND_RETURN_RET_LOG(activeFrameRate.size() > 1, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(activeFrameRate.size() <= 1, CAMERA_SERVICE_FATAL_ERROR,
         "invalid activeFrameRate size!");
 
     frameRateRange->min = static_cast<uint32_t>(activeFrameRate[0]);
@@ -206,12 +206,12 @@ Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* f
 
 Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
-    CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraImageRotation == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "GetCameraImageRotation failed");
-    CHECK_AND_RETURN_RET_LOG(innerVideoOutput_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "innerVideoOutput_ is nullptr");
     int32_t cameraOutputRotation = innerVideoOutput_->GetVideoRotation(imageRotation);
-    CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(cameraOutputRotation == CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);
     *cameraImageRotation = static_cast<Camera_ImageRotation>(cameraOutputRotation);
     return CAMERA_OK;

@@ -163,7 +163,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callback
 {
     shared_ptr<InnerCaptureSessionCallback> innerCallback =
         make_shared<InnerCaptureSessionCallback>(this, callback);
-    CHECK_AND_RETURN_RET_LOG(innerCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     if (callback->onError != nullptr) {
         innerCaptureSession_->SetCallback(innerCallback);
@@ -190,7 +190,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterSmoothZoomInfoCallback(
 {
     shared_ptr<InnerCaptureSessionSmoothZoomInfoCallback> innerSmoothZoomInfoCallback =
         make_shared<InnerCaptureSessionSmoothZoomInfoCallback>(this, smoothZoomInfoCallback);
-    CHECK_AND_RETURN_RET_LOG(innerSmoothZoomInfoCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerSmoothZoomInfoCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     innerCaptureSession_->SetSmoothZoomCallback(innerSmoothZoomInfoCallback);
     return CAMERA_OK;
@@ -205,10 +205,10 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterSmoothZoomInfoCallback(
 
 Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMode)
 {
-    CHECK_AND_RETURN_RET_LOG(!innerCaptureSession_->IsSessionConfiged() && !innerCaptureSession_->IsSessionCommited(),
+    CHECK_ERROR_RETURN_RET_LOG(innerCaptureSession_->IsSessionConfiged() || innerCaptureSession_->IsSessionCommited(),
         CAMERA_OPERATION_NOT_ALLOWED, "Camera_Manager::SetSessionMode can not set sceneMode after BeginConfig!");
     auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
-    CHECK_AND_RETURN_RET_LOG(itr != g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::SetSessionMode sceneMode not found!");
     SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
     switch (innerSceneMode) {
@@ -666,7 +666,7 @@ Camera_ErrorCode Camera_CaptureSession::CanPreconfigWithRatio(Camera_PreconfigTy
 Camera_ErrorCode Camera_CaptureSession::Preconfig(Camera_PreconfigType preconfigType)
 {
     auto itr = g_ndkToFwPreconfig.find(preconfigType);
-    CHECK_AND_RETURN_RET_LOG(itr != g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::Preconfig preconfigType: [%{public}d] is invalid!", preconfigType);
 
     int32_t ret = innerCaptureSession_->Preconfig(itr->second, ProfileSizeRatio::UNSPECIFIED);
@@ -678,9 +678,9 @@ Camera_ErrorCode Camera_CaptureSession::PreconfigWithRatio(Camera_PreconfigType 
 {
     auto type = g_ndkToFwPreconfig.find(preconfigType);
     auto ratio = g_ndkToFwPreconfigRatio.find(preconfigRatio);
-    CHECK_AND_RETURN_RET_LOG(type != g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(type == g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::PreconfigWithRatio preconfigType: [%{public}d] is invalid!", preconfigType);
-    CHECK_AND_RETURN_RET_LOG(ratio != g_ndkToFwPreconfigRatio.end(), CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(ratio == g_ndkToFwPreconfigRatio.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::PreconfigWithRatio preconfigRatio: [%{public}d] is invalid!", preconfigRatio);
 
     int32_t ret = innerCaptureSession_->Preconfig(type->second, ratio->second);
@@ -738,7 +738,7 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedColorSpaces(OH_NativeBuffer_
     }
 
     OH_NativeBuffer_ColorSpace* newColorSpace = new OH_NativeBuffer_ColorSpace[cameraColorSpace.size()];
-    CHECK_AND_RETURN_RET_LOG(newColorSpace != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(newColorSpace == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Failed to allocate memory for color space!");
     for (size_t index = 0; index < cameraColorSpace.size(); index++) {
         newColorSpace[index] = cameraColorSpace[index];
@@ -796,7 +796,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterAutoDeviceSwitchStatusCallback(
 {
     shared_ptr<InnerCaptureSessionAutoDeviceSwitchStatusCallback> innerDeviceSwitchStatusCallback =
         make_shared<InnerCaptureSessionAutoDeviceSwitchStatusCallback>(this, autoDeviceSwitchStatusChange);
-    CHECK_AND_RETURN_RET_LOG(innerDeviceSwitchStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(innerDeviceSwitchStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
     innerCaptureSession_->SetAutoDeviceSwitchCallback(innerDeviceSwitchStatusCallback);
     return CAMERA_OK;

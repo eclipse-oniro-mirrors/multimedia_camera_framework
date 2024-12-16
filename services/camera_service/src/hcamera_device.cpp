@@ -349,7 +349,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CheckPermissionBeforeOpenDevice();
-    CHECK_AND_RETURN_RET(errorCode == CAMERA_OK, errorCode);
+    CHECK_ERROR_RETURN_RET(errorCode != CAMERA_OK, errorCode);
     bool canOpenDevice = CanOpenCamera();
     CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT, "HCameraDevice::Refuse to turn on the camera");
     CHECK_ERROR_RETURN_RET_LOG(!HandlePrivacyBeforeOpenDevice(), CAMERA_OPERATION_NOT_ALLOWED, "privacy not allow!");
@@ -382,7 +382,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
                 CreateMuteSetting(updateSettings_);
             }
             errorCode = UpdateDeviceSetting();
-            CHECK_AND_RETURN_RET(errorCode == CAMERA_OK, errorCode);
+            CHECK_ERROR_RETURN_RET(errorCode != CAMERA_OK, errorCode);
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
         }
     }
@@ -579,7 +579,7 @@ bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     int32_t ret = cameraHostManager_->GetCameraAbility(cameraID_, cameraAbility);
-    CHECK_AND_RETURN_RET(cameraAbility != nullptr, false);
+    CHECK_ERROR_RETURN_RET(cameraAbility == nullptr, false);
     camera_metadata_item_t metadataItem;
     std::vector<int32_t> modes = {};
     ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_MOVING_PHOTO,
@@ -1274,7 +1274,7 @@ int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::Str
     std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
 {
     int retCode = CreateStreams(streamInfos);
-    CHECK_AND_RETURN_RET(retCode == CAMERA_OK, retCode);
+    CHECK_ERROR_RETURN_RET(retCode != CAMERA_OK, retCode);
     return CommitStreams(deviceSettings, operationMode);
 }
 
@@ -1388,7 +1388,7 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
 int32_t HCameraDevice::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureStarted(captureId, streamIds);
 }
 
@@ -1396,14 +1396,14 @@ int32_t HCameraDevice::OnCaptureStarted_V1_2(
     int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureStarted_V1_2(captureId, infos);
 }
 
 int32_t HCameraDevice::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureEnded(captureId, infos);
 }
 
@@ -1411,35 +1411,35 @@ int32_t HCameraDevice::OnCaptureEndedExt(int32_t captureId,
     const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureEndedExt(captureId, infos);
 }
 
 int32_t HCameraDevice::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureError(captureId, infos);
 }
 
 int32_t HCameraDevice::OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnFrameShutter(captureId, streamIds, timestamp);
 }
 
 int32_t HCameraDevice::OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnFrameShutterEnd(captureId, streamIds, timestamp);
 }
 
 int32_t HCameraDevice::OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
     return streamOperatorCallback->OnCaptureReady(captureId, streamIds, timestamp);
 }
 
