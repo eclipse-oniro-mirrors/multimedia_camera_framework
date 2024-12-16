@@ -227,7 +227,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCap
     sptr<IRemoteObject> object = innerCaptureSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
-    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+    CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
@@ -341,10 +341,10 @@ int32_t CaptureSession::CommitConfig()
 void CaptureSession::CheckSpecSearch()
 {
     auto inputDevice = GetInputDevice();
-    CHECK_AND_RETURN_LOG(inputDevice && inputDevice->GetCameraDeviceInfo(), "camera device is null");
+    CHECK_ERROR_RETURN_LOG(!inputDevice || !(inputDevice->GetCameraDeviceInfo()), "camera device is null");
     camera_metadata_item_t item;
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_AND_RETURN_LOG(metadata != nullptr, "CheckSpecSearch camera metadata is null");
+    CHECK_ERROR_RETURN_LOG(metadata == nullptr, "CheckSpecSearch camera metadata is null");
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
     if (retCode != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("specSearch is not support");
@@ -378,7 +378,7 @@ void CaptureSession::PopulateSpecIdMaps(sptr<CameraDevice> device, int32_t modeN
                                         std::map<int32_t, std::vector<Profile>>& specIdPhotoMap,
                                         std::map<int32_t, std::vector<VideoProfile>>& specIdVideoMap)
 {
-    CHECK_AND_RETURN_LOG(device, "camera device is null");
+    CHECK_ERROR_RETURN_LOG(!device, "camera device is null");
     auto buildSpecProfileMap = [](auto& profiles, auto& map) {
         for (auto& profile : profiles) {
             map[profile.GetSpecId()].emplace_back(profile);
@@ -927,7 +927,7 @@ int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
-    CHECK_AND_RETURN_RET(currentMode_ == SceneMode::SECURE, CAMERA_OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(currentMode_ != SceneMode::SECURE, CAMERA_OPERATION_NOT_ALLOWED);
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
         CAMERA_OPERATION_NOT_ALLOWED, "SecureCameraSession::AddSecureOutput operation is Not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
@@ -1459,7 +1459,8 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
         stabilizationMode = VideoStabilizationMode::AUTO;
     }
-    CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsVideoStabilizationModeSupported(stabilizationMode),
+        CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
@@ -1633,7 +1634,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -2023,7 +2024,7 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
         MEDIA_ERR_LOG("CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsFocusModeSupported(focusMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsFocusModeSupported(focusMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end()) {
@@ -2487,7 +2488,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
             "CaptureSession::TriggerLighting Failed to trigger lighting");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_AND_RETURN_RET(IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
     if (itr == g_fwkFlashModeMap_.end()) {
@@ -3489,7 +3490,7 @@ int32_t CaptureSession::SetPortraitThemeType(PortraitThemeType type)
         "CaptureSession::SetPortraitThemeType Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetPortraitThemeType Need to call LockForControl() before setting camera properties");
-    CHECK_AND_RETURN_RET(IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
     PortraitThemeType portraitThemeTypeTemp = PortraitThemeType::NATURAL;
     uint8_t themeType = g_fwkPortraitThemeTypeMap_.at(portraitThemeTypeTemp);
     auto itr = g_fwkPortraitThemeTypeMap_.find(type);
@@ -3569,7 +3570,7 @@ int32_t CaptureSession::SetVideoRotation(int32_t rotation)
         "CaptureSession::SetVideoRotation Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetVideoRotation Need to call LockForControl() before setting camera properties");
-    CHECK_AND_RETURN_RET(IsVideoRotationSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET(!IsVideoRotationSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_VIDEO_ROTATION, &rotation, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetVideoRotation Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
@@ -4471,9 +4472,9 @@ int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableLowLightBoost, isEnable:%{public}d", isEnable);
-    CHECK_AND_RETURN_RET_LOG(
-        IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
-    CHECK_AND_RETURN_RET_LOG(IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_BOOST, &enableValue, 1)) {
         MEDIA_ERR_LOG("CaptureSession::EnableLowLightBoost failed to enable low light boost");
@@ -4487,9 +4488,9 @@ int32_t CaptureSession::EnableLowLightDetection(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableLowLightDetection, isEnable:%{public}d", isEnable);
-    CHECK_AND_RETURN_RET_LOG(
-        IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
-    CHECK_AND_RETURN_RET_LOG(IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_DETECT, &enableValue, 1)) {
         MEDIA_ERR_LOG("CaptureSession::EnableLowLightDetection failed to enable low light detect");

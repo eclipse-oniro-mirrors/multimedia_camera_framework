@@ -162,12 +162,12 @@ int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     int32_t videoMetaType = data.ReadInt32();
 
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleAttachMetaSurface BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamRepeatStub HandleAttachMetaSurface producer is null");
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleAttachMetaSurface producer is null");
     int errCode = AttachMetaSurface(producer, videoMetaType);
     CHECK_ERROR_RETURN_RET_LOG(errCode != ERR_NONE, errCode,
         "HStreamRepeatStub::HandleAttachMetaSurface add deferred surface failed : %{public}d", errCode);

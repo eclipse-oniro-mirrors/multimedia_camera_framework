@@ -120,7 +120,7 @@ static sptr<HCaptureSession> TotalSessionsGet(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
     auto it = g_totalSessions.find(pid);
-    CHECK_AND_RETURN_RET(it == g_totalSessions.end(), it->second);
+    CHECK_ERROR_RETURN_RET(it != g_totalSessions.end(), it->second);
     return nullptr;
 }
 
@@ -142,7 +142,7 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
 sptr<HCaptureSession> HCaptureSession::NewInstance(const uint32_t callerToken, int32_t opMode)
 {
     sptr<HCaptureSession> session = new HCaptureSession();
-    CHECK_AND_RETURN_RET(session->Initialize(callerToken, opMode) != CAMERA_OK, session);
+    CHECK_ERROR_RETURN_RET(session->Initialize(callerToken, opMode) == CAMERA_OK, session);
     return nullptr;
 }
 
@@ -203,7 +203,7 @@ pid_t HCaptureSession::GetPid()
 
 int32_t HCaptureSession::GetopMode()
 {
-    CHECK_AND_RETURN_RET(!featureMode_, featureMode_);
+    CHECK_ERROR_RETURN_RET(featureMode_, featureMode_);
     return opMode_;
 }
 
@@ -783,13 +783,13 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
             auto producer = movingPhotoSurfaceWrapper->GetProducer();
             metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
             auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(3);
-            CHECK_AND_CONTINUE_LOG(producer != nullptr, "get producer fail.");
+            CHECK_WARNING_CONTINUE_LOG(producer == nullptr, "get producer fail.");
             livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper,
                 metaSurface_, metaCache, preCacheFrameCount_, postCacheFrameCount_);
-            CHECK_AND_CONTINUE_LOG(livephotoListener_ != nullptr, "failed to new livephotoListener_!");
+            CHECK_WARNING_CONTINUE_LOG(livephotoListener_ == nullptr, "failed to new livephotoListener_!");
             movingPhotoSurfaceWrapper->SetSurfaceBufferListener(livephotoListener_);
             livephotoMetaListener_ = new(std::nothrow) MovingPhotoMetaListener(metaSurface_, metaCache);
-            CHECK_AND_CONTINUE_LOG(livephotoMetaListener_ != nullptr, "failed to new livephotoMetaListener_!");
+            CHECK_WARNING_CONTINUE_LOG(livephotoMetaListener_ == nullptr, "failed to new livephotoMetaListener_!");
             metaSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)livephotoMetaListener_);
             CreateMovingPhotoStreamRepeat(streamRepeat->format_, streamRepeat->width_, streamRepeat->height_, producer);
             std::lock_guard<std::mutex> streamLock(livePhotoStreamLock_);
@@ -821,7 +821,7 @@ int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
         livePhotoStreamRepeat_->Release();
     }
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::LIVEPHOTO);
-    CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
+    CHECK_ERROR_RETURN_RET_LOG(streamRepeat == nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
     MEDIA_DEBUG_LOG("para is:%{public}dx%{public}d,%{public}d", width, height, format);
     livePhotoStreamRepeat_ = streamRepeat;
     streamRepeat->SetMetaProducer(metaSurface_->GetProducer());
@@ -1218,7 +1218,7 @@ int32_t HCaptureSession::GetSensorOritation()
     CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, sensorOrientation,
         "HCaptureSession::GetSensorOritation() cameraDevice is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
-    CHECK_AND_RETURN_RET(ability != nullptr, sensorOrientation);
+    CHECK_ERROR_RETURN_RET(ability == nullptr, sensorOrientation);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_SENSOR_ORIENTATION, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, sensorOrientation,
@@ -1907,7 +1907,7 @@ void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
     int32_t invalidBurstSeqId = -1;
     auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
     for (auto& stream : captureStreams) {
-        CHECK_AND_CONTINUE_LOG(stream != nullptr, "stream is null");
+        CHECK_WARNING_CONTINUE_LOG(stream == nullptr, "stream is null");
         MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
         auto streamCapture = CastStream<HStreamCapture>(stream);
         isBursting = streamCapture->IsBurstCapture(captureId);
@@ -2550,7 +2550,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
-    CHECK_AND_RETURN_LOG(frameRecord != nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+    CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
     if (isNeededClear_ && isNeededPop_) {
         if (timestamp < shutterTime_) {
             frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);

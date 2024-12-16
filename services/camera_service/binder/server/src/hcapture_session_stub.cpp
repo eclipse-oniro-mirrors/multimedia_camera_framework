@@ -32,9 +32,9 @@ int HCaptureSessionStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     errCode = OperatePermissionCheck(code);
-    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+    CHECK_ERROR_RETURN_RET(errCode != CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG):
             errCode = BeginConfig();
@@ -118,27 +118,27 @@ int HCaptureSessionStub::OnRemoteRequest(
 int32_t HCaptureSessionStub::HandleAddInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleAddInput CameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleAddInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleAddInput Device is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleAddInput Device is null");
     return AddInput(cameraDevice);
 }
 
 int HCaptureSessionStub::HandleCanAddInput(MessageParcel &data, MessageParcel &reply)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleAddInput CameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleAddInput CameraDevice is null");
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleCanAddInput CameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCanAddInput CameraDevice is null");
     bool result = false;
     int32_t ret = CanAddInput(cameraDevice, result);
     MEDIA_INFO_LOG("HandleCanAddInput ret: %{public}d, result: %{public}d", ret, result);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteBool(result), IPC_STUB_WRITE_PARCEL_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteBool(result)), IPC_STUB_WRITE_PARCEL_ERR,
         "HCaptureSessionStub HandleCanAddInput Write result failed");
     return ret;
 }
@@ -146,12 +146,12 @@ int HCaptureSessionStub::HandleCanAddInput(MessageParcel &data, MessageParcel &r
 int32_t HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
-    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
     return RemoveInput(cameraDevice);
 }
 
@@ -159,8 +159,8 @@ int32_t HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleAddOutput remoteObj is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleAddOutput remoteObj is null");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
@@ -179,8 +179,8 @@ int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleRemoveOutput remoteObj is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleRemoveOutput remoteObj is null");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
@@ -197,12 +197,12 @@ int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
 int32_t HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleSetCallback CaptureSessionCallback is null");
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleSetCallback CaptureSessionCallback is null");
 
     auto callback = iface_cast<ICaptureSessionCallback>(remoteObject);
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCaptureSessionStub HandleSetCallback callback is null");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 
@@ -210,8 +210,8 @@ int32_t HCaptureSessionStub::HandleGetSessionState(MessageParcel &reply)
 {
     CaptureSessionState sessionState;
     int32_t ret = GetSessionState(sessionState);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteUint32(static_cast<uint32_t>(sessionState)), IPC_STUB_WRITE_PARCEL_ERR,
-                             "HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteUint32(static_cast<uint32_t>(sessionState))), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
     return ret;
 }
 
@@ -219,8 +219,8 @@ int HCaptureSessionStub::HandleGetActiveColorSpace(MessageParcel &reply)
 {
     ColorSpace currColorSpace;
     int32_t ret = GetActiveColorSpace(currColorSpace);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteInt32(static_cast<int32_t>(currColorSpace)), IPC_STUB_WRITE_PARCEL_ERR,
-                             "HCaptureSessionStub HandleGetActiveColorSpace write colorSpace failed");
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteInt32(static_cast<int32_t>(currColorSpace))), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleGetActiveColorSpace write colorSpace failed");
     return ret;
 }
 
@@ -239,14 +239,14 @@ int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel 
     float targetZoomRatio = data.ReadFloat();
     float duration;
     int32_t ret = SetSmoothZoom(smoothZoomType, operationMode, targetZoomRatio, duration);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteFloat(duration), IPC_STUB_WRITE_PARCEL_ERR,
-                             "HCaptureSessionStub HandleSetSmoothZoom Write duration failed");
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteFloat(duration)), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleSetSmoothZoom Write duration failed");
     return ret;
 }
 
 int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
 {
-    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
     int featureMode = static_cast<int>(data.ReadUint32());
     return SetFeatureMode(featureMode);
 }
@@ -268,34 +268,36 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, Messa
     sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
     photoProxy->ReadFromParcel(data);
     int64_t timestamp = data.ReadInt64();
-    CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
     int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType) && reply.WriteString(burstKey),
-        IPC_STUB_WRITE_PARCEL_ERR, "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
+        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
     return ret;
 }
 
 int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
 {
     Picture *picturePtr = Media::Picture::Unmarshalling(data);
-    CHECK_AND_RETURN_RET_LOG(picturePtr != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
     std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
     sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
     photoProxy->ReadFromParcel(data);
-    CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
     int64_t timestamp = data.ReadInt64();
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
     int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
-    CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType) && reply.WriteString(burstKey),
-        IPC_STUB_WRITE_PARCEL_ERR, "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
+    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
+        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
     return ret;
 }
 } // namespace CameraStandard

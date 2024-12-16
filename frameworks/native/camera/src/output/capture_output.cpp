@@ -40,7 +40,7 @@ void CaptureOutput::RegisterStreamBinderDied()
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     if (deathRecipient_ == nullptr) {
         deathRecipient_ = new (std::nothrow) CameraDeathRecipient(0);
-        CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+        CHECK_ERROR_RETURN_LOG(deathRecipient_ == nullptr, "failed to new CameraDeathRecipient.");
         deathRecipient_->SetNotifyCb([this](pid_t pid) { OnCameraServerDied(pid); });
     }
 

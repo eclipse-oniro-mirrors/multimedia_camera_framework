@@ -24,7 +24,7 @@ int CameraWindowManagerAgentStub::OnRemoteRequest(
 {
     int errCode = -1;
  
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    CHECK_ERROR_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(WindowServiceInterfaceCode::TRANS_ID_UPDATE_CAMERA_WINDOW_STATUS):
             errCode = CameraWindowManagerAgentStub::HandleUpdateCameraWindowStatus(data);

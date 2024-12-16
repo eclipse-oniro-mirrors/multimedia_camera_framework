@@ -57,18 +57,18 @@ SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
 auto AddOutput()
 {
     sptr<CameraOutputCapability> capability = manager->GetSupportedOutputCapability(camera, sceneMode);
-    CHECK_AND_RETURN_LOG(capability, "TimeLapsePhotoSessionFuzzer: capability Error");
+    CHECK_ERROR_RETURN_LOG(!capability, "TimeLapsePhotoSessionFuzzer: capability Error");
     Profile preview(CameraFormat::CAMERA_FORMAT_YUV_420_SP, {640, 480});
     sptr<CaptureOutput> previewOutput = manager->CreatePreviewOutput(preview, Surface::CreateSurfaceAsConsumer());
-    CHECK_AND_RETURN_LOG(previewOutput, "TimeLapsePhotoSessionFuzzer: previewOutput Error");
+    CHECK_ERROR_RETURN_LOG(!previewOutput, "TimeLapsePhotoSessionFuzzer: previewOutput Error");
     session->AddOutput(previewOutput);
     Profile photo(CameraFormat::CAMERA_FORMAT_JPEG, {640, 480});
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "TimeLapsePhotoSessionFuzzer: photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "TimeLapsePhotoSessionFuzzer: photoSurface Error");
     sptr<IBufferProducer> surface = photoSurface->GetProducer();
-    CHECK_AND_RETURN_LOG(surface, "TimeLapsePhotoSessionFuzzer: surface Error");
+    CHECK_ERROR_RETURN_LOG(!surface, "TimeLapsePhotoSessionFuzzer: surface Error");
     sptr<CaptureOutput> photoOutput = manager->CreatePhotoOutput(photo, surface);
-    CHECK_AND_RETURN_LOG(photoOutput, "TimeLapsePhotoSessionFuzzer: photoOutput Error");
+    CHECK_ERROR_RETURN_LOG(!photoOutput, "TimeLapsePhotoSessionFuzzer: photoOutput Error");
     session->AddOutput(photoOutput);
 }
 
@@ -480,11 +480,11 @@ void Test(uint8_t *rawData, size_t size)
     session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     session->BeginConfig();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_AND_RETURN_LOG(cameras.size() >= NUM_2, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
     camera = cameras[0];
-    CHECK_AND_RETURN_LOG(camera, "TimeLapsePhotoSessionFuzzer: Camera is null");
+    CHECK_ERROR_RETURN_LOG(!camera, "TimeLapsePhotoSessionFuzzer: Camera is null");
     sptr<CaptureInput> input = manager->CreateCameraInput(camera);
-    CHECK_AND_RETURN_LOG(input, "TimeLapsePhotoSessionFuzzer: CreateCameraInput Error");
+    CHECK_ERROR_RETURN_LOG(!input, "TimeLapsePhotoSessionFuzzer: CreateCameraInput Error");
     input->Open();
     session->AddInput(input);
     AddOutput();

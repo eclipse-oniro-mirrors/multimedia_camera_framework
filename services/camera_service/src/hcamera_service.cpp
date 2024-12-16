@@ -101,8 +101,8 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     }
     statusCallback_ = std::make_shared<ServiceHostStatus>(this);
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
-    CHECK_AND_RETURN_LOG(
-        cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+    CHECK_ERROR_RETURN_LOG(
+        cameraHostManager_ == nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
     MEDIA_INFO_LOG("HCameraService Construct end");
     serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
 }
@@ -188,7 +188,7 @@ bool HCameraService::SetMuteModeFromDataShareHelper()
     this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
     bool muteMode = false;
     int32_t ret = GetMuteModeFromDataShareHelper(muteMode);
-    CHECK_AND_RETURN_RET_LOG((ret == CAMERA_OK), false, "GetMuteModeFromDataShareHelper failed");
+    CHECK_ERROR_RETURN_RET_LOG((ret != CAMERA_OK), false, "GetMuteModeFromDataShareHelper failed");
     MuteCameraFunc(muteMode);
     muteModeStored_ = muteMode;
     MEDIA_INFO_LOG("SetMuteModeFromDataShareHelper Success, muteMode = %{public}d", muteMode);
@@ -685,7 +685,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
 bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(freezedPidListMutex_);
-    CHECK_AND_RETURN_RET(freezedPidList_.count(pid) != 0, false);
+    CHECK_ERROR_RETURN_RET(freezedPidList_.count(pid) == 0, false);
     MEDIA_INFO_LOG("ShouldSkipStatusUpdates pid = %{public}d", pid);
     return true;
 }
@@ -1170,9 +1170,9 @@ int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
     }
     std::vector<std::string> cameraIds_;
     cameraHostManager_->GetCameras(cameraIds_);
-    CHECK_AND_RETURN_RET(!cameraIds_.empty(), CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET(cameraIds_.empty(), CAMERA_INVALID_STATE);
     auto it = std::find(cameraIds_.begin(), cameraIds_.end(), cameraId);
-    CHECK_AND_RETURN_RET(it != cameraIds_.end(), CAMERA_INVALID_ARG);
+    CHECK_ERROR_RETURN_RET(it == cameraIds_.end(), CAMERA_INVALID_ARG);
     MEDIA_INFO_LOG("HCameraService::PreSwitchCamera cameraId is: %{public}s", cameraId.c_str());
     CameraReportUtils::GetInstance().SetSwitchCamPerfStartInfo(CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->PreSwitchCamera(cameraId);
@@ -1689,7 +1689,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     CHECK_ERROR_RETURN_RET_LOG(activeClient == -1, CAMERA_OPERATION_NOT_ALLOWED,
         "HCaptureSession::SaveCurrentParamForRestore() Failed to save param");
     sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
-    CHECK_AND_RETURN_RET(activeDevice != nullptr, CAMERA_OK);
+    CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_OK);
     std::vector<StreamInfo_V1_1> allStreamInfos;
 
     if (activeDevice != nullptr) {
@@ -1699,7 +1699,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         UpdateSkinToneSetting(defaultSettings, effectParam.skinTone);
         cameraRestoreParam->SetSetting(defaultSettings);
     }
-    CHECK_AND_RETURN_RET(activeDevice != nullptr, CAMERA_UNKNOWN_ERROR);
+    CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_UNKNOWN_ERROR);
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %{public}d", effectParam.skinSmoothLevel);
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc,
@@ -1971,11 +1971,11 @@ int32_t HCameraService::CameraDataShareHelper::QueryOnce(const std::string key, 
     columns.emplace_back(SETTINGS_DATA_FIELD_VALUE);
 
     auto resultSet = dataShareHelper->Query(uri, predicates, columns);
-    CHECK_AND_RETURN_RET_LOG(resultSet != nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
+    CHECK_ERROR_RETURN_RET_LOG(resultSet == nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
 
     int32_t numRows = 0;
     resultSet->GetRowCount(numRows);
-    CHECK_AND_RETURN_RET_LOG(numRows > 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
+    CHECK_ERROR_RETURN_RET_LOG(numRows <= 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
 
     if (resultSet->GoToFirstRow() != DataShare::E_OK) {
         MEDIA_INFO_LOG("CameraDataShareHelper Query failed,go to first row error");

@@ -48,7 +48,7 @@ void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {
         bool isSameCallback = CameraNapiUtils::IsSameNapiValue(env_, callback, it->GetCallbackFunction());
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+        CHECK_ERROR_RETURN_LOG(isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     callbackList.refList.emplace_back(AutoRef(env_, callback, isOnce));
     MEDIA_DEBUG_LOG("Save callback reference success, %s callback list size [%{public}zu]", eventName.c_str(),

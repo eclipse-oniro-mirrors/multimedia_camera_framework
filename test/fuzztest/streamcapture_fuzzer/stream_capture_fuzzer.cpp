@@ -81,14 +81,14 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
         "StreamCaptureFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     CHECK_ERROR_RETURN(streamcapture == nullptr);

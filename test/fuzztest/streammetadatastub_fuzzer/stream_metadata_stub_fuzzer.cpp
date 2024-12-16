@@ -92,7 +92,7 @@ void Test(uint8_t *rawData, size_t size)
 
     if (fuzz == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_AND_RETURN_LOG(photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
+        CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         const int32_t face = 0;
         std::vector<int32_t> type = {face};
@@ -107,7 +107,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteInterfaceToken(fuzz->GetDescriptor());
     auto metadata = MakeMetadata(rawData, size);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data),
+    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data)),
         "StreamMetadataStubFuzzer: EncodeCameraMetadata Error");
     uint32_t code;
     MessageParcel reply;

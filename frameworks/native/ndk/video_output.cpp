@@ -28,15 +28,15 @@ extern "C" {
  */
 Camera_ErrorCode OH_VideoOutput_RegisterCallback(Camera_VideoOutput* videoOutput, VideoOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onFrameStart is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onFrameEnd is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onError is null!");
 
     videoOutput->RegisterCallback(callback);
@@ -49,15 +49,15 @@ Camera_ErrorCode OH_VideoOutput_RegisterCallback(Camera_VideoOutput* videoOutput
  */
 Camera_ErrorCode OH_VideoOutput_UnregisterCallback(Camera_VideoOutput* videoOutput, VideoOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameStart == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onFrameStart is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameEnd == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onFrameEnd is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, callback onError is null!");
 
     videoOutput->UnregisterCallback(callback);
@@ -70,7 +70,7 @@ Camera_ErrorCode OH_VideoOutput_UnregisterCallback(Camera_VideoOutput* videoOutp
  */
 Camera_ErrorCode OH_VideoOutput_Start(Camera_VideoOutput* videoOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
 
     return videoOutput->Start();
@@ -82,7 +82,7 @@ Camera_ErrorCode OH_VideoOutput_Start(Camera_VideoOutput* videoOutput)
  */
 Camera_ErrorCode OH_VideoOutput_Stop(Camera_VideoOutput* videoOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
 
     return videoOutput->Stop();
@@ -94,7 +94,7 @@ Camera_ErrorCode OH_VideoOutput_Stop(Camera_VideoOutput* videoOutput)
  */
 Camera_ErrorCode OH_VideoOutput_Release(Camera_VideoOutput* videoOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
 
     Camera_ErrorCode retCode = videoOutput->Release();
@@ -111,9 +111,9 @@ Camera_ErrorCode OH_VideoOutput_Release(Camera_VideoOutput* videoOutput)
 Camera_ErrorCode OH_VideoOutput_GetActiveProfile(Camera_VideoOutput* videoOutput, Camera_VideoProfile** profile)
 {
     MEDIA_DEBUG_LOG("OH_VideoOutput_GetActiveProfile is called.");
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, profile is null!");
 
     return videoOutput->GetVideoProfile(profile);
@@ -126,7 +126,7 @@ Camera_ErrorCode OH_VideoOutput_GetActiveProfile(Camera_VideoOutput* videoOutput
 Camera_ErrorCode OH_VideoOutput_DeleteProfile(Camera_VideoProfile* profile)
 {
     MEDIA_DEBUG_LOG("OH_VideoOutput_DeleteProfile is called.");
-    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, profile is null!");
 
     delete profile;
@@ -141,11 +141,11 @@ Camera_ErrorCode OH_VideoOutput_DeleteProfile(Camera_VideoProfile* profile)
 Camera_ErrorCode OH_VideoOutput_GetSupportedFrameRates(Camera_VideoOutput* videoOutput,
     Camera_FrameRateRange** frameRateRange, uint32_t* size)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, frameRateRange is null!");
-    CHECK_AND_RETURN_RET_LOG(size != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, size is null!");
 
     return videoOutput->GetSupportedFrameRates(frameRateRange, size);
@@ -158,9 +158,9 @@ Camera_ErrorCode OH_VideoOutput_GetSupportedFrameRates(Camera_VideoOutput* video
 Camera_ErrorCode OH_VideoOutput_DeleteFrameRates(Camera_VideoOutput* videoOutput,
     Camera_FrameRateRange* frameRateRange)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, frameRateRange is null!");
 
     return videoOutput->DeleteFrameRates(frameRateRange);
@@ -173,7 +173,7 @@ Camera_ErrorCode OH_VideoOutput_DeleteFrameRates(Camera_VideoOutput* videoOutput
 Camera_ErrorCode OH_VideoOutput_SetFrameRate(Camera_VideoOutput* videoOutput,
     int32_t minFps, int32_t maxFps)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
 
     return videoOutput->SetFrameRate(minFps, maxFps);
@@ -185,9 +185,9 @@ Camera_ErrorCode OH_VideoOutput_SetFrameRate(Camera_VideoOutput* videoOutput,
 Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutput,
     Camera_FrameRateRange* frameRateRange)
 {
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(frameRateRange == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, frameRateRange is null!");
 
     return videoOutput->GetActiveFrameRate(frameRateRange);
@@ -201,9 +201,9 @@ Camera_ErrorCode OH_VideoOutput_GetVideoRotation(Camera_VideoOutput* videoOutput
     Camera_ImageRotation* imageRotation)
 {
     MEDIA_DEBUG_LOG("OH_VideoOutput_GetVideoRotation is called.");
-    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, videoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG(imageRotation == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, imageRotation is null!");
     return videoOutput->GetVideoRotation(deviceDegree, imageRotation);
 }

@@ -112,7 +112,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data),
+    CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
         "CameraDeviceFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
     MessageParcel reply;
@@ -280,7 +280,7 @@ void Test3(uint8_t *rawData, size_t size)
     GetPermission();
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_AND_RETURN_LOG(cameras.size() >= NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     sptr<CameraDevice> camera = cameras[data.ReadUint32() % cameras.size()];
@@ -301,7 +301,7 @@ void Test3(uint8_t *rawData, size_t size)
     camera->GetModuleType();
     CameraFormat format = static_cast<CameraFormat>(data.ReadInt32());
     auto capability = manager->GetSupportedOutputCapability(camera);
-    CHECK_AND_RETURN_LOG(capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
+    CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     vector<Profile> profiles = capability->GetPhotoProfiles();
     camera->GetMaxSizeProfile(profiles, data.ReadFloat(), format);
     auto profiles2 = capability->GetVideoProfiles();

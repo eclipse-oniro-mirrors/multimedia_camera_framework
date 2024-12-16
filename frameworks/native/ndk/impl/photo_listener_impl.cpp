@@ -50,14 +50,14 @@ void PhotoListener::OnBufferAvailable()
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
-    CHECK_AND_RETURN_LOG(photoSurface_ != nullptr, "photoSurface_ is null");
+    CHECK_ERROR_RETURN_LOG(photoSurface_ == nullptr, "photoSurface_ is null");
 
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     SurfaceError surfaceRet = photoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_AND_RETURN_LOG(surfaceRet == SURFACE_ERROR_OK, "Failed to acquire surface buffer");
+    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire surface buffer");
 
     CameraBufferExtraData extraData = GetCameraBufferExtraData(surfaceBuffer);
 
@@ -66,7 +66,7 @@ void PhotoListener::OnBufferAvailable()
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
         photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-        CHECK_AND_RETURN_LOG(newSurfaceBuffer != nullptr, "deep copy buffer failed");
+        CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "deep copy buffer failed");
 
         ExecutePhotoAsset(newSurfaceBuffer, extraData, extraData.isDegradedImage == 0, timestamp);
         MEDIA_DEBUG_LOG("PhotoListener on capture photo asset callback end");
@@ -179,11 +179,11 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t time
 {
     std::shared_ptr<Media::NativeImage> nativeImage = std::make_shared<Media::NativeImage>(surfaceBuffer,
         bufferProcessor_, timestamp);
-    CHECK_AND_RETURN_LOG(nativeImage != nullptr, "Create native image failed");
+    CHECK_ERROR_RETURN_LOG(nativeImage == nullptr, "Create native image failed");
 
     if (photoCallback_ != nullptr && photoOutput_ != nullptr) {
         OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, true);
-        CHECK_AND_RETURN_LOG(photoNative != nullptr, "Create photo native failed");
+        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
 
         photoCallback_(photoOutput_, photoNative);
     }
@@ -195,7 +195,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
 {
     CAMERA_SYNC_TRACE;
     BufferHandle* bufferHandle = surfaceBuffer->GetBufferHandle();
-    CHECK_AND_RETURN_LOG(bufferHandle != nullptr, "invalid bufferHandle");
+    CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "invalid bufferHandle");
 
     surfaceBuffer->Map();
     std::string uri = "";
@@ -203,13 +203,13 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
     std::string burstKey = "";
     CreateMediaLibrary(surfaceBuffer, bufferHandle, extraData, isHighQuality,
         uri, cameraShotType, burstKey, timestamp);
-    CHECK_AND_RETURN_LOG(!uri.empty(), "uri is empty");
+    CHECK_ERROR_RETURN_LOG(uri.empty(), "uri is empty");
 
     auto mediaAssetHelper = Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
-    CHECK_AND_RETURN_LOG(mediaAssetHelper != nullptr, "create media asset helper failed");
+    CHECK_ERROR_RETURN_LOG(mediaAssetHelper == nullptr, "create media asset helper failed");
 
     auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
-    CHECK_AND_RETURN_LOG(mediaAsset != nullptr, "Create photo asset failed");
+    CHECK_ERROR_RETURN_LOG(mediaAsset == nullptr, "Create photo asset failed");
 
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {
         photoAssetCallback_(photoOutput_, mediaAsset);
@@ -243,7 +243,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_AND_RETURN_LOG(bufferHandle != nullptr, "bufferHandle is nullptr");
+    CHECK_ERROR_RETURN_LOG(bufferHandle == nullptr, "bufferHandle is nullptr");
 
     MEDIA_DEBUG_LOG("PhotoListener ExecutePhotoAsset captureId:%{public}d imageId:%{public}" PRId64
         ", deferredProcessingType:%{public}d",
@@ -256,7 +256,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     std::string imageIdStr = std::to_string(extraData.imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, extraData.photoWidth, extraData.photoHeight,
         isHighQuality, extraData.captureId);
-    CHECK_AND_RETURN_LOG(photoProxy != nullptr, "Failed to new photoProxy");
+    CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "Failed to new photoProxy");
 
     photoProxy->SetDeferredAttrs(imageIdStr, extraData.deferredProcessingType, extraData.size,
         extraData.deferredImageFormat);
@@ -290,14 +290,14 @@ void RawPhotoListener::OnBufferAvailable()
     MEDIA_DEBUG_LOG("RawPhotoListener::OnBufferAvailable");
     std::lock_guard<std::mutex> lock(g_photoImageMutex);
     MEDIA_INFO_LOG("RawPhotoListener::OnBufferAvailable is called");
-    CHECK_AND_RETURN_LOG(rawPhotoSurface_ != nullptr, "rawPhotoSurface_ is null");
+    CHECK_ERROR_RETURN_LOG(rawPhotoSurface_ == nullptr, "rawPhotoSurface_ is null");
 
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     SurfaceError surfaceRet = rawPhotoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    CHECK_AND_RETURN_LOG(surfaceRet == SURFACE_ERROR_OK, "RawPhotoListener failed to acquire surface buffer");
+    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "RawPhotoListener failed to acquire surface buffer");
 
     int32_t isDegradedImage;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
@@ -311,11 +311,11 @@ void RawPhotoListener::ExecuteRawPhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_
 {
     std::shared_ptr<Media::NativeImage> nativeImage = std::make_shared<Media::NativeImage>(surfaceBuffer,
         bufferProcessor_, timestamp);
-    CHECK_AND_RETURN_LOG(nativeImage != nullptr, "Create native image failed");
+    CHECK_ERROR_RETURN_LOG(nativeImage == nullptr, "Create native image failed");
 
     if (callback_ != nullptr && photoOutput_ != nullptr) {
         OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, false);
-        CHECK_AND_RETURN_LOG(photoNative != nullptr, "Create photo native failed");
+        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
 
         callback_(photoOutput_, photoNative);
     }
