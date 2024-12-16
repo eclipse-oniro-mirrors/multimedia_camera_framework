@@ -183,7 +183,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
             audioRecord->ReleaseAudioBuffer();
             MEDIA_DEBUG_LOG("audio release popBuffer");
         }
-        int64_t timeOffset = 20;
+        int64_t timeOffset = 32;
         sptr<AudioRecord> audioRecord = new AudioRecord(GetTickCount() - timeOffset);
         audioRecord->SetAudioBuffer(buffer.get());
         MEDIA_DEBUG_LOG("audio push buffer frameId: %{public}s", audioRecord->GetFrameId().c_str());
