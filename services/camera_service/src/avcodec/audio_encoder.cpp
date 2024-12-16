@@ -140,7 +140,11 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         std::unique_lock<std::mutex> lock(context_->inputMutex_);
         if (context_->inputBufferInfoQueue_.empty()) {
             bool condRet = context_->inputCond_.wait_for(lock,
+<<<<<<< HEAD
                 std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
+=======
+                std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
+>>>>>>> c0f98740 (!2524 modify movingphoto audio lock)
                 [this]() { return !isStarted_ || !context_->inputBufferInfoQueue_.empty(); });
             CHECK_AND_CONTINUE_LOG(!context_->inputBufferInfoQueue_.empty(),
                 "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
