@@ -22,6 +22,8 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t DEFAULT_ITEMS = 10;
+constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata()
 {
