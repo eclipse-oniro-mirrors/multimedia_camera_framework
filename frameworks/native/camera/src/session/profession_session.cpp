@@ -28,6 +28,9 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t DEFAULT_ITEMS = 10;
+constexpr int32_t DEFAULT_DATA_LENGTH = 100;
+
 ProfessionSession::~ProfessionSession()
 {
     exposureInfoCallback_ = nullptr;
