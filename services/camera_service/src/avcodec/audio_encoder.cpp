@@ -97,7 +97,7 @@ int32_t AudioEncoder::Stop()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_AND_RETURN_RET_LOG(isEncoding_.load(), 1, "Encoder is null");
+    CHECK_ERROR_RETURN_RET_LOG(isEncoding_.load(), 1, "Is Encoding.");
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     int ret = OH_AudioCodec_Stop(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
