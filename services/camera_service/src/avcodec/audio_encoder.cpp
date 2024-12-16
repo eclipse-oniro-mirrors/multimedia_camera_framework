@@ -28,6 +28,12 @@ AudioEncoder::~AudioEncoder()
     Release();
 }
 
+AudioEncoder::AudioEncoder()
+{
+    MEDIA_INFO_LOG("AudioEncoder Constructor enter");
+    context_ = new CodecUserData;
+}
+
 int32_t AudioEncoder::Create(const std::string &codecMime)
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
@@ -40,19 +46,16 @@ int32_t AudioEncoder::Config()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
-    std::unique_lock<std::mutex> contextLock(contextMutex_);
-    context_ = new CodecUserData;
     // Configure audio encoder
     int32_t ret = Configure();
     CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Configure failed");
     // SetCallback for audio encoder
+    CHECK_AND_RETURN_RET_LOG(context_ != nullptr, 1, "AudioEncoder has been released");
     ret = SetCallback(context_);
     CHECK_AND_RETURN_RET_LOG(ret == 0, 1, "Set callback failed");
-    contextLock.unlock();
     // Prepare audio encoder
     ret = OH_AudioCodec_Prepare(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Prepare failed, ret: %{public}d", ret);
-
     return 0;
 }
 
@@ -94,6 +97,7 @@ int32_t AudioEncoder::Stop()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(encoderMutex_);
+    CHECK_ERROR_RETURN_RET_LOG(isEncoding_.load(), 1, "Is Encoding.");
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     int ret = OH_AudioCodec_Stop(encoder_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
@@ -132,13 +136,15 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
     int enqueueRetryCount = 3;
     while (enqueueRetryCount > 0) {
         enqueueRetryCount--;
-        std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->inputMutex_);
-        bool condRet = context_->inputCond_.wait_for(lock, std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
-            [this]() { return !isStarted_ || !context_->inputBufferInfoQueue_.empty(); });
-        CHECK_AND_CONTINUE_LOG(!context_->inputBufferInfoQueue_.empty(),
-            "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+        if (context_->inputBufferInfoQueue_.empty()) {
+            bool condRet = context_->inputCond_.wait_for(lock,
+                std::chrono::milliseconds(BUFFER_ENCODE_EXPIREATION_TIME),
+                [this]() { return !isStarted_ || !context_->inputBufferInfoQueue_.empty(); });
+            CHECK_AND_CONTINUE_LOG(!context_->inputBufferInfoQueue_.empty(),
+                "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+        }
         sptr<CodecAVBufferInfo> bufferInfo = context_->inputBufferInfoQueue_.front();
         context_->inputBufferInfoQueue_.pop();
         context_->inputFrameCount_++;
@@ -150,7 +156,6 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
         CHECK_AND_RETURN_RET_LOG(cpyRet == 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
         lock.unlock();
-        contextLock.unlock();
         int32_t ret = PushInputData(bufferInfo);
         CHECK_AND_RETURN_RET_LOG(ret == 0, false, "Push data failed");
         MEDIA_DEBUG_LOG("Success frame id is : %{public}s", audioRecord->GetFrameId().c_str());
@@ -176,20 +181,21 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
     int retryCount = 2;
     while (retryCount > 0) {
         retryCount--;
-        std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
-        bool condRet = context_->outputCond_.wait_for(lock, std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
-            [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
-        CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
-            "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+        if (context_->outputBufferInfoQueue_.empty()) {
+            bool condRet = context_->outputCond_.wait_for(lock,
+                std::chrono::milliseconds(AUDIO_ENCODE_EXPIREATION_TIME),
+                [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
+            CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
+                "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+        }
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
         MEDIA_DEBUG_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64,
             context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
         lock.unlock();
-        contextLock.unlock();
         OH_AVBuffer *audioBuffer = bufferInfo->GetCopyAVBuffer();
         audioRecord->CacheEncodedBuffer(audioBuffer);
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
@@ -211,12 +217,14 @@ bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
         RestartAudioCodec();
     }
     bool isSuccess = true;
+    isEncoding_.store(true);
     for (sptr<AudioRecord> audioRecord : audioRecords) {
         if (!audioRecord->IsEncoded() && !EncodeAudioBuffer(audioRecord)) {
             isSuccess = false;
             MEDIA_ERR_LOG("Failed frame id is : %{public}s", audioRecord->GetFrameId().c_str());
         }
     }
+    isEncoding_.store(false);
     return isSuccess;
 }
 
