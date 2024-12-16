@@ -1216,7 +1216,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exp
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
+    MEDIA_INFO_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
         captureID, frameCount);
     CallbackInfo info;
     info.captureID = captureID;
