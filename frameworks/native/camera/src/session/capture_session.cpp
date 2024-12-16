@@ -3421,22 +3421,19 @@ int32_t CaptureSession::GetBeauty(BeautyType beautyType)
 // focus distance
 float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi")))
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::GetMinimumFocusDistance Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    float invalidDistance = 0.0;
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, invalidDistance,
         "CaptureSession::GetMinimumFocusDistance camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, invalidDistance,
         "CaptureSession::GetMinimumFocusDistance camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, invalidDistance,
         "GetMinimumFocusDistance camera metadata is null");
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, invalidDistance,
         "CaptureSession::GetMinimumFocusDistance Failed with return code %{public}d", ret);
     float minimumFocusDistance = item.data.f[0];
     MEDIA_DEBUG_LOG("CaptureSession::GetMinimumFocusDistance minimumFocusDistance=%{public}f", minimumFocusDistance);
