@@ -624,7 +624,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         }
     }
 
-    inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_ = {};
+    deviceInfo->modeVideoDeferredType_ = {};
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
     MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability video item: %{public}d count: %{public}d", item.item, item.count);
@@ -632,7 +632,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, video deferredType:%{public}d",
                 item.data.u8[i], item.data.u8[i + 1]);
-            inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
+            deviceInfo->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
         }
     }
 }
