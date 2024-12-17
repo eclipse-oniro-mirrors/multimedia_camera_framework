@@ -603,21 +603,26 @@ void PhotoListener::OnBufferAvailable()
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is end");
 }
 
-void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const
+void FillNapiObjectWithCaptureId(napi_env env, int32_t captureId, napi_value &photoAsset)
+{
+    napi_value propertyName, propertyValue;
+    napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int32(env, captureId, &propertyValue);
+    napi_set_property(env, photoAsset, propertyName, propertyValue);
+    MEDIA_INFO_LOG("FillNapiObjectWithCaptureId captureId %{public}d", captureId);
+}
+
+void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+    const std::string burstKey) const
 {
     MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(loop == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
+    callbackInfo->captureId = captureId;
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
     callbackInfo->burstKey = burstKey;
@@ -625,16 +630,17 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
+            MEDIA_INFO_LOG("UpdatePictureJSCallback enter");
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
             auto listener = callbackInfo->listener_.lock();
             if (callbackInfo && listener != nullptr) {
-                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
                 napi_value result[ARGS_TWO] = { nullptr, nullptr };
                 napi_value retVal;
                 napi_get_undefined(listener->env_, &result[PARAM0]);
                 napi_get_undefined(listener->env_, &result[PARAM1]);
                 result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(listener->env_,
                     callbackInfo->uri, callbackInfo->cameraShotType, callbackInfo->burstKey);
+                FillNapiObjectWithCaptureId(listener->env_, callbackInfo->captureId, result[PARAM1]);
                 MEDIA_INFO_LOG("UpdatePictureJSCallback result %{public}s, type %{public}d, burstKey %{public}s",
                     callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
                 ExecuteCallbackNapiPara callbackPara {
@@ -793,7 +799,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
             photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
                 uri, cameraShotType, burstKey, timestamp);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-            UpdatePictureJSCallback(uri, cameraShotType, burstKey);
+            UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
             CleanAfterTransPicture(photoOutput, captureId);
         } else {
             MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
@@ -816,7 +822,9 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t time
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &mainImage);
     }
-    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage);
+    napi_value photoValue = PhotoNapi::CreatePhoto(env_, mainImage);
+    FillNapiObjectWithCaptureId(env_, GetCaptureId(surfaceBuffer), photoValue);
+    result[PARAM1] = photoValue;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callbackNapiPara);
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
@@ -920,6 +928,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_get_undefined(env_, &result[PARAM1]);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    int32_t captureId = GetCaptureId(surfaceBuffer);
     DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, 0);
     BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
     if (bufferHandle == nullptr) {
@@ -929,15 +938,15 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
         MEDIA_ERR_LOG("invalid bufferHandle");
     }
     newSurfaceBuffer->Map();
-    auto photoOutput = photoOutput_.promote();
     string uri = "";
     int32_t cameraShotType = 0;
-
     std::string burstKey = "";
     CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, burstKey, timestamp);
     MEDIA_INFO_LOG("CreateMediaLibrary result uri:%{public}s cameraShotType:%{public}d burstKey:%{public}s",
         uri.c_str(), cameraShotType, burstKey.c_str());
-    result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType, burstKey);
+    napi_value photoAssetValue = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType, burstKey);
+    FillNapiObjectWithCaptureId(env_, captureId, photoAssetValue);
+    result[PARAM1] = photoAssetValue;
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
     // return buffer to buffer queue
@@ -1581,26 +1590,21 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
-    UpdateJSCallbackAsync(std::move(pixelMap));
+    UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
         surfaceName.c_str(), captureId);
 }
 
-void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelMap)
+void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,
+    unique_ptr<Media::PixelMap> pixelMap)
 {
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(loop == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
-        std::make_unique<ThumbnailListenerInfo>(this, std::move(pixelMap));
+        std::make_unique<ThumbnailListenerInfo>(this, captureId, timestamp, std::move(pixelMap));
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
@@ -1609,7 +1613,8 @@ void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelM
             if (callbackInfo) {
                 auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
-                    listener->UpdateJSCallback(std::move(callbackInfo->pixelMap_));
+                    listener->UpdateJSCallback(callbackInfo->captureId_, callbackInfo->timestamp_,
+                        std::move(callbackInfo->pixelMap_));
                     MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
                 }
                 delete callbackInfo;
@@ -1625,7 +1630,21 @@ void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelM
     }
 }
 
-void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) const
+void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
+{
+    napi_value propertyName, propertyValue;
+    napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int32(env, captureId, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    MEDIA_INFO_LOG("FillPixelMapWithCaptureIdAndTimestamp captureId %{public}d", captureId);
+
+    napi_create_string_utf8(env, "timestamp", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int64(env, timestamp, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+}
+
+void ThumbnailListener::UpdateJSCallback(int32_t captureId, int64_t timestamp,
+    unique_ptr<Media::PixelMap> pixelMap) const
 {
     if (pixelMap == nullptr) {
         MEDIA_ERR_LOG("ThumbnailListener::UpdateJSCallback surfaceBuffer is nullptr");
@@ -1641,6 +1660,7 @@ void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) c
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
     }
+    FillPixelMapWithCaptureIdAndTimestamp(env_, captureId, timestamp, valueParam);
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
@@ -1672,6 +1692,7 @@ void ThumbnailListener::UpdateJSCallback() const
     int32_t thumbnailHeight;
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    int32_t captureId = GetCaptureId(thumbnailBuffer);
     Media::InitializationOptions opts;
     opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
     opts.pixelFormat = Media::PixelFormat::RGBA_8888;
@@ -1685,6 +1706,7 @@ void ThumbnailListener::UpdateJSCallback() const
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
     }
+    FillPixelMapWithCaptureIdAndTimestamp(env_, captureId, timestamp, valueParam);
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
 
@@ -1706,7 +1728,7 @@ void ThumbnailListener::UpdateJSCallbackAsync()
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, nullptr);
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, 0, 0, nullptr);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},

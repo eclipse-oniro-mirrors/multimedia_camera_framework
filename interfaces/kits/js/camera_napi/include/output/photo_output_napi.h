@@ -146,7 +146,8 @@ private:
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
-    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const;
+    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+        const std::string burstKey) const;
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
@@ -251,16 +252,19 @@ private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
     void UpdateJSCallbackAsync();
-    void UpdateJSCallback(unique_ptr<Media::PixelMap>) const;
-    void UpdateJSCallbackAsync(unique_ptr<Media::PixelMap>);
+    void UpdateJSCallback(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>) const;
+    void UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>);
     void ExecuteDeepCopySurfaceBuffer();
 };
 
 struct ThumbnailListenerInfo {
     wptr<ThumbnailListener> listener_;
+    int32_t captureId_;
+    int64_t timestamp_;
     unique_ptr<Media::PixelMap> pixelMap_;
-    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, unique_ptr<Media::PixelMap> pixelMap)
-        : listener_(listener), pixelMap_(std::move(pixelMap))
+    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, int32_t captureId,
+        int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap)
+        : listener_(listener), captureId_(captureId), timestamp_(timestamp), pixelMap_(std::move(pixelMap))
     {}
 };
 
@@ -270,6 +274,7 @@ struct PhotoListenerInfo {
     PhotoListenerInfo(sptr<Surface> photoSurface, shared_ptr<const PhotoListener> listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
+    int32_t captureId = 0;
     std::string uri = "";
     int32_t cameraShotType = 0;
     std::string burstKey = "";
