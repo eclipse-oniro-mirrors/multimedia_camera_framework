@@ -120,7 +120,8 @@ void AvcodecTaskManager::SubmitTask(function<void()> task)
     }
 }
 
-void AvcodecTaskManager::SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy, int32_t captureId)
+void AvcodecTaskManager::SetVideoFd(
+    int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
 {
     lock_guard<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
@@ -188,11 +189,10 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
     if (muxer) {
         muxer->Stop();
         muxer->Release();
-        PhotoAssetIntf* proxy = muxer->GetPhotoAssetProxy();
+        std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
         MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
         if (proxy) {
             proxy->NotifyVideoSaveFinished();
-            delete proxy;
         }
     }
 }
@@ -388,12 +388,6 @@ void AvcodecTaskManager::Release()
     }
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("videoFdMap_ size is %{public}zu", videoFdMap_.size());
-    for (auto videoFdPair : videoFdMap_) {
-        PhotoAssetIntf* photoAssetProxy = videoFdPair.second.second;
-        if (photoAssetProxy) {
-            delete photoAssetProxy;
-        }
-    }
     videoFdMap_.clear();
     MEDIA_INFO_LOG("AvcodecTaskManager release end");
 }

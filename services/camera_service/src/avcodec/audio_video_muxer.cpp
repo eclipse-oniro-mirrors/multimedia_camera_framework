@@ -32,7 +32,7 @@ AudioVideoMuxer::~AudioVideoMuxer()
     MEDIA_INFO_LOG("~AudioVideoMuxer enter");
 }
 
-int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy)
+int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, std::shared_ptr<PhotoAssetIntf> photoAssetProxy)
 {
     photoAssetProxy_ = photoAssetProxy;
     if (photoAssetProxy_) {
@@ -134,7 +134,7 @@ int32_t AudioVideoMuxer::GetVideoFd()
     return fd_;
 }
 
-PhotoAssetIntf* AudioVideoMuxer::GetPhotoAssetProxy()
+std::shared_ptr<PhotoAssetIntf> AudioVideoMuxer::GetPhotoAssetProxy()
 {
     return photoAssetProxy_;
 }

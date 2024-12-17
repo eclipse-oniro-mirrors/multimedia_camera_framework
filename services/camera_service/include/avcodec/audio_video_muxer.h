@@ -22,6 +22,7 @@
 #include "native_avbuffer.h"
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <refbase.h>
 #include "avmuxer.h"
 #include "media_description.h"
@@ -40,7 +41,7 @@ public:
     explicit AudioVideoMuxer();
     ~AudioVideoMuxer();
 
-    int32_t Create(OH_AVOutputFormat format, PhotoAssetIntf* photoAssetProxy);
+    int32_t Create(OH_AVOutputFormat format, std::shared_ptr<PhotoAssetIntf> photoAssetProxy);
     int32_t AddTrack(int &trackId, std::shared_ptr<Format> format, TrackType type);
     int32_t Start();
     int32_t WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type);
@@ -51,13 +52,13 @@ public:
     int32_t SetStartTime(float timems);
     int32_t SetTimedMetadata();
     int32_t GetVideoFd();
-    PhotoAssetIntf* GetPhotoAssetProxy();
+    std::shared_ptr<PhotoAssetIntf> GetPhotoAssetProxy();
     std::atomic<int32_t> releaseSignal_ = 2;
 
 private:
     std::shared_ptr<AVMuxer> muxer_ = nullptr;
     int32_t fd_ = -1;
-    PhotoAssetIntf* photoAssetProxy_ = nullptr;
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy_ = nullptr;
     int audioTrackId_ = -1;
     int videoTrackId_ = -1;
     int metaTrackId_ = -1;

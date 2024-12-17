@@ -13,84 +13,147 @@
  * limitations under the License.
  */
 
-#include <dlfcn.h>
-#include "camera_log.h"
 #include "camera_dynamic_loader.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <dlfcn.h>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <utility>
+
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-const char *librarySuffix = ".so";
-std::unique_ptr<CameraDynamicLoader> CameraDynamicLoader::instance = nullptr;
-std::once_flag CameraDynamicLoader::onceFlag;
-CameraDynamicLoader::CameraDynamicLoader()
-{
-    MEDIA_INFO_LOG("CameraDynamicLoader ctor");
-}
 
-CameraDynamicLoader::~CameraDynamicLoader()
-{
-    MEDIA_INFO_LOG("CameraDynamicLoader dtor");
-    for (auto iterator = dynamicLibHandle_.begin(); iterator != dynamicLibHandle_.end(); ++iterator) {
-        dlclose(iterator->second);
-        MEDIA_INFO_LOG("close library camera_dynamic success: %{public}s", iterator->first.c_str());
-    }
-}
+enum AsyncLoadingState : int32_t { NONE, PREPARE, LOADING };
 
-void* CameraDynamicLoader::OpenDynamicHandle(std::string dynamicLibrary)
+static const uint32_t HANDLE_MASK = 0xffffffff;
+static mutex g_libMutex;
+static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
+static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
+
+static mutex g_asyncLoadingMutex;
+static condition_variable g_asyncLiblockCondition;
+static AsyncLoadingState g_isAsyncLoading = AsyncLoadingState::NONE;
+
+Dynamiclib::Dynamiclib(const string& libName) : libName_(libName)
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard loaderLock(libLock_);
-    if (!EndsWith(dynamicLibrary, librarySuffix)) {
-        MEDIA_ERR_LOG("CloseDynamicHandle with error name!");
-        return nullptr;
-    }
-    if (dynamicLibHandle_[dynamicLibrary] == nullptr) {
-        void* dynamicLibHandle = dlopen(dynamicLibrary.c_str(), RTLD_NOW);
-        if (dynamicLibHandle == nullptr) {
-            MEDIA_ERR_LOG("Failed to open %{public}s, reason: %{public}sn", dynamicLibrary.c_str(), dlerror());
-            return nullptr;
-        }
-        MEDIA_INFO_LOG("open library %{public}s success", dynamicLibrary.c_str());
-        dynamicLibHandle_[dynamicLibrary] = dynamicLibHandle;
-    }
-    return dynamicLibHandle_[dynamicLibrary];
+    MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s", libName_.c_str());
+    libHandle_ = dlopen(libName_.c_str(), RTLD_NOW);
+    CHECK_ERROR_RETURN_LOG(
+        libHandle_ == nullptr, "Dynamiclib::Dynamiclib dlopen name:%{public}s return null", libName_.c_str());
+    MEDIA_INFO_LOG("Dynamiclib::Dynamiclib dlopen %{public}s success handle:%{public}u", libName_.c_str(),
+        static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)));
 }
 
-void* CameraDynamicLoader::GetFunction(std::string dynamicLibrary, std::string function)
+Dynamiclib::~Dynamiclib()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard loaderLock(libLock_);
-    // if not opened, then open directly
-    if (dynamicLibHandle_[dynamicLibrary] == nullptr) {
-        OpenDynamicHandle(dynamicLibrary);
+    if (libHandle_ != nullptr) {
+        int ret = dlclose(libHandle_);
+        MEDIA_INFO_LOG("Dynamiclib::~Dynamiclib dlclose name:%{public}s handle:%{public}u result:%{public}d",
+            libName_.c_str(), static_cast<uint32_t>(HANDLE_MASK & reinterpret_cast<uintptr_t>(libHandle_)), ret);
+        libHandle_ = nullptr;
     }
+}
 
-    void* handle = nullptr;
-    if (dynamicLibHandle_[dynamicLibrary] != nullptr) {
-        handle = dlsym(dynamicLibHandle_[dynamicLibrary], function.c_str());
-        if (handle == nullptr) {
-            MEDIA_ERR_LOG("Failed to load %{public}s, reason: %{public}sn", function.c_str(), dlerror());
-            return nullptr;
-        }
-        MEDIA_INFO_LOG("GetFunction %{public}s success", function.c_str());
-    }
+bool Dynamiclib::IsLoaded()
+{
+    return libHandle_ != nullptr;
+}
+
+void* Dynamiclib::GetFunction(const string& functionName)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsLoaded(), nullptr, "Dynamiclib::GetFunction fail libname:%{public}s not loaded", libName_.c_str());
+
+    void* handle = dlsym(libHandle_, functionName.c_str());
+    CHECK_ERROR_RETURN_RET_LOG(
+        handle == nullptr, nullptr, "Dynamiclib::GetFunction fail function:%{public}s not find", functionName.c_str());
+    MEDIA_INFO_LOG("Dynamiclib::GetFunction %{public}s success", functionName.c_str());
     return handle;
 }
+shared_ptr<Dynamiclib> CameraDynamicLoader::GetDynamiclibNoLock(const string& libName)
+{
+    auto loadedIterator = g_dynamiclibMap.find(libName);
+    if (loadedIterator != g_dynamiclibMap.end()) {
+        MEDIA_INFO_LOG("Dynamiclib::GetDynamiclib %{public}s by cache", libName.c_str());
+        return loadedIterator->second;
+    }
 
-void CameraDynamicLoader::CloseDynamicHandle(std::string dynamicLibrary)
+    shared_ptr<Dynamiclib> dynamiclib = nullptr;
+    auto loadedWeakIterator = g_weakDynamiclibMap.find(libName);
+    if (loadedWeakIterator != g_weakDynamiclibMap.end()) {
+        dynamiclib = loadedWeakIterator->second.lock();
+    }
+    if (dynamiclib != nullptr) {
+        MEDIA_INFO_LOG("Dynamiclib::GetDynamiclib %{public}s by weak cache", libName.c_str());
+    } else {
+        dynamiclib = make_shared<Dynamiclib>(libName);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !dynamiclib->IsLoaded(), nullptr, "CameraDynamicLoader::GetDynamiclib name:%{public}s fail", libName.c_str());
+    g_dynamiclibMap.emplace(pair<const string, shared_ptr<Dynamiclib>>(libName, dynamiclib));
+    MEDIA_INFO_LOG("Dynamiclib::GetDynamiclib %{public}s load first", libName.c_str());
+    return dynamiclib;
+}
+
+shared_ptr<Dynamiclib> CameraDynamicLoader::GetDynamiclib(const string& libName)
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard loaderLock(libLock_);
-    if (!EndsWith(dynamicLibrary, librarySuffix)) {
-        MEDIA_ERR_LOG("CloseDynamicHandle with error name!");
+    lock_guard<mutex> lock(g_libMutex);
+    return GetDynamiclibNoLock(libName);
+}
+
+void CameraDynamicLoader::LoadDynamiclibAsync(const std::string& libName)
+{
+    CAMERA_SYNC_TRACE;
+    unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
+    MEDIA_INFO_LOG("CameraDynamicLoader::LoadDynamiclibAsync %{public}s", libName.c_str());
+    if (g_isAsyncLoading != AsyncLoadingState::NONE) {
+        MEDIA_INFO_LOG("CameraDynamicLoader::LoadDynamiclibAsync %{public}s is loading", libName.c_str());
         return;
     }
-    if (dynamicLibHandle_[dynamicLibrary] != nullptr) {
-        dlclose(dynamicLibHandle_[dynamicLibrary]);
-        dynamicLibHandle_[dynamicLibrary] = nullptr;
-        MEDIA_INFO_LOG("close library camera_dynamic success: %{public}s", dynamicLibrary.c_str());
-    }
+    g_isAsyncLoading = AsyncLoadingState::PREPARE;
+    thread asyncThread = thread([libName]() {
+        unique_lock<mutex> lock(g_libMutex);
+        {
+            unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
+            g_isAsyncLoading = AsyncLoadingState::LOADING;
+            g_asyncLiblockCondition.notify_all();
+        }
+        GetDynamiclibNoLock(libName);
+        {
+            unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
+            g_isAsyncLoading = AsyncLoadingState::NONE;
+        }
+        MEDIA_INFO_LOG("CameraDynamicLoader::LoadDynamiclibAsync %{public}s finish", libName.c_str());
+    });
+    asyncThread.detach();
+    g_asyncLiblockCondition.wait(asyncLock, []() { return g_isAsyncLoading != AsyncLoadingState::PREPARE; });
 }
-}  // namespace Camera
-}  // namespace OHOS
+
+void CameraDynamicLoader::FreeDynamiclib(const string& libName)
+{
+    CAMERA_SYNC_TRACE;
+    lock_guard<mutex> lock(g_libMutex);
+    auto loadedIterator = g_dynamiclibMap.find(libName);
+    if (loadedIterator == g_dynamiclibMap.end()) {
+        return;
+    }
+    MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}d", libName.c_str(),
+        static_cast<int32_t>(loadedIterator->second.use_count()));
+
+    weak_ptr<Dynamiclib> weaklib = loadedIterator->second;
+    g_weakDynamiclibMap[libName] = weaklib;
+    g_dynamiclibMap.erase(loadedIterator);
+}
+} // namespace CameraStandard
+} // namespace OHOS
