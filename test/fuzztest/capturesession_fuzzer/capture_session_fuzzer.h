@@ -37,6 +37,7 @@ void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
+void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 
 class SessionCallbackMock : public SessionCallback {
 public:
@@ -95,7 +96,7 @@ public:
     void OnAbilityChange() override {}
 };
 
-}
-}
-}
-#endif
+} //CaptureSessionFuzzer
+} //CameraStandard
+} //OHOS
+#endif //CAPTURE_SESSION_FUZZER_H

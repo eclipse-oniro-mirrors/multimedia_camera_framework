@@ -33,7 +33,7 @@ void Test_HandleSetCallback(uint8_t *rawData, size_t size);
 void CheckPermission();
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size);
 
-}
-}
-}
-#endif
+} //StreamCaptureStubFuzzer
+} //CameraStandard
+} //OHOS
+#endif //STREAM_CAPTURE_STUB_FUZZER_H

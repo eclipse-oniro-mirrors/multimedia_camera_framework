@@ -24,12 +24,12 @@ namespace CameraStandard {
 class CameraListenerStubFuzzer {
 public:
 static bool hasPermission;
-static CameraListenerStub *fuzz;
+static CameraListenerStub *fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //CAMERA_LISTENER_STUB_FUZZER_H

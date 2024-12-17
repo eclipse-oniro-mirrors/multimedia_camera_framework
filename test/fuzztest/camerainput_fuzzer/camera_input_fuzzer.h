@@ -37,7 +37,7 @@ public:
 void Test(uint8_t *rawData, size_t size);
 void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size);
 
-}
-}
-}
-#endif
+} //CameraInputFuzzer
+} //CameraStandard
+} //OHOS
+#endif //CAMERA_INPUT_FUZZER_H
