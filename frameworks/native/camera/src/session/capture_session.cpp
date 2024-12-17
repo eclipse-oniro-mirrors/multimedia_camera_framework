@@ -3652,7 +3652,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
         focusDistance = 1.0;
     }
     float value = (1 - focusDistance) * GetMinimumFocusDistance();
-    focusDistance_ = value;
+    focusDistance_ = focusDistance;
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusDistance meta set focusDistance = %{public}f", value);
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LENS_FOCUS_DISTANCE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
