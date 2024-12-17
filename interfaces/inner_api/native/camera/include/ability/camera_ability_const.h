@@ -103,6 +103,19 @@ enum ColorSpace {
     P3_PQ_LIMIT = 22 // CM_P3_PQ_LIMIT
 };
 
+enum class PortraitThemeType {
+    NATURAL = 0,
+    DELICATE,
+    STYLISH
+};
+
+enum class VideoRotation {
+    ROTATION_0 = 0,
+    ROTATION_90 = 90,
+    ROTATION_180 = 180,
+    ROTATION_270 = 270
+};
+
 extern const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_;
 extern const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> g_metaExposureModeMap_;
 extern const std::unordered_map<camera_focus_mode_enum_t, FocusMode> g_metaFocusModeMap_;
@@ -119,6 +132,9 @@ extern const std::unordered_map<ColorEffect, camera_xmage_color_type_t> g_fwkCol
 extern const std::unordered_map<FlashMode, camera_flash_mode_enum_t> g_fwkFlashModeMap_;
 extern const std::unordered_map<BeautyType, camera_beauty_type_t> g_fwkBeautyTypeMap_;
 extern const std::unordered_map<BeautyType, camera_device_metadata_tag_t> g_fwkBeautyAbilityMap_;
+extern const std::unordered_map<PortraitThemeType, CameraPortraitThemeTypes> g_fwkPortraitThemeTypeMap_;
+extern const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_metaPortraitThemeTypeMap_;
+extern const std::vector<VideoRotation> g_fwkVideoRotationVector_;
 
 template <typename S, typename T>
 void g_transformValidData(
