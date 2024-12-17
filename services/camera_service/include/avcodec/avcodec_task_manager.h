@@ -60,7 +60,7 @@ public:
     sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
         vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId);
     void SubmitTask(function<void()> task);
-    void SetVideoFd(int64_t timestamp, PhotoAssetIntf* photoAssetProxy, int32_t captureId);
+    void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId);
     void Stop();
     void ClearTaskResource();
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
@@ -89,7 +89,7 @@ private:
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
     std::atomic<bool> isActive_ { true };
-    map<int32_t, std::pair<int64_t, PhotoAssetIntf*>> videoFdMap_;
+    map<int32_t, std::pair<int64_t, std::shared_ptr<PhotoAssetIntf>>> videoFdMap_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     int64_t preBufferDuration_ = NANOSEC_RANGE;
     int64_t postBufferDuration_ = NANOSEC_RANGE;

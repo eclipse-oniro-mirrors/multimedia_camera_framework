@@ -16,9 +16,6 @@
 #ifndef OHOS_CAMERA_DYNAMIC_LOADER_H
 #define OHOS_CAMERA_DYNAMIC_LOADER_H
 
-#include <map>
-#include <memory>
-#include <mutex>
 #include <string>
 
 namespace OHOS {
@@ -27,36 +24,32 @@ using namespace std;
 
 const std::string MEDIA_LIB_SO = "libcamera_dynamic_medialibrary.z.so";
 
-class CameraDynamicLoader {
+class Dynamiclib {
 public:
-    static CameraDynamicLoader* GetInstance()
-    {
-        std::call_once(onceFlag, []() { instance.reset(new CameraDynamicLoader()); });
-        return instance.get();
-    };
-    ~CameraDynamicLoader();
-
-    void* OpenDynamicHandle(std::string dynamicLibrary);
-    void CloseDynamicHandle(std::string dynamicLibrary);
-    void* GetFunction(std::string dynamicLibrary, std::string function);
-    inline bool EndsWith(const std::string& str, const std::string& suffix)
-    {
-        if (str.length() >= suffix.length()) {
-            return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
-        }
-        return false;
-    }
+    explicit Dynamiclib(const std::string& libName);
+    ~Dynamiclib();
+    bool IsLoaded();
+    void* GetFunction(const std::string& functionName);
 
 private:
-    CameraDynamicLoader(const CameraDynamicLoader&) = delete;
-    CameraDynamicLoader& operator=(const CameraDynamicLoader&) = delete;
-    static std::unique_ptr<CameraDynamicLoader> instance;
-    static std::once_flag onceFlag;
-    CameraDynamicLoader();
-    std::map<std::string, void *> dynamicLibHandle_;
-    std::recursive_mutex libLock_;
+    std::string libName_;
+    void* libHandle_ = nullptr;
 };
 
-}  // namespace Camera
-}  // namespace OHOS
+class CameraDynamicLoader {
+public:
+    static std::shared_ptr<Dynamiclib> GetDynamiclib(const std::string& libName);
+    static void LoadDynamiclibAsync(const std::string& libName);
+    static void FreeDynamiclib(const std::string& libName);
+
+private:
+    explicit CameraDynamicLoader() = delete;
+    CameraDynamicLoader(const CameraDynamicLoader&) = delete;
+    CameraDynamicLoader& operator=(const CameraDynamicLoader&) = delete;
+
+    static std::shared_ptr<Dynamiclib> GetDynamiclibNoLock(const std::string& libName);
+};
+
+} // namespace CameraStandard
+} // namespace OHOS
 #endif // OHOS_CAMERA_DYNAMIC_LOADER_H

@@ -74,6 +74,7 @@ ohos_shared_library("camera_service") {
     "src/hstream_depth_data.cpp",
     "src/hstream_metadata.cpp",
     "src/hstream_repeat.cpp",
+    "src/media_library/photo_asset_proxy.cpp",
     "src/moving_photo/moving_photo_surface_wrapper.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
     "src/smooth_zoom/smooth_zoom.cpp",

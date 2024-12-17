@@ -279,10 +279,6 @@ public:
     void ReleaseStreams();
     void StopMovingPhoto();
 
-    static void OpenMediaLib();
-    static void DelayCloseMediaLib();
-    static std::optional<uint32_t> closeTimerId_;
-    static std::mutex g_mediaTaskLock_;
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
 
