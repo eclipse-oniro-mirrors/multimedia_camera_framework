@@ -14,6 +14,8 @@
  */
 
 #include "camera_ndk_unittest.h"
+#include "camera/camera.h"
+#include "camera/camera_device.h"
 #include "camera_log.h"
 #include "test_common.h"
 #include "ipc_skeleton.h"
@@ -30,6 +32,9 @@
 #include "photo_native_impl.h"
 #include "camera_util.h"
 #include "camera_error_code.h"
+#include <cstdlib>
+#include <new>
+#include <string>
 using namespace testing::ext;
 
 namespace OHOS {
@@ -7058,6 +7063,31 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_115, TestSize.Level0)
     err = CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS;
     ret = FrameworkToNdkCameraError(err);
     EXPECT_EQ(ret, CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test to get remote device name and type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get remote device name and type
+ */
+HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_116, TestSize.Level0)
+{
+    char* name = nullptr;
+    std::string cid = "272873888fe576592633a793fa235ad9f502f4115828d12abe459df5160e710e";
+    if (strcpy_s(cameraDevice->cameraId, cid.size(), cid.c_str()) != EOK) {
+        EXPECT_NE(std::string(name), "");
+    }
+    Camera_ErrorCode ret = OH_CameraDevice_GetHostDeviceName(cameraDevice, &name);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(std::string(name), "");
+
+    Camera_HostDeviceType type = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
+    ret = OH_CameraDevice_GetHostDeviceType(cameraDevice, &type);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_NE(type, 0);
 }
 
 } // CameraStandard
