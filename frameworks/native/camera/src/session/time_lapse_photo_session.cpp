@@ -53,7 +53,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
     auto cameraObj = inputDevice->GetCameraDeviceInfo();
     if (!cameraObj) {
         return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    }                      
+    }              
     MEDIA_DEBUG_LOG("%{public}s: no physicalCamera, using current camera device:%{public}s", __FUNCTION__,
         cameraObj->GetID().c_str());
     return cameraObj->GetMetadata();
