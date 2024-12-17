@@ -24,7 +24,7 @@ namespace TimeLapsePhotoSessionFuzzer {
 
 void Test(uint8_t *rawData, size_t size);
 
-}
-}
-}
-#endif
+} //TimeLapsePhotoSessionFuzzer
+} //CameraStandard
+} //OHOS
+#endif //TIME_LAPSE_PHOTO_SESSION_FUZZER_H

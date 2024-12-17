@@ -27,7 +27,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraListenerStubFuzzer::hasPermission = false;
-CameraListenerStub *CameraListenerStubFuzzer::fuzz;
+CameraListenerStub *CameraListenerStubFuzzer::fuzz_;
 
 void CameraListenerStubFuzzer::CheckPermission()
 {
@@ -53,8 +53,8 @@ void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
-        fuzz = new CameraListenerStub();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new CameraListenerStub();
     }
 
     MessageParcel data;
@@ -64,31 +64,31 @@ void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
     MessageOption option;
 
     data.RewindRead(0);
-    fuzz->AddAuthInfo(data, reply, code);
+    fuzz_->AddAuthInfo(data, reply, code);
 
     data.RewindRead(0);
-    fuzz->InvokerDataBusThread(data, reply);
+    fuzz_->InvokerDataBusThread(data, reply);
 
     data.RewindRead(0);
-    fuzz->InvokerThread(code, data, reply, option);
+    fuzz_->InvokerThread(code, data, reply, option);
 
     data.RewindRead(0);
-    fuzz->Marshalling(data);
+    fuzz_->Marshalling(data);
 
     data.RewindRead(0);
-    fuzz->NoticeServiceDie(data, reply, option);
+    fuzz_->NoticeServiceDie(data, reply, option);
 
     data.RewindRead(0);
-    fuzz->SendRequest(code, data, reply, option);
+    fuzz_->SendRequest(code, data, reply, option);
 
     data.RewindRead(0);
-    fuzz->ProcessProto(code, data, reply, option);
+    fuzz_->ProcessProto(code, data, reply, option);
 
     data.RewindRead(0);
-    fuzz->OnRemoteDump(code, data, reply, option);
+    fuzz_->OnRemoteDump(code, data, reply, option);
 
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
 } // namespace CameraStandard

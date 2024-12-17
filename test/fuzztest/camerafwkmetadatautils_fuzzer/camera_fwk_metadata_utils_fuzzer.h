@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STREAM_CAPTURE_STUB_FUZZER_H
-#define STREAM_CAPTURE_STUB_FUZZER_H
+#ifndef CAMERA_FWK_METADATA_UTILS_FUZZER_H
+#define CAMERA_FWK_METADATA_UTILS_FUZZER_H
 
 #include "camera_fwk_metadata_utils.h"
 
@@ -29,6 +29,6 @@ static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //CAMERA_FWK_METADATA_UTILS_FUZZER_H

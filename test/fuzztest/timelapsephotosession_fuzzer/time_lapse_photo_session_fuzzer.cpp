@@ -27,7 +27,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace TimeLapsePhotoSessionFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t NUM_2 = 2;
+const int32_t NUM_TWO = 2;
 void GetPermission()
 {
     uint64_t tokenId;
@@ -480,7 +480,7 @@ void Test(uint8_t *rawData, size_t size)
     session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
     session->BeginConfig();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "TimeLapsePhotoSessionFuzzer: GetSupportedCameras Error");
     camera = cameras[0];
     CHECK_ERROR_RETURN_LOG(!camera, "TimeLapsePhotoSessionFuzzer: Camera is null");
     sptr<CaptureInput> input = manager->CreateCameraInput(camera);

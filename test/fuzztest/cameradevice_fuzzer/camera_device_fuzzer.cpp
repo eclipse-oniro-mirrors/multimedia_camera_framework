@@ -16,6 +16,7 @@
 #include "camera_device_fuzzer.h"
 #include "camera_log.h"
 #include "camera_xcollie.h"
+#include "camera_dynamic_loader.h"
 #include "input/camera_manager.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
@@ -26,16 +27,17 @@
 #include "token_setproc.h"
 using namespace std;
 
-const uint8_t TEST_NUM = 5;
+const uint8_t TEST_NUM = 6;
 const uint8_t TEST_INDEX_ONE = 1;
 const uint8_t TEST_INDEX_TWO = 2;
 const uint8_t TEST_INDEX_THREE = 3;
+const uint8_t TEST_INDEX_FOUR = 4;
 
 namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const size_t LIMITCOUNT = 4;
-const int32_t NUM_2 = 2;
+const int32_t NUM_TWO = 2;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 bool g_isCameraDevicePermission = false;
@@ -83,7 +85,7 @@ void PrepareHCameraDevice()
 
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < NUM_2) {
+    if (rawData == nullptr || size < NUM_TWO) {
         return;
     }
     CameraDeviceFuzzTestGetPermission();
@@ -126,7 +128,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
 void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < NUM_2) {
+    if (rawData == nullptr || size < NUM_TWO) {
         return;
     }
     CameraDeviceFuzzTestGetPermission();
@@ -229,7 +231,7 @@ void CameraDeviceFuzzTest2Case3(uint8_t *rawData, size_t size)
 
 void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < NUM_2) {
+    if (rawData == nullptr || size < NUM_TWO) {
         return;
     }
     MessageParcel data;
@@ -274,13 +276,13 @@ void GetPermission()
 
 void Test3(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < NUM_2) {
+    if (rawData == nullptr || size < NUM_TWO) {
         return;
     }
     GetPermission();
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     sptr<CameraDevice> camera = cameras[data.ReadUint32() % cameras.size()];
@@ -299,6 +301,7 @@ void Test3(uint8_t *rawData, size_t size)
     camera->GetZoomRatioRange();
     camera->GetExposureBiasRange();
     camera->GetModuleType();
+    camera->GetUsedAsPosition();
     CameraFormat format = static_cast<CameraFormat>(data.ReadInt32());
     auto capability = manager->GetSupportedOutputCapability(camera);
     CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
@@ -306,11 +309,21 @@ void Test3(uint8_t *rawData, size_t size)
     camera->GetMaxSizeProfile(profiles, data.ReadFloat(), format);
     auto profiles2 = capability->GetVideoProfiles();
     camera->GetMaxSizeProfile(profiles2, data.ReadFloat(), format);
+    camera->SetProfile(capability);
+    auto modeName = *(reinterpret_cast<const int32_t*>(rawData));
+    camera->SetProfile(capability, modeName);
+    camera->SetCameraDeviceUsedAsPosition(CameraPosition::CAMERA_POSITION_FRONT);
+    camera->GetSupportedFoldStatus();
+    std::string cameraID(reinterpret_cast<const char*>(rawData), size);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    std::shared_ptr<CameraDevice> cameraDevice =
+        std::make_shared<CameraDevice>(cameraID, metadata);
 }
 
 void TestXCollie(uint8_t *rawData, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_2);
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_TWO);
     MessageParcel data;
     data.WriteRawData(rawData, size);
     string tag = data.ReadString();
@@ -331,9 +344,21 @@ void TestXCollie(uint8_t *rawData, size_t size)
     }
 }
 
+void TestDynamicLoader(uint8_t *rawData, size_t size)
+{
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_TWO);
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+
+    string libName = data.ReadString();
+    CameraDynamicLoader::GetDynamiclib(libName);
+    CameraDynamicLoader::LoadDynamiclibAsync(libName);
+    CameraDynamicLoader::FreeDynamiclib(libName);
+}
+
 void TestCameraDeviceServiceCallback(uint8_t *rawData, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_2);
+    CHECK_ERROR_RETURN(rawData == nullptr || size < NUM_TWO);
     MessageParcel data;
     data.WriteRawData(rawData, size);
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
@@ -394,10 +419,12 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
         case TEST_INDEX_THREE:
             OHOS::CameraStandard::Test3(data, size);
             break;
-        default:
+        case TEST_INDEX_FOUR:
             OHOS::CameraStandard::TestXCollie(data, size);
+            break;
+        default:
+            OHOS::CameraStandard::TestDynamicLoader(data, size);
             break;
     }
     return 0;
 }
-

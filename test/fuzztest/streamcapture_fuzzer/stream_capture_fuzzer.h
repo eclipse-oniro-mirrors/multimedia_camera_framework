@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef CAMERADEVICE_FUZZER_H
-#define CAMERADEVICE_FUZZER_H
+#ifndef STREAM_CAPTURE_FUZZER_H
+#define STREAM_CAPTURE_FUZZER_H
 #define FUZZ_PROJECT_NAME "streamcapture_fuzzer"
 #include <iostream>
 #include "surface.h"
@@ -24,7 +24,7 @@ namespace OHOS {
 namespace CameraStandard {
 void StreamCaptureFuzzTest(uint8_t *rawData, size_t size);
 void StreamCaptureFuzzTestGetPermission();
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //STREAM_CAPTURE_FUZZER_H
 

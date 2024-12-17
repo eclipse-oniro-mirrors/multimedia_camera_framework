@@ -35,7 +35,7 @@ const int32_t PHOTO_FORMAT = 2000;
 const RepeatStreamType REPEAT_STREAM_TYPE = RepeatStreamType::PREVIEW;
 
 bool g_hasPermission = false;
-HStreamRepeatStub *fuzz = nullptr;
+HStreamRepeatStub *fuzz_ = nullptr;
 
 void CheckPermission()
 {
