@@ -1272,6 +1272,8 @@ std::shared_ptr<ARCallback> CaptureSession::GetARCallback()
 int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!changedMetadata,
+        CameraErrorCode::INVALID_ARGUMENT, "CaptureSession::UpdateSetting changedMetadata is nullptr");
     auto metadataHeader = changedMetadata->get();
     uint32_t count = Camera::GetCameraMetadataItemCount(metadataHeader);
     if (count == 0) {
@@ -1280,11 +1282,14 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
     }
 
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || ((sptr<CameraInput>&)inputDevice)->GetCameraDevice() == nullptr) {
+    if (!inputDevice) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed inputDevice is nullptr");
         return CameraErrorCode::SUCCESS;
     }
-    int32_t ret = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice()->UpdateSetting(changedMetadata);
+    auto cameraDeviceObj = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!cameraDeviceObj,
+        CameraErrorCode::SUCCESS, "CaptureSession::UpdateSetting Failed cameraDeviceObj is nullptr");
+    int32_t ret = cameraDeviceObj->UpdateSetting(changedMetadata);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
         "CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
 
@@ -2646,7 +2651,7 @@ int32_t CaptureSession::GetZoomRatio(float& zoomRatio)
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+    if (!inputDevice) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
         return CameraErrorCode::SUCCESS;
     }
@@ -2660,7 +2665,10 @@ int32_t CaptureSession::GetZoomRatio(float& zoomRatio)
     uint32_t zoomRatioMultiple = 100;
     uint32_t metaInZoomRatio = 1 * zoomRatioMultiple;
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &metaInZoomRatio, count);
-    int32_t ret = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice()->GetStatus(metaIn, metaOut);
+    auto cameraDeviceObj = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!cameraDeviceObj,
+        CameraErrorCode::SUCCESS, "CaptureSession::GetZoomRatio cameraDeviceObj is nullptr");
+    int32_t ret = cameraDeviceObj->GetStatus(metaIn, metaOut);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
         "CaptureSession::GetZoomRatio Failed to Get ZoomRatio, errCode = %{public}d", ret);
     camera_metadata_item_t item;
