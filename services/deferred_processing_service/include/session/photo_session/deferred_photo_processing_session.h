@@ -15,12 +15,8 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
 #define OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
-#define EXPORT_API __attribute__((visibility("default")))
 
 #include "deferred_photo_processing_session_stub.h"
-#include "ideferred_photo_processing_session_callback.h"
-#include "task_manager.h"
-#include "deferred_photo_processor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,27 +34,25 @@ public:
         bool discardable_;
         DpsMetadata metadata_;
     };
-    EXPORT_API DeferredPhotoProcessingSession(
-        const int32_t userId, std::shared_ptr<DeferredPhotoProcessor> deferredPhotoProcessor,
-        TaskManager* taskManager, sptr<IDeferredPhotoProcessingSessionCallback> callback);
 
+    DeferredPhotoProcessingSession(const int32_t userId);
     ~DeferredPhotoProcessingSession();
+
     int32_t BeginSynchronize() override;
     int32_t EndSynchronize() override;
     int32_t AddImage(const std::string& imageId, DpsMetadata& metadata, bool discardable) override;
     int32_t RemoveImage(const std::string& imageId, bool restorable) override;
     int32_t RestoreImage(const std::string& imageId) override;
-    int32_t ProcessImage(const std::string& appName, const std::string imageId) override;
+    int32_t ProcessImage(const std::string& appName, const std::string& imageId) override;
     int32_t CancelProcessImage(const std::string& imageId) override;
 
 private:
     void ReportEvent(const std::string& imageId, int32_t event);
+
+    std::mutex mutex_;
     const int32_t userId_;
     std::atomic<bool> inSync_;
-    std::shared_ptr<DeferredPhotoProcessor> processor_;
-    TaskManager* taskManager_;
-    sptr<IDeferredPhotoProcessingSessionCallback> callback_;
-    std::unordered_map<std::string, std::shared_ptr<PhotoInfo>> imageIds_;
+    std::unordered_map<std::string, std::shared_ptr<PhotoInfo>> imageIds_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

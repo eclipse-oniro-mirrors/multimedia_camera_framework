@@ -34,66 +34,63 @@ std::shared_ptr<SessionManager> SessionManager::Create()
     return sessionManager;
 }
 
-SessionManager::SessionManager()
-    : initialized_(false),
-      photoSessionInfos_(),
-      coordinator_(std::make_shared<SessionCoordinator>())
+SessionManager::SessionManager() : coordinator_(CreateShared<SessionCoordinator>())
 {
     DP_DEBUG_LOG("entered.");
 }
 
 SessionManager::~SessionManager()
 {
-    DP_DEBUG_LOG("entered.");
-    initialized_ = false;
-    coordinator_ = nullptr;
+    DP_INFO_LOG("entered.");
     photoSessionInfos_.clear();
     videoSessionInfos_.clear();
 }
 
 void SessionManager::Initialize()
 {
-    coordinator_->Initialize();
-    initialized_ = true;
-    return;
+    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Initialize());
+    initialized_.store(true);
 }
 
 void SessionManager::Start()
 {
-    coordinator_->Start();
-    return;
+    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Start());
 }
 
 void SessionManager::Stop()
 {
-    coordinator_->Stop();
-    return;
+    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Stop());
 }
 
 sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(const int32_t userId,
-    const sptr<IDeferredPhotoProcessingSessionCallback>& callback, std::shared_ptr<DeferredPhotoProcessor> processor,
-    TaskManager* taskManager)
+    const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
-    DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %{public}d", userId);
-    for (auto it = photoSessionInfos_.begin(); it != photoSessionInfos_.end(); ++it) {
-        DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", it->first);
-    }
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto iter = photoSessionInfos_.find(userId);
-    if (iter != photoSessionInfos_.end()) {
-        DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessorSession failed due to photoSession already existed");
-        sptr<SessionInfo> sessionInfo = iter->second;
+    DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
+    std::lock_guard<std::mutex> lock(photoSessionMutex_);
+    auto sessionInfo = GetPhotoInfo(userId);
+    if (sessionInfo == nullptr) {
+        DP_INFO_LOG("Photo session creat susses");
+        sessionInfo = sptr<PhotoSessionInfo>::MakeSptr(userId, callback);
+        photoSessionInfos_.emplace(userId, sessionInfo);
+    } else {
+        DP_DEBUG_LOG("Photo session already existed");
         sessionInfo->SetCallback(callback);
-        coordinator_->NotifySessionCreated(userId, callback, taskManager);
-        return sessionInfo->GetDeferredPhotoProcessingSession();
     }
-    sptr<SessionInfo> sessionInfo(new SessionInfo(userId, callback, this));
-    sessionInfo->CreateDeferredPhotoProcessingSession(userId, processor, taskManager, callback);
-    coordinator_->NotifySessionCreated(userId, callback, taskManager);
-    photoSessionInfos_[userId] = sessionInfo;
+    auto ret = DPS_SendUrgentCommand<AddPhotoSessionCommand>(sessionInfo);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, nullptr, "AddPhotoSession failed, ret: %{public}d", ret);
+    
     return sessionInfo->GetDeferredPhotoProcessingSession();
+}
+
+sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
+{
+    auto it = photoSessionInfos_.find(userId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(it == photoSessionInfos_.end(), nullptr,
+        "Not find PhotoSessionInfo for userId: %{public}d", userId);
+    
+    return it->second;
 }
 
 std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
@@ -104,10 +101,8 @@ std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
 
 sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const int32_t userId)
 {
-    auto iter = photoSessionInfos_.find(userId);
-    if (iter != photoSessionInfos_.end()) {
-        DP_INFO_LOG("SessionManager::GetCallback");
-        sptr<SessionInfo> sessionInfo = iter->second;
+    auto sessionInfo = GetPhotoInfo(userId);
+    if (sessionInfo) {
         return sessionInfo->GetRemoteCallback();
     }
     return nullptr;
@@ -118,15 +113,15 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(!initialized_.load(), nullptr, "failed due to uninitialized.");
 
-    DP_INFO_LOG("Create DeferredVideoProcessingSession for userId: %{public}d", userId);
+    DP_INFO_LOG("Create video session for userId: %{public}d", userId);
     std::lock_guard<std::mutex> lock(videoSessionMutex_);
-    auto sessionInfo = GetSessionInfo(userId);
+    auto sessionInfo = GetVideoInfo(userId);
     if (sessionInfo == nullptr) {
-        DP_INFO_LOG("DeferredVideoProcessingSession susses");
+        DP_INFO_LOG("Video session creat susses");
         sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId, callback);
         videoSessionInfos_.emplace(userId, sessionInfo);
     } else {
-        DP_INFO_LOG("DeferredVideoProcessingSession already existed");
+        DP_DEBUG_LOG("Video session already existed");
         sessionInfo->SetCallback(callback);
     }
     auto ret = DPS_SendUrgentCommand<AddVideoSessionCommand>(sessionInfo);
@@ -135,7 +130,7 @@ sptr<IDeferredVideoProcessingSession> SessionManager::CreateDeferredVideoProcess
     return sessionInfo->GetDeferredVideoProcessingSession();
 }
 
-sptr<VideoSessionInfo> SessionManager::GetSessionInfo(const int32_t userId)
+sptr<VideoSessionInfo> SessionManager::GetVideoInfo(const int32_t userId)
 {
     auto it = videoSessionInfos_.find(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == videoSessionInfos_.end(), nullptr,
@@ -147,13 +142,6 @@ sptr<VideoSessionInfo> SessionManager::GetSessionInfo(const int32_t userId)
 std::shared_ptr<SessionCoordinator> SessionManager::GetSessionCoordinator()
 {
     return coordinator_;
-}
-
-void SessionManager::OnCallbackDied(const int32_t userId)
-{
-    if (photoSessionInfos_.count(userId) != 0) {
-        coordinator_->NotifyCallbackDestroyed(userId);
-    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

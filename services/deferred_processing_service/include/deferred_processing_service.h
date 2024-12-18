@@ -47,11 +47,7 @@ public:
         const std::string& cameraId, bool running, bool isSystemCamera);
 
 private:
-    TaskManager* GetPhotoTaskManager(const int32_t userId);
-
     std::atomic<bool> initialized_ {false};
-    std::unordered_map<int, std::shared_ptr<TaskManager>> photoTaskManagerMap_;
-    std::mutex taskManagerMutex_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

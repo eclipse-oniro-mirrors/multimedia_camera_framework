@@ -30,9 +30,9 @@ class IImageProcessCallbacks {
 public:
     virtual ~IImageProcessCallbacks() = default;
     virtual void OnProcessDone(const int32_t userId,
-        const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) = 0;
+        const std::string& imageId, const std::shared_ptr<BufferInfo>& bufferInfo) = 0;
     virtual void OnProcessDoneExt(int userId, const std::string& imageId,
-        std::shared_ptr<BufferInfoExt> bufferInfo) = 0;
+        const std::shared_ptr<BufferInfoExt>& bufferInfo) = 0;
     virtual void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) = 0;
     virtual void OnStateChanged(const int32_t userId, DpsStatus statusCode) = 0;
 };

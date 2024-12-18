@@ -25,27 +25,31 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class SessionManager;
 
-class SessionInfo : public RefBase {
+class PhotoSessionInfo : public RefBase {
 public:
-    SessionInfo(const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
-        SessionManager* sessionManager);
-    virtual ~SessionInfo();
+    PhotoSessionInfo(const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
+    virtual ~PhotoSessionInfo();
 
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
-        std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
-        sptr<IDeferredPhotoProcessingSessionCallback> callback);
+    int32_t Initialize();
     sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
     sptr<IDeferredPhotoProcessingSessionCallback> GetRemoteCallback();
     void OnCallbackDied();
     void SetCallback(const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
 
+    inline int32_t GetUserId()
+    {
+        return userId_;
+    }
+    
+    bool isCreate_ {true};
 private:
     class CallbackDeathRecipient;
+
     const int32_t userId_;
+    std::mutex callbackMutex_;
+    sptr<IDeferredPhotoProcessingSession> session_ {nullptr};
     sptr<IDeferredPhotoProcessingSessionCallback> callback_;
-    SessionManager* sessionManager_;
-    sptr<IDeferredPhotoProcessingSession> session_;
-    sptr<CallbackDeathRecipient> callbackDeathRecipient_;
+    sptr<CallbackDeathRecipient> deathRecipient_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

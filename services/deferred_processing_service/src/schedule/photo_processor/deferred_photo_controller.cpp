@@ -15,11 +15,12 @@
 
 #include "deferred_photo_controller.h"
 
+#include "basic_definitions.h"
+#include "dp_timer.h"
 #include "dp_utils.h"
 #include "dp_log.h"
 #include "events_monitor.h"
 #include "dps_event_report.h"
-#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,32 +33,30 @@ namespace DeferredProcessing {
 
 class DeferredPhotoController::EventsListener : public IEventsListener {
 public:
-    explicit EventsListener(DeferredPhotoController* controller)
+    explicit EventsListener(const std::weak_ptr<DeferredPhotoController>& controller)
         : controller_(controller)
     {
         DP_DEBUG_LOG("entered");
     }
-    ~EventsListener()
-    {
-        DP_DEBUG_LOG("entered");
-        controller_ = nullptr;
-    }
+    ~EventsListener() = default;
 
     void OnEventChange(EventType event, int32_t value) override
     {
         DP_INFO_LOG("entered, event: %{public}d", event);
+        auto controller = controller_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "photo controller is nullptr.");
         switch (event) {
             case EventType::CAMERA_SESSION_STATUS_EVENT:
-                controller_->NotifyCameraStatusChanged(static_cast<CameraSessionStatus>(value));
+                controller->NotifyCameraStatusChanged(static_cast<CameraSessionStatus>(value));
                 break;
-            case EventType::HDI_STATUS_EVENT:
-                controller_->NotifyHdiStatusChanged(static_cast<HdiStatus>(value));
+            case EventType::PHOTO_HDI_STATUS_EVENT:
+                controller->NotifyHdiStatusChanged(static_cast<HdiStatus>(value));
                 break;
             case EventType::MEDIA_LIBRARY_STATUS_EVENT:
-                controller_->NotifyMediaLibStatusChanged(static_cast<MediaLibraryStatus>(value));
+                controller->NotifyMediaLibStatusChanged(static_cast<MediaLibraryStatus>(value));
                 break;
-            case EventType::SYSTEM_PRESSURE_LEVEL_EVENT:
-                controller_->NotifyPressureLevelChanged(static_cast<SystemPressureLevel>(value));
+            case EventType::THERMAL_LEVEL_STATUS_EVENT:
+                controller->NotifyPressureLevelChanged(ConvertPressureLevel(value));
                 break;
             default:
                 break;
@@ -66,88 +65,99 @@ public:
     }
 
 private:
-    DeferredPhotoController* controller_;
+    std::weak_ptr<DeferredPhotoController> controller_;
+
+    SystemPressureLevel ConvertPressureLevel(int32_t level)
+    {
+        if (level < LEVEL_0 || level > LEVEL_5) {
+            return SystemPressureLevel::SEVERE;
+        }
+        SystemPressureLevel eventLevel = SystemPressureLevel::SEVERE;
+        switch (level) {
+            case LEVEL_0:
+            case LEVEL_1:
+                eventLevel = SystemPressureLevel::NOMINAL;
+                break;
+            case LEVEL_2:
+            case LEVEL_3:
+            case LEVEL_4:
+                eventLevel = SystemPressureLevel::FAIR;
+                break;
+            default:
+                eventLevel = SystemPressureLevel::SEVERE;
+                break;
+        }
+        return eventLevel;
+    }
 };
 
 class DeferredPhotoController::PhotoJobRepositoryListener : public IPhotoJobRepositoryListener {
 public:
-    explicit PhotoJobRepositoryListener(DeferredPhotoController* controller)
+    explicit PhotoJobRepositoryListener(const std::weak_ptr<DeferredPhotoController>& controller)
         : controller_(controller)
     {
         DP_DEBUG_LOG("entered");
     }
-    ~PhotoJobRepositoryListener()
-    {
-        DP_DEBUG_LOG("entered");
-        controller_ = nullptr;
-    }
+    ~PhotoJobRepositoryListener() = default;
 
     void OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr) override
     {
-        controller_->OnPhotoJobChanged(priorityChanged, statusChanged, jobPtr);
+        auto controller = controller_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(controller == nullptr, "photo controller is nullptr.");
+        controller->OnPhotoJobChanged(priorityChanged, statusChanged, jobPtr);
     }
 
 private:
-    DeferredPhotoController* controller_;
+    std::weak_ptr<DeferredPhotoController> controller_;
 };
 
-DeferredPhotoController::DeferredPhotoController(const int32_t userId, std::shared_ptr<PhotoJobRepository> repository,
-    std::shared_ptr<DeferredPhotoProcessor> processor)
+DeferredPhotoController::DeferredPhotoController(const int32_t userId,
+    const std::shared_ptr<PhotoJobRepository>& repository, const std::shared_ptr<DeferredPhotoProcessor>& processor)
     : userId_(userId),
-      callbackHandle_(0),
-      isWaitForUser_(false),
-      scheduleState_(DpsStatus::DPS_SESSION_STATE_IDLE),
       photoJobRepository_(repository),
-      photoProcessor_(processor),
-      userInitiatedStrategy_(nullptr),
-      backgroundStrategy_(nullptr),
-      eventsListener_(nullptr),
-      photoJobRepositoryListener_(nullptr)
+      photoProcessor_(processor)
 {
     DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
-    //创建策略
-    userInitiatedStrategy_ = std::make_unique<UserInitiatedStrategy>(repository);
-    backgroundStrategy_ = std::make_unique<BackgroundStrategy>(repository);
-    //注册事件监听
-    eventsListener_ = std::make_shared<EventsListener>(this);
-    EventsMonitor::GetInstance().RegisterEventsListener(userId_, {EventType::CAMERA_SESSION_STATUS_EVENT,
-        EventType::HDI_STATUS_EVENT, EventType::MEDIA_LIBRARY_STATUS_EVENT, EventType::SYSTEM_PRESSURE_LEVEL_EVENT},
-        eventsListener_);
-    //注册任务监听
-    photoJobRepositoryListener_ = std::make_shared<PhotoJobRepositoryListener>(this);
-    photoJobRepository_->RegisterJobListener(photoJobRepositoryListener_);
 }
 
 DeferredPhotoController::~DeferredPhotoController()
 {
     DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
-    photoProcessor_ = nullptr;
-    photoJobRepository_ = nullptr;
-    userInitiatedStrategy_ = nullptr;
-    backgroundStrategy_ = nullptr;
-    eventsListener_ = nullptr;
 }
 
 void DeferredPhotoController::Initialize()
 {
     DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
+    //创建策略
+    userInitiatedStrategy_ = std::make_unique<UserInitiatedStrategy>(photoJobRepository_);
+    backgroundStrategy_ = std::make_unique<BackgroundStrategy>(photoJobRepository_);
+    //注册事件监听
+    eventsListener_ = std::make_shared<EventsListener>(weak_from_this());
+    EventsMonitor::GetInstance().RegisterEventsListener(userId_, {
+        EventType::CAMERA_SESSION_STATUS_EVENT,
+        EventType::PHOTO_HDI_STATUS_EVENT,
+        EventType::MEDIA_LIBRARY_STATUS_EVENT,
+        EventType::THERMAL_LEVEL_STATUS_EVENT},
+        eventsListener_);
+    //注册任务监听
+    photoJobRepositoryListener_ = std::make_shared<PhotoJobRepositoryListener>(weak_from_this());
+    photoJobRepository_->RegisterJobListener(photoJobRepositoryListener_);
+    photoProcessor_->Initialize();
 }
 
 void DeferredPhotoController::TryDoSchedule()
 {
-    DP_INFO_LOG("entered");
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto work = userInitiatedStrategy_->GetWork();
-    DP_INFO_LOG("userInitiatedStrategy_ get work: %{public}d", work != nullptr);
+    DP_INFO_LOG("DPS_PHOTO: UserInitiated get work: %{public}d", work != nullptr);
     if (work != nullptr) {
         StopWaitForUser();
     }
-    if (work == nullptr && !isWaitForUser_) {
+
+    if (work == nullptr && timeId_ == INVALID_TIMEID) {
         work = backgroundStrategy_->GetWork();
-        DP_INFO_LOG("backgroundStrategy_ get work: %{public}d", work != nullptr);
+        DP_INFO_LOG("DPS_PHOTO: Background get work: %{public}d", work != nullptr);
     }
-    DP_INFO_LOG("all strategy get work: %{public}d", work != nullptr);
-    NotifyScheduleState(work != nullptr);
+
     if (work == nullptr) {
         if (photoJobRepository_->GetRunningJobCounts() == 0) {
             // 重置底层性能模式，避免功耗增加
@@ -155,10 +165,10 @@ void DeferredPhotoController::TryDoSchedule()
         }
         return;
     }
+
     if ((photoJobRepository_->GetRunningJobCounts()) < (photoProcessor_->GetConcurrency(work->GetExecutionMode()))) {
         PostProcess(work);
     }
-    return;
 }
 
 void DeferredPhotoController::PostProcess(std::shared_ptr<DeferredPhotoWork> work)
@@ -177,7 +187,6 @@ void DeferredPhotoController::NotifyPressureLevelChanged(SystemPressureLevel lev
 {
     backgroundStrategy_->NotifyPressureLevelChanged(level);
     TryDoSchedule();
-    return;
 }
 
 void DeferredPhotoController::NotifyHdiStatusChanged(HdiStatus status)
@@ -185,7 +194,6 @@ void DeferredPhotoController::NotifyHdiStatusChanged(HdiStatus status)
     userInitiatedStrategy_->NotifyHdiStatusChanged(status);
     backgroundStrategy_->NotifyHdiStatusChanged(status);
     TryDoSchedule();
-    return;
 }
 
 void DeferredPhotoController::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
@@ -195,7 +203,6 @@ void DeferredPhotoController::NotifyMediaLibStatusChanged(MediaLibraryStatus sta
     if (status == MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
         TryDoSchedule();
     }
-    return;
 }
 
 void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus status)
@@ -208,13 +215,12 @@ void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus stat
     if (status == CameraSessionStatus::SYSTEM_CAMERA_CLOSED || status == CameraSessionStatus::NORMAL_CAMERA_CLOSED) {
         TryDoSchedule();
     }
-    return;
 }
 
 //来自任务仓库的事件
 void DeferredPhotoController::OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr)
 {
-    DP_INFO_LOG("entered, priorityChanged: %{public}d, statusChanged: %{public}d , imageId: %s",
+    DP_INFO_LOG("DPS_PHOTO: priorityChanged: %{public}d, statusChanged: %{public}d, imageId: %{public}s",
         priorityChanged, statusChanged, jobPtr->GetImageId().c_str());
     if (priorityChanged && statusChanged) {
         if (jobPtr->GetPrePriority() == PhotoJobPriority::HIGH && jobPtr->GetPreStatus() == PhotoJobStatus::RUNNING) {
@@ -222,52 +228,22 @@ void DeferredPhotoController::OnPhotoJobChanged(bool priorityChanged, bool statu
         }
     }
     TryDoSchedule();
-    return;
 }
 
 void DeferredPhotoController::StartWaitForUser()
 {
-    DP_INFO_LOG("entered");
-    isWaitForUser_ = true;
-    GetGlobalWatchdog().StartMonitor(callbackHandle_, DURATIONMS_500, [this](uint32_t handle) {
-        isWaitForUser_ = false;
-        DP_INFO_LOG("DeferredPhotoController, wait for user ended, handle: %{public}d, try do schedule",
-            static_cast<int>(handle));
+    timeId_ = DpsTimer::GetInstance().StartTimer([&]() {
+        DP_INFO_LOG("DPS_TIMER: WaitForUser try do schedule, timeId: %{public}u", timeId_);
+        timeId_ = INVALID_TIMEID;
         TryDoSchedule();
-    });
-    DP_INFO_LOG("DeferredPhotoController, wait for user started, handle: %{public}d",
-        static_cast<int>(callbackHandle_));
+    }, DURATIONMS_500);
+    DP_INFO_LOG("DPS_TIMER: StartWaitForUser timeId: %{public}u", timeId_);
 }
 
 void DeferredPhotoController::StopWaitForUser()
 {
-    DP_INFO_LOG("entered");
-    isWaitForUser_ = false;
-    GetGlobalWatchdog().StopMonitor(callbackHandle_);
-}
-
-void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
-{
-    DP_INFO_LOG("entered, workAvailable: %{public}d", workAvailable);
-    DpsStatus scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
-    if (workAvailable || photoJobRepository_->GetRunningJobCounts() > 0) {
-        scheduleState =  DpsStatus::DPS_SESSION_STATE_RUNNING;
-    } else {
-        if (photoJobRepository_->GetOfflineJobSize() == 0) {
-            scheduleState =  DpsStatus::DPS_SESSION_STATE_IDLE;
-        } else {
-            if (backgroundStrategy_->GetHdiStatus() != HdiStatus::HDI_READY) {
-                scheduleState =  DpsStatus::DPS_SESSION_STATE_SUSPENDED;
-            } else {
-                scheduleState =  DpsStatus::DPS_SESSION_STATE_RUNNALBE;
-            }
-        }
-    }
-    DP_INFO_LOG("entered, scheduleState_: %{public}d, scheduleState: %{public}d", scheduleState_, scheduleState);
-    if (scheduleState != scheduleState_) {
-        scheduleState_ = scheduleState;
-        photoProcessor_->NotifyScheduleState(scheduleState_);
-    }
+    DP_INFO_LOG("DPS_TIMER: StopWaitForUser timeId: %{public}u", timeId_);
+    DpsTimer::GetInstance().StopTimer(timeId_);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

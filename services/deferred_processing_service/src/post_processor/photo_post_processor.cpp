@@ -12,33 +12,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "photo_post_processor.h"
 
-#include <cstdint>
-#include <string>
 #include <sys/mman.h>
-#include "foundation/multimedia/camera_framework/services/camera_service/include/camera_util.h"
-#include "foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include/photo_proxy.h"
-#include "image_format.h"
-#include "image_mime_type.h"
-#include "image_type.h"
-#include "v1_3/iimage_process_service.h"
-#include "iproxy_broker.h"
-#include "v1_3/types.h"
-#include "securec.h"
-#include "shared_buffer.h"
-#include "dp_utils.h"
-#include "events_monitor.h"
-#include "dps_event_report.h"
-#include "picture.h"
-#include "steady_clock.h"
+
+#include "auxiliary_picture.h"
 #include "buffer_extra_data_impl.h"
-#include "metadata.h"
+#include "dp_log.h"
+#include "dp_timer.h"
+#include "dp_utils.h"
+#include "dps_event_report.h"
+#include "events_monitor.h"
+#include "foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include/photo_proxy.h"
+#include "iproxy_broker.h"
+#include "iservmgr_hdi.h"
+#include "picture.h"
+#include "securec.h"
+#include "v1_3/iimage_process_service.h"
+#include "v1_3/iimage_process_callback.h"
+#include "v1_3/types.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr uint32_t MAX_CONSECUTIVE_TIMEOUT_COUNT = 3;
-constexpr uint32_t MAX_CONSECUTIVE_CRASH_COUNT = 3;
+namespace {
+    const std::string PHOTO_SERVICE_NAME = "camera_image_process_service";
+    constexpr uint32_t MAX_PROC_TIME_MS = 11 * 1000;
+    constexpr uint32_t MAX_CONSECUTIVE_TIMEOUT_COUNT = 3;
+    constexpr uint32_t MAX_CONSECUTIVE_CRASH_COUNT = 3;
+    constexpr int32_t HDI_VERSION_1 = 1;
+    constexpr int32_t HDI_VERSION_3 = 3;
+}
 
 DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
@@ -115,46 +120,84 @@ OHOS::HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode execu
     return mode;
 }
 
-class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_3::IImageProcessCallback {
+class PhotoPostProcessor::PhotoServiceListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
 public:
-    explicit PhotoProcessListener(PhotoPostProcessor* photoPostProcessor) : photoPostProcessor_(photoPostProcessor)
+    using StatusCallback = std::function<void(const HDI::ServiceManager::V1_0::ServiceStatus&)>;
+    explicit PhotoServiceListener(const std::weak_ptr<PhotoPostProcessor>& processor) : processor_(processor)
     {
+        DP_DEBUG_LOG("entered.");
     }
 
-    ~PhotoProcessListener()
+    void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
     {
-        photoPostProcessor_ = nullptr;
+        auto process = processor_.lock();
+        DP_CHECK_ERROR_RETURN_LOG(process == nullptr, "photo post process is nullptr.");
+        process->OnServiceChange(status);
+    }
+
+private:
+    std::weak_ptr<PhotoPostProcessor> processor_;
+};
+
+class PhotoPostProcessor::SessionDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    explicit SessionDeathRecipient(const std::weak_ptr<PhotoProcessResult>& processResult)
+        : processResult_(processResult)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+
+    void OnRemoteDied(const wptr<IRemoteObject> &remote) override
+    {
+        if (auto processResult = processResult_.lock()) {
+            processResult->OnPhotoSessionDied();
+        }
+    }
+
+private:
+    std::weak_ptr<PhotoProcessResult> processResult_;
+};
+
+class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_3::IImageProcessCallback {
+public:
+    explicit PhotoProcessListener(const int32_t userId, const std::weak_ptr<PhotoProcessResult>& processResult)
+        : userId_(userId), processResult_(processResult)
+    {
+        DP_DEBUG_LOG("entered.");
     }
 
     int32_t OnProcessDone(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer) override;
-
     int32_t OnProcessDoneExt(const std::string& imageId,
         const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer) override;
-
     int32_t OnError(const std::string& imageId,  OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override;
     int32_t OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status) override;
 
 private:
     void ReportEvent(const std::string& imageId);
-    int32_t processBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
-
+    int32_t ProcessBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
+    int32_t ProcessBufferInfoExt(const std::string& imageId,
+        const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     std::shared_ptr<Media::Picture> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
-    PhotoPostProcessor* photoPostProcessor_;
+
+    const int32_t userId_;
+    std::weak_ptr<PhotoProcessResult> processResult_;
 };
 
 int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDone(const std::string& imageId,
     const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer)
 {
-    DP_DEBUG_LOG("imageId: %{public}s", imageId.c_str());
-    auto ret = processBufferInfo(imageId, buffer);
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
+    auto ret = ProcessBufferInfo(imageId, buffer);
     if (ret != DP_OK) {
         DP_ERR_LOG("process done failed imageId: %{public}s.", imageId.c_str());
-        photoPostProcessor_->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
+        if (auto processResult = processResult_.lock()) {
+            processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
+        }
     }
     return DP_OK;
 }
 
-int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::string& imageId,
+int32_t PhotoPostProcessor::PhotoProcessListener::ProcessBufferInfo(const std::string& imageId,
     const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer)
 {
     auto bufferHandle = buffer.imageHandle->GetBufferHandle();
@@ -173,7 +216,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
             static_cast<int>(retImageQuality), static_cast<int>(retDataSize),
             static_cast<int>(retCloudImageEnhanceSupported));
     }
-    DP_INFO_LOG("bufferHandle param, size: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d",
+    DP_INFO_LOG("DPS_PHOTO: bufferHandle param, size: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d",
         size, static_cast<int>(dataSize), isDegradedImage);
     auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
     DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
@@ -183,13 +226,16 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     DP_CHECK_ERROR_RETURN_RET_LOG(addr == MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
 
     if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
-        DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
+        DP_INFO_LOG("DPS_PHOTO: bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
         std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
             isDegradedImage == 0, isCloudImageEnhanceSupported);
-        ReportEvent(imageId);
-        photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
+        auto processResult = processResult_.lock();
+        if (processResult) {
+            processResult->OnProcessDone(imageId, bufferInfo);
+        }
     }
     munmap(addr, dataSize);
+    ReportEvent(imageId);
     return DP_OK;
 }
 
@@ -249,11 +295,9 @@ BufferHandle *CloneBufferHandle(const BufferHandle *handle)
 
 sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(BufferHandle *bufferHandle)
 {
-    DP_INFO_LOG("entered");
-    if (bufferHandle == nullptr) {
-        DP_ERR_LOG("bufferHandle is null");
-        return nullptr;
-    }
+    DP_DEBUG_LOG("entered");
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
+
     BufferHandle *newBufferHandle = CloneBufferHandle(bufferHandle);
     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
     surfaceBuffer->SetBufferHandle(newBufferHandle);
@@ -266,10 +310,8 @@ std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bu
     Media::AuxiliaryPictureType type)
 {
     DP_INFO_LOG("entered, AuxiliaryPictureType type = %{public}d", static_cast<int32_t>(type));
-    if (bufferHandle == nullptr) {
-        DP_ERR_LOG("bufferHandle is null");
-        return nullptr;
-    }
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
+
     auto buffer = TransBufferHandleToSurfaceBuffer(bufferHandle);
     auto uniquePtr = Media::AuxiliaryPicture::Create(buffer, type, {buffer->GetWidth(), buffer->GetHeight()});
     auto auxiliaryPicture = std::shared_ptr<Media::AuxiliaryPicture>(uniquePtr.release());
@@ -366,7 +408,6 @@ void AssemleAuxilaryPicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& b
 std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
     const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
-    DP_INFO_LOG("entered");
     int32_t exifDataSize = 0;
     if (buffer.metadata) {
         int32_t retExifDataSize = buffer.metadata->Get("exifDataSize", exifDataSize);
@@ -397,16 +438,27 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     return picture;
 }
 
-int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
-    const std::string& imageId, const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
+int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(const std::string& imageId,
+    const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
-    DP_INFO_LOG("entered");
-    auto imageBufferHandle = buffer.imageHandle->GetBufferHandle();
-    if (imageBufferHandle == nullptr) {
-        DP_ERR_LOG("bufferHandle is null");
-        return 0;
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
+    auto ret = ProcessBufferInfoExt(imageId, buffer);
+    if (ret != DP_OK) {
+        DP_ERR_LOG("process done failed imageId: %{public}s.", imageId.c_str());
+        if (auto processResult = processResult_.lock()) {
+            processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
+        }
     }
-    int size = imageBufferHandle->size;
+    return DP_OK;
+}
+
+int32_t PhotoPostProcessor::PhotoProcessListener::ProcessBufferInfoExt(const std::string& imageId,
+    const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
+{
+    auto bufferHandle = buffer.imageHandle->GetBufferHandle();
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
+
+    int size = bufferHandle->size;
     int32_t isDegradedImage = 0;
     int32_t dataSize = size;
     int32_t deferredImageFormat = 0;
@@ -418,99 +470,74 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
         int32_t retCloudImageEnhanceSupported = buffer.metadata->Get("isCloudImageEnhanceSupported",
             isCloudImageEnhanceSupported);
         DP_DEBUG_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retFormat: %{public}d, "
-            "retCloudImageEnhanceSupported: %{public}d", static_cast<int>(retImageQuality),
-            static_cast<int>(retDataSize), static_cast<int>(retFormat),
-            static_cast<int>(retCloudImageEnhanceSupported));
+            "retCloudImageEnhanceSupported: %{public}d", retImageQuality, retDataSize, retFormat,
+            retCloudImageEnhanceSupported);
     }
+
     DP_INFO_LOG("bufferHandle param, bufferHandleSize: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d, "
-        "deferredImageFormat: %{public}d", size, dataSize, isDegradedImage, deferredImageFormat);
+        "deferredImageFormat: %{public}d, isCloudImageEnhanceSupported: %{public}d",
+        size, dataSize, isDegradedImage, deferredImageFormat, isCloudImageEnhanceSupported);
+    auto processResult = processResult_.lock();
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
         std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
+        DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, DPS_ERROR_IMAGE_PROC_FAILED,
+            "failed to AssemblePicture.");
+
         std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
             isDegradedImage == 0, isCloudImageEnhanceSupported);
-        photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
+        if (processResult) {
+            processResult->OnProcessDoneExt(imageId, bufferInfo);
+        }
     } else {
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
         DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
             "failed to initialize shared buffer.");
 
-        auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, imageBufferHandle->fd, 0);
-        DP_CHECK_ERROR_RETURN_RET_LOG(
-            addr == MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
-
+        auto addr = mmap(nullptr, dataSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle->fd, 0);
+        DP_CHECK_ERROR_RETURN_RET_LOG(addr == MAP_FAILED,
+            DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
         if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
-            DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
+            DP_INFO_LOG("DPS_PHOTO: bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
             std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
                 isDegradedImage == 0, isCloudImageEnhanceSupported);
-            photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
+            if (processResult) {
+                processResult->OnProcessDone(imageId, bufferInfo);
+            }
         }
         munmap(addr, dataSize);
     }
     ReportEvent(imageId);
-    return 0;
+    return DP_OK;
 }
-
-void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& imageId)
-{
-    DPSEventReport::GetInstance()
-        .UpdateProcessDoneTime(imageId, photoPostProcessor_->GetUserId());
-}
-
 
 int32_t PhotoPostProcessor::PhotoProcessListener::OnError(const std::string& imageId,
     OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-    DpsError dpsErrorCode = MapHdiError(errorCode);
-    photoPostProcessor_->OnError(imageId, dpsErrorCode);
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, error: %{public}d", imageId.c_str(), errorCode);
+    if (auto processResult = processResult_.lock()) {
+        DpsError dpsErrorCode = MapHdiError(errorCode);
+        processResult->OnError(imageId, dpsErrorCode);
+    }
     return DP_OK;
 }
 
 int32_t PhotoPostProcessor::PhotoProcessListener::OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status)
 {
-    DP_INFO_LOG("entered");
-    HdiStatus hdiStatus = MapHdiStatus(status);
-    photoPostProcessor_->OnStateChanged(hdiStatus);
+    DP_INFO_LOG("DPS_PHOTO: HdiStatus: %{public}d", status);
+    if (auto processResult = processResult_.lock()) {
+        HdiStatus hdiStatus = MapHdiStatus(status);
+        processResult->OnStateChanged(hdiStatus);
+    }
     return DP_OK;
 }
 
-class PhotoPostProcessor::SessionDeathRecipient : public IRemoteObject::DeathRecipient {
-public:
-    explicit SessionDeathRecipient(PhotoPostProcessor* processor)
-        : photoPostProcessor_(processor)
-    {
-    }
-    ~SessionDeathRecipient()
-    {
-        photoPostProcessor_ = nullptr;
-    }
+void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& imageId)
+{
+    DPSEventReport::GetInstance().UpdateProcessDoneTime(imageId, userId_);
+}
 
-    void OnRemoteDied(const wptr<IRemoteObject> &remote) override
-    {
-        DP_ERR_LOG("Remote died.");
-        if (photoPostProcessor_ == nullptr) {
-            return;
-        }
-        photoPostProcessor_->OnSessionDied();
-    }
-
-private:
-    PhotoPostProcessor* photoPostProcessor_;
-};
-
-
-PhotoPostProcessor::PhotoPostProcessor(const int32_t userId,
-    TaskManager* taskManager, IImageProcessCallbacks* callbacks)
-    : userId_(userId),
-      taskManager_(taskManager),
-      processCallacks_(callbacks),
-      listener_(nullptr),
-      session_(nullptr),
-      sessionDeathRecipient_(nullptr),
-      imageId2Handle_(),
-      imageId2CrashCount_(),
-      removeNeededList_(),
-      consecutiveTimeoutCount_(0)
+PhotoPostProcessor::PhotoPostProcessor(const int32_t userId)
+    : userId_(userId), serviceListener_(nullptr), processListener_(nullptr), sessionDeathRecipient_(nullptr)
 {
     DP_DEBUG_LOG("entered");
 }
@@ -518,300 +545,278 @@ PhotoPostProcessor::PhotoPostProcessor(const int32_t userId,
 PhotoPostProcessor::~PhotoPostProcessor()
 {
     DP_DEBUG_LOG("entered");
-    DisconnectServiceIfNecessary();
-    taskManager_ = nullptr;
-    processCallacks_ = nullptr;
-    session_ = nullptr;
-    sessionDeathRecipient_ = nullptr;
-    listener_ = nullptr;
-    imageId2Handle_.Clear();
-    consecutiveTimeoutCount_ = 0;
+    DisconnectService();
+    SetPhotoSession(nullptr);
+    runningWork_.clear();
+    imageId2CrashCount_.clear();
+    removeNeededList_.clear();
 }
 
 void PhotoPostProcessor::Initialize()
 {
     DP_DEBUG_LOG("entered");
-    sessionDeathRecipient_ = new SessionDeathRecipient(this); // sptr<SessionDeathRecipient>::MakeSptr(this);
-    listener_ = new PhotoProcessListener(this); // sptr<PhotoProcessListener>::MakeSptr(this);
-    ConnectServiceIfNecessary();
+    processResult_ = std::make_shared<PhotoProcessResult>(userId_);
+    sessionDeathRecipient_ = sptr<SessionDeathRecipient>::MakeSptr(processResult_);
+    processListener_ = sptr<PhotoProcessListener>::MakeSptr(userId_, processResult_);
+    ConnectService();
 }
 
-int32_t PhotoPostProcessor::GetUserId()
+int32_t PhotoPostProcessor::GetConcurrency(ExecutionMode mode)
 {
-    return userId_;
-}
+    int32_t count = 1;
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_RET_LOG(session == nullptr, count, "photo session is nullptr, count: %{public}d", count);
 
-int PhotoPostProcessor::GetConcurrency(ExecutionMode mode)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    int count = 1;
-    if (session_) {
-        int32_t ret = session_->GetCoucurrency(OHOS::HDI::Camera::V1_2::ExecutionMode::BALANCED, count);
-        DP_INFO_LOG("getConcurrency, ret: %{public}d", ret);
-    }
-    DP_INFO_LOG("entered, count: %{public}d", count);
+    int32_t ret = session->GetCoucurrency(OHOS::HDI::Camera::V1_2::ExecutionMode::BALANCED, count);
+    DP_INFO_LOG("DPS_PHOTO: GetCoucurrency to ive, ret: %{public}d", ret);
     return count;
 }
 
 bool PhotoPostProcessor::GetPendingImages(std::vector<std::string>& pendingImages)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered");
-    if (session_) {
-        int32_t ret = session_->GetPendingImages(pendingImages);
-        DP_INFO_LOG("getPendingImages, ret: %{public}d", ret);
-        if (ret == 0) {
-        return true;
-        }
-    }
-    return false;
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false, "photo session is nullptr.");
+
+    int32_t ret = session->GetPendingImages(pendingImages);
+    DP_INFO_LOG("DPS_PHOTO: GetPendingImages to ive, ret: %{public}d", ret);
+    return ret == DP_OK;
 }
 
 void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, executionMode: %{public}d", executionMode);
-    if (session_) {
-        int32_t ret = session_->SetExecutionMode(MapToHdiExecutionMode(executionMode));
-        DP_INFO_LOG("setExecutionMode, ret: %{public}d", ret);
-    }
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
+
+    int32_t ret = session->SetExecutionMode(MapToHdiExecutionMode(executionMode));
+    DP_INFO_LOG("DPS_PHOTO: SetExecutionMode to ive, ret: %{public}d", ret);
 }
 
 void PhotoPostProcessor::SetDefaultExecutionMode()
 {
     // 采用直接新增方法，不适配1_2 和 1_3 模式的差异点
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered.");
-    if (session_) {
-        int32_t ret = session_->SetExecutionMode(
-            static_cast<OHOS::HDI::Camera::V1_2::ExecutionMode>(OHOS::HDI::Camera::V1_3::ExecutionMode::DEFAULT));
-        DP_INFO_LOG("setExecutionMode, ret: %{public}d", ret);
-    }
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
+
+    int32_t ret = session->SetExecutionMode(
+        static_cast<OHOS::HDI::Camera::V1_2::ExecutionMode>(OHOS::HDI::Camera::V1_3::ExecutionMode::DEFAULT));
+    DP_INFO_LOG("DPS_PHOTO: SetDefaultExecutionMode to ive, ret: %{public}d", ret);
 }
 
-void PhotoPostProcessor::ProcessImage(std::string imageId)
+void PhotoPostProcessor::ProcessImage(const std::string& imageId)
 {
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-    if (!ConnectServiceIfNecessary()) {
-        DP_INFO_LOG("failed to process image (%{public}s) due to connect service failed", imageId.c_str());
+    auto session = GetPhotoSession();
+    if (session == nullptr) {
+        DP_ERR_LOG("Failed to process imageId: %{public}s, photo session is nullptr", imageId.c_str());
         OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
         return;
     }
 
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_CHECK_ERROR_RETURN_LOG(session_ == nullptr, "PhotoPostProcessor::ProcessImage imageProcessSession is nullptr");
-    int32_t ret = session_->ProcessImage(imageId);
-    DP_INFO_LOG("processImage, ret: %{public}d", ret);
-    uint32_t callbackHandle;
-    constexpr uint32_t maxProcessingTimeMs = 11 * 1000;
-    GetGlobalWatchdog().StartMonitor(callbackHandle, maxProcessingTimeMs, [this, imageId](uint32_t handle) {
-        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, userId: %{public}d, handle: %{public}d",
-            userId_, static_cast<int>(handle));
-        OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
-    });
-    DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog registered, userId: %{public}d, handle: %{public}d",
-        userId_, static_cast<int>(callbackHandle));
-    imageId2Handle_.Insert(imageId, callbackHandle);
+    StartTimer(imageId);
+    int32_t ret = session->ProcessImage(imageId);
+    DP_INFO_LOG("DPS_PHOTO: Process photo to ive, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
 }
 
-void PhotoPostProcessor::RemoveImage(std::string imageId)
+void PhotoPostProcessor::RemoveImage(const std::string& imageId)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-    if (session_) {
-        int32_t ret = session_->RemoveImage(imageId);
-        DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
-        imageId2CrashCount_.erase(imageId);
-        DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
-    } else {
+    auto session = GetPhotoSession();
+    if (session == nullptr) {
+        DP_ERR_LOG("photo session is nullptr.");
+        std::lock_guard<std::mutex> lock(removeMutex_);
         removeNeededList_.emplace_back(imageId);
+        return;
     }
+
+    int32_t ret = session->RemoveImage(imageId);
+    DP_INFO_LOG("DPS_PHOTO: Remove photo to ive, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
+    imageId2CrashCount_.erase(imageId);
+    DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
 }
 
 void PhotoPostProcessor::Interrupt()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered");
-    if (session_) {
-        int32_t ret = session_->Interrupt();
-        DP_INFO_LOG("interrupt, ret: %{public}d", ret);
-    }
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
+
+    int32_t ret = session->Interrupt();
+    DP_INFO_LOG("DPS_PHOTO: Interrupt photo to ive, ret: %{public}d", ret);
 }
 
 void PhotoPostProcessor::Reset()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered");
-    if (session_) {
-        int32_t ret = session_->Reset();
-        DP_INFO_LOG("reset, ret: %{public}d", ret);
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "photo session is nullptr.");
+
+    int32_t ret = session->Reset();
+    DP_INFO_LOG("DPS_PHOTO: Reset to ive, ret: %{public}d", ret);
+    consecutiveTimeoutCount_ = 0;
+}
+
+void PhotoPostProcessor::OnProcessDone(const std::string& imageId, const std::shared_ptr<BufferInfo>& bufferInfo)
+{
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, consecutiveTimeoutCount: %{public}d",
+        imageId.c_str(), consecutiveTimeoutCount_.load());
+    consecutiveTimeoutCount_ = 0;
+    StopTimer(imageId);
+    if (auto callback = callback_.lock()) {
+        callback->OnProcessDone(userId_, imageId, bufferInfo);
     }
 }
 
-void PhotoPostProcessor::OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo)
+void PhotoPostProcessor::OnProcessDoneExt(const std::string& imageId, const std::shared_ptr<BufferInfoExt>& bufferInfo)
 {
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, consecutiveTimeoutCount: %{public}d",
+        imageId.c_str(), consecutiveTimeoutCount_.load());
     consecutiveTimeoutCount_ = 0;
     StopTimer(imageId);
-    if (processCallacks_) {
-        taskManager_->SubmitTask([this, imageId, bufferInfo = std::move(bufferInfo)]() {
-            processCallacks_->OnProcessDone(userId_, imageId, std::move(bufferInfo));
-        });
-    }
-}
-
-void PhotoPostProcessor::OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo)
-{
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-    consecutiveTimeoutCount_ = 0;
-    StopTimer(imageId);
-    if (processCallacks_) {
-        taskManager_->SubmitTask([this, imageId, bufferInfo = std::move(bufferInfo)]() {
-            processCallacks_->OnProcessDoneExt(userId_, imageId, std::move(bufferInfo));
-        });
+    if (auto callback = callback_.lock()) {
+        callback->OnProcessDoneExt(userId_, imageId, bufferInfo);
     }
 }
 
 void PhotoPostProcessor::OnError(const std::string& imageId, DpsError errorCode)
 {
-    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, consecutiveTimeoutCount: %{public}d",
+        imageId.c_str(), consecutiveTimeoutCount_.load());
     StopTimer(imageId);
     if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT) {
         consecutiveTimeoutCount_++;
         if (consecutiveTimeoutCount_ >= static_cast<int>(MAX_CONSECUTIVE_TIMEOUT_COUNT)) {
             Reset();
-            consecutiveTimeoutCount_ = 0;
         }
     } else {
         consecutiveTimeoutCount_ = 0;
     }
-    if (processCallacks_) {
-        taskManager_->SubmitTask([this, imageId, errorCode]() {
-            processCallacks_->OnError(userId_, imageId, errorCode);
-        });
+
+    if (auto callback = callback_.lock()) {
+        callback->OnError(userId_, imageId, errorCode);
     }
 }
 
 void PhotoPostProcessor::OnStateChanged(HdiStatus hdiStatus)
 {
-    DP_INFO_LOG("entered, HdiStatus: %{public}d", hdiStatus);
+    DP_INFO_LOG("DPS_PHOTO: HdiStatus: %{public}d", hdiStatus);
     EventsMonitor::GetInstance().NotifyImageEnhanceStatus(hdiStatus);
 }
 
 void PhotoPostProcessor::OnSessionDied()
 {
-    DP_INFO_LOG("entered, session died!");
-    std::lock_guard<std::mutex> lock(mutex_);
-    session_ = nullptr;
+    DP_INFO_LOG("entered, photo session died!");
+    SetPhotoSession(nullptr);
     consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
-    std::vector<std::string> crashJobs;
-    imageId2Handle_.Iterate([&](const std::string& imageId, const uint32_t value) {
-        crashJobs.emplace_back(imageId);
-    });
-    for (const auto& id : crashJobs) {
-        DP_INFO_LOG("failed to process imageId(%{public}s) due to connect service failed", id.c_str());
-        if (imageId2CrashCount_.count(id) == 0) {
-            imageId2CrashCount_.emplace(id, 1);
+    for (const auto& item : runningWork_) {
+        DP_INFO_LOG("Failed to process imageId: %{public}s due to connect service failed", item.first.c_str());
+        if (imageId2CrashCount_.count(item.first) == 0) {
+            imageId2CrashCount_.emplace(item.first, 1);
         } else {
-            imageId2CrashCount_[id] += 1;
+            imageId2CrashCount_[item.first] += 1;
         }
-        if (imageId2CrashCount_[id] >= MAX_CONSECUTIVE_CRASH_COUNT) {
-            OnError(id, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+        if (imageId2CrashCount_[item.first] >= MAX_CONSECUTIVE_CRASH_COUNT) {
+            OnError(item.first, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
         } else {
-            OnError(id, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+            OnError(item.first, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
         }
     }
-    ScheduleConnectService();
 }
 
-bool PhotoPostProcessor::ConnectServiceIfNecessary()
+void PhotoPostProcessor::SetCallback(const std::weak_ptr<IImageProcessCallbacks>& callback)
 {
-    DP_INFO_LOG("entered.");
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (session_ != nullptr) {
-        DP_INFO_LOG("connected");
-        return true;
-    }
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSession;
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessService> imageProcessServiceProxyV1_2;
-    sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> imageProcessServiceProxyV1_3;
-    imageProcessServiceProxyV1_2 = OHOS::HDI::Camera::V1_2::IImageProcessService::Get(
-        std::string("camera_image_process_service"));
-    if (imageProcessServiceProxyV1_2 == nullptr) {
-        DP_INFO_LOG("Failed to CreateImageProcessSession");
-        ScheduleConnectService();
-        return false;
-    }
+    callback_ = callback;
+}
+
+void PhotoPostProcessor::OnTimerOut(const std::string& imageId)
+{
+    DP_INFO_LOG("DPS_TIMER: Executed imageId: %{public}s", imageId.c_str());
+    OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+}
+
+void PhotoPostProcessor::ConnectService()
+{
+    auto svcMgr = HDI::ServiceManager::V1_0::IServiceManager::Get();
+    DP_CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "IServiceManager init failed.");
+    serviceListener_ = sptr<PhotoServiceListener>::MakeSptr(weak_from_this());
+    auto ret  = svcMgr->RegisterServiceStatusListener(serviceListener_, DEVICE_CLASS_DEFAULT);
+    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "Register Photo ServiceStatusListener failed.");
+}
+
+void PhotoPostProcessor::DisconnectService()
+{
+    auto session = GetPhotoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "PhotoSession is nullptr.");
+
+    const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<IImageProcessSession>(session);
+    bool result = remote->RemoveDeathRecipient(sessionDeathRecipient_);
+    DP_CHECK_ERROR_RETURN_LOG(!result, "Remove DeathRecipient for PhotoProcessSession failed.");
+    auto svcMgr = HDI::ServiceManager::V1_0::IServiceManager::Get();
+    DP_CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "IServiceManager init failed.");
+
+    auto ret  = svcMgr->UnregisterServiceStatusListener(serviceListener_);
+    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "Unregister Photo ServiceStatusListener failed.");
+}
+
+void PhotoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::ServiceStatus& status)
+{
+    DP_CHECK_RETURN(status.serviceName != PHOTO_SERVICE_NAME);
+    DP_CHECK_RETURN_LOG(status.status != HDI::ServiceManager::V1_0::SERVIE_STATUS_START,
+        "photo service state: %{public}d", status.status);
+    DP_CHECK_RETURN(GetPhotoSession() != nullptr);
+
+    sptr<OHOS::HDI::Camera::V1_2::IImageProcessService> proxyV1_2 =
+        OHOS::HDI::Camera::V1_2::IImageProcessService::Get(status.serviceName);
+    DP_CHECK_ERROR_RETURN_LOG(proxyV1_2 == nullptr, "get ImageProcessService failed.");
+
     uint32_t majorVer = 0;
     uint32_t minorVer = 0;
-    imageProcessServiceProxyV1_2->GetVersion(majorVer, minorVer);
+    proxyV1_2->GetVersion(majorVer, minorVer);
     int32_t versionId = GetVersionId(majorVer, minorVer);
-    DP_INFO_LOG("CreateImageProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
-    if (imageProcessServiceProxyV1_2 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        imageProcessServiceProxyV1_3 =
-            OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(imageProcessServiceProxyV1_2);
-        DP_INFO_LOG("CreateImageProcessSession CastFrom imageProcessServiceProxyV1_3 == nullptr %{public}d",
-            imageProcessServiceProxyV1_3 == nullptr);
+    sptr<IImageProcessSession> session;
+    sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> proxyV1_3;
+    if (versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+        proxyV1_3 = OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(proxyV1_2);
     }
-    if (imageProcessServiceProxyV1_3 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSessionV1_3;
-        imageProcessServiceProxyV1_3->CreateImageProcessSessionExt(userId_, listener_, imageProcessSessionV1_3);
-        DP_INFO_LOG("CreateImageProcessSessionExt");
-        imageProcessSession = imageProcessSessionV1_3;
-    } else if (imageProcessServiceProxyV1_2 != nullptr && versionId >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
-        imageProcessServiceProxyV1_2->CreateImageProcessSession(userId_, listener_, imageProcessSession);
+    if (proxyV1_3 != nullptr) {
+        DP_INFO_LOG("CreateImageProcessSessionExt version=%{public}d_%{public}d", majorVer, minorVer);
+        proxyV1_3->CreateImageProcessSessionExt(userId_, processListener_, session);
+    } else {
+        DP_INFO_LOG("CreateImageProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
+        proxyV1_2->CreateImageProcessSession(userId_, processListener_, session);
     }
-    session_ = imageProcessSession;
-    DP_CHECK_ERROR_RETURN_RET_LOG(session_ == nullptr, false, "session_ is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "get ImageProcessSession failed.");
+
+    const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<IImageProcessSession>(session);
+    bool result = remote->AddDeathRecipient(sessionDeathRecipient_);
+    DP_CHECK_ERROR_RETURN_LOG(!result, "add DeathRecipient for ImageProcessSession failed.");
+
+    RemoveNeedJbo(session);
+    SetPhotoSession(session);
+    OnStateChanged(HdiStatus::HDI_READY);
+}
+
+void PhotoPostProcessor::RemoveNeedJbo(const sptr<IImageProcessSession>& session)
+{
+    std::lock_guard<std::mutex> lock(removeMutex_);
     for (const auto& imageId : removeNeededList_) {
-        int32_t ret = session_->RemoveImage(imageId);
-        DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
+        int32_t ret = session->RemoveImage(imageId);
+        DP_INFO_LOG("DPS_PHOTO: RemoveImage imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
     }
     removeNeededList_.clear();
-    const sptr<IRemoteObject>& remote =
-        OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(!remote->AddDeathRecipient(sessionDeathRecipient_),
-        false, "AddDeathRecipient for ImageProcessSession failed.");
-    OnStateChanged(HdiStatus::HDI_READY);
-    return true;
 }
 
-void PhotoPostProcessor::DisconnectServiceIfNecessary()
+void PhotoPostProcessor::StartTimer(const std::string& imageId)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_CHECK_ERROR_RETURN_LOG(session_ == nullptr, "imageProcessSession is nullptr");
-    const sptr<IRemoteObject> &remote =
-        OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(session_);
-    DP_CHECK_ERROR_PRINT_LOG(!remote->RemoveDeathRecipient(sessionDeathRecipient_),
-        "RemoveDeathRecipient for ImageProcessSession failed.");
-    session_ = nullptr;
-}
-
-void PhotoPostProcessor::ScheduleConnectService()
-{
-    DP_INFO_LOG("entered.");
-    if (session_ == nullptr) {
-        constexpr uint32_t delayMilli = 10 * 1000;
-        uint32_t callbackHandle;
-        GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
-            DP_INFO_LOG("PhotoPostProcessor Watchdog executed, handle: %{public}d", static_cast<int>(handle));
-            ConnectServiceIfNecessary();
-        });
-        DP_INFO_LOG("PhotoPostProcessor Watchdog registered, handle: %{public}d", static_cast<int>(callbackHandle));
-    } else {
-        DP_INFO_LOG("already connected.");
-    }
+    uint32_t timeId = DpsTimer::GetInstance().StartTimer([&, imageId]() {OnTimerOut(imageId);}, MAX_PROC_TIME_MS);
+    DP_INFO_LOG("DPS_TIMER: Start imageId: %{public}s, timeId: %{public}u", imageId.c_str(), timeId);
+    runningWork_.emplace(imageId, timeId);
 }
 
 void PhotoPostProcessor::StopTimer(const std::string& imageId)
 {
-    uint32_t callbackHandle;
-    DP_CHECK_ERROR_RETURN_LOG(!imageId2Handle_.Find(imageId, callbackHandle),
-        "stoptimer failed not find imageId: %{public}s", imageId.c_str());
-    imageId2Handle_.Erase(imageId);
-    GetGlobalWatchdog().StopMonitor(callbackHandle);
-    DP_INFO_LOG("stoptimer success, imageId: %{public}s", imageId.c_str());
+    auto it = runningWork_.find(imageId);
+    DP_CHECK_ERROR_RETURN_LOG(it == runningWork_.end(),
+        "Stoptimer failed not find imageId: %{public}s", imageId.c_str());
+    runningWork_.erase(it);
+    DpsTimer::GetInstance().StopTimer(it->second);
+    DP_INFO_LOG("DPS_TIMER: Stop imageId: %{public}s, timeId: %{public}u", imageId.c_str(), it->second);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

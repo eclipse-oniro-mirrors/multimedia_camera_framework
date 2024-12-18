@@ -21,7 +21,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 
-SessionCommand::SessionCommand(const sptr<VideoSessionInfo>& sessionInfo) : sessionInfo_(sessionInfo)
+SessionCommand::SessionCommand()
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -29,8 +29,6 @@ SessionCommand::SessionCommand(const sptr<VideoSessionInfo>& sessionInfo) : sess
 SessionCommand::~SessionCommand()
 {
     DP_DEBUG_LOG("entered.");
-    sessionManager_ = nullptr;
-    sessionInfo_ = nullptr;
 }
 
 int32_t SessionCommand::Initialize()
@@ -39,8 +37,53 @@ int32_t SessionCommand::Initialize()
 
     sessionManager_ = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager_ == nullptr, DP_NULL_POINTER, "SessionManager is nullptr.");
+    schedulerManager_ = DPS_GetSchedulerManager();
+    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager_ == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
     initialized_.store(true);
     return DP_OK;
+}
+
+AddPhotoSessionCommand::AddPhotoSessionCommand(const sptr<PhotoSessionInfo>& info) : photoInfo_(info)
+{
+    DP_DEBUG_LOG("entered.");
+}
+
+int32_t AddPhotoSessionCommand::Executing()
+{
+    if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+    
+    auto coordinator = sessionManager_->GetSessionCoordinator();
+    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
+
+    if (photoInfo_->isCreate_) {
+        schedulerManager_->CreatePhotoProcessor(photoInfo_->GetUserId(), coordinator->GetImageProcCallbacks());
+    }
+    coordinator->AddPhotoSession(photoInfo_);
+    return DP_OK;
+}
+
+DeletePhotoSessionCommand::DeletePhotoSessionCommand(const sptr<PhotoSessionInfo>& info) : photoInfo_(info)
+{
+    DP_DEBUG_LOG("entered.");
+}
+
+int32_t DeletePhotoSessionCommand::Executing()
+{
+    if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+    
+    auto coordinator = sessionManager_->GetSessionCoordinator();
+    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
+    coordinator->DeletePhotoSession(photoInfo_->GetUserId());
+    return DP_OK;
+}
+
+AddVideoSessionCommand::AddVideoSessionCommand(const sptr<VideoSessionInfo>& info) : videoInfo_(info)
+{
+    DP_DEBUG_LOG("entered.");
 }
 
 int32_t AddVideoSessionCommand::Executing()
@@ -51,11 +94,17 @@ int32_t AddVideoSessionCommand::Executing()
     
     auto coordinator = sessionManager_->GetSessionCoordinator();
     DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
-    auto schedulerManager = DPS_GetSchedulerManager();
-    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr");
-    schedulerManager->CreateVideoProcessor(sessionInfo_->GetUserId(), coordinator->GetVideoProcCallbacks());
-    coordinator->AddSession(sessionInfo_);
+    
+    if (videoInfo_->isCreate_) {
+        schedulerManager_->CreateVideoProcessor(videoInfo_->GetUserId(), coordinator->GetVideoProcCallbacks());
+    }
+    coordinator->AddVideoSession(videoInfo_);
     return DP_OK;
+}
+
+DeleteVideoSessionCommand::DeleteVideoSessionCommand(const sptr<VideoSessionInfo>& info) : videoInfo_(info)
+{
+    DP_DEBUG_LOG("entered.");
 }
 
 int32_t DeleteVideoSessionCommand::Executing()
@@ -66,7 +115,7 @@ int32_t DeleteVideoSessionCommand::Executing()
     
     auto coordinator = sessionManager_->GetSessionCoordinator();
     DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
-    coordinator->DeleteSession(sessionInfo_->GetUserId());
+    coordinator->DeleteVideoSession(videoInfo_->GetUserId());
     return DP_OK;
 }
 } // namespace DeferredProcessing

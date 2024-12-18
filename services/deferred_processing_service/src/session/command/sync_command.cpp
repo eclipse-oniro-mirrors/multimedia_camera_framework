@@ -29,9 +29,6 @@ SyncCommand::SyncCommand(const int32_t userId) : userId_(userId)
 SyncCommand::~SyncCommand()
 {
     DP_DEBUG_LOG("entered.");
-    schedulerManager_ = nullptr;
-    sessionManager_ = nullptr;
-    processor_ = nullptr;
 }
 
 int32_t SyncCommand::Initialize()
@@ -42,9 +39,55 @@ int32_t SyncCommand::Initialize()
     DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager_ == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
     sessionManager_ = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager_ == nullptr, DP_NULL_POINTER, "SessionManager is nullptr.");
-    processor_ = schedulerManager_->GetVideoProcessor(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(processor_ == nullptr, DP_NULL_POINTER, "VideoProcessor is nullptr.");
     initialized_.store(true);
+    return DP_OK;
+}
+
+PhotoSyncCommand::PhotoSyncCommand(const int32_t userId,
+    const std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>>& imageIds)
+    : SyncCommand(userId), imageIds_(imageIds)
+{
+    DP_DEBUG_LOG("VideoSyncCommand, video job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
+}
+
+int32_t PhotoSyncCommand::Executing()
+{
+    if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+
+    auto processor = schedulerManager_->GetPhotoProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "PhotoProcessor is nullptr.");
+
+    std::vector<std::string> pendingImages;
+    bool isSuccess = processor->GetPendingImages(pendingImages);
+    if (!isSuccess) {
+        for (const auto& it : imageIds_) {
+            processor->AddImage(it.first, it.second->discardable_, it.second->metadata_);
+        }
+        return DP_OK;
+    }
+
+    std::set<std::string> hdiImageIds(pendingImages.begin(), pendingImages.end());
+    for (const auto& photoId : hdiImageIds) {
+        auto item = imageIds_.find(photoId);
+        if (item != imageIds_.end()) {
+            processor->AddImage(photoId, item->second->discardable_, item->second->metadata_);
+            imageIds_.erase(photoId);
+        } else {
+            processor->RemoveImage(photoId, false);
+        }
+    }
+
+    auto info = sessionManager_->GetPhotoInfo(userId_);
+    if (info != nullptr) {
+        auto callbacks =  info->GetRemoteCallback();
+        for (const auto& it : imageIds_) {
+            callbacks->OnError(it.first, ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+        }
+    }
+    pendingImages.clear();
+    hdiImageIds.clear();
     return DP_OK;
 }
 
@@ -61,11 +104,14 @@ int32_t VideoSyncCommand::Executing()
         return ret;
     }
 
+    auto processor = schedulerManager_->GetVideoProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(processor == nullptr, DP_NULL_POINTER, "VideoProcessor is nullptr.");
+
     std::vector<std::string> pendingVidoes;
-    bool isSuccess = processor_->GetPendingVideos(pendingVidoes);
+    bool isSuccess = processor->GetPendingVideos(pendingVidoes);
     if (!isSuccess) {
         for (const auto& it : videoIds_) {
-            processor_->AddVideo(it.first, it.second->srcFd_, it.second->dstFd_);
+            processor->AddVideo(it.first, it.second->srcFd_, it.second->dstFd_);
         }
         return DP_OK;
     }
@@ -74,13 +120,14 @@ int32_t VideoSyncCommand::Executing()
     for (auto& videoId : hdiVideoIds) {
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
-            processor_->AddVideo(videoId, item->second->srcFd_, item->second->dstFd_);
+            processor->AddVideo(videoId, item->second->srcFd_, item->second->dstFd_);
             videoIds_.erase(videoId);
         } else {
-            processor_->RemoveVideo(videoId, false);
+            processor->RemoveVideo(videoId, false);
         }
     }
-    auto info = sessionManager_->GetSessionInfo(userId_);
+
+    auto info = sessionManager_->GetVideoInfo(userId_);
     if (info != nullptr) {
         auto callbacks =  info->GetRemoteCallback();
         for (const auto& it : videoIds_) {
@@ -88,6 +135,7 @@ int32_t VideoSyncCommand::Executing()
         }
     }
     pendingVidoes.clear();
+    hdiVideoIds.clear();
     return DP_OK;
 }
 } // namespace DeferredProcessing

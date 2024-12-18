@@ -33,7 +33,6 @@ DeferredProcessingService::~DeferredProcessingService()
     DP_DEBUG_LOG("entered.");
     DP_CHECK_RETURN(!initialized_.load());
 
-    photoTaskManagerMap_.clear();
     DPS_Destroy();
 }
 
@@ -73,20 +72,11 @@ void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, cons
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
     const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks)
 {
-    DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %{public}d",
-        userId);
-    TaskManager* taskManager = GetPhotoTaskManager(userId);
-    auto schedulerManager = DPS_GetSchedulerManager();
+    DP_INFO_LOG("create photo session, userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();
-    if (schedulerManager == nullptr || sessionManager == nullptr) {
-        DP_ERR_LOG("schedulerManager or sessionManager is nullptr.");
-        return nullptr;
-    }
-    std::shared_ptr<IImageProcessCallbacks> sessionImageProcCallbacks = sessionManager->GetImageProcCallbacks();
-    auto processor = schedulerManager->GetPhotoProcessor(userId, taskManager, sessionImageProcCallbacks);
-    sptr<IDeferredPhotoProcessingSession> session = sessionManager->CreateDeferredPhotoProcessingSession(userId,
-        callbacks, processor, taskManager);
-    return session;
+    DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
+        "SessionManager is null, userId: %{public}d", userId);
+    return sessionManager->CreateDeferredPhotoProcessingSession(userId, callbacks);
 }
 
 sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredVideoProcessingSession(
@@ -97,20 +87,6 @@ sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredV
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
         "SessionManager is null, userId: %{public}d", userId);
     return sessionManager->CreateDeferredVideoProcessingSession(userId, callbacks);
-}
-
-TaskManager* DeferredProcessingService::GetPhotoTaskManager(const int32_t userId)
-{
-    std::lock_guard<std::mutex> lock(taskManagerMutex_);
-    DP_INFO_LOG("entered, userId: %{public}d", userId);
-    if (photoTaskManagerMap_.count(userId) == 0) {
-        constexpr uint32_t numThreads = 1;
-        std::shared_ptr<TaskManager> taskManager =
-            std::make_shared<TaskManager>("PhotoProcTaskManager_userid_" + std::to_string(userId),
-            numThreads, true);
-        photoTaskManagerMap_[userId] = taskManager;
-    }
-    return photoTaskManagerMap_[userId].get();
 }
 
 void DeferredProcessingService::NotifyCameraSessionStatus(const int32_t userId, const std::string& cameraId,

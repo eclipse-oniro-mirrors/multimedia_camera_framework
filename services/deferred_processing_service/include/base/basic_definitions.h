@@ -22,7 +22,10 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr int32_t DEFAULT_OFFSET = 0;
+constexpr int32_t DEFAULT_COUNT = 0;
+constexpr uint32_t INVALID_TIMEID = 0;
+constexpr int64_t DEFAULT_OFFSET = 0;
+constexpr uint64_t DEFAULT_TRAILING_TIME = 0;
 constexpr int32_t TOTAL_PROCESS_TIME = 10 * 60 * 1000;
 constexpr int32_t ONCE_PROCESS_TIME = 5 * 60 * 1000;
 constexpr uint32_t DELAY_TIME = 1000;
@@ -33,6 +36,7 @@ const std::string OUT_TAG = "_vid";
 
 enum EventType : int32_t {
     CAMERA_SESSION_STATUS_EVENT = 1,
+    PHOTO_HDI_STATUS_EVENT,
     HDI_STATUS_EVENT,
     VIDEO_HDI_STATUS_EVENT,
     MEDIA_LIBRARY_STATUS_EVENT,
@@ -42,7 +46,6 @@ enum EventType : int32_t {
     BATTERY_LEVEL_STATUS_EVENT,
     THERMAL_LEVEL_STATUS_EVENT,
     PHOTO_PROCESS_STATUS_EVENT,
-    SYSTEM_PRESSURE_LEVEL_EVENT,
     USER_INITIATED_EVENT,
     AVAILABLE_CONCURRENT_EVENT,
 };
@@ -208,9 +211,6 @@ enum MediaResult : int32_t {
     SUCCESS = 0,
     PAUSE = 1
 };
-
-SystemPressureLevel MapEventThermalLevel(int32_t level);
-
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

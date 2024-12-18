@@ -59,7 +59,7 @@ void VideoProcessResult::OnStateChanged(HdiStatus hdiStatus)
 void VideoProcessResult::OnVideoSessionDied()
 {
     DP_DEBUG_LOG("DPS_VIDEO: OnVideoSessionDied");
-    auto ret = DPS_SendCommand<ServiceDiedCommand>(userId_);
+    auto ret = DPS_SendCommand<VideoDiedCommand>(userId_);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "process video session deied failed, ret: %{public}d", ret);
 }
 } // namespace DeferredProcessing

@@ -67,6 +67,7 @@ public:
     using StatusCallback = std::function<void(const HDI::ServiceManager::V1_0::ServiceStatus&)>;
     explicit VideoServiceListener(const std::weak_ptr<VideoPostProcessor>& processor) : processor_(processor)
     {
+        DP_DEBUG_LOG("entered.");
     }
 
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
@@ -207,7 +208,7 @@ void VideoPostProcessor::RemoveRequest(const std::string& videoId)
 {
     auto session = GetVideoSession();
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr,
-        "remove videoId: %{public}s failed, video session is nullptr.", videoId.c_str());
+        "failed to remove videoId: %{public}s, video session is nullptr.", videoId.c_str());
     std::string path = PATH + videoId + OUT_TAG;
     DP_CHECK_ERROR_PRINT_LOG(remove(path.c_str()) != 0, "Failed to remove file at path: %{public}s", path.c_str());
     auto ret = session->RemoveVideo(videoId);
@@ -273,7 +274,7 @@ bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
 void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer)
 {
     StreamInfo_V1_1 streamInfo;
-    streamInfo.v1_0.intent_ = HDI::Camera::V1_0::VIDEO;
+    streamInfo.v1_0.intent_ = GetIntent(stream.type);
     streamInfo.v1_0.tunneledMode_ = true;
     streamInfo.v1_0.streamId_ = stream.streamId;
     streamInfo.v1_0.width_ = stream.width;
@@ -282,6 +283,23 @@ void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<Buf
     streamInfo.v1_0.dataspace_ = stream.dataspace;
     streamInfo.v1_0.bufferQueue_ = producer;
     allStreamInfo_.emplace_back(streamInfo);
+}
+
+HDI::Camera::V1_0::StreamIntent VideoPostProcessor::GetIntent(HDI::Camera::V1_3::MediaStreamType type)
+{
+    HDI::Camera::V1_0::StreamIntent intent = HDI::Camera::V1_0::PREVIEW;
+    switch (type) {
+        case HDI::Camera::V1_3::MEDIA_STREAM_TYPE_MAKER:
+            intent = HDI::Camera::V1_0::CUSTOM;
+            break;
+        case HDI::Camera::V1_3::MEDIA_STREAM_TYPE_VIDEO:
+            intent = HDI::Camera::V1_0::VIDEO;
+            break;
+        default:
+            DP_ERR_LOG("unexpected error type: %{public}d.", type);
+            break;
+    }
+    return intent;
 }
 
 bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd)
@@ -435,7 +453,7 @@ void VideoPostProcessor::ConnectService()
 
     serviceListener_ = sptr<VideoServiceListener>::MakeSptr(weak_from_this());
     auto ret  = svcMgr->RegisterServiceStatusListener(serviceListener_, DEVICE_CLASS_DEFAULT);
-    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "RegisterServiceStatusListener failed.");
+    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "Register Video ServiceStatusListener failed.");
 }
 
 void VideoPostProcessor::DisconnectService()
@@ -451,7 +469,7 @@ void VideoPostProcessor::DisconnectService()
     DP_CHECK_ERROR_RETURN_LOG(svcMgr == nullptr, "IServiceManager init failed.");
 
     auto ret  = svcMgr->UnregisterServiceStatusListener(serviceListener_);
-    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "RegisterServiceStatusListener failed.");
+    DP_CHECK_ERROR_RETURN_LOG(ret != 0, "Unregister Video ServiceStatusListener failed.");
 }
 
 void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::ServiceStatus& status)
@@ -469,7 +487,7 @@ void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     proxy->CreateVideoProcessSession(userId_, processListener_, session);
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "get VideoProcessSession failed.");
 
-    const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<IVideoProcessSession>(session);
+    const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<IVideoProcessSession>(session);
     bool result = remote->AddDeathRecipient(sessionDeathRecipient_);
     DP_CHECK_ERROR_RETURN_LOG(!result, "add DeathRecipient for VideoProcessSession failed.");
     

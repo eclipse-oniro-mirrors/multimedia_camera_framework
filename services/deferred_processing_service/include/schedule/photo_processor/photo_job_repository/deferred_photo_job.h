@@ -58,8 +58,8 @@ public:
     PhotoJobPriority GetRunningPriority();
     PhotoJobStatus GetCurStatus();
     PhotoJobStatus GetPreStatus();
-    std::string& GetImageId();
-    int GetDeferredProcType();
+    std::string GetImageId();
+    int32_t GetDeferredProcType();
 
 private:
     friend class PhotoJobRepository;
