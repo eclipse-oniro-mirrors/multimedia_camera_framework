@@ -36,9 +36,9 @@ public:
     int32_t PrepareOfflineAudioEffectChain();
     int32_t GetMaxBufferSize(const AudioStreamInfo& inputOption, const AudioStreamInfo& outputOption);
     int32_t GetOfflineEffectChain();
-    int32_t GetOutputSampleRate();
-    int32_t GetOutputChannelCount();
-    int32_t GetOneUnprocessedSize();
+    AudioSamplingRate GetOutputSampleRate();
+    AudioChannel GetOutputChannelCount();
+    uint32_t GetOneUnprocessedSize();
     int32_t Process(vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedRecords);
     void Release();
     

@@ -92,7 +92,6 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
         inputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
     oneProcessedSize_ = outputOptions.samplingRate / ONE_THOUSAND *
         outputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
-    MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize %{public}d", oneProcessedSize_);
     if (oneUnprocessedSize_ * PROCESS_BATCH_SIZE > maxUnprocessedBufferSize_ ||
         oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_) {
         MEDIA_ERR_LOG("AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
@@ -101,17 +100,17 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
     return CAMERA_OK;
 }
 
-int32_t AudioDeferredProcess::GetOneUnprocessedSize()
+uint32_t AudioDeferredProcess::GetOneUnprocessedSize()
 {
     return oneUnprocessedSize_;
 }
 
-int32_t AudioDeferredProcess::GetOutputSampleRate()
+AudioSamplingRate AudioDeferredProcess::GetOutputSampleRate()
 {
     return outputOptions_.samplingRate;
 }
 
-int32_t AudioDeferredProcess::GetOutputChannelCount()
+AudioChannel AudioDeferredProcess::GetOutputChannelCount()
 {
     return outputOptions_.channels;
 }
@@ -131,14 +130,14 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     uint32_t count = 0;
     lock_guard<std::mutex> lock(mutex_);
     auto returnToRecords = [this, &processedRecords, &rawArr, &processedArr](uint32_t i, uint32_t batchSize)->void {
-        int32_t ret = offlineEffectChain_->Process(rawArr.get(), oneUnprocessedSize_ * batchSize,
-            processedArr.get(), oneProcessedSize_ * batchSize);
+        int32_t ret = offlineEffectChain_->Process(rawArr.get(), oneUnprocessedSize_ * PROCESS_BATCH_SIZE,
+            processedArr.get(), oneProcessedSize_ * PROCESS_BATCH_SIZE);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process err");
         for (uint32_t j = 0; j < batchSize; ++ j) {
             uint8_t* temp = new uint8_t[oneProcessedSize_];
             ret = memcpy_s(temp, oneProcessedSize_, processedArr.get() + j * oneProcessedSize_, oneProcessedSize_);
             CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
-            processedRecords[i - batchSize + 1 + j]->SetAudioBuffer(temp);
+            processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp);
         }
     };
 
