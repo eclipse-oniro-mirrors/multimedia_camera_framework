@@ -89,9 +89,19 @@ public:
         isEncoded_ = encodedResult;
     }
 
+    void SetDeferredProcessedResult(bool processResult)
+    {
+        isDeferredProcessed_ = processResult;
+    }
+
     bool IsEncoded()
     {
         return isEncoded_;
+    }
+
+    bool IsDeferredProcessed()
+    {
+        return isDeferredProcessed_;
     }
 
     const std::string& GetFrameId() const
@@ -155,6 +165,7 @@ private:
     static const int32_t STATUS_READY_CONVERT = 1;
     static const int32_t STATUS_FINISH_ENCODE = 2;
     int status = STATUS_NONE;
+    std::atomic<bool> isDeferredProcessed_ { false };
     std::atomic<bool> isEncoded_ { false };
     uint32_t bufferSize;
     int64_t timestamp_;
