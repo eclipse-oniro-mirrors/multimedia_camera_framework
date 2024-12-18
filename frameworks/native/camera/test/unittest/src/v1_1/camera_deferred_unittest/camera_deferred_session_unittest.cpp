@@ -84,7 +84,7 @@ sptr<IDeferredVideoProcessingSession> CameraDeferredSessionUnitTest::GetDeferred
 {
     sptr<DeferredVideoProcessingSessionCallback> callback = new (std::nothrow) DeferredVideoProcessingSessionCallback();
     DP_CHECK_ERROR_RETURN_RET_LOG(!callback, nullptr, "callback is nullptr.");
-    sessionManagerPtr_->videoSessionInfos_.Clear();
+    sessionManagerPtr_->videoSessionInfos_.clear();
     sptr<IDeferredVideoProcessingSession> deferredVideoSession =
         sessionManagerPtr_->CreateDeferredVideoProcessingSession(userId_, callback);
     DP_CHECK_ERROR_RETURN_RET_LOG(!deferredVideoSession, nullptr, "deferredVideoSession is nullptr.");
