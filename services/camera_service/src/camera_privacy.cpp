@@ -134,8 +134,10 @@ bool CameraPrivacy::StartUsingPermissionCallback()
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>(cameraDevice_);
     int32_t res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback res:%{public}d", res);
-    CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StartUsingPermissionCallback failed.");
-    return res == CAMERA_OK;
+    bool ret = (res == CAMERA_OK || res == Security::AccessToken::ERR_EDM_POLICY_CHECK_FAILED ||
+        res == Security::AccessToken::ERR_PRIVACY_POLICY_CHECK_FAILED);
+    CHECK_ERROR_PRINT_LOG(!ret, "StartUsingPermissionCallback failed.");
+    return ret;
 }
 
 void CameraPrivacy::StopUsingPermissionCallback()
