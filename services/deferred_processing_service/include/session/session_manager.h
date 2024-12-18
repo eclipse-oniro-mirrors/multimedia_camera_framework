@@ -16,9 +16,9 @@
 #ifndef OHOS_CAMERA_DPS_SESSION_MANAGER_H
 #define OHOS_CAMERA_DPS_SESSION_MANAGER_H
 
-#include "session_info.h"
+#include "photo_session_info.h"
+#include "safe_map.h"
 #include "session_coordinator.h"
-#include "task_manager.h"
 #include "video_session_info.h"
 
 namespace OHOS {
@@ -27,29 +27,29 @@ namespace DeferredProcessing {
 class SessionManager {
 public:
     static std::shared_ptr<SessionManager> Create();
-    SessionManager();
     ~SessionManager();
     
     void Initialize();
     void Start();
     void Stop();
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(
-        const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
-        std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager);
+    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
+        const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
+    sptr<PhotoSessionInfo> GetPhotoInfo(const int32_t userId);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
     sptr<IDeferredPhotoProcessingSessionCallback> GetCallback(const int32_t userId);
-    sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
         const sptr<IDeferredVideoProcessingSessionCallback>& callback);
+    sptr<VideoSessionInfo> GetVideoInfo(const int32_t userId);
     std::shared_ptr<SessionCoordinator> GetSessionCoordinator();
-    sptr<VideoSessionInfo> GetSessionInfo(const int32_t userId);
-    void OnCallbackDied(const int32_t userId);
+
+protected:
+    SessionManager();
 
 private:
-    std::mutex mutex_;
+    std::mutex photoSessionMutex_;
     std::mutex videoSessionMutex_;
-    std::atomic<bool> initialized_;
-    std::unordered_map<int32_t, sptr<SessionInfo>> photoSessionInfos_;
+    std::atomic<bool> initialized_ {false};
+    std::unordered_map<int32_t, sptr<PhotoSessionInfo>> photoSessionInfos_ {};
     std::unordered_map<int32_t, sptr<VideoSessionInfo>> videoSessionInfos_ {};
     std::shared_ptr<SessionCoordinator> coordinator_;
 };

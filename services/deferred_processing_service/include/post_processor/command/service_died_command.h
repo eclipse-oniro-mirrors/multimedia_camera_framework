@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_DPS_SERVICE_DIED_COMMAND_H
 
 #include "command.h"
+#include "scheduler_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,12 +26,32 @@ class ServiceDiedCommand : public Command {
     DECLARE_CMD_CLASS(ServiceDiedCommand);
 public:
     ServiceDiedCommand(const int32_t userId);
-    ~ServiceDiedCommand() override;
+    ~ServiceDiedCommand() override = default;
+
+protected:
+    int32_t Initialize();
+
+    const int32_t userId_;
+    std::atomic<bool> initialized_ {false};
+    std::shared_ptr<SchedulerManager> schedulerManager_ {nullptr};
+};
+
+class PhotoDiedCommand : public ServiceDiedCommand {
+    DECLARE_CMD_CLASS(PhotoDiedCommand);
+public:
+    using ServiceDiedCommand::ServiceDiedCommand;
 
 protected:
     int32_t Executing() override;
+};
 
-    const int32_t userId_;
+class VideoDiedCommand : public ServiceDiedCommand {
+    DECLARE_CMD_CLASS(VideoDiedCommand);
+public:
+    using ServiceDiedCommand::ServiceDiedCommand;
+
+protected:
+    int32_t Executing() override;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

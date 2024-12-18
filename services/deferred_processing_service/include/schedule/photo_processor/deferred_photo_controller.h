@@ -16,27 +16,28 @@
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_CONTROLLER_H
 #define OHOS_CAMERA_DPS_DEFERRED_PHOTO_CONTROLLER_H
 
-#include "basic_definitions.h"
-#include "photo_job_repository.h"
-#include "user_initiated_strategy.h"
 #include "background_strategy.h"
-#include "iimage_process_callbacks.h"
+#include "deferred_photo_job.h"
 #include "deferred_photo_processor.h"
-#include "ievents_listener.h"
+#include "user_initiated_strategy.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredPhotoController {
+class DeferredPhotoController : public std::enable_shared_from_this<DeferredPhotoController> {
 public:
-    DeferredPhotoController(const int32_t userId, std::shared_ptr<PhotoJobRepository> repository,
-        std::shared_ptr<DeferredPhotoProcessor> processor);
     ~DeferredPhotoController();
+
     void Initialize();
+
+protected:
+    DeferredPhotoController(const int32_t userId, const std::shared_ptr<PhotoJobRepository>& repository,
+        const std::shared_ptr<DeferredPhotoProcessor>& processor);
 
 private:
     class EventsListener;
     class PhotoJobRepositoryListener;
+
     void TryDoSchedule();
     void PostProcess(DeferredPhotoWorkPtr work);
     void SetDefaultExecutionMode();
@@ -47,17 +48,13 @@ private:
     void OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr);
     void StartWaitForUser();
     void StopWaitForUser();
-    void NotifyScheduleState(bool scheduling);
 
-    std::recursive_mutex mutex_;
     const int32_t userId_;
-    uint32_t callbackHandle_;
-    bool isWaitForUser_;
-    DpsStatus scheduleState_;
+    uint32_t timeId_ {INVALID_TIMEID};
+    std::unique_ptr<UserInitiatedStrategy> userInitiatedStrategy_ {nullptr};
+    std::unique_ptr<BackgroundStrategy> backgroundStrategy_ {nullptr};
     std::shared_ptr<PhotoJobRepository> photoJobRepository_;
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_;
-    std::unique_ptr<UserInitiatedStrategy> userInitiatedStrategy_;
-    std::unique_ptr<BackgroundStrategy> backgroundStrategy_;
     std::shared_ptr<EventsListener> eventsListener_;
     std::shared_ptr<PhotoJobRepositoryListener> photoJobRepositoryListener_;
 };

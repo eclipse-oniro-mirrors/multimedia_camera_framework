@@ -16,8 +16,6 @@
 #ifndef OHOS_CAMERA_DPS_USERINITIATED_STRATEGY_H
 #define OHOS_CAMERA_DPS_USERINITIATED_STRATEGY_H
 
-#include <memory>
-
 #include "istrategy.h"
 #include "photo_job_repository.h"
 
@@ -31,8 +29,9 @@ namespace DeferredProcessing {
 */
 class UserInitiatedStrategy : public IStrategy {
 public:
-    UserInitiatedStrategy(std::shared_ptr<PhotoJobRepository> photoJobRepository);
+    UserInitiatedStrategy(const std::shared_ptr<PhotoJobRepository>& repository);
     ~UserInitiatedStrategy();
+
     DeferredPhotoWorkPtr GetWork() override;
     DeferredPhotoJobPtr GetJob() override;
     ExecutionMode GetExecutionMode() override;
@@ -41,9 +40,9 @@ public:
     void NotifyCameraStatusChanged(CameraSessionStatus status);
 
 private:
-    std::shared_ptr<PhotoJobRepository> photoJobRepository_;
+    std::shared_ptr<PhotoJobRepository> repository_;
     CameraSessionStatus cameraSessionStatus_ {CameraSessionStatus::NORMAL_CAMERA_CLOSED};
-    HdiStatus hdiStatus_ {HdiStatus::HDI_READY};
+    HdiStatus hdiStatus_ {HdiStatus::HDI_DISCONNECTED};
     MediaLibraryStatus mediaLibraryStatus_ {MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE};
 };
 } // namespace DeferredProcessing

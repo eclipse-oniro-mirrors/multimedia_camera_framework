@@ -21,9 +21,11 @@
 #include "iservstat_listener_hdi.h"
 #include "ivideo_process_callbacks.h"
 #include "mpeg_manager.h"
+#include "v1_0/types.h"
 #include "v1_3/ivideo_process_service.h"
 #include "v1_3/ivideo_process_session.h"
 #include "v1_3/ivideo_process_callback.h"
+#include "v1_3/types.h"
 #include "video_process_result.h"
 
 namespace OHOS {
@@ -64,6 +66,7 @@ private:
     bool PrepareStreams(const std::string& videoId, const int inputFd);
     bool ProcessStream(const StreamDescription& stream);
     void SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer);
+    HDI::Camera::V1_0::StreamIntent GetIntent(HDI::Camera::V1_3::MediaStreamType type);
     bool StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd);
     bool StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work);
     void ReleaseMpeg();

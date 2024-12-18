@@ -22,14 +22,14 @@
 #include "istrategy.h"
 #include "photo_job_repository.h"
 
-
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 class BackgroundStrategy : public IStrategy {
 public:
-    BackgroundStrategy(std::shared_ptr<PhotoJobRepository> repository);
+    BackgroundStrategy(const std::shared_ptr<PhotoJobRepository>& repository);
     ~BackgroundStrategy();
+
     DeferredPhotoWorkPtr GetWork() override;
     DeferredPhotoJobPtr GetJob() override;
     ExecutionMode GetExecutionMode() override;
@@ -44,14 +44,14 @@ private:
     void StopTrailing();
     void FlashTrailingState();
 
-    uint64_t trailingStartTimeStamp_;
-    uint64_t remainingTrailingTime_;
-    bool isInTrailing_;
-    CameraSessionStatus cameraSessionStatus_;
-    HdiStatus hdiStatus_;
-    MediaLibraryStatus mediaLibraryStatus_;
-    SystemPressureLevel systemPressureLevel_;
-    std::shared_ptr<PhotoJobRepository> jobRepository_;
+    uint64_t trailingStartTimeStamp_ {DEFAULT_TRAILING_TIME};
+    uint64_t remainingTrailingTime_  {DEFAULT_TRAILING_TIME};
+    bool isInTrailing_ {false};
+    CameraSessionStatus cameraSessionStatus_ {CameraSessionStatus::NORMAL_CAMERA_CLOSED};
+    HdiStatus hdiStatus_ {HdiStatus::HDI_DISCONNECTED};
+    MediaLibraryStatus mediaLibraryStatus_ {MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE};
+    SystemPressureLevel systemPressureLevel_ {SystemPressureLevel::NOMINAL};
+    std::shared_ptr<PhotoJobRepository> repository_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

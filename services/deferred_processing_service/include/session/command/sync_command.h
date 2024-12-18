@@ -36,7 +36,18 @@ protected:
     std::atomic_bool initialized_ {false};
     std::shared_ptr<SessionManager> sessionManager_ {nullptr};
     std::shared_ptr<SchedulerManager> schedulerManager_ {nullptr};
-    std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
+};
+
+class PhotoSyncCommand : public SyncCommand {
+    DECLARE_CMD_CLASS(PhotoSyncCommand)
+public:
+    PhotoSyncCommand(const int32_t userId,
+        const std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>>& imageIds);
+
+protected:
+    int32_t Executing() override;
+
+    std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>> imageIds_ {};
 };
 
 class VideoSyncCommand : public SyncCommand {

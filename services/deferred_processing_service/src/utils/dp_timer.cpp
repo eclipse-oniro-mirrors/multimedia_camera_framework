@@ -15,6 +15,7 @@
 
 #include "dp_timer.h"
 
+#include "basic_definitions.h"
 #include "common_timer_errors.h"
 #include "dp_log.h"
 

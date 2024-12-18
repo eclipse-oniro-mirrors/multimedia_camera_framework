@@ -62,7 +62,7 @@ protected:
     const bool restorable_;
 };
 
-class RestoreCommand : public VideoCommand {
+class RestoreVideoCommand : public VideoCommand {
     DECLARE_CMD_CLASS(RestoreCommand)
 public:
     using VideoCommand::VideoCommand;

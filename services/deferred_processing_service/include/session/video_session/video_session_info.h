@@ -31,10 +31,15 @@ public:
     int32_t Initialize();
     sptr<IDeferredVideoProcessingSession> GetDeferredVideoProcessingSession();
     sptr<IDeferredVideoProcessingSessionCallback> GetRemoteCallback();
-    int32_t GetUserId() const;
     void OnCallbackDied();
     void SetCallback(const sptr<IDeferredVideoProcessingSessionCallback>& callback);
 
+    inline int32_t GetUserId()
+    {
+        return userId_;
+    }
+
+    bool isCreate_ {true};
 private:
     class CallbackDeathRecipient;
 

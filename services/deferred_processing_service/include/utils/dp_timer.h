@@ -22,8 +22,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-constexpr uint32_t INVALID_TIMEID = 0;
-
 class DpsTimer : public Singleton<DpsTimer> {
     DECLARE_SINGLETON(DpsTimer)
 

@@ -41,7 +41,7 @@ PROSS
     DP_DEBUG_LOG("entered.");
     g_dpsInfo.server = std::make_shared<CommandServer>();
     g_dpsInfo.session = SessionManager::Create();
-    g_dpsInfo.scheduler = std::make_shared<SchedulerManager>();
+    g_dpsInfo.scheduler = SchedulerManager::Create();
     JUDEG(DP_NULL_POINTER, g_dpsInfo.server != nullptr);
     JUDEG(DP_NULL_POINTER, g_dpsInfo.session != nullptr);
     JUDEG(DP_NULL_POINTER, g_dpsInfo.scheduler != nullptr);

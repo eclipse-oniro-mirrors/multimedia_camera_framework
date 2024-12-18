@@ -15,139 +15,106 @@
 
 #include "deferred_photo_processing_session.h"
 
-#include "dp_log.h"
-#include "basic_definitions.h"
+#include "dp_utils.h"
+#include "dps.h"
 #include "dps_event_report.h"
-#include "steady_clock.h"
+#include "photo_command.h"
+#include "sync_command.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(const int32_t userId,
-    std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
-    sptr<IDeferredPhotoProcessingSessionCallback> callback)
-    : userId_(userId),
-      inSync_(false),
-      processor_(processor),
-      taskManager_(taskManager),
-      callback_(callback),
-      imageIds_()
+DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(const int32_t userId)
+    : userId_(userId)
 {
-    DP_DEBUG_LOG("DeferredPhotoProcessingSession enter.");
-    (void)(userId_);
+    DP_DEBUG_LOG("entered. userId: %{public}d", userId_);
 }
 
 DeferredPhotoProcessingSession::~DeferredPhotoProcessingSession()
 {
-    DP_DEBUG_LOG("~DeferredPhotoProcessingSession enter.");
-    processor_ = nullptr;
-    taskManager_ = nullptr;
+    DP_DEBUG_LOG("entered.");
+    imageIds_.clear();
 }
 
 int32_t DeferredPhotoProcessingSession::BeginSynchronize()
 {
-    DP_INFO_LOG("BeginSynchronize enter.");
-    inSync_ = true;
+    DP_INFO_LOG("DPS_PHOTO: BeginSynchronize.");
+    std::lock_guard<std::mutex> lock(mutex_);
+    inSync_.store(true);
     const std::string imageId = "default";
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE);
-    return 0;
+    return DP_OK;
 }
 
 int32_t DeferredPhotoProcessingSession::EndSynchronize()
 {
-    DP_INFO_LOG("EndSynchronize enter.");
-
-    inSync_ = false;
-    std::vector<std::string> pendingImages;
-    bool isSuccess = processor_->GetPendingImages(pendingImages);
-    if (!isSuccess) {
-        for (auto it = imageIds_.begin(); it != imageIds_.end();) {
-            AddImage(it->first, it->second->metadata_, it->second->discardable_);
-            it = imageIds_.erase(it);
-        }
+    DP_INFO_LOG("DPS_PHOTO: EndSynchronize photo job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (inSync_.load()) {
+        auto ret = DPS_SendCommand<PhotoSyncCommand>(userId_, imageIds_);
+        inSync_.store(false);
+        imageIds_.clear();
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "photo synchronize failed, ret: %{public}d", ret);
+        
         const std::string imageId = "default";
         ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE);
-        return 0;
     }
-    std::set<std::string> hdiImageIds(pendingImages.begin(), pendingImages.end());
-    for (auto it = imageIds_.begin(); it != imageIds_.end();) {
-        if (hdiImageIds.count(it->first) != 0) {
-            hdiImageIds.erase(it->first);
-            AddImage(it->first, it->second->metadata_, it->second->discardable_);
-            it = imageIds_.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    for (auto& imageId : hdiImageIds) {
-        RemoveImage(imageId, false);
-    }
-    for (auto it = imageIds_.begin(); it != imageIds_.end();) {
-        callback_->OnError(it->first, ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
-        ++it;
-    }
-    imageIds_.clear();
-    hdiImageIds.clear();
-    const std::string imageId = "default";
-    ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE);
-    return 0;
+    return DP_OK;
 }
 
 int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, DpsMetadata& metadata, bool discardable)
 {
-    if (inSync_) {
+    if (inSync_.load()) {
+        std::lock_guard<std::mutex> lock(mutex_);
         DP_INFO_LOG("AddImage error, inSync!");
-        imageIds_[imageId] = std::make_shared<PhotoInfo>(discardable, metadata);
+        auto info = std::make_shared<PhotoInfo>(discardable, metadata);
+        imageIds_.emplace(imageId, info);
     } else {
-        DP_INFO_LOG("AddImage enter.");
-        taskManager_->SubmitTask([this, imageId, discardable, metadata]() {
-            processor_->AddImage(imageId, discardable, const_cast<DpsMetadata&>(metadata));
-        });
+        auto ret = DPS_SendCommand<AddPhotoCommand>(userId_, imageId, metadata, discardable);
+        DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+            "DPS_PHOTO: add imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
-    return 0;
+    return DP_OK;
 }
 
 int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string& imageId, bool restorable)
 {
-    if (inSync_) {
+    if (inSync_.load()) {
         DP_INFO_LOG("RemoveImage error, inSync!");
     } else {
-        DP_INFO_LOG("RemoveImage enter.");
-        taskManager_->SubmitTask([this, imageId, restorable]() {
-            processor_->RemoveImage(imageId, restorable);
-        });
+        auto ret = DPS_SendCommand<RemovePhotoCommand>(userId_, imageId, restorable);
+        DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+            "DPS_PHOTO: remove imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
-    return 0;
+    return DP_OK;
 }
 
 int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
 {
-    if (inSync_) {
+    if (inSync_.load()) {
         DP_INFO_LOG("RestoreImage error, inSync!");
     } else {
-        DP_INFO_LOG("RestoreImage enter.");
-        taskManager_->SubmitTask([this, imageId]() {
-            processor_->RestoreImage(imageId);
-        });
+        auto ret = DPS_SendCommand<RestorePhotoCommand>(userId_, imageId);
+        DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+            "DPS_PHOTO: restore imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);
-    return 0;
+    return DP_OK;
 }
 
-int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName, const std::string imageId)
+int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
     if (inSync_) {
         DP_INFO_LOG("ProcessImage error, inSync!");
     } else {
-        DP_INFO_LOG("ProcessImage enter.");
-        taskManager_->SubmitTask([this, appName, imageId]() {
-            processor_->ProcessImage(appName, imageId);
-        });
+        auto ret = DPS_SendCommand<ProcessPhotoCommand>(userId_, imageId, appName);
+        DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+            "DPS_PHOTO: process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
@@ -159,10 +126,9 @@ int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& im
     if (inSync_) {
         DP_INFO_LOG("CancelProcessImage error, inSync!");
     } else {
-        DP_INFO_LOG("CancelProcessImage enter.");
-        taskManager_->SubmitTask([this, imageId]() {
-            processor_->CancelProcessImage(imageId);
-        });
+        auto ret = DPS_SendCommand<CancelProcessPhotoCommand>(userId_, imageId);
+        DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+            "DPS_PHOTO: cance process imageId: %{public}s failed. ret: %{public}u", imageId.c_str(), ret);
     }
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
@@ -175,7 +141,7 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
     dpsEventInfo.operatorStage = static_cast<uint32_t>(event);
     dpsEventInfo.imageId = imageId;
     dpsEventInfo.userId = userId_;
-    uint64_t beginTime = SteadyClock::GetTimestampMilli();
+    uint64_t beginTime = GetTimestampMilli();
     switch (static_cast<int32_t>(event)) {
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeBeginTime = beginTime;

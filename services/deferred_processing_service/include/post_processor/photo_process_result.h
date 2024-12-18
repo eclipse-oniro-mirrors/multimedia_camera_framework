@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H
-#define OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H
+#ifndef OHOS_CAMERA_DPS_PHOTO_PROCESS_RESULT_H
+#define OHOS_CAMERA_DPS_PHOTO_PROCESS_RESULT_H
 
 #include "basic_definitions.h"
+#include "buffer_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class VideoProcessResult {
+class PhotoProcessResult {
 public:
-    explicit VideoProcessResult(const int32_t userId);
-    ~VideoProcessResult();
+    explicit PhotoProcessResult(const int32_t userId);
+    ~PhotoProcessResult();
 
-    void OnProcessDone(const std::string& videoId);
-    void OnError(const std::string& videoId, DpsError errorCode);
+    void OnProcessDone(const std::string& imageId, const std::shared_ptr<BufferInfo>& bufferInfo);
+    void OnProcessDoneExt(const std::string& imageId, const std::shared_ptr<BufferInfoExt>& bufferInfo);
+    void OnError(const std::string& imageId,  DpsError errorCode);
     void OnStateChanged(HdiStatus hdiStatus);
-    void OnVideoSessionDied();
+    void OnPhotoSessionDied();
 
 private:
     const int32_t userId_;
@@ -37,4 +39,4 @@ private:
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H
+#endif // OHOS_CAMERA_DPS_PHOTO_PROCESS_RESULT_H
