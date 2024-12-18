@@ -92,7 +92,6 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
         inputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
     oneProcessedSize_ = outputOptions.samplingRate / ONE_THOUSAND *
         outputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
-    MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize %{public}d", oneProcessedSize_);
     if (oneUnprocessedSize_ * PROCESS_BATCH_SIZE > maxUnprocessedBufferSize_ ||
         oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_) {
         MEDIA_ERR_LOG("AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
@@ -125,25 +124,25 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     }
     MEDIA_INFO_LOG("AudioDeferredProcess::Process Enter");
     uint32_t audioRecordsLen = audioRecords.size();
-    uint8_t rawArr[oneUnprocessedSize_ * PROCESS_BATCH_SIZE];
-    uint8_t processedArr[oneProcessedSize_ * PROCESS_BATCH_SIZE];
+    std::unique_ptr<uint8_t[]> rawArr = std::make_unique<uint8_t[]>(oneUnprocessedSize_ * PROCESS_BATCH_SIZE);
+    std::unique_ptr<uint8_t[]> processedArr = std::make_unique<uint8_t[]>(oneProcessedSize_ * PROCESS_BATCH_SIZE);
 
     uint32_t count = 0;
     lock_guard<std::mutex> lock(mutex_);
     auto returnToRecords = [this, &processedRecords, &rawArr, &processedArr](uint32_t i, uint32_t batchSize)->void {
-        int32_t ret = offlineEffectChain_->Process(rawArr, oneUnprocessedSize_ * batchSize,
-            processedArr, oneProcessedSize_ * batchSize);
+        int32_t ret = offlineEffectChain_->Process(rawArr.get(), oneUnprocessedSize_ * PROCESS_BATCH_SIZE,
+            processedArr.get(), oneProcessedSize_ * PROCESS_BATCH_SIZE);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process err");
         for (uint32_t j = 0; j < batchSize; ++ j) {
             uint8_t* temp = new uint8_t[oneProcessedSize_];
-            ret = memcpy_s(temp, oneProcessedSize_, processedArr + j * oneProcessedSize_, oneProcessedSize_);
+            ret = memcpy_s(temp, oneProcessedSize_, processedArr.get() + j * oneProcessedSize_, oneProcessedSize_);
             CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
             processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp);
         }
     };
 
     for (uint32_t i = 0; i < audioRecordsLen; i ++) {
-        int32_t ret = memcpy_s(rawArr + count * oneUnprocessedSize_, oneUnprocessedSize_,
+        int32_t ret = memcpy_s(rawArr.get() + count * oneUnprocessedSize_, oneUnprocessedSize_,
             audioRecords[i]->GetAudioBuffer(), oneUnprocessedSize_);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err");
         if (count == PROCESS_BATCH_SIZE - 1) {
