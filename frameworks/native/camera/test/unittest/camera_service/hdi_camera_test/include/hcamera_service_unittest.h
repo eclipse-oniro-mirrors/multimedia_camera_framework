@@ -122,7 +122,7 @@ public:
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
-    sptr<HCameraHostManager> cameraHostManager_ = nullptr;
+    static sptr<HCameraHostManager> cameraHostManager_;
     sptr<HCameraService> cameraService_ = nullptr;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> pDevice_ = nullptr;
 

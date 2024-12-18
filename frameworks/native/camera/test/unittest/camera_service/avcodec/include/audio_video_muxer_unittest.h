@@ -13,25 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef HCAMEA_DEVICE_UNITTEST_H
-#define HCAMEA_DEVICE_UNITTEST_H
+#ifndef AUDIO_VIDEO_MUXER_UNITTEST_H
+#define AUDIO_VIDEO_MUXER_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "input/camera_manager.h"
-#include "portrait_session.h"
-#include "hcamera_device.h"
+#include "gmock/gmock.h"
+#include "message_parcel.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraDeviceUnitTest : public testing::Test {
-public:
-    uint64_t tokenId_ = 0;
-    int32_t uid_ = 0;
-    int32_t userId_ = 0;
-    sptr<HCameraHostManager> cameraHostManager_ = nullptr;
-    sptr<CameraManager> cameraManager_ = nullptr;
-    void NativeAuthorization();
 
+class AudioVideoMuxerUnitTest : public testing::Test {
+public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 
@@ -46,4 +40,4 @@ public:
 };
 } // CameraStandard
 } // OHOS
-#endif // HCAMEA_DEVICE_UNITTEST_H
+#endif // AUDIO_VIDEO_MUXER_UNITTEST_H

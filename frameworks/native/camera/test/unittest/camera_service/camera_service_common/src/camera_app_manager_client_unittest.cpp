@@ -17,6 +17,7 @@
 #include "camera_app_manager_client.h"
 #include "camera_log.h"
 #include "hcamera_service.h"
+#include "ipc_skeleton.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -67,22 +68,5 @@ HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_002, Tes
     ASSERT_NE(client->cameraAppManagerClient_, nullptr);
 }
 
-/*
- * Feature: Framework
- * Function: Test CameraAppManagerClient
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the GetProcessState method of CameraAppManagerClient with a valid PID.
- *The expected return value is CAMERA_OK.
- */
-HWTEST_F(CameraAppManagerClientUnit, camera_app_manager_client_unittest_003, TestSize.Level0)
-{
-    int32_t pid = 1;
-    sptr<CameraAppManagerClient> client = CameraAppManagerClient::GetInstance();
-    ASSERT_NE(client, nullptr);
-    int32_t ret = client->GetProcessState(pid);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
 }
 }

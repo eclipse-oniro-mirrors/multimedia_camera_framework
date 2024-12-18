@@ -13,16 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef HSTREAM_REPEAT_UNITTEST_H
-#define HSTREAM_REPEAT_UNITTEST_H
+#ifndef AVCODEC_TASK_MANAGER_UNITTEST_H
+#define AVCODEC_TASK_MANAGER_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include <refbase.h>
-#include "hstream_repeat.h"
+#include "gmock/gmock.h"
+#include "message_parcel.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamRepeatUnitTest : public testing::Test {
+
+class AvcodecTaskManagerUnitTest : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
@@ -31,13 +33,11 @@ public:
     static void TearDownTestCase(void);
 
     /* SetUp:Execute before each test case */
-    void SetUp(void);
+    void SetUp();
 
     /* TearDown:Execute after each test case */
-    void TearDown(void);
-
-    HStreamRepeat *CreateHStreamRepeat();
+    void TearDown();
 };
 } // CameraStandard
 } // OHOS
-#endif
+#endif // AVCODEC_TASK_MANAGER_UNITTEST_H
