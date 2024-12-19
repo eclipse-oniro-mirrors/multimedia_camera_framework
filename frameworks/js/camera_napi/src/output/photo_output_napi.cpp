@@ -1670,7 +1670,7 @@ void ThumbnailListener::UpdateJSCallback(int32_t captureId, int64_t timestamp,
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     napi_value obj = nullptr;
     napi_create_object(env_, &obj);
-    napi_set_named_property(env_, obj, "pixelMap", valueParam);
+    napi_set_named_property(env_, obj, "thumbnailImage", valueParam);
     napi_set_named_property(env_, obj, "captureId", valueCaptureId);
     result[1] = obj;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
