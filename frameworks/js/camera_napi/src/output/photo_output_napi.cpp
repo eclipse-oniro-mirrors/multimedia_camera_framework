@@ -1661,8 +1661,18 @@ void ThumbnailListener::UpdateJSCallback(int32_t captureId, int64_t timestamp,
         napi_get_undefined(env_, &valueParam);
     }
     FillPixelMapWithCaptureIdAndTimestamp(env_, captureId, timestamp, valueParam);
+    napi_value valueCaptureId = nullptr;
+    napi_create_int32(env_, captureId, &valueCaptureId);
+    if (valueCaptureId == nullptr) {
+        MEDIA_ERR_LOG("napi_create_int64 failed");
+        napi_get_undefined(env_, &valueCaptureId);
+    }
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
-    result[1] = valueParam;
+    napi_value obj = nullptr;
+    napi_create_object(env_, &obj);
+    napi_set_named_property(env_, obj, "thumbnailImage", valueParam);
+    napi_set_named_property(env_, obj, "captureId", valueCaptureId);
+    result[1] = obj;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
 }
