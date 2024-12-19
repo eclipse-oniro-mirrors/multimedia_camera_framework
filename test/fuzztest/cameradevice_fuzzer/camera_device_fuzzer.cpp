@@ -24,6 +24,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
+#include <fuzzer/FuzzedDataProvider.h>
 using namespace std;
 
 const uint8_t TEST_NUM = 5;
@@ -87,6 +88,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     CameraDeviceFuzzTestGetPermission();
+    FuzzedDataProvider fdp(rawData, size);
 
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
@@ -97,13 +99,13 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     int32_t compensationRange[2] = {rawData[0], rawData[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
+    float focalLength = fdp.ConsumeFloatingPoint<float>();
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-    int32_t sensorOrientation = rawData[0];
+    int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-    int32_t cameraPosition = rawData[0];
+    int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
@@ -130,7 +132,7 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
         return;
     }
     CameraDeviceFuzzTestGetPermission();
-
+    FuzzedDataProvider fdp(rawData, size);
     int32_t itemCount = NUM_10;
     int32_t dataSize = NUM_100;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
@@ -139,13 +141,13 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
     int32_t compensationRange[2] = {rawData[0], rawData[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
+    float focalLength = fdp.ConsumeFloatingPoint<float>();
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-    int32_t sensorOrientation = rawData[0];
+    int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-    int32_t cameraPosition = rawData[0];
+    int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
