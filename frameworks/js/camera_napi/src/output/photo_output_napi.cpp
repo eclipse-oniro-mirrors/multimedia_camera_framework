@@ -62,11 +62,49 @@
 #include "task_manager.h"
 #include "video_key_info.h"
 #include "camera_dynamic_loader.h"
+#include "metadata_helper.h"
+#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 namespace {
+using namespace HDI::Display::Graphic::Common::V1_0;
+static const std::unordered_map<CM_ColorSpaceType, OHOS::ColorManager::ColorSpaceName> COLORSPACE_MAP = {
+    {CM_COLORSPACE_NONE, OHOS::ColorManager::ColorSpaceName::NONE},
+    {CM_BT601_EBU_FULL, OHOS::ColorManager::ColorSpaceName::BT601_EBU},
+    {CM_BT601_SMPTE_C_FULL, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C},
+    {CM_BT709_FULL, OHOS::ColorManager::ColorSpaceName::BT709},
+    {CM_BT2020_HLG_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_HLG},
+    {CM_BT2020_PQ_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_PQ},
+    {CM_BT601_EBU_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_EBU_LIMIT},
+    {CM_BT601_SMPTE_C_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C_LIMIT},
+    {CM_BT709_LIMIT, OHOS::ColorManager::ColorSpaceName::BT709_LIMIT},
+    {CM_BT2020_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_HLG_LIMIT},
+    {CM_BT2020_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_PQ_LIMIT},
+    {CM_SRGB_FULL, OHOS::ColorManager::ColorSpaceName::SRGB},
+    {CM_P3_FULL, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3},
+    {CM_P3_HLG_FULL, OHOS::ColorManager::ColorSpaceName::P3_HLG},
+    {CM_P3_PQ_FULL, OHOS::ColorManager::ColorSpaceName::P3_PQ},
+    {CM_ADOBERGB_FULL, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB},
+    {CM_SRGB_LIMIT, OHOS::ColorManager::ColorSpaceName::SRGB_LIMIT},
+    {CM_P3_LIMIT, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_LIMIT},
+    {CM_P3_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_HLG_LIMIT},
+    {CM_P3_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_PQ_LIMIT},
+    {CM_ADOBERGB_LIMIT, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB_LIMIT},
+    {CM_LINEAR_SRGB, OHOS::ColorManager::ColorSpaceName::LINEAR_SRGB},
+    {CM_LINEAR_BT709, OHOS::ColorManager::ColorSpaceName::LINEAR_BT709},
+    {CM_LINEAR_P3, OHOS::ColorManager::ColorSpaceName::LINEAR_P3},
+    {CM_LINEAR_BT2020, OHOS::ColorManager::ColorSpaceName::LINEAR_BT2020},
+    {CM_DISPLAY_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_SRGB},
+    {CM_DISPLAY_P3_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_SRGB},
+    {CM_DISPLAY_P3_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_HLG},
+    {CM_DISPLAY_P3_PQ, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_PQ},
+    {CM_DISPLAY_BT2020_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_SRGB},
+    {CM_DISPLAY_BT2020_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_HLG},
+    {CM_DISPLAY_BT2020_PQ, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_PQ}
+};
+
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<PhotoOutputAsyncContext*>(data);
@@ -231,6 +269,26 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     }
     MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
     return captureId;
+}
+
+OHOS::ColorManager::ColorSpace GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
+{
+    OHOS::ColorManager::ColorSpace colorSpace =
+        OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::NONE);
+    HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
+    GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
+    if (gsErr != GSERROR_OK) {
+        MEDIA_ERR_LOG("Failed to get colorSpaceType!");
+    } else {
+        MEDIA_INFO_LOG("get colorSpaceType:%{public}d", colorSpaceType);
+    }
+    auto it = COLORSPACE_MAP.find(colorSpaceType);
+    if (it != COLORSPACE_MAP.end()) {
+        colorSpace = it->second;
+    } else {
+        MEDIA_ERR_LOG("colorSpace not supported!");
+    }
+    return colorSpace;
 }
 
 void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput)
@@ -1553,8 +1611,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     CHECK_ERROR_RETURN_LOG(photoOutput->thumbnailSurface_ == nullptr, "ThumbnailListener thumbnailSurface_ is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
     string surfaceName = "Thumbnail";
-    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
-        surfaceName.c_str());
+    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s", surfaceName.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -1562,10 +1619,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
-    if (surfaceRet != SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("ThumbnailListener Failed to acquire surface buffer");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
     int32_t thumbnailWidth;
     int32_t thumbnailHeight;
     int32_t burstSeqId = -1;
@@ -1573,6 +1627,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     int32_t captureId = GetCaptureId(surfaceBuffer);
+    OHOS::ColorManager::ColorSpace colorSpace = GetColorSpace(surfaceBuffer);
     MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     if (burstSeqId != -1) {
@@ -1587,6 +1642,11 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     const int32_t formatSize = 4;
     auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
         thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
+    if (!pixelMap) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
+    } else {
+        pixelMap->InnerSetColorSpace(colorSpace);
+    }
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
