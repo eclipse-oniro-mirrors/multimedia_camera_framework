@@ -1627,7 +1627,6 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     int32_t captureId = GetCaptureId(surfaceBuffer);
-    OHOS::ColorManager::ColorSpace colorSpace = GetColorSpace(surfaceBuffer);
     MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     if (burstSeqId != -1) {
@@ -1645,6 +1644,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     if (!pixelMap) {
         MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
     } else {
+        OHOS::ColorManager::ColorSpace colorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
         pixelMap->InnerSetColorSpace(colorSpace);
     }
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");

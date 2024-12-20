@@ -97,6 +97,8 @@ ohos_shared_library("camera_napi") {
     "data_share:datashare_consumer",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_display:display_commontype_idl_headers",
+    "graphic_2d:color_manager",
     "graphic_surface:surface",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
@@ -108,8 +110,6 @@ ohos_shared_library("camera_napi") {
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
     "samgr:samgr_proxy",
-    "drivers_interface_display:display_commontype_idl_headers",
-    "graphic_2d:color_manager",
   ]
 
   public_external_deps = [
