@@ -27,7 +27,7 @@
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -82,7 +82,7 @@ class CameraInfoDumper;
 
 class EXPORT_API HCameraService
     : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
-    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+    public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -156,6 +156,7 @@ public:
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
+    int32_t RequireMemorySize(int32_t memSize) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;

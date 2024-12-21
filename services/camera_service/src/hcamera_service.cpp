@@ -35,7 +35,7 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "hcamera_device_manager.h"
 #include "hcamera_preconfig.h"
 #ifdef DEVICE_MANAGER
@@ -70,6 +70,22 @@ static const std::string SETTINGS_DATA_EXT_URI = "datashare:///com.ohos.settings
 static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
 static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
 static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
+std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
+    OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
+    OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY,
+    OHOS_CONTROL_SUPPORTED_COLOR_MODES,
+    OHOS_CONTROL_PORTRAIT_EFFECT_TYPE,
+    OHOS_CONTROL_FILTER_TYPE,
+    OHOS_CONTROL_EFFECT_SUGGESTION,
+    OHOS_CONTROL_MOTION_DETECTION,
+    OHOS_CONTROL_HIGH_QUALITY_MODE,
+    OHOS_CONTROL_CAMERA_USED_AS_POSITION,
+    OHOS_CONTROL_MOVING_PHOTO,
+    OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE,
+    OHOS_CONTROL_BEAUTY_TYPE,
+    OHOS_CONTROL_BEAUTY_AUTO_VALUE,
+    OHOS_CONTROL_CAMERA_MACRO,
+};
 mutex g_dataShareHelperMutex;
 mutex g_dmDeviceInfoMutex;
 thread_local uint32_t g_dumpDepth = 0;
@@ -248,7 +264,7 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
-    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_POSITION_OTHER &&
+    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER &&
         system::GetParameter("const.window.foldscreen.type", "")[0] == '1') {
         return nullptr;
     }
@@ -943,8 +959,8 @@ int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
 void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
-    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
+    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(this);
     CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
     isFoldRegister = true;
 }
@@ -952,7 +968,7 @@ void HCameraService::RegisterFoldStatusListener()
 void HCameraService::UnRegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(this);
     preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
     isFoldRegister = false;
@@ -1636,7 +1652,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         preCameraClient_, cameraId);
     cameraRestoreParam->SetRestoreParamType(restoreParamType);
     cameraRestoreParam->SetStartActiveTime(activeTime);
-    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
     cameraRestoreParam->SetFoldStatus(foldStatus);
     if (captureSession == nullptr || restoreParamType == NO_NEED_RESTORE_PARAM_OHOS) {
         cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
@@ -1697,84 +1713,22 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         }
         defaultSettings->addEntry(OHOS_CONTROL_FPS_RANGES, fpsRange.data(), fpscount);
     }
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t stabilizationMode_ = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t deferredType = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t colorEffectTemp = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t effect = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
-    }
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FILTER_TYPE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t filterValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_FILTER_TYPE, &filterValue, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_MOTION_DETECTION, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_MOTION_DETECTION, &enableValue, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_HIGH_QUALITY_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &enableValue, count);
-    }
 
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CAMERA_USER_ID, &item);
     if (ret == CAM_META_SUCCESS) {
-        int32_t enableValue = item.data.i32[0];
-        defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &enableValue, count);
+        int32_t userId = item.data.i32[0];
+        defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &userId, count);
     }
 
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_MOVING_PHOTO, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, count);
-    }
-    
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t filterValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &filterValue, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &enableValue, count);
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_CAMERA_USED_AS_POSITION, &item);
-    if (ret == CAM_META_SUCCESS) {
-        uint8_t enableValue = item.data.u8[0];
-        defaultSettings->addEntry(OHOS_CONTROL_CAMERA_USED_AS_POSITION, &enableValue, count);
-    }
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
+
+    for (uint32_t metadataTag : restoreMetadataTag) { // item.type is uint8
+        ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), metadataTag, &item);
+        if (ret == 0 && item.count != 0) {
+            defaultSettings->addEntry(item.item, item.data.u8, item.count);
+        }
+    }
     return defaultSettings;
 }
 
@@ -2035,6 +1989,22 @@ int32_t HCameraService::CameraDataShareHelper::UpdateOnce(const std::string key,
     MEDIA_INFO_LOG("CameraDataShareHelper Update:%{public}s success", key.c_str());
     dataShareHelper->Release();
     return CAMERA_OK;
+}
+
+int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
+{
+    #ifdef MEMMGR_OVERRID
+    int32_t pid = getpid();
+    const std::string reason = "HW_CAMERA_TO_PHOTO";
+    std::string clientName = SYSTEM_CAMERA;
+    int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, reason, requiredMemSizeKB, clientName);
+    MEDIA_INFO_LOG("HCameraDevice::RequireMemory reason:%{public}s, clientName:%{public}s, ret:%{public}d",
+        reason.c_str(), clientName.c_str(), ret);
+    if (ret == 0) {
+        return CAMERA_OK;
+    }
+    #endif
+    return CAMERA_UNKNOWN_ERROR;
 }
 } // namespace CameraStandard
 } // namespace OHOS

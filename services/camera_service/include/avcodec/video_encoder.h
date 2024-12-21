@@ -61,6 +61,7 @@ private:
     int32_t keyFrameInterval_ = KEY_FRAME_INTERVAL;
     int32_t bitrate_ = 0;
     bool successFrame_ = false;
+    int64_t preFrameTimestamp_ = 0;
 };
 } // CameraStandard
 } // OHOS

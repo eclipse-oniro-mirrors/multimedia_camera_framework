@@ -5690,6 +5690,93 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level
 
 /*
  * Feature: Framework
+ * Function: Test metadataoutput with start when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start when stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_065, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(metadata);
+
+    session->CommitConfig();
+    session->Start();
+
+    metadatOutput->stream_ = nullptr;
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
+
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with start
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(metadata);
+
+    session->CommitConfig();
+    session->Start();
+
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
+    metadatOutput->Release();
+
+    input->Close();
+}
+
+/*
+ * Feature: Framework
  * Function: Test metadataoutput when destruction
  * SubFunction: NA
  * FunctionPoints: NA
@@ -5705,7 +5792,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_067, TestSize.Level
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
 
     metadatOutput->Release();
-    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
 }
 
 /*
@@ -8317,14 +8404,14 @@ HWTEST_F(CameraFrameworkUnitTest, test_CreateBurstDisplayName, TestSize.Level0)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = CAPTURE;
     sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
-    std::string displayName = session->CreateBurstDisplayName(1);
+    std::string displayName = session->CreateBurstDisplayName(1,1);
     cout << "displayName: " << displayName <<endl;
     ASSERT_NE(displayName, "");
     ASSERT_THAT(displayName, testing::EndsWith("_COVER"));
-    displayName = session->CreateBurstDisplayName(2);
+    displayName = session->CreateBurstDisplayName(2,2);
     cout << "displayName: " << displayName <<endl;
     ASSERT_THAT(displayName, Not(testing::EndsWith("_COVER")));
-    displayName = session->CreateBurstDisplayName(-1);
+    displayName = session->CreateBurstDisplayName(-1,-1);
     cout << "displayName: " << displayName <<endl;
 }
 

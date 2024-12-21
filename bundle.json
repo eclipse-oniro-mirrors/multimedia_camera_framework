@@ -1,159 +1,162 @@
 {
-    "name": "@ohos/camera_framework",
-    "description": "Camera standard provides managers and provides the camera resources to application to capture photo/preview/videos",
-    "version": "3.1",
-    "license": "Apache License 2.0",
-    "publishAs": "code-segment",
-    "segment": {
-        "destPath": "foundation/multimedia/camera_framework"
-    },
-    "dirs": {},
-    "scripts": {},
-    "component": {
-        "name": "camera_framework",
-        "subsystem": "multimedia",
-        "syscap": ["SystemCapability.Multimedia.Camera.Core"],
-        "features": [],
-        "adapted_system_type": [ "standard" ],
-        "rom": "",
-        "ram": "",
-        "hisysevent_config": [ "//foundation/multimedia/camera_framework/hisysevent.yaml" ],
-        "deps": {
-          "components": [
-              "ability_base",
-              "ability_runtime",
-              "access_token",
-              "ace_engine",
-              "audio_framework",
-              "av_codec",
-              "bundle_framework",
-              "c_utils",
-              "common_event_service",
-              "data_share",
-              "device_manager",
-              "drivers_interface_camera",
-              "drivers_interface_display",
-              "graphic_2d",
-              "graphic_surface",
-              "hdf_core",
-              "hicollie",
-              "hilog",
-              "hisysevent",
-              "hitrace",
-              "init",
-              "ipc",
-              "image_framework",
-              "media_foundation",
-              "media_library",
-              "napi",
-              "os_account",
-              "resource_management",
-              "safwk",
-              "samgr",
-              "sensor",
-              "thermal_manager",
-              "battery_manager",
-              "power_manager",
-              "window_manager",
-              "memmgr"
-            ],
-            "third_party": [
-              "e2fsprogs"
-            ]
-        },
-        "build": {
-          "group_type": {
-            "base_group": [],
-            "fwk_group": [
-              "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-              "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
-            ],
-            "service_group": [
-              "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
-              "//foundation/multimedia/camera_framework/services/etc:camera_service.rc",
-              "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
-              "//foundation/multimedia/camera_framework/services/camera_service:camera_dynamic_medialibrary",
-              "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
-            ]
-          },
-
-          "inner_kits": [
-            {
-              "type": "none",
-              "name": "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-              "header": {
-                "header_base": [
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/deferred_proc_session",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils"
-                ],
-                "header_files": [
-                  "camera_info.h",
-                  "camera_input.h",
-                  "camera_manager.h",
-                  "capture_input.h",
-                  "capture_output.h",
-                  "metadata_output.h",
-                  "photo_output.h",
-                  "preview_output.h",
-                  "video_output.h",
-                  "capture_session.h",
-                  "deferred_photo_proc_session.h",
-                  "dps_metadata_info.h"
-                ]
-              }
-            },
-            {
-              "type": "none",
-              "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
-              "header": {
-                "header_base": [
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/input",
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/output",
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/session"
-                 ],
-                "header_files": [
-                  "camera_input_napi.h",
-                  "camera_manager_napi.h",
-                  "camera_napi.h",
-                  "photo_output_napi.h",
-                  "preview_output_napi.h",
-                  "video_output_napi.h",
-                  "camera_session_napi.h",
-                  "camera_napi_utils.h",
-                  "native_module_ohos_camera.h",
-                  "listener_base.h",
-                  "metadata_output_napi.h"
-                ]
-              }
-           },
-            {
-              "type": "none",
-              "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
-              "header": {
-                "header_base": [
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
-                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
-                ],
-                "header_files": [
-                  "camera_picker_napi.h"
-                ]
-              }
-            }
+  "name": "@ohos/camera_framework",
+  "description": "Camera standard provides managers and provides the camera resources to application to capture photo/preview/videos",
+  "version": "3.1",
+  "license": "Apache License 2.0",
+  "publishAs": "code-segment",
+  "segment": {
+      "destPath": "foundation/multimedia/camera_framework"
+  },
+  "dirs": {},
+  "scripts": {},
+  "component": {
+      "name": "camera_framework",
+      "subsystem": "multimedia",
+      "syscap": ["SystemCapability.Multimedia.Camera.Core"],
+      "features": [],
+      "adapted_system_type": [ "standard" ],
+      "rom": "",
+      "ram": "",
+      "hisysevent_config": [ "//foundation/multimedia/camera_framework/hisysevent.yaml" ],
+      "deps": {
+        "components": [
+            "ability_base",
+            "ability_runtime",
+            "access_token",
+            "ace_engine",
+            "audio_framework",
+            "av_codec",
+            "bundle_framework",
+            "c_utils",
+            "common_event_service",
+            "data_share",
+            "device_manager",
+            "drivers_interface_camera",
+            "drivers_interface_display",
+            "graphic_2d",
+            "graphic_surface",
+            "hdf_core",
+            "hicollie",
+            "hilog",
+            "hisysevent",
+            "hitrace",
+            "init",
+            "ipc",
+            "image_framework",
+            "media_foundation",
+            "media_library",
+            "napi",
+            "os_account",
+            "resource_management",
+            "safwk",
+            "samgr",
+            "sensor",
+            "thermal_manager",
+            "battery_manager",
+            "power_manager",
+            "window_manager",
+            "memmgr"
           ],
-          "test": [
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
-            "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
+          "third_party": [
+            "e2fsprogs"
           ]
-        }
-    }
+      },
+      "build": {
+        "group_type": {
+          "base_group": [],
+          "fwk_group": [
+            "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
+            "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
+            "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
+            "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
+            "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
+            "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
+          ],
+          "service_group": [
+            "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
+            "//foundation/multimedia/camera_framework/services/etc:camera_service.rc",
+            "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
+            "//foundation/multimedia/camera_framework/services/camera_service:camera_dynamic_medialibrary",
+          "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
+          ]
+        },
+
+        "inner_kits": [
+          {
+            "type": "none",
+            "name": "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
+            "header": {
+              "header_base": [
+                  "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
+                  "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
+                  "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+                  "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/deferred_proc_session",
+                  "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils"
+              ],
+              "header_files": [
+                "camera_info.h",
+                "camera_input.h",
+                "camera_manager.h",
+                "capture_input.h",
+                "capture_output.h",
+                "metadata_output.h",
+                "photo_output.h",
+                "preview_output.h",
+                "video_output.h",
+                "capture_session.h",
+                "deferred_photo_proc_session.h",
+                "dps_metadata_info.h"
+              ]
+            }
+          },
+          {
+            "type": "none",
+            "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
+            "header": {
+              "header_base": [
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/input",
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/output",
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/session"
+               ],
+              "header_files": [
+                "camera_input_napi.h",
+                "camera_manager_napi.h",
+                "camera_napi.h",
+                "photo_output_napi.h",
+                "preview_output_napi.h",
+                "video_output_napi.h",
+                "camera_session_napi.h",
+                "camera_napi_utils.h",
+                "native_module_ohos_camera.h",
+                "listener_base.h",
+                "metadata_output_napi.h"
+              ]
+            }
+         },
+          {
+            "type": "none",
+            "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
+            "header": {
+              "header_base": [
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
+                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
+              ],
+              "header_files": [
+                "camera_picker_napi.h"
+              ]
+            }
+          }
+        ],
+        "test": [
+          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
+          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
+          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
+          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
+          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
+          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
+          "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
+        ]
+      }
+  }
 }

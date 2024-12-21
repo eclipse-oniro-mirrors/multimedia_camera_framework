@@ -12,15 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <dlfcn.h>
 #include "camera_log.h"
 #include "camera_dynamic_loader.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 const char *librarySuffix = ".so";
+std::unique_ptr<CameraDynamicLoader> CameraDynamicLoader::instance = nullptr;
+std::once_flag CameraDynamicLoader::onceFlag;
 CameraDynamicLoader::CameraDynamicLoader()
 {
     MEDIA_INFO_LOG("CameraDynamicLoader ctor");
@@ -54,8 +56,8 @@ void* CameraDynamicLoader::OpenDynamicHandle(std::string dynamicLibrary)
     }
     return dynamicLibHandle_[dynamicLibrary];
 }
- 
-void* CameraDynamicLoader::GetFuntion(std::string dynamicLibrary, std::string function)
+
+void* CameraDynamicLoader::GetFunction(std::string dynamicLibrary, std::string function)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard loaderLock(libLock_);
@@ -63,7 +65,7 @@ void* CameraDynamicLoader::GetFuntion(std::string dynamicLibrary, std::string fu
     if (dynamicLibHandle_[dynamicLibrary] == nullptr) {
         OpenDynamicHandle(dynamicLibrary);
     }
- 
+
     void* handle = nullptr;
     if (dynamicLibHandle_[dynamicLibrary] != nullptr) {
         handle = dlsym(dynamicLibHandle_[dynamicLibrary], function.c_str());
@@ -71,11 +73,11 @@ void* CameraDynamicLoader::GetFuntion(std::string dynamicLibrary, std::string fu
             MEDIA_ERR_LOG("Failed to load %{public}s, reason: %{public}sn", function.c_str(), dlerror());
             return nullptr;
         }
-        MEDIA_INFO_LOG("GetFuntion %{public}s success", function.c_str());
+        MEDIA_INFO_LOG("GetFunction %{public}s success", function.c_str());
     }
     return handle;
 }
- 
+
 void CameraDynamicLoader::CloseDynamicHandle(std::string dynamicLibrary)
 {
     CAMERA_SYNC_TRACE;

@@ -161,8 +161,6 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("Emotion",
             CreateObjectWithMap(env, "Emotion", mapMetaFaceEmotion, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("UsageType", CreateObjectWithMap(env, "UsageType", mapUsageType, g_ignoreRef_)),
-        DECLARE_NAPI_PROPERTY("PortraitThemeType",
-            CreateObjectWithMap(env, "PortraitThemeType", mapPortraitThemeType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

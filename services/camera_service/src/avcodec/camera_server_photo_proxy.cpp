@@ -44,6 +44,7 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     longitude_ = 0.0;
     latitude_ = 0.0;
     captureId_ = 0;
+    burstSeqId_ = -1;
     burstKey_ = "";
     isCoverPhoto_ = false;
     imageFormat_ = 0;
@@ -95,6 +96,7 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     latitude_ = parcel.ReadDouble();
     longitude_ = parcel.ReadDouble();
     captureId_ = parcel.ReadInt32();
+    burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
@@ -105,6 +107,13 @@ int32_t CameraServerPhotoProxy::GetCaptureId()
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetCaptureId captureId:%{public}d", captureId_);
     std::lock_guard<std::mutex> lock(mutex_);
     return captureId_;
+}
+
+int32_t CameraServerPhotoProxy::GetBurstSeqId()
+{
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetBurstSeqId burstSeqId:%{public}d", burstSeqId_);
+    std::lock_guard<std::mutex> lock(mutex_);
+    return burstSeqId_;
 }
 
 std::string CameraServerPhotoProxy::GetPhotoId()

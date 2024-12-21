@@ -21,7 +21,7 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
@@ -215,6 +215,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+    if (dynamicSetting == nullptr) {
+        dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     // open video dfx switch for hal, no need close
     if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
         OpenVideoDfxSwitch(dynamicSetting);
@@ -499,6 +502,9 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
         std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+        if (dynamicSetting == nullptr) {
+            dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        }
         CHECK_AND_RETURN_RET_LOG(dynamicSetting != nullptr, CAMERA_INVALID_ARG,
             "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
         camera_metadata_item_t item;
@@ -628,7 +634,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
     int ret;
     int32_t sensorOrientation;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_LOG(display == nullptr,
         "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {
@@ -646,11 +652,11 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
     if (cameraUsedAsPosition_ != OHOS_CAMERA_POSITION_OTHER) {
         cameraPosition = cameraUsedAsPosition_;
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position as %{public}d", cameraPosition);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
     if (enableCameraRotation_) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);

@@ -233,10 +233,7 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVideoRotation", GetVideoRotation),
         DECLARE_NAPI_FUNCTION("isAutoDeferredVideoEnhancementSupported", IsAutoDeferredVideoEnhancementSupported),
         DECLARE_NAPI_FUNCTION("isAutoDeferredVideoEnhancementEnabled", IsAutoDeferredVideoEnhancementEnabled),
-        DECLARE_NAPI_FUNCTION("enableAutoDeferredVideoEnhancement", EnableAutoDeferredVideoEnhancement),
-        DECLARE_NAPI_FUNCTION("getSupportedRotations", GetSupportedRotations),
-        DECLARE_NAPI_FUNCTION("isRotationSupported", IsRotationSupported),
-        DECLARE_NAPI_FUNCTION("setRotation", SetRotation),
+        DECLARE_NAPI_FUNCTION("enableAutoDeferredVideoEnhancement", EnableAutoDeferredVideoEnhancement)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -985,98 +982,6 @@ napi_value VideoOutputNapi::EnableAutoDeferredVideoEnhancement(napi_env env, nap
     }
     if (res > 0) {
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail");
-    }
-    return result;
-}
-
-napi_value VideoOutputNapi::GetSupportedRotations(napi_env env, napi_callback_info info)
-{
-    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi GetSupportedRotations is called!");
-        return result;
-    }
-    MEDIA_DEBUG_LOG("VideoOutputNapi::GetSupportedRotations is called");
- 
-    VideoOutputNapi* videoOutputNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::GetSupportedRotations parse parameter occur error");
-        return result;
-    }
-    if (videoOutputNapi->videoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("VideoOutputNapi::GetSupportedRotations get native object fail");
-        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
-        return result;
-    }
-    std::vector<int32_t> supportedRotations;
-    int32_t retCode = videoOutputNapi->videoOutput_->GetSupportedRotations(supportedRotations);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        return nullptr;
-    }
-    napi_status status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
-    for (size_t i = 0; i < supportedRotations.size(); i++) {
-        int32_t value = supportedRotations[i];
-        napi_value element;
-        napi_create_int32(env, value, &element);
-        napi_set_element(env, result, i, element);
-    }
-    return result;
-}
-
-napi_value VideoOutputNapi::IsRotationSupported(napi_env env, napi_callback_info info)
-{
-    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsRotationSupported is called!");
-        return result;
-    }
-    MEDIA_DEBUG_LOG("VideoOutputNapi::IsRotationSupported is called");
- 
-    VideoOutputNapi* videoOutputNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported parse parameter occur error");
-        return result;
-    }
-    if (videoOutputNapi->videoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
-        return result;
-    }
-    bool isSupported = false;
-    int32_t retCode = videoOutputNapi->videoOutput_->IsRotationSupported(isSupported);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported fail %{public}d", retCode);
-    }
-    napi_get_boolean(env, isSupported, &result);
-    return result;
-}
-
-napi_value VideoOutputNapi::SetRotation(napi_env env, napi_callback_info info)
-{
-    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi SetRotation is called!");
-        return result;
-    }
-    MEDIA_DEBUG_LOG("VideoOutputNapi::SetRotation is called");
-    VideoOutputNapi* videoOutputNapi = nullptr;
-    int32_t rotation;
-    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi, rotation);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::SetRotation parse parameter occur error");
-        return result;
-    }
-    if (videoOutputNapi->videoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("VideoOutputNapi::SetRotation get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-        return result;
-    }
-    int32_t retCode = videoOutputNapi->videoOutput_->SetRotation(rotation);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        MEDIA_ERR_LOG("VideoOutputNapi::SetRotation fail %{public}d", retCode);
     }
     return result;
 }

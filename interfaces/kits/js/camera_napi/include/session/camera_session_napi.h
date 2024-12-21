@@ -295,9 +295,6 @@ public:
     static napi_value GetSupportedBeautyRange(napi_env env, napi_callback_info info);
     static napi_value GetBeauty(napi_env env, napi_callback_info info);
     static napi_value SetBeauty(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedPortraitThemeTypes(napi_env env, napi_callback_info info);
-    static napi_value IsPortraitThemeSupported(napi_env env, napi_callback_info info);
-    static napi_value SetPortraitThemeType(napi_env env, napi_callback_info info);
     static napi_value GetSupportedColorSpaces(napi_env env, napi_callback_info info);
     static napi_value GetActiveColorSpace(napi_env env, napi_callback_info info);
     static napi_value SetColorSpace(napi_env env, napi_callback_info info);

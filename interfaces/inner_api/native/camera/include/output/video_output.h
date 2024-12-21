@@ -215,24 +215,6 @@ public:
     */
     bool IsVideoStarted();
 
-    /**
-     * @brief Get supported rotations.
-     *
-     */
-    int32_t GetSupportedRotations(std::vector<int32_t> &supportedRotations);
-
-    /**
-     * @brief Check whether the rotation is supported.
-     *
-     */
-    int32_t IsRotationSupported(bool &isSupported);
-
-    /**
-     * @brief Set the rotation.
-     *
-     */
-    int32_t SetRotation(int32_t rotation);
-
 private:
     int32_t videoFormat_;
     Size videoSize_;

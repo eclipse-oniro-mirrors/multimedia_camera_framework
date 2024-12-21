@@ -668,6 +668,8 @@ public:
     */
     void SetCameraManagerNull();
 
+    int32_t RequireMemorySize(int32_t memSize);
+
     int32_t CreatePreviewOutputStream(
         sptr<IStreamRepeat>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
 
@@ -709,6 +711,7 @@ public:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         return serviceProxyPrivate_;
     }
+
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -856,6 +859,7 @@ private:
     std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
+    std::mutex saListenerMuxtex_;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
     std::string foldScreenType_;
     bool isSystemApp_ = false;

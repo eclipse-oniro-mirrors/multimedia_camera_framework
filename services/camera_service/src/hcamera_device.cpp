@@ -28,7 +28,7 @@
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
@@ -57,7 +57,7 @@ static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
-sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
+sptr<OHOS::Rosen::DisplayManagerLite::IFoldStatusListener> listener;
 CallerInfo caller_;
 
 const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice::reportTagInfos_ = {
@@ -81,7 +81,7 @@ const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice:
     {OHOS_CONTROL_CAMERA_USED_AS_POSITION, "OHOS_CONTROL_CAMERA_USED_AS_POSITION", DFX_UB_NOT_REPORT},
 };
 
-class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManagerLite::IFoldStatusListener {
 public:
     explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, const std::string cameraId)
         : cameraHostManager_(cameraHostManager), cameraId_(cameraId)
@@ -101,6 +101,7 @@ public:
             return;
         }
         mLastFoldStatus = currentFoldStatus;
+        MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
     }
 private:
@@ -285,7 +286,7 @@ int32_t HCameraDevice::Open()
     CHECK_ERROR_PRINT_LOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
-    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
+    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s", cameraID_.c_str());
     int32_t result = OpenDevice();
     return result;
 }
@@ -297,7 +298,7 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
     CHECK_ERROR_PRINT_LOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
-    MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera Camera:[%{public}s]", cameraID_.c_str());
+    MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera Camera:[%{public}s", cameraID_.c_str());
     int32_t errCode = OpenDevice(true);
     auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
     if (hdiCameraDeviceV1_3 != nullptr) {
@@ -461,7 +462,7 @@ int32_t HCameraDevice::UpdateDeviceSetting()
 
 void HCameraDevice::HandleFoldableDevice()
 {
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice isFoldable is %d", isFoldable);
     if (isFoldable) {
         RegisterFoldStatusListener();
@@ -476,7 +477,7 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
             "HCameraDevice::CloseDevice device has benn closed");
-        bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+        bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
         if (isFoldable) {
             UnRegisterFoldStatusListener();
         }
@@ -649,7 +650,7 @@ int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
 {
     MEDIA_INFO_LOG("HCameraDevice::SetUsedAsPosition as %{public}d", value);
     usedAsPosition_ = value;
-    // lockforcontrol
+    // lockforControl
     return CAMERA_OK;
 }
 
@@ -819,10 +820,10 @@ void HCameraDevice::RegisterFoldStatusListener()
 {
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
-        int foldStatus = (int)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+        int foldStatus = (int)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, foldStatus);
     }
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener failed");
         listener = nullptr;
@@ -837,7 +838,7 @@ void HCameraDevice::UnRegisterFoldStatusListener()
         MEDIA_ERR_LOG("HCameraDevice::unRegisterFoldStatusListener  listener is null");
         return;
     }
-    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
+    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::UnRegisterFoldStatusListener failed");
     }
@@ -1065,6 +1066,9 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     if (IsCameraDebugOn()) {
         CameraFwkMetadataUtils::DumpMetadataInfo(cameraResult);
     }
@@ -1086,6 +1090,9 @@ int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& re
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     auto streamOperatorCallback = GetStreamOperatorCallback();
     if (streamOperatorCallback != nullptr) {
         streamOperatorCallback->OnResult(streamId, result);
@@ -1390,7 +1397,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
     CAMERA_SYNC_TRACE;
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }

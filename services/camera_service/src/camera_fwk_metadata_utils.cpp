@@ -169,6 +169,7 @@ void DumpMetadataItemInfo(const camera_metadata_item_t& metadataItem)
 std::shared_ptr<OHOS::Camera::CameraMetadata> RecreateMetadata(
     const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, nullptr, "RecreateMetadata is fail, metadata is null");
     common_metadata_header_t* header = metadata->get();
     std::shared_ptr<OHOS::Camera::CameraMetadata> newMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAPACITY, DATA_CAPACITY);

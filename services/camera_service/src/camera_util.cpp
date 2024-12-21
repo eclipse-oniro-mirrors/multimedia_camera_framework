@@ -21,8 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
@@ -383,7 +382,7 @@ int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
 
     if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
-        return CAMERA_OPERATION_NOT_ALLOWED;
+        return CAMERA_NO_PERMISSION;
     } else {
         MEDIA_DEBUG_LOG("HCameraService::CheckPermission: Permission to Access Camera Granted!!!!");
     }
@@ -410,7 +409,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    auto display = OHOS::Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
     MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
                    display->GetWidth(), display->GetHeight(), display->GetRotation());

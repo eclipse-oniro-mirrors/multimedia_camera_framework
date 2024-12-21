@@ -76,7 +76,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "media_library:media_library_manager",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]

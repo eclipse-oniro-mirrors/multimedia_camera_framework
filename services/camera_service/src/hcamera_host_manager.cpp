@@ -25,7 +25,7 @@
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
-#include "display_manager.h"
+#include "display_manager_lite.h"
 #include "camera_report_uitls.h"
 
 namespace OHOS {
@@ -266,6 +266,9 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
                 return HdiToServiceError(rc);
             }
             OHOS::Camera::MetadataUtils::ConvertVecToMetadata(cameraAbility, ability);
+            if (ability == nullptr) {
+                ability = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+            }
             deviceInfo->ability = ability;
         }
     }
@@ -848,7 +851,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::Prelaunch failed with invalid device info");
     sptr<HCameraRestoreParam> cameraRestoreParam = GetRestoreParam(clientName, cameraId);
-    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
     if (foldStatus != cameraRestoreParam->GetFlodStatus()) {
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
         return 0;
@@ -895,15 +898,14 @@ void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestor
         DeleteRestoreParam(clientName, cameraRestoreParam->GetCameraId());
         (persistentParamMap_[clientName])[cameraRestoreParam->GetCameraId()] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save persistent param");
-    } else if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
+    } else {
         auto itTransitent = transitentParamMap_.find(clientName);
         if (itTransitent != transitentParamMap_.end()) {
             transitentParamMap_.erase(clientName);
         }
         transitentParamMap_[clientName] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save transist param");
-    } else {
-        MEDIA_DEBUG_LOG("No need save param");
+        isHasSavedParam = true;
     }
 }
 
@@ -930,9 +932,15 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
     }
 
     auto itTransitent = transitentParamMap_.find(clientName);
+    if (!isHasSavedParam && itTransitent != transitentParamMap_.end()) {
+        transitentParamMap_.erase(clientName);
+        return;
+    }
+
     if (itTransitent != transitentParamMap_.end()) {
         MEDIA_INFO_LOG("HCameraHostManager::Update transient CloseTime ");
         transitentParamMap_[clientName]->SetCloseCameraTime(closeTime);
+        isHasSavedParam = false;
     }
 }
 

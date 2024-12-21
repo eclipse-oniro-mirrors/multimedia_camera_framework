@@ -175,7 +175,7 @@ const std::unordered_map<LightPaintingType, CameraLightPaintingType>
     {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
     {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
 };
- 
+
 const std::unordered_map<CameraLightPaintingType, LightPaintingType>
     CaptureSession::metaLightPaintingTypeMap_ = {
     {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
@@ -624,7 +624,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         }
     }
 
-    deviceInfo->modeVideoDeferredType_ = {};
+    inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_ = {};
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
     MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability video item: %{public}d count: %{public}d", item.item, item.count);
@@ -632,7 +632,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, video deferredType:%{public}d",
                 item.data.u8[i], item.data.u8[i + 1]);
-            deviceInfo->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
+            inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
         }
     }
 }
@@ -2329,10 +2329,12 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
         }
         arStatusInfo.laserData = laserData;
     }
+
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LENS_FOCUS_DISTANCE, &item);
     if (ret == CAM_META_SUCCESS) {
         arStatusInfo.lensFocusDistance = item.data.f[0];
     }
+
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
     if (ret == CAM_META_SUCCESS) {
         arStatusInfo.sensorSensitivity = item.data.i32[0];
@@ -3330,7 +3332,7 @@ CameraPosition CaptureSession::GetUsedAsPosition()
         return usedAsCameraPosition;
     }
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    if (inputDevice == nullptr) {
+    if (inputDeviceInfo == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::GetUsedAsPosition camera device info is null");
         return usedAsCameraPosition;
     }
@@ -3418,160 +3420,25 @@ int32_t CaptureSession::GetBeauty(BeautyType beautyType)
     return beautyLevel;
 }
 
-int32_t CaptureSession::GetSupportedPortraitThemeTypes(std::vector<PortraitThemeType>& supportedPortraitThemeTypes)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::GetSupportedPortraitThemeTypes");
-    supportedPortraitThemeTypes.clear();
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::GetSupportedPortraitThemeTypes Session is not Commited.");
-    auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedPortraitThemeTypes camera device is null");
-    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedPortraitThemeTypes camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PORTRAIT_THEME_TYPES, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedPortraitThemeTypes Failed with return code %{public}d", ret);
-    g_transformValidData(item, g_metaPortraitThemeTypeMap_, supportedPortraitThemeTypes);
-    return CameraErrorCode::SUCCESS;
-}
-
-bool CaptureSession::IsPortraitThemeSupported()
-{
-    bool isSupported;
-    IsPortraitThemeSupported(isSupported);
-    return isSupported;
-}
-
-int32_t CaptureSession::IsPortraitThemeSupported(bool &isSupported)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::IsPortraitThemeSupported");
-    isSupported = false;
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::IsPortraitThemeSupported Session is not Commited.");
-    auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsPortraitThemeSupported camera device is null");
-    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsPortraitThemeSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PORTRAIT_THEME_SUPPORTED, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsPortraitThemeSupported Failed with return code %{public}d", ret);
-    isSupported = static_cast<bool>(item.data.u8[0]);
-    return CameraErrorCode::SUCCESS;
-}
-
-int32_t CaptureSession::SetPortraitThemeType(PortraitThemeType type)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::SetPortraitThemeType");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::SetPortraitThemeType Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetPortraitThemeType Need to call LockForControl() before setting camera properties");
-    CHECK_AND_RETURN_RET(IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
-    PortraitThemeType portraitThemeTypeTemp = PortraitThemeType::NATURAL;
-    uint8_t themeType = g_fwkPortraitThemeTypeMap_.at(portraitThemeTypeTemp);
-    auto itr = g_fwkPortraitThemeTypeMap_.find(type);
-    if (itr == g_fwkPortraitThemeTypeMap_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetPortraitThemeType Unknown portrait theme type");
-    } else {
-        themeType = itr->second;
-    }
-    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_PORTRAIT_THEME_TYPE, &themeType, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetPortraitThemeType Failed to set flash mode");
-    return CameraErrorCode::SUCCESS;
-}
-
-int32_t CaptureSession::GetSupportedVideoRotations(std::vector<int32_t>& supportedRotation)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::GetSupportedVideoRotations");
-    supportedRotation.clear();
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::GetSupportedVideoRotations Session is not Commited.");
-    auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedVideoRotations camera device is null");
-    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedVideoRotations camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
-    camera_metadata_item_t item;
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIDEO_ROTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetSupportedVideoRotations Failed with return code %{public}d", ret);
-    for (uint32_t i = 0; i < item.count; i++) {
-        auto rotation = static_cast<VideoRotation>(item.data.i32[i]);
-        auto it = std::find(g_fwkVideoRotationVector_.begin(), g_fwkVideoRotationVector_.end(), rotation);
-        if (it != g_fwkVideoRotationVector_.end()) {
-            supportedRotation.emplace_back(static_cast<int32_t>(*it));
-        }
-    }
-    return CameraErrorCode::SUCCESS;
-}
-
-bool CaptureSession::IsVideoRotationSupported()
-{
-    bool isSupported;
-    IsVideoRotationSupported(isSupported);
-    return isSupported;
-}
-
-int32_t CaptureSession::IsVideoRotationSupported(bool &isSupported)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::IsVideoRotationSupported");
-    isSupported = false;
-    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::IsVideoRotationSupported Session is not Commited.");
-    auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsVideoRotationSupported camera device is null");
-    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsVideoRotationSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIDEO_ROTATION_SUPPORTED, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
-        "CaptureSession::IsVideoRotationSupported Failed with return code %{public}d", ret);
-    isSupported = static_cast<bool>(item.data.u8[0]);
-    return CameraErrorCode::SUCCESS;
-}
-
-int32_t CaptureSession::SetVideoRotation(int32_t rotation)
-{
-    MEDIA_DEBUG_LOG("Enter CaptureSession::SetVideoRotation");
-    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::SetVideoRotation Session is not Commited");
-    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetVideoRotation Need to call LockForControl() before setting camera properties");
-    CHECK_AND_RETURN_RET(IsVideoRotationSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
-    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_VIDEO_ROTATION, &rotation, 1);
-    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetVideoRotation Failed to set flash mode");
-    return CameraErrorCode::SUCCESS;
-}
-
 // focus distance
 float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi")))
 {
-    float invalidDistance = 0.0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetMinimumFocusDistance Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetMinimumFocusDistance camera metadata is null");
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance Failed with return code %{public}d", ret);
     float minimumFocusDistance = item.data.f[0];
     MEDIA_DEBUG_LOG("CaptureSession::GetMinimumFocusDistance minimumFocusDistance=%{public}f", minimumFocusDistance);
@@ -3584,12 +3451,12 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(result->get(), OHOS_CONTROL_LENS_FOCUS_DISTANCE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates Failed with return code %{public}d", ret);
+        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates Failed with return code %{public}d", ret);
         return;
     }
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates meta=%{public}f", item.data.f[0]);
     if (FloatIsEqual(GetMinimumFocusDistance(), 0.0)) {
-        MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
+        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
         return;
     }
     focusDistance_ = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
@@ -4198,6 +4065,7 @@ bool CaptureSession::IsMacroSupported()
         MEDIA_ERR_LOG("CaptureSession::IsMacroSupported camera deviceInfo is null");
         return false;
     }
+
     if (supportSpecSearch_) {
         MEDIA_INFO_LOG("spec search enter");
         auto abilityContainer = GetCameraAbilityContainer();
@@ -4606,15 +4474,10 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
-        }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -4982,7 +4845,7 @@ int32_t CaptureSession::EnableAutoCloudImageEnhancement(bool enabled)
     MEDIA_INFO_LOG("CaptureSession::EnableAutoCloudImageEnhancement enabled:%{public}d", enabled);
 
     LockForControl();
-    
+
     int32_t res = CameraErrorCode::SUCCESS;
     bool status = false;
     camera_metadata_item_t item;
@@ -5361,7 +5224,10 @@ int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     MEDIA_DEBUG_LOG("CaptureSession::SetWhiteBalanceMode WhiteBalance mode: %{public}d", whiteBalanceMode);
     // no manual wb mode need set maunual value to 0
     if (mode != AWB_MODE_OFF) {
-        SetManualWhiteBalance(0);
+        int32_t wbValue = 0;
+        if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, 1)) {
+            MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance.");
+        }
     }
     res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1);
     CHECK_ERROR_PRINT_LOG(!res, "CaptureSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
@@ -6156,13 +6022,13 @@ void CaptureSession::SetUsage(UsageType usageType, bool enabled)
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
         "CaptureSession::SetUsage Need to call LockForControl() before setting camera properties");
     std::vector<int32_t> mode;
- 
+
     mode.push_back(static_cast<int32_t>(usageType));
     mode.push_back(
         static_cast<int32_t>(enabled ? OHOS_CAMERA_SESSION_USAGE_ENABLE : OHOS_CAMERA_SESSION_USAGE_DISABLE));
- 
+
     bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
- 
+
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
 }
 } // namespace CameraStandard

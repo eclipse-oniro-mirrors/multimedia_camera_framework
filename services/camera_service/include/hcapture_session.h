@@ -30,7 +30,6 @@
 #include "camera_util.h"
 #include "camera_dynamic_loader.h"
 #include "fixed_size_list.h"
-#include "camera_dynamic_loader.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
@@ -281,9 +280,9 @@ public:
 
     static void OpenMediaLib();
     static void DelayCloseMediaLib();
-    static shared_ptr<CameraDynamicLoader> dynamicLoader_;
     static std::optional<uint32_t> closeTimerId_;
     static std::mutex g_mediaTaskLock_;
+    std::atomic<bool> isNeedMediaLib = false;
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
 
@@ -308,7 +307,7 @@ private:
         return cameraDevice_;
     }
     string CreateDisplayName(const std::string& suffix);
-    string CreateBurstDisplayName(int32_t seqId);
+    string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t ValidateSession();

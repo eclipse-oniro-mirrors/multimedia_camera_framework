@@ -170,10 +170,7 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::beauty_props = {
     DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", CameraSessionNapi::GetSupportedBeautyTypes),
     DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", CameraSessionNapi::GetSupportedBeautyRange),
     DECLARE_NAPI_FUNCTION("getBeauty", CameraSessionNapi::GetBeauty),
-    DECLARE_NAPI_FUNCTION("setBeauty", CameraSessionNapi::SetBeauty),
-    DECLARE_NAPI_FUNCTION("getSupportedPortraitThemeTypes", GetSupportedPortraitThemeTypes),
-    DECLARE_NAPI_FUNCTION("isPortraitThemeSupported", IsPortraitThemeSupported),
-    DECLARE_NAPI_FUNCTION("setPortraitThemeType", SetPortraitThemeType)
+    DECLARE_NAPI_FUNCTION("setBeauty", CameraSessionNapi::SetBeauty)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::color_effect_props = {
@@ -2668,110 +2665,6 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value CameraSessionNapi::GetSupportedPortraitThemeTypes(napi_env env, napi_callback_info info)
-{
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi GetSupportedPortraitThemeTypes is called!");
-        return nullptr;
-    }
-    MEDIA_DEBUG_LOG("GetSupportedPortraitThemeTypes is called");
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedPortraitThemeTypes parse parameter occur error");
-        return nullptr;
-    }
-
-    napi_status status;
-    napi_value result = nullptr;
-    status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return nullptr;
-    }
-
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
-        std::vector<PortraitThemeType> themeTypes;
-        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedPortraitThemeTypes(themeTypes);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedPortraitThemeTypes len = %{public}zu", themeTypes.size());
-        if (!themeTypes.empty()) {
-            for (size_t i = 0; i < themeTypes.size(); i++) {
-                napi_value value;
-                napi_create_int32(env, static_cast<int32_t>(themeTypes[i]), &value);
-                napi_set_element(env, result, i, value);
-            }
-        }
-    } else {
-        MEDIA_ERR_LOG("GetSupportedPortraitThemeTypes call Failed!");
-    }
-    return result;
-}
-
-napi_value CameraSessionNapi::SetPortraitThemeType(napi_env env, napi_callback_info info)
-{
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi SetPortraitThemeType is called!");
-        return nullptr;
-    }
-    MEDIA_DEBUG_LOG("CameraSessionNapi::SetPortraitThemeType is called");
-    int32_t type;
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, type);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::SetPortraitThemeType parse parameter occur error");
-        return nullptr;
-    }
-
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
-        PortraitThemeType portraitThemeType = static_cast<PortraitThemeType>(type);
-        MEDIA_INFO_LOG("CameraSessionNapi::SetPortraitThemeType:%{public}d", portraitThemeType);
-        cameraSessionNapi->cameraSession_->LockForControl();
-        int32_t retCode = cameraSessionNapi->cameraSession_->SetPortraitThemeType(portraitThemeType);
-        cameraSessionNapi->cameraSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            MEDIA_ERR_LOG("CameraSessionNapi::SetPortraitThemeType fail %{public}d", retCode);
-            return nullptr;
-        }
-    } else {
-        MEDIA_ERR_LOG("CameraSessionNapi::SetPortraitThemeType get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-        return nullptr;
-    }
-    return CameraNapiUtils::GetUndefinedValue(env);
-}
-
-napi_value CameraSessionNapi::IsPortraitThemeSupported(napi_env env, napi_callback_info info)
-{
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsPortraitThemeSupported is called!");
-        return nullptr;
-    }
-    MEDIA_DEBUG_LOG("CameraSessionNapi::IsPortraitThemeSupported is called");
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::IsPortraitThemeSupported parse parameter occur error");
-        return nullptr;
-    }
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
-        bool isSupported;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsPortraitThemeSupported(isSupported);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        napi_get_boolean(env, isSupported, &result);
-    } else {
-        MEDIA_ERR_LOG("CameraSessionNapi::IsPortraitThemeSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-        return nullptr;
-    }
-    return result;
-}
-
 napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetSupportedColorSpaces is called.");
@@ -4279,13 +4172,13 @@ napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::SetUsage parse parameter occur error");
         return nullptr;
     }
- 
+
     cameraSessionNapi->cameraSession_->LockForControl();
     cameraSessionNapi->cameraSession_->SetUsage(static_cast<UsageType>(usageType), enabled);
     cameraSessionNapi->cameraSession_->UnlockForControl();
     
     MEDIA_DEBUG_LOG("CameraSessionNapi::SetUsage success");
- 
+
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 

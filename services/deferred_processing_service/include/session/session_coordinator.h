@@ -16,6 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 #define OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 
+#include <memory>
+#include <stdint.h>
 #include "iimage_process_callbacks.h"
 #include "ivideo_process_callbacks.h"
 #include "ipc_file_descriptor.h"
@@ -100,10 +102,25 @@ private:
     void ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback);
     void ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback);
 
+    inline sptr<IDeferredPhotoProcessingSessionCallback> GetRemoteImageCallback(int32_t userId)
+    {
+        std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
+        auto iter = remoteImageCallbacksMap_.find(userId);
+        if (iter != remoteImageCallbacksMap_.end()) {
+            return iter->second.promote();
+        }
+        return nullptr;
+    }
+
     std::mutex mutex_;
     std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
+
+    std::mutex remoteImageCallbacksMapMutex_;
     std::map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
+
+    std::mutex pendingImageResultsMutex_;
     std::deque<ImageResult> pendingImageResults_;
+
     std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_;
     std::map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> remoteVideoCallbacksMap_;
     std::deque<RequestResult> pendingRequestResults_;

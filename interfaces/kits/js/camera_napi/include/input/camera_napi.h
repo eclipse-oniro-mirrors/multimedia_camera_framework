@@ -385,12 +385,6 @@ static const std::unordered_map<std::string, int32_t> mapUsageType = {
     {"BOKEH", 0},
 };
 
-static const std::unordered_map<std::string, int32_t> mapPortraitThemeType = {
-    {"NATURAL", 0},
-    {"DELICATE", 1},
-    {"STYLISH", 2},
-};
-
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

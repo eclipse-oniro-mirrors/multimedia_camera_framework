@@ -304,6 +304,9 @@ Camera_ErrorCode Camera_CaptureSession::RemoveMetaDataOutput(Camera_MetadataOutp
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::RemoveMetaDataOutput is called");
     sptr<CaptureOutput> innerMetaDataOutput = metadataOutput->GetInnerMetadataOutput();
+    if (innerCaptureSession_ == nullptr) {
+        return CAMERA_INVALID_ARGUMENT;
+    }
     int32_t ret = innerCaptureSession_->AddOutput(innerMetaDataOutput);
     return FrameworkToNdkCameraError(ret);
 }

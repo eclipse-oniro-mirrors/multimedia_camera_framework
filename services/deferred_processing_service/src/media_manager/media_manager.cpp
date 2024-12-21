@@ -15,6 +15,7 @@
 
 #include "media_manager.h"
 
+#include "basic_definitions.h"
 #include "dp_log.h"
 
 namespace OHOS {
@@ -26,6 +27,7 @@ namespace {
     constexpr int32_t DEFAULT_CHANNEL_COUNT = 1;
     constexpr int32_t DEFAULT_AUDIO_INPUT_SIZE = 1024 * DEFAULT_CHANNEL_COUNT * sizeof(short);
     constexpr uint32_t DPS_FLAG_SYNC_FRAME = 10;
+    constexpr int32_t MAX_FRAME = 10000;
 }
 
 MediaManagerError MediaManager::Create(int32_t inFd, int32_t outFd, int32_t tempFd)
@@ -80,7 +82,7 @@ MediaManagerError MediaManager::Pause()
     }
     
     std::string lastPts = TEMP_PTS_TAG + std::to_string(finalSyncPts_);
-    DP_INFO_LOG("lastPts: %{public}s", lastPts.c_str());
+    DP_INFO_LOG("Pause pausePts: %{public}s", lastPts.c_str());
     auto off = lseek(outputFileFd_, 0, SEEK_END);
     DP_CHECK_ERROR_RETURN_RET_LOG(off == static_cast<off_t>(ERROR_FAIL), ERROR_FAIL, "write temp lseek failed.");
     auto ret = write(outputFileFd_, lastPts.c_str(), lastPts.size());
@@ -152,29 +154,37 @@ MediaManagerError MediaManager::Recover(const int64_t size)
     config.memoryType = MemoryType::SHARED_MEMORY;
     auto sample = AVBuffer::CreateAVBuffer(config);
     DP_CHECK_ERROR_RETURN_RET_LOG(sample == nullptr, ERROR_FAIL, "create avbuffer failed.");
+    int64_t curPts = 0;
     while (true) {
         ret = recoverReader_->Read(TrackType::AV_KEY_VIDEO_TYPE, sample);
         if (ret == ERROR_FAIL) {
             DP_ERR_LOG("read temp data failed.");
             return ERROR_FAIL;
         }
-        DP_CHECK_BREAK_LOG(ret == EOS, "recovering finished.");
 
-        if (sample->flag_ == DPS_FLAG_SYNC_FRAME) {
+        ++frameNum;
+        curPts = sample->pts_;
+        if (sample->flag_ == AVCODEC_BUFFER_FLAG_SYNC_FRAME || sample->flag_ == DPS_FLAG_SYNC_FRAME) {
             resumePts_ = sample->pts_;
             finalFrameNum_ = frameNum;
         }
 
-        ++frameNum;
-        DP_DEBUG_LOG("pts: %{public}lld, frame-num(%{public}d)", static_cast<long long>(sample->pts_), frameNum);
+        if (frameNum >= MAX_FRAME) {
+            DP_ERR_LOG("over max size.");
+            return ERROR_FAIL;
+        }
+
+        DP_CHECK_BREAK_LOG(sample->pts_ == pausePts_ || ret == EOS, "Recovering finished.");
+        DP_DEBUG_LOG("VideoInfo pts: %{public}" PRId64 ", frame-num(%{public}d), resume pts: %{public}" PRId64,
+            sample->pts_, frameNum, resumePts_);
         ret = outputWriter_->Write(TrackType::AV_KEY_VIDEO_TYPE, sample);
         if (ret == ERROR_FAIL) {
             DP_ERR_LOG("write temp data failed.");
             return ERROR_FAIL;
         }
     }
-    DP_INFO_LOG("recover sync end, process total num: %{public}d, resume pts: %{public}lld",
-        finalFrameNum_, static_cast<long long>(resumePts_));
+    DP_INFO_LOG("Recover sync end, process total num: %{public}d, "
+        "resumePts: %{public}" PRId64", curPts: %{public}" PRId64, finalFrameNum_, resumePts_, curPts);
     outputWriter_->SetLastPause(pausePts_);
     return OK;
 }
@@ -191,6 +201,7 @@ MediaManagerError MediaManager::CopyAudioTrack()
     auto sample = AVBuffer::CreateAVBuffer(config);
     DP_CHECK_ERROR_RETURN_RET_LOG(sample == nullptr, ERROR_FAIL, "create avbuffer failed.");
 
+    int32_t frameNum = 0;
     while (true) {
         auto ret = inputReader_->Read(TrackType::AV_KEY_AUDIO_TYPE, sample);
         if (ret == ERROR_FAIL) {
@@ -198,6 +209,11 @@ MediaManagerError MediaManager::CopyAudioTrack()
             return ERROR_FAIL;
         }
         DP_CHECK_BREAK_LOG(ret == EOS, "read audio data finished.");
+
+        if (frameNum >= MAX_FRAME) {
+            DP_ERR_LOG("over max size.");
+            return ERROR_FAIL;
+        }
 
         ret = outputWriter_->Write(TrackType::AV_KEY_AUDIO_TYPE, sample);
         if (ret == ERROR_FAIL) {
@@ -272,6 +288,7 @@ MediaManagerError MediaManager::GetRecoverInfo(const int64_t size)
     DP_CHECK_ERROR_RETURN_RET_LOG(findTag == tempTail.end(), ERROR_FAIL, "cannot find temp pts tag.");
 
     std::string pauseTime(findTag + TEMP_PTS_TAG.size(), tempTail.end());
+    DP_INFO_LOG("Recover pausePts: %{public}s", pauseTime.c_str());
     pausePts_ = std::stol(pauseTime);
     lseek(tempFileFd_, 0, SEEK_SET);
     return OK;
