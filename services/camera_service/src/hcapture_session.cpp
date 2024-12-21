@@ -775,7 +775,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
                 audioCapturerSession_ = new AudioCapturerSession();
             }
             if (!taskManager_ && audioCapturerSession_) {
-                taskManager_ = new AvcodecTaskManager(audioCapturerSession_, videoCodecType);
+                taskManager_ = new AvcodecTaskManager(audioCapturerSession_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC);
                 taskManager_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
             }
             if (!videoCache_ && taskManager_) {
