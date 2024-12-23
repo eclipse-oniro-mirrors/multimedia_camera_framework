@@ -554,19 +554,20 @@ int32_t HStreamRepeat::SetMirror(bool isEnable)
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
+{
+    enableCameraRotation_ = isEnable;
+    CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
+    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
+    apiCompatibleVersion_ = apiCompatibleVersion;
+    SetStreamTransform();
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
 {
     enableStreamRotate_ = true;
     deviceClass_ = deviceClass;
-    return CAMERA_OK;
-}
- 
-int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
-{
-    enableCameraRotation_ = isEnable;
-    CHECK_ERROR_RETURN_RET(rotation>STREAM_ROTATE_360, CAMERA_INVALID_ARG);
-    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
-    SetStreamTransform();
     return CAMERA_OK;
 }
 
@@ -602,26 +603,6 @@ bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     return isMirrorSupported;
 }
 
-<<<<<<< HEAD
-=======
-int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
-{
-    enableCameraRotation_ = isEnable;
-    CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
-    setCameraRotation_ = STREAM_ROTATE_360 - rotation;
-    apiCompatibleVersion_ = apiCompatibleVersion;
-    SetStreamTransform();
-    return CAMERA_OK;
-}
-
-int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
-{
-    enableStreamRotate_ = true;
-    deviceClass_ = deviceClass;
-    return CAMERA_OK;
-}
-
->>>>>>> c9fc29f4 (旋转平板api隔离)
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
 {
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -680,7 +661,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
-    if (enableCameraRotation_) {
+    if (enableCameraRotation_ && sensorOrientation != 0) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
@@ -703,8 +684,6 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
         ProcessFixedTransform(sensorOrientation, cameraPosition);
-<<<<<<< HEAD
-=======
     }
 }
 
@@ -743,7 +722,6 @@ void HStreamRepeat::ProcessFixedDiffDeviceTransform(camera_position_enum_t& came
     }
     if (ret != SurfaceError::SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
->>>>>>> c9fc29f4 (旋转平板api隔离)
     }
 }
 
@@ -757,26 +735,6 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
     if (sensorOrientation == GRAPHIC_ROTATE_NONE) {
         int ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
         MEDIA_ERR_LOG("HStreamRepeat::CameraSetRotation failed %{public}d", ret);
-    }
-}
-
-void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
-{
-    int ret = SurfaceError::SURFACE_ERROR_OK;
-    if (IsVerticalDevice()) {
-        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
-    } else {
-        ret = SurfaceError::SURFACE_ERROR_OK;
-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
-        } else {
-            ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
-        }
-    }
-    if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
     }
 }
 
