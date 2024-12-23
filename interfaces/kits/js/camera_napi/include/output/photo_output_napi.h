@@ -154,7 +154,8 @@ private:
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
-class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
+class RawPhotoListener : public IBufferConsumerListener, public ListenerBase,
+    public std::enable_shared_from_this<RawPhotoListener> {
 public:
     explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
     ~RawPhotoListener() = default;
@@ -255,8 +256,8 @@ struct ThumbnailListenerInfo {
 
 struct PhotoListenerInfo {
     sptr<Surface> photoSurface_;
-    const PhotoListener* listener_;
-    PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
+    weak_ptr<const PhotoListener> listener_;
+    PhotoListenerInfo(sptr<Surface> photoSurface, shared_ptr<const PhotoListener> listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
     std::string uri = "";
@@ -268,8 +269,8 @@ struct PhotoListenerInfo {
 
 struct RawPhotoListenerInfo {
     sptr<Surface> rawPhotoSurface_;
-    const RawPhotoListener* listener_;
-    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, const RawPhotoListener* listener)
+    weak_ptr<const RawPhotoListener> listener_;
+    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, shared_ptr<const RawPhotoListener> listener)
         : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
     {}
 };
