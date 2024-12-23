@@ -242,8 +242,7 @@ struct LcdFlashStatusStatusCallbackInfo {
         : lcdFlashStatusInfo_(lcdFlashStatusInfo), listener_(listener) {}
 };
 
-class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase,
-    public std::enable_shared_from_this<AutoDeviceSwitchCallbackListener> {
+class AutoDeviceSwitchCallbackListener : public AutoDeviceSwitchCallback, public ListenerBase {
 public:
     AutoDeviceSwitchCallbackListener(napi_env env) : ListenerBase(env) {}
     ~AutoDeviceSwitchCallbackListener() = default;
