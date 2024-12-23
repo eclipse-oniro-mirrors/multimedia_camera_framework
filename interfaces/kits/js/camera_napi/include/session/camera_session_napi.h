@@ -256,9 +256,9 @@ private:
 struct AutoDeviceSwitchCallbackListenerInfo {
     bool isDeviceSwitched_;
     bool isDeviceCapabilityChanged_;
-    weak_ptr<const AutoDeviceSwitchCallbackListener> listener_;
+    const AutoDeviceSwitchCallbackListener* listener_;
     AutoDeviceSwitchCallbackListenerInfo(bool isDeviceSwitched, bool isDeviceCapabilityChanged,
-        shared_ptr<const AutoDeviceSwitchCallbackListener> listener)
+        const AutoDeviceSwitchCallbackListener* listener)
         : isDeviceSwitched_(isDeviceSwitched), isDeviceCapabilityChanged_(isDeviceCapabilityChanged),
         listener_(listener) {}
 };

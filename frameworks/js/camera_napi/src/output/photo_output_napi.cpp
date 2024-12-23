@@ -635,12 +635,12 @@ void PhotoListener::UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surf
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
-            if (callbackInfo && !callbackInfo->listener_.expired()) {
-                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
-                sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
-                int64_t timestamp = callbackInfo->timestamp;
+            if (callbackInfo) {
                 auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
+                    MEDIA_INFO_LOG("ExecutePhotoAsset picture");
+                    sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
+                    int64_t timestamp = callbackInfo->timestamp;
                     listener->ExecutePhoto(surfaceBuffer, timestamp);
                 }
                 callbackInfo->listener_ = nullptr;
@@ -1114,7 +1114,10 @@ void RawPhotoListener::UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) cons
         return;
     }
     std::unique_ptr<RawPhotoListenerInfo> callbackInfo =
-        std::make_unique<RawPhotoListenerInfo>(rawPhotoSurface, wptr<RawPhotoListener>(const_cast<RawPhotoListener*>(this)));
+        std::make_unique<RawPhotoListenerInfo>(
+            rawPhotoSurface,
+            wptr<RawPhotoListener>(const_cast<RawPhotoListener*>(this))
+        );
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},

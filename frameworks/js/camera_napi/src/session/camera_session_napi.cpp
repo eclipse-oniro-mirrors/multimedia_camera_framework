@@ -858,18 +858,15 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
         return;
     }
     auto callbackInfo = std::make_unique<AutoDeviceSwitchCallbackListenerInfo>(
-        isDeviceSwitched, isDeviceCapabilityChanged, shared_from_this());
+        isDeviceSwitched, isDeviceCapabilityChanged, this);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             auto callbackInfo = reinterpret_cast<AutoDeviceSwitchCallbackListenerInfo*>(work->data);
             if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                if (listener != nullptr) {
-                    listener->OnAutoDeviceSwitchCallback(
-                        callbackInfo->isDeviceSwitched_, callbackInfo->isDeviceCapabilityChanged_);
-                }
+                callbackInfo->listener_->OnAutoDeviceSwitchCallback(
+                    callbackInfo->isDeviceSwitched_, callbackInfo->isDeviceCapabilityChanged_);
                 delete callbackInfo;
             }
             delete work;
