@@ -43,7 +43,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-const uint32_t API_SEGREGATE_MOD = 14;
 camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
 {
     switch (cameraFormat) {
@@ -681,7 +680,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if (apiCompatibleVersion < API_SEGREGATE_MOD) {
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
     sensorOrientation = item.data.i32[0];
