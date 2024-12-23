@@ -3451,12 +3451,12 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(result->get(), OHOS_CONTROL_LENS_FOCUS_DISTANCE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates Failed with return code %{public}d", ret);
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates Failed with return code %{public}d", ret);
         return;
     }
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates meta=%{public}f", item.data.f[0]);
     if (FloatIsEqual(GetMinimumFocusDistance(), 0.0)) {
-        MEDIA_ERR_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates minimum distance is 0");
         return;
     }
     focusDistance_ = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
