@@ -155,7 +155,7 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
         return;
     }
     std::unique_ptr<DepthDataListenerInfo> callbackInfo =
-        std::make_unique<DepthDataListenerInfo>(depthSurface, shared_from_this());
+        std::make_unique<DepthDataListenerInfo>(depthSurface, wptr<DepthDataListener>(const_cast<DepthDataListener*>(this)));
     work->data = callbackInfo.get();
     MEDIA_DEBUG_LOG("DepthDataListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
     int ret = uv_queue_work_with_qos(
@@ -163,13 +163,13 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
         [](uv_work_t* work, int status) {
             DepthDataListenerInfo* callbackInfo = reinterpret_cast<DepthDataListenerInfo*>(work->data);
             if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
+                auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
                     listener->UpdateJSCallback(callbackInfo->depthDataSurface_);
                 }
                 MEDIA_INFO_LOG("DepthDataListener:UpdateJSCallbackAsync() complete");
                 callbackInfo->depthDataSurface_ = nullptr;
-                callbackInfo->listener_.reset();
+                callbackInfo->listener_ = nullptr;
                 delete callbackInfo;
             }
             delete work;

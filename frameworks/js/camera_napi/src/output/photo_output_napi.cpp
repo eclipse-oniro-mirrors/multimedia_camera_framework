@@ -574,7 +574,8 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
         MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
+    std::unique_ptr<PhotoListenerInfo> callbackInfo =
+        std::make_unique<PhotoListenerInfo>(nullptr, wptr<PhotoListener>(const_cast<PhotoListener*>(this)));
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
     callbackInfo->burstKey = burstKey;
@@ -583,7 +584,7 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
-            auto listener = callbackInfo->listener_.lock();
+            auto listener = callbackInfo->listener_.promote();
             if (callbackInfo && listener != nullptr) {
                 MEDIA_INFO_LOG("ExecutePhotoAsset picture");
                 napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -598,7 +599,6 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
                     .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
                 listener->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
                 MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
-                callbackInfo->listener_.reset();
                 delete callbackInfo;
             }
             delete work;
@@ -626,7 +626,8 @@ void PhotoListener::UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surf
         MEDIA_ERR_LOG("PhotoListenerInfo:UpdateMainPictureStageOneJSCallback() failed to allocate work");
         return;
     }
-    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
+    std::unique_ptr<PhotoListenerInfo> callbackInfo =
+        std::make_unique<PhotoListenerInfo>(nullptr, wptr<PhotoListener>(const_cast<PhotoListener*>(this)));
     callbackInfo->surfaceBuffer = surfaceBuffer;
     callbackInfo->timestamp = timestamp;
     work->data = callbackInfo.get();
@@ -638,11 +639,11 @@ void PhotoListener::UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surf
                 MEDIA_INFO_LOG("ExecutePhotoAsset picture");
                 sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
                 int64_t timestamp = callbackInfo->timestamp;
-                auto listener = callbackInfo->listener_.lock();
+                auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
                     listener->ExecutePhoto(surfaceBuffer, timestamp);
                 }
-                callbackInfo->listener_.reset();
+                callbackInfo->listener_ = nullptr;
                 delete callbackInfo;
             }
             delete work;
@@ -972,7 +973,7 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
         return;
     }
     std::unique_ptr<PhotoListenerInfo> callbackInfo =
-        std::make_unique<PhotoListenerInfo>(photoSurface, shared_from_this());
+        std::make_unique<PhotoListenerInfo>(photoSurface, wptr<PhotoListener>(const_cast<PhotoListener*>(this)));
     work->data = callbackInfo.get();
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
     int ret = uv_queue_work_with_qos(
@@ -980,13 +981,13 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
         [](uv_work_t* work, int status) {
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
             if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
+                auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
                     listener->UpdateJSCallback(callbackInfo->photoSurface_);
                 }
                 MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
                 callbackInfo->photoSurface_ = nullptr;
-                callbackInfo->listener_.reset();
+                callbackInfo->listener_ = nullptr;
                 delete callbackInfo;
             }
             delete work;
@@ -1113,20 +1114,20 @@ void RawPhotoListener::UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) cons
         return;
     }
     std::unique_ptr<RawPhotoListenerInfo> callbackInfo =
-        std::make_unique<RawPhotoListenerInfo>(rawPhotoSurface, shared_from_this());
+        std::make_unique<RawPhotoListenerInfo>(rawPhotoSurface, wptr<RawPhotoListener>(const_cast<RawPhotoListener*>(this)));
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             RawPhotoListenerInfo* callbackInfo = reinterpret_cast<RawPhotoListenerInfo*>(work->data);
             if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
+                auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
                     listener->UpdateJSCallback(callbackInfo->rawPhotoSurface_);
                 }
                 MEDIA_INFO_LOG("RawPhotoListener:UpdateJSCallbackAsync() complete");
                 callbackInfo->rawPhotoSurface_ = nullptr;
-                callbackInfo->listener_.reset();
+                callbackInfo->listener_ = nullptr;
                 delete callbackInfo;
             }
             delete work;
