@@ -25,7 +25,8 @@ namespace OHOS {
 namespace CameraStandard {
 static const char SLOW_MOTION_SESSION_NAPI_CLASS_NAME[] = "SlowMotionSession";
 
-class SlowMotionStateListener : public SlowMotionStateCallback, public ListenerBase {
+class SlowMotionStateListener : public SlowMotionStateCallback, public ListenerBase,
+    public std::enable_shared_from_this<SlowMotionStateListener> {
 public:
     explicit SlowMotionStateListener(napi_env env) : ListenerBase(env)
     {
@@ -40,8 +41,8 @@ private:
 
 struct SlowMotionStateListenerInfo {
     SlowMotionState state_;
-    const SlowMotionStateListener* listener_;
-    SlowMotionStateListenerInfo(SlowMotionState state, const SlowMotionStateListener* listener)
+    weak_ptr<const SlowMotionStateListener> listener_;
+    SlowMotionStateListenerInfo(SlowMotionState state, shared_ptr<const SlowMotionStateListener> listener)
         : state_(state), listener_(listener) {}
 };
 
