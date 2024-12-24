@@ -181,7 +181,8 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:metadata",
     "drivers_interface_display:display_commontype_idl_headers",
-    "drivers_interface_display:libdisplay_composer_proxy_1.0",
+    "drivers_interface_display:libdisplay_composer_hdi_impl",
+    "drivers_interface_display:libdisplay_composer_hdi_impl_1.1",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hdf_core:libhdi",
@@ -193,12 +194,14 @@ ohos_shared_library("camera_service") {
     "ipc:ipc_single",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
+    "media_library:media_library",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libdm_lite",
+    "window_manager:libdm",
+    "window_manager:libwm",
   ]
 
   public_external_deps = [
@@ -253,12 +256,10 @@ ohos_shared_library("camera_service") {
 
 ohos_shared_library("camera_dynamic_medialibrary") {
   install_enable = true
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp",
-  ]
+  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
   cflags = [
     "-fPIC",
-    "-Wall"
+    "-Wall",
   ]
   sanitize = {
     cfi = true
@@ -274,19 +275,18 @@ ohos_shared_library("camera_dynamic_medialibrary") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [
-    "${multimedia_camera_framework_path}/common:camera_utils",
-  ]
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
 
   external_deps = [
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_single",
     "media_library:media_library",
     "media_library:media_library_manager",
-    "samgr:samgr_proxy"
+    "samgr:samgr_proxy",
   ]
 
   cflags_cc = cflags
