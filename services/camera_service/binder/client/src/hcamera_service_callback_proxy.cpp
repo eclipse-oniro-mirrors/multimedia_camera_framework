@@ -29,7 +29,6 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     MessageParcel reply;
     MessageOption option;
     option.SetFlags(option.TF_ASYNC);
-    MEDIA_INFO_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged called");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(cameraId);

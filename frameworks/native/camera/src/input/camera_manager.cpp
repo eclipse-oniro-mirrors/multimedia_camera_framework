@@ -1773,16 +1773,15 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     }
     FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
-    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
-    MEDIA_INFO_LOG("SetPreviewProfiles size = %{public}zu", profilesWrapper.previewProfiles.size());
     if (!isPhotoMode_.count(modeName)) {
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
-    MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", profilesWrapper.vidProfiles.size());
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_INFO_LOG("SetDepthProfiles size = %{public}zu", depthProfiles_.size());
-
+    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+        "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
+        profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
+        profilesWrapper.vidProfiles.size(), depthProfiles_.size());
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
     if (!CameraSecurity::CheckSystemApp()) {
