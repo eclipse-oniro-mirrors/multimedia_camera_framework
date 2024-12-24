@@ -23,7 +23,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class ExposureInfoCallbackListener : public ExposureInfoCallback, public ListenerBase {
+class ExposureInfoCallbackListener : public ExposureInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<ExposureInfoCallbackListener> {
 public:
     ExposureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
     ~ExposureInfoCallbackListener() = default;
@@ -36,12 +37,13 @@ private:
 
 struct ExposureInfoChangedCallback {
     ExposureInfo info_;
-    const ExposureInfoCallbackListener* listener_;
-    ExposureInfoChangedCallback(ExposureInfo info, const ExposureInfoCallbackListener* listener)
+    weak_ptr<const ExposureInfoCallbackListener> listener_;
+    ExposureInfoChangedCallback(ExposureInfo info, shared_ptr<const ExposureInfoCallbackListener> listener)
         : info_(info), listener_(listener) {}
 };
 
-class IsoInfoCallbackListener : public IsoInfoCallback, public ListenerBase {
+class IsoInfoCallbackListener : public IsoInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<IsoInfoCallbackListener> {
 public:
     IsoInfoCallbackListener(napi_env env) : ListenerBase(env) {}
     ~IsoInfoCallbackListener() = default;
@@ -54,12 +56,13 @@ private:
 
 struct IsoInfoChangedCallback {
     IsoInfo info_;
-    const IsoInfoCallbackListener* listener_;
-    IsoInfoChangedCallback(IsoInfo info, const IsoInfoCallbackListener* listener)
+    weak_ptr<const IsoInfoCallbackListener> listener_;
+    IsoInfoChangedCallback(IsoInfo info, shared_ptr<const IsoInfoCallbackListener> listener)
         : info_(info), listener_(listener) {}
 };
 
-class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase {
+class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<ApertureInfoCallbackListener> {
 public:
     ApertureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
     ~ApertureInfoCallbackListener() = default;
@@ -72,12 +75,13 @@ private:
 
 struct ApertureInfoChangedCallback {
     ApertureInfo info_;
-    const ApertureInfoCallbackListener* listener_;
-    ApertureInfoChangedCallback(ApertureInfo info, const ApertureInfoCallbackListener* listener)
+    weak_ptr<const ApertureInfoCallbackListener> listener_;
+    ApertureInfoChangedCallback(ApertureInfo info, shared_ptr<const ApertureInfoCallbackListener> listener)
         : info_(info), listener_(listener) {}
 };
 
-class LuminationInfoCallbackListener : public LuminationInfoCallback, public ListenerBase {
+class LuminationInfoCallbackListener : public LuminationInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<LuminationInfoCallbackListener> {
 public:
     LuminationInfoCallbackListener(napi_env env) : ListenerBase(env) {}
     ~LuminationInfoCallbackListener() = default;
@@ -90,8 +94,8 @@ private:
 
 struct LuminationInfoChangedCallback {
     LuminationInfo info_;
-    const LuminationInfoCallbackListener* listener_;
-    LuminationInfoChangedCallback(LuminationInfo info, const LuminationInfoCallbackListener* listener)
+    weak_ptr<const LuminationInfoCallbackListener> listener_;
+    LuminationInfoChangedCallback(LuminationInfo info, shared_ptr<const LuminationInfoCallbackListener> listener)
         : info_(info), listener_(listener) {}
 };
 
