@@ -32,7 +32,7 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "dps_metadata_info.h"
 #include "icamera_util.h"
 #include "ipc_skeleton.h"
