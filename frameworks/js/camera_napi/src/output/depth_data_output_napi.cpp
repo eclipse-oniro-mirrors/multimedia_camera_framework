@@ -155,7 +155,10 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
         return;
     }
     std::unique_ptr<DepthDataListenerInfo> callbackInfo =
-        std::make_unique<DepthDataListenerInfo>(depthSurface, wptr<DepthDataListener>(const_cast<DepthDataListener*>(this)));
+        std::make_unique<DepthDataListenerInfo>(
+            depthSurface,
+            wptr<DepthDataListener>(const_cast<DepthDataListener*>(this))
+        );
     work->data = callbackInfo.get();
     MEDIA_DEBUG_LOG("DepthDataListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
     int ret = uv_queue_work_with_qos(
