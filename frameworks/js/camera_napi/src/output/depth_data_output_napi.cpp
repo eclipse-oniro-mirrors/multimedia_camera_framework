@@ -155,7 +155,6 @@ void DepthDataListener::UpdateJSCallbackAsync(sptr<Surface> depthSurface) const
         return;
     }
     std::unique_ptr<DepthDataListenerInfo> callbackInfo =
-        std::unique_ptr<DepthDataListenerInfo> callbackInfo =
         std::make_unique<DepthDataListenerInfo>(
             depthSurface,
             wptr<DepthDataListener>(const_cast<DepthDataListener*>(this))
