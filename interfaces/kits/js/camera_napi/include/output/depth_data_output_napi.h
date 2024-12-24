@@ -64,8 +64,7 @@ private:
     sptr<Surface> depthDataSurface_ = nullptr;
 };
 
-class DepthDataListener : public IBufferConsumerListener, public ListenerBase,
-    public std::enable_shared_from_this<DepthDataListener> {
+class DepthDataListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit DepthDataListener(napi_env env, const sptr<Surface> depthSurface, sptr<DepthDataOutput> depthDataOutput);
     ~DepthDataListener() = default;
