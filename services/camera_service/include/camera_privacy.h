@@ -25,6 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 class HCameraDevice;
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
@@ -61,10 +62,24 @@ public:
     bool AddCameraPermissionUsedRecord();
     bool IsAllowUsingCamera();
 
+    inline std::cv_status WaitFor()
+    {
+        std::unique_lock<std::mutex> lock(canCloseMutex_);
+        return canClose_.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
+    }
+
+    inline void Notify()
+    {
+        std::lock_guard<std::mutex> lock(canCloseMutex_);
+        canClose_.notify_one();
+    }
+
 private:
     int32_t pid_;
     uint32_t callerToken_;
     wptr<HCameraDevice> cameraDevice_;
+    std::condition_variable canClose_;
+    std::mutex canCloseMutex_;
     std::mutex permissionCbMutex_;
     std::mutex cameraUseCbMutex_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
