@@ -16,6 +16,7 @@
 #ifndef DEFERRED_PHOTO_JOB_UNITTEST_H
 #define DEFERRED_PHOTO_JOB_UNITTEST_H
 
+#include "deferred_photo_controller.h"
 #include "deferred_photo_job.h"
 #include "deferred_photo_processor.h"
 #include "dps_metadata_info.h"
@@ -46,7 +47,7 @@ public:
 
     std::shared_ptr<SessionManager> sessionManager_;
     std::shared_ptr<IImageProcessCallbacks> callbacks_;
-    std::shared_ptr<TaskManager> taskManager_;
+    std::shared_ptr<PhotoPostProcessor> postProcessor_;
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_;
     std::shared_ptr<DeferredPhotoController> photoController_;
 };
