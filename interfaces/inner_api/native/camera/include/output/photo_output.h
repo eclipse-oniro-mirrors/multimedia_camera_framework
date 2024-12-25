@@ -480,6 +480,9 @@ public:
     uint32_t GetAuxiliaryPhotoHandle();
     sptr<CameraPhotoProxy> photoProxy_;
     uint32_t watchDogHandle_;
+
+    void AcquireBufferToPrepareProxy(int32_t captureId);
+
     std::mutex watchDogHandleMutex_;
     std::map<int32_t, int32_t> caputreIdAuxiliaryCountMap_;
     std::map<int32_t, int32_t> caputreIdCountMap_;
