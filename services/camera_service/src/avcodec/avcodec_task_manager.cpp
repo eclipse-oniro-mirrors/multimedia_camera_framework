@@ -135,9 +135,9 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
 {
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
+    auto thisPtr = sptr<AvcodecTaskManager>(this);
     if (videoFdQueue_.empty()) {
         bool waitResult = false;
-        auto thisPtr = sptr<AvcodecTaskManager>(this);
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
             [thisPtr] { return !thisPtr->videoFdQueue_.empty(); });
         CHECK_ERROR_RETURN_RET(!waitResult || videoFdQueue_.empty(), nullptr);
@@ -166,7 +166,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     #ifdef MOVING_PHOTO_ADD_AUDIO
     auto formatAudio = make_shared<Format>();
     formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
-    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, DEFAULT_SAMPLERATE);
+    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, SAMPLERATE_32000);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
     #endif
@@ -176,7 +176,6 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY, TIMED_METADATA_KEY);
     formatMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
     muxer->AddTrack(metaTrackId, formatMeta, META_TRACK);
-
     MEDIA_INFO_LOG("CreateMuxer vId:%{public}d,aid:%{public}d,mid:%{public}d", videoTrackId, audioTrackId, metaTrackId);
     muxer->SetTimedMetadata();
     muxer->Start();
@@ -239,12 +238,9 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         #ifdef MOVING_PHOTO_ADD_AUDIO
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
-        if (thisPtr->audioCapturerSession_) {
-            int64_t startTime = NanosecToMillisec(videoStartTime);
-            int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
-            thisPtr->audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
-        }
-        thisPtr->CollectAudioBuffer(audioRecords, muxer);
+        vector<sptr<AudioRecord>> processedAudioRecords;
+        thisPtr->PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords);
+        thisPtr->CollectAudioBuffer(processedAudioRecords, muxer);
         #endif
         thisPtr->FinishMuxer(muxer);
     });
@@ -299,6 +295,21 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
         choosedBuffer = frameRecords;
     }
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
+}
+
+void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
+    vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
+{
+    int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
+    if (audioCapturerSession_) {
+        int64_t startTime = NanosecToMillisec(videoStartTime);
+        int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
+        audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
+        for (auto ptr: audioRecords) {
+            processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
+        }
+        audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
+    }
 }
 
 void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer)
