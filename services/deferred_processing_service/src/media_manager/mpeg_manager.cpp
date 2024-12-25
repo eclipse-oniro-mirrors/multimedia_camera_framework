@@ -219,7 +219,6 @@ void MpegManager::UnInitVideoCodec()
 
 void MpegManager::OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer)
 {
-    DP_DEBUG_LOG("OnBufferAvailable: dts: %{public}ld, duration: %{public}ld", buffer->dts_, buffer->duration_);
     auto ret = mediaManager_->WriteSample(TrackType::AV_KEY_VIDEO_TYPE, buffer);
     DP_CHECK_ERROR_RETURN_LOG(ret != OK, "video codec write failde.");
     ret = ReleaseBuffer(index);
