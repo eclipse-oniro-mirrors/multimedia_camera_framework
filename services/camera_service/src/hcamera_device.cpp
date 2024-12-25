@@ -28,7 +28,7 @@
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"

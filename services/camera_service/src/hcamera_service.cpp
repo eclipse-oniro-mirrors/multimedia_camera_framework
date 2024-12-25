@@ -35,7 +35,7 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "hcamera_preconfig.h"
 #ifdef DEVICE_MANAGER

@@ -25,7 +25,7 @@
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "camera_report_uitls.h"
 
 namespace OHOS {

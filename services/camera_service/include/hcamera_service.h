@@ -27,7 +27,7 @@
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"

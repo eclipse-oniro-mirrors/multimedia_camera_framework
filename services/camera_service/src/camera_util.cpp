@@ -21,7 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display_manager_lite.h"
+#include "display_manager.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
