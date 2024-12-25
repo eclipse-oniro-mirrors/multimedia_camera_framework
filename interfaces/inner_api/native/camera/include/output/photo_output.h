@@ -482,6 +482,9 @@ public:
 
     void SetAuxiliaryPhotoHandle(uint32_t handle);
     uint32_t GetAuxiliaryPhotoHandle();
+
+    void AcquireBufferToPrepareProxy(int32_t captureId);
+
     uint32_t watchDogHandle_ = 0;
     std::mutex watchDogHandleMutex_;
     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
