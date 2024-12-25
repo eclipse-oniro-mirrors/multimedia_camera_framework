@@ -959,8 +959,8 @@ int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
 void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
-    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
-    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().RegisterFoldStatusListener(this);
+    preFoldStatus_ = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
     CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
     isFoldRegister = true;
 }
@@ -968,7 +968,7 @@ void HCameraService::RegisterFoldStatusListener()
 void HCameraService::UnRegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
-    auto ret = OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterFoldStatusListener(this);
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
     preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
     isFoldRegister = false;
@@ -1652,7 +1652,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         preCameraClient_, cameraId);
     cameraRestoreParam->SetRestoreParamType(restoreParamType);
     cameraRestoreParam->SetStartActiveTime(activeTime);
-    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
     cameraRestoreParam->SetFoldStatus(foldStatus);
     if (captureSession == nullptr || restoreParamType == NO_NEED_RESTORE_PARAM_OHOS) {
         cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
