@@ -30,7 +30,6 @@
 #include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
-#include "camera_report_dfx_uitls.h"
 #include "picture.h"
 #include "task_manager.h"
 using namespace std;
@@ -538,9 +537,18 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
     return appCallback_;
 }
 
+void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    if (itemStream) {
+        itemStream->AcquireBufferToPrepareProxy(captureId);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
+    }
+}
+
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
-    CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo();
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
