@@ -713,7 +713,7 @@ public:
         return serviceProxyPrivate_;
     }
     std::vector<dmDeviceInfo> GetDmDeviceInfo();
-
+    std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
