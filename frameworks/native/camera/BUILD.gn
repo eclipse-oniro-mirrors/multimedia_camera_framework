@@ -140,7 +140,6 @@ ohos_shared_library("camera_framework") {
     "src/session/time_lapse_photo_session.cpp",
     "src/session/video_session.cpp",
     "src/utils/camera_buffer_handle_utils.cpp",
-    "src/utils/camera_report_dfx_uitls.cpp",
     "src/utils/camera_rotation_api_utils.cpp",
     "src/utils/camera_security_utils.cpp",
     "src/utils/dps_metadata_info.cpp",

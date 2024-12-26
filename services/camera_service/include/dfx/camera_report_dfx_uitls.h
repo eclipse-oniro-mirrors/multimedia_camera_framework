@@ -21,38 +21,40 @@
  
 namespace OHOS {
 namespace CameraStandard {
+
+struct CaptureDfxInfo {
+    int32_t captureId;
+    bool isSystemApp;
+    uint64_t firstBufferStartTime;
+    uint64_t firstBufferEndTime;
+    uint64_t prepareProxyStartTime;
+    uint64_t prepareProxyEndTime;
+    uint64_t addProxyStartTime;
+    uint64_t addProxyEndTime;
+};
+
 class CameraReportDfxUtils : public RefBase {
 public:
     static sptr<CameraReportDfxUtils> &GetInstance();
  
-    void SetFirstBufferStartInfo();
-    void SetFirstBufferEndInfo();
+    void SetFirstBufferStartInfo(CaptureDfxInfo captureInfo);
+    void SetFirstBufferEndInfo(int32_t captureId);
  
-    void SetPrepareProxyStartInfo();
-    void SetPrepareProxyEndInfo();
+    void SetPrepareProxyStartInfo(int32_t captureId);
+    void SetPrepareProxyEndInfo(int32_t captureId);
  
-    void SetAddProxyStartInfo();
-    void SetAddProxyEndInfo();
+    void SetAddProxyStartInfo(int32_t captureId);
+    void SetAddProxyEndInfo(int32_t captureId);
     
 private:
     std::mutex mutex_;
- 
-    uint64_t setFirstBufferStartTime_;
-    uint64_t setFirstBufferEndTime_;
-    bool isBufferSetting_;
- 
-    uint64_t setPrepareProxyStartTime_;
-    uint64_t setPrepareProxyEndTime_;
-    bool isPrepareProxySetting_;
- 
-    uint64_t setAddProxyStartTime_;
-    uint64_t setAddProxyEndTime_;
-    bool isAddProxySetting_;
 
     static sptr<CameraReportDfxUtils> cameraReportDfx_;
     static std::mutex instanceMutex_;
+
+    std::map<int32_t, CaptureDfxInfo> captureList_;
  
-    void ReportPerformanceDeferredPhoto();
+    void ReportPerformanceDeferredPhoto(CaptureDfxInfo captureInfo);
 };
 } // namespace CameraStandard
 } // namespace OHOS

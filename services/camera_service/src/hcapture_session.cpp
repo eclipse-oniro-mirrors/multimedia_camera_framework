@@ -74,6 +74,7 @@
 #include "surface_buffer.h"
 #include "system_ability_definition.h"
 #include "v1_0/types.h"
+#include "camera_report_dfx_uitls.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1920,6 +1921,8 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     CHECK_ERROR_RETURN_RET_LOG(
@@ -1932,6 +1935,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
     } else {
         photoAssetProxy = nullptr;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
 }
 
@@ -2010,6 +2014,8 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     // RotatePicture can be processed in parallel
     std::thread rotateTask;
@@ -2036,6 +2042,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     } else {
         photoAssetProxy = nullptr;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
 }
 
