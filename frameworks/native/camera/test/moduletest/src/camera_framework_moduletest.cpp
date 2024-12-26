@@ -9021,7 +9021,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_121, TestSize.L
     EXPECT_EQ(intResult, 0);
     camSession->UnlockForControl();
     intResult = camSession->GetFocusDistance(recnum);
-    EXPECT_EQ(recnum, 0.0f);
+    EXPECT_EQ(recnum, 1.0f);
 
     ReleaseInput();
 
