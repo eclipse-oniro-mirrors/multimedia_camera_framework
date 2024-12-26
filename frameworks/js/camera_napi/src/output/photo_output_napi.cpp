@@ -367,7 +367,6 @@ void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sa
 {
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
         surfaceName_.c_str());
-    auto photoOutput = photoOutput_.promote();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -381,9 +380,6 @@ void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sa
     }
     int32_t captureId = GetCaptureId(surfaceBuffer);
     int32_t dataSize = 0;
-    if (photoOutput != nullptr) {
-        photoOutput->AcquireBufferToPrepareProxy(captureId);
-    }
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
@@ -562,6 +558,9 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
     }
     auxiliaryCount = GetAuxiliaryPhotoCount(surfaceBuffer);
     captureId = GetCaptureId(surfaceBuffer);
+    if (photoOutput != nullptr) {
+        photoOutput->AcquireBufferToPrepareProxy(captureId);
+    }
     // deep copy buffer
     newSurfaceBuffer = SurfaceBuffer::Create();
     MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
