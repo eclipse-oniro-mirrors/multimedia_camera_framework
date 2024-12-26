@@ -833,7 +833,6 @@ int32_t HCameraServiceProxy::RequireMemorySize(int32_t memSize)
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_REQUIRE_MEMORY_SIZE),
         data, reply, option);
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "RequireMemorySize, error: %{public}d", error);
-    status = reply.ReadInt32();
     return error;
 }
 } // namespace CameraStandard
