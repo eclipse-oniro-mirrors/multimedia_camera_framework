@@ -14,10 +14,14 @@
  */
 
 #include "camera_manager_impl.h"
+
+#include <unistd.h>
+
 #include "camera_log.h"
 #include "camera_util.h"
-#include "surface_utils.h"
 #include "image_receiver.h"
+#include "securec.h"
+#include "surface_utils.h"
 
 using namespace std;
 using namespace OHOS;
@@ -757,6 +761,65 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         return CAMERA_SERVICE_FATAL_ERROR;
     } else {
         *orientation = cameraDevice->GetCameraOrientation();
+        return CAMERA_OK;
+    }
+}
+
+Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char** hostDeviceName)
+{
+    dmDeviceInfo* device = nullptr;
+    std::vector<dmDeviceInfo> cameraObjList = CameraManager::GetInstance()->GetDmDeviceInfo();
+    MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameraObjList.size());
+    for (size_t index = 0; index < cameraObjList.size(); index++) {
+        dmDeviceInfo innerCameraDevice = cameraObjList[index];
+        if (innerCameraDevice.networkId == std::string(camera->cameraId)) {
+            device = &cameraObjList[index];
+            break;
+        }
+    }
+
+    if (device == nullptr) {
+        return CAMERA_SERVICE_FATAL_ERROR;
+    } else {
+        std::string deviceName = device->deviceName;
+        *hostDeviceName = (char*)malloc(deviceName.size() + 1);
+        if (memcpy_s(*hostDeviceName, deviceName.size() + 1, deviceName.c_str(), deviceName.size()) != EOK) {
+            free(*hostDeviceName);
+            *hostDeviceName = nullptr;
+            return CAMERA_SERVICE_FATAL_ERROR;
+        }
+        (*hostDeviceName)[deviceName.size()] = '\0';
+        return CAMERA_OK;
+    }
+}
+
+Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType)
+{
+    dmDeviceInfo* device = nullptr;
+    std::vector<dmDeviceInfo> cameraObjList = CameraManager::GetInstance()->GetDmDeviceInfo();
+    MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameraObjList.size());
+    for (size_t index = 0; index < cameraObjList.size(); index++) {
+        dmDeviceInfo innerCameraDevice = cameraObjList[index];
+        if (innerCameraDevice.networkId == std::string(camera->cameraId)) {
+            device = &cameraObjList[index];
+            break;
+        }
+    }
+
+    if (device == nullptr) {
+        return CAMERA_SERVICE_FATAL_ERROR;
+    } else {
+        switch (device->deviceTypeId) {
+            case Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE:
+                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_PHONE;
+                break;
+            case Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET:
+                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_TABLET;
+                break;
+            default:
+                *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
+                break;
+        }
         return CAMERA_OK;
     }
 }
