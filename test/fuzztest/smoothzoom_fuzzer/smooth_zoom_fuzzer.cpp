@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool SmoothZoomFuzzer::hasPermission = false;
-SmoothZoom *SmoothZoomFuzzer::fuzz = nullptr;
+SmoothZoom *SmoothZoomFuzzer::fuzz_ = nullptr;
 
 void SmoothZoomFuzzer::CheckPermission()
 {
@@ -58,14 +58,14 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
-        fuzz = new SmoothZoom();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new SmoothZoom();
     }
     MessageParcel data;
     data.WriteRawData(rawData, size);
 
     SmoothZoomType mode = SmoothZoomType::NORMAL;
-    auto alg = fuzz->GetZoomAlgorithm(mode);
+    auto alg = fuzz_->GetZoomAlgorithm(mode);
 
     data.RewindRead(0);
     float currentZoom = data.ReadFloat();

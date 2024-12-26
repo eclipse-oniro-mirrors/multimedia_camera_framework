@@ -42,7 +42,7 @@ const int32_t ITEM_CAP = 10;
 const int32_t DATA_CAP = 100;
 
 bool g_hasPermission = false;
-HStreamCaptureStub *fuzz = nullptr;
+HStreamCaptureStub *fuzz_ = nullptr;
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
 {
@@ -95,11 +95,11 @@ void Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
         CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        fuzz = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+        fuzz_ = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
 
     Test_OnRemoteRequest(rawData, size);
@@ -108,14 +108,14 @@ void Test(uint8_t *rawData, size_t size)
     Test_HandleSetBufferProducerInfo(rawData, size);
     Test_HandleEnableDeferredType(rawData, size);
     Test_HandleSetCallback(rawData, size);
-    fuzz->Release();
+    fuzz_->Release();
 }
 
 void Request(MessageParcel &data, MessageParcel &reply, MessageOption &option, StreamCaptureInterfaceCode scic)
 {
     uint32_t code = static_cast<uint32_t>(scic);
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
@@ -140,7 +140,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_SET_BUFFER_PRODUCER_INFO);
     uint32_t code = INVALID_CODE;
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_HandleCapture(uint8_t *rawData, size_t size)
@@ -163,7 +163,7 @@ void Test_HandleCapture(uint8_t *rawData, size_t size)
     data.WriteInt32(1);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleCapture(data);
+    fuzz_->HandleCapture(data);
 }
 
 void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
@@ -175,7 +175,7 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleSetThumbnail(data);
+    fuzz_->HandleSetThumbnail(data);
 }
 
 void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
@@ -187,7 +187,7 @@ void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleSetBufferProducerInfo(data);
+    fuzz_->HandleSetBufferProducerInfo(data);
 }
 
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
@@ -195,7 +195,7 @@ void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleEnableDeferredType(data);
+    fuzz_->HandleEnableDeferredType(data);
 }
 
 void Test_HandleSetCallback(uint8_t *rawData, size_t size)
@@ -207,7 +207,7 @@ void Test_HandleSetCallback(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(object);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->HandleSetCallback(data);
+    fuzz_->HandleSetCallback(data);
 }
 
 } // namespace StreamCaptureStubFuzzer

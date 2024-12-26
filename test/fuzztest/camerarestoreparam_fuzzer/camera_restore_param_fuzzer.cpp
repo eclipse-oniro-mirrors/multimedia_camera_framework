@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraRestoreParamFuzzer::hasPermission = false;
-HCameraRestoreParam *CameraRestoreParamFuzzer::fuzz = nullptr;
+HCameraRestoreParam *CameraRestoreParamFuzzer::fuzz_ = nullptr;
 
 void CameraRestoreParamFuzzer::CheckPermission()
 {
@@ -58,10 +58,10 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         std::string clientName;
         std::string cameraId;
-        fuzz = new HCameraRestoreParam(clientName, cameraId);
+        fuzz_ = new HCameraRestoreParam(clientName, cameraId);
     }
     
     MessageParcel data;
@@ -69,42 +69,42 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
 
     data.RewindRead(0);
     int32_t opMode = data.ReadInt32();
-    fuzz->SetCameraOpMode(opMode);
+    fuzz_->SetCameraOpMode(opMode);
 
     data.RewindRead(0);
     int foldStaus = data.ReadInt32();
-    fuzz->SetFoldStatus(foldStaus);
+    fuzz_->SetFoldStatus(foldStaus);
 
     data.RewindRead(0);
     timeval closeCameraTime = {
         data.ReadUint32(),
         data.ReadUint32(),
     };
-    fuzz->SetCloseCameraTime(closeCameraTime);
+    fuzz_->SetCloseCameraTime(closeCameraTime);
 
     data.RewindRead(0);
     int activeTime = data.ReadInt32();
-    fuzz->SetStartActiveTime(activeTime);
+    fuzz_->SetStartActiveTime(activeTime);
 
     RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
-    fuzz->SetRestoreParamType(restoreParamType);
+    fuzz_->SetRestoreParamType(restoreParamType);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
-    fuzz->SetSetting(settings);
+    fuzz_->SetSetting(settings);
 
     std::vector<StreamInfo_V1_1> streamInfos;
-    fuzz->SetStreamInfo(streamInfos);
+    fuzz_->SetStreamInfo(streamInfos);
     
     data.RewindRead(0);
     auto obj = std::make_unique<int32_t>(data.ReadInt32());
     const void *objectId = obj.get();
-    fuzz->IncStrongRef(objectId);
-    fuzz->IncWeakRef(objectId);
-    fuzz->AttemptIncStrong(objectId);
-    fuzz->AttemptIncStrongRef(objectId);
-    fuzz->DecStrongRef(objectId);
-    fuzz->DecWeakRef(objectId);
-    fuzz->AttemptAcquire(objectId);
+    fuzz_->IncStrongRef(objectId);
+    fuzz_->IncWeakRef(objectId);
+    fuzz_->AttemptIncStrong(objectId);
+    fuzz_->AttemptIncStrongRef(objectId);
+    fuzz_->DecStrongRef(objectId);
+    fuzz_->DecWeakRef(objectId);
+    fuzz_->AttemptAcquire(objectId);
 }
 
 } // namespace CameraStandard

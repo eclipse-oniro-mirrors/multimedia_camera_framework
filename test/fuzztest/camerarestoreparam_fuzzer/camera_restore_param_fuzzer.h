@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STREAM_CAPTURE_STUB_FUZZER_H
-#define STREAM_CAPTURE_STUB_FUZZER_H
+#ifndef CAMERA_RESTORE_PARAM_FUZZER_H
+#define CAMERA_RESTORE_PARAM_FUZZER_H
 
 #include "hcamera_restore_param.h"
 
@@ -24,12 +24,12 @@ namespace CameraStandard {
 class CameraRestoreParamFuzzer {
 public:
 static bool hasPermission;
-static HCameraRestoreParam *fuzz;
+static HCameraRestoreParam *fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //CAMERA_RESTORE_PARAM_FUZZER_H
