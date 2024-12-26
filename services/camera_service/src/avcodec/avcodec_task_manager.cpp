@@ -136,12 +136,8 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
 {
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
-<<<<<<< HEAD
     auto thisPtr = sptr<AvcodecTaskManager>(this);
-    if (videoFdQueue_.empty()) {
-=======
     if (videoFdMap_.empty()) {
->>>>>>> 745a848d (fix diff)
         bool waitResult = false;
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
             [thisPtr] { return !thisPtr->videoFdMap_.empty(); });
