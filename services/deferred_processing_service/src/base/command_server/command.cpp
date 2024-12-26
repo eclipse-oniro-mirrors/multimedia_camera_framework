@@ -33,7 +33,6 @@ Command::~Command()
 int32_t Command::Do()
 {
     auto name = GetCommandName();
-    DP_INFO_LOG("DPS_CommandName: %{public}s", name);
     auto timeStart = std::chrono::steady_clock::now();
     auto ret = Executing();
     auto timeEnd = std::chrono::steady_clock::now();
