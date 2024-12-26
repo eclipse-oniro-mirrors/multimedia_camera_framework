@@ -22,8 +22,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-UserInitiatedStrategy::UserInitiatedStrategy(std::shared_ptr<PhotoJobRepository> photoJobRepository)
-    : photoJobRepository_(photoJobRepository)
+UserInitiatedStrategy::UserInitiatedStrategy(const std::shared_ptr<PhotoJobRepository>& repository)
+    : repository_(repository)
 {
     DP_DEBUG_LOG("entered");
 }
@@ -31,12 +31,11 @@ UserInitiatedStrategy::UserInitiatedStrategy(std::shared_ptr<PhotoJobRepository>
 UserInitiatedStrategy::~UserInitiatedStrategy()
 {
     DP_DEBUG_LOG("entered");
-    photoJobRepository_ = nullptr;
 }
 
 DeferredPhotoWorkPtr UserInitiatedStrategy::GetWork()
 {
-    DP_INFO_LOG("entered");
+    DP_DEBUG_LOG("entered");
     DeferredPhotoJobPtr jobPtr = GetJob();
     ExecutionMode mode = GetExecutionMode();
     if ((jobPtr != nullptr) && (mode != ExecutionMode::DUMMY)) {
@@ -47,7 +46,7 @@ DeferredPhotoWorkPtr UserInitiatedStrategy::GetWork()
 
 DeferredPhotoJobPtr UserInitiatedStrategy::GetJob()
 {
-    return photoJobRepository_->GetHighPriorityJob();
+    return repository_->GetHighPriorityJob();
 }
 
 ExecutionMode UserInitiatedStrategy::GetExecutionMode()

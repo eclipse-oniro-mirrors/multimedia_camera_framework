@@ -27,21 +27,41 @@ ServiceDiedCommand::ServiceDiedCommand(const int32_t userId) : userId_(userId)
     DP_DEBUG_LOG("entered.");
 }
 
-ServiceDiedCommand::~ServiceDiedCommand()
+int32_t ServiceDiedCommand::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_CHECK_RETURN_RET(initialized_.load(), DP_OK);
+    schedulerManager_ = DPS_GetSchedulerManager();
+    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager_ == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
+
+    initialized_.store(true);
+    return DP_OK;
 }
 
-int32_t ServiceDiedCommand::Executing()
+int32_t PhotoDiedCommand::Executing()
 {
-    auto schedulerManager = DPS_GetSchedulerManager();
-    DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
-    auto videoPostProcessor = schedulerManager->GetVideoPostProcessor(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(videoPostProcessor == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
-    auto controller = schedulerManager->GetVideoController(userId_);
+    if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+
+    auto photoPost = schedulerManager_->GetPhotoPostProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(photoPost == nullptr, DP_NULL_POINTER, "PhotoPostProcessor is nullptr.");
+    photoPost->OnSessionDied();
+    return DP_OK;
+}
+
+int32_t VideoDiedCommand::Executing()
+{
+    if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+
+    auto videoPost = schedulerManager_->GetVideoPostProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(videoPost == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
+    videoPost->OnSessionDied();
+
+    auto controller = schedulerManager_->GetVideoController(userId_);
     DP_CHECK_ERROR_RETURN_RET_LOG(controller == nullptr, DP_NULL_POINTER, "VideoController is nullptr.");
 
-    videoPostProcessor->OnSessionDied();
     controller->HandleServiceDied();
     return DP_OK;
 }

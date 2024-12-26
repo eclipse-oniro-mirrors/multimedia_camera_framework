@@ -34,7 +34,7 @@ public:
 
     virtual int32_t RestoreImage(const std::string& imageId) = 0;
 
-    virtual int32_t ProcessImage(const std::string& appName, const std::string imageId) = 0;
+    virtual int32_t ProcessImage(const std::string& appName, const std::string& imageId) = 0;
 
     virtual int32_t CancelProcessImage(const std::string& imageId) = 0;
 

@@ -417,7 +417,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
-        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
+        MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
             camera->cameraId.c_str(), camera->position, camera->connectionType);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
@@ -427,7 +427,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
                     defaultCamera->foldStatus == camera->foldStatus);
             })
         ) {
-            MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
+            MEDIA_DEBUG_LOG("ChooseDeFaultCameras alreadly has default camera");
         } else {
             choosedCameras.emplace_back(camera);
             MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
@@ -1870,7 +1870,6 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
 {
     constexpr int32_t maxSaUid = 10000;
     CHECK_ERROR_RETURN_RET_LOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
-    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
     {
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
         if (isProxy) {

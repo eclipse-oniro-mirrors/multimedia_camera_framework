@@ -39,6 +39,7 @@ public:
     int32_t HandleEnableDeferredType(MessageParcel& data);
     int32_t HandleSetMovingPhotoVideoCodecType(MessageParcel& data);
     int32_t HandleSetCameraPhotoRotation(MessageParcel& data);
+    int32_t HandleAcquireBufferToPrepareProxy(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

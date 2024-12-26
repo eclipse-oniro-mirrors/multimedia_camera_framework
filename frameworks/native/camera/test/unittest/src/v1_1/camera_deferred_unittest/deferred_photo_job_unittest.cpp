@@ -15,6 +15,7 @@
 
 #include "deferred_photo_controller.h"
 #include "deferred_photo_job_unittest.h"
+#include "dp_utils.h"
 #include "iphoto_job_repository_listener.h"
 #include "photo_job_repository.h"
 
@@ -40,7 +41,7 @@ void DeferredPhotoJobUnitTest::TearDown(void)
 {
     sessionManager_ = nullptr;
     callbacks_ = nullptr;
-    taskManager_ = nullptr;
+    postProcessor_ = nullptr;
     photoProcessor_ = nullptr;
     photoController_ = nullptr;
 }
@@ -48,19 +49,17 @@ void DeferredPhotoJobUnitTest::TearDown(void)
 void DeferredPhotoJobUnitTest::TestRegisterJobListener(
     std::shared_ptr<PhotoJobRepository> photoJR, const int32_t userId)
 {
-    std::string taskName = "test_taskmgr";
-    uint32_t defaultThreadNumber = 4;
-
     sessionManager_ = SessionManager::Create();
     ASSERT_NE(sessionManager_, nullptr);
     callbacks_ = sessionManager_->GetImageProcCallbacks();
     ASSERT_NE(callbacks_, nullptr);
-    taskManager_ = std::make_shared<TaskManager>(taskName, defaultThreadNumber, false);
-    ASSERT_NE(taskManager_, nullptr);
-    photoProcessor_ = std::make_shared<DeferredPhotoProcessor>(userId, taskManager_.get(), photoJR, callbacks_);
+    postProcessor_ = CreateShared<PhotoPostProcessor>(userId);
+    ASSERT_NE(postProcessor_, nullptr);
+    photoProcessor_ = CreateShared<DeferredPhotoProcessor>(userId, photoJR, postProcessor_, callbacks_);
     ASSERT_NE(photoProcessor_, nullptr);
-    photoController_ = std::make_shared<DeferredPhotoController>(userId, photoJR, photoProcessor_);
+    photoController_ = CreateShared<DeferredPhotoController>(userId, photoJR, photoProcessor_);
     ASSERT_NE(photoController_, nullptr);
+    photoController_->Initialize();
 }
 
 /*

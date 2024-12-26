@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,8 +42,6 @@ void ThermalStrategy::handleEvent(const EventFwk::CommonEventData& data)
     int level = want.GetIntParam(THERMAL_EVENT_ID, DEFAULT_LEVEL);
     DPSEventReport::GetInstance().SetTemperatureLevel(level);
     DP_INFO_LOG("DPS_EVENT: ThermalLevelChanged level:%{public}d", level);
-    // 需要整改归一化图片和视频接收到温度事件的出来
-    EventsMonitor::GetInstance().NotifySystemPressureLevel(MapEventThermalLevel(level));
     EventsMonitor::GetInstance().NotifyThermalLevel(level);
 }
 } // namespace DeferredProcessing

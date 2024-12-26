@@ -38,7 +38,6 @@
 #include "camera_napi_worker_queue_keeper.h"
 #include "camera_output_capability.h"
 #include "camera_photo_proxy.h"
-#include "camera_report_dfx_uitls.h"
 #include "camera_util.h"
 #include "dp_utils.h"
 #include "image_napi.h"
@@ -62,11 +61,49 @@
 #include "task_manager.h"
 #include "video_key_info.h"
 #include "camera_dynamic_loader.h"
+#include "metadata_helper.h"
+#include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 namespace {
+using namespace HDI::Display::Graphic::Common::V1_0;
+static const std::unordered_map<CM_ColorSpaceType, OHOS::ColorManager::ColorSpaceName> COLORSPACE_MAP = {
+    {CM_COLORSPACE_NONE, OHOS::ColorManager::ColorSpaceName::NONE},
+    {CM_BT601_EBU_FULL, OHOS::ColorManager::ColorSpaceName::BT601_EBU},
+    {CM_BT601_SMPTE_C_FULL, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C},
+    {CM_BT709_FULL, OHOS::ColorManager::ColorSpaceName::BT709},
+    {CM_BT2020_HLG_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_HLG},
+    {CM_BT2020_PQ_FULL, OHOS::ColorManager::ColorSpaceName::BT2020_PQ},
+    {CM_BT601_EBU_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_EBU_LIMIT},
+    {CM_BT601_SMPTE_C_LIMIT, OHOS::ColorManager::ColorSpaceName::BT601_SMPTE_C_LIMIT},
+    {CM_BT709_LIMIT, OHOS::ColorManager::ColorSpaceName::BT709_LIMIT},
+    {CM_BT2020_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_HLG_LIMIT},
+    {CM_BT2020_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::BT2020_PQ_LIMIT},
+    {CM_SRGB_FULL, OHOS::ColorManager::ColorSpaceName::SRGB},
+    {CM_P3_FULL, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3},
+    {CM_P3_HLG_FULL, OHOS::ColorManager::ColorSpaceName::P3_HLG},
+    {CM_P3_PQ_FULL, OHOS::ColorManager::ColorSpaceName::P3_PQ},
+    {CM_ADOBERGB_FULL, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB},
+    {CM_SRGB_LIMIT, OHOS::ColorManager::ColorSpaceName::SRGB_LIMIT},
+    {CM_P3_LIMIT, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_LIMIT},
+    {CM_P3_HLG_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_HLG_LIMIT},
+    {CM_P3_PQ_LIMIT, OHOS::ColorManager::ColorSpaceName::P3_PQ_LIMIT},
+    {CM_ADOBERGB_LIMIT, OHOS::ColorManager::ColorSpaceName::ADOBE_RGB_LIMIT},
+    {CM_LINEAR_SRGB, OHOS::ColorManager::ColorSpaceName::LINEAR_SRGB},
+    {CM_LINEAR_BT709, OHOS::ColorManager::ColorSpaceName::LINEAR_BT709},
+    {CM_LINEAR_P3, OHOS::ColorManager::ColorSpaceName::LINEAR_P3},
+    {CM_LINEAR_BT2020, OHOS::ColorManager::ColorSpaceName::LINEAR_BT2020},
+    {CM_DISPLAY_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_SRGB},
+    {CM_DISPLAY_P3_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_SRGB},
+    {CM_DISPLAY_P3_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_HLG},
+    {CM_DISPLAY_P3_PQ, OHOS::ColorManager::ColorSpaceName::DISPLAY_P3_PQ},
+    {CM_DISPLAY_BT2020_SRGB, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_SRGB},
+    {CM_DISPLAY_BT2020_HLG, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_HLG},
+    {CM_DISPLAY_BT2020_PQ, OHOS::ColorManager::ColorSpaceName::DISPLAY_BT2020_PQ}
+};
+
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<PhotoOutputAsyncContext*>(data);
@@ -233,6 +270,26 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     return captureId;
 }
 
+OHOS::ColorManager::ColorSpace GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
+{
+    OHOS::ColorManager::ColorSpace colorSpace =
+        OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::NONE);
+    HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
+    GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
+    if (gsErr != GSERROR_OK) {
+        MEDIA_ERR_LOG("Failed to get colorSpaceType!");
+    } else {
+        MEDIA_INFO_LOG("get colorSpaceType:%{public}d", colorSpaceType);
+    }
+    auto it = COLORSPACE_MAP.find(colorSpaceType);
+    if (it != COLORSPACE_MAP.end()) {
+        colorSpace = it->second;
+    } else {
+        MEDIA_ERR_LOG("colorSpace not supported!");
+    }
+    return colorSpace;
+}
+
 void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput)
 {
     if (photoOutput == nullptr) {
@@ -310,6 +367,7 @@ void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sa
 {
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
         surfaceName_.c_str());
+    auto photoOutput = photoOutput_.promote();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -323,6 +381,9 @@ void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sa
     }
     int32_t captureId = GetCaptureId(surfaceBuffer);
     int32_t dataSize = 0;
+    if (photoOutput != nullptr) {
+        photoOutput->AcquireBufferToPrepareProxy(captureId);
+    }
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
@@ -603,21 +664,26 @@ void PhotoListener::OnBufferAvailable()
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is end");
 }
 
-void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const
+void FillNapiObjectWithCaptureId(napi_env env, int32_t captureId, napi_value &photoAsset)
+{
+    napi_value propertyName, propertyValue;
+    napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int32(env, captureId, &propertyValue);
+    napi_set_property(env, photoAsset, propertyName, propertyValue);
+    MEDIA_INFO_LOG("FillNapiObjectWithCaptureId captureId %{public}d", captureId);
+}
+
+void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+    const std::string burstKey) const
 {
     MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(loop == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("PhotoListenerInfo:UpdateJSCallbackAsync() failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
+    callbackInfo->captureId = captureId;
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
     callbackInfo->burstKey = burstKey;
@@ -625,16 +691,17 @@ void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShot
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
+            MEDIA_INFO_LOG("UpdatePictureJSCallback enter");
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
             auto listener = callbackInfo->listener_.lock();
             if (callbackInfo && listener != nullptr) {
-                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
                 napi_value result[ARGS_TWO] = { nullptr, nullptr };
                 napi_value retVal;
                 napi_get_undefined(listener->env_, &result[PARAM0]);
                 napi_get_undefined(listener->env_, &result[PARAM1]);
                 result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(listener->env_,
                     callbackInfo->uri, callbackInfo->cameraShotType, callbackInfo->burstKey);
+                FillNapiObjectWithCaptureId(listener->env_, callbackInfo->captureId, result[PARAM1]);
                 MEDIA_INFO_LOG("UpdatePictureJSCallback result %{public}s, type %{public}d, burstKey %{public}s",
                     callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
                 ExecuteCallbackNapiPara callbackPara {
@@ -793,7 +860,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
             photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
                 uri, cameraShotType, burstKey, timestamp);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-            UpdatePictureJSCallback(uri, cameraShotType, burstKey);
+            UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
             CleanAfterTransPicture(photoOutput, captureId);
         } else {
             MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
@@ -816,7 +883,9 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t time
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &mainImage);
     }
-    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage);
+    napi_value photoValue = PhotoNapi::CreatePhoto(env_, mainImage);
+    FillNapiObjectWithCaptureId(env_, GetCaptureId(surfaceBuffer), photoValue);
+    result[PARAM1] = photoValue;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callbackNapiPara);
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
@@ -911,7 +980,6 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
-    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo();
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -920,6 +988,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_get_undefined(env_, &result[PARAM1]);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    int32_t captureId = GetCaptureId(surfaceBuffer);
     DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, 0);
     BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
     if (bufferHandle == nullptr) {
@@ -929,15 +998,15 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
         MEDIA_ERR_LOG("invalid bufferHandle");
     }
     newSurfaceBuffer->Map();
-    auto photoOutput = photoOutput_.promote();
     string uri = "";
     int32_t cameraShotType = 0;
-
     std::string burstKey = "";
     CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, burstKey, timestamp);
     MEDIA_INFO_LOG("CreateMediaLibrary result uri:%{public}s cameraShotType:%{public}d burstKey:%{public}s",
         uri.c_str(), cameraShotType, burstKey.c_str());
-    result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType, burstKey);
+    napi_value photoAssetValue = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType, burstKey);
+    FillNapiObjectWithCaptureId(env_, captureId, photoAssetValue);
+    result[PARAM1] = photoAssetValue;
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
     // return buffer to buffer queue
@@ -1005,10 +1074,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
             settings->GetLocation(location);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
-        CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo();
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo();
     }
 }
 
@@ -1030,7 +1096,11 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
-        CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo();
+        auto photoOutput = photoOutput_.promote();
+        if (photoOutput != nullptr) {
+            int32_t currentCaptureId = GetCaptureId(surfaceBuffer);
+            photoOutput->AcquireBufferToPrepareProxy(currentCaptureId);
+        }
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
@@ -1544,8 +1614,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     CHECK_ERROR_RETURN_LOG(photoOutput->thumbnailSurface_ == nullptr, "ThumbnailListener thumbnailSurface_ is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
     string surfaceName = "Thumbnail";
-    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
-        surfaceName.c_str());
+    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s", surfaceName.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -1553,10 +1622,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
-    if (surfaceRet != SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("ThumbnailListener Failed to acquire surface buffer");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
     int32_t thumbnailWidth;
     int32_t thumbnailHeight;
     int32_t burstSeqId = -1;
@@ -1578,29 +1644,30 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     const int32_t formatSize = 4;
     auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
         thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
+    if (!pixelMap) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
+    } else {
+        OHOS::ColorManager::ColorSpace colorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
+        pixelMap->InnerSetColorSpace(colorSpace);
+    }
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
-    UpdateJSCallbackAsync(std::move(pixelMap));
+    UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
         surfaceName.c_str(), captureId);
 }
 
-void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelMap)
+void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,
+    unique_ptr<Media::PixelMap> pixelMap)
 {
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(loop == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(work == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
-        std::make_unique<ThumbnailListenerInfo>(this, std::move(pixelMap));
+        std::make_unique<ThumbnailListenerInfo>(this, captureId, timestamp, std::move(pixelMap));
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
@@ -1609,7 +1676,8 @@ void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelM
             if (callbackInfo) {
                 auto listener = callbackInfo->listener_.promote();
                 if (listener != nullptr) {
-                    listener->UpdateJSCallback(std::move(callbackInfo->pixelMap_));
+                    listener->UpdateJSCallback(callbackInfo->captureId_, callbackInfo->timestamp_,
+                        std::move(callbackInfo->pixelMap_));
                     MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
                 }
                 delete callbackInfo;
@@ -1625,7 +1693,21 @@ void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelM
     }
 }
 
-void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) const
+void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
+{
+    napi_value propertyName, propertyValue;
+    napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int32(env, captureId, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+    MEDIA_INFO_LOG("FillPixelMapWithCaptureIdAndTimestamp captureId %{public}d", captureId);
+
+    napi_create_string_utf8(env, "timestamp", NAPI_AUTO_LENGTH, &propertyName);
+    napi_create_int64(env, timestamp, &propertyValue);
+    napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
+}
+
+void ThumbnailListener::UpdateJSCallback(int32_t captureId, int64_t timestamp,
+    unique_ptr<Media::PixelMap> pixelMap) const
 {
     if (pixelMap == nullptr) {
         MEDIA_ERR_LOG("ThumbnailListener::UpdateJSCallback surfaceBuffer is nullptr");
@@ -1641,8 +1723,19 @@ void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) c
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
     }
+    FillPixelMapWithCaptureIdAndTimestamp(env_, captureId, timestamp, valueParam);
+    napi_value valueCaptureId = nullptr;
+    napi_create_int32(env_, captureId, &valueCaptureId);
+    if (valueCaptureId == nullptr) {
+        MEDIA_ERR_LOG("napi_create_int64 failed");
+        napi_get_undefined(env_, &valueCaptureId);
+    }
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
-    result[1] = valueParam;
+    napi_value obj = nullptr;
+    napi_create_object(env_, &obj);
+    napi_set_named_property(env_, obj, "thumbnailImage", valueParam);
+    napi_set_named_property(env_, obj, "captureId", valueCaptureId);
+    result[1] = obj;
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
 }
@@ -1672,6 +1765,7 @@ void ThumbnailListener::UpdateJSCallback() const
     int32_t thumbnailHeight;
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    int32_t captureId = GetCaptureId(thumbnailBuffer);
     Media::InitializationOptions opts;
     opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
     opts.pixelFormat = Media::PixelFormat::RGBA_8888;
@@ -1685,6 +1779,7 @@ void ThumbnailListener::UpdateJSCallback() const
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
     }
+    FillPixelMapWithCaptureIdAndTimestamp(env_, captureId, timestamp, valueParam);
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
 
@@ -1706,7 +1801,7 @@ void ThumbnailListener::UpdateJSCallbackAsync()
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, nullptr);
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, 0, 0, nullptr);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},

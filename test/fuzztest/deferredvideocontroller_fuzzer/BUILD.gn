@@ -67,6 +67,7 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
   ]
 
   cflags = [
@@ -80,11 +81,20 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
   defines = []
 
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_info.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/dps.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/dfx/dps_event_report.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/dfx/dps_video_report.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/command/event_status_change_command.cpp",
@@ -107,6 +117,7 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/writer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/command/service_died_command.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/command/video_process_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/photo_post_processor.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/video_post_processor.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/video_process_result.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/base/ischeduler_video_state.cpp",
@@ -119,6 +130,13 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/impl/video_photo_process_state.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/impl/video_screen_state.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/impl/video_temperature_state.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/deferred_photo_controller.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/deferred_photo_processor.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/photo_job_repository/deferred_photo_job.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/photo_job_repository/photo_job_repository.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/strategy/background_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/photo_processor/strategy/user_initiated_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/scheduler_coordinator.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/scheduler_manager.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/deferred_video_controller.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/deferred_video_processor.cpp",
@@ -126,8 +144,16 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/deferred_video_job.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_queue.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_repository.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/command/session_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/command/sync_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/command/video_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_coordinator.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/video_session/deferred_video_processing_session.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/video_session/video_session_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_power_manager.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
     "deferred_video_controller_fuzzer.cpp",
   ]
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -48,13 +48,11 @@ public:
     void NotifyChargingStatus(int32_t status);
     void NotifyBatteryStatus(int32_t status);
     void NotifyBatteryLevel(int32_t level);
-    void NotifySystemPressureLevel(SystemPressureLevel level);
-    void NotifyThermalLevel(int level);
+    void NotifyThermalLevel(int32_t level);
     void NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize);
-    void NotifyEventToObervers(int userId, EventType event, int value);
-    void RegisterEventsListener(int userId, const std::vector<EventType>& events,
+    void NotifyEventToObervers(int32_t userId, EventType event, int value);
+    void RegisterEventsListener(int32_t userId, const std::vector<EventType>& events,
         const std::weak_ptr<IEventsListener>& listener);
-    void NotifyObservers(EventType event, int value, int userId = 0);
 
 private:
     void NotifyObserversUnlocked(int userId, EventType event, int value);

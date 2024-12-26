@@ -327,11 +327,13 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
                        cameraRequestOpen->IsConflicting(curCameraId));
         bool deviceConflict = (curCameraId == cameraId);
         bool controlConflict = x->IsConflicting(cameraId) || cameraRequestOpen->IsConflicting(curCameraId);
-        if (deviceConflict && (*curPriority <= *requestPriority)) {
+        if ((deviceConflict || controlConflict) && (*curPriority <= *requestPriority)) {
+            evictList.clear();
             evictList.push_back(x);
             MEDIA_INFO_LOG("deviceConflict: requestProcess has higher priority, Evict current CameraClient");
             return evictList;
         } else if ((deviceConflict || controlConflict) && (*curPriority > *requestPriority)) {
+            evictList.clear();
             evictList.push_back(cameraRequestOpen);
             MEDIA_INFO_LOG(
                 "DeviceConflict or controlConflict, current client has higher priority, Evict request client");

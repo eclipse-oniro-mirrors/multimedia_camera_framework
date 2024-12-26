@@ -16,23 +16,17 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 #define OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 
-#include <list>
-
-#include "ipc_file_descriptor.h"
-#include "safe_map.h"
-#include "v1_2/icamera_host_callback.h"
-#include "v1_2/iimage_process_service.h"
-#include "v1_2/iimage_process_session.h"
-#include "v1_2/iimage_process_callback.h"
-#include "v1_2/types.h"
-#include "iremote_object.h"
-#include "deferred_photo_job.h"
+#include "basic_definitions.h"
+#include "buffer_info.h"
 #include "iimage_process_callbacks.h"
-#include "task_manager.h"
+#include "iservstat_listener_hdi.h"
+#include "photo_process_result.h"
+#include "v1_2/iimage_process_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+using OHOS::HDI::Camera::V1_2::IImageProcessSession;
 enum class IveResult : int32_t {
     ERROR = 0
 };
@@ -45,49 +39,67 @@ enum class IveStateCode : int32_t {
     ERROR = 0
 };
 
-class PhotoPostProcessor {
+class PhotoPostProcessor : public std::enable_shared_from_this<PhotoPostProcessor> {
 public:
-    PhotoPostProcessor(const int32_t userId, TaskManager* taskManager, IImageProcessCallbacks* callbacks);
     ~PhotoPostProcessor();
 
     void Initialize();
-    int GetConcurrency(ExecutionMode mode);
+    int32_t GetConcurrency(ExecutionMode mode);
     bool GetPendingImages(std::vector<std::string>& pendingImages);
     void SetExecutionMode(ExecutionMode executionMode);
     void SetDefaultExecutionMode();
-    void ProcessImage(std::string imageId);
-    void RemoveImage(std::string imageId);
+    void ProcessImage(const std::string& imageId);
+    void RemoveImage(const std::string& imageId);
     void Interrupt();
     void Reset();
+    void OnProcessDone(const std::string& imageId, const std::shared_ptr<BufferInfo>& bufferInfo);
+    void OnProcessDoneExt(const std::string& imageId, const std::shared_ptr<BufferInfoExt>& bufferInfo);
+    void OnError(const std::string& imageId,  DpsError errorCode);
+    void OnStateChanged(HdiStatus HdiStatus);
     void OnSessionDied();
-    int32_t GetUserId();
+    void SetCallback(const std::weak_ptr<IImageProcessCallbacks>& callback_);
+
+protected:
+    PhotoPostProcessor(const int32_t userId);
 
 private:
+    class PhotoServiceListener;
     class PhotoProcessListener;
     class SessionDeathRecipient;
 
-    void OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo);
-
-    void OnProcessDoneExt(const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo);
-
-    void OnError(const std::string& imageId,  DpsError errorCode);
-    void OnStateChanged(HdiStatus HdiStatus);
-    bool ConnectServiceIfNecessary();
-    void DisconnectServiceIfNecessary();
-    void ScheduleConnectService();
+    void ConnectService();
+    void DisconnectService();
+    void StartTimer(const std::string& imageId);
     void StopTimer(const std::string& imageId);
+    void OnTimerOut(const std::string& imageId);
+    void OnServiceChange(const HDI::ServiceManager::V1_0::ServiceStatus& status);
+    void RemoveNeedJbo(const sptr<IImageProcessSession>& session);
 
-    std::mutex mutex_;
+    inline sptr<IImageProcessSession> GetPhotoSession()
+    {
+        std::lock_guard<std::mutex> lock(sessionMutex_);
+        return session_;
+    }
+
+    inline void SetPhotoSession(const sptr<IImageProcessSession>& session)
+    {
+        std::lock_guard<std::mutex> lock(sessionMutex_);
+        session_ = session;
+    }
+
+    std::mutex sessionMutex_;
+    std::mutex removeMutex_;
     const int32_t userId_;
-    TaskManager* taskManager_;
-    IImageProcessCallbacks* processCallacks_;
-    sptr<PhotoProcessListener> listener_;
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> session_;
-    sptr<IRemoteObject::DeathRecipient> sessionDeathRecipient_;
-    SafeMap<std::string, uint32_t> imageId2Handle_;
-    std::unordered_map<std::string, uint32_t> imageId2CrashCount_;
-    std::list<std::string> removeNeededList_;
-    std::atomic<int> consecutiveTimeoutCount_;
+    sptr<PhotoServiceListener> serviceListener_;
+    sptr<PhotoProcessListener> processListener_;
+    sptr<SessionDeathRecipient> sessionDeathRecipient_;
+    sptr<IImageProcessSession> session_ {nullptr};
+    std::unordered_map<std::string, uint32_t> runningWork_ {};
+    std::unordered_map<std::string, uint32_t> imageId2CrashCount_ {};
+    std::list<std::string> removeNeededList_ {};
+    std::atomic<int32_t> consecutiveTimeoutCount_ {DEFAULT_COUNT};
+    std::shared_ptr<PhotoProcessResult> processResult_ {nullptr};
+    std::weak_ptr<IImageProcessCallbacks> callback_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

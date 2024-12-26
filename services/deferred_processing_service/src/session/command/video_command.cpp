@@ -80,7 +80,7 @@ int32_t RemoveVideoCommand::Executing()
     return DP_OK;
 }
 
-int32_t RestoreCommand::Executing()
+int32_t RestoreVideoCommand::Executing()
 {
     if (int32_t ret = Initialize() != DP_OK) {
         return ret;

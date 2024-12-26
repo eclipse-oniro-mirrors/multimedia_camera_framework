@@ -678,13 +678,13 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get sensor orientation failed");
         sensorOrientation = item.data.i32[0];
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
     if (producer_ == nullptr) {
@@ -695,7 +695,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
-    if (enableCameraRotation_) {
+    if (enableCameraRotation_ && sensorOrientation != 0) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {

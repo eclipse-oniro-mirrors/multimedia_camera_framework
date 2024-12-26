@@ -16,14 +16,6 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_LISTENER_H
 #define OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_LISTENER_H
 
-#include <unordered_map>
-#include <map>
-#include <list>
-#include <deque>
-#include <vector>
-#include <string>
-#include <mutex>
-
 #include "deferred_photo_job.h"
 
 namespace OHOS {

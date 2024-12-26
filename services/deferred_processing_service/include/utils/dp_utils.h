@@ -49,6 +49,16 @@ inline auto GetDiffTime(TimePoint begin)
     return GetDiffTime<Duration>(begin, TimePoint::clock::now());
 }
 
+inline uint64_t GetTimestampMilli()
+{
+    return std::chrono::duration_cast<Milli>(GetSteadyNow().time_since_epoch()).count();
+}
+
+inline uint64_t GetTimestampMicro()
+{
+    return std::chrono::duration_cast<Micro>(GetSteadyNow().time_since_epoch()).count();
+}
+
 inline bool IsFileEmpty(int fd)
 {
     off_t fileSize = lseek(fd, 0, SEEK_END);

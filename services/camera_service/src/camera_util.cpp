@@ -329,7 +329,10 @@ std::string GetClientBundle(int uid)
     CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
 
     auto result = bms->GetNameForUid(uid, bundleName);
-    CHECK_ERROR_RETURN_RET_LOG(result != ERR_OK, "", "GetClientBundle GetBundleNameForUid fail");
+    if (result != ERR_OK) {
+        MEDIA_DEBUG_LOG("GetClientBundle GetBundleNameForUid fail");
+        return "";
+    }
     MEDIA_INFO_LOG("bundle name is %{public}s ", bundleName.c_str());
 
     return bundleName;
@@ -420,8 +423,8 @@ bool IsVerticalDevice()
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
 
     CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
-    MEDIA_INFO_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
-                   display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
+    MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Orientation(%{public}d),Rotation(%{public}d)",
+        display->GetWidth(), display->GetHeight(), display->GetOrientation(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
                             display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_180;
     bool isScreenHorizontal = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_90 ||

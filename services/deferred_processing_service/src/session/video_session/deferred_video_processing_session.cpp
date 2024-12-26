@@ -50,8 +50,8 @@ int32_t DeferredVideoProcessingSession::EndSynchronize()
         DP_INFO_LOG("DPS_VIDEO: EndSynchronize video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
         auto ret = DPS_SendCommand<VideoSyncCommand>(userId_, videoIds_);
         inSync_.store(false);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "video synchronize failed, ret: %{public}d", ret);
         videoIds_.clear();
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "video synchronize failed, ret: %{public}d", ret);
     }
     return DP_OK;
 }
@@ -89,7 +89,7 @@ int32_t DeferredVideoProcessingSession::RestoreVideo(const std::string& videoId)
 {
     DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RestoreVideo error, inSync!");
 
-    auto ret = DPS_SendCommand<RestoreCommand>(userId_, videoId);
+    auto ret = DPS_SendCommand<RestoreVideoCommand>(userId_, videoId);
     DP_INFO_LOG("DPS_VIDEO: RestoreVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     return ret;
 }

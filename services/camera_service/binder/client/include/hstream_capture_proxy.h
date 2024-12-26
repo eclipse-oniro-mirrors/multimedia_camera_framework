@@ -53,6 +53,8 @@ public:
 
     int32_t SetCameraPhotoRotation(bool isEnable) override;
 
+    int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
+
 private:
     static inline BrokerDelegator<HStreamCaptureProxy> delegator_;
 };

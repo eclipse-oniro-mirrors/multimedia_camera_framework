@@ -712,7 +712,8 @@ public:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         return serviceProxyPrivate_;
     }
-
+    std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -777,7 +778,7 @@ private:
     void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
         camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
-    std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    
     dmDeviceInfo GetDmDeviceInfo(const std::string& cameraId, const std::vector<dmDeviceInfo>& dmDeviceInfoList);
     int32_t SetTorchLevel(float level);
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);

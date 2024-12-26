@@ -51,7 +51,7 @@ private:
     void OnTimerOut();
 
     const int32_t userId_;
-    uint32_t normalTimeId_ {0};
+    uint32_t normalTimeId_ {INVALID_TIMEID};
     std::shared_ptr<DeferredVideoProcessor> videoProcessor_;
     std::shared_ptr<VideoJobRepository> repository_;
     std::shared_ptr<VideoStrategyCenter> videoStrategyCenter_ {nullptr};
