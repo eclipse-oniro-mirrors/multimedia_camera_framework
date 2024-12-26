@@ -224,6 +224,7 @@ private:
     void DumpCameraZoom(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAF(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraQualityPrioritization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAE(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraSensorInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraVideoStabilization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);

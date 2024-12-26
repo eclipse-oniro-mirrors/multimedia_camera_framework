@@ -1533,6 +1533,14 @@ public:
      */
     int32_t SetPhysicalAperture(float physicalAperture);
 
+    /**
+     * @brief Set quality prioritization.
+     *
+     * @param QualityPrioritization quality prioritization to be set.
+     * @return Return errCode.
+     */
+    int32_t SetQualityPrioritization(QualityPrioritization qualityPrioritization);
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();

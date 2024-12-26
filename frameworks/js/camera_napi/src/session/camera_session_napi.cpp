@@ -145,6 +145,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::quality_prioritization_props = {
+    DECLARE_NAPI_FUNCTION("setQualityPrioritization", CameraSessionNapi::SetQualityPrioritization),
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::manual_focus_props = {
     DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
     DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
@@ -2199,6 +2203,36 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("SetFocusMode call Failed!");
     }
     return result;
+}
+
+napi_value CameraSessionNapi::SetQualityPrioritization(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("CameraSessionNapi::SetQualityPrioritization enter");
+ 
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t quality;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, quality);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetQualityPrioritization parse parameter occur error");
+        return nullptr;
+    }
+ 
+    if (cameraSessionNapi->cameraSession_ == nullptr) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetQualityPrioritization get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
+    }
+ 
+    cameraSessionNapi->cameraSession_->LockForControl();
+    int retCode =
+        cameraSessionNapi->cameraSession_->SetQualityPrioritization(static_cast<QualityPrioritization>(quality));
+    cameraSessionNapi->cameraSession_->UnlockForControl();
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetQualityPrioritization fail! %{public}d", retCode);
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("CameraSessionNapi::SetQualityPrioritization success");
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info info)
