@@ -182,6 +182,7 @@ void DeferredPhotoController::NotifyPressureLevelChanged(SystemPressureLevel lev
 
 void DeferredPhotoController::NotifyHdiStatusChanged(HdiStatus status)
 {
+    userInitiatedStrategy_->NotifyHdiStatusChanged(status);
     backgroundStrategy_->NotifyHdiStatusChanged(status);
     TryDoSchedule();
     return;
@@ -189,6 +190,7 @@ void DeferredPhotoController::NotifyHdiStatusChanged(HdiStatus status)
 
 void DeferredPhotoController::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
 {
+    userInitiatedStrategy_->NotifyMediaLibStatusChanged(status);
     backgroundStrategy_->NotifyMediaLibStatusChanged(status);
     if (status == MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
         TryDoSchedule();
@@ -198,6 +200,7 @@ void DeferredPhotoController::NotifyMediaLibStatusChanged(MediaLibraryStatus sta
 
 void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus status)
 {
+    userInitiatedStrategy_->NotifyCameraStatusChanged(status);
     backgroundStrategy_->NotifyCameraStatusChanged(status);
     if (status == CameraSessionStatus::SYSTEM_CAMERA_OPEN || status == CameraSessionStatus::NORMAL_CAMERA_OPEN) {
         photoProcessor_->Interrupt();
