@@ -117,17 +117,6 @@ BatteryLevel EventsInfo::GetBatteryLevel()
     return batteryLevel_;
 }
 
-SystemPressureLevel EventsInfo::GetPhotoThermalLevel()
-{
-#ifdef CAMERA_USE_THERMAL
-    auto& thermal = OHOS::PowerMgr::ThermalMgrClient::GetInstance();
-    auto level = thermal.GetThermalLevel();
-    photoThermalLevel_ = MapEventThermalLevel(static_cast<int32_t>(level));
-    DP_INFO_LOG("GetPhotoThermalLevel: %{public}d", photoThermalLevel_);
-#endif
-    return photoThermalLevel_;
-}
-
 ThermalLevel EventsInfo::GetThermalLevel()
 {
 #ifdef CAMERA_USE_THERMAL

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -95,7 +95,7 @@ void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
             CameraSessionStatus::NORMAL_CAMERA_CLOSED;
     }
     NotifyObserversUnlocked(userId, EventType::CAMERA_SESSION_STATUS_EVENT, cameraSessionStatus);
-    auto level = EventsInfo::GetInstance().GetPhotoThermalLevel();
+    auto level = EventsInfo::GetInstance().GetThermalLevel();
     DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
 }
 
@@ -117,7 +117,7 @@ void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
     DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
 
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::HDI_STATUS_EVENT, status);
+        NotifyObserversUnlocked(it->first, EventType::PHOTO_HDI_STATUS_EVENT, status);
     }
 }
 
@@ -176,16 +176,6 @@ void EventsMonitor::NotifyBatteryLevel(int32_t level)
     }
 }
 
-void EventsMonitor::NotifySystemPressureLevel(SystemPressureLevel level)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: SystemPressureLevel: %{public}d", level);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::SYSTEM_PRESSURE_LEVEL_EVENT, level);
-    }
-}
 void EventsMonitor::NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -221,13 +211,6 @@ void EventsMonitor::NotifyEventToObervers(const int32_t userId, EventType event,
             }
         }
     }
-}
-
-void EventsMonitor::NotifyObservers(EventType event, int value, int32_t userId)
-{
-    DP_DEBUG_LOG("entered.");
-    std::lock_guard<std::mutex> lock(mutex_);
-    NotifyObserversUnlocked(userId, event, value);
 }
 
 void CommonEventListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)

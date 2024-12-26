@@ -26,11 +26,11 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class VideoSessionInfo::CallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    explicit CallbackDeathRecipient(wptr<VideoSessionInfo> sessionInfo)
+    explicit CallbackDeathRecipient(const wptr<VideoSessionInfo>& sessionInfo)
         : sessionInfo_(sessionInfo)
     {
+        DP_DEBUG_LOG("entered.");
     }
-
     virtual ~CallbackDeathRecipient() = default;
 
     int32_t Initialize(const sptr<IDeferredVideoProcessingSessionCallback>& callback)
@@ -38,7 +38,8 @@ public:
         DP_DEBUG_LOG("entered.");
         sptr<IRemoteObject> object = callback->AsObject();
         auto result = object->AddDeathRecipient(this);
-        DP_CHECK_ERROR_RETURN_RET_LOG(!result, DP_INIT_FAIL, "add DeathRecipient for Callback failed.");
+        DP_CHECK_ERROR_RETURN_RET_LOG(!result, DP_INIT_FAIL,
+            "Add video DeathRecipient for Callback failed.");
         return DP_OK;
     }
 
@@ -47,13 +48,14 @@ public:
         DP_DEBUG_LOG("entered.");
         sptr<IRemoteObject> object = callback->AsObject();
         auto result = object->RemoveDeathRecipient(this);
-        DP_CHECK_ERROR_RETURN_RET_LOG(!result, DP_INIT_FAIL, "remove DeathRecipient for Callback failed.");
+        DP_CHECK_ERROR_RETURN_RET_LOG(!result, DP_INIT_FAIL,
+            "Remove video DeathRecipient for Callback failed.");
         return DP_OK;
     }
 
     void OnRemoteDied(const wptr<IRemoteObject> &remote) override
     {
-        DP_ERR_LOG("Remote died, do clean works.");
+        DP_ERR_LOG("Video remote died.");
         auto info = sessionInfo_.promote();
         DP_CHECK_RETURN_LOG(info == nullptr, "VideoSessionInfo is nullptr.");
         info->OnCallbackDied();
@@ -72,11 +74,8 @@ VideoSessionInfo::VideoSessionInfo(const int32_t userId, const sptr<IDeferredVid
 
 VideoSessionInfo::~VideoSessionInfo()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered. userId: %{public}d.", userId_);
     DP_CHECK_EXECUTE(callback_ != nullptr && deathRecipient_ != nullptr, deathRecipient_->Destroy(callback_));
-    session_ = nullptr;
-    callback_ = nullptr;
-    deathRecipient_ =nullptr;
 }
 
 int32_t VideoSessionInfo::Initialize()
@@ -88,7 +87,7 @@ int32_t VideoSessionInfo::Initialize()
     deathRecipient_ = sptr<CallbackDeathRecipient>::MakeSptr(this);
 
     auto ret = deathRecipient_->Initialize(callback_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "set DeathRecipient failed.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "set video DeathRecipient failed.");
     return DP_OK;
 }
 
@@ -103,11 +102,6 @@ sptr<IDeferredVideoProcessingSessionCallback> VideoSessionInfo::GetRemoteCallbac
     return callback_;
 }
 
-int32_t VideoSessionInfo::GetUserId() const
-{
-    return userId_;
-}
-
 void VideoSessionInfo::OnCallbackDied()
 {
     auto ret = DPS_SendUrgentCommand<DeleteVideoSessionCommand>(this);
@@ -116,11 +110,12 @@ void VideoSessionInfo::OnCallbackDied()
 
 void VideoSessionInfo::SetCallback(const sptr<IDeferredVideoProcessingSessionCallback>& callback)
 {
-    DP_INFO_LOG("Reset video callback");
+    DP_INFO_LOG("Reset video callback.");
     std::lock_guard lock(callbackMutex_);
+    isCreate_ = false;
     callback_ = callback;
     auto ret = deathRecipient_->Initialize(callback_);
-    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "Set DeathRecipient failed.");
+    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "Set video DeathRecipient failed.");
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

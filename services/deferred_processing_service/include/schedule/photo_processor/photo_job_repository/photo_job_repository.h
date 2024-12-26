@@ -16,10 +16,12 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 #define OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 
+#include <deque>
+#include <list>
+
 #include "deferred_photo_job.h"
 #include "iphoto_job_repository_listener.h"
 #include "deferred_processing_service_ipc_interface_code.h"
-#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,16 +31,16 @@ class PhotoJobRepository {
 public:
     PhotoJobRepository(const int32_t userId);
     ~PhotoJobRepository();
+
     void AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata);
     void RemoveDeferredJob(const std::string& imageId, bool restorable);
     bool RequestJob(const std::string& imageId);
     void CancelJob(const std::string& imageId);
     void RestoreJob(const std::string& imageId);
-    void SetJobPending(const std::string imageId);
-    void SetJobRunning(const std::string imageId);
-    void SetJobCompleted(const std::string imageId);
-    void SetJobFailed(const std::string imageId);
-
+    void SetJobPending(const std::string& imageId);
+    void SetJobRunning(const std::string& imageId);
+    void SetJobCompleted(const std::string& imageId);
+    void SetJobFailed(const std::string& imageId);
     PhotoJobStatus GetJobStatus(const std::string& imageId);
     DeferredPhotoJobPtr GetLowPriorityJob();
     DeferredPhotoJobPtr GetNormalPriorityJob();
@@ -60,16 +62,18 @@ private:
     void RecordPriotyNum(bool priorityChanged, const DeferredPhotoJobPtr& jobPtr);
     void ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event);
 
-    std::recursive_mutex mutex_;
-    std::recursive_mutex jobListenersMutex_;
     const int32_t userId_;
-    int runningNum_;
-    std::unordered_map<std::string, DeferredPhotoJobPtr> offlineJobMap_;
-    std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_;
-    std::list<DeferredPhotoJobPtr> offlineJobList_;
-    std::deque<DeferredPhotoJobPtr> jobQueue_;
-    std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_;
-    SafeMap<PhotoJobPriority, int32_t> priotyToNum_ = {};
+    int32_t runningNum_ {0};
+    std::unordered_map<std::string, DeferredPhotoJobPtr> offlineJobMap_ {};
+    std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_ {};
+    std::list<DeferredPhotoJobPtr> offlineJobList_ {};
+    std::deque<DeferredPhotoJobPtr> jobQueue_ {};
+    std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_ {};
+    std::unordered_map<PhotoJobPriority, int32_t> priotyToNum_ = {
+        {PhotoJobPriority::HIGH, 0},
+        {PhotoJobPriority::LOW, 0},
+        {PhotoJobPriority::NORMAL, 0},
+    };
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

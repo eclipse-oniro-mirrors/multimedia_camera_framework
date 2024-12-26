@@ -119,8 +119,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
-    strategyCenter->HandleEventChanged(SYSTEM_PRESSURE_LEVEL_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
-    strategyCenter->HandleEventChanged(CAMERA_SESSION_STATUS_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
+    strategyCenter->HandleEventChanged(THERMAL_LEVEL_STATUS_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
     strategyCenter->HandleEventChanged(CAMERA_SESSION_STATUS_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
     auto scheduleState = strategyCenter->GetScheduleState(ScheduleType::CAMERA_STATE);
     EXPECT_EQ(scheduleState->stateValue_, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);

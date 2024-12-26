@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DPS_PROCESS_RESULT_H
-#define OHOS_CAMERA_DPS_PROCESS_RESULT_H
+#ifndef OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H
+#define OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H
 
 #include "basic_definitions.h"
 
@@ -37,4 +37,4 @@ private:
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DPS_PROCESS_RESULT_H
+#endif // OHOS_CAMERA_DPS_VIDEO_PROCESS_RESULT_H

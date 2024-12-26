@@ -113,7 +113,6 @@ public:
 
     static napi_value Off(napi_env env, napi_callback_info info)
     {
-        MEDIA_INFO_LOG("Off is called");
         CAMERA_SYNC_TRACE;
         T* targetInstance = nullptr;
         CameraNapiCallbackParamParser jsCallbackParamParser(env, info, targetInstance);

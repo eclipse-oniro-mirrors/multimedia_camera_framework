@@ -54,5 +54,10 @@ group("camera_fuzz_test") {
     "fuzztest/streammetadatastub_fuzzer:fuzztest",
     "fuzztest/streamrepeatstub_fuzzer:fuzztest",
     "fuzztest/timelapsephotosession_fuzzer:fuzztest",
+    "fuzztest/videojobqueue_fuzzer:fuzztest",
+    "fuzztest/videojobrepository_fuzzer:fuzztest",
+    "fuzztest/videopostprocessor_fuzzer:fuzztest",
+    "fuzztest/videoprocesscommand_fuzzer:fuzztest",
+    "fuzztest/videostrategycenter_fuzzer:fuzztest",
   ]
 }

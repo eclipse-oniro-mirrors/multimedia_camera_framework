@@ -31,7 +31,6 @@ public:
     BatteryStatus GetBatteryState();
     ChargingStatus GetChargingState();
     BatteryLevel GetBatteryLevel();
-    SystemPressureLevel GetPhotoThermalLevel();
     ThermalLevel GetThermalLevel();
 
 private:

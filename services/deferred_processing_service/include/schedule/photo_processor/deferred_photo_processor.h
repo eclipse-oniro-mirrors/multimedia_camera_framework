@@ -18,17 +18,15 @@
 
 #include "set"
 
-#include "iimage_process_callbacks.h"
 #include "photo_job_repository.h"
 #include "photo_post_processor.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredPhotoProcessor : public IImageProcessCallbacks {
+class DeferredPhotoProcessor : public IImageProcessCallbacks,
+    public std::enable_shared_from_this<IImageProcessCallbacks> {
 public:
-    DeferredPhotoProcessor(const int32_t userId, TaskManager* taskManager,
-        std::shared_ptr<PhotoJobRepository> repository, std::shared_ptr<IImageProcessCallbacks> callbacks);
     ~DeferredPhotoProcessor();
     void Initialize();
 
@@ -37,31 +35,31 @@ public:
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);
     void CancelProcessImage(const std::string& imageId);
-
-    void SetCallback(IImageProcessCallbacks callbacks);
-
-    void OnProcessDone(const int32_t userId,
-        const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) override;
-    void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<BufferInfoExt> bufferInfo) override;
+    void OnProcessDone(const int32_t userId, const std::string& imageId,
+        const std::shared_ptr<BufferInfo>& bufferInfo) override;
+    void OnProcessDoneExt(int userId, const std::string& imageId,
+        const std::shared_ptr<BufferInfoExt>& bufferInfo) override;
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override;
     void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
-    void NotifyScheduleState(DpsStatus status);
-
-    void PostProcess(DeferredPhotoWorkPtr work);
+    void PostProcess(const DeferredPhotoWorkPtr& work);
     void SetDefaultExecutionMode();
     void Interrupt();
-    int GetConcurrency(ExecutionMode mode);
+    int32_t GetConcurrency(ExecutionMode mode);
     bool GetPendingImages(std::vector<std::string>& pendingImages);
+
+protected:
+    DeferredPhotoProcessor(const int32_t userId, const std::shared_ptr<PhotoJobRepository>& repository,
+        const std::shared_ptr<PhotoPostProcessor>& postProcessor,
+        const std::weak_ptr<IImageProcessCallbacks>& callback);
 
 private:
     bool IsFatalError(DpsError errorCode);
 
     const int32_t userId_;
-    TaskManager* taskManager_;
     std::shared_ptr<PhotoJobRepository> repository_;
     std::shared_ptr<PhotoPostProcessor> postProcessor_;
-    std::shared_ptr<IImageProcessCallbacks> callbacks_;
-    std::set<std::string> requestedImages_;
+    std::weak_ptr<IImageProcessCallbacks> callback_;
+    std::set<std::string> requestedImages_ {};
     std::string postedImageId_;
 };
 } // namespace DeferredProcessing

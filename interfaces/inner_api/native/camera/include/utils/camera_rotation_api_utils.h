@@ -23,6 +23,10 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraApiVersion {
+enum APIVersion {
+    API_FOURTEEN = 14
+};
+
 uint32_t GetApiVersion();
 }
 } // namespace CameraStandard

@@ -55,7 +55,7 @@ int32_t DeferredPhotoProcessingSessionProxy::EndSynchronize()
 }
 
 int32_t DeferredPhotoProcessingSessionProxy::AddImage(const std::string& imageId,
-                                                      DpsMetadata& metadata, const bool discardable)
+    DpsMetadata& metadata, const bool discardable)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -109,7 +109,7 @@ int32_t DeferredPhotoProcessingSessionProxy::RestoreImage(const std::string& ima
     return error;
 }
 
-int32_t DeferredPhotoProcessingSessionProxy::ProcessImage(const std::string& appName, const std::string imageId)
+int32_t DeferredPhotoProcessingSessionProxy::ProcessImage(const std::string& appName, const std::string& imageId)
 {
     MessageParcel data;
     MessageParcel reply;

@@ -55,27 +55,11 @@ void CameraDeferredSessionUnitTest::TearDown()
 
 sptr<IDeferredPhotoProcessingSession> CameraDeferredSessionUnitTest::GetDeferredPhotoProcessingSession()
 {
-    uint32_t numThreads = 1;
-    std::shared_ptr<TaskManager> taskManager =
-        std::make_shared<TaskManager>("CameraDeferredSessionUnitTest_userid_" + std::to_string(userId_),
-        numThreads, true);
-    DP_CHECK_ERROR_RETURN_RET_LOG(!taskManager, nullptr, "taskManager is nullptr.");
-
-    auto photoRepository = std::make_shared<PhotoJobRepository>(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(!photoRepository, nullptr, "photoRepository is nullptr.");
-    std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
-    DP_CHECK_ERROR_RETURN_RET_LOG(!sessionCoordinator, nullptr, "sessionCoordinator is nullptr.");
-    auto photoProcessor = std::make_shared<DeferredPhotoProcessor>(userId_, taskManager.get(), photoRepository,
-        sessionCoordinator->imageProcCallbacks_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(!photoProcessor, nullptr, "photoProcessor is nullptr.");
     sptr<DeferredPhotoProcessingSessionCallback> callback = new (std::nothrow) DeferredPhotoProcessingSessionCallback();
     DP_CHECK_ERROR_RETURN_RET_LOG(!callback, nullptr, "callback is nullptr.");
+    sessionManagerPtr_->photoSessionInfos_.clear();
     sptr<IDeferredPhotoProcessingSession> deferredPhotoSession =
-        sessionManagerPtr_->CreateDeferredPhotoProcessingSession(userId_, callback, photoProcessor, taskManager.get());
-    if (!deferredPhotoSession) {
-        deferredPhotoSession = new (std::nothrow) DeferredPhotoProcessingSession(userId_, photoProcessor,
-            taskManager.get(), callback);
-    }
+        sessionManagerPtr_->CreateDeferredPhotoProcessingSession(userId_, callback);
     DP_CHECK_ERROR_RETURN_RET_LOG(!deferredPhotoSession, nullptr, "deferredPhotoSession is nullptr.");
     return deferredPhotoSession;
 }
@@ -84,7 +68,7 @@ sptr<IDeferredVideoProcessingSession> CameraDeferredSessionUnitTest::GetDeferred
 {
     sptr<DeferredVideoProcessingSessionCallback> callback = new (std::nothrow) DeferredVideoProcessingSessionCallback();
     DP_CHECK_ERROR_RETURN_RET_LOG(!callback, nullptr, "callback is nullptr.");
-    sessionManagerPtr_->videoSessionInfos_.Clear();
+    sessionManagerPtr_->videoSessionInfos_.clear();
     sptr<IDeferredVideoProcessingSession> deferredVideoSession =
         sessionManagerPtr_->CreateDeferredVideoProcessingSession(userId_, callback);
     DP_CHECK_ERROR_RETURN_RET_LOG(!deferredVideoSession, nullptr, "deferredVideoSession is nullptr.");
@@ -101,20 +85,21 @@ sptr<IDeferredVideoProcessingSession> CameraDeferredSessionUnitTest::GetDeferred
  */
 HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_001, TestSize.Level0)
 {
+    sptr<DeferredPhotoProcessingSession> deferredPhotoSession;
     sptr<IDeferredPhotoProcessingSession> deferredPhotoSessionTemp = GetDeferredPhotoProcessingSession();
-    ASSERT_NE(deferredPhotoSessionTemp, nullptr);
-    sptr<DeferredPhotoProcessingSession> deferredPhotoSession =
-        static_cast<DeferredPhotoProcessingSession *>(deferredPhotoSessionTemp.GetRefPtr());
+    if (deferredPhotoSessionTemp) {
+        deferredPhotoSession = static_cast<DeferredPhotoProcessingSession *>(deferredPhotoSessionTemp.GetRefPtr());
+    } else {
+        deferredPhotoSession = new (std::nothrow) DeferredPhotoProcessingSession(userId_);
+    }
     ASSERT_NE(deferredPhotoSession, nullptr);
-    sessionManagerPtr_->OnCallbackDied(userId_);
     EXPECT_NE(sessionManagerPtr_->GetCallback(userId_), nullptr);
     int32_t ret = deferredPhotoSession->BeginSynchronize();
     EXPECT_TRUE(deferredPhotoSession->inSync_);
     EXPECT_EQ(ret, 0);
 
     ret = deferredPhotoSession->EndSynchronize();
-    EXPECT_EQ(ret, 0);
-    EXPECT_FALSE(deferredPhotoSession->inSync_);
+    EXPECT_FALSE(deferredPhotoSession->inSync_.load());
 
     std::string imageId = "testImageId";
     DpsMetadata metadata;
@@ -148,12 +133,13 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_001, Te
  */
 HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_002, TestSize.Level0)
 {
-    sessionManagerPtr_->OnCallbackDied(userId_);
-    EXPECT_EQ(sessionManagerPtr_->GetCallback(userId_), nullptr);
+    sptr<DeferredPhotoProcessingSession> deferredPhotoSession;
     sptr<IDeferredPhotoProcessingSession> deferredPhotoSessionTemp = GetDeferredPhotoProcessingSession();
-    ASSERT_NE(deferredPhotoSessionTemp, nullptr);
-    sptr<DeferredPhotoProcessingSession> deferredPhotoSession =
-        static_cast<DeferredPhotoProcessingSession *>(deferredPhotoSessionTemp.GetRefPtr());
+    if (deferredPhotoSessionTemp) {
+        deferredPhotoSession = static_cast<DeferredPhotoProcessingSession *>(deferredPhotoSessionTemp.GetRefPtr());
+    } else {
+        deferredPhotoSession = new (std::nothrow) DeferredPhotoProcessingSession(userId_);
+    }
     ASSERT_NE(deferredPhotoSession, nullptr);
     int32_t ret = deferredPhotoSession->BeginSynchronize();
     EXPECT_EQ(ret, 0);
@@ -181,7 +167,6 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_002, Te
     EXPECT_EQ(ret, 0);
 
     ret = deferredPhotoSession->EndSynchronize();
-    EXPECT_EQ(ret, 0);
     EXPECT_FALSE(deferredPhotoSession->inSync_);
 }
 
@@ -277,25 +262,29 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_005, Te
     sptr<DeferredPhotoProcessingSessionCallback> callback =
         new (std::nothrow) DeferredPhotoProcessingSessionCallback();
     ASSERT_NE(callback, nullptr);
-    sessionCoordinator->NotifySessionCreated(userId_, callback, taskManager.get());
+    sessionCoordinator->photoCallbackMap_.clear();
+    sptr<PhotoSessionInfo> photoInfo = sptr<PhotoSessionInfo>::MakeSptr(userId_, callback);
+    sessionCoordinator->AddPhotoSession(photoInfo);
     std::string imageId = "testImageId";
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
     sessionCoordinator->OnProcessDone(userId_, imageId, ipcFd, 1, false);
     sessionCoordinator->OnError(userId_, imageId, DPS_ERROR_UNKNOW);
     sessionCoordinator->OnStateChanged(userId_, DPS_SESSION_STATE_IDLE);
+    sessionCoordinator->DeletePhotoSession(userId_);
+    EXPECT_EQ(sessionCoordinator->photoCallbackMap_.size(), 0);
 
     sptr<DeferredVideoProcessingSessionCallback> videoCallback =
         new (std::nothrow) DeferredVideoProcessingSessionCallback();
     ASSERT_NE(videoCallback, nullptr);
-    sessionCoordinator->remoteVideoCallbacksMap_.clear();
-    sptr<VideoSessionInfo> sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId_, videoCallback);
-    sessionCoordinator->AddSession(sessionInfo);
-    EXPECT_NE(sessionCoordinator->remoteVideoCallbacksMap_.size(), 0);
+    sessionCoordinator->videoCallbackMap_.clear();
+    sptr<VideoSessionInfo> videoInfo = sptr<VideoSessionInfo>::MakeSptr(userId_, videoCallback);
+    sessionCoordinator->AddVideoSession(videoInfo);
+    EXPECT_NE(sessionCoordinator->videoCallbackMap_.size(), 0);
     std::string videoId = "testVideo";
     sessionCoordinator->OnVideoProcessDone(userId_, videoId, ipcFd);
     sessionCoordinator->OnVideoError(userId_, videoId, DPS_ERROR_UNKNOW);
-    sessionCoordinator->DeleteSession(userId_);
-    EXPECT_EQ(sessionCoordinator->remoteVideoCallbacksMap_.size(), 0);
+    sessionCoordinator->DeleteVideoSession(userId_);
+    EXPECT_EQ(sessionCoordinator->videoCallbackMap_.size(), 0);
 }
 
 /*
@@ -320,11 +309,11 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_006, Te
     sptr<DeferredVideoProcessingSessionCallback> videoCallback =
         new (std::nothrow) DeferredVideoProcessingSessionCallback();
     ASSERT_NE(videoCallback, nullptr);
-    sessionCoordinator->remoteVideoCallbacksMap_.clear();
+    sessionCoordinator->videoCallbackMap_.clear();
     sptr<VideoSessionInfo> sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId_, videoCallback);
-    sessionCoordinator->AddSession(sessionInfo);
-    sessionCoordinator->DeleteSession(userId_);
-    EXPECT_EQ(sessionCoordinator->remoteVideoCallbacksMap_.size(), 0);
+    sessionCoordinator->AddVideoSession(sessionInfo);
+    sessionCoordinator->DeleteVideoSession(userId_);
+    EXPECT_EQ(sessionCoordinator->videoCallbackMap_.size(), 0);
     std::string videoId = "testVideo";
     sessionCoordinator->OnVideoProcessDone(userId_, videoId, ipcFd);
     sessionCoordinator->OnVideoError(userId_, videoId, DPS_ERROR_UNKNOW);

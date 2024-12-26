@@ -27,7 +27,7 @@ namespace DeferredProcessing {
 
 class SessionCommand : public Command {
 public:
-    SessionCommand(const sptr<VideoSessionInfo>& sessionInfo);
+    SessionCommand();
     ~SessionCommand() override;
 
 protected:
@@ -35,25 +35,51 @@ protected:
 
     std::atomic<bool> initialized_ {false};
     std::shared_ptr<SessionManager> sessionManager_ {nullptr};
-    sptr<VideoSessionInfo> sessionInfo_;
+    std::shared_ptr<SchedulerManager> schedulerManager_ {nullptr};
+};
+
+class AddPhotoSessionCommand : public SessionCommand {
+    DECLARE_CMD_CLASS(AddPhotoSessionCommand)
+public:
+    AddPhotoSessionCommand(const sptr<PhotoSessionInfo>& info);
+
+protected:
+    int32_t Executing() override;
+
+    sptr<PhotoSessionInfo> photoInfo_;
+};
+
+class DeletePhotoSessionCommand : public SessionCommand {
+    DECLARE_CMD_CLASS(DeletePhotoSessionCommand)
+public:
+    DeletePhotoSessionCommand(const sptr<PhotoSessionInfo>& info);
+
+protected:
+    int32_t Executing() override;
+
+    sptr<PhotoSessionInfo> photoInfo_;
 };
 
 class AddVideoSessionCommand : public SessionCommand {
     DECLARE_CMD_CLASS(AddVideoSessionCommand)
 public:
-    using SessionCommand::SessionCommand;
+    AddVideoSessionCommand(const sptr<VideoSessionInfo>& info);
 
 protected:
     int32_t Executing() override;
+
+    sptr<VideoSessionInfo> videoInfo_;
 };
 
 class DeleteVideoSessionCommand : public SessionCommand {
     DECLARE_CMD_CLASS(DeleteVideoSessionCommand)
 public:
-    using SessionCommand::SessionCommand;
+    DeleteVideoSessionCommand(const sptr<VideoSessionInfo>& info);
 
 protected:
     int32_t Executing() override;
+
+    sptr<VideoSessionInfo> videoInfo_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

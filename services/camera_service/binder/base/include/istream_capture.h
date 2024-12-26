@@ -51,6 +51,8 @@ public:
 
     virtual int32_t SetCameraPhotoRotation(bool isEnable) = 0;
 
+    virtual int32_t AcquireBufferToPrepareProxy(int32_t captureId) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };
 } // namespace CameraStandard

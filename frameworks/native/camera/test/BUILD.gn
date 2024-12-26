@@ -21,14 +21,9 @@ group("cameraframeworktest") {
     "unittest:camera_deferred_processing_service_unittest",
     "unittest:camera_deferred_session_unittest",
     "unittest:camera_deferred_video_processor_stratety_unittest",
-    "unittest:camera_framework_input_unittest",
-    "unittest:camera_framework_output_unittest",
-    "unittest:camera_framework_session_unittest",
-    "unittest:camera_framework_unittest_v1_1",
     "unittest:camera_ndk_unittest_v1_1",
-    "unittest:camera_profession_session_unittest",
-    "unittest:camera_service_unittest",
-    "unittest:camera_utils_unittest",
     "unittest:deferred_processing_service_unittest",
+    "unittest/camera_service:camera_service_unittest",
+    "unittest/framework_native:camera_framework_native_unittest",
   ]
 }

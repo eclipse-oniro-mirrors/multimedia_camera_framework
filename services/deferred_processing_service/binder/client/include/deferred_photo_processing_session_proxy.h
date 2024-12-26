@@ -31,7 +31,7 @@ public:
     int32_t AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable) override;
     int32_t RemoveImage(const std::string& imageId, const bool restorable) override;
     int32_t RestoreImage(const std::string& imageId) override;
-    int32_t ProcessImage(const std::string& appName, const std::string imageId) override;
+    int32_t ProcessImage(const std::string& appName, const std::string& imageId) override;
     int32_t CancelProcessImage(const std::string& imageId) override;
 
 private:

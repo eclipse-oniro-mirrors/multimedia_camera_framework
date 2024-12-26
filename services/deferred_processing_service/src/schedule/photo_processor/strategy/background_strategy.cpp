@@ -14,8 +14,9 @@
  */
 
 #include "background_strategy.h"
-#include "steady_clock.h"
+
 #include "dp_log.h"
+#include "dp_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,15 +26,8 @@ namespace {
 }
 
 namespace DeferredProcessing {
-BackgroundStrategy::BackgroundStrategy(std::shared_ptr<PhotoJobRepository> repository)
-    : trailingStartTimeStamp_(0),
-      remainingTrailingTime_(0),
-      isInTrailing_(false),
-      cameraSessionStatus_(CameraSessionStatus::NORMAL_CAMERA_CLOSED),
-      hdiStatus_(HdiStatus::HDI_READY),
-      mediaLibraryStatus_(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE),
-      systemPressureLevel_(SystemPressureLevel::NOMINAL),
-      jobRepository_(repository)
+BackgroundStrategy::BackgroundStrategy(const std::shared_ptr<PhotoJobRepository>& repository)
+    : repository_(repository)
 {
     DP_DEBUG_LOG("entered");
 }
@@ -41,12 +35,11 @@ BackgroundStrategy::BackgroundStrategy(std::shared_ptr<PhotoJobRepository> repos
 BackgroundStrategy::~BackgroundStrategy()
 {
     DP_DEBUG_LOG("entered");
-    jobRepository_ = nullptr;
 }
 
 DeferredPhotoWorkPtr BackgroundStrategy::GetWork()
 {
-    DP_INFO_LOG("entered");
+    DP_DEBUG_LOG("entered");
     ExecutionMode mode = GetExecutionMode();
     if (mode == ExecutionMode::DUMMY) {
         return nullptr;
@@ -60,32 +53,32 @@ DeferredPhotoWorkPtr BackgroundStrategy::GetWork()
 
 DeferredPhotoJobPtr BackgroundStrategy::GetJob()
 {
-    DP_INFO_LOG("entered");
+    DP_DEBUG_LOG("entered");
     DeferredPhotoJobPtr jobPtr = nullptr;
-    jobPtr = jobRepository_->GetNormalPriorityJob();
+    jobPtr = repository_->GetNormalPriorityJob();
     if (jobPtr == nullptr) {
-        jobPtr = jobRepository_->GetLowPriorityJob();
+        jobPtr = repository_->GetLowPriorityJob();
     }
     return jobPtr;
 }
 
 ExecutionMode BackgroundStrategy::GetExecutionMode()
 {
-    DP_INFO_LOG("entered");
+    DP_DEBUG_LOG("entered");
     if (cameraSessionStatus_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN
         || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
         || !(hdiStatus_ == HdiStatus::HDI_READY || hdiStatus_ == HdiStatus::HDI_READY_SPACE_LIMIT_REACHED)
         || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
-        DP_INFO_LOG("cameraSessionStatus_: %{public}d, hdiStatus_: %{public}d, mediaLibraryStatus_: %{public}d, ",
+        DP_INFO_LOG("DPS_PHOTO: cameraStatus: %{public}d, hdiStatus: %{public}d, mediaStatus: %{public}d",
             cameraSessionStatus_, hdiStatus_, mediaLibraryStatus_);
         return ExecutionMode::DUMMY;
     }
     FlashTrailingState();
-    DP_INFO_LOG("isInTrailing_: %{public}d", isInTrailing_);
+    DP_INFO_LOG("DPS_PHOTO: isInTrailing: %{public}d", isInTrailing_);
     if (isInTrailing_) {
         return ExecutionMode::LOAD_BALANCE;
     }
-    DP_INFO_LOG("systemPressureLevel_: %{public}d", systemPressureLevel_);
+    DP_INFO_LOG("DPS_PHOTO: systemPressureLevel: %{public}d", systemPressureLevel_);
     if (systemPressureLevel_ == SystemPressureLevel::NOMINAL) {
         return ExecutionMode::LOAD_BALANCE;
     }
@@ -102,21 +95,18 @@ void BackgroundStrategy::NotifyPressureLevelChanged(SystemPressureLevel level)
 {
     DP_INFO_LOG("previous system pressure level: %{public}d, new level: %{public}d", systemPressureLevel_, level);
     systemPressureLevel_ = level;
-    return;
 }
 
 void BackgroundStrategy::NotifyHdiStatusChanged(HdiStatus status)
 {
     DP_INFO_LOG("previous hdi status %{public}d, new status: %{public}d", hdiStatus_, status);
     hdiStatus_ = status;
-    return;
 }
 
 void BackgroundStrategy::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
 {
     DP_INFO_LOG("previous media lib status %{public}d, new status: %{public}d", mediaLibraryStatus_, status);
     mediaLibraryStatus_ = status;
-    return;
 }
 
 void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
@@ -137,7 +127,6 @@ void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
         default:
             break;
     }
-    return;
 }
 
 void BackgroundStrategy::StartTrailing(uint64_t duration)
@@ -147,7 +136,7 @@ void BackgroundStrategy::StartTrailing(uint64_t duration)
         return;
     }
     if (isInTrailing_) {
-        auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
+        auto passedTime = GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {
             remainingTrailingTime_ = 0;
         } else {
@@ -155,16 +144,15 @@ void BackgroundStrategy::StartTrailing(uint64_t duration)
         }
     }
     remainingTrailingTime_ = duration > remainingTrailingTime_ ? duration : remainingTrailingTime_;
-    trailingStartTimeStamp_ = SteadyClock::GetTimestampMilli();
+    trailingStartTimeStamp_ = GetTimestampMilli();
     isInTrailing_ = true;
-    return;
 }
 
 void BackgroundStrategy::StopTrailing()
 {
     DP_INFO_LOG("entered, is in trailing: %{public}d", isInTrailing_);
     if (isInTrailing_) {
-        auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
+        auto passedTime = GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {
             remainingTrailingTime_ = 0;
         } else {
@@ -172,20 +160,18 @@ void BackgroundStrategy::StopTrailing()
         }
         isInTrailing_ = false;
     }
-    return;
 }
 
 void BackgroundStrategy::FlashTrailingState()
 {
     DP_INFO_LOG("entered, is in trailing: %{public}d", isInTrailing_);
     if (isInTrailing_) {
-        auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
+        auto passedTime = GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {
             remainingTrailingTime_ = 0;
             isInTrailing_ = false;
         }
     }
-    return;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

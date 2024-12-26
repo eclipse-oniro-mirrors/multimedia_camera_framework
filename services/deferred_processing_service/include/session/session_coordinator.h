@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 #include "ipc_file_descriptor.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_video_processing_session_callback.h"
+#include "photo_session_info.h"
 #include "video_session_info.h"
 #include "task_manager.h"
 
@@ -34,12 +35,13 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class SessionCoordinator : public std::enable_shared_from_this<SessionCoordinator> {
 public:
-    SessionCoordinator();
     ~SessionCoordinator();
+
     void Initialize();
     void Start();
     void Stop();
-
+    void AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo);
+    void DeletePhotoSession(const int32_t userId);
     void OnProcessDone(const int32_t userId, const std::string& imageId,
         const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported);
     void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<Media::Picture> picture,
@@ -47,16 +49,16 @@ public:
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode);
     void OnStateChanged(const int32_t userId, DpsStatus statusCode);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
-    void NotifySessionCreated(const int32_t userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
-        TaskManager* taskManager);
-    void NotifyCallbackDestroyed(const int32_t userId);
 
-    void AddSession(const sptr<VideoSessionInfo>& sessionInfo);
-    void DeleteSession(const int32_t userId);
+    void AddVideoSession(const sptr<VideoSessionInfo>& sessionInfo);
+    void DeleteVideoSession(const int32_t userId);
     void OnVideoProcessDone(const int32_t userId, const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFd);
     void OnVideoError(const int32_t userId, const std::string& videoId, DpsError errorCode);
     void OnVideoStateChanged(const int32_t userId, DpsStatus statusCode);
     std::shared_ptr<IVideoProcessCallbacks> GetVideoProcCallbacks();
+
+protected:
+    SessionCoordinator();
 
 private:
     class ImageProcCallbacks;
@@ -104,9 +106,8 @@ private:
 
     inline sptr<IDeferredPhotoProcessingSessionCallback> GetRemoteImageCallback(int32_t userId)
     {
-        std::lock_guard<std::mutex> lock(remoteImageCallbacksMapMutex_);
-        auto iter = remoteImageCallbacksMap_.find(userId);
-        if (iter != remoteImageCallbacksMap_.end()) {
+        auto iter = photoCallbackMap_.find(userId);
+        if (iter != photoCallbackMap_.end()) {
             return iter->second.promote();
         }
         return nullptr;
@@ -114,25 +115,19 @@ private:
 
     inline sptr<IDeferredVideoProcessingSessionCallback> GetRemoteVideoCallback(int32_t userId)
     {
-        auto iter = remoteVideoCallbacksMap_.find(userId);
-        if (iter != remoteVideoCallbacksMap_.end()) {
+        auto iter = videoCallbackMap_.find(userId);
+        if (iter != videoCallbackMap_.end()) {
             return iter->second.promote();
         }
         return nullptr;
     }
 
-    std::mutex mutex_;
-    std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
-
-    std::mutex remoteImageCallbacksMapMutex_;
-    std::map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
-
-    std::mutex pendingImageResultsMutex_;
-    std::deque<ImageResult> pendingImageResults_;
-
-    std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_;
-    std::unordered_map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> remoteVideoCallbacksMap_;
-    std::deque<RequestResult> pendingRequestResults_;
+    std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_ {nullptr};
+    std::unordered_map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> photoCallbackMap_ {};
+    std::deque<ImageResult> pendingImageResults_ {};
+    std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_ {nullptr};
+    std::unordered_map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> videoCallbackMap_ {};
+    std::deque<RequestResult> pendingRequestResults_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
