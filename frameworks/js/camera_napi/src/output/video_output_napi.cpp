@@ -237,6 +237,8 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSupportedRotations", GetSupportedRotations),
         DECLARE_NAPI_FUNCTION("isRotationSupported", IsRotationSupported),
         DECLARE_NAPI_FUNCTION("setRotation", SetRotation),
+        DECLARE_NAPI_FUNCTION("isAutoVideoFrameRateSupported", IsAutoVideoFrameRateSupported),
+        DECLARE_NAPI_FUNCTION("enableAutoVideoFrameRate", EnableAutoVideoFrameRate)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -1077,6 +1079,64 @@ napi_value VideoOutputNapi::SetRotation(napi_env env, napi_callback_info info)
     int32_t retCode = videoOutputNapi->videoOutput_->SetRotation(rotation);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("VideoOutputNapi::SetRotation fail %{public}d", retCode);
+    }
+    return result;
+}
+ 
+napi_value VideoOutputNapi::IsAutoVideoFrameRateSupported(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoVideoFrameRateSupported is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("VideoOutputNapi::IsAutoVideoFrameRateSupported is called");
+ 
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoVideoFrameRateSupported parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoVideoFrameRateSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+    bool isAutoVideoFrameRateSupported = videoOutputNapi->videoOutput_->IsAutoVideoFrameRateSupported();
+    if (isAutoVideoFrameRateSupported) {
+        napi_get_boolean(env, true, &result);
+        return result;
+    }
+    MEDIA_ERR_LOG("VideoOutputNapi::IsAutoVideoFrameRateSupported is not supported");
+    napi_get_boolean(env, false, &result);
+    return result;
+}
+ 
+napi_value VideoOutputNapi::EnableAutoVideoFrameRate(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoVideoFrameRate is called!");
+        return result;
+    }
+    MEDIA_INFO_LOG("VideoOutputNapi::EnableAutoVideoFrameRate is called");
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+ 
+    int32_t retCode = videoOutputNapi->videoOutput_->EnableAutoVideoFrameRate(isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate fail %{public}d", retCode);
     }
     return result;
 }

@@ -233,6 +233,20 @@ public:
      */
     int32_t SetRotation(int32_t rotation);
 
+    /**
+     * @brief heck is Auto frameRate is supported.
+     *
+     * @return Returns true/false if the automatic frame rate is supported/not-supported respectively.
+     */
+    bool IsAutoVideoFrameRateSupported();
+ 
+    /**
+    * @brief Enable automatic frame rate
+    *
+    * @param boolean true/false to set/unset automatic frame rat respectively.
+    */
+    int32_t EnableAutoVideoFrameRate(bool enable);
+
 private:
     int32_t videoFormat_;
     Size videoSize_;

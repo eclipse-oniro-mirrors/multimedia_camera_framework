@@ -610,5 +610,55 @@ int32_t VideoOutput::SetRotation(int32_t rotation)
     captureSession->UnlockForControl();
     return CameraErrorCode::SUCCESS;
 }
+ 
+bool VideoOutput::IsAutoVideoFrameRateSupported()
+{
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false,
+        "VideoOutput IsAutoVideoFrameRateSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+        "VideoOutput IsAutoVideoFrameRateSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
+        "VideoOutput IsAutoVideoFrameRateSupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_VIDEO_FRAME_RATE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS, false,
+        "VideoOutput Can not find OHOS_ABILITY_AUTO_VIDEO_FRAME_RATE");
+    bool isAutoVideoFrameRateSupported = false;
+    SceneMode currentSceneMode = session->GetMode();
+    for (int i = 0; i < static_cast<int>(item.count); i++) {
+        MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
+        if (currentSceneMode == static_cast<SceneMode>(item.data.u8[i])) {
+            isAutoVideoFrameRateSupported = true;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsAutoVideoFrameRateSupported isSupport: %{public}d", isAutoVideoFrameRateSupported);
+    return isAutoVideoFrameRateSupported;
+}
+ 
+int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
+{
+    MEDIA_INFO_LOG("VideoOutput::EnableAutoVideoFrameRate enable: %{public}d", enable);
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "VideoOutput IsAutoVideoFrameRateSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "VideoOutput IsAutoVideoFrameRateSupported error!, inputDevice is nullptr");
+    bool isSupportedAutoVideoFps = IsAutoVideoFrameRateSupported();
+    CHECK_ERROR_RETURN_RET_LOG(!isSupportedAutoVideoFps, CameraErrorCode::INVALID_ARGUMENT,
+        "VideoOutput::EnableAutoVideoFrameRate does not supported.");
+    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    if (itemStream) {
+        int32_t ret = itemStream-> ToggleAutoVideoFrameRate(enable);
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
+            "VideoOutput::EnableAutoVideoFrameRate failed to set auto frame rate");
+    }
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS
