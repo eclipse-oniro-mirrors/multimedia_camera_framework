@@ -13,18 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef HSTREAM_METADATA_UNITTEST_H
-#define HSTREAM_METADATA_UNITTEST_H
+#ifndef AUDIO_CAPTURER_SESSION_UNITTEST_H
+#define AUDIO_CAPTURER_SESSION_UNITTEST_H
 
 #include "gtest/gtest.h"
-#include "hcamera_service.h"
-#include "hstream_metadata.h"
+#include "gmock/gmock.h"
+#include "message_parcel.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamMetadataUnitTest : public testing::Test {
-public:
 
+class AudioCapturerSessionUnitTest : public testing::Test {
+public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 
@@ -32,11 +33,11 @@ public:
     static void TearDownTestCase(void);
 
     /* SetUp:Execute before each test case */
-    void SetUp(void);
+    void SetUp();
 
     /* TearDown:Execute after each test case */
-    void TearDown(void);
+    void TearDown();
 };
 } // CameraStandard
 } // OHOS
-#endif
+#endif // AUDIO_CAPTURER_SESSION_UNITTEST_H

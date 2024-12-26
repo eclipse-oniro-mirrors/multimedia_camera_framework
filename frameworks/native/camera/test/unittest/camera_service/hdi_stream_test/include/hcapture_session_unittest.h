@@ -20,6 +20,8 @@
 #include <vector>
 #include "gtest/gtest.h"
 #include "hcamera_service.h"
+#include "hcapture_session.h"
+#include "camera_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -45,8 +47,9 @@ protected:
     int32_t userId_;
 
 private:
-    sptr<HCameraService> cameraService_;
-    sptr<HCameraHostManager> cameraHostManager_;
+    sptr<HCameraService> cameraService_ = nullptr;
+    sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<HCameraHostManager> cameraHostManager_ = nullptr;
 };
 } // CameraStandard
 } // OHOS

@@ -21,21 +21,19 @@
 #include "portrait_session.h"
 #include "hcamera_device.h"
 #include "camera_manager.h"
-
+#include "hcamera_host_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraHostManagerUnitTest : public testing::Test {
+
+class HCameraHostManagerUnit : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
-
     /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
     static void TearDownTestCase(void);
-
     /* SetUp:Execute before each test case */
     void SetUp(void);
-
     /* TearDown:Execute after each test case */
     void TearDown(void);
 
@@ -44,8 +42,11 @@ private:
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
+    sptr<HCameraHostManager> cameraHostManager_ = nullptr;
     void NativeAuthorization(void);
 };
-} // CameraStandard
-} // OHOS
-#endif // HCAMERA_HOST_MANAGER_UNITTEST_H
+
+}
+}
+
+#endif

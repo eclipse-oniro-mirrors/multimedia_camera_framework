@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "gmock/gmock.h"
 #include "hap_token_info.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -57,12 +58,20 @@ void HCaptureSessionUnitTest::SetUp()
     NativeAuthorization();
     cameraHostManager_ = new HCameraHostManager(nullptr);
     cameraService_ = new HCameraService(cameraHostManager_);
+    cameraManager_ = CameraManager::GetInstance();
 }
 
 void HCaptureSessionUnitTest::TearDown()
 {
-    cameraHostManager_ = nullptr;
-    cameraService_ = nullptr;
+    if (cameraHostManager_) {
+        cameraHostManager_ = nullptr;
+    }
+    if (cameraService_) {
+        cameraService_ = nullptr;
+    }
+    if (cameraManager_) {
+        cameraManager_ = nullptr;
+    }
 }
 
 void HCaptureSessionUnitTest::NativeAuthorization()
@@ -1365,9 +1374,505 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
     session->CommitConfig();
 
     session->BeginConfig();
+    EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
 
     MEDIA_INFO_LOG("hcapture_session_unit_test_027 end");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    int32_t ret = camSession->AddInput(device);
+    EXPECT_EQ(ret, 10);
+
+    ret = camSession->RemoveInput(device);
+    EXPECT_EQ(ret, 10);
+    device->Close();
+    ret = camSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    ret = camSession->BeginConfig();
+    EXPECT_EQ(ret, 10);
+
+    device = nullptr;
+    ret = camSession->AddInput(device);
+    EXPECT_EQ(ret, 2);
+
+    ret = camSession->RemoveInput(device);
+    EXPECT_EQ(ret, 2);
+
+    sptr<IStreamCommon> stream_2 = nullptr;
+    ret = camSession->AddOutput(StreamType::CAPTURE, stream_2);
+    EXPECT_EQ(ret, 2);
+
+    ret = camSession->RemoveOutput(StreamType::CAPTURE, stream_2);
+    EXPECT_EQ(ret, 2);
+
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->BeginConfig();
+    camSession->Start();
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
+    auto streamRepeat1 = new (std::nothrow) HStreamRepeat(producer, 3, 640, 480, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat1, nullptr);
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    ASSERT_NE(streamCapture, nullptr);
+
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat1), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 2;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    camSession->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {1, 2};
+    camSession->OnFrameShutter(0, streamIds, 0);
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
+    device->Close();
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->BeginConfig();
+    camSession->Start();
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    sptr<HStreamCapture> streamCapture1 = new (std::nothrow) HStreamCapture(producer, 3, 640, 480);
+    sptr<HStreamRepeat> streamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
+
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture1), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 2;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    camSession->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {1, 2};
+    camSession->OnFrameShutter(0, streamIds, 0);
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
+
+    device->Close();
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_031, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, PORTRAIT);
+    ASSERT_NE(camSession, nullptr);
+    EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
+    camSession->BeginConfig();
+    camSession->Start();
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, 0, 0, 0);
+    ASSERT_NE(streamCapture, nullptr);
+
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+
+    camSession->CommitConfig();
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 0;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    camSession->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {0, 1, 2};
+    camSession->OnFrameShutter(0, streamIds, 0);
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
+    camSession->BeginConfig();
+
+    device->Close();
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+    EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0, {1});
+    ASSERT_NE(streamMetadata, nullptr);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
+
+    camSession->BeginConfig();
+    camSession->Start();
+    camSession->AddOutput(StreamType::METADATA, streamMetadata);
+    camSession->AddOutput(StreamType::METADATA, streamMetadata);
+    camSession->RemoveOutput(StreamType::METADATA, streamMetadata);
+    camSession->AddInput(device);
+
+    camSession->AddInput(device);
+
+    sptr<ICaptureSessionCallback> callback1 = nullptr;
+    camSession->SetCallback(callback1);
+
+    CameraInfoDumper infoDumper(0);
+    camSession->DumpSessionInfo(infoDumper);
+    camSession->DumpSessions(infoDumper);
+
+    device->Close();
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when stream is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when stream is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    std::vector<StreamInfo_V1_1> streamInfos = {};
+    EXPECT_EQ(camSession->GetCurrentStreamInfos(streamInfos), 0);
+    EXPECT_EQ(camSession->AddOutputStream(nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(camSession->RemoveOutputStream(nullptr), CAMERA_INVALID_ARG);
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when cameraDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when cameraDevice_ is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->cameraDevice_ = nullptr;
+    EXPECT_EQ(camSession->LinkInputAndOutputs(), CAMERA_INVALID_SESSION_CFG);
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession with SetColorSpace
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with SetColorSpace
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    bool isNeedUpdate = false;
+    ColorSpace colorSpace = ColorSpace::SRGB;
+    ColorSpace captureColorSpace = ColorSpace::SRGB;
+    camSession->currColorSpace_ = ColorSpace::BT709;
+    camSession->currCaptureColorSpace_ = ColorSpace::BT709;
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    camSession->currColorSpace_ = ColorSpace::SRGB;
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->RestartStreams();
+
+    ColorSpace colorSpace = ColorSpace::SRGB;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_HLG ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_PQ ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_HLG_LIMIT ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_PQ_LIMIT;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when isSessionStarted_ is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when isSessionStarted_ is true
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->SetColorSpaceForStreams();
+
+    std::vector<StreamInfo_V1_1> streamInfos = {};
+    camSession->CancelStreamsAndGetStreamInfos(streamInfos);
+
+    camSession->isSessionStarted_ = true;
+    camSession->RestartStreams();
+    camSession->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when cameraDevice is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when cameraDevice is nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    float currentFps = 0;
+    float currentZoomRatio = 0;
+    EXPECT_EQ(camSession->QueryFpsAndZoomRatio(currentFps, currentZoomRatio), false);
+    std::vector<float> crossZoomAndTime = {0, 0};
+    int32_t operationMode = 0;
+    EXPECT_EQ(camSession->QueryZoomPerformance(crossZoomAndTime, operationMode), false);
+    int32_t smoothZoomType = 0;
+    float targetZoomRatio = 0;
+    float duration = 0;
+    EXPECT_EQ(camSession->SetSmoothZoom(smoothZoomType, operationMode,
+        targetZoomRatio, duration), 11);
+    camSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test fuzz
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test opMode PORTRAIT fuzz test
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode opMode = PORTRAIT;
+    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    ASSERT_NE(session, nullptr);
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateBurstDisplayName
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateBurstDisplayName
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode opMode = CAPTURE;
+    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    std::string displayName = session->CreateBurstDisplayName(1, 1);
+    cout << "displayName: " << displayName <<endl;
+    ASSERT_NE(displayName, "");
+    ASSERT_THAT(displayName, testing::EndsWith("_COVER"));
+    displayName = session->CreateBurstDisplayName(2, 2);
+    cout << "displayName: " << displayName <<endl;
+    ASSERT_THAT(displayName, Not(testing::EndsWith("_COVER")));
+    displayName = session->CreateBurstDisplayName(-1, -1);
+    cout << "displayName: " << displayName <<endl;
+    session->Release();
 }
 
 } // namespace CameraStandard
