@@ -6061,8 +6061,9 @@ bool CaptureSession::SwitchDevice()
     auto cameraInput = (sptr<CameraInput>&)captureInput;
     CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
     auto deviceiInfo = cameraInput->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo || deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT,
-        false, "No need switch camera.");
+    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo ||
+        (deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT &&
+        deviceiInfo->GetPosition() != CAMERA_POSITION_FOLD_INNER), false, "No need switch camera.");
     bool hasVideoOutput = StopVideoOutput();
     int32_t retCode = CameraErrorCode::SUCCESS;
     Stop();
@@ -6091,10 +6092,10 @@ bool CaptureSession::SwitchDevice()
 
 sptr<CameraDevice> CaptureSession::FindFrontCamera()
 {
-    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCamerasWithFoldStatus();
     for (const auto& cameraDevice : cameraDeviceList) {
-        MEDIA_INFO_LOG("CreateCameraInput position:%{public}d", cameraDevice->GetPosition());
-        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
+        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT ||
+            cameraDevice->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
             return cameraDevice;
         }
     }
