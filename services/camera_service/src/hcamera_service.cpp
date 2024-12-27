@@ -84,7 +84,6 @@ std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE,
     OHOS_CONTROL_BEAUTY_TYPE,
     OHOS_CONTROL_BEAUTY_AUTO_VALUE,
-    OHOS_CONTROL_CAMERA_MACRO,
 };
 mutex g_dataShareHelperMutex;
 mutex g_dmDeviceInfoMutex;
