@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #ifndef OHOS_CAMERA_DYNAMIC_LOADER_H
 #define OHOS_CAMERA_DYNAMIC_LOADER_H
- 
+
 #include <map>
 #include <memory>
 #include <mutex>
@@ -29,12 +29,16 @@ const std::string MEDIA_LIB_SO = "libcamera_dynamic_medialibrary.z.so";
 
 class CameraDynamicLoader {
 public:
-    CameraDynamicLoader();
+    static CameraDynamicLoader* GetInstance()
+    {
+        std::call_once(onceFlag, []() { instance.reset(new CameraDynamicLoader()); });
+        return instance.get();
+    };
     ~CameraDynamicLoader();
- 
+
     void* OpenDynamicHandle(std::string dynamicLibrary);
     void CloseDynamicHandle(std::string dynamicLibrary);
-    void* GetFuntion(std::string dynamicLibrary, std::string function);
+    void* GetFunction(std::string dynamicLibrary, std::string function);
     inline bool EndsWith(const std::string& str, const std::string& suffix)
     {
         if (str.length() >= suffix.length()) {
@@ -44,10 +48,15 @@ public:
     }
 
 private:
+    CameraDynamicLoader(const CameraDynamicLoader&) = delete;
+    CameraDynamicLoader& operator=(const CameraDynamicLoader&) = delete;
+    static std::unique_ptr<CameraDynamicLoader> instance;
+    static std::once_flag onceFlag;
+    CameraDynamicLoader();
     std::map<std::string, void *> dynamicLibHandle_;
     std::recursive_mutex libLock_;
 };
- 
+
 }  // namespace Camera
 }  // namespace OHOS
 #endif // OHOS_CAMERA_DYNAMIC_LOADER_H

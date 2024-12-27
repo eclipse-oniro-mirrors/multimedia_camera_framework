@@ -207,6 +207,8 @@ Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Cam
 {
     CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "GetCameraImageRotation failed");
+    CHECK_AND_RETURN_RET_LOG(innerVideoOutput_ != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "innerVideoOutput_ is nullptr");
     int32_t cameraOutputRotation = innerVideoOutput_->GetVideoRotation(imageRotation);
     CHECK_AND_RETURN_RET_LOG(cameraOutputRotation != CAMERA_SERVICE_FATAL_ERROR, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoRotation camera service fatal error! ret: %{public}d", cameraOutputRotation);

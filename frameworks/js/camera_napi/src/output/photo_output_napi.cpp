@@ -28,6 +28,7 @@
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_napi_const.h"
 #include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
@@ -57,7 +58,9 @@
 #include "picture.h"
 #include "refbase.h"
 #include "securec.h"
+#include "task_manager.h"
 #include "video_key_info.h"
+#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -170,6 +173,7 @@ thread_local napi_ref PhotoOutputNapi::rawCallback_ = nullptr;
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
+static std::mutex g_assembleImageMutex;
 static int32_t g_captureId;
 
 PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput)
@@ -181,10 +185,17 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wpt
     if (taskManager_ == nullptr) {
         constexpr int32_t numThreads = 1;
         taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
-            numThreads, true);
+            numThreads, false);
     }
 }
-
+PhotoListener::~PhotoListener()
+{
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
+}
 RawPhotoListener::RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface)
     : ListenerBase(env), rawPhotoSurface_(rawPhotoSurface)
 {
@@ -199,26 +210,23 @@ AuxiliaryPhotoListener::AuxiliaryPhotoListener(const std::string surfaceName, co
     if (bufferProcessor_ == nullptr && surface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(surface);
     }
-    if (taskManager_ == nullptr) {
-        constexpr int32_t numThreads = 1;
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxiliaryPhotoListener_" + surfaceName,
-            numThreads, true);
-    }
 }
 
 int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
 {
     int32_t captureId;
-    int32_t burstSeqId;
+    int32_t burstSeqId = -1;
+    int32_t maskBurstSeqId = 0;
     int32_t invalidSeqenceId = -1;
     int32_t captureIdMask = 0x0000FFFF;
     int32_t captureIdShit = 16;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
-    if (burstSeqId != invalidSeqenceId) {
-        burstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
-        MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
-        return burstSeqId;
+    if (burstSeqId != invalidSeqenceId && captureId >= 0) {
+        maskBurstSeqId = ((captureId & captureIdMask) << captureIdShit) | burstSeqId;
+        MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d, maskBurstSeqId = %{public}d",
+            captureId, burstSeqId, maskBurstSeqId);
+        return maskBurstSeqId;
     }
     MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
     return captureId;
@@ -271,10 +279,11 @@ void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photo
 }
 
 void AuxiliaryPhotoListener::DeepCopyBuffer(
-    sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
+    sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t  captureId) const
 {
-    MEDIA_INFO_LOG("PhotoListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d",
-        surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
+    MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d "
+        "surfaceName=%{public}s captureId = %{public}d", surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(),
+        surfaceBuffer->GetFormat(), surfaceName_.c_str(), captureId);
     BufferRequestConfig requestConfig = {
         .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
@@ -286,74 +295,93 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer SurfaceBuffer alloc ret: %{public}d surfaceName=%{public}s "
+        "captureId = %{public}d", allocErrorCode, surfaceName_.c_str(), captureId);
     if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
         MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
     }
+    MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer memcpy end surfaceName=%{public}s captureId = %{public}d",
+        surfaceName_.c_str(), captureId);
 }
 
-void AuxiliaryPhotoListener::ExecuteDeepyCopySurfaceBuffer()
+void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
-    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepyCopySurfaceBuffer surfaceName = %{public}s",
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
         surfaceName_.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s AcquireBuffer before", surfaceName_.c_str());
     SurfaceError surfaceRet = surface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s AcquireBuffer end", surfaceName_.c_str());
     if (surfaceRet != SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("AuxiliaryPhotoListener Failed to acquire surface buffer");
         return;
     }
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    int32_t dataSize = 0;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, captureId);
+    MEDIA_INFO_LOG("AuxiliaryPhotoListener surfaceName_ = %{public}s w=%{public}d, h=%{public}d, f=%{public}d"
+                   "captureId=%{public}d", surfaceName_.c_str(), newSurfaceBuffer->GetWidth(),
+                   newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat(), captureId);
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s ReleaseBuffer captureId=%{public}d, before",
+        surfaceName_.c_str(), captureId);
+    surface_->ReleaseBuffer(surfaceBuffer, -1);
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s ReleaseBuffer captureId=%{public}d, end",
+        surfaceName_.c_str(), captureId);
+
     BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
     if (bufferHandle == nullptr) {
         MEDIA_ERR_LOG("invalid bufferHandle");
+        return;
     }
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s Map captureId=%{public}d, before",
+        surfaceName_.c_str(), captureId);
     newSurfaceBuffer->Map();
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto surfaceName = %{public}s Map captureId=%{public}d, end",
+        surfaceName_.c_str(), captureId);
     if (surfaceName_ == CONST_EXIF_SURFACE) {
-        int32_t dataSize = 0;
-        surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, dataSize);
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();
         extraData->ExtraSet("exifDataSize", dataSize);
         newSurfaceBuffer->SetExtraData(extraData);
         MEDIA_INFO_LOG("AuxiliaryPhotoListener exifDataSize = %{public}d", dataSize);
     }
-    int32_t captureId = GetCaptureId(surfaceBuffer);
-    MEDIA_INFO_LOG("AuxiliaryPhotoListener surfaceName_ = %{public}s w=%{public}d, h=%{public}d, f=%{public}d"
-                   "captureId=%{public}d", surfaceName_.c_str(), newSurfaceBuffer->GetWidth(),
-                   newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat(), captureId);
-    surface_->ReleaseBuffer(surfaceBuffer, -1);
     {
         std::lock_guard<std::mutex> lock(g_photoImageMutex);
         auto photoOutput = photoOutput_.promote();
-        if (photoOutput->caputreIdAuxiliaryCountMap_.count(captureId)) {
-            int32_t auxiliaryCount = photoOutput->caputreIdAuxiliaryCountMap_[captureId];
-            int32_t expectCount = photoOutput->caputreIdCountMap_[captureId];
+        if (photoOutput == nullptr) {
+            MEDIA_ERR_LOG("AuxiliaryPhotoListener ExecuteDeepCopySurfaceBuffer photoOutput is nullptr");
+            return;
+        }
+        if (photoOutput->captureIdAuxiliaryCountMap_.count(captureId)) {
+            int32_t auxiliaryCount = photoOutput->captureIdAuxiliaryCountMap_[captureId];
+            int32_t expectCount = photoOutput->captureIdCountMap_[captureId];
             if (auxiliaryCount == -1 || (expectCount != 0 && auxiliaryCount == expectCount)) {
                 MEDIA_INFO_LOG("AuxiliaryPhotoListener ReleaseBuffer, captureId=%{public}d", captureId);
                 return;
             }
         }
-        photoOutput->caputreIdAuxiliaryCountMap_[captureId]++;
+        photoOutput->captureIdAuxiliaryCountMap_[captureId]++;
         switch (SurfaceTypeHelper.ToEnum(surfaceName_)) {
             case SurfaceType::GAINMAP_SURFACE: {
-                    photoOutput->gainmapSurfaceBuffer_ = newSurfaceBuffer;
+                    photoOutput->captureIdGainmapMap_[captureId] = newSurfaceBuffer;
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener gainmapSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             case SurfaceType::DEEP_SURFACE: {
-                    photoOutput->deepSurfaceBuffer_ = newSurfaceBuffer;
+                    photoOutput->captureIdDepthMap_[captureId] = newSurfaceBuffer;
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener deepSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             case SurfaceType::EXIF_SURFACE: {
-                    photoOutput->exifSurfaceBuffer_ = newSurfaceBuffer;
+                    photoOutput->captureIdExifMap_[captureId] = newSurfaceBuffer;
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener exifSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             case SurfaceType::DEBUG_SURFACE: {
-                    photoOutput->debugSurfaceBuffer_ = newSurfaceBuffer;
+                    photoOutput->captureIdDebugMap_[captureId] = newSurfaceBuffer;
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener debugSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             default:
@@ -361,22 +389,22 @@ void AuxiliaryPhotoListener::ExecuteDeepyCopySurfaceBuffer()
         }
         MEDIA_INFO_LOG("AuxiliaryPhotoListener auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
                        "surfaceName=%{public}s, captureId=%{public}d",
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId], photoOutput->caputreIdCountMap_[captureId],
+            photoOutput->captureIdAuxiliaryCountMap_[captureId], photoOutput->captureIdCountMap_[captureId],
             surfaceName_.c_str(), captureId);
-        if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
-            uint32_t handle = photoOutput->caputreIdHandleMap_[captureId];
+        if (photoOutput->captureIdCountMap_[captureId] != 0 &&
+            photoOutput->captureIdAuxiliaryCountMap_[captureId] == photoOutput->captureIdCountMap_[captureId]) {
+            uint32_t handle = photoOutput->captureIdHandleMap_[captureId];
             MEDIA_INFO_LOG("AuxiliaryPhotoListener StopMonitor, surfaceName=%{public}s, handle = %{public}d, "
                            "captureId = %{public}d",
                 surfaceName_.c_str(), handle, captureId);
             DeferredProcessing::GetGlobalWatchdog().DoTimeout(handle);
             DeferredProcessing::GetGlobalWatchdog().StopMonitor(handle);
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId] = -1;
-            MEDIA_INFO_LOG("AuxiliaryPhotoListener caputreIdAuxiliaryCountMap_ = -1");
+            photoOutput->captureIdAuxiliaryCountMap_[captureId] = -1;
+            MEDIA_INFO_LOG("AuxiliaryPhotoListener captureIdAuxiliaryCountMap_ = -1");
         }
         MEDIA_INFO_LOG("AuxiliaryPhotoListener auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
                        "surfaceName=%{public}s, captureId=%{public}d",
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId], photoOutput->caputreIdCountMap_[captureId],
+            photoOutput->captureIdAuxiliaryCountMap_[captureId], photoOutput->captureIdCountMap_[captureId],
             surfaceName_.c_str(), captureId);
     }
 }
@@ -389,9 +417,16 @@ void AuxiliaryPhotoListener::OnBufferAvailable()
         MEDIA_ERR_LOG("AuxiliaryPhotoListener napi photoSurface_ is null");
         return;
     }
-    taskManager_->SubmitTask([this]() {
-        this->ExecuteDeepyCopySurfaceBuffer();
-    });
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput && photoOutput->taskManager_) {
+        wptr<AuxiliaryPhotoListener> thisPtr(this);
+        photoOutput->taskManager_->SubmitTask([thisPtr]() {
+            auto listener = thisPtr.promote();
+            if (listener) {
+                listener->ExecuteDeepCopySurfaceBuffer();
+            }
+        });
+    }
     MEDIA_INFO_LOG("AuxiliaryPhotoListener::OnBufferAvailable is end, surfaceName=%{public}s", surfaceName_.c_str());
 }
 
@@ -411,11 +446,16 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     int64_t imageId = 0;
     int32_t deferredProcessingType;
     int32_t captureId;
+    int32_t burstSeqId = -1;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    // When not in burst mode, burstSequenceId is invalid (-1); otherwise,
+    // it is an incrementing serial number starting from 1
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy imageId:%{public}" PRId64 ", "
-        "deferredProcessingType:%{public}d, captureId = %{public}d", imageId, deferredProcessingType, captureId);
+        "deferredProcessingType:%{public}d, captureId = %{public}d, burstSeqId = %{public}d",
+        imageId, deferredProcessingType, captureId, burstSeqId);
     // get buffer handle and photo info
     int32_t photoWidth;
     int32_t photoHeight;
@@ -441,16 +481,19 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
         "size:%{public}" PRId64, deferredImageFormat, isHighQuality, size);
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
-        nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId);
+        nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
     std::string imageIdStr = std::to_string(imageId);
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     return photoProxy;
 }
 
-void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
+void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
-    auto photoOutput = photoOutput_.promote();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    sptr<SurfaceBuffer> newSurfaceBuffer = nullptr;
+    sptr<CameraPhotoProxy> photoProxy = nullptr;
+    int32_t auxiliaryCount = 0;
+    int32_t captureId = -1;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
@@ -460,26 +503,36 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
         MEDIA_ERR_LOG("PhotoListener Failed to acquire surface buffer");
         return;
     }
+    auxiliaryCount = GetAuxiliaryPhotoCount(surfaceBuffer);
+    captureId = GetCaptureId(surfaceBuffer);
+    // deep copy buffer
+    newSurfaceBuffer = SurfaceBuffer::Create();
+    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, captureId);
+    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 2");
+    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
     {
         std::lock_guard<std::mutex> lock(g_photoImageMutex);
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
-        int32_t auxiliaryCount = GetAuxiliaryPhotoCount(surfaceBuffer);
-        int32_t captureId = GetCaptureId(surfaceBuffer);
-        photoOutput->caputreIdCountMap_[captureId] = auxiliaryCount;
-        photoOutput->caputreIdAuxiliaryCountMap_[captureId]++;
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 2 captureId = %{public}d", captureId);
-        sptr<CameraPhotoProxy> photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
+        auto photoOutput = photoOutput_.promote();
+        if (!photoOutput) {
+            MEDIA_ERR_LOG("photoOutput is nullptr");
+            return;
+        }
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 3");
+        photoOutput->captureIdCountMap_[captureId] = auxiliaryCount;
+        photoOutput->captureIdAuxiliaryCountMap_[captureId]++;
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 4 captureId = %{public}d", captureId);
+        photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
+        photoOutput->photoProxyMap_[captureId] = photoProxy;
+        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 5");
         if (!photoProxy) {
             MEDIA_ERR_LOG("photoProxy is nullptr");
             return;
         }
-        // deep copy buffer
-        sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 4");
-        DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 5");
-        photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+        if (photoProxy->isHighQuality_ && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
+            UpdateMainPictureStageOneJSCallback(surfaceBuffer, timestamp);
+            return;
+        }
         BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 6");
         if (bufferHandle == nullptr) {
@@ -489,10 +542,6 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 7");
         newSurfaceBuffer->Map();
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 8");
-        if (photoProxy->isHighQuality_ && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
-            UpdateMainPictureStageOneJSCallback(surfaceBuffer, timestamp);
-            return;
-        }
         photoProxy->bufferHandle_ = bufferHandle;
         std::unique_ptr<Media::Picture> picture = Media::Picture::Create(newSurfaceBuffer);
         if (!picture) {
@@ -500,15 +549,9 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
             return;
         }
         Media::ImageInfo imageInfo;
-        if (picture->GetMainPixel()) {
-            picture->GetMainPixel()->GetImageInfo(imageInfo);
-        }
-        MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetMainPixel w=%{public}d, h=%{public}d, f=%{public}d",
-            imageInfo.size.width, imageInfo.size.height, imageInfo.pixelFormat);
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
             newSurfaceBuffer->GetWidth(), newSurfaceBuffer->GetHeight(), newSurfaceBuffer->GetFormat());
-        photoOutput->caputreIdPictureMap_[captureId] = std::move(picture);
-        photoOutput->photoProxy_ = photoProxy;
+        photoOutput->captureIdPictureMap_[captureId] = std::move(picture);
         uint32_t pictureHandle;
         constexpr uint32_t delayMilli = 1 * 1000;
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto GetGlobalWatchdog StartMonitor, captureId=%{public}d",
@@ -519,19 +562,19 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
                     "captureId=%{public}d", static_cast<int>(handle), captureId);
                 AssembleAuxiliaryPhoto(timestamp, captureId);
                 auto photoOutput = photoOutput_.promote();
-                if (photoOutput) {
-                    photoOutput->caputreIdAuxiliaryCountMap_[captureId] = -1;
-                    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto caputreIdAuxiliaryCountMap_ = -1, "
+                if (photoOutput && photoOutput->captureIdAuxiliaryCountMap_.count(captureId)) {
+                    photoOutput->captureIdAuxiliaryCountMap_[captureId] = -1;
+                    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto captureIdAuxiliaryCountMap_ = -1, "
                         "captureId=%{public}d", captureId);
                 }
         });
-        photoOutput->caputreIdHandleMap_[captureId] = pictureHandle;
+        photoOutput->captureIdHandleMap_[captureId] = pictureHandle;
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto, pictureHandle: %{public}d, captureId=%{public}d "
-            "caputreIdCountMap = %{public}d, caputreIdAuxiliaryCountMap = %{public}d",
-            pictureHandle, captureId, photoOutput->caputreIdCountMap_[captureId],
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId]);
-        if (photoOutput->caputreIdCountMap_[captureId] != 0 &&
-            photoOutput->caputreIdAuxiliaryCountMap_[captureId] == photoOutput->caputreIdCountMap_[captureId]) {
+            "captureIdCountMap = %{public}d, captureIdAuxiliaryCountMap = %{public}d",
+            pictureHandle, captureId, photoOutput->captureIdCountMap_[captureId],
+            photoOutput->captureIdAuxiliaryCountMap_[captureId]);
+        if (photoOutput->captureIdCountMap_[captureId] != 0 &&
+            photoOutput->captureIdAuxiliaryCountMap_[captureId] == photoOutput->captureIdCountMap_[captureId]) {
             MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto auxiliaryCount is complete, StopMonitor DoTimeout "
                 "handle = %{public}d, captureId = %{public}d", pictureHandle, captureId);
             DeferredProcessing::GetGlobalWatchdog().DoTimeout(pictureHandle);
@@ -540,23 +583,33 @@ void PhotoListener::ExecuteDeepyCopySurfaceBuffer()
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto end");
     }
 }
+
 void PhotoListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
-    if (!photoSurface_) {
-        MEDIA_ERR_LOG("photoOutput napi photoSurface_ is null");
+    auto photoOutput = photoOutput_.promote();
+    if (photoSurface_ == nullptr || photoOutput == nullptr) {
+        MEDIA_ERR_LOG("PhotoListener::OnBufferAvailable photoSurface or photoOutput is null");
         return;
     }
-    auto photoOutput = photoOutput_.promote();
-    if (photoOutput->IsYuvOrHeifPhoto()) {
-        taskManager_->SubmitTask([this]() {
-            ExecuteDeepyCopySurfaceBuffer();
-        });
-    } else {
+    if (!photoOutput->IsYuvOrHeifPhoto()) {
         UpdateJSCallbackAsync(photoSurface_);
+        MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is end");
+        return;
     }
-    MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
+    if (taskManager_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoListener::OnBufferAvailable taskManager_ is null");
+        return;
+    }
+    wptr<PhotoListener> thisPtr(this);
+    taskManager_->SubmitTask([thisPtr]() {
+        auto listener = thisPtr.promote();
+        if (listener) {
+            listener->ExecuteDeepCopySurfaceBuffer();
+        }
+    });
+    MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is end");
 }
 
 void PhotoListener::UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const
@@ -672,52 +725,81 @@ std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSett
     return location;
 }
 
+int32_t GetBurstSeqId(int32_t captureId)
+{
+    const uint32_t burstSeqIdMask = 0xFFFF;
+    return captureId > 0 ? (static_cast<int32_t>(static_cast<uint32_t>(captureId) & burstSeqIdMask)) : captureId;
+}
+
+void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
+{
+    if (!photoOutput) {
+        MEDIA_ERR_LOG("CleanAfterTransPicture photoOutput is nullptr");
+        return;
+    }
+    photoOutput->photoProxyMap_[captureId] = nullptr;
+    photoOutput->photoProxyMap_.erase(captureId);
+    photoOutput->captureIdPictureMap_.erase(captureId);
+    photoOutput->captureIdGainmapMap_.erase(captureId);
+    photoOutput->captureIdDepthMap_.erase(captureId);
+    photoOutput->captureIdExifMap_.erase(captureId);
+    photoOutput->captureIdDebugMap_.erase(captureId);
+    photoOutput->captureIdAuxiliaryCountMap_.erase(captureId);
+    photoOutput->captureIdCountMap_.erase(captureId);
+    photoOutput->captureIdHandleMap_.erase(captureId);
+}
+
 void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto begin captureId %{public}d, burstSeqId %{public}d",
+        captureId, GetBurstSeqId(captureId));
+    std::lock_guard<std::mutex> lock(g_assembleImageMutex);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
-        auto settings = photoOutput->GetDefaultCaptureSetting();
-        if (settings) {
-            auto location = make_shared<Location>();
-            settings->GetLocation(location);
-            MEDIA_INFO_LOG("AssembleAuxiliaryPhoto GetLocation latitude:%{public}f, longitude:%{public}f",
-                location->latitude, location->longitude);
-            photoOutput->photoProxy_->SetLocation(location->latitude, location->longitude);
+        auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
+        if (location && photoOutput->photoProxyMap_[captureId]) {
+            photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude);
         }
-        std::unique_ptr<Media::Picture> picture = std::move(photoOutput->caputreIdPictureMap_[captureId]);
-        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto picture %{public}d", picture != nullptr);
-        if (photoOutput->exifSurfaceBuffer_ && picture) {
-            LoggingSurfaceBufferInfo(photoOutput->exifSurfaceBuffer_, "exifSurfaceBuffer");
-            picture->SetExifMetadata(photoOutput->exifSurfaceBuffer_);
+        std::unique_ptr<Media::Picture> picture = std::move(photoOutput->captureIdPictureMap_[captureId]);
+        if (photoOutput->captureIdExifMap_[captureId] && picture) {
+            auto buffer = photoOutput->captureIdExifMap_[captureId];
+            LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
+            picture->SetExifMetadata(buffer);
+            photoOutput->captureIdExifMap_[captureId] = nullptr;
         }
-        if (photoOutput->gainmapSurfaceBuffer_ && picture) {
+        if (photoOutput->captureIdGainmapMap_[captureId] && picture) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
-                photoOutput->gainmapSurfaceBuffer_, Media::AuxiliaryPictureType::GAINMAP);
+                photoOutput->captureIdGainmapMap_[captureId], Media::AuxiliaryPictureType::GAINMAP);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
-            LoggingSurfaceBufferInfo(photoOutput->gainmapSurfaceBuffer_, "gainmapSurfaceBuffer");
+            LoggingSurfaceBufferInfo(photoOutput->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
             picture->SetAuxiliaryPicture(picturePtr);
-            photoOutput->gainmapSurfaceBuffer_ = nullptr;
+            photoOutput->captureIdGainmapMap_[captureId] = nullptr;
         }
-        if (photoOutput->deepSurfaceBuffer_ && picture) {
+        if (photoOutput->captureIdDepthMap_[captureId] && picture) {
             std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
-                photoOutput->deepSurfaceBuffer_, Media::AuxiliaryPictureType::DEPTH_MAP);
+                photoOutput->captureIdDepthMap_[captureId], Media::AuxiliaryPictureType::DEPTH_MAP);
             std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
-            LoggingSurfaceBufferInfo(photoOutput->deepSurfaceBuffer_, "deepSurfaceBuffer");
+            LoggingSurfaceBufferInfo(photoOutput->captureIdDepthMap_[captureId], "deepSurfaceBuffer");
             picture->SetAuxiliaryPicture(picturePtr);
+            photoOutput->captureIdDepthMap_[captureId] = nullptr;
         }
-        if (photoOutput->debugSurfaceBuffer_ && picture) {
-            LoggingSurfaceBufferInfo(photoOutput->debugSurfaceBuffer_, "debugSurfaceBuffer");
-            picture->SetMaintenanceData(photoOutput->debugSurfaceBuffer_);
+        if (photoOutput->captureIdDebugMap_[captureId] && picture) {
+            auto buffer = photoOutput->captureIdDebugMap_[captureId];
+            LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
+            picture->SetMaintenanceData(buffer);
+            photoOutput->captureIdDebugMap_[captureId] = nullptr;
         }
-        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto captureId %{public}d", captureId);
+        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto end captureId %{public}d, burstSeqId %{public}d",
+            captureId, GetBurstSeqId(captureId));
         if (picture) {
             std::string uri;
             int32_t cameraShotType;
             std::string burstKey = "";
-            photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxy_,
+            photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
                 uri, cameraShotType, burstKey, timestamp);
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
             UpdatePictureJSCallback(uri, cameraShotType, burstKey);
+            CleanAfterTransPicture(photoOutput, captureId);
         } else {
             MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
         }
@@ -775,7 +857,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
 
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, 0);
     BufferHandle *newBufferHandle = CameraCloneBufferHandle(newSurfaceBuffer->GetBufferHandle());
     if (newBufferHandle == nullptr) {
         napi_value errorCode;
@@ -804,8 +886,12 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
-void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
+void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+    int32_t captureId) const
 {
+    MEDIA_DEBUG_LOG("PhotoListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d surfaceName=%{public}s "
+        "captureId = %{public}d", surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat(),
+        "main", captureId);
     BufferRequestConfig requestConfig = {
         .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
@@ -817,11 +903,14 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    MEDIA_DEBUG_LOG("PhotoListener::DeepCopyBuffer SurfaceBuffer alloc ret: %{public}d surfaceName=%{public}s "
+        "captureId = %{public}d", allocErrorCode, "main", captureId);
     if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
         MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
     }
+    MEDIA_DEBUG_LOG("PhotoListener::DeepCopyBuffer memcpy_s end surfaceName=%{public}s captureId = %{public}d",
+        "main", captureId);
 }
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
@@ -835,7 +924,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_get_undefined(env_, &result[PARAM1]);
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, 0);
     BufferHandle* bufferHandle = newSurfaceBuffer->GetBufferHandle();
     if (bufferHandle == nullptr) {
         napi_value errorCode;
@@ -869,14 +958,16 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     }
     int32_t captureId;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    int32_t burstSeqId = -1;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
     int64_t imageId = 0;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
     MEDIA_INFO_LOG(
         "PhotoListener ExecutePhotoAsset captureId:%{public}d "
-        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
-        captureId, imageId, deferredProcessingType);
+        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d, burstSeqId:%{public}d",
+        captureId, imageId, deferredProcessingType, burstSeqId);
     int32_t photoWidth;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
     int32_t photoHeight;
@@ -903,7 +994,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight,
-                                                    isHighQuality, captureId);
+                                                    isHighQuality, captureId, burstSeqId);
     if (photoProxy == nullptr) {
         return;
     }
@@ -1028,7 +1119,7 @@ void PhotoListener::RemoveCallback(const std::string eventName, napi_value callb
     } else if (eventName == CONST_CAPTURE_PHOTO_ASSET_AVAILABLE) {
         auto photoOutput = photoOutput_.promote();
         if (photoOutput != nullptr) {
-            photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
+            photoOutput->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
         }
         callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
     }
@@ -1430,8 +1521,122 @@ ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photo
 void ThumbnailListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("ThumbnailListener:OnBufferAvailable() called");
-    UpdateJSCallbackAsync();
+    MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
+    ExecuteDeepCopySurfaceBuffer();
+    constexpr int32_t memSize = 20 * 1024;
+    int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
+    CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
+    MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
+}
+
+void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
+{
+    auto photoOutput = photoOutput_.promote();
+    CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "ThumbnailListener photoOutput is nullptr");
+    CHECK_ERROR_RETURN_LOG(photoOutput->thumbnailSurface_ == nullptr, "ThumbnailListener thumbnailSurface_ is nullptr");
+    auto surface = photoOutput->thumbnailSurface_;
+    string surfaceName = "Thumbnail";
+    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
+        surfaceName.c_str());
+    sptr<SurfaceBuffer> surfaceBuffer = nullptr;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
+    SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to acquire surface buffer");
+        return;
+    }
+    int32_t thumbnailWidth;
+    int32_t thumbnailHeight;
+    int32_t burstSeqId = -1;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
+        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
+    if (burstSeqId != -1) {
+        surface->ReleaseBuffer(surfaceBuffer, -1);
+        return;
+    }
+    Media::InitializationOptions opts {
+        .size = { .width = thumbnailWidth, .height = thumbnailHeight },
+        .srcPixelFormat = Media::PixelFormat::RGBA_8888,
+        .pixelFormat = Media::PixelFormat::RGBA_8888,
+    };
+    const int32_t formatSize = 4;
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
+        thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
+    surface->ReleaseBuffer(surfaceBuffer, -1);
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
+    UpdateJSCallbackAsync(std::move(pixelMap));
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
+        surfaceName.c_str(), captureId);
+}
+
+void ThumbnailListener::UpdateJSCallbackAsync(unique_ptr<Media::PixelMap> pixelMap)
+{
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
+        std::make_unique<ThumbnailListenerInfo>(this, std::move(pixelMap));
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(work->data);
+            if (callbackInfo) {
+                auto listener = callbackInfo->listener_.promote();
+                if (listener != nullptr) {
+                    listener->UpdateJSCallback(std::move(callbackInfo->pixelMap_));
+                    MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
+                }
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void ThumbnailListener::UpdateJSCallback(unique_ptr<Media::PixelMap> pixelMap) const
+{
+    if (pixelMap == nullptr) {
+        MEDIA_ERR_LOG("ThumbnailListener::UpdateJSCallback surfaceBuffer is nullptr");
+        return;
+    }
+    napi_value result[ARGS_TWO] = { 0 };
+    napi_get_undefined(env_, &result[0]);
+    napi_get_undefined(env_, &result[1]);
+    napi_value retVal;
+    MEDIA_INFO_LOG("enter ImageNapi::Create start");
+    napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
+    if (valueParam == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &valueParam);
+    }
+    MEDIA_INFO_LOG("enter ImageNapi::Create end");
+    result[1] = valueParam;
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
 }
 
 void ThumbnailListener::UpdateJSCallback() const
@@ -1493,7 +1698,7 @@ void ThumbnailListener::UpdateJSCallbackAsync()
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this);
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, nullptr);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
@@ -1665,6 +1870,11 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
             photoListener_ = photoListener;
             pictureListener_ = pictureListener;
         }
+        if (photoOutput_->taskManager_ == nullptr) {
+            constexpr int32_t auxiliaryPictureCount = 4;
+            photoOutput_->taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("AuxilaryPictureListener",
+                auxiliaryPictureCount, false);
+        }
     }
 }
 
@@ -1764,13 +1974,14 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
         }
+        if (surfaceId == "") {
+            sPhotoOutput_->SetNativeSurface(true);
+        }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             MEDIA_DEBUG_LOG("Success to create photo output instance");
             return result;
-        } else {
-            MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
@@ -1808,8 +2019,8 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
             return false;
         }
         if (settingsNapiOjbect.IsKeySetted("mirror") && asyncContext->isMirror) {
-                MEDIA_INFO_LOG("GetMirrorStatus is ok!");
-                asyncContext->isMirrorSettedByUser = true;
+            MEDIA_INFO_LOG("GetMirrorStatus is ok!");
+            asyncContext->isMirrorSettedByUser = true;
         }
         MEDIA_INFO_LOG("ParseCaptureSettings with capture settings pass");
         asyncContext->hasPhotoSettings = true;
@@ -2378,8 +2589,8 @@ napi_value PhotoOutputNapi::EnableRawDelivery(napi_env env, napi_callback_info i
         }
     }
     MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
-    auto rawSurface = photoOutputNapi->photoOutput_->rawPhotoSurface_;
     CHECK_ERROR_RETURN_RET_LOG(photoOutputNapi == nullptr, result, "photoOutputNapi is null!");
+    auto rawSurface = photoOutputNapi->photoOutput_->rawPhotoSurface_;
     if (rawSurface == nullptr) {
         MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
         return result;
@@ -2553,6 +2764,18 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
 {
     if (photoListener_ != nullptr) {
         photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
+        if (photoListener_->taskManager_) {
+            photoListener_->taskManager_->CancelAllTasks();
+            photoListener_->taskManager_.reset();
+            photoListener_->taskManager_ = nullptr;
+        }
+    }
+    if (photoOutput_) {
+        if (photoOutput_->taskManager_) {
+            photoOutput_->taskManager_->CancelAllTasks();
+            photoOutput_->taskManager_.reset();
+            photoOutput_->taskManager_ = nullptr;
+        }
     }
 }
 

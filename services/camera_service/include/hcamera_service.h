@@ -156,6 +156,7 @@ public:
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
+    int32_t RequireMemorySize(int32_t memSize) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;

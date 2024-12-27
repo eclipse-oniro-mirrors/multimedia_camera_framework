@@ -118,6 +118,7 @@ AudioCapturerSession::~AudioCapturerSession()
 bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
+    CHECK_ERROR_RETURN_RET_LOG(startAudioCapture_, true, "AudioCapture is already started.");
     if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
         MEDIA_INFO_LOG("audioCapturer is not create");
         return false;
@@ -125,16 +126,17 @@ bool AudioCapturerSession::StartAudioCapture()
     if (!audioCapturer_->Start()) {
         MEDIA_INFO_LOG("Start stream failed");
         audioCapturer_->Release();
+        startAudioCapture_ = false;
         return false;
     }
     if (audioThread_ && audioThread_->joinable()) {
-        MEDIA_DEBUG_LOG("audioThread_ is already start");
+        MEDIA_INFO_LOG("audioThread_ is already start, reset");
         startAudioCapture_ = false;
         audioThread_->join();
         audioThread_.reset();
     }
-    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     startAudioCapture_ = true;
+    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     if (audioThread_ == nullptr) {
         MEDIA_ERR_LOG("Create auido thread failed");
         return false;

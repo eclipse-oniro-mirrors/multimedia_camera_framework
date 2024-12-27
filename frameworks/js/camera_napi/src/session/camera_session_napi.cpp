@@ -4313,13 +4313,13 @@ napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::SetUsage parse parameter occur error");
         return nullptr;
     }
- 
+
     cameraSessionNapi->cameraSession_->LockForControl();
     cameraSessionNapi->cameraSession_->SetUsage(static_cast<UsageType>(usageType), enabled);
     cameraSessionNapi->cameraSession_->UnlockForControl();
     
     MEDIA_DEBUG_LOG("CameraSessionNapi::SetUsage success");
- 
+
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 

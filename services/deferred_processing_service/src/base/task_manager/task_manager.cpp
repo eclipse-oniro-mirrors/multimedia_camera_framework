@@ -126,7 +126,7 @@ bool TaskManager::SubmitTask(std::function<void()> task, uint32_t delayMilli)
 
 bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
 {
-    DP_INFO_LOG("submit task to handle: %{public}d", static_cast<int>(handle));
+    DP_DEBUG_LOG("submit task to handle: %{public}d", static_cast<int>(handle));
     if (taskRegistry_ == nullptr) {
         DP_ERR_LOG("invalid ptr");
         return false;

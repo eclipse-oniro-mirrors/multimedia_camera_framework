@@ -548,7 +548,7 @@ napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info
     int32_t cameraPosition;
     CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, cameraPosition);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "input usedAsPosition with invalid arguments!")) {
-        MEDIA_ERR_LOG("CameraInputNapi::UsedAsPosition invalid arguments!");
+        MEDIA_ERR_LOG("CameraInputNapi::UsedAsPosition invalid arguments");
         return nullptr;
     }
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition params: %{public}d", cameraPosition);

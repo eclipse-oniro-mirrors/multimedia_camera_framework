@@ -12875,11 +12875,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_time_machine, Te
 
 /*
  * Feature: Framework
- * Function: Test camera rotation func.
+ * Function: Test camera rotation func
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test camera rotation func.
+ * CaseDescription: Test camera rotation func
  */
 HWTEST_F(CameraFrameworkModuleTest, test_camera_rotation_func, TestSize.Level0)
 {

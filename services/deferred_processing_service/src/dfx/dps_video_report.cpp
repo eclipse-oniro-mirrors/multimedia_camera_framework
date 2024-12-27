@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "dps_video_report.h"
 
 #include "dp_log.h"
@@ -43,9 +42,10 @@ void DfxVideoReport::ReportAddVideoEvent(const std::string &videoId, DpsCallerIn
         .calleVersion = callerInfo.version,
         .addTime = SteadyClock::GetTimestampMilli(),
     };
-    auto iter = processVideoInfo_.find(videoId);
-    if (iter == processVideoInfo_.end()) {
-        processVideoInfo_.emplace(videoId, videoRecord);
+
+    VideoRecord videoRecordFound;
+    if (!processVideoInfo_.Find(videoId, videoRecordFound)) {
+        processVideoInfo_.Insert(videoId, videoRecord);
     } else {
         DP_ERR_LOG("ReportAddVideoEvent video has been added.");
     }
@@ -61,9 +61,9 @@ void DfxVideoReport::ReportAddVideoEvent(const std::string &videoId, DpsCallerIn
 void DfxVideoReport::ReportRemoveVideoEvent(const std::string &videoId, DpsCallerInfo callerInfo)
 {
     DP_DEBUG_LOG("ReportRemoveVideoEvent enter.");
-    auto iter = processVideoInfo_.find(videoId);
-    if (iter != processVideoInfo_.end()) {
-        processVideoInfo_.erase(videoId);
+    VideoRecord videoRecordFound;
+    if (processVideoInfo_.Find(videoId, videoRecordFound)) {
+        processVideoInfo_.Erase(videoId);
     }
 
     HiSysEventWrite(CAMERA_FWK_UE,
@@ -80,10 +80,9 @@ void DfxVideoReport::ReportPauseVideoEvent(const std::string& videoId, int32_t p
     uint64_t processToPauseCost = 0;
     std::string bundleName;
     std::string version;
-    auto iter = processVideoInfo_.find(videoId);
-    if (iter != processVideoInfo_.end()) {
+    VideoRecord vr;
+    if (processVideoInfo_.Find(videoId, vr)) {
         DP_DEBUG_LOG("ReportPauseVideoEvent videoId found.");
-        VideoRecord vr = iter->second;
         vr.pauseStartTime = SteadyClock::GetTimestampMilli();
         processToPauseCost = vr.pauseStartTime - vr.processTime;
         bundleName = vr.calleBundle;
@@ -108,10 +107,9 @@ void DfxVideoReport::ReportResumeVideoEvent(const std::string &videoId)
     uint64_t pauseToResumeCost = 0;
     std::string bundleName;
     std::string version;
-    auto iter = processVideoInfo_.find(videoId);
-    if (iter != processVideoInfo_.end()) {
+    VideoRecord vr;
+    if (processVideoInfo_.Find(videoId, vr)) {
         DP_DEBUG_LOG("ReportResumeVideoEvent videoId found.");
-        VideoRecord vr = iter->second;
         if (vr.processTime == 0) {
             // 首次开始分段式任务
             DP_DEBUG_LOG("ReportResumeVideoEvent first process videoId:%{public}s", videoId.c_str());
@@ -144,10 +142,9 @@ void DfxVideoReport::ReportCompleteVideoEvent(const std::string &videoId)
     uint64_t realCompleteTime = 0;
     std::string bundleName;
     std::string version;
-    auto iter = processVideoInfo_.find(videoId);
-    if (iter != processVideoInfo_.end()) {
+    VideoRecord vr;
+    if (processVideoInfo_.Find(videoId, vr)) {
         DP_DEBUG_LOG("ReportCompleteVideoEvent videoId found.");
-        VideoRecord vr = iter->second;
         completeTime = SteadyClock::GetTimestampMilli() - vr.processTime;
         realCompleteTime = completeTime - vr.totlePauseTime;
         bundleName = vr.calleBundle;

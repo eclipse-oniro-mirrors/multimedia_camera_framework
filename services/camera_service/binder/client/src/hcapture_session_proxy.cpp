@@ -394,7 +394,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
         return IPC_PROXY_ERR;
     }
     data.WriteInterfaceToken(GetDescriptor());
-    picture->Marshalling(data);
+    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(

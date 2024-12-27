@@ -401,6 +401,9 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     // report capture performance dfx
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ == nullptr) {
+        captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
     captureInfo.caller = CameraReportUtils::GetCallerInfo();
@@ -461,6 +464,9 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
     captureInfoPhoto.enableShutterCallback_ = true;
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ == nullptr) {
+        captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     if (captureMetadataSetting_ != nullptr) {
         // convert rotation with application set rotation
         SetRotation(captureMetadataSetting_, captureId);
@@ -576,6 +582,9 @@ int32_t HStreamCapture::ConfirmCapture()
         std::shared_ptr<OHOS::Camera::CameraMetadata> burstCaptureSettings = nullptr;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, settingVector);
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
+        if (burstCaptureSettings == nullptr) {
+            burstCaptureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        }
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
         if (ret != CAMERA_OK) {

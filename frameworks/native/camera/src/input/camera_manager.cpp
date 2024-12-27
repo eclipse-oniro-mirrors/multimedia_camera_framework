@@ -827,10 +827,22 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface/profile is null");
     CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
-        "CreateVideoOutput invalid fomrat or width or height is zero");
+        "CreateVideoOutput invalid format or width or height is zero");
 
     camera_format_t metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
-    MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
+    auto [width, height] = profile.GetSize();
+    auto frames = profile.GetFrameRates();
+    const int32_t VALID_FRAME_SIZE = 2;
+    bool isExistFrames = frames.size() >= VALID_FRAME_SIZE;
+    if (isExistFrames) {
+        MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
+                       "frameRateMin: %{public}d, frameRateMax: %{public}d, surfaceId: %{public}" PRIu64,
+            static_cast<int32_t>(metaFormat), width, height, frames[0], frames[1], surface->GetUniqueId());
+    } else {
+        MEDIA_INFO_LOG("CameraManager::CreateVideoOutput, format: %{public}d, width: %{public}d, height: %{public}d, "
+                       "surfaceId: %{public}" PRIu64,
+            static_cast<int32_t>(metaFormat), width, height, surface->GetUniqueId());
+    }
     sptr<IStreamRepeat> streamRepeat = nullptr;
     int32_t retCode = serviceProxy->CreateVideoOutput(
         surface->GetProducer(), metaFormat, profile.GetSize().width, profile.GetSize().height, streamRepeat);
@@ -872,9 +884,9 @@ int32_t CameraManager::RefreshServiceProxy()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::RefreshServiceProxy Failed to get System ability manager");
-    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    object = samgr->CheckSystemAbility(CAMERA_SERVICE_ID);
     CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CameraManager::RefreshServiceProxy Init GetSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
+        "CameraManager::RefreshServiceProxy Init CheckSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
     auto serviceProxy = iface_cast<ICameraService>(object);
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::RefreshServiceProxy serviceProxy is null");
@@ -888,12 +900,18 @@ int32_t CameraManager::SubscribeSystemAbility()
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::SubscribeSystemAbility Failed to get System ability manager");
-    saListener_ = new CameraServiceSystemAbilityListener();
-    CHECK_ERROR_RETURN_RET_LOG(saListener_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CameraManager::SubscribeSystemAbility saListener_ is null");
-    int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
-    MEDIA_INFO_LOG("SubscribeSystemAbility ret = %{public}d", ret);
-    return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
+    {
+        std::lock_guard<std::mutex> lock(saListenerMuxtex_);
+        if (saListener_ == nullptr) {
+            saListener_ = new CameraServiceSystemAbilityListener();
+            CHECK_ERROR_RETURN_RET_LOG(saListener_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+                "CameraManager::SubscribeSystemAbility saListener_ is null");
+            int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
+            MEDIA_INFO_LOG("SubscribeSystemAbility ret = %{public}d", ret);
+            return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CameraManager::UnSubscribeSystemAbility()
@@ -1251,14 +1269,14 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     for (auto& deviceInfo : cameraDeviceList) {
-        // Compatible with adaptive applications
         if (deviceInfo->GetPosition() == CAMERA_POSITION_BACK &&
             (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
+        // Compatible with adaptive applications
         if ((deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) &&
+             deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) &&
             (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
@@ -1387,10 +1405,10 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateCameraInput Camera object is null");
-        // Compatible with adaptive applications
+    // Compatible with adaptive applications
     FoldStatus curFoldStatus = GetFoldStatus();
-    MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
-        camera->GetPosition());
+    MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position: %{public}d", curFoldStatus,
+                   camera->GetPosition());
     if ((curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
         camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT && foldScreenType_[0] != '4') {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
@@ -2300,7 +2318,7 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");
- 
+
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_RET_LOG(surface == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput Failed to create MetadataOutputSurface");
@@ -2328,6 +2346,15 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK,
         "MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CameraManager::RequireMemorySize(int32_t memSize)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "RequireMemorySize serviceProxy is null");
+    int32_t retCode = serviceProxy->RequireMemorySize(memSize);
+    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "RequireMemorySize call failed, retCode: %{public}d", retCode);
+    return retCode;
 }
 } // namespace CameraStandard
 } // namespace OHOS

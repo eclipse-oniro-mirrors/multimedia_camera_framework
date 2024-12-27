@@ -37,18 +37,19 @@ std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>
     DP_DEBUG_LOG("entered.");
     Format trackFormat;
     int32_t trackType = -1;
+    DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "source is nullptr.");
     auto ret = source->GetTrackFormat(trackFormat, trackIndex);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "get track format failed.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType),
         nullptr, "get track type failed.");
 
+    DP_INFO_LOG("CreateTrack type: %{public}d", trackType);
     auto track = std::make_shared<Track>();
     if (static_cast<TrackType>(trackType) == TrackType::AV_KEY_AUDIO_TYPE ||
         static_cast<TrackType>(trackType) == TrackType::AV_KEY_VIDEO_TYPE) {
         TrackFormat formatOfIndex;
         formatOfIndex.format = std::make_shared<Format>(trackFormat);
         formatOfIndex.trackId = trackIndex;
-        DP_INFO_LOG("track type: %{public}d", trackType);
         track->SetFormat(formatOfIndex, static_cast<TrackType>(trackType));
     }
     return track;

@@ -333,6 +333,7 @@ int32_t MetadataOutput::Release()
         std::lock_guard<std::mutex> lock(outputCallbackMutex_);
         appObjectCallback_ = nullptr;
         appStateCallback_ = nullptr;
+        cameraMetadataCallback_ = nullptr;
     }
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -635,9 +636,11 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     bool isNeedFlip = false;
     if (inputDevice) {
         auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-        isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
-                        inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
-        isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
+        if (inputDeviceInfo) {
+            isNeedMirror = (inputDeviceInfo->GetPosition() == CAMERA_POSITION_FRONT ||
+                            inputDeviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER);
+            isNeedFlip = inputDeviceInfo->GetUsedAsPosition() == CAMERA_POSITION_FRONT;
+        }
     }
     std::vector<sptr<MetadataObject>> metaObjects;
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);

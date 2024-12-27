@@ -125,7 +125,6 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
         UpdateRunningCountUnLocked(statusChanged, jobPtr);
     }
     
-    NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
     RecordPriotyNum(priorityChanged, jobPtr);
     ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
     int32_t imageSize = static_cast<int32_t>(offlineJobList_.size() + backgroundJobMap_.size());
@@ -262,7 +261,7 @@ void PhotoJobRepository::SetJobCompleted(const std::string imageId)
         statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::COMPLETED);
         UpdateRunningCountUnLocked(statusChanged, jobPtr);
     }
-    
+
     NotifyJobChanged(priorityChanged, statusChanged, jobPtr);
     RecordPriotyNum(priorityChanged, jobPtr);
 }
@@ -448,7 +447,7 @@ void PhotoJobRepository::UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr 
 
 void PhotoJobRepository::RegisterJobListener(std::weak_ptr<IPhotoJobRepositoryListener> listener)
 {
-    DP_INFO_LOG("jobListenersMutex begin");
+    DP_INFO_LOG("entered, jobListenersMutex begin");
     std::lock_guard<std::recursive_mutex> lock(jobListenersMutex_);
     jobListeners_.emplace_back(listener);
     DP_INFO_LOG("jobListenersMutex end");

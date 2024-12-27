@@ -1829,7 +1829,7 @@ public:
      * @param enabled - Enable usage for session if TRUE.
      */
     void SetUsage(UsageType usageType, bool enabled);
-    
+
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

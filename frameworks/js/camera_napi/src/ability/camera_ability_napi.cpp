@@ -19,7 +19,7 @@
 #include "napi/native_common.h"
 #include "napi/native_api.h"
 #include "js_native_api_types.h"
-#include "camera_napi_security_utils.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_error_code.h"
@@ -487,7 +487,7 @@ napi_value CameraFunctionsNapi::IsDepthFusionSupported(napi_env env, napi_callba
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
+        MEDIA_ERR_LOG("CameraFunctionsNapi::IsDepthFusionSupported parse parameter occur error");
         return nullptr;
     }
     thisVar = jsParamParser.GetThisVar();
@@ -507,7 +507,7 @@ napi_value CameraFunctionsNapi::GetDepthFusionThreshold(napi_env env, napi_callb
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::GetDepthFusionThreshold parse parameter occur error");
+        MEDIA_ERR_LOG("CameraFunctionsNapi::GetDepthFusionThreshold parse parameter occur error");
         return nullptr;
     }
     thisVar = jsParamParser.GetThisVar();

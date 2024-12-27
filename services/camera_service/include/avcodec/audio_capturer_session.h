@@ -29,7 +29,7 @@ namespace CameraStandard {
 using namespace AudioStandard;
 using namespace std::chrono;
 using namespace DeferredProcessing;
-constexpr uint32_t DEFAULT_AUDIO_CACHE_NUMBER = 200;
+constexpr uint32_t DEFAULT_AUDIO_CACHE_NUMBER = 400;
 class AudioCapturerSession : public RefBase, public std::enable_shared_from_this<AudioCapturerSession> {
 public:
     explicit AudioCapturerSession();

@@ -18,6 +18,28 @@
 #include "camera_log.h"
 #include "hilog/log.h"
 
+Camera_ErrorCode OH_CameraManager_RegisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    cameraManager->RegisterFoldStatusCallback(foldStatusInfoCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CameraManager_UnregisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
+    OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, callback is null!");
+    cameraManager->UnregisterFoldStatusCallback(foldStatusInfoCallback);
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -385,28 +407,6 @@ Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager, Ca
         "Invaild argument, cameraManager is null!");
 
     return cameraManager->SetTorchMode(torchMode);
-}
-
-Camera_ErrorCode OH_CameraManager_RegisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
-    OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
-{
-    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
-    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    cameraManager->RegisterFoldStatusCallback(foldStatusInfoCallback);
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode OH_CameraManager_UnregisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
-    OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
-{
-    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
-    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    cameraManager->UnregisterFoldStatusCallback(foldStatusInfoCallback);
-    return CAMERA_OK;
 }
 #ifdef __cplusplus
 }
