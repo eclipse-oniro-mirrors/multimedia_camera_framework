@@ -75,7 +75,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]
@@ -164,7 +164,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
     "sensor:sensor_interface_native",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]
@@ -237,21 +237,22 @@ ohos_unittest("camera_framework_deferred_unittest") {
   ]
 
   sources = [
-    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
-    "src/v1_1/camera_deferred_unittest.cpp",
-    "src/v1_1/camera_deferred_video_unittest.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/basic_definitions.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/dps.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
@@ -264,28 +265,25 @@ ohos_unittest("camera_framework_deferred_unittest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/deferred_processing_service.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/dfx/dps_event_report.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/command/event_status_change_command.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_monitor.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/events_subscriber.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/thermal_strategy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/screen_strategy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/charging_strategy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/battery_strategy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/battery_level_strategy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/command/event_status_change_command.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/battery_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/charging_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/screen_strategy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/event_monitor/impl/thermal_strategy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/demuxer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/media_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager_factory.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager_factory.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/muxer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/reader.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track_factory.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track_factory.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/writer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/command/service_died_command.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/post_processor/command/video_process_command.cpp",
@@ -322,10 +320,12 @@ ohos_unittest("camera_framework_deferred_unittest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_coordinator.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/session_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/video_session/video_session_info.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/video_session/deferred_video_processing_session.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/session/video_session/video_session_info.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_power_manager.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_power_manager.cpp"
+    "src/v1_1/camera_deferred_unittest.cpp",
+    "src/v1_1/camera_deferred_video_unittest.cpp",
   ]
 
   deps = [
@@ -371,7 +371,7 @@ ohos_unittest("camera_framework_deferred_unittest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = [ "private=public" ]
