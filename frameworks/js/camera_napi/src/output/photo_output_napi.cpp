@@ -2321,7 +2321,7 @@ napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         photoOutputNapi->isMirrorEnabled_ = isMirror;
-        int32_t retCode = session->EnableMovingPhotoMirror(isMirror);
+        int32_t retCode = photoOutputNapi->photoOutput_->EnableMirror(isMirror);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return result;
         }

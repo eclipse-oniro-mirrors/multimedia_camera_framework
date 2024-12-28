@@ -1196,7 +1196,7 @@ public:
     /**
      * @brief Enable moving photo mirror.
      */
-    int32_t EnableMovingPhotoMirror(bool isMirror);
+    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
 
     /**
      * @brief Check current status is support moon capture boost or not.
