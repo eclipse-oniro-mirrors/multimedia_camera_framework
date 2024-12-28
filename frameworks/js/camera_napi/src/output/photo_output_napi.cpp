@@ -586,7 +586,8 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
     CHECK_ERROR_RETURN_LOG(loop == nullptr, "PhotoListenerInfo UpdateJSCallbackAsync failed to get event loop");
     uv_work_t* work = new (std::nothrow) uv_work_t;
     CHECK_ERROR_RETURN_LOG(work == nullptr, "PhotoListenerInfo UpdateJSCallbackAsync failed to allocate work");
-    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, this);
+    std::unique_ptr<PhotoListenerInfo> callbackInfo =
+        std::make_unique<PhotoListenerInfo>(nullptr, wptr<PhotoListener>(const_cast<PhotoListener*>(this)));
     callbackInfo->captureId = captureId;
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
@@ -619,8 +620,7 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
                 delete callbackInfo;
             }
             delete work;
-        },
-        uv_qos_user_initiated);
+        }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
         delete work;
