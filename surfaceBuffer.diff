@@ -1,0 +1,94 @@
+From 2de2a41daf4ceab59ca9ff547884ab5e94921f87 Mon Sep 17 00:00:00 2001
+From: sunchao <sunchao106@huawei.com>
+Date: Sat, 28 Dec 2024 11:53:05 +0800
+Subject: [PATCH] =?UTF-8?q?=E4=BF=AE=E5=A4=8DVideoSurfaceBuffer=E8=B8=A9?=
+ =?UTF-8?q?=E5=86=85=E5=AD=98=E9=97=AE=E9=A2=98=20TicketNo:DTS202412261571?=
+ =?UTF-8?q?9=20Description:=E4=BF=AE=E5=A4=8DVideoSurfaceBuffer=E8=B8=A9?=
+ =?UTF-8?q?=E5=86=85=E5=AD=98=E9=97=AE=E9=A2=98=20Team:Gitee=20Feature=20o?=
+ =?UTF-8?q?r=20Bugfix:Bugfix=20Binary=20Source:Sync=20from=20Gitee=20Priva?=
+ =?UTF-8?q?teCode(Yes/No):No?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I08a173ad2a88301cf230d21426bba60fcbccab34
+---
+ .../include/avcodec/common/frame_record.h     | 20 +++++++++++++++++++
+ .../src/avcodec/common/frame_record.cpp       |  2 ++
+ .../src/avcodec/video_encoder.cpp             |  8 ++++----
+ 3 files changed, 26 insertions(+), 4 deletions(-)
+
+diff --git a/services/camera_service/include/avcodec/common/frame_record.h b/services/camera_service/include/avcodec/common/frame_record.h
+index d235c1633..93a7fbc03 100644
+--- a/services/camera_service/include/avcodec/common/frame_record.h
++++ b/services/camera_service/include/avcodec/common/frame_record.h
+@@ -113,6 +113,24 @@ public:
+         return isEncoded_;
+     }
+ 
++    inline int32_t GetFormat()
++    {
++        auto surfaceBuffer = GetSurfaceBuffer();
++        if (surfaceBuffer) {
++            return surfaceBuffer->GetFormat();
++        }
++        return -1;
++    }
++
++    inline uint64_t GetUsage()
++    {
++        auto surfaceBuffer = GetSurfaceBuffer();
++        if (surfaceBuffer) {
++            return surfaceBuffer->GetUsage();
++        }
++        return std::numeric_limits<uint64_t>::max();
++    }
++
+     inline const std::string& GetFrameId() const
+     {
+         return frameId_;
+@@ -202,6 +220,8 @@ private:
+     std::atomic<bool> isCover_ { false };
+     shared_ptr<Size> size;
+     uint32_t bufferSize;
++    int32_t format;
++    uint64_t usage;
+     sptr<SurfaceBuffer> videoBuffer_;
+     int64_t timestamp_;
+     GraphicTransformType transformType_;
+diff --git a/services/camera_service/src/avcodec/common/frame_record.cpp b/services/camera_service/src/avcodec/common/frame_record.cpp
+index b1a95a587..e35d8375e 100644
+--- a/services/camera_service/src/avcodec/common/frame_record.cpp
++++ b/services/camera_service/src/avcodec/common/frame_record.cpp
+@@ -28,6 +28,8 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
+     size->width = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferWidth());
+     size->height = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferHeight());
+     bufferSize = videoBuffer->GetSize();
++    format = videoBuffer->GetFormat();
++    usage = videoBuffer->GetUsage();
+ }
+ 
+ FrameRecord::~FrameRecord()
+diff --git a/services/camera_service/src/avcodec/video_encoder.cpp b/services/camera_service/src/avcodec/video_encoder.cpp
+index 1de192412..efe802a55 100644
+--- a/services/camera_service/src/avcodec/video_encoder.cpp
++++ b/services/camera_service/src/avcodec/video_encoder.cpp
+@@ -97,11 +97,11 @@ int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
+         "SurfaceBuffer is released %{public}s", frameRecord->GetFrameId().c_str());
+     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+     BufferRequestConfig requestConfig = {
+-        .width = frameRecord->GetSurfaceBuffer()->GetWidth(),
+-        .height = frameRecord->GetSurfaceBuffer()->GetHeight(),
++        .width = frameRecord->GetFrameSize()->width,
++        .height = frameRecord->GetFrameSize()->height,
+         .strideAlignment = 0x8, // default stride is 8 Bytes.
+-        .format = frameRecord->GetSurfaceBuffer()->GetFormat(),
+-        .usage = frameRecord->GetSurfaceBuffer()->GetUsage(),
++        .format = frameRecord->GetFormat(),
++        .usage = frameRecord->GetUsage(),
+         .timeout = 0,
+     };
+     sptr<SurfaceBuffer> releaseBuffer;
+-- 
+2.45.2.huawei.7
+
