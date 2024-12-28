@@ -1268,7 +1268,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
     session->CommitConfig();
 
     EXPECT_EQ(session->EnableMovingPhoto(true), CAMERA_OK);
-    EXPECT_EQ(session->EnableMovingPhotoMirror(true), CAMERA_OK);
+    EXPECT_EQ(session->EnableMovingPhotoMirror(true, true), CAMERA_OK);
 
     session->Start();
     session->Stop();
