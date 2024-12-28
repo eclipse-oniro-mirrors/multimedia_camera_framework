@@ -57,7 +57,6 @@
 #include "icapture_session.h"
 #include "iconsumer_surface.h"
 #include "image_type.h"
-#include "ipc_file_descriptor.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_common.h"
