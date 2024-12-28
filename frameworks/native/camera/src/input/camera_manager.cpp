@@ -2356,5 +2356,31 @@ int32_t CameraManager::RequireMemorySize(int32_t memSize)
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "RequireMemorySize call failed, retCode: %{public}d", retCode);
     return retCode;
 }
+
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasWithFoldStatus()
+{
+    auto cameraDeviceList = GetCameraDeviceList();
+    bool isFoldable = GetIsFoldable();
+    CHECK_ERROR_RETURN_RET(!isFoldable, cameraDeviceList);
+    auto curFoldStatus = GetFoldStatus();
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::EXPAND;
+    }
+    MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
+    std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
+    for (const auto& deviceInfo : cameraDeviceList) {
+        auto supportedFoldStatus = deviceInfo->GetSupportedFoldStatus();
+        auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
+        if (it == g_metaToFwCameraFoldStatus_.end()) {
+            MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
+        if (it->second == curFoldStatus) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+        }
+    }
+    return supportedCameraDeviceList;
+}
 } // namespace CameraStandard
 } // namespace OHOS

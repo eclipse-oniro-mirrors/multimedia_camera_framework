@@ -711,7 +711,7 @@ public:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         return serviceProxyPrivate_;
     }
-
+    std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
