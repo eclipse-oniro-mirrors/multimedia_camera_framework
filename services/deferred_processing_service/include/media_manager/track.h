@@ -46,8 +46,8 @@ public:
     };
 
 private:
-    TrackFormat trackFormat_ {};
-    TrackType trackType_ {};
+    TrackFormat trackFormat_ {nullptr};
+    TrackType trackType_ {TrackType::AV_KEY_DEFAULT_TYPE};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

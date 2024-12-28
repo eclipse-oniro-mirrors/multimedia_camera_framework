@@ -234,7 +234,12 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
 
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
-    keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
+    if (frameRecord->GetTimeStamp() - preFrameTimestamp_ > NANOSEC_RANGE) {
+        keyFrameInterval_ = KEY_FRAME_INTERVAL;
+    } else {
+        keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
+    }
+    preFrameTimestamp_ = frameRecord->GetTimeStamp();
     if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
         return false;
     }
@@ -250,8 +255,8 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
-        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64 ", "
-            "timestamp:%{public}" PRId64, context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags,
+        MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
+            "timestamp:%{public}" PRIu64, context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags,
             bufferInfo->attr.pts, frameRecord->GetTimeStamp());
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;

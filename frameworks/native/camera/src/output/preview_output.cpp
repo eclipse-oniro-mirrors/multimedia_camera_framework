@@ -387,11 +387,11 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     }
     auto session = GetSession();
     wptr<PreviewOutput> weakThis(this);
-    CHECK_EXECUTE(session != nullptr, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
+    CHECK_EXECUTE(session, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
         [weakThis, minFrameRate, maxFrameRate]() {
             auto sharedThis = weakThis.promote();
             if (!sharedThis) {
-                MEDIA_ERR_LOG("SetFrameRate previewOutput is nullptr.");
+                MEDIA_ERR_LOG("SetFrameRate previewOutput is nullptr");
                 return;
             }
             sharedThis->SetFrameRate(minFrameRate, maxFrameRate);
@@ -709,7 +709,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     if (itemStream) {
         errCode = itemStream->SetCameraRotation(true, result);
         CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
-            "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
+            "Failed to SetCameraRotation! , errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("PreviewOutput::SetCameraRotation() itemStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;

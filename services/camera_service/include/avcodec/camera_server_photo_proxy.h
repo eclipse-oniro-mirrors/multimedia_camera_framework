@@ -79,6 +79,7 @@ public:
     bool IsCoverPhoto() override;
     void SetBurstInfo(std::string burstKey, bool isCoverPhoto);
     int32_t GetCaptureId();
+    int32_t GetBurstSeqId();
 
 private:
     BufferHandle* bufferHandle_;
@@ -99,6 +100,7 @@ private:
     double longitude_;
     int32_t mode_;
     int32_t captureId_;
+    int32_t burstSeqId_;
     std::string burstKey_;
     bool isCoverPhoto_;
     int32_t imageFormat_;

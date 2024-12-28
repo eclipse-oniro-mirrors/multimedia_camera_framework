@@ -97,7 +97,7 @@ public:
     };
 
 private:
-    MetadataObjectType type_ = MetadataObjectType::INVALID;
+    MetadataObjectType type_;
     int32_t timestamp_;
     Rect box_;
     int32_t objectId_;
@@ -288,7 +288,7 @@ private:
     static sptr<MetadataObjectFactory> metaFactoryInstance_;
     static std::mutex instanceMutex_;
     // Parameters of metadataObject
-    MetadataObjectType type_ = MetadataObjectType::INVALID;;
+    MetadataObjectType type_ = MetadataObjectType::INVALID;
     int32_t timestamp_ = 0;
     Rect box_ = {0.0, 0.0, 0.0, 0.0};
     int32_t objectId_ = 0;
@@ -411,7 +411,7 @@ private:
     void ProcessBaseInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t& metadataItem,
         int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
     void ProcessExternInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t& metadataItem,
-        int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
+    int32_t& index, MetadataObjectType typeFromHal, bool isNeedMirror, bool isNeedFlip);
     void ProcessHumanFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,
         const camera_metadata_item_t& metadataItem, int32_t& index, bool isNeedMirror, bool isNeedFlip);
     void ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,

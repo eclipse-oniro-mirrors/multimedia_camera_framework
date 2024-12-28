@@ -24,8 +24,8 @@
 #include <cstdint>
 #include <refbase.h>
 #include "avmuxer.h"
-#include "media_description.h"
 #include "media_library/photo_asset_interface.h"
+#include "media_description.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -48,7 +48,6 @@ public:
     int32_t Release();
     int32_t SetRotation(int32_t rotation);
     int32_t SetCoverTime(float timems);
-    int32_t SetStartTime(float timems);
     int32_t SetTimedMetadata();
     int32_t GetVideoFd();
     PhotoAssetIntf* GetPhotoAssetProxy();

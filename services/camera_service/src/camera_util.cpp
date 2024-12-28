@@ -21,7 +21,6 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
-#include "display.h"
 #include "display_manager.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
@@ -117,6 +116,11 @@ std::map<int, std::string> g_cameraPrelaunchAvailable = {
 std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
     {0, "False"},
     {1, "True"},
+};
+
+std::map<int, std::string> g_cameraQualityPrioritization = {
+    {0, "HighQuality"},
+    {1, "PowerBalance"},
 };
 
 bool g_cameraDebugOn = false;
@@ -383,7 +387,7 @@ int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
 
     if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
-        return CAMERA_OPERATION_NOT_ALLOWED;
+        return CAMERA_NO_PERMISSION;
     } else {
         MEDIA_DEBUG_LOG("HCameraService::CheckPermission: Permission to Access Camera Granted!!!!");
     }

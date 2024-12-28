@@ -24,7 +24,7 @@ namespace OHOS {
 namespace CameraStandard {
 class AudioEncoder {
 public:
-    AudioEncoder() = default;
+    explicit AudioEncoder();
     ~AudioEncoder();
 
     int32_t Create(const std::string &codecMime);
@@ -43,9 +43,9 @@ private:
     bool EnqueueBuffer(sptr<AudioRecord> audioRecord);
     bool EncodeAudioBuffer(sptr<AudioRecord> audioRecord);
     std::atomic<bool> isStarted_ { false };
+    std::atomic<bool> isEncoding_ { false };
     std::mutex encoderMutex_;
     OH_AVCodec *encoder_ = nullptr;
-    std::mutex contextMutex_;
     sptr<CodecUserData> context_ = nullptr;
     std::mutex serialMutex_;
 };

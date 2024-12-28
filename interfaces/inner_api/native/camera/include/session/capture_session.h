@@ -1533,6 +1533,14 @@ public:
      */
     int32_t SetPhysicalAperture(float physicalAperture);
 
+    /**
+     * @brief Set quality prioritization.
+     *
+     * @param QualityPrioritization quality prioritization to be set.
+     * @return Return errCode.
+     */
+    int32_t SetQualityPrioritization(QualityPrioritization qualityPrioritization);
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1821,7 +1829,7 @@ public:
      * @param enabled - Enable usage for session if TRUE.
      */
     void SetUsage(UsageType usageType, bool enabled);
-    
+
 protected:
 
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

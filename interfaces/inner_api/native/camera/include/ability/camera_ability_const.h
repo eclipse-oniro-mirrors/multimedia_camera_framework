@@ -54,6 +54,11 @@ enum FocusMode {
     FOCUS_MODE_LOCKED,
 };
 
+enum QualityPrioritization {
+    HIGH_QUALITY = 0,
+    POWER_BALANCE,
+};
+
 enum BeautyType {
     AUTO_TYPE = 0,
     SKIN_SMOOTH = 1,
@@ -135,6 +140,8 @@ extern const std::unordered_map<BeautyType, camera_device_metadata_tag_t> g_fwkB
 extern const std::unordered_map<PortraitThemeType, CameraPortraitThemeTypes> g_fwkPortraitThemeTypeMap_;
 extern const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_metaPortraitThemeTypeMap_;
 extern const std::vector<VideoRotation> g_fwkVideoRotationVector_;
+extern const std::unordered_map<CameraQualityPrioritization, QualityPrioritization> g_metaQualityPrioritizationMap_;
+extern const std::unordered_map<QualityPrioritization, CameraQualityPrioritization> g_fwkQualityPrioritizationMap_;
 
 template <typename S, typename T>
 void g_transformValidData(

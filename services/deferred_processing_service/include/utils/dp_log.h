@@ -16,6 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_LOG_H
 #define OHOS_CAMERA_DPS_LOG_H
 
+#include <cinttypes>
+
 #include "hilog/log.h"
 #include "hisysevent.h"
 #include "hitrace_meter.h"

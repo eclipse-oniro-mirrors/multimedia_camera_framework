@@ -22,8 +22,6 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr int32_t DEFAULT_ITEMS = 10;
-constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata()
 {
@@ -50,13 +48,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
     }
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
-    auto cameraObj = inputDevice->GetCameraDeviceInfo();
-    if (!cameraObj) {
-        return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    }
     MEDIA_DEBUG_LOG("%{public}s: no physicalCamera, using current camera device:%{public}s", __FUNCTION__,
-        cameraObj->GetID().c_str());
-    return cameraObj->GetMetadata();
+        inputDevice->GetCameraDeviceInfo()->GetID().c_str());
+    return inputDevice->GetCameraDeviceInfo()->GetMetadata();
 }
 
 void TimeLapsePhotoSessionMetadataResultProcessor::ProcessCallbacks(
@@ -94,6 +88,7 @@ void TimeLapsePhotoSession::ProcessIsoInfoChange(const shared_ptr<OHOS::Camera::
 void TimeLapsePhotoSession::ProcessExposureChange(const shared_ptr<OHOS::Camera::CameraMetadata>& meta)
 {
     camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_LOG(meta == nullptr, "ProcessExposureChange Error! meta is null.");
     common_metadata_header_t* metadata = meta->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -120,6 +115,7 @@ void TimeLapsePhotoSession::ProcessLuminationChange(const shared_ptr<OHOS::Camer
 {
     constexpr float normalizedMeanValue = 255.0;
     camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_LOG(meta == nullptr, "ProcessLuminationChange Error! meta is nullptr");
     common_metadata_header_t* metadata = meta->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_ALGO_MEAN_Y, &item);
     float value = item.data.ui32[0] / normalizedMeanValue;
@@ -174,6 +170,7 @@ void TimeLapsePhotoSession::ProcessSetTryAEChange(const shared_ptr<OHOS::Camera:
 void TimeLapsePhotoSession::ProcessPhysicalCameraSwitch(const shared_ptr<OHOS::Camera::CameraMetadata>& meta)
 {
     camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_LOG(meta == nullptr, "ProcessPhysicalCameraSwitch Error! meta is nullptr");
     common_metadata_header_t* metadata = meta->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &item);
     CHECK_ERROR_RETURN(ret != CAM_META_SUCCESS);
