@@ -231,6 +231,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateFrameRateSettings(dynamicSetting);
     }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        UpdateAutoFrameRateSettings(dynamicSetting);
+    }
     if (settings != nullptr) {
         UpdateFrameMuteSettings(settings, dynamicSetting);
     }
@@ -987,6 +990,30 @@ int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& prod
         metaSurfaceBufferQueue_ = new BufferProducerSequenceable(producer);
     }
     return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::ToggleAutoVideoFrameRate(bool isEnable)
+{
+    MEDIA_INFO_LOG("HStreamRepeat::ToggleAutoVideoFrameRate enable: %{public}d", isEnable);
+    enableAutoFrameRate_ = isEnable;
+    return CAMERA_OK;
+}
+ 
+void HStreamRepeat::UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateAutoFrameRateSettings settings is nullptr");
+    bool status = false;
+    camera_metadata_item_t item;
+ 
+    uint8_t autoFrameRate = enableAutoFrameRate_;
+    MEDIA_INFO_LOG("HStreamRepeat::UpdateAutoFrameRateSettings set enable %{public}d", autoFrameRate);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = settings->addEntry(OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &autoFrameRate, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = settings->updateEntry(OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &autoFrameRate, 1);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "UpdateAutoFrameRateSettings Failed to set auto-frame rate in VideoSettings");
 }
 } // namespace CameraStandard
 } // namespace OHOS
