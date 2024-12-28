@@ -55,6 +55,7 @@
 #include "icapture_session.h"
 #include "iconsumer_surface.h"
 #include "image_type.h"
+#include "ipc_file_descriptor.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_common.h"
@@ -837,6 +838,7 @@ int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
     MEDIA_DEBUG_LOG("para is:%{public}dx%{public}d,%{public}d", width, height, format);
     livePhotoStreamRepeat_ = streamRepeat;
     streamRepeat->SetMetaProducer(metaSurface_->GetProducer());
+    streamRepeat->SetMirror(isMovingPhotoMirror_);
     MEDIA_INFO_LOG("HCameraService::CreateLivePhotoStreamRepeat end");
     return CAMERA_OK;
 }
@@ -1709,8 +1711,12 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
     }
 }
 
-int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
+int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
+    if (!isConfig) {
+        isMovingPhotoMirror_ = isMirror;
+        return CAMERA_OK;
+    }
     if (!isSetMotionPhoto_ || isMirror == isMovingPhotoMirror_) {
         return CAMERA_OK;
     }
