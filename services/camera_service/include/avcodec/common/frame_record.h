@@ -113,6 +113,24 @@ public:
         return isEncoded_;
     }
 
+    inline int32_t GetFormat()
+    {
+        auto surfaceBuffer = GetSurfaceBuffer();
+        if (surfaceBuffer) {
+            return surfaceBuffer->GetFormat();
+        }
+        return -1;
+    }
+
+    inline uint64_t GetUsage()
+    {
+        auto surfaceBuffer = GetSurfaceBuffer();
+        if (surfaceBuffer) {
+            return surfaceBuffer->GetUsage();
+        }
+        return std::numeric_limits<uint64_t>::max();
+    }
+
     inline const std::string& GetFrameId() const
     {
         return frameId_;
@@ -197,6 +215,8 @@ private:
     std::atomic<bool> isCover_ { false };
     shared_ptr<Size> size;
     uint32_t bufferSize;
+    int32_t format;
+    uint64_t usage;
     sptr<SurfaceBuffer> videoBuffer_;
     int64_t timestamp_;
     GraphicTransformType transformType_;

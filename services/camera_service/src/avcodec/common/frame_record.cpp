@@ -28,6 +28,8 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
     size->width = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferWidth());
     size->height = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferHeight());
     bufferSize = videoBuffer->GetSize();
+    format = videoBuffer->GetFormat();
+    usage = videoBuffer->GetUsage();
 }
 
 FrameRecord::~FrameRecord()
