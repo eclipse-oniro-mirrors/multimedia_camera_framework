@@ -146,7 +146,8 @@ private:
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
-    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const;
+    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+        const std::string burstKey) const;
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
@@ -269,6 +270,7 @@ struct PhotoListenerInfo {
     PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
+    int32_t captureId = 0;
     std::string uri = "";
     int32_t cameraShotType = 0;
     std::string burstKey = "";
