@@ -42,16 +42,16 @@ uint32_t GetApiVersion()
         systemAbilityManager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     sptr<AppExecFwk::IBundleMgr> iBundleMgr = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     if (iBundleMgr == nullptr) {
-        MEDIA_INFO_LOG("GetApiCompatibleVersion iBundleMgr is null");
+        MEDIA_ERR_LOG("GetApiCompatibleVersion iBundleMgr is null");
         return g_apiCompatibleVersion;
     }
     AppExecFwk::BundleInfo bundleInfo;
     if (iBundleMgr->GetBundleInfoForSelf(0, bundleInfo) == ERR_OK) {
         g_apiCompatibleVersion = bundleInfo.targetVersion % API_DEFAULT_VERSION;
-        MEDIA_INFO_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
+        MEDIA_ERR_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
             g_apiCompatibleVersion);
     } else {
-        MEDIA_INFO_LOG("Call for GetApiCompatibleVersion failed");
+        MEDIA_ERR_LOG("Call for GetApiCompatibleVersion failed");
     }
     return g_apiCompatibleVersion;
 }

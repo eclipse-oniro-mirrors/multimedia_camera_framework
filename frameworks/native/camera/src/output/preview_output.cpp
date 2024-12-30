@@ -727,8 +727,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     sensorOrientation = item.data.i32[0];
-    result = isDisplayLocked ? ImageRotation((imageRotation - sensorOrientation + CAPTURE_ROTATION_BASE)
-        % CAPTURE_ROTATION_BASE) : ImageRotation(imageRotation);
+    result = isDisplayLocked ? ImageRotation(sensorOrientation) : ImageRotation(imageRotation);
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());

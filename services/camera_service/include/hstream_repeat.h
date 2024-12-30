@@ -93,7 +93,6 @@ private:
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
-    void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);

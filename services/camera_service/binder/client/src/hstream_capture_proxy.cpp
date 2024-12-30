@@ -239,12 +239,7 @@ int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType
     return error;
 }
 
-<<<<<<< HEAD
-
-int32_t HStreamRepeatProxy::SetCameraPhotoRotation(bool isEnable)
-=======
 int32_t HStreamCaptureProxy::SetCameraPhotoRotation(bool isEnable)
->>>>>>> d70ff169 (bugfix)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -254,7 +249,7 @@ int32_t HStreamCaptureProxy::SetCameraPhotoRotation(bool isEnable)
     data.WriteBool(isEnable);
  
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_PHOTO_ROTATION), data, reply, option);
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PHOTO_ROTATION), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy SetCameraPhotoRotation failed, error: %{public}d", error);
     }

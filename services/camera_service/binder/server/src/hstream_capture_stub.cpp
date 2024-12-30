@@ -161,25 +161,21 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+int32_t HStreamCaptureStub::HandleSetCameraPhotoRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+
+    int ret = SetCameraPhotoRotation(isEnable);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::SetCameraPhotoRotation failed : %{public}d", ret);
+    return ret;
+}
+
 int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& data)
 {
     int32_t captureId = data.ReadInt32();
     int32_t ret = AcquireBufferToPrepareProxy(captureId);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
                           "HStreamCaptureStub::HandleAcquireBufferToPrepareProxy failed : %{public}d", ret);
-=======
-int32_t HStreamRepeatStub::HandleSetCameraPhotoRotation(MessageParcel& data)
-=======
-int32_t HStreamCaptureStub::HandleSetCameraPhotoRotation(MessageParcel& data)
->>>>>>> a71f6b4d (fix)
-{
-    bool isEnable = data.ReadBool();
-
-    int ret = SetCameraPhotoRotation(isEnable);
-    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::SetCameraPhotoRotation failed : %{public}d", ret);
->>>>>>> e44a6624 (拍照旋转预览配置项fix)
     return ret;
 }
 } // namespace CameraStandard
