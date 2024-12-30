@@ -256,8 +256,8 @@ struct ThumbnailListenerInfo {
 
 struct PhotoListenerInfo {
     sptr<Surface> photoSurface_;
-    const PhotoListener* listener_;
-    PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
+    wptr<PhotoListener> listener_;
+    PhotoListenerInfo(sptr<Surface> photoSurface, wptr<PhotoListener> listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
     int32_t captureId = 0;
@@ -270,8 +270,8 @@ struct PhotoListenerInfo {
 
 struct RawPhotoListenerInfo {
     sptr<Surface> rawPhotoSurface_;
-    const RawPhotoListener* listener_;
-    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, const RawPhotoListener* listener)
+    wptr<RawPhotoListener> listener_;
+    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, wptr<const RawPhotoListener> listener)
         : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
     {}
 };
