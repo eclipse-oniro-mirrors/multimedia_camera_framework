@@ -72,6 +72,7 @@
 #include "picture.h"
 #include "camera_timer.h"
 #include "fixed_size_list.h"
+#include "camera_report_dfx_uitls.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1959,6 +1960,8 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
         MEDIA_LIB_SO, "createPhotoAssetIntf"));
@@ -1971,6 +1974,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     } else {
         delete photoAssetProxy;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
 }
 
@@ -2047,6 +2051,8 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
         MEDIA_LIB_SO, "createPhotoAssetIntf"));
@@ -2068,6 +2074,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     } else {
         delete photoAssetProxy;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
 }
 

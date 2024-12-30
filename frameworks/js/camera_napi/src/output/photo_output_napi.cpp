@@ -38,7 +38,6 @@
 #include "camera_napi_worker_queue_keeper.h"
 #include "camera_output_capability.h"
 #include "camera_photo_proxy.h"
-#include "camera_report_dfx_uitls.h"
 #include "camera_util.h"
 #include "dp_utils.h"
 #include "image_napi.h"
@@ -505,6 +504,10 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
     }
     auxiliaryCount = GetAuxiliaryPhotoCount(surfaceBuffer);
     captureId = GetCaptureId(surfaceBuffer);
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput != nullptr) {
+        photoOutput->AcquireBufferToPrepareProxy(captureId);
+    }
     // deep copy buffer
     newSurfaceBuffer = SurfaceBuffer::Create();
     MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
@@ -513,7 +516,6 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
     {
         std::lock_guard<std::mutex> lock(g_photoImageMutex);
-        auto photoOutput = photoOutput_.promote();
         if (!photoOutput) {
             MEDIA_ERR_LOG("photoOutput is nullptr");
             return;
@@ -935,7 +937,6 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
-    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo();
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -1031,10 +1032,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
             settings->GetLocation(location);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo();
-        CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo();
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo();
     }
 }
 
@@ -1055,7 +1053,11 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
-        CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo();
+        auto photoOutput = photoOutput_.promote();
+        if (photoOutput != nullptr) {
+            int32_t currentCaptureId = GetCaptureId(surfaceBuffer);
+            photoOutput->AcquireBufferToPrepareProxy(currentCaptureId);
+        }
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
