@@ -16,12 +16,15 @@
 #include "media_library/photo_asset_proxy.h"
 
 #include "camera_log.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
 typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t);
+std::mutex g_opMutex;
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(int32_t shootType, int32_t callingUid)
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
     CHECK_ERROR_RETURN_RET_LOG(
         dynamiclib == nullptr, nullptr, "PhotoAssetProxy::GetPhotoAssetProxy get dynamiclib fail");
@@ -46,12 +49,14 @@ PhotoAssetProxy::PhotoAssetProxy(
 
 void PhotoAssetProxy::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     CHECK_ERROR_RETURN_LOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
     photoAssetIntf_->AddPhotoProxy(photoProxy);
 }
 
 std::string PhotoAssetProxy::GetPhotoAssetUri()
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     CHECK_ERROR_RETURN_RET_LOG(
         photoAssetIntf_ == nullptr, "", "PhotoAssetProxy::GetPhotoAssetUri photoAssetIntf_ is null");
     return photoAssetIntf_->GetPhotoAssetUri();
@@ -59,12 +64,14 @@ std::string PhotoAssetProxy::GetPhotoAssetUri()
 
 int32_t PhotoAssetProxy::GetVideoFd()
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetVideoFd photoAssetIntf_ is null");
     return photoAssetIntf_->GetVideoFd();
 }
 
 void PhotoAssetProxy::NotifyVideoSaveFinished()
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     CHECK_ERROR_RETURN_LOG(
         photoAssetIntf_ == nullptr, "PhotoAssetProxy::NotifyVideoSaveFinished photoAssetIntf_ is null");
     photoAssetIntf_->NotifyVideoSaveFinished();
@@ -72,6 +79,7 @@ void PhotoAssetProxy::NotifyVideoSaveFinished()
 
 int32_t PhotoAssetProxy::GetUserId()
 {
+    std::lock_guard<std::mutex> lock(g_opMutex);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
     return photoAssetIntf_->GetUserId();
 }

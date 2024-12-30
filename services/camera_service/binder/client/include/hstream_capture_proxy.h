@@ -41,6 +41,8 @@ public:
 
     int32_t EnableRawDelivery(bool enabled) override;
 
+    int32_t EnableMovingPhoto(bool enabled) override;
+
     int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
 
     int32_t DeferImageDeliveryFor(int32_t type) override;
@@ -52,6 +54,8 @@ public:
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
 
     int32_t SetCameraPhotoRotation(bool isEnable) override;
+
+    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) override;
 
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
 

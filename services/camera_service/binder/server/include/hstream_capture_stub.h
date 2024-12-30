@@ -35,10 +35,12 @@ public:
     int32_t HandleSetCallback(MessageParcel& data);
     int32_t HandleSetThumbnail(MessageParcel& data);
     int32_t HandleEnableRawDelivery(MessageParcel& data);
+    int32_t HandleEnableMovingPhoto(MessageParcel& data);
     int32_t HandleSetBufferProducerInfo(MessageParcel& data);
     int32_t HandleEnableDeferredType(MessageParcel& data);
     int32_t HandleSetMovingPhotoVideoCodecType(MessageParcel& data);
     int32_t HandleSetCameraPhotoRotation(MessageParcel& data);
+    int32_t HandleAddMediaLibraryPhotoProxy(MessageParcel& data);
     int32_t HandleAcquireBufferToPrepareProxy(MessageParcel& data);
 };
 } // namespace CameraStandard

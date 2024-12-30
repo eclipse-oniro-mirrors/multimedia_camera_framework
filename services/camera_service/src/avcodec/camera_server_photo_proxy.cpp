@@ -27,6 +27,8 @@
 namespace OHOS {
 namespace CameraStandard {
 
+static std::string g_lastDisplayName = "";
+static int32_t g_saveIndex = 0;
 CameraServerPhotoProxy::CameraServerPhotoProxy()
 {
     format_ = 0;
@@ -75,6 +77,34 @@ int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
     }
     free(handle);
     return 0;
+}
+
+std::string CreateDisplayName(const std::string& suffix)
+{
+    struct tm currentTime;
+    std::string formattedTime = "";
+    if (GetSystemCurrentTime(&currentTime)) {
+        std::stringstream ss;
+        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday
+           << connector << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec;
+        formattedTime = ss.str();
+    } else {
+        MEDIA_ERR_LOG("Failed to get current time.");
+    }
+    if (g_lastDisplayName == formattedTime) {
+        g_saveIndex++;
+        formattedTime = formattedTime + connector + std::to_string(g_saveIndex);
+        MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
+        return formattedTime;
+    }
+    g_lastDisplayName = formattedTime;
+    g_saveIndex = 0;
+    MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
+    return formattedTime;
 }
 
 void CameraServerPhotoProxy::SetDisplayName(std::string displayName)

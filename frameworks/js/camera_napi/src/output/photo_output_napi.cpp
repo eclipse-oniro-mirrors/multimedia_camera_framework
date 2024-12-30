@@ -339,6 +339,7 @@ void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photo
 void AuxiliaryPhotoListener::DeepCopyBuffer(
     sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t  captureId) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d "
         "surfaceName=%{public}s captureId = %{public}d", surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(),
         surfaceBuffer->GetFormat(), surfaceName_.c_str(), captureId);
@@ -365,6 +366,7 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
 
 void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s",
         surfaceName_.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
@@ -490,11 +492,11 @@ int32_t PhotoListener::GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer)
     return auxiliaryCount;
 }
 
-sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
+sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
 {
     int32_t isDegradedImage;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
-    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy isDegradedImage:%{public}d", isDegradedImage);
+    MEDIA_INFO_LOG("CreateCameraPhotoProxy isDegradedImage:%{public}d", isDegradedImage);
     int64_t imageId = 0;
     int32_t deferredProcessingType;
     int32_t captureId;
@@ -505,7 +507,7 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     // When not in burst mode, burstSequenceId is invalid (-1); otherwise,
     // it is an incrementing serial number starting from 1
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
-    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy imageId:%{public}" PRId64 ", "
+    MEDIA_INFO_LOG("CreateCameraPhotoProxy imageId:%{public}" PRId64 ", "
         "deferredProcessingType:%{public}d, captureId = %{public}d, burstSeqId = %{public}d",
         imageId, deferredProcessingType, captureId, burstSeqId);
     // get buffer handle and photo info
@@ -530,8 +532,9 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
     int32_t deferredImageFormat = 0;
     res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
     bool isHighQuality = (isDegradedImage == 0);
-    MEDIA_INFO_LOG("PhotoListener CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
+    MEDIA_INFO_LOG("CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
         "size:%{public}" PRId64, deferredImageFormat, isHighQuality, size);
+
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
         nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
     std::string imageIdStr = std::to_string(imageId);
@@ -541,6 +544,7 @@ sptr<CameraPhotoProxy> PhotoListener::CreateCameraPhotoProxy(sptr<SurfaceBuffer>
 
 void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("cfi")))
 {
+    CAMERA_SYNC_TRACE;
     auto photoOutput = photoOutput_.promote();
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     sptr<SurfaceBuffer> newSurfaceBuffer = nullptr;
@@ -550,8 +554,9 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer AcquireBuffer E");
     SurfaceError surfaceRet = photoSurface_->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 0");
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer AcquireBuffer X");
     if (surfaceRet != SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("PhotoListener Failed to acquire surface buffer");
         return;
@@ -563,10 +568,12 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
     }
     // deep copy buffer
     newSurfaceBuffer = SurfaceBuffer::Create();
-    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 1");
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer DeepCopyBuffer E");
     DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, captureId);
-    MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto 2");
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer DeepCopyBuffer X");
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer ReleaseBuffer E");
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+    MEDIA_DEBUG_LOG("ExecuteDeepCopySurfaceBuffer ReleaseBuffer X");
     {
         std::lock_guard<std::mutex> lock(g_photoImageMutex);
         photoOutput = photoOutput_.promote();
@@ -687,8 +694,7 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
     callbackInfo->cameraShotType = cameraShotType;
     callbackInfo->burstKey = burstKey;
     work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
+    int ret = uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             MEDIA_INFO_LOG("UpdatePictureJSCallback enter");
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
@@ -705,7 +711,9 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
                     callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
                 ExecuteCallbackNapiPara callbackPara {
                     .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+                MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE E");
                 listener->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
+                MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
                 MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
                 callbackInfo->listener_.reset();
                 delete callbackInfo;
@@ -812,6 +820,7 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
 
 void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AssembleAuxiliaryPhoto begin captureId %{public}d, burstSeqId %{public}d",
         captureId, GetBurstSeqId(captureId));
     std::lock_guard<std::mutex> lock(g_assembleImageMutex);
@@ -856,8 +865,10 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
             std::string uri;
             int32_t cameraShotType;
             std::string burstKey = "";
+            MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary E");
             photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
                 uri, cameraShotType, burstKey, timestamp);
+            MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
             UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
             CleanAfterTransPicture(photoOutput, captureId);
@@ -1593,13 +1604,37 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
 
 ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput)
     : ListenerBase(env), photoOutput_(photoOutput)
-{}
+{
+    if (taskManager_ == nullptr) {
+        constexpr int32_t numThreads = 1;
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
+            numThreads, true);
+    }
+}
+ThumbnailListener::~ThumbnailListener()
+{
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
+}
 
 void ThumbnailListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
-    ExecuteDeepCopySurfaceBuffer();
+    if (taskManager_ == nullptr) {
+        MEDIA_ERR_LOG("ThumbnailListener::OnBufferAvailable taskManager_ is null");
+        return;
+    }
+    wptr<ThumbnailListener> thisPtr(this);
+    taskManager_->SubmitTask([thisPtr]() {
+        auto listener = thisPtr.promote();
+        if (listener) {
+            listener->ExecuteDeepCopySurfaceBuffer();
+        }
+    });
     constexpr int32_t memSize = 20 * 1024;
     int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
@@ -1610,10 +1645,9 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
 {
     auto photoOutput = photoOutput_.promote();
     CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "ThumbnailListener photoOutput is nullptr");
-    CHECK_ERROR_RETURN_LOG(photoOutput->thumbnailSurface_ == nullptr, "ThumbnailListener thumbnailSurface_ is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
+    CHECK_ERROR_RETURN_LOG(surface == nullptr, "ThumbnailListener surface is nullptr");
     string surfaceName = "Thumbnail";
-    MEDIA_INFO_LOG("ThumbnailListener ExecuteDeepCopySurfaceBuffer surfaceName = %{public}s", surfaceName.c_str());
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -1622,19 +1656,19 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
-    int32_t thumbnailWidth;
-    int32_t thumbnailHeight;
     int32_t burstSeqId = -1;
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
-    int32_t captureId = GetCaptureId(surfaceBuffer);
-    MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
-        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     if (burstSeqId != -1) {
         surface->ReleaseBuffer(surfaceBuffer, -1);
         return;
     }
+    int32_t thumbnailWidth;
+    int32_t thumbnailHeight;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    int32_t captureId = GetCaptureId(surfaceBuffer);
+    MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
+        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
     Media::InitializationOptions opts {
         .size = { .width = thumbnailWidth, .height = thumbnailHeight },
         .srcPixelFormat = Media::PixelFormat::RGBA_8888,
@@ -1655,6 +1689,10 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
     MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
         surfaceName.c_str(), captureId);
+    auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
+    if (photoOutput->IsYuvOrHeifPhoto()) {
+        photoOutput->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
+    }
 }
 
 void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,
@@ -2532,6 +2570,9 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     if (session != nullptr) {
         bool isEnableMovingPhoto;
         napi_get_value_bool(env, argv[PARAM0], &isEnableMovingPhoto);
+        if (photoOutputNapi->GetPhotoOutput()) {
+            photoOutputNapi->GetPhotoOutput()->EnableMovingPhoto(isEnableMovingPhoto);
+        }
         session->LockForControl();
         int32_t retCode = session->EnableMovingPhoto(isEnableMovingPhoto);
         session->UnlockForControl();
