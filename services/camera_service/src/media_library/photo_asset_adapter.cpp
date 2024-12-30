@@ -27,6 +27,7 @@ namespace CameraStandard {
 Media::MediaLibraryManager *g_mediaLibraryManager = nullptr;
 PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
     if (g_mediaLibraryManager == nullptr) {
         g_mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();

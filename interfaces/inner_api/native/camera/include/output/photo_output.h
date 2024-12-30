@@ -461,6 +461,9 @@ public:
      */
     int32_t EnableDepthDataDelivery(bool enabled);
 
+    int32_t EnableMovingPhoto(bool enabled);
+    bool UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy);
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;

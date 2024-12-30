@@ -54,6 +54,8 @@ static const std::map<int32_t, PhotoFormat> formatMap = {
     {2, PhotoFormat::HEIF},
     {3, PhotoFormat::YUV}
 };
+
+std::string CreateDisplayName(const std::string& suffix);
 class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();

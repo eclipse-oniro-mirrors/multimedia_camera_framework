@@ -727,30 +727,39 @@ void HCaptureSession::ExpandSketchRepeatStream()
     MEDIA_DEBUG_LOG("Exit HCaptureSession::ExpandSketchRepeatStream()");
 }
 
+VideoCodecType GetVideoCodecType(StreamContainer &streamContainer)
+{
+    auto captureStreams = streamContainer.GetStreams(StreamType::CAPTURE);
+    MEDIA_INFO_LOG("GetVideoCodecType capture stream size = %{public}zu",
+        captureStreams.size());
+    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_AVC;
+    for (auto &stream : captureStreams) {
+        auto streamCapture = CastStream<HStreamCapture>(stream);
+        if (streamCapture == nullptr) {
+            continue;
+        }
+        videoCodecType = static_cast<VideoCodecType>(streamCapture->GetMovingPhotoVideoCodecType());
+        break;
+    }
+    MEDIA_INFO_LOG("ExpandMovingPhotoRepeatStream GetVideoCodecType videoCodecType = %{public}d", videoCodecType);
+    return videoCodecType;
+}
+
 void HCaptureSession::ExpandMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("ExpandMovingPhotoRepeatStream enter");
     if (!GetCameraDevice()->CheckMovingPhotoSupported(GetopMode())) {
         MEDIA_DEBUG_LOG("movingPhoto is not supported");
         return;
     }
-    auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
-    MEDIA_INFO_LOG("HCameraService::ExpandMovingPhotoRepeatStream capture stream size = %{public}zu",
-        captureStreams.size());
-    VideoCodecType videoCodecType = VIDEO_ENCODE_TYPE_AVC;
-    for (auto &stream : captureStreams) {
-        int32_t type = static_cast<HStreamCapture*>(stream.GetRefPtr())->GetMovingPhotoVideoCodecType();
-        videoCodecType = static_cast<VideoCodecType>(type);
-        break;
-    }
-    MEDIA_INFO_LOG("HCameraService::ExpandMovingPhotoRepeatStream videoCodecType = %{public}d", videoCodecType);
     auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
     for (auto& stream : repeatStreams) {
         if (stream == nullptr) {
             continue;
         }
         auto streamRepeat = CastStream<HStreamRepeat>(stream);
-        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+        if (streamRepeat && streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
             std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
             auto movingPhotoSurfaceWrapper =
                 MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(streamRepeat->width_, streamRepeat->height_);
@@ -785,7 +794,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
             break;
         }
     }
-    MEDIA_DEBUG_LOG("Exit HCaptureSession::ExpandMovingPhotoRepeatStream()");
+    MEDIA_DEBUG_LOG("ExpandMovingPhotoRepeatStream Exit");
 }
 
 int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
@@ -1938,7 +1947,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
         MEDIA_INFO_LOG("taskManager setVideoFd start");
         taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
     } else {
-        photoAssetProxy = nullptr;
+        photoAssetProxy.reset();
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
@@ -1990,6 +1999,7 @@ std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
 
 void RotatePicture(std::shared_ptr<Media::Picture> picture)
 {
+    CAMERA_SYNC_TRACE;
     std::string orientation = GetAndSetExifOrientation(
         reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     RotatePixelMap(picture->GetMainPixel(), orientation);
@@ -2001,6 +2011,52 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
     if (depthMap) {
         RotatePixelMap(depthMap->GetContentPixel(), orientation);
     }
+}
+
+std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContainer, int32_t captureId,
+    std::shared_ptr<Media::Picture> picturePtr, bool isBursting,
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");
+    sptr<HStreamCapture> captureStream = nullptr;
+    for (auto& stream : streamContainer.GetStreams(StreamType::CAPTURE)) {
+        captureStream = CastStream<HStreamCapture>(stream);
+        if (captureStream != nullptr) {
+            break;
+        }
+    }
+    CHECK_ERROR_RETURN_RET_LOG(captureStream == nullptr, nullptr, "stream is null");
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = nullptr;
+    std::thread taskThread;
+    if (isBursting) {
+        int32_t cameraShotType = 3;
+        photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
+    } else {
+        photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
+    if (!isBursting && picturePtr) {
+        MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
+        taskThread = std::thread(RotatePicture, picturePtr);
+    }
+    if (captureStream->GetAddPhotoProxyEnabled() == false) {
+        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
+        photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
+    } else {
+        captureStream->EnableAddPhotoProxy(false);
+    }
+    uri = photoAssetProxy->GetPhotoAssetUri();
+    if (!isBursting && taskThread.joinable()) {
+        taskThread.join();
+        MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture X");
+    }
+    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage E");
+    DeferredProcessing::DeferredProcessingService::GetInstance().
+        NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
+    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage X");
+    return photoAssetProxy;
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
@@ -2022,22 +2078,10 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
-    // RotatePicture can be processed in parallel
-    std::thread rotateTask;
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
-    if (!isBursting && picturePtr) {
-        rotateTask = std::thread(RotatePicture, std::ref(picturePtr));
-    }
-    auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
-    CHECK_ERROR_RETURN_RET_LOG(
-        photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HCaptureSession::CreateMediaLibrary get photoAssetProxy fail");
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
-    uri = photoAssetProxy->GetPhotoAssetUri();
-    if (rotateTask.joinable()) {
-        rotateTask.join();
-    }
-    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(
-        photoAssetProxy->GetUserId(), uri, picturePtr);
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
+        ProcessPhotoProxy(streamContainer_, captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
+    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (isBursting && isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
@@ -2045,7 +2089,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
             taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }
     } else {
-        photoAssetProxy = nullptr;
+        photoAssetProxy.reset();
     }
     CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
