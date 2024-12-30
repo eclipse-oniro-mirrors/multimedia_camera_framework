@@ -204,7 +204,8 @@ int32_t HStreamRepeatProxy::SetFrameRate(int32_t minFrameRate, int32_t maxFrameR
     }
     return error;
 }
-int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
+
+int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -213,6 +214,8 @@ int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isEnable);
     data.WriteInt32(rotation);
+    data.WriteUint32(apiCompatibleVersion);
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION), data, reply, option);
     if (error != ERR_NONE) {
@@ -270,25 +273,6 @@ int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>&
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
         "HStreamRepeatProxy::AttachMetaSurface failed, error: %{public}d", error);
 
-    return error;
-}
-
-int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
- 
-    data.WriteInterfaceToken(GetDescriptor());
-    data.WriteBool(isEnable);
-    data.WriteInt32(rotation);
-    data.WriteUint32(apiCompatibleVersion);
- 
-    int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
-    }
     return error;
 }
 } // namespace CameraStandard
