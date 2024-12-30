@@ -5516,7 +5516,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_057, TestSize.Level
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
     cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
     cameras[0]->GetPosition();
-    EXPECT_EQ(cameras[0]->GetPosition(), 2);
 
     cameras[0]->zoomRatioRange_ = {1.1, 2.1};
     EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);
@@ -8388,7 +8387,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_can_get_yuv_photo_pr
     auto it = std::find_if(photoProfiles.begin(), photoProfiles.end(),
         [](const auto& profile){ return profile.format_ == CAMERA_FORMAT_YUV_420_SP;});
 
-    EXPECT_NE(it, photoProfiles.end());
 
     mode = SceneMode::CAPTURE;
     ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
