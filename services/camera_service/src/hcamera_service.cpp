@@ -135,8 +135,8 @@ void HCameraService::OnStart()
 #ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
 #endif
-    AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
+    AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     if (Publish(this)) {
         MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
     } else {
