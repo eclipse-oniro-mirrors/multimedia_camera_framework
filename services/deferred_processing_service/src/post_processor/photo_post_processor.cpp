@@ -814,9 +814,10 @@ void PhotoPostProcessor::StopTimer(const std::string& imageId)
     auto it = runningWork_.find(imageId);
     DP_CHECK_ERROR_RETURN_LOG(it == runningWork_.end(),
         "Stoptimer failed not find imageId: %{public}s", imageId.c_str());
-    runningWork_.erase(it);
+
     DpsTimer::GetInstance().StopTimer(it->second);
     DP_INFO_LOG("DPS_TIMER: Stop imageId: %{public}s, timeId: %{public}u", imageId.c_str(), it->second);
+    runningWork_.erase(it);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
