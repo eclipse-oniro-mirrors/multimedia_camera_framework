@@ -344,6 +344,7 @@ void Test31(sptr<CaptureSession> s)
 {
     s->UnlockForControl();
     bool supported = true;
+    bool configed = true;
     set<camera_face_detect_mode_t> metadataObjectTypes{};
     s->SetCaptureMetadataObjectTypes(metadataObjectTypes);
     metadataObjectTypes.emplace(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
@@ -351,7 +352,7 @@ void Test31(sptr<CaptureSession> s)
     s->EnableFaceDetection(supported);
     const float distance = 1.0f;
     s->IsSessionStarted();
-    s->EnableMovingPhotoMirror(supported);
+    s->EnableMovingPhotoMirror(supported, configed);
     vector<WhiteBalanceMode> modes;
     s->GetSupportedWhiteBalanceModes(modes);
     s->IsWhiteBalanceModeSupported(WhiteBalanceMode::AWB_MODE_AUTO, supported);

@@ -560,7 +560,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
-        session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror());
+        session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror(), true);
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
         MEDIA_DEBUG_LOG("Capture End");
     } else {
@@ -586,7 +586,7 @@ int32_t PhotoOutput::Capture()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
-        session->EnableMovingPhotoMirror(false);
+        session->EnableMovingPhotoMirror(false, true);
         errCode = itemStream->Capture(captureMetadataSetting);
         MEDIA_DEBUG_LOG("Capture end");
     } else {
@@ -721,13 +721,15 @@ bool PhotoOutput::IsMirrorSupported()
 
 int32_t PhotoOutput::EnableMirror(bool isEnable)
 {
+    MEDIA_INFO_LOG("PhotoOutput::EnableMirror enter, isEnable: %{public}d", isEnable);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_RUNNING,
         "PhotoOutput EnableMirror error!, session is nullptr");
         
     int32_t ret = CAMERA_UNKNOWN_ERROR;
     if (IsMirrorSupported()) {
-        ret = session->EnableMovingPhotoMirror(isEnable);
+        auto isSessionConfiged = session->IsSessionCommited() || session->IsSessionStarted();
+        ret = session->EnableMovingPhotoMirror(isEnable, isSessionConfiged);
         CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ret,
             "PhotoOutput EnableMirror error!, ret is not success");
     } else {

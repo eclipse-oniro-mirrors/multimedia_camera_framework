@@ -466,6 +466,7 @@ void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetFocusDistance(data.ReadFloat());
     session->EnableMacro(data.ReadBool());
     session->EnableMovingPhoto(data.ReadBool());
+    session->EnableMovingPhotoMirror(data.ReadBool(), data.ReadBool());
     session->EnableMoonCaptureBoost(data.ReadBool());
     session->SetSensorSensitivity(data.ReadUint32());
     session->UnlockForControl();

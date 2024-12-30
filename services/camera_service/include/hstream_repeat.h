@@ -84,6 +84,7 @@ public:
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
     int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) override;
+    int32_t ToggleAutoVideoFrameRate(bool isEnable) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -99,6 +100,7 @@ private:
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
     void SyncTransformToSketch();
+    void UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
@@ -114,6 +116,7 @@ private:
     bool enableMirror_ = false;
     bool enableStreamRotate_ = false;
     bool enableCameraRotation_ = false;
+    bool enableAutoFrameRate_ = false;
     int32_t setCameraRotation_ = 0;
     uint32_t apiCompatibleVersion_ = 0;
     std::string deviceClass_ = "phone";
