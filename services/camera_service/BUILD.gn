@@ -59,6 +59,7 @@ ohos_shared_library("camera_service") {
     "src/camera_privacy.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
