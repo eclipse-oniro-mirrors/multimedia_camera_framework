@@ -42,11 +42,8 @@ enum class RepeatStreamStatus {
     STOPED,
     STARTED
 };
-<<<<<<< HEAD
 #define CAMERA_ROTATION_TYPE_BASE 4
-=======
 #define CAMERA_API_VERSION_BASE 14
->>>>>>> 8fbf89b7 (bugfix)
 class EXPORT_API HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(

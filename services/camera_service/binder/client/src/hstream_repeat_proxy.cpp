@@ -272,8 +272,6 @@ int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>&
 
     return error;
 }
-<<<<<<< HEAD
-=======
 
 int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
 {
@@ -293,6 +291,5 @@ int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation, u
     }
     return error;
 }
->>>>>>> c9fc29f4 (旋转平板api隔离)
 } // namespace CameraStandard
 } // namespace OHOS
