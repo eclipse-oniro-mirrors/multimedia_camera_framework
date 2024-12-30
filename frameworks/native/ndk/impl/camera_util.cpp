@@ -30,6 +30,7 @@ Camera_ErrorCode FrameworkToNdkCameraError(int32_t ret)
         case CameraErrorCode::NO_SYSTEM_APP_PERMISSION:
             err = CAMERA_OPERATION_NOT_ALLOWED;
             break;
+        case CameraErrorCode::PARAMETER_ERROR:
         case CameraErrorCode::INVALID_ARGUMENT:
             err = CAMERA_INVALID_ARGUMENT;
             break;

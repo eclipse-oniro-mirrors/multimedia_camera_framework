@@ -40,6 +40,11 @@ const std::unordered_map<camera_focus_mode_enum_t, FocusMode> g_metaFocusModeMap
     {OHOS_CAMERA_FOCUS_MODE_LOCKED, FOCUS_MODE_LOCKED}
 };
 
+const std::unordered_map<CameraQualityPrioritization, QualityPrioritization> g_metaQualityPrioritizationMap_ = {
+    { OHOS_CAMERA_QUALITY_PRIORITIZATION_HIGH_QUALITY, HIGH_QUALITY },
+    { OHOS_CAMERA_QUALITY_PRIORITIZATION_POWER_BALANCE, POWER_BALANCE }
+};
+
 const std::unordered_map<camera_beauty_type_t, BeautyType> g_metaBeautyTypeMap_ = {
     {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
     {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
@@ -116,6 +121,11 @@ const std::unordered_map<FocusMode, camera_focus_mode_enum_t> g_fwkFocusModeMap_
     {FOCUS_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_FOCUS_MODE_CONTINUOUS_AUTO},
     {FOCUS_MODE_AUTO, OHOS_CAMERA_FOCUS_MODE_AUTO},
     {FOCUS_MODE_LOCKED, OHOS_CAMERA_FOCUS_MODE_LOCKED}
+};
+
+const std::unordered_map<QualityPrioritization, CameraQualityPrioritization> g_fwkQualityPrioritizationMap_ = {
+    { HIGH_QUALITY, OHOS_CAMERA_QUALITY_PRIORITIZATION_HIGH_QUALITY },
+    { POWER_BALANCE, OHOS_CAMERA_QUALITY_PRIORITIZATION_POWER_BALANCE }
 };
 
 const std::unordered_map<ColorEffect, camera_xmage_color_type_t> g_fwkColorEffectMap_ = {

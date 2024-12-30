@@ -238,5 +238,21 @@ int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType
     }
     return error;
 }
+
+int32_t HStreamCaptureProxy::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+ 
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy AcquireBufferToPrepareProxy failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

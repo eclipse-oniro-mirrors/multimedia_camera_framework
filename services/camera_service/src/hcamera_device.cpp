@@ -63,6 +63,7 @@ CallerInfo caller_;
 const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice::reportTagInfos_ = {
     {OHOS_CONTROL_FLASH_MODE, "OHOS_CONTROL_FLASH_MODE", DFX_UB_SET_FLASHMODE},
     {OHOS_CONTROL_FOCUS_MODE, "OHOS_CONTROL_FOCUS_MODE", DFX_UB_SET_FOCUSMODE},
+    {OHOS_CONTROL_QUALITY_PRIORITIZATION, "OHOS_CONTROL_QUALITY_PRIORITIZATION", DFX_UB_SET_QUALITY_PRIORITIZATION},
     {OHOS_CONTROL_EXPOSURE_MODE, "OHOS_CONTROL_EXPOSURE_MODE", DFX_UB_SET_EXPOSUREMODE},
     {OHOS_CONTROL_VIDEO_STABILIZATION_MODE, "OHOS_CONTROL_VIDEO_STABILIZATION_MODE", DFX_UB_SET_VIDEOSTABILIZATIONMODE},
     {OHOS_CONTROL_FILTER_TYPE, "OHOS_CONTROL_FILTER_TYPE", DFX_UB_SET_FILTER},
@@ -101,6 +102,7 @@ public:
             return;
         }
         mLastFoldStatus = currentFoldStatus;
+        MEDIA_INFO_LOG("OnFoldStatusChanged, foldStatus: %{public}d", foldStatus);
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
     }
 private:
@@ -649,7 +651,7 @@ int32_t HCameraDevice::SetUsedAsPosition(uint8_t value)
 {
     MEDIA_INFO_LOG("HCameraDevice::SetUsedAsPosition as %{public}d", value);
     usedAsPosition_ = value;
-    // lockforcontrol
+    // lockforControl
     return CAMERA_OK;
 }
 
@@ -1034,6 +1036,10 @@ void HCameraDevice::CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetada
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
     }
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_QUALITY_PRIORITIZATION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("quality prioritization: %{public}d", item.data.u8[0]);
+    }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
@@ -1065,6 +1071,9 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     if (IsCameraDebugOn()) {
         CameraFwkMetadataUtils::DumpMetadataInfo(cameraResult);
     }
@@ -1086,6 +1095,9 @@ int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& re
     CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+    if (cameraResult == nullptr) {
+        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     auto streamOperatorCallback = GetStreamOperatorCallback();
     if (streamOperatorCallback != nullptr) {
         streamOperatorCallback->OnResult(streamId, result);

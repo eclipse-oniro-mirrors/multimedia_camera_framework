@@ -156,6 +156,7 @@ public:
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
+    int32_t RequireMemorySize(int32_t memSize) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -224,6 +225,7 @@ private:
     void DumpCameraZoom(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAF(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraQualityPrioritization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAE(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraSensorInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraVideoStabilization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);

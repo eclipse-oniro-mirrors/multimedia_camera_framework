@@ -20,6 +20,7 @@
 #include <thread>
 #include "audio_record.h"
 #include "audio_session_manager.h"
+#include "audio_deferred_process.h"
 #include "camera_log.h"
 #include "datetime_ex.h"
 #include "ipc_skeleton.h"
@@ -34,6 +35,38 @@ AudioCapturerSession::AudioCapturerSession()
 {
 }
 
+AudioChannel AudioCapturerSession::getMicNum()
+{
+    MEDIA_INFO_LOG("AudioCapturerSession::getMicNum");
+    std::string mainKey = "device_status";
+    std::vector<std::string> subKeys = {"hardware_info#mic_num"};
+    std::vector<std::pair<std::string, std::string>> result = {};
+    AudioSystemManager* audioSystemMgr = AudioSystemManager::GetInstance();
+    if (audioSystemMgr == nullptr) {
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetAudioSystemManagerInstance err");
+        return AudioChannel::STEREO;
+    }
+    int32_t ret = audioSystemMgr->GetExtraParameters(mainKey, subKeys, result);
+    if (ret != 0) {
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum GetExtraParameters err");
+        return AudioChannel::STEREO;
+    }
+    if (result.empty() || result[0].second.empty() || result[0].first.empty()) {
+        MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result empty");
+        return AudioChannel::STEREO;
+    }
+    for (auto i: result[0].second) {
+        if (!std::isdigit(i)) {
+            MEDIA_WARNING_LOG("AudioCapturerSession::getMicNum result illegal");
+            return AudioChannel::STEREO;
+        }
+    }
+    int32_t micNum = std::stoi(result[0].second);
+    MEDIA_INFO_LOG("AudioCapturerSession::getMicNum %{public}d + %{public}d", micNum, micNum % I32_TWO);
+    // odd channel should + 1
+    return static_cast<AudioChannel>(micNum + (micNum % I32_TWO));
+}
+
 bool AudioCapturerSession::CreateAudioCapturer()
 {
     auto callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -42,8 +75,8 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
     capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
-    capturerOptions.streamInfo.channels = AudioChannel::MONO;
-    capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_MIC;
+    capturerOptions.streamInfo.channels = getMicNum();
+    capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
     if (audioCapturer_ == nullptr) {
@@ -53,6 +86,24 @@ bool AudioCapturerSession::CreateAudioCapturer()
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
+    audioDeferredProcess_ = new AudioDeferredProcess();
+    if (!audioDeferredProcess_ || audioDeferredProcess_->GetOfflineEffectChain() != 0) {
+        return false;
+    }
+    AudioStreamInfo outputOptions;
+    outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
+    outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
+    outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
+    outputOptions.channels = AudioChannel::MONO;
+    if (audioDeferredProcess_->ConfigOfflineAudioEffectChain(capturerOptions.streamInfo, outputOptions) != 0) {
+        return false;
+    }
+    if (audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0) {
+        return false;
+    }
+    if (audioDeferredProcess_->GetMaxBufferSize(capturerOptions.streamInfo, outputOptions) != 0) {
+        return false;
+    }
     return true;
 }
 
@@ -67,6 +118,7 @@ AudioCapturerSession::~AudioCapturerSession()
 bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
+    CHECK_ERROR_RETURN_RET_LOG(startAudioCapture_, true, "AudioCapture is already started.");
     if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
         MEDIA_INFO_LOG("audioCapturer is not create");
         return false;
@@ -74,16 +126,17 @@ bool AudioCapturerSession::StartAudioCapture()
     if (!audioCapturer_->Start()) {
         MEDIA_INFO_LOG("Start stream failed");
         audioCapturer_->Release();
+        startAudioCapture_ = false;
         return false;
     }
     if (audioThread_ && audioThread_->joinable()) {
-        MEDIA_DEBUG_LOG("audioThread_ is already start");
+        MEDIA_INFO_LOG("audioThread_ is already start, reset");
         startAudioCapture_ = false;
         audioThread_->join();
         audioThread_.reset();
     }
-    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     startAudioCapture_ = true;
+    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     if (audioThread_ == nullptr) {
         MEDIA_ERR_LOG("Create auido thread failed");
         return false;
@@ -104,7 +157,7 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 void AudioCapturerSession::ProcessAudioBuffer()
 {
     CHECK_ERROR_RETURN_LOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
-    size_t bufferLen = DEFAULT_MAX_INPUT_SIZE;
+    size_t bufferLen = audioDeferredProcess_->GetOneUnprocessedSize();
     while (true) {
         CHECK_AND_BREAK_LOG(startAudioCapture_, "Audio capture work done, thread out");
         auto buffer = std::make_unique<uint8_t[]>(bufferLen);
@@ -132,7 +185,7 @@ void AudioCapturerSession::ProcessAudioBuffer()
             audioRecord->ReleaseAudioBuffer();
             MEDIA_DEBUG_LOG("audio release popBuffer");
         }
-        int64_t timeOffset = 20;
+        int64_t timeOffset = 32;
         sptr<AudioRecord> audioRecord = new AudioRecord(GetTickCount() - timeOffset);
         audioRecord->SetAudioBuffer(buffer.get());
         MEDIA_DEBUG_LOG("audio push buffer frameId: %{public}s", audioRecord->GetFrameId().c_str());
@@ -164,6 +217,11 @@ void AudioCapturerSession::Release()
     }
     audioCapturer_ = nullptr;
     MEDIA_INFO_LOG("Audio capture released");
+}
+
+sptr<AudioDeferredProcess> AudioCapturerSession::GetAudioDeferredProcess()
+{
+    return audioDeferredProcess_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

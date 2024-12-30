@@ -24,6 +24,7 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
+#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -373,6 +374,15 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     return CAM_META_SUCCESS;
 }
 
+int32_t HStreamCapture::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    MEDIA_DEBUG_LOG("HStreamCapture::AcquireBufferToPrepareProxy start");
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::AcquireBufferToPrepareProxy end");
+    return CAMERA_OK;
+}
+
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
 {
     CAMERA_SYNC_TRACE;
@@ -391,6 +401,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
 
+    CaptureDfxInfo captureDfxInfo;
+    captureDfxInfo.captureId = preparedCaptureId;
+    captureDfxInfo.isSystemApp = CheckSystemApp();
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo(captureDfxInfo);
+
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
@@ -401,6 +416,9 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     // report capture performance dfx
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ == nullptr) {
+        captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
     captureInfo.caller = CameraReportUtils::GetCallerInfo();
@@ -461,6 +479,9 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
     captureInfoPhoto.enableShutterCallback_ = true;
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ == nullptr) {
+        captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
     if (captureMetadataSetting_ != nullptr) {
         // convert rotation with application set rotation
         SetRotation(captureMetadataSetting_, captureId);
@@ -576,6 +597,9 @@ int32_t HStreamCapture::ConfirmCapture()
         std::shared_ptr<OHOS::Camera::CameraMetadata> burstCaptureSettings = nullptr;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, settingVector);
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(settingVector, burstCaptureSettings);
+        if (burstCaptureSettings == nullptr) {
+            burstCaptureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        }
         EndBurstCapture(burstCaptureSettings);
         ret = Capture(burstCaptureSettings);
         if (ret != CAMERA_OK) {

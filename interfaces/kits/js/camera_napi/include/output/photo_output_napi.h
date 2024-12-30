@@ -27,7 +27,10 @@
 #include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
-#include "task_manager.h"
+
+namespace OHOS::Media {
+    class PixelMap;
+}
 namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
@@ -125,25 +128,31 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener, public ListenerBase {
+class PhotoListener : public IBufferConsumerListener,
+                      public ListenerBase,
+                      public std::enable_shared_from_this<PhotoListener> {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
-    ~PhotoListener() = default;
+    virtual ~PhotoListener();
     void OnBufferAvailable() override;
     void SaveCallback(const std::string eventName, napi_value callback);
     void RemoveCallback(const std::string eventName, napi_value callback);
-    void ExecuteDeepyCopySurfaceBuffer();
+    void ExecuteDeepCopySurfaceBuffer();
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+
 private:
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
-    void UpdatePictureJSCallback(const string uri, int32_t cameraShotType, const std::string burstKey) const;
+    void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
+        const std::string burstKey) const;
     void UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer, int64_t timestamp) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+        int32_t captureId) const;
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
@@ -151,7 +160,6 @@ private:
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
     sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer);
     uint8_t callbackFlag_ = 0;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
@@ -174,14 +182,13 @@ public:
         wptr<PhotoOutput> photoOutput);
     ~AuxiliaryPhotoListener() = default;
     void OnBufferAvailable() override;
-    void ExecuteDeepyCopySurfaceBuffer();
+    void ExecuteDeepCopySurfaceBuffer();
 private:
-    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer, int32_t) const;
     std::string surfaceName_;
     sptr<Surface> surface_;
     wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
 };
 
 class PictureListener : public RefBase {
@@ -244,12 +251,16 @@ private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
     void UpdateJSCallbackAsync();
+    void UpdateJSCallback(unique_ptr<Media::PixelMap>) const;
+    void UpdateJSCallbackAsync(unique_ptr<Media::PixelMap>);
+    void ExecuteDeepCopySurfaceBuffer();
 };
 
 struct ThumbnailListenerInfo {
     wptr<ThumbnailListener> listener_;
-    ThumbnailListenerInfo(sptr<ThumbnailListener> listener)
-        : listener_(listener)
+    unique_ptr<Media::PixelMap> pixelMap_;
+    ThumbnailListenerInfo(sptr<ThumbnailListener> listener, unique_ptr<Media::PixelMap> pixelMap)
+        : listener_(listener), pixelMap_(std::move(pixelMap))
     {}
 };
 
@@ -259,6 +270,7 @@ struct PhotoListenerInfo {
     PhotoListenerInfo(sptr<Surface> photoSurface, wptr<PhotoListener> listener)
         : photoSurface_(photoSurface), listener_(listener)
     {}
+    int32_t captureId = 0;
     std::string uri = "";
     int32_t cameraShotType = 0;
     std::string burstKey = "";
@@ -393,7 +405,6 @@ private:
     static thread_local napi_ref rawCallback_;
 };
 
-
 struct PhotoOutputNapiCaptureSetting {
     int32_t quality = -1;
 };
@@ -403,8 +414,8 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     int32_t quality = -1;
     int32_t rotation = -1;
     bool isMirror = false;
-    bool hasPhotoSettings = false;
     bool isMirrorSettedByUser = false;
+    bool hasPhotoSettings = false;
     bool isSupported = false;
     shared_ptr<Location> location;
     PhotoOutputNapi* objectInfo = nullptr;

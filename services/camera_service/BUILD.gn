@@ -46,6 +46,7 @@ ohos_shared_library("camera_service") {
     "src/app_manager_utils/camera_app_manager_client.cpp",
     "src/app_manager_utils/camera_app_manager_utils.cpp",
     "src/avcodec/audio_capturer_session.cpp",
+    "src/avcodec/audio_deferred_process.cpp",
     "src/avcodec/audio_encoder.cpp",
     "src/avcodec/audio_video_muxer.cpp",
     "src/avcodec/avcodec_task_manager.cpp",
@@ -59,6 +60,7 @@ ohos_shared_library("camera_service") {
     "src/camera_privacy.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
@@ -203,7 +205,10 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
   ]
 
-  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
+  public_external_deps = [
+    "audio_framework:offline_audio_effect",
+    "e2fsprogs:libext2_uuid",
+  ]
 
   defines = []
   if (use_sensor) {

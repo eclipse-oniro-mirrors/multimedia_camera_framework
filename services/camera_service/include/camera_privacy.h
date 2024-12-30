@@ -20,6 +20,7 @@
 #include "camera_util.h"
 #include "accesstoken_kit.h"
 #include "perm_state_change_callback_customize.h"
+#include "privacy_error.h"
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
 
@@ -65,6 +66,8 @@ private:
     int32_t pid_;
     uint32_t callerToken_;
     wptr<HCameraDevice> cameraDevice_;
+    std::mutex permissionCbMutex_;
+    std::mutex cameraUseCbMutex_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
 };

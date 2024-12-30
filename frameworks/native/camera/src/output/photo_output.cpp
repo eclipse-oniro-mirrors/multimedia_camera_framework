@@ -25,12 +25,14 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
+#include "image_type.h"
 #include "input/camera_device.h"
 #include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
-#include "camera_report_dfx_uitls.h"
 #include "picture.h"
+#include "task_manager.h"
+
 using namespace std;
 
 namespace OHOS {
@@ -127,7 +129,7 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
     bool status = false;
     camera_metadata_item_t item;
 
-    MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
+    MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location_->latitude, location_->longitude, location_->altitude);
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_GPS_COORDINATES, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -144,7 +146,7 @@ void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
 {
     std::lock_guard<std::mutex> lock(locationMutex_);
     location = location_;
-    MEDIA_DEBUG_LOG("PhotoCaptureSetting::GetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
+    MEDIA_DEBUG_LOG("PhotoCaptureSetting::GetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location->latitude, location->longitude, location->altitude);
 }
 
@@ -318,14 +320,18 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
-    photoProxy_ = nullptr;
-    watchDogHandle_ = 0;
+    taskManager_ = nullptr;
 }
 
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
 }
 
 void PhotoOutput::SetNativeSurface(bool isNativeSurface)
@@ -535,9 +541,18 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
     return appCallback_;
 }
 
+void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    if (itemStream) {
+        itemStream->AcquireBufferToPrepareProxy(captureId);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::AcquireBufferToPrepareProxy() itemStream is nullptr");
+    }
+}
+
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
-    CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo();
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
@@ -664,6 +679,11 @@ int32_t PhotoOutput::Release()
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
     return ServiceToCameraError(errCode);
 }
 
@@ -719,7 +739,7 @@ int32_t PhotoOutput::EnableMirror(bool isEnable)
     }
     return ret;
 }
-      
+
 int32_t PhotoOutput::IsQuickThumbnailSupported()
 {
     int32_t isQuickThumbnailEnabled = -1;
@@ -956,7 +976,6 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
         result, sensorOrientation);
     return result;
 }
-
 int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImageEnhancementSupported)
 {
     MEDIA_INFO_LOG("PhotoOutput IsAutoCloudImageEnhancementSupported is called");

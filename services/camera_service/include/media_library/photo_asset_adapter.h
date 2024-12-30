@@ -24,7 +24,7 @@ namespace CameraStandard {
 
 class PhotoAssetAdapter : public OHOS::CameraStandard::PhotoAssetIntf {
 public:
-    PhotoAssetAdapter(int32_t cameraShotType);
+    PhotoAssetAdapter(int32_t cameraShotType, int32_t uid);
     virtual ~PhotoAssetAdapter() = default;
     void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy);
     std::string GetPhotoAssetUri();

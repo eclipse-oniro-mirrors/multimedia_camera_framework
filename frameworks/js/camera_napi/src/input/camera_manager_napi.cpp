@@ -1351,6 +1351,10 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
     sptr<CameraInput> cameraInput = nullptr;
     int retCode = cameraManagerNapi->cameraManager_->CreateCameraInput(cameraInfo, &cameraInput);
+    if (retCode == CAMERA_NO_PERMISSION) {
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "not allowed, because have no permission.");
+        return nullptr;
+    }
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }
@@ -1440,7 +1444,7 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
     }
     auto cameraMuteListener =
             std::static_pointer_cast<CameraMuteListenerNapi>(cameraManager_->GetCameraMuteListener());
-    if (cameraMuteListener == nullptr) {
+    if (cameraMuteListener == nullptr && cameraManager_ == nullptr) {
         MEDIA_ERR_LOG("cameraMuteListener is null");
     } else {
         cameraMuteListener->RemoveCallbackRef(eventName, callback);

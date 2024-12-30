@@ -25,8 +25,8 @@
 #include "camera_util.h"
 #include "hcamera_device_callback_stub.h"
 #include "icamera_util.h"
-#include "metadata_utils.h"
 #include "metadata_common_utils.h"
+#include "metadata_utils.h"
 #include "output/metadata_output.h"
 #include "session/capture_session.h"
 
@@ -298,10 +298,13 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     auto metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
     MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition fr: %{public}u, to: %{public}u", usedAsPosition, translatePos);
     if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1)) {
-        MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition Failed to set metadata");
+        MEDIA_ERR_LOG("CameraInput::SetInputUsedAsPosition Failed to set metadata");
     }
-    deviceObj_->SetUsedAsPosition(translatePos);
-    deviceObj_->UpdateSetting(metadata);
+    auto deviceObj = GetCameraDevice();
+    CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+    deviceObj->SetUsedAsPosition(translatePos);
+    deviceObj->UpdateSetting(metadata);
+    CHECK_ERROR_RETURN_LOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
     cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
 }
 
@@ -462,6 +465,7 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
     MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
     return CAMERA_OK;
 }
+
 
 void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj)
 {

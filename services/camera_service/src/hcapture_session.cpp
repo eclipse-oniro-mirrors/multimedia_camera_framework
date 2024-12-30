@@ -33,6 +33,7 @@
 #include "avcodec_task_manager.h"
 #include "blocking_queue.h"
 #include "bundle_mgr_interface.h"
+#include "camera_dynamic_loader.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
@@ -71,13 +72,12 @@
 #include "picture.h"
 #include "camera_timer.h"
 #include "fixed_size_list.h"
-#include "camera_timer.h"
+#include "camera_report_dfx_uitls.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-std::shared_ptr<CameraDynamicLoader> HCaptureSession::dynamicLoader_ = std::make_shared<CameraDynamicLoader>();
 std::optional<uint32_t> HCaptureSession::closeTimerId_ = std::nullopt;
 std::mutex HCaptureSession::g_mediaTaskLock_;
 
@@ -90,6 +90,7 @@ constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
 #endif
 static GravityData gravityData = {0.0, 0.0, 0.0};
 static int32_t sensorRotation = 0;
+const char *CAMERA_BUNDLE_NAME = "com.huawei.hmos.camera";
 static size_t TotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
@@ -128,6 +129,14 @@ static void TotalSessionErase(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
     g_totalSessions.erase(pid);
+}
+
+static bool IsExistSessionsNeedMediaLib()
+{
+    std::lock_guard<std::mutex> lock(g_totalSessionLock);
+    return std::any_of(g_totalSessions.begin(), g_totalSessions.end(), [](const auto& pair) {
+        return pair.second && pair.second->isNeedMediaLib;
+    });
 }
 } // namespace
 
@@ -227,7 +236,8 @@ void HCaptureSession::DynamicConfigStream()
         GetSessionState().c_str());
     auto currentState = stateMachine_.GetCurrentState();
     if (currentState == CaptureSessionState::SESSION_STARTED) {
-        isDynamicConfiged_ = CheckSystemApp(); // System applications support dynamic config stream.
+        std::string bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
+        isDynamicConfiged_ = (bundleName == CAMERA_BUNDLE_NAME);
         MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
     }
 }
@@ -346,6 +356,7 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
         captureStream->SetColorSpace(currCaptureColorSpace_);
+        isNeedMediaLib = true;
         HCaptureSession::OpenMediaLib();
     } else {
         stream->SetColorSpace(currColorSpace_);
@@ -357,10 +368,12 @@ void HCaptureSession::OpenMediaLib()
 {
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
     if (closeTimerId_.has_value()) {
+        MEDIA_INFO_LOG("cancel closeDynamicHandle task id: %{public}d", closeTimerId_.value());
         CameraTimer::GetInstance().Unregister(closeTimerId_.value());
         closeTimerId_.reset();
     }
-    CameraTimer::GetInstance().Register([&] { dynamicLoader_->OpenDynamicHandle(MEDIA_LIB_SO); }, 0, true);
+    CameraTimer::GetInstance().Register(
+        [&] { CameraDynamicLoader::GetInstance()->OpenDynamicHandle(MEDIA_LIB_SO); }, 0, true);
 }
 
 void HCaptureSession::StartMovingPhotoStream()
@@ -587,13 +600,14 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
 void HCaptureSession::DelayCloseMediaLib()
 {
     std::lock_guard<std::mutex> lock(g_mediaTaskLock_);
-    constexpr uint32_t waitMs = 30 * 1000;
+    constexpr uint32_t waitMs = 60 * 1000;
     if (closeTimerId_.has_value()) {
         CameraTimer::GetInstance().Unregister(closeTimerId_.value());
         MEDIA_INFO_LOG("delete closeDynamicHandle task id: %{public}d", closeTimerId_.value());
     }
     closeTimerId_ = CameraTimer::GetInstance().Register([]() {
-        dynamicLoader_->CloseDynamicHandle(MEDIA_LIB_SO);
+        CHECK_ERROR_RETURN_LOG(IsExistSessionsNeedMediaLib(), "exist session need media lib, directly return");
+        CameraDynamicLoader::GetInstance()->CloseDynamicHandle(MEDIA_LIB_SO);
     }, waitMs, true);
     MEDIA_INFO_LOG("create closeDynamicHandle task id: %{public}d", closeTimerId_.value());
 }
@@ -616,6 +630,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         }
         if (streamType == StreamType::CAPTURE) {
             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+            isNeedMediaLib = false;
             HCaptureSession::DelayCloseMediaLib();
         } else if (streamType == StreamType::REPEAT) {
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
@@ -796,6 +811,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
                 audioCapturerSession_ = new AudioCapturerSession();
             }
             if (!taskManager_ && audioCapturerSession_) {
+                taskManager_ = new AvcodecTaskManager(audioCapturerSession_, videoCodecType);
                 taskManager_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
             }
             if (!videoCache_ && taskManager_) {
@@ -995,19 +1011,21 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
 
             currColorSpace_ = colorSpace;
             currCaptureColorSpace_ = captureColorSpace;
-            MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace %{public}d, captureColorSpace %{public}d, "
-                "isNeedUpdate %{public}d", colorSpace, captureColorSpace, isNeedUpdate);
-
             result = CheckIfColorSpaceMatchesFormat(colorSpace);
-            if (result != CAMERA_OK && isNeedUpdate) {
-                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() Failed, format and colorSpace not match.");
-                return;
+            if (result != CAMERA_OK) {
+                if (isNeedUpdate) {
+                    MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() Failed, format and colorSpace not match.");
+                    return;
+                } else {
+                    MEDIA_ERR_LOG(
+                        "HCaptureSession::SetColorSpace() %{public}d, format and colorSpace: %{public}d not match.",
+                        result, colorSpace);
+                    currColorSpace_ = ColorSpace::BT709;
+                }
             }
-            if (result != CAMERA_OK && !isNeedUpdate) {
-                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() %{public}d, format and colorSpace not match.", result);
-                currColorSpace_ = ColorSpace::BT709;
-            }
-
+            MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace: %{public}d, captureColorSpace: %{public}d, "
+                           "isNeedUpdate: %{public}d",
+                currColorSpace_, captureColorSpace, isNeedUpdate);
             SetColorSpaceForStreams();
 
             if (isNeedUpdate) {
@@ -1315,12 +1333,6 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 {
     isSetMotionPhoto_ = isEnable;
     StartMovingPhotoStream();
-    auto device = GetCameraDevice();
-    if (device != nullptr) {
-        device->EnableMovingPhoto(isEnable);
-    }
-    GetMovingPhotoBufferDuration();
-    GetMovingPhotoStartAndEndTime();
     #ifdef CAMERA_USE_SENSOR
     if (isSetMotionPhoto_) {
         RegisterSensorCallback();
@@ -1328,6 +1340,12 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
         UnRegisterSensorCallback();
     }
     #endif
+    auto device = GetCameraDevice();
+    if (device != nullptr) {
+        device->EnableMovingPhoto(isEnable);
+    }
+    GetMovingPhotoBufferDuration();
+    GetMovingPhotoStartAndEndTime();
     return CAMERA_OK;
 }
 
@@ -1397,7 +1415,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set start time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->startTimeMutex_);
         if (sessionPtr->taskManager_->mPStartTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRId64,
+            MEDIA_INFO_LOG("Save moving photo start info, captureId : %{public}d, start timestamp : %{public}" PRIu64,
                 captureId, startTimeStamp);
             sessionPtr->taskManager_->mPStartTimeMap_.insert(make_pair(captureId, startTimeStamp));
         }
@@ -1409,7 +1427,7 @@ void HCaptureSession::GetMovingPhotoStartAndEndTime()
         CHECK_ERROR_RETURN_LOG(sessionPtr->taskManager_ == nullptr, "Set end time callback taskManager_ is null");
         std::lock_guard<mutex> lock(sessionPtr->taskManager_->endTimeMutex_);
         if (sessionPtr->taskManager_->mPEndTimeMap_.count(captureId) == 0) {
-            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRId64,
+            MEDIA_INFO_LOG("Save moving photo end info, captureId : %{public}d, end timestamp : %{public}" PRIu64,
                 captureId, endTimeStamp);
             sessionPtr->taskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
         }
@@ -1540,6 +1558,7 @@ void HCaptureSession::ReleaseStreams()
     if ((cameraDevice != nullptr) && !hdiStreamIds.empty()) {
         cameraDevice->ReleaseStreams(hdiStreamIds);
     }
+    isNeedMediaLib = false;
     HCaptureSession::DelayCloseMediaLib();
 }
 
@@ -1599,7 +1618,6 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             taskManager_->ClearTaskResource();
             taskManager_ = nullptr;
         }
-        HCaptureSession::DelayCloseMediaLib();
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
     return errorCode;
@@ -1697,23 +1715,22 @@ int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror)
     if (!isSetMotionPhoto_ || isMirror == isMovingPhotoMirror_) {
         return CAMERA_OK;
     }
-    if (isMirror != isMovingPhotoMirror_) {
-        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-        for (auto& stream : repeatStreams) {
-            if (stream == nullptr) {
-                continue;
-            }
-            auto streamRepeat = CastStream<HStreamRepeat>(stream);
-            if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
-                MEDIA_INFO_LOG("restart movingphoto stream.");
-                streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& stream : repeatStreams) {
+        if (stream == nullptr) {
+            continue;
+        }
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
+            MEDIA_INFO_LOG("restart movingphoto stream.");
+            if (streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_)) {
+                isMovingPhotoMirror_ = isMirror;
                 // set clear cache flag
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 livephotoListener_->SetClearFlag();
-                break;
             }
+            break;
         }
-        isMovingPhotoMirror_ = isMirror;
     }
     return CAMERA_OK;
 }
@@ -1859,36 +1876,74 @@ std::string HCaptureSession::CreateDisplayName(const std::string& suffix)
     return formattedTime;
 }
 
-std::string HCaptureSession::CreateBurstDisplayName(int32_t seqId)
+std::string HCaptureSession::CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId)
 {
     struct tm currentTime;
     std::string formattedTime = "";
     std::stringstream ss;
-    if (seqId == 1) {
+    // a group of burst capture use the same prefix
+    if (imageSeqId == 1) {
         if (!GetSystemCurrentTime(&currentTime)) {
             MEDIA_ERR_LOG("Failed to get current time.");
             return formattedTime;
         }
         ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
-            << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday << connector
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
-            << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
-            << connector << burstTag;
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1) << std::setw(otherWidth)
+           << std::setfill(placeholder) << currentTime.tm_mday << connector << std::setw(otherWidth)
+           << std::setfill(placeholder) << currentTime.tm_hour << std::setw(otherWidth) << std::setfill(placeholder)
+           << currentTime.tm_min << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
+           << connector << burstTag;
         lastBurstPrefix_ = ss.str();
-        MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
-        ss  << std::setw(burstWidth) << std::setfill(placeholder) << seqId
-            << coverTag;
+        ss << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
     } else {
         ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
+    }
+    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
+
+    if (seqId == 1) {
+        ss << coverTag;
     }
     formattedTime = ss.str();
     MEDIA_INFO_LOG("CreateBurstDisplayName is %{private}s", formattedTime.c_str());
     return formattedTime;
 }
 
-typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t);
+typedef PhotoAssetIntf* (*GetPhotoAssetProxy)(int32_t, int32_t);
+
+void HCaptureSession::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy,
+    int32_t &cameraShotType, bool &isBursting, std::string &burstKey)
+{
+    cameraPhotoProxy->SetShootingMode(opMode_);
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
+    std::string imageId = cameraPhotoProxy->GetPhotoId();
+    isBursting = false;
+    bool isCoverPhoto = false;
+    int32_t invalidBurstSeqId = -1;
+    auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
+    for (auto& stream : captureStreams) {
+        CHECK_AND_CONTINUE_LOG(stream != nullptr, "stream is null");
+        MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
+        auto streamCapture = CastStream<HStreamCapture>(stream);
+        isBursting = streamCapture->IsBurstCapture(captureId);
+        if (isBursting) {
+            burstKey = streamCapture->GetBurstKey(captureId);
+            streamCapture->SetBurstImages(captureId, imageId);
+            isCoverPhoto = streamCapture->IsBurstCover(captureId);
+            int32_t burstSeqId = cameraPhotoProxy->GetBurstSeqId();
+            int32_t imageSeqId = streamCapture->GetCurBurstSeq(captureId);
+            int32_t displaySeqId = (burstSeqId != invalidBurstSeqId) ? burstSeqId : imageSeqId;
+            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeqId, displaySeqId));
+            streamCapture->CheckResetBurstKey(captureId);
+            MEDIA_INFO_LOG("isBursting burstKey:%{public}s isCoverPhoto:%{public}d", burstKey.c_str(), isCoverPhoto);
+            int32_t burstShotType = 3;
+            cameraShotType = burstShotType;
+            cameraPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
+            break;
+        }
+    }
+    MEDIA_INFO_LOG("GetLocation latitude:%{private}f, quality:%{public}d, format:%{public}d,",
+        cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
+}
 
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
@@ -1903,45 +1958,81 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->ReadFromParcel(data);
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
-    cameraPhotoProxy->SetShootingMode(opMode_);
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
-    std::string imageId = cameraPhotoProxy->GetPhotoId();
     bool isBursting = false;
-    bool isCoverPhoto = false;
-    auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
-    for (auto& stream : captureStreams) {
-        CHECK_AND_CONTINUE_LOG(stream != nullptr, "stream is null");
-        MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
-        auto streamCapture = CastStream<HStreamCapture>(stream);
-        isBursting = streamCapture->IsBurstCapture(captureId);
-        if (isBursting) {
-            burstKey = streamCapture->GetBurstKey(captureId);
-            streamCapture->SetBurstImages(captureId, imageId);
-            isCoverPhoto = streamCapture->IsBurstCover(captureId);
-            int32_t imageSeq = streamCapture->GetCurBurstSeq(captureId);
-            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeq));
-            streamCapture->CheckResetBurstKey(captureId);
-            MEDIA_INFO_LOG("isBursting burstKey:%{public}s isCoverPhoto:%{public}d", burstKey.c_str(), isCoverPhoto);
-            int32_t burstShotType = 3;
-            cameraShotType = burstShotType;
-            cameraPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
-            break;
-        }
-    }
-    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, quality:%{public}d, format:%{public}d,",
-        cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
-    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)dynamicLoader_->GetFuntion(
-        MEDIA_LIB_SO, "createPhotoAssetIntf");
-    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
+    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
+        MEDIA_LIB_SO, "createPhotoAssetIntf"));
+    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("taskManager setVideoFd start");
-        taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
     } else {
         delete photoAssetProxy;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
+}
+
+std::unordered_map<std::string, float> exifOrientationDegree = {
+    {"Top-left", 0},
+    {"Top-right", 90},
+    {"Bottom-right", 180},
+    {"Right-top", 90},
+    {"Left-bottom", 270},
+};
+
+inline float TransExifOrientationToDegree(const std::string& orientation)
+{
+    float degree = .0;
+    if (exifOrientationDegree.count(orientation)) {
+        degree = exifOrientationDegree[orientation];
+    }
+    return degree;
+}
+
+inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
+{
+    float degree = TransExifOrientationToDegree(exifOrientation);
+    if (pixelMap) {
+        MEDIA_INFO_LOG("RotatePicture degree is %{public}f", degree);
+        pixelMap->rotate(degree);
+    } else {
+        MEDIA_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
+    }
+}
+
+std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
+{
+    std::string orientation = "";
+    if (exifData != nullptr) {
+        exifData->GetValue("Orientation", orientation);
+        std::string defalutExifOrientation = "1";
+        exifData->SetValue("Orientation", defalutExifOrientation);
+        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
+    } else {
+        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
+    }
+    return orientation;
+}
+
+void RotatePicture(std::shared_ptr<Media::Picture> picture)
+{
+    std::string orientation = GetAndSetExifOrientation(
+        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
+    RotatePixelMap(picture->GetMainPixel(), orientation);
+    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
+    if (gainMap) {
+        RotatePixelMap(gainMap->GetContentPixel(), orientation);
+    }
+    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
+    if (depthMap) {
+        RotatePixelMap(depthMap->GetContentPixel(), orientation);
+    }
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
@@ -1958,27 +2049,32 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     PhotoFormat photoFormat = cameraPhotoProxy->GetFormat();
     std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
-    cameraPhotoProxy->SetShootingMode(opMode_);
-    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
-        cameraPhotoProxy->GetLatitude(), cameraPhotoProxy->GetLongitude());
-
-    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)dynamicLoader_->GetFuntion(
-        MEDIA_LIB_SO, "createPhotoAssetIntf");
-    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType);
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
+    bool isBursting = false;
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
+    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+    GetPhotoAssetProxy getPhotoAssetProxy = (GetPhotoAssetProxy)(CameraDynamicLoader::GetInstance()->GetFunction(
+        MEDIA_LIB_SO, "createPhotoAssetIntf"));
+    PhotoAssetIntf* photoAssetProxy = getPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
-    std::shared_ptr<Media::Picture> picturePtr(picture.release());
     uri = photoAssetProxy->GetPhotoAssetUri();
+    std::shared_ptr<Media::Picture> picturePtr(picture.release());
+    if (!isBursting && picturePtr) {
+        RotatePicture(picturePtr);
+    }
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
-    if (isSetMotionPhoto_) {
+    if (!isBursting && isSetMotionPhoto_) {
         int32_t videoFd = photoAssetProxy->GetVideoFd();
         MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
         if (taskManager_) {
-            taskManager_->SetVideoFd(timestamp, photoAssetProxy);
+            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }
     } else {
         delete photoAssetProxy;
     }
+    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
     return CAMERA_OK;
 }
 
@@ -2047,7 +2143,9 @@ void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
     if (frame->IsIdle() && videoCache) {
         videoCache->CacheFrame(frame);
     } else if (frame->IsFinishCache() && videoCache) {
-        videoCache->OnImageEncoded(frame, true);
+        videoCache->OnImageEncoded(frame, frame->IsEncoded());
+    } else if (frame->IsReadyConvert()) {
+        MEDIA_DEBUG_LOG("frame is ready convert");
     } else {
         MEDIA_INFO_LOG("videoCache and frame is not useful");
     }
@@ -2064,7 +2162,7 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
             [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
                          uint64_t timestamp,
                          int32_t rotation,
-                        int32_t captureId) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation, captureId); },
+                         int32_t captureId) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation, captureId); },
             timestamp_,
             rotation_,
             captureId_);
@@ -2183,7 +2281,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
 int32_t StreamOperatorCallback::OnFrameShutter(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRId64, timestamp);
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
@@ -2204,7 +2302,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(
 int32_t StreamOperatorCallback::OnFrameShutterEnd(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRId64, timestamp);
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);

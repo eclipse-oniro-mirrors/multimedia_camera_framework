@@ -65,7 +65,13 @@ public:
         string cameraId = cameraStatusInfo.cameraDevice->GetID();
         statusInfo.camera->cameraId = cameraId.data();
         MEDIA_INFO_LOG("cameraId is %{public}s", statusInfo.camera->cameraId);
-        statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
+        auto itr = g_FwkCameraPositionToNdk_.find(cameraStatusInfo.cameraDevice->GetPosition());
+        if (itr != g_FwkCameraPositionToNdk_.end()) {
+            statusInfo.camera->cameraPosition = itr->second;
+        } else {
+            MEDIA_ERR_LOG("OnCameraStatusChanged cameraPosition not found!");
+            return;
+        }
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
@@ -143,9 +149,9 @@ public:
                 cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
                 cameraDevice->cameraId = cameraIds[outSize].data();
                 cameraDevice->cameraType =
-                    static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
+                        static_cast<Camera_Type>(foldStatusInfo.supportedCameras[index]->GetCameraType());
                 cameraDevice->connectionType =
-                    static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
+                        static_cast<Camera_Connection>(foldStatusInfo.supportedCameras[index]->GetConnectionType());
                 supportedCamerasPtr[outSize] = cameraDevice;
                 outSize++;
             }
@@ -267,8 +273,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     std::vector<Profile> photoProfiles = innerCameraOutputCapability->GetPhotoProfiles();
     std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
 
-    std::vector<MetadataObjectType> metadataTypeList = innerCameraOutputCapability->GetSupportedMetadataObjectType();
-
+    std::vector<MetadataObjectType> metadataTypeList =
+        innerCameraOutputCapability->GetSupportedMetadataObjectType();
     std::vector<Profile> uniquePreviewProfiles;
     for (const auto& profile : previewProfiles) {
         if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
@@ -818,9 +824,9 @@ Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
 Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
 {
     shared_ptr<InnerCameraManagerFoldStatusCallback> innerFoldStatusCallback =
-                make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
+            make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
     CHECK_AND_RETURN_RET_LOG(innerFoldStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "create innerFoldStatusCallback failed!");
+                             "create innerFoldStatusCallback failed!");
     cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
     return CAMERA_OK;
 }

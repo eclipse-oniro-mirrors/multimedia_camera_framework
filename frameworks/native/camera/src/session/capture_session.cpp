@@ -175,7 +175,7 @@ const std::unordered_map<LightPaintingType, CameraLightPaintingType>
     {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
     {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
 };
- 
+
 const std::unordered_map<CameraLightPaintingType, LightPaintingType>
     CaptureSession::metaLightPaintingTypeMap_ = {
     {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
@@ -624,7 +624,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         }
     }
 
-    deviceInfo->modeVideoDeferredType_ = {};
+    inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_ = {};
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
     MEDIA_INFO_LOG("UpdateDeviceDeferredability get video ret: %{public}d", ret);
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability video item: %{public}d count: %{public}d", item.item, item.count);
@@ -632,7 +632,7 @@ void CaptureSession::UpdateDeviceDeferredability()
         if (i % DEFERRED_MODE_DATA_SIZE == 0) {
             MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, video deferredType:%{public}d",
                 item.data.u8[i], item.data.u8[i + 1]);
-            deviceInfo->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
+            inputDevice->GetCameraDeviceInfo()->modeVideoDeferredType_[item.data.u8[i]] = item.data.u8[i + 1];
         }
     }
 }
@@ -2329,10 +2329,12 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
         }
         arStatusInfo.laserData = laserData;
     }
+
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LENS_FOCUS_DISTANCE, &item);
     if (ret == CAM_META_SUCCESS) {
         arStatusInfo.lensFocusDistance = item.data.f[0];
     }
+
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
     if (ret == CAM_META_SUCCESS) {
         arStatusInfo.sensorSensitivity = item.data.i32[0];
@@ -3330,7 +3332,7 @@ CameraPosition CaptureSession::GetUsedAsPosition()
         return usedAsCameraPosition;
     }
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    if (inputDevice == nullptr) {
+    if (inputDeviceInfo == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::GetUsedAsPosition camera device info is null");
         return usedAsCameraPosition;
     }
@@ -3559,19 +3561,22 @@ int32_t CaptureSession::SetVideoRotation(int32_t rotation)
 // focus distance
 float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi")))
 {
-    float invalidDistance = 0.0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetMinimumFocusDistance Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetMinimumFocusDistance camera metadata is null");
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, invalidDistance,
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetMinimumFocusDistance Failed with return code %{public}d", ret);
     float minimumFocusDistance = item.data.f[0];
     MEDIA_DEBUG_LOG("CaptureSession::GetMinimumFocusDistance minimumFocusDistance=%{public}f", minimumFocusDistance);
@@ -3633,7 +3638,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
         focusDistance = 1.0;
     }
     float value = (1 - focusDistance) * GetMinimumFocusDistance();
-    focusDistance_ = value;
+    focusDistance_ = focusDistance;
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusDistance meta set focusDistance = %{public}f", value);
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LENS_FOCUS_DISTANCE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -4198,6 +4203,7 @@ bool CaptureSession::IsMacroSupported()
         MEDIA_ERR_LOG("CaptureSession::IsMacroSupported camera deviceInfo is null");
         return false;
     }
+
     if (supportSpecSearch_) {
         MEDIA_INFO_LOG("spec search enter");
         auto abilityContainer = GetCameraAbilityContainer();
@@ -4606,15 +4612,10 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
-        }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -4982,7 +4983,7 @@ int32_t CaptureSession::EnableAutoCloudImageEnhancement(bool enabled)
     MEDIA_INFO_LOG("CaptureSession::EnableAutoCloudImageEnhancement enabled:%{public}d", enabled);
 
     LockForControl();
-    
+
     int32_t res = CameraErrorCode::SUCCESS;
     bool status = false;
     camera_metadata_item_t item;
@@ -5361,7 +5362,10 @@ int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     MEDIA_DEBUG_LOG("CaptureSession::SetWhiteBalanceMode WhiteBalance mode: %{public}d", whiteBalanceMode);
     // no manual wb mode need set maunual value to 0
     if (mode != AWB_MODE_OFF) {
-        SetManualWhiteBalance(0);
+        int32_t wbValue = 0;
+        if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, 1)) {
+            MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance.");
+        }
     }
     res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1);
     CHECK_ERROR_PRINT_LOG(!res, "CaptureSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
@@ -6027,8 +6031,9 @@ bool CaptureSession::SwitchDevice()
     auto cameraInput = (sptr<CameraInput>&)captureInput;
     CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
     auto deviceiInfo = cameraInput->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo || deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT,
-        false, "No need switch camera.");
+    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo ||
+        (deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT &&
+        deviceiInfo->GetPosition() != CAMERA_POSITION_FOLD_INNER), false, "No need switch camera.");
     bool hasVideoOutput = StopVideoOutput();
     int32_t retCode = CameraErrorCode::SUCCESS;
     Stop();
@@ -6057,10 +6062,10 @@ bool CaptureSession::SwitchDevice()
 
 sptr<CameraDevice> CaptureSession::FindFrontCamera()
 {
-    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCamerasWithFoldStatus();
     for (const auto& cameraDevice : cameraDeviceList) {
-        MEDIA_INFO_LOG("CreateCameraInput position:%{public}d", cameraDevice->GetPosition());
-        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
+        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT ||
+            cameraDevice->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
             return cameraDevice;
         }
     }
@@ -6156,14 +6161,50 @@ void CaptureSession::SetUsage(UsageType usageType, bool enabled)
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
         "CaptureSession::SetUsage Need to call LockForControl() before setting camera properties");
     std::vector<int32_t> mode;
- 
+
     mode.push_back(static_cast<int32_t>(usageType));
     mode.push_back(
         static_cast<int32_t>(enabled ? OHOS_CAMERA_SESSION_USAGE_ENABLE : OHOS_CAMERA_SESSION_USAGE_DISABLE));
- 
+
     bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
- 
+
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
 }
+
+int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPrioritization)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetQualityPrioritization Session is not Commited");
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG(
+            "CaptureSession::SetQualityPrioritization Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    uint8_t quality = HIGH_QUALITY;
+    auto itr = g_fwkQualityPrioritizationMap_.find(qualityPrioritization);
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkQualityPrioritizationMap_.end(), CameraErrorCode::PARAMETER_ERROR,
+        "CaptureSession::SetColorSpace() map failed, %{public}d", static_cast<int32_t>(qualityPrioritization));
+    quality = itr->second;
+
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG(
+        "CaptureSession::SetQualityPrioritization quality prioritization: %{public}d", qualityPrioritization);
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_QUALITY_PRIORITIZATION, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
+    return CameraErrorCode::SUCCESS;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
