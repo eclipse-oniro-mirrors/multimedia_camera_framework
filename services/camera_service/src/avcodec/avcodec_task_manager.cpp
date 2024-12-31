@@ -338,7 +338,7 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
     int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-    if (audioCapturerSession_) {
+    if (audioCapturerSession_ && audioCapturerSession_->GetAudioDeferredProcess()) {
         int64_t startTime = NanosecToMillisec(videoStartTime);
         int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
         audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);

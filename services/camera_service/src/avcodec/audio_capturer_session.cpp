@@ -33,6 +33,7 @@ namespace CameraStandard {
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
+    audioDeferredProcess_ = new AudioDeferredProcess();
 }
 
 AudioChannel AudioCapturerSession::getMicNum()
@@ -86,7 +87,6 @@ bool AudioCapturerSession::CreateAudioCapturer()
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
-    audioDeferredProcess_ = new AudioDeferredProcess();
     if (!audioDeferredProcess_ || audioDeferredProcess_->GetOfflineEffectChain() != 0) {
         return false;
     }
