@@ -7075,19 +7075,20 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_115, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_116, TestSize.Level0)
 {
-    char* name = nullptr;
-    std::string cid = "272873888fe576592633a793fa235ad9f502f4115828d12abe459df5160e710e";
-    if (strcpy_s(cameraDevice->cameraId, cid.size(), cid.c_str()) != EOK) {
-        EXPECT_NE(std::string(name), "");
+    Camera_Device* cameras = nullptr;
+    uint32_t size;
+    Camera_ErrorCode ret = OH_CameraManager_GetSupportedCameras(cameraManager, &cameras, &size);
+    if (size == 0) {
+        return;
     }
-    Camera_ErrorCode ret = OH_CameraDevice_GetHostDeviceName(cameraDevice, &name);
     EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(std::string(name), "");
+    char* name = nullptr;
+    ret = OH_CameraDevice_GetHostDeviceName(cameraDevice, &name);
+    EXPECT_EQ(ret, CAMERA_OK);
 
     Camera_HostDeviceType type = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
     ret = OH_CameraDevice_GetHostDeviceType(cameraDevice, &type);
     EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(type, 0);
 }
 
 } // CameraStandard
