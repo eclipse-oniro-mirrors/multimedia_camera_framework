@@ -29,12 +29,14 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace CaptureSessionFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t NUM_2 = 2;
+const int32_t NUM_TWO = 2;
 sptr<IBufferProducer> surface;
 sptr<CameraDevice> camera;
 Profile profile;
@@ -73,9 +75,16 @@ void Test(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
     g_sceneMode = static_cast<SceneMode>(
-        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2));
+        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_TWO));
     auto manager = CameraManager::GetInstance();
-    auto session = manager->CreateCaptureSession(g_sceneMode);
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        return;
+    }
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    sptr<ICaptureSession> captureSession = iface_cast<ICaptureSession>(object);
+    sptr<CaptureSession> session = manager->CreateCaptureSessionImpl(SceneMode::NORMAL, captureSession);
     CHECK_ERROR_RETURN_LOG(!manager, "CaptureSessionFuzzer: CreateCaptureSession Error");
     TestCallback(session, rawData, size);
     TestSession(session, rawData, size);
@@ -89,6 +98,9 @@ void Test(uint8_t *rawData, size_t size)
     TestAperture(session, rawData, size);
     TestBeauty(session, rawData, size);
     TestOther(session, rawData, size);
+    TestOther2(session, rawData, size);
+    TestFlash(session, rawData, size);
+    TestAdd(session, rawData, size);
     session->Release();
     session->Stop();
 }
@@ -98,7 +110,7 @@ sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_2, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     camera = cameras[data.ReadUint32() % cameras.size()];
@@ -141,7 +153,7 @@ void TestExposure(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     vector<ExposureMode> exposureModes;
     session->GetSupportedExposureModes(exposureModes);
     ExposureMode exposureMode = static_cast<ExposureMode>(
-        data.ReadInt32() % (ExposureMode::EXPOSURE_MODE_CONTINUOUS_AUTO + NUM_2));
+        data.ReadInt32() % (ExposureMode::EXPOSURE_MODE_CONTINUOUS_AUTO + NUM_TWO));
     session->IsExposureModeSupported(exposureMode);
     session->IsExposureModeSupported(exposureMode, g_isSupported);
     session->GetExposureMode();
@@ -178,7 +190,7 @@ void TestFocus(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     vector<FocusMode> focusModes;
     session->GetSupportedFocusModes(focusModes);
     FocusMode focusMode = static_cast<FocusMode>(
-        data.ReadInt32() % (FocusMode::FOCUS_MODE_LOCKED + NUM_2));
+        data.ReadInt32() % (FocusMode::FOCUS_MODE_LOCKED + NUM_TWO));
     session->IsFocusModeSupported(focusMode);
     session->IsFocusModeSupported(focusMode, g_isSupported);
     session->GetFocusMode();
@@ -260,7 +272,7 @@ void TestStabilization(sptr<CaptureSession> session, uint8_t *rawData, size_t si
     session->GetSupportedStabilizationMode(modes);
     data.RewindRead(0);
     VideoStabilizationMode stabilizationMode = static_cast<VideoStabilizationMode>(
-        data.ReadInt32() % (VideoStabilizationMode::AUTO + NUM_2));
+        data.ReadInt32() % (VideoStabilizationMode::AUTO + NUM_TWO));
     session->IsVideoStabilizationModeSupported(stabilizationMode);
     session->IsVideoStabilizationModeSupported(stabilizationMode, g_isSupported);
     VideoStabilizationMode mode;
@@ -273,7 +285,6 @@ void TestStabilization(sptr<CaptureSession> session, uint8_t *rawData, size_t si
 void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    // 执行这段测试会卡死
     MessageParcel data;
     data.WriteRawData(rawData, size);
     session->GetSupportedFlashModes();
@@ -283,14 +294,12 @@ void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     bool hasFlash;
     session->HasFlash(hasFlash);
     FlashMode flashMode = static_cast<FlashMode>(
-        data.ReadInt32() % (FlashMode::FLASH_MODE_ALWAYS_OPEN + NUM_2));
+        data.ReadInt32() % (FlashMode::FLASH_MODE_ALWAYS_OPEN + NUM_TWO));
     session->IsFlashModeSupported(flashMode);
     session->IsFlashModeSupported(flashMode, g_isSupported);
     session->GetFlashMode();
     session->GetFlashMode(flashMode);
-    session->LockForControl();
     session->SetFlashMode(flashMode);
-    session->LockForControl();
 }
 
 void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
@@ -348,7 +357,7 @@ void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetARMode(data.ReadBool());
     session->EnableEffectSuggestion(data.ReadBool());
     vector<EffectSuggestionStatus> effectSuggestionStatusList;
-    size_t max = EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + NUM_2;
+    size_t max = EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + NUM_TWO;
     for (size_t i = 0; i < data.ReadInt32() % max; i++) {
         EffectSuggestionStatus status = {
             static_cast<EffectSuggestionType>(data.ReadInt32() % max),
@@ -370,7 +379,7 @@ void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->GetSupportedFilters();
     session->GetSupportedBeautyTypes();
     BeautyType type = static_cast<BeautyType>(
-        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_2));
+        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_TWO));
     session->GetSupportedBeautyRange(type);
     session->GetBeauty(type);
     session->GetSupportedColorSpaces();
@@ -381,15 +390,15 @@ void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 
     session->GetFilter();
     FilterType filter = static_cast<FilterType>(
-        data.ReadInt32() % (FilterType::PINK + NUM_2));
+        data.ReadInt32() % (FilterType::PINK + NUM_TWO));
     session->LockForControl();
     session->SetFilter(filter);
     session->SetColorSpace(colorSpace);
     ColorEffect colorEffect = static_cast<ColorEffect>(
-        data.ReadInt32() % (ColorEffect::COLOR_EFFECT_BLACK_WHITE + NUM_2));
+        data.ReadInt32() % (ColorEffect::COLOR_EFFECT_BLACK_WHITE + NUM_TWO));
     session->SetColorEffect(colorEffect);
     BeautyType beautyType = static_cast<BeautyType>(
-        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_2));
+        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_TWO));
     session->SetBeautyValue(beautyType, data.ReadInt32());
     session->SetBeauty(type, data.ReadInt32());
     session->UnlockForControl();
@@ -404,7 +413,7 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->IsMovingPhotoSupported();
     session->IsMoonCaptureBoostSupported();
     SceneFeature feature = static_cast<SceneFeature>(
-        data.ReadInt32() % (SceneFeature::FEATURE_ENUM_MAX + NUM_2));
+        data.ReadInt32() % (SceneFeature::FEATURE_ENUM_MAX + NUM_TWO));
     session->IsFeatureSupported(feature);
     vector<int32_t> sensitivityRange;
     session->GetSensorSensitivityRange(sensitivityRange);
@@ -424,21 +433,31 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     vector<int32_t> frameRateRange{data.ReadInt32(), data.ReadInt32()};
     session->SetFrameRateRange(frameRateRange);
     DeferredDeliveryImageType deferredType = static_cast<DeferredDeliveryImageType>(
-        data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + NUM_2));
+        data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + NUM_TWO));
     session->EnableDeferredType(deferredType, data.ReadBool());
     session->SetUserId();
     session->EnableAutoHighQualityPhoto(data.ReadBool());
+    session->EnableRawDelivery(data.ReadBool());
+    auto curMinFps = *(reinterpret_cast<const int32_t*>(rawData));
+    auto curMaxFps = *(reinterpret_cast<const int32_t*>(rawData));
+    auto minFps = *(reinterpret_cast<const int32_t*>(rawData));
+    auto maxFps = *(reinterpret_cast<const int32_t*>(rawData));
+    session->CheckFrameRateRangeWithCurrentFps(curMinFps, curMaxFps, minFps, maxFps);
+    ProfileSizeRatio sizeRatio = RATIO_1_1;
+    session->GetMaxSizePhotoProfile(sizeRatio);
+    session->GetPreconfigPreviewProfile();
+    session->GetPreconfigPhotoProfile();
+    session->GetPreconfigVideoProfile();
+    session->IsVideoDeferred();
 }
 
 void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    // 执行这段测试会卡死
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    session->LockForControl();
     camera_face_detect_mode_t t = static_cast<camera_face_detect_mode_t>(
-        data.ReadInt32() % (camera_face_detect_mode_t::OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE + NUM_2));
+        data.ReadInt32() % (camera_face_detect_mode_t::OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE + NUM_TWO));
     set<camera_face_detect_mode_t> metadataObjectTypes;
     metadataObjectTypes.insert(t);
     session->SetCaptureMetadataObjectTypes(metadataObjectTypes);
@@ -464,9 +483,9 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetMode(g_sceneMode);
     session->GetMode();
     PreconfigType preconfigType = static_cast<PreconfigType>(
-        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + NUM_2));
+        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + NUM_TWO));
     ProfileSizeRatio preconfigRatio = static_cast<ProfileSizeRatio>(
-        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + NUM_2));
+        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + NUM_TWO));
     session->CanPreconfig(preconfigType, preconfigRatio);
     session->Preconfig(preconfigType, preconfigRatio);
     session->BeginConfig();
@@ -481,11 +500,53 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->AddSecureOutput(output);
     input->Open();
     session->CommitConfig();
+    session->CheckSpecSearch();
     session->Start();
     curOutput = output.GetRefPtr();
     CaptureOutputType outputType = static_cast<CaptureOutputType>(
-        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + NUM_2));
+        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + NUM_TWO));
     session->ValidateOutputProfile(profile, outputType);
+    session->GeneratePreconfigProfiles(preconfigType, preconfigRatio);
+    session->EnableAutoDeferredVideoEnhancement(data.ReadBool());
+}
+
+void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    std::vector<PortraitThemeType> supportedPortraitThemeTypes = {
+        PortraitThemeType::NATURAL,
+        PortraitThemeType::DELICATE,
+        PortraitThemeType::STYLISH
+    };
+    session->SetPortraitThemeType(PortraitThemeType::NATURAL);
+    session->GetSupportedPortraitThemeTypes(supportedPortraitThemeTypes);
+    session->IsPortraitThemeSupported();
+    std::vector<int32_t> supportedRotation = {0, 90, 180, 270};
+    session->GetSupportedVideoRotations(supportedRotation);
+    session->IsVideoRotationSupported();
+    session->SetVideoRotation(data.ReadInt32());
+    FoldCallback *fold = new FoldCallback(session);
+    fold->OnFoldStatusChanged(FoldStatus::UNKNOWN_FOLD);
+    session->ExecuteAllFunctionsInMap();
+    session->CreateAndSetFoldServiceCallback();
+    shared_ptr<AutoDeviceSwitchCallback> autoDeviceSwitchCallback = nullptr;
+    session->SwitchDevice();
+    session->FindFrontCamera();
+    session->SetAutoDeviceSwitchCallback(autoDeviceSwitchCallback);
+    session->GetAutoDeviceSwitchCallback();
+    session->StartVideoOutput();
+    session->StopVideoOutput();
+    session->SetUsage(UsageType::BOKEH, data.ReadBool());
+    session->IsAutoDeviceSwitchSupported();
+    session->EnableAutoDeviceSwitch(data.ReadBool());
+    session->SetIsAutoSwitchDeviceStatus(data.ReadBool());
+    pid_t pid = data.ReadInt32();
+    session->CameraServerDied(pid);
+    sptr<CaptureInput> inputDevice = nullptr;
+    session->SetInputDevice(inputDevice);
+    session->CreateCameraAbilityContainer();
+    session->SetDefaultColorSpace();
 }
 
 } // namespace StreamRepeatStubFuzzer

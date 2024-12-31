@@ -35,7 +35,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace CloudEnhanceSessionFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t NUM_2 = 2;
+const int32_t NUM_TWO = 2;
 sptr<IBufferProducer> surface;
 sptr<CameraDevice> camera;
 Profile profile;
@@ -74,7 +74,7 @@ sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
     MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_2,
+    CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO,
         nullptr, "CloudEnhanceSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
@@ -114,9 +114,9 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetMode(g_sceneMode);
     session->GetMode();
     PreconfigType preconfigType = static_cast<PreconfigType>(
-        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + NUM_2));
+        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + NUM_TWO));
     ProfileSizeRatio preconfigRatio = static_cast<ProfileSizeRatio>(
-        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + NUM_2));
+        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + NUM_TWO));
     session->CanPreconfig(preconfigType, preconfigRatio);
     session->Preconfig(preconfigType, preconfigRatio);
     session->BeginConfig();
@@ -134,7 +134,7 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->Start();
     curOutput = output.GetRefPtr();
     CaptureOutputType outputType = static_cast<CaptureOutputType>(
-        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + NUM_2));
+        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + NUM_TWO));
     session->ValidateOutputProfile(profile, outputType);
 }
 
@@ -161,7 +161,7 @@ void Test(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
     g_sceneMode = static_cast<SceneMode>(
-        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2));
+        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_TWO));
     auto manager = CameraManager::GetInstance();
     auto session = manager->CreateCaptureSession(g_sceneMode);
     CHECK_ERROR_RETURN_LOG(!manager, "CloudEnhanceSessionFuzzer: CreateCaptureSession Error");
