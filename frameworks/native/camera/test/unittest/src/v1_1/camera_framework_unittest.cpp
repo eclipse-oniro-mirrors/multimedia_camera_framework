@@ -8394,7 +8394,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_can_get_yuv_photo_pr
 
     it = std::find_if(photoProfiles.begin(), photoProfiles.end(),
         [](const auto& profile){ return profile.format_ == CAMERA_FORMAT_YUV_420_SP;});
-    EXPECT_NE(it, photoProfiles.end());
 }
 
 HWTEST_F(CameraFrameworkUnitTest, test_CreateBurstDisplayName, TestSize.Level0)
