@@ -152,9 +152,10 @@ int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
     int32_t rotation = data.ReadInt32();
-    
-    int ret = SetCameraRotation(isEnable, rotation);
-    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", ret);
+    uint32_t apiCompatibleVersion = data.ReadUint32();
+
+    int ret = SetCameraRotation(isEnable, rotation, apiCompatibleVersion);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
     return ret;
 }
 

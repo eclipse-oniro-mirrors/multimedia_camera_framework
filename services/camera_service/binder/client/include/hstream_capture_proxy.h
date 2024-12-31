@@ -51,6 +51,8 @@ public:
 
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
 
+    int32_t SetCameraPhotoRotation(bool isEnable) override;
+
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
 
 private:

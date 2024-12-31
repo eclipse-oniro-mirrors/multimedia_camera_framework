@@ -32,7 +32,7 @@ public:
     {
         return 0;
     }
-    int32_t SetCameraRotation(bool isEnable = false, int32_t rotation = 0) override
+    int32_t SetCameraRotation(bool isEnable = false, int32_t rotation = 0, uint32_t apiCompatibleVersion = 0) override
     {
         return 0;
     }

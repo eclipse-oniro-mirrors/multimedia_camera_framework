@@ -23,6 +23,7 @@
 #include "icamera_service.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
+#include "input/camera_device.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -233,6 +234,7 @@ private:
     int32_t StopSketch();
     void CameraServerDied(pid_t pid) override;
     int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+    int32_t JudegRotationFunc(int32_t imageRotation);
 };
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {

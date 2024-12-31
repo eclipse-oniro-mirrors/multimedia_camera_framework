@@ -43,6 +43,7 @@ enum class RepeatStreamStatus {
     STARTED
 };
 #define CAMERA_ROTATION_TYPE_BASE 4
+#define CAMERA_API_VERSION_BASE 14
 class EXPORT_API HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(
@@ -83,7 +84,7 @@ public:
     void SetStreamTransform(int disPlayRotation = -1);
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
-    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -92,6 +93,7 @@ private:
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
+    void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -113,6 +115,7 @@ private:
     bool enableStreamRotate_ = false;
     bool enableCameraRotation_ = false;
     int32_t setCameraRotation_ = 0;
+    uint32_t apiCompatibleVersion_ = 0;
     std::string deviceClass_ = "phone";
     sptr<OHOS::IBufferProducer> metaProducer_;
     std::mutex movingPhotoCallbackLock_;

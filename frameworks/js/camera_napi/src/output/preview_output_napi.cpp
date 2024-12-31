@@ -844,6 +844,11 @@ napi_value PreviewOutputNapi::GetPreviewRotation(napi_env env, napi_callback_inf
                 "GetPreviewRotation Camera service fatal error.");
             return result;
         }
+        if (retCode == INVALID_ARGUMENT) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT,
+                "GetPreviewRotation Camera invalid argument.");
+            return result;
+        }
         napi_create_int32(env, retCode, &result);
         MEDIA_INFO_LOG("PreviewOutputNapi GetPreviewRotation! %{public}d", retCode);
     } else {
@@ -872,7 +877,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
         return nullptr;
     }
     if (previewOutputNapi->previewOutput_ == nullptr || imageRotation < 0 ||
-        imageRotation > ROTATION_270) {
+        imageRotation > ROTATION_270 || (imageRotation % ROTATION_90 != 0)) {
         MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return nullptr;
