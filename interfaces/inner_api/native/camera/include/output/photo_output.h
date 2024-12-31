@@ -461,6 +461,9 @@ public:
      */
     int32_t EnableDepthDataDelivery(bool enabled);
 
+    int32_t EnableMovingPhoto(bool enabled);
+    bool UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy);
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;
@@ -480,6 +483,9 @@ public:
 
     void SetAuxiliaryPhotoHandle(uint32_t handle);
     uint32_t GetAuxiliaryPhotoHandle();
+
+    void AcquireBufferToPrepareProxy(int32_t captureId);
+
     uint32_t watchDogHandle_ = 0;
     std::mutex watchDogHandleMutex_;
     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;

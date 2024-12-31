@@ -45,7 +45,7 @@ napi_value MacroVideoSessionNapi::Init(napi_env env, napi_value exports)
 
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, flash_props,
         auto_exposure_props, focus_props, zoom_props, color_effect_props, features_props, stabilization_props,
-        manual_focus_props };
+        manual_focus_props, color_management_props };
 
     std::vector<napi_property_descriptor> macro_video_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);

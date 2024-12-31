@@ -27,7 +27,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
 
 void CheckPermission();
 
-}
-}
-}
-#endif
+} //StreamRepeatStubFuzzer
+} //CameraStandard
+} //OHOS
+#endif //STREAM_REPEAT_STUB_FUZZER_H

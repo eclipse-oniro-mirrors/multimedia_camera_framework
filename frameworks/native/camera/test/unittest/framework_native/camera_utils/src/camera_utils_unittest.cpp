@@ -20,7 +20,6 @@
 #include "message_parcel.h"
 #include "surface.h"
 #include "utils/camera_buffer_handle_utils.h"
-#include "utils/camera_report_dfx_uitls.h"
 #include "utils/camera_security_utils.h"
 #include "utils/dps_metadata_info.h"
 #include "utils/metadata_common_utils.h"

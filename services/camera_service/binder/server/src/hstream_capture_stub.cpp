@@ -15,9 +15,10 @@
 
 #include "hstream_capture_stub.h"
 #include "camera_log.h"
+#include "camera_photo_proxy.h"
+#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "metadata_utils.h"
-#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -52,6 +53,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY):
             errCode = HandleEnableRawDelivery(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_MOVING_PHOTO):
+            errCode = HandleEnableMovingPhoto(data);
+            break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE):
             errCode = HandleEnableDeferredType(data);
             break;
@@ -69,6 +73,12 @@ int HStreamCaptureStub::OnRemoteRequest(
             break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_PHOTO_ROTATION):
             errCode = HandleSetCameraPhotoRotation(data);
+            break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ADD_MEDIA_LIBRARY_PHOTO_PROXY):
+            errCode = HandleAddMediaLibraryPhotoProxy(data);
+            break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX):
+            errCode = HandleAcquireBufferToPrepareProxy(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
@@ -111,6 +121,14 @@ int32_t HStreamCaptureStub::HandleEnableRawDelivery(MessageParcel &data)
 {
     bool enabled = data.ReadBool();
     int32_t ret = EnableRawDelivery(enabled);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamCaptureStub::HandleEnableMovingPhoto(MessageParcel &data)
+{
+    bool enabled = data.ReadBool();
+    int32_t ret = EnableMovingPhoto(enabled);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableRawDelivery result: %{public}d", ret);
     return ret;
 }
@@ -158,12 +176,30 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
+int32_t HStreamCaptureStub::HandleAddMediaLibraryPhotoProxy(MessageParcel& data)
+{
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    photoProxy->ReadFromParcel(data);
+    int ret = UpdateMediaLibraryPhotoAssetProxy(photoProxy);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::HandleSetCameraPhotoRotation failed : %{public}d", ret);
+    return ret;
+}
+
 int32_t HStreamCaptureStub::HandleSetCameraPhotoRotation(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
 
     int ret = SetCameraPhotoRotation(isEnable);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::SetCameraPhotoRotation failed : %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& data)
+{
+    int32_t captureId = data.ReadInt32();
+    int32_t ret = AcquireBufferToPrepareProxy(captureId);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+                          "HStreamCaptureStub::HandleAcquireBufferToPrepareProxy failed : %{public}d", ret);
     return ret;
 }
 } // namespace CameraStandard

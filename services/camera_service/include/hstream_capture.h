@@ -33,6 +33,8 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
+class PhotoAssetIntf;
+class CameraServerPhotoProxy;
 constexpr const char* BURST_UUID_UNSET = "";
 class EXPORT_API HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
@@ -44,6 +46,7 @@ public:
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t EnableRawDelivery(bool enabled) override;
+    int32_t EnableMovingPhoto(bool enabled) override;
     int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t DeferImageDeliveryFor(int32_t type) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
@@ -77,6 +80,12 @@ public:
     void SetBurstImages(int32_t captureId, std::string imageId);
     void CheckResetBurstKey(int32_t captureId);
     int32_t SetCameraPhotoRotation(bool isEnable) override;
+    int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
+    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) override;
+    std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
+    void EnableAddPhotoProxy(bool enabled);
+    bool GetAddPhotoProxyEnabled();
+    int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -87,10 +96,12 @@ private:
     void EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_);
     void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
+    void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     int32_t rawDeliverySwitch_;
+    int32_t movingPhotoSwitch_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
     sptr<BufferProducerSequenceable> rawBufferQueue_;
     sptr<BufferProducerSequenceable> gainmapBufferQueue_;
@@ -101,6 +112,8 @@ private:
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
     bool enableCameraPhotoRotation_ = false;
+    bool enableAddPhotoProxy_ = false;
+    std::mutex enableAddPhotoProxyLock_;
     std::atomic<bool> isCaptureReady_ = true;
     std::string curBurstKey_ = BURST_UUID_UNSET;
     bool isBursting_ = false;
@@ -110,6 +123,8 @@ private:
     mutable std::mutex burstLock_;
     int32_t burstNum_;
     int32_t videoCodecType_ = 0;
+    std::mutex photoAssetLock_;
+    std::map<int32_t, std::shared_ptr<PhotoAssetIntf>> photoAssetProxy_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

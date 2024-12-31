@@ -231,6 +231,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateFrameRateSettings(dynamicSetting);
     }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        UpdateAutoFrameRateSettings(dynamicSetting);
+    }
     if (settings != nullptr) {
         UpdateFrameMuteSettings(settings, dynamicSetting);
     }
@@ -678,13 +681,13 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get sensor orientation failed");
         sensorOrientation = item.data.i32[0];
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get camera position failed");
         cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
     if (producer_ == nullptr) {
@@ -695,7 +698,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
     }
-    if (enableCameraRotation_) {
+    if (enableCameraRotation_ && sensorOrientation != 0) {
         ProcessCameraSetRotation(sensorOrientation, cameraPosition);
     }
     if (apiCompatibleVersion_ >= CAMERA_API_VERSION_BASE) {
@@ -987,6 +990,30 @@ int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& prod
         metaSurfaceBufferQueue_ = new BufferProducerSequenceable(producer);
     }
     return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::ToggleAutoVideoFrameRate(bool isEnable)
+{
+    MEDIA_INFO_LOG("HStreamRepeat::ToggleAutoVideoFrameRate enable: %{public}d", isEnable);
+    enableAutoFrameRate_ = isEnable;
+    return CAMERA_OK;
+}
+ 
+void HStreamRepeat::UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateAutoFrameRateSettings settings is nullptr");
+    bool status = false;
+    camera_metadata_item_t item;
+ 
+    uint8_t autoFrameRate = enableAutoFrameRate_;
+    MEDIA_INFO_LOG("HStreamRepeat::UpdateAutoFrameRateSettings set enable %{public}d", autoFrameRate);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = settings->addEntry(OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &autoFrameRate, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = settings->updateEntry(OHOS_CONTROL_AUTO_VIDEO_FRAME_RATE, &autoFrameRate, 1);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "UpdateAutoFrameRateSettings Failed to set auto-frame rate in VideoSettings");
 }
 } // namespace CameraStandard
 } // namespace OHOS

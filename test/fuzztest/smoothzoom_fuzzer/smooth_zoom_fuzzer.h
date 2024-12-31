@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STREAM_CAPTURE_STUB_FUZZER_H
-#define STREAM_CAPTURE_STUB_FUZZER_H
+#ifndef SMOOTH_ZOOM_FUZZER_H
+#define SMOOTH_ZOOM_FUZZER_H
 
 #include "smooth_zoom/smooth_zoom.h"
 
@@ -24,12 +24,12 @@ namespace CameraStandard {
 class SmoothZoomFuzzer {
 public:
 static bool hasPermission;
-static SmoothZoom *fuzz;
+static SmoothZoom *fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //SMOOTH_ZOOM_FUZZER_H

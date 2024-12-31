@@ -68,7 +68,7 @@ namespace CameraStandard {
 namespace StreamMetadataStubFuzzer {
 
 bool g_hasPermission = false;
-HStreamMetadataStub *fuzz = nullptr;
+HStreamMetadataStub *fuzz_ = nullptr;
 
 void CheckPermission()
 {
@@ -93,13 +93,13 @@ void Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
+    if (fuzz_ == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
         CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         const int32_t face = 0;
         std::vector<int32_t> type = {face};
-        fuzz = new HStreamMetadata(producer, PHOTO_FORMAT, type);
+        fuzz_ = new HStreamMetadata(producer, PHOTO_FORMAT, type);
     }
 
     Test_OnRemoteRequest(rawData, size);
@@ -108,7 +108,7 @@ void Test(uint8_t *rawData, size_t size)
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(fuzz->GetDescriptor());
+    data.WriteInterfaceToken(fuzz_->GetDescriptor());
     auto metadata = MakeMetadata(rawData, size);
     CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data)),
         "StreamMetadataStubFuzzer: EncodeCameraMetadata Error");
@@ -117,19 +117,19 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     MessageOption option;
     code  = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START);
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 
     code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP);
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 
     code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE);
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 
     code = INVALID_CODE;
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
 } // namespace StreamMetadataStubFuzzer

@@ -32,6 +32,7 @@
 #include "camera_security_utils.h"
 #include "camera_service_system_ability_listener.h"
 #include "camera_util.h"
+#include "camera_rotation_api_utils.h"
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
 #include "display_manager.h"
@@ -1279,18 +1280,19 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     }
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
-    for (auto& deviceInfo : cameraDeviceList) {
-        // Compatible with adaptive applications
-        if (deviceInfo->GetPosition() == CAMERA_POSITION_BACK &&
-            (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
-            supportedCameraDeviceList.emplace_back(deviceInfo);
-            continue;
-        }
-        if ((deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) &&
-            (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
-            supportedCameraDeviceList.emplace_back(deviceInfo);
-            continue;
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    for (const auto& deviceInfo : cameraDeviceList) {
+        // Check for API compatibility
+        if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+            bool isBackCamera = deviceInfo->GetPosition() == CAMERA_POSITION_BACK;
+            bool isInnerOrFrontCamera = (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
+                deviceInfo->GetPosition() == CAMERA_POSITION_FRONT);
+            bool isUnsupportedFoldScreenType = (foldScreenType_[0] != '2' && foldScreenType_[0] != '4');
+
+            if ((isBackCamera || isInnerOrFrontCamera) && isUnsupportedFoldScreenType) {
+                supportedCameraDeviceList.emplace_back(deviceInfo);
+                continue;
+            }
         }
 
         auto supportedFoldStatus = deviceInfo->GetSupportedFoldStatus();
@@ -1445,26 +1447,24 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
         ReportEvent(camera->GetID());
     }
 
-    // Compatible with adaptive applications
+    // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
-    if ((curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN &&
+        (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
         camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT && foldScreenType_[0] != '4') {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
         sptr<CameraDevice> cameraInfo;
-        for (size_t i = 0; i < cameraObjList.size(); i++) {
-            sptr<CameraDevice> cameraDevice = cameraObjList[i];
-            if (cameraDevice == nullptr) {
-                continue;
-            }
-            if (cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
+        for (const auto& cameraDevice : cameraObjList) {
+            if (cameraDevice != nullptr &&
+                cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
                 camera = cameraDevice;
                 break;
             }
         }
     }
-
     sptr<ICameraDeviceService> deviceObj = nullptr;
     int32_t retCode = CreateCameraDevice(camera->GetID(), &deviceObj);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, retCode,
@@ -1773,16 +1773,15 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     }
     FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
-    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
-    MEDIA_INFO_LOG("SetPreviewProfiles size = %{public}zu", profilesWrapper.previewProfiles.size());
     if (!isPhotoMode_.count(modeName)) {
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
-    MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", profilesWrapper.vidProfiles.size());
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_INFO_LOG("SetDepthProfiles size = %{public}zu", depthProfiles_.size());
-
+    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+        "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
+        profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
+        profilesWrapper.vidProfiles.size(), depthProfiles_.size());
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
     if (!CameraSecurity::CheckSystemApp()) {
@@ -2404,6 +2403,32 @@ int32_t CameraManager::RequireMemorySize(int32_t memSize)
     int32_t retCode = serviceProxy->RequireMemorySize(memSize);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "RequireMemorySize call failed, retCode: %{public}d", retCode);
     return retCode;
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasWithFoldStatus()
+{
+    auto cameraDeviceList = GetCameraDeviceList();
+    bool isFoldable = GetIsFoldable();
+    CHECK_ERROR_RETURN_RET(!isFoldable, cameraDeviceList);
+    auto curFoldStatus = GetFoldStatus();
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::EXPAND;
+    }
+    MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
+    std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
+    for (const auto& deviceInfo : cameraDeviceList) {
+        auto supportedFoldStatus = deviceInfo->GetSupportedFoldStatus();
+        auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
+        if (it == g_metaToFwCameraFoldStatus_.end()) {
+            MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
+        if (it->second == curFoldStatus) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+        }
+    }
+    return supportedCameraDeviceList;
 }
 } // namespace CameraStandard
 } // namespace OHOS

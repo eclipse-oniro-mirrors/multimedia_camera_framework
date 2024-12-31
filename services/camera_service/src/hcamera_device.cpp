@@ -631,24 +631,25 @@ void HCameraDevice::UnPrepareZoom()
 int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HCameraDevice::UpdateSetting prepare execute");
-    CHECK_ERROR_RETURN_RET_LOG(settings == nullptr, CAMERA_INVALID_ARG, "settings is null");
+    CHECK_ERROR_RETURN_RET_LOG(settings == nullptr, CAMERA_INVALID_ARG,
+        "HCameraDevice::UpdateSetting settings is null");
     CheckZoomChange(settings);
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
-    CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "Nothing to update");
+    CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
     std::lock_guard<std::mutex> lock(opMutex_);
     if (updateSettings_ == nullptr || !CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_)) {
         updateSettings_ = settings;
     }
-    MEDIA_INFO_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
+    MEDIA_INFO_LOG("HCameraDevice::UpdateSetting Updated device settings hdiCameraDevice_(%{public}d)",
+        hdiCameraDevice_ != nullptr);
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, hdiSettings);
         ReportMetadataDebugLog(updateSettings_);
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
         CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
-            "Failed with error Code: %{public}d", rc);
+            "HCameraDevice::UpdateSetting Failed with error Code: %{public}d", rc);
         UpdateDeviceOpenLifeCycleSettings(updateSettings_);
         {
             std::lock_guard<std::mutex> cachedLock(cachedSettingsMutex_);

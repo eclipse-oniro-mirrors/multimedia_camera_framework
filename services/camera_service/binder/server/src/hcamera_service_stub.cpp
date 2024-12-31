@@ -724,13 +724,10 @@ int HCameraServiceStub::HandleResetAllFreezeStatus(MessageParcel& data, MessageP
 
 int HCameraServiceStub::HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply)
 {
-    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
-
     std::vector<std::string> deviceInfos;
     int ret = GetDmDeviceInfo(deviceInfos);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteStringVector(deviceInfos), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleGetDmDeviceInfo WriteStringVector failed");
-
     return ret;
 }
 

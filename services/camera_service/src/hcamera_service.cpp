@@ -84,7 +84,6 @@ std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE,
     OHOS_CONTROL_BEAUTY_TYPE,
     OHOS_CONTROL_BEAUTY_AUTO_VALUE,
-    OHOS_CONTROL_CAMERA_MACRO,
 };
 mutex g_dataShareHelperMutex;
 mutex g_dmDeviceInfoMutex;
@@ -136,8 +135,8 @@ void HCameraService::OnStart()
 #ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
 #endif
-    AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
+    AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
     if (Publish(this)) {
         MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
     } else {
@@ -417,7 +416,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
-        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
+        MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
             camera->cameraId.c_str(), camera->position, camera->connectionType);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
@@ -427,7 +426,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
                     defaultCamera->foldStatus == camera->foldStatus);
             })
         ) {
-            MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
+            MEDIA_DEBUG_LOG("ChooseDeFaultCameras alreadly has default camera");
         } else {
             choosedCameras.emplace_back(camera);
             MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
@@ -1870,7 +1869,6 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
 {
     constexpr int32_t maxSaUid = 10000;
     CHECK_ERROR_RETURN_RET_LOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
-    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
     {
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
         if (isProxy) {

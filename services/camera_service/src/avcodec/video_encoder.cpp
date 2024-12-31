@@ -108,11 +108,11 @@ int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
         "SurfaceBuffer is released %{public}s", frameRecord->GetFrameId().c_str());
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     BufferRequestConfig requestConfig = {
-        .width = frameRecord->GetSurfaceBuffer()->GetWidth(),
-        .height = frameRecord->GetSurfaceBuffer()->GetHeight(),
+        .width = frameRecord->GetFrameSize()->width,
+        .height = frameRecord->GetFrameSize()->height,
         .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .format = frameRecord->GetSurfaceBuffer()->GetFormat(),
-        .usage = frameRecord->GetSurfaceBuffer()->GetUsage(),
+        .format = frameRecord->GetFormat(),
+        .usage = frameRecord->GetUsage(),
         .timeout = 0,
     };
     sptr<SurfaceBuffer> releaseBuffer;

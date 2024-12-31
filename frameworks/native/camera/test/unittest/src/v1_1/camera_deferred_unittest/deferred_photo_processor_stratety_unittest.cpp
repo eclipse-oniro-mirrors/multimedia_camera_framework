@@ -99,9 +99,9 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
         EXPECT_EQ(work, nullptr);
     }
     auto mode = strategy->GetExecutionMode();
-    EXPECT_EQ(mode, ExecutionMode::LOAD_BALANCE);
+    EXPECT_EQ(mode, ExecutionMode::DUMMY);
     auto status = strategy->GetHdiStatus();
-    EXPECT_EQ(status, HdiStatus::HDI_READY);
+    EXPECT_EQ(status, HdiStatus::HDI_DISCONNECTED);
     GTEST_LOG_(INFO) << "deferred_photo_processor_stratety_unittest_001 end";
 }
 
@@ -249,7 +249,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
 
     strategy->StartTrailing(TRAILING_DURATION_TWO_SEC);
     auto mode = strategy->GetExecutionMode();
-    EXPECT_EQ(mode, ExecutionMode::LOAD_BALANCE);
+    EXPECT_EQ(mode, ExecutionMode::DUMMY);
     auto job = strategy->GetJob();
     auto work = strategy->GetWork();
     if (job) {
@@ -491,7 +491,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
         EXPECT_EQ(work, nullptr);
     }
     auto mode = strategy->GetExecutionMode();
-    EXPECT_EQ(mode, ExecutionMode::HIGH_PERFORMANCE);
+    EXPECT_EQ(mode, ExecutionMode::DUMMY);
     GTEST_LOG_(INFO) << "deferred_photo_processor_stratety_unittest_016 end";
 }
 } // CameraStandard

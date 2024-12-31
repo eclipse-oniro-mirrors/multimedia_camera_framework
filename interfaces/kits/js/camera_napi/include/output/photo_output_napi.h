@@ -158,7 +158,6 @@ private:
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
     void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
-    sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer);
     uint8_t callbackFlag_ = 0;
 };
 
@@ -245,9 +244,9 @@ struct PhotoOutputCallbackInfo {
 class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
-    ~ThumbnailListener() = default;
+    virtual ~ThumbnailListener();
     void OnBufferAvailable() override;
-
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
 private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;

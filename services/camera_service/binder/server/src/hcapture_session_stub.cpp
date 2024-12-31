@@ -260,7 +260,8 @@ int32_t HCaptureSessionStub::HandleEnableMovingPhoto(MessageParcel &data)
 int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
 {
     bool isMirror = data.ReadBool();
-    return EnableMovingPhotoMirror(isMirror);
+    bool isConfig = data.ReadBool();
+    return EnableMovingPhotoMirror(isMirror, isConfig);
 }
 
 int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
@@ -282,7 +283,10 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, Messa
 
 int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
 {
+    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
     Picture *picturePtr = Media::Picture::Unmarshalling(data);
+    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
+
     CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
     std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
@@ -294,7 +298,9 @@ int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& d
     std::string uri;
     int32_t cameraShotType = 0;
     std::string burstKey;
+    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture E");
     int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
+    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture X");
     CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
         !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
         "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");

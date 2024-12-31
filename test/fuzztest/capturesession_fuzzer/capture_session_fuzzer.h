@@ -95,7 +95,7 @@ public:
     void OnAbilityChange() override {}
 };
 
-}
-}
-}
-#endif
+} //CaptureSessionFuzzer
+} //CameraStandard
+} //OHOS
+#endif //CAPTURE_SESSION_FUZZER_H

@@ -345,7 +345,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhoto(bool isEnable)
     return error;
 }
 
-int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
+int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -353,6 +353,7 @@ int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror)
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isMirror);
+    data.WriteBool(isConfig);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE),
         data, reply, option);
@@ -394,7 +395,9 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
         return IPC_PROXY_ERR;
     }
     data.WriteInterfaceToken(GetDescriptor());
+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling E");
     CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling X");
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(

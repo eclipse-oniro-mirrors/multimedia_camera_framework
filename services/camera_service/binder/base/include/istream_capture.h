@@ -23,6 +23,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class CameraPhotoProxy;
 class IStreamCapture : public IStreamCommon {
 public:
     virtual int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) = 0;
@@ -39,6 +40,8 @@ public:
 
     virtual int32_t EnableRawDelivery(bool enabled) = 0;
 
+    virtual int32_t EnableMovingPhoto(bool enabled) = 0;
+
     virtual int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) = 0;
 
     virtual int32_t DeferImageDeliveryFor(int32_t type) = 0;
@@ -50,6 +53,10 @@ public:
     virtual int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) = 0;
 
     virtual int32_t SetCameraPhotoRotation(bool isEnable) = 0;
+
+    virtual int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) = 0;
+
+    virtual int32_t AcquireBufferToPrepareProxy(int32_t captureId) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };

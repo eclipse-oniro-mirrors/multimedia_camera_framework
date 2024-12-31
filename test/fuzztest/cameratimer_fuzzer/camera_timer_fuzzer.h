@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STREAM_CAPTURE_STUB_FUZZER_H
-#define STREAM_CAPTURE_STUB_FUZZER_H
+#ifndef CAMERA_TIMER_FUZZER_H
+#define CAMERA_TIMER_FUZZER_H
 
 #include "camera_timer.h"
 
@@ -24,12 +24,12 @@ namespace CameraStandard {
 class CameraTimerFuzzer {
 public:
 static bool hasPermission;
-static CameraTimer *fuzz;
+static CameraTimer *fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();
 };
 
-}
-}
-#endif
+} //CameraStandard
+} //OHOS
+#endif //CAMERA_TIMER_FUZZER_H

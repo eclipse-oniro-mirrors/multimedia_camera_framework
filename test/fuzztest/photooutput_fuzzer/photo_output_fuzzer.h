@@ -42,7 +42,7 @@ public:
 void Test(uint8_t *rawData, size_t size);
 void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
 
-}
-}
-}
-#endif
+} //PhotoOutputFuzzer
+} //CameraStandard
+} //OHOS
+#endif //PHOTO_OUTPUT_FUZZER_H

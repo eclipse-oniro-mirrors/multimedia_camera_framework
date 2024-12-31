@@ -258,7 +258,7 @@ public:
     int32_t GetopMode();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
-    int32_t EnableMovingPhotoMirror(bool isMirror) override;
+    int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp) override;
     int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,

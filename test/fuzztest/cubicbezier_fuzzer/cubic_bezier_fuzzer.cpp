@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CubicBezierFuzzer::hasPermission = false;
-CubicBezier *CubicBezierFuzzer::fuzz = nullptr;
+CubicBezier *CubicBezierFuzzer::fuzz_ = nullptr;
 
 void CubicBezierFuzzer::CheckPermission()
 {
@@ -58,8 +58,8 @@ void CubicBezierFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
-        fuzz = new CubicBezier();
+    if (fuzz_ == nullptr) {
+        fuzz_ = new CubicBezier();
     }
     MessageParcel data;
     data.WriteRawData(rawData, size);
@@ -68,7 +68,7 @@ void CubicBezierFuzzer::Test(uint8_t *rawData, size_t size)
     float currentZoom = data.ReadFloat();
     float targetZoom = data.ReadFloat();
     float frameInterval = data.ReadFloat();
-    fuzz->GetZoomArray(currentZoom, targetZoom, frameInterval);
+    fuzz_->GetZoomArray(currentZoom, targetZoom, frameInterval);
 }
 
 } // namespace CameraStandard

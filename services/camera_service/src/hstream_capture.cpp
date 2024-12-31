@@ -15,16 +15,22 @@
 
 #include "hstream_capture.h"
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <uuid.h>
 
 #include "camera_log.h"
+#include "camera_server_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
+#include "camera_dynamic_loader.h"
+#include "media_library/photo_asset_interface.h"
+#include "media_library/photo_asset_proxy.h"
+#include "camera_report_dfx_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -174,6 +180,16 @@ int32_t HStreamCapture::EnableRawDelivery(bool enabled)
         rawDeliverySwitch_ = 1;
     } else {
         rawDeliverySwitch_ = 0;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::EnableMovingPhoto(bool enabled)
+{
+    if (enabled) {
+        movingPhotoSwitch_ = 1;
+    } else {
+        movingPhotoSwitch_ = 0;
     }
     return CAMERA_OK;
 }
@@ -374,6 +390,63 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     return CAM_META_SUCCESS;
 }
 
+int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(photoAssetLock_);
+    MEDIA_INFO_LOG("HStreamCapture CreateMediaLibraryPhotoAssetProxy E");
+    if (photoAssetProxy_.find(captureId) != photoAssetProxy_.end()) {
+        return CAMERA_OK;
+    }
+    constexpr int32_t imageShotType = 0;
+    constexpr int32_t movingPhotoShotType = 2;
+    constexpr int32_t burstShotType = 3;
+    int32_t cameraShotType = imageShotType;
+    if (movingPhotoSwitch_) {
+        cameraShotType = movingPhotoShotType;
+    } else if (isBursting_) {
+        cameraShotType = burstShotType;
+    }
+    auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
+    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
+        "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
+    photoAssetProxy_.emplace(std::pair<int32_t, std::shared_ptr<PhotoAssetIntf>>(captureId, photoAssetProxy));
+    MEDIA_INFO_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
+    return CAMERA_OK;
+}
+
+std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t captureId)
+{
+    std::lock_guard<std::mutex> lock(photoAssetLock_);
+    auto it = photoAssetProxy_.find(captureId);
+    if (it == photoAssetProxy_.end()) {
+        return nullptr;
+    }
+    std::shared_ptr<PhotoAssetIntf> proxy = it->second;
+    photoAssetProxy_.erase(captureId);
+    return proxy;
+}
+
+void HStreamCapture::EnableAddPhotoProxy(bool enabled)
+{
+    std::lock_guard<mutex> lock(enableAddPhotoProxyLock_);
+    enableAddPhotoProxy_ = enabled;
+}
+
+bool HStreamCapture::GetAddPhotoProxyEnabled()
+{
+    return enableAddPhotoProxy_;
+}
+
+int32_t HStreamCapture::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    MEDIA_DEBUG_LOG("HStreamCapture::AcquireBufferToPrepareProxy start");
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
+    CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+    MEDIA_DEBUG_LOG("HStreamCapture::AcquireBufferToPrepareProxy end");
+    return CAMERA_OK;
+}
+
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
 {
     CAMERA_SYNC_TRACE;
@@ -391,6 +464,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
+
+    CaptureDfxInfo captureDfxInfo;
+    captureDfxInfo.captureId = preparedCaptureId;
+    captureDfxInfo.isSystemApp = CheckSystemApp();
+    CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo(captureDfxInfo);
 
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
@@ -450,6 +528,12 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2 && !isBursting_) {
         MEDIA_INFO_LOG("HStreamCapture::Capture set capture not ready");
         isCaptureReady_ = false;
+    }
+    if (!isBursting_) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy E");
+        CHECK_ERROR_PRINT_LOG(CreateMediaLibraryPhotoAssetProxy(preparedCaptureId) != CAMERA_OK,
+            "HStreamCapture::Capture Failed with CreateMediaLibraryPhotoAssetProxy");
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy X");
     }
     return ret;
 }
@@ -826,6 +910,46 @@ int32_t HStreamCapture::SetCameraPhotoRotation(bool isEnable)
 {
     enableCameraPhotoRotation_ = isEnable;
     return 0;
+}
+
+void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy)
+{
+    MEDIA_INFO_LOG("SetCameraPhotoProxyInfo get captureStream");
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName(format_ == OHOS_CAMERA_FORMAT_HEIC ? suffixHeif : suffixJpeg));
+    cameraPhotoProxy->SetShootingMode(GetMode());
+    MEDIA_INFO_LOG("SetCameraPhotoProxyInfo quality:%{public}d, format:%{public}d",
+        cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
+}
+
+int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
+{
+    if (isBursting_) {
+        EnableAddPhotoProxy(false);
+        return CAMERA_UNSUPPORTED;
+    }
+    std::lock_guard<std::mutex> lock(photoAssetLock_);
+    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", photoProxy->captureId_);
+    auto iter = photoAssetProxy_.find(photoProxy->captureId_);
+    if (iter == photoAssetProxy_.end()) {
+        MEDIA_ERR_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed, no iter captureId(%{public}d)",
+            photoProxy->captureId_);
+        return CAMERA_INVALID_ARG;
+    }
+    auto photoAssetProxy = iter->second;
+    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
+    MessageParcel data;
+    photoProxy->WriteToParcel(data);
+    photoProxy->CameraFreeBufferHandle();
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    cameraPhotoProxy->ReadFromParcel(data);
+    SetCameraPhotoProxyInfo(cameraPhotoProxy);
+    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
+    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
+    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
+    EnableAddPhotoProxy(true);
+    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", photoProxy->captureId_);
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

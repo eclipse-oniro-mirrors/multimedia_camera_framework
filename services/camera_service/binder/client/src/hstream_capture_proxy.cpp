@@ -15,8 +15,9 @@
 
 #include "hstream_capture_proxy.h"
 #include "camera_log.h"
-#include "metadata_utils.h"
+#include "camera_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
+#include "metadata_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -155,6 +156,23 @@ int32_t HStreamCaptureProxy::EnableRawDelivery(bool enabled)
     return error;
 }
 
+int32_t HStreamCaptureProxy::EnableMovingPhoto(bool enabled)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(enabled);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_MOVING_PHOTO), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy EnableMovingPhoto failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamCaptureProxy::SetBufferProducerInfo(const std::string bufName,
     const sptr<OHOS::IBufferProducer> &producer)
 {
@@ -239,19 +257,53 @@ int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType
     return error;
 }
 
+int32_t HStreamCaptureProxy::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
+        "HStreamCaptureProxy UpdateMediaLibraryPhotoAssetProxy photoProxy is null");
+    data.WriteInterfaceToken(GetDescriptor());
+    photoProxy->WriteToParcel(data);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ADD_MEDIA_LIBRARY_PHOTO_PROXY),
+            data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamCaptureProxy::SetCameraPhotoRotation(bool isEnable)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
+
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isEnable);
- 
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_PHOTO_ROTATION), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy SetCameraPhotoRotation failed, error: %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HStreamCaptureProxy::AcquireBufferToPrepareProxy(int32_t captureId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy AcquireBufferToPrepareProxy failed, error: %{public}d", error);
     }
     return error;
 }

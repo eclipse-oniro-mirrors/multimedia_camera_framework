@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraTimerFuzzer::hasPermission = false;
-CameraTimer *CameraTimerFuzzer::fuzz = nullptr;
+CameraTimer *CameraTimerFuzzer::fuzz_ = nullptr;
 
 void CameraTimerFuzzer::CheckPermission()
 {
@@ -58,16 +58,16 @@ void CameraTimerFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz == nullptr) {
-        fuzz = CameraTimer::GetInstance();
+    if (fuzz_ == nullptr) {
+        fuzz_ = CameraTimer::GetInstance();
     }
     MessageParcel data;
     data.WriteRawData(rawData, size);
 
     data.RewindRead(0);
 
-    fuzz->IncreaseUserCount();
-    fuzz->DecreaseUserCount();
+    fuzz_->IncreaseUserCount();
+    fuzz_->DecreaseUserCount();
 
     TimerCallback callback = [] {
         // do nothing
@@ -79,9 +79,9 @@ void CameraTimerFuzzer::Test(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     bool once = data.ReadBool();
 
-    uint32_t timerId = fuzz->Register(callback, interval, once);
+    uint32_t timerId = fuzz_->Register(callback, interval, once);
     
-    fuzz->Unregister(timerId);
+    fuzz_->Unregister(timerId);
 }
 
 } // namespace CameraStandard

@@ -320,6 +320,24 @@ Camera_ErrorCode OH_CameraDevice_GetCameraOrientation(Camera_Device* camera, uin
     return Camera_Manager::GetCameraOrientation(camera, orientation);
 }
 
+Camera_ErrorCode OH_CameraDevice_GetHostDeviceName(Camera_Device* camera, char** hostDeviceName)
+{
+    CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument, cameraDevice is null!");
+    CHECK_ERROR_RETURN_RET_LOG(hostDeviceName == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument, hostDeviceName is null!");
+    return Camera_Manager::GetHostDeviceName(camera, hostDeviceName);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType)
+{
+    CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument, cameraDevice is null!");
+    CHECK_ERROR_RETURN_RET_LOG(hostDeviceType == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument, hostDeviceType is null!");
+    return Camera_Manager::GetHostDeviceType(camera, hostDeviceType);
+}
+
 Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
     Camera_SceneMode** sceneModes, uint32_t* size)
 {

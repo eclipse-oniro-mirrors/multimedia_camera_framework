@@ -4626,10 +4626,10 @@ bool CaptureSession::IsMovingPhotoEnabled()
     return isMovingPhotoEnabled_;
 }
 
-int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
+int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("EnableMovingPhotoMirror %{public}d", isMirror);
+    MEDIA_INFO_LOG("EnableMovingPhotoMirror enter, isMirror: %{public}d", isMirror);
     if (!IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -4637,7 +4637,7 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
-    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
+    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror, isConfig);
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
 }
@@ -6061,8 +6061,9 @@ bool CaptureSession::SwitchDevice()
     auto cameraInput = (sptr<CameraInput>&)captureInput;
     CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
     auto deviceiInfo = cameraInput->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo || deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT,
-        false, "No need switch camera.");
+    CHECK_ERROR_RETURN_RET_LOG(!deviceiInfo ||
+        (deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT &&
+        deviceiInfo->GetPosition() != CAMERA_POSITION_FOLD_INNER), false, "No need switch camera.");
     bool hasVideoOutput = StopVideoOutput();
     int32_t retCode = CameraErrorCode::SUCCESS;
     Stop();
@@ -6091,10 +6092,10 @@ bool CaptureSession::SwitchDevice()
 
 sptr<CameraDevice> CaptureSession::FindFrontCamera()
 {
-    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCamerasWithFoldStatus();
     for (const auto& cameraDevice : cameraDeviceList) {
-        MEDIA_INFO_LOG("CreateCameraInput position:%{public}d", cameraDevice->GetPosition());
-        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
+        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT ||
+            cameraDevice->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
             return cameraDevice;
         }
     }

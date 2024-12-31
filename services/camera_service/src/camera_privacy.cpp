@@ -29,10 +29,6 @@ namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
 
-static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
-std::condition_variable g_canClose;
-std::mutex g_mutex;
-
 sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 {
     if (streamOpCb == nullptr) {
@@ -61,16 +57,10 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
 {
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
     auto device = cameraDevice_.promote();
-    if ((isShowing == true) || (device == nullptr)) {
-        MEDIA_ERR_LOG("abnormal callback from privacy.");
-        return;
-    }
-    std::cv_status waitStatus;
-    {
-        std::unique_lock<std::mutex> lock(g_mutex);
-        waitStatus = g_canClose.wait_for(lock, std::chrono::milliseconds(WAIT_RELEASE_STREAM_MS));
-    }
-    if (waitStatus == std::cv_status::timeout) {
+    CHECK_ERROR_RETURN_LOG((isShowing == true) || (device == nullptr), "abnormal callback from privacy.");
+    auto cameraPrivacy = device->GetCameraPrivacy();
+    CHECK_ERROR_RETURN_LOG(cameraPrivacy == nullptr, "cameraPrivacy is nullptr.");
+    if (cameraPrivacy->WaitFor() == std::cv_status::timeout) {
         MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify wait timeout");
         device = cameraDevice_.promote();
         bool isForeground = CameraAppManagerUtils::IsForegroundApplication(tokenId);
@@ -158,8 +148,7 @@ void CameraPrivacy::StopUsingPermissionCallback()
         CHECK_ERROR_PRINT_LOG(res != CAMERA_OK, "StopUsingPermissionCallback failed.");
         cameraUseCallbackPtr_ = nullptr;
     }
-    std::lock_guard<std::mutex> lock(g_mutex);
-    g_canClose.notify_one();
+    Notify();
 }
 } // namespace CameraStandard
 } // namespace OHOS

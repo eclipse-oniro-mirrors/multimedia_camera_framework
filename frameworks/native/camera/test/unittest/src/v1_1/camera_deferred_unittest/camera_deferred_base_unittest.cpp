@@ -304,25 +304,6 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test system pressure level
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test system pressure level
- */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level0)
-{
-    DeferredProcessing::SystemPressureLevel eventLevel = NOMINAL;
-    eventLevel = DeferredProcessing::MapEventThermalLevel(static_cast<DeferredProcessing::ThermalLevel>(-1));
-    EXPECT_EQ(eventLevel, DeferredProcessing::SystemPressureLevel::SEVERE);
-    eventLevel = DeferredProcessing::MapEventThermalLevel(DeferredProcessing::ThermalLevel::LEVEL_2);
-    EXPECT_EQ(eventLevel, DeferredProcessing::SystemPressureLevel::FAIR);
-    eventLevel = DeferredProcessing::MapEventThermalLevel(DeferredProcessing::ThermalLevel::LEVEL_5);
-    EXPECT_EQ(eventLevel, DeferredProcessing::SystemPressureLevel::SEVERE);
-}
-
-/*
- * Feature: Framework
  * Function: Test repeated initialization
  * SubFunction: NA
  * FunctionPoints: NA
