@@ -101,6 +101,20 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     data.RewindRead(0);
     input->Open(data.ReadBool(), &secureSeqId);
     input->Release();
+    CameraDeviceServiceCallback callback;
+    auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    callback.OnError(data.ReadInt32(), data.ReadInt32());
+    callback.OnResult(data.ReadUint64(), meta);
+    input->SetInputUsedAsPosition(CAMERA_POSITION_UNSPECIFIED);
+    class CameraOcclusionDetectCallbackMock : public CameraOcclusionDetectCallback {
+    public:
+        void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
+            const uint8_t isCameraLensDirty) const override {}
+    };
+    input->SetOcclusionDetectCallback(make_shared<CameraOcclusionDetectCallbackMock>());
+    input->GetOcclusionDetectCallback();
+    input->UpdateSetting(meta);
+    input->MergeMetadata(meta, meta);
 }
 
 } // namespace StreamRepeatStubFuzzer

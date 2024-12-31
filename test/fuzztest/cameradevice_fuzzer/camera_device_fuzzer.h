@@ -120,6 +120,7 @@ void CameraDeviceFuzzTestGetPermission();
 void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size);
 void Test3(uint8_t *rawData, size_t size);
 void TestXCollie(uint8_t *rawData, size_t size);
+void TestDynamicLoader(uint8_t *rawData, size_t size);
 } //CameraStandard
 } //OHOS
 #endif //CAMERADEVICE_FUZZER_H

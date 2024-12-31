@@ -20,8 +20,6 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
   fuzz_config_file = "../cameradevice_fuzzer"
 
   include_dirs = [
-    "${driver_disply_path}/interfaces/include",
-    "${graphic_surface_path}/surface/include",
     "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
@@ -49,17 +47,6 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
-    "${window_manager_path}/interfaces/innerkits/dm",
-    "${base_security_path}/interfaces/innerkits/accesstoken/include",
-    "${driver_peripheral_path}/interfaces/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
-    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
-    "${base_security_path}/interfaces/innerkits/token_setproc/include",
-    "${system_safwk_path}/native/include",
-    "${driver_disply_path}/interfaces/include",
   ]
 
   cflags = [
@@ -67,6 +54,7 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-fno-access-control",
   ]
 
   sources = [ "camera_device_fuzzer.cpp" ]

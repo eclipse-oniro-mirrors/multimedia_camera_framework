@@ -27,3 +27,4 @@ void StreamCaptureFuzzTestGetPermission();
 } //CameraStandard
 } //OHOS
 #endif //STREAM_CAPTURE_FUZZER_H
+

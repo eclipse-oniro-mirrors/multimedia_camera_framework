@@ -30,7 +30,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace PhotoOutputFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t NUM_2 = 2;
+const int32_t NUM_TWO = 2;
 bool g_isCameraDevicePermission = false;
 
 void GetPermission()
@@ -63,12 +63,12 @@ void Test(uint8_t *rawData, size_t size)
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "PhotoOutputFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     auto camera = cameras[data.ReadUint32() % cameras.size()];
     CHECK_ERROR_RETURN_LOG(!camera, "PhotoOutputFuzzer: camera is null");
-    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2);
+    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_TWO);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
     CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
