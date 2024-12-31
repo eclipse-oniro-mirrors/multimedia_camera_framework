@@ -394,7 +394,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(photoAssetLock_);
-    MEDIA_INFO_LOG("HStreamCapture CreateMediaLibraryPhotoAssetProxy E");
+    MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy E captureId:%{public}d", captureId);
     if (photoAssetProxy_.find(captureId) != photoAssetProxy_.end()) {
         return CAMERA_OK;
     }
@@ -411,7 +411,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
         "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
     photoAssetProxy_.emplace(std::pair<int32_t, std::shared_ptr<PhotoAssetIntf>>(captureId, photoAssetProxy));
-    MEDIA_INFO_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
+    MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
     return CAMERA_OK;
 }
 
@@ -423,7 +423,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t ca
         return nullptr;
     }
     std::shared_ptr<PhotoAssetIntf> proxy = it->second;
-    photoAssetProxy_.erase(captureId);
+    photoAssetProxy_.erase(it);
     return proxy;
 }
 
