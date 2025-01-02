@@ -737,10 +737,6 @@ int32_t HCameraHostManager::Init()
 
             switch (status.status) {
                 case SERVIE_STATUS_START:
-                    if (status.serviceName == DISTRIBUTED_SERVICE_NAME) {
-                        MEDIA_ERR_LOG("HCameraHostManager::service no need to add");
-                        return;
-                    }
                     AddCameraHost(status.serviceName);
                     break;
                 case SERVIE_STATUS_STOP:
