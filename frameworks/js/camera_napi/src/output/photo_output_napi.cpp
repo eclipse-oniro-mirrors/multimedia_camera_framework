@@ -1641,20 +1641,30 @@ void ThumbnailListener::OnBufferAvailable()
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
 }
 
+void ThumbnailCreatePixelMap(std::unique_ptr<Media::PixelMap>& pixelMap)
+{
+    if (!pixelMap) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
+    } else {
+        OHOS::ColorManager::ColorSpace colorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
+        pixelMap->InnerSetColorSpace(colorSpace);
+    }
+}
+
 void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
 {
     auto photoOutput = photoOutput_.promote();
     CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "ThumbnailListener photoOutput is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
     CHECK_ERROR_RETURN_LOG(surface == nullptr, "ThumbnailListener surface is nullptr");
-    string surfaceName = "Thumbnail";
+    std::string surfaceName = "Thumbnail";
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
-    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
+    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
+    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
     int32_t burstSeqId = -1;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
@@ -1662,8 +1672,8 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
         surface->ReleaseBuffer(surfaceBuffer, -1);
         return;
     }
-    int32_t thumbnailWidth;
-    int32_t thumbnailHeight;
+    int32_t thumbnailWidth = 0;
+    int32_t thumbnailHeight = 0;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
     int32_t captureId = GetCaptureId(surfaceBuffer);
@@ -1677,12 +1687,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     const int32_t formatSize = 4;
     auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
         thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
-    if (!pixelMap) {
-        MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
-    } else {
-        OHOS::ColorManager::ColorSpace colorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
-        pixelMap->InnerSetColorSpace(colorSpace);
-    }
+    ThumbnailCreatePixelMap(pixelMap);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
@@ -1732,7 +1737,15 @@ void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timesta
 
 void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
 {
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, pixelMapNapi, &valueType) != napi_ok || valueType == napi_undefined) {
+        MEDIA_ERR_LOG("FillPixelMapWithCaptureIdAndTimestamp err, pixelMapNapi is undefined = %{public}d",
+            valueType == napi_undefined);
+        return;
+    }
     napi_value propertyName, propertyValue;
+    napi_get_undefined(env, &propertyName);
+    napi_get_undefined(env, &propertyValue);
     napi_create_string_utf8(env, "captureId", NAPI_AUTO_LENGTH, &propertyName);
     napi_create_int32(env, captureId, &propertyValue);
     napi_set_property(env, pixelMapNapi, propertyName, propertyValue);
