@@ -1344,6 +1344,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     int32_t zoomInOutCount = 2;
     std::vector<std::vector<float>> crossTime(waitCount, std::vector<float>(zoomInOutCount, 0.0f)); //生成4x2二维数组
     GetCrossZoomAndTime(crossZoomAndTime, mCrossZoom, crossTime);
+    float waitTime = 0.0;
     float frameIntervalMs = 1000.0 / currentFps;
     targetZoomRatio = targetZoomRatio * ZOOM_RATIO_MULTIPLE;
     targetRangeId = GetRangeId(targetZoomRatio, mCrossZoom);
