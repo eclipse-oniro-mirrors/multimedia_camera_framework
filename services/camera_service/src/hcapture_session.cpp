@@ -90,6 +90,16 @@ constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
 #endif
 static GravityData gravityData = {0.0, 0.0, 0.0};
 static int32_t sensorRotation = 0;
+constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
+constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
+constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
+constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
+constexpr int32_t WIDE_MAIN_ZOOM_PER = 0;
+constexpr int32_t TELE_MAIN_ZOOM_PER = 1;
+constexpr int32_t TELE_2X_ZOOM_PER = 2;
+constexpr int32_t WIDE_TELE_ZOOM_PER = 3;
+constexpr int32_t zoomInPerf = 0;
+constexpr int32_t zoomOutPerf = 1;
 static size_t TotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
@@ -1242,6 +1252,79 @@ int32_t HCaptureSession::GetMovingPhotoBufferDuration()
     return CAMERA_OK;
 }
 
+int32_t HCaptureSession::GetRangeId(float& zoomRatio, std::vector<float>& crossZoom)
+{
+    int32_t rangId = 0;
+    for (; rangId < static_cast<int>(crossZoom.size()); rangId++) {
+        if (zoomRatio < crossZoom[rangId]) {
+            return rangId;
+        }
+    }
+    return rangId;
+}
+
+bool HCaptureSession::isEqual(float zoomPointA, float zoomPointB)
+{
+    float epsilon = 0.00001f;
+    return fabs(zoomPointA - zoomPointB) < epsilon;
+}
+
+void HCaptureSession::GetCrossZoomAndTime(
+    std::vector<float>& crossZoomAndTime, std::vector<float>& crossZoom, std::vector<std::vector<float>>& crossTime)
+{
+    int dataLenPerPoint = 3;
+    for (int i = 0; i < static_cast<int>(crossZoomAndTime.size()); i = i + dataLenPerPoint) {
+        if (crossZoomAndTime[i] != 0) {
+            crossZoom.push_back(crossZoomAndTime[i]);
+        }
+        crossTime[i / dataLenPerPoint][zoomInPerf] = crossZoomAndTime[i + zoomInPerf + 1];
+        crossTime[i / dataLenPerPoint][zoomOutPerf] = crossZoomAndTime[i + zoomOutPerf + 1];
+    }
+}
+
+float HCaptureSession::GetCrossWaitTime(
+    std::vector<std::vector<float>>& crossTime, int32_t targetRangeId, int32_t currentRangeId)
+{
+    float waitTime = 0.0; // 100 199 370 获取maxWaitTime
+    switch (currentRangeId) {
+        case WIDE_CAMERA_ZOOM_RANGE:
+            if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[WIDE_TELE_ZOOM_PER][zoomInPerf];
+            } else {
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomInPerf];
+            }
+            break;
+        case MAIN_CAMERA_ZOOM_RANGE:
+            if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[TELE_MAIN_ZOOM_PER][zoomInPerf];
+            } else if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+            }
+            break;
+        case TWO_X_EXIT_TELE_ZOOM_RANGE:
+            if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[TELE_2X_ZOOM_PER][zoomInPerf];
+            } else if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+            } else {
+                MEDIA_DEBUG_LOG("HCaptureSession::GetCrossWaitTime pass");
+            }
+            break;
+        case TELE_CAMERA_ZOOM_RANGE:
+            if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
+                waitTime = crossTime[WIDE_TELE_ZOOM_PER][zoomInPerf];
+            } else if (targetRangeId == TWO_X_EXIT_TELE_ZOOM_RANGE) {
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+            } else {
+                waitTime = crossTime[TELE_MAIN_ZOOM_PER][zoomOutPerf]; 
+            }
+            break;
+    }
+    MEDIA_DEBUG_LOG("HCaptureSession::GetCrossWaitTime waitTime %{public}f, targetRangeId %{public}d,"
+        " currentRangeId %{public}d", waitTime, targetRangeId, currentRangeId);
+    return waitTime;
+}
+
 int32_t HCaptureSession::SetSmoothZoom(
     int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration)
 {
@@ -1251,26 +1334,33 @@ int32_t HCaptureSession::SetSmoothZoom(
         "HCaptureSession::SetSmoothZoom device is null");
     float currentFps = 30.0f;
     float currentZoomRatio = 1.0f;
+    int32_t targetRangeId = 0;
+    int32_t currentRangeId = 0;
     QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
     std::vector<float> crossZoomAndTime {};
     QueryZoomPerformance(crossZoomAndTime, operationMode);
-    float waitTime = 0.0;
-    int dataLenPerPoint = 3;
+    std::vector<float> mCrossZoom {};
+    int32_t waitCount = 4;
+    int32_t zoomInOutCount = 2;
+    std::vector<std::vector<float>> crossTime(waitCount, std::vector<float>(zoomInOutCount, 0.0f)); //生成4x2二维数组
+    GetCrossZoomAndTime(crossZoomAndTime, mCrossZoom, crossTime);
     float frameIntervalMs = 1000.0 / currentFps;
     targetZoomRatio = targetZoomRatio * ZOOM_RATIO_MULTIPLE;
-    int indexAdded = targetZoomRatio > currentZoomRatio ? 1 : 2;
+    targetRangeId = GetRangeId(targetZoomRatio, mCrossZoom);
+    currentRangeId = GetRangeId(currentZoomRatio, mCrossZoom);
+    float waitMs = GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
     CHECK_ERROR_RETURN_RET_LOG(array.empty(), CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom array is empty");
-    for (int i = 0; i < static_cast<int>(crossZoomAndTime.size()); i = i + dataLenPerPoint) {
-        float crossZoom = crossZoomAndTime[i];
-        if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0) {
+    for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {
+        float crossZoom = mCrossZoom[i];
+        if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0 ||
+            isEqual(crossZoom, 199.0f)) {
             continue;
         }
-        float waitMs = crossZoomAndTime[i + indexAdded];
         if (std::fabs(currentZoomRatio - crossZoom) <= std::numeric_limits<float>::epsilon() &&
             currentZoomRatio > targetZoomRatio) {
-            waitTime = crossZoomAndTime[i + indexAdded];
+            waitTime = waitMs;
         }
         for (int j = 0; j < static_cast<int>(array.size()); j++) {
             if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) < 0) {

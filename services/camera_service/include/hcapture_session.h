@@ -250,6 +250,10 @@ public:
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
     bool QueryFpsAndZoomRatio(float& currentFps, float& currentZoomRatio);
     bool QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode);
+    int32_t GetRangeId(float& zoomRatio, std::vector<float>& crossZoom);
+    float GetCrossWaitTime(std::vector<std::vector<float>>& crossTime, int32_t targetRangeId, int32_t currentRangeId);
+    void GetCrossZoomAndTime(std::vector<float>& crossZoomAndTime,
+        std::vector<float>& crossZoom, std::vector<std::vector<float>>& crossTime);
     int32_t SetSmoothZoom(
         int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
     int32_t EnableMovingPhoto(bool isEnable) override;
@@ -278,6 +282,7 @@ public:
     static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
     void ReleaseStreams();
     void StopMovingPhoto();
+    bool isEqual(float zoomPointA, float zoomPointB);
 
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
