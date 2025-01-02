@@ -98,8 +98,8 @@ constexpr int32_t WIDE_MAIN_ZOOM_PER = 0;
 constexpr int32_t TELE_MAIN_ZOOM_PER = 1;
 constexpr int32_t TELE_2X_ZOOM_PER = 2;
 constexpr int32_t WIDE_TELE_ZOOM_PER = 3;
-constexpr int32_t zoomInPerf = 0;
-constexpr int32_t zoomOutPerf = 1;
+constexpr int32_t ZOOM_IN_PER = 0;
+constexpr int32_t ZOOM_OUT_PERF = 1;
 static size_t TotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
@@ -1277,8 +1277,8 @@ void HCaptureSession::GetCrossZoomAndTime(
         if (crossZoomAndTime[i] != 0) {
             crossZoom.push_back(crossZoomAndTime[i]);
         }
-        crossTime[i / dataLenPerPoint][zoomInPerf] = crossZoomAndTime[i + zoomInPerf + 1];
-        crossTime[i / dataLenPerPoint][zoomOutPerf] = crossZoomAndTime[i + zoomOutPerf + 1];
+        crossTime[i / dataLenPerPoint][ZOOM_IN_PER] = crossZoomAndTime[i + ZOOM_IN_PER + 1];
+        crossTime[i / dataLenPerPoint][ZOOM_OUT_PERF] = crossZoomAndTime[i + ZOOM_OUT_PERF + 1];
     }
 }
 
@@ -1289,34 +1289,34 @@ float HCaptureSession::GetCrossWaitTime(
     switch (currentRangeId) {
         case WIDE_CAMERA_ZOOM_RANGE:
             if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[WIDE_TELE_ZOOM_PER][zoomInPerf];
+                waitTime = crossTime[WIDE_TELE_ZOOM_PER][ZOOM_IN_PER];
             } else {
-                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomInPerf];
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][ZOOM_IN_PER];
             }
             break;
         case MAIN_CAMERA_ZOOM_RANGE:
             if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[TELE_MAIN_ZOOM_PER][zoomInPerf];
+                waitTime = crossTime[TELE_MAIN_ZOOM_PER][ZOOM_IN_PER];
             } else if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][ZOOM_OUT_PERF];
             }
             break;
         case TWO_X_EXIT_TELE_ZOOM_RANGE:
             if (targetRangeId == TELE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[TELE_2X_ZOOM_PER][zoomInPerf];
+                waitTime = crossTime[TELE_2X_ZOOM_PER][ZOOM_IN_PER];
             } else if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][ZOOM_OUT_PERF];
             } else {
                 MEDIA_DEBUG_LOG("HCaptureSession::GetCrossWaitTime pass");
             }
             break;
         case TELE_CAMERA_ZOOM_RANGE:
             if (targetRangeId == WIDE_CAMERA_ZOOM_RANGE) {
-                waitTime = crossTime[WIDE_TELE_ZOOM_PER][zoomInPerf];
+                waitTime = crossTime[WIDE_TELE_ZOOM_PER][ZOOM_IN_PER];
             } else if (targetRangeId == TWO_X_EXIT_TELE_ZOOM_RANGE) {
-                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][zoomOutPerf];
+                waitTime = crossTime[WIDE_MAIN_ZOOM_PER][ZOOM_OUT_PERF];
             } else {
-                waitTime = crossTime[TELE_MAIN_ZOOM_PER][zoomOutPerf]; 
+                waitTime = crossTime[TELE_MAIN_ZOOM_PER][ZOOM_OUT_PERF];
             }
             break;
     }
