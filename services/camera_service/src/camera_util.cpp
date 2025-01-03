@@ -416,7 +416,7 @@ bool IsVerticalDevice()
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     CHECK_ERROR_RETURN_RET_LOG(display == nullptr, isVerticalDevice, "IsVerticalDevice GetDefaultDisplay failed");
     MEDIA_DEBUG_LOG("GetDefaultDisplay:W(%{public}d),H(%{public}d),Rotation(%{public}d)",
-                   display->GetWidth(), display->GetHeight(), display->GetRotation());
+        display->GetWidth(), display->GetHeight(), display->GetRotation());
     bool isScreenVertical = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_0 ||
                             display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_180;
     bool isScreenHorizontal = display->GetRotation() == OHOS::Rosen::Rotation::ROTATION_90 ||
