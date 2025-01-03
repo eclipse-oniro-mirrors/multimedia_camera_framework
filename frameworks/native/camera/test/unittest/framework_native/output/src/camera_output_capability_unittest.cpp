@@ -212,5 +212,47 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_005, Test
     EXPECT_EQ(capability->GetPhotoProfiles().size(), 1);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test Profile with GetFps
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Profile with GetFps
+ */
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_006, TestSize.Level0)
+{
+    CameraFormat format = CAMERA_FORMAT_YUV_420_SP;
+    Size size = {480, 640};
+    Fps fps = {0, 0, 0};
+    std::vector<uint32_t> abilityId;
+    abilityId.push_back(0);
+    std::shared_ptr<Profile> profile = std::make_shared<Profile>(format, size, fps, abilityId);
+    ASSERT_NE(profile, nullptr);
+
+    profile->fps_ = {0, 0, 0};
+    Fps ret = profile->GetFps();
+    EXPECT_EQ(ret.fixedFps, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraOutputCapability with GetDepthProfiles
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraOutputCapability with GetDepthProfiles
+ */
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_007, TestSize.Level0)
+{
+    std::shared_ptr<CameraOutputCapability> capability = std::make_shared<CameraOutputCapability>();
+    ASSERT_NE(capability, nullptr);
+
+    std::vector<DepthProfile> depthProfiles = {};
+    capability->depthProfiles_ = depthProfiles;
+    std::vector<DepthProfile> ret = capability->GetDepthProfiles();
+    EXPECT_TRUE(ret.empty());
+}
+
 }
 }

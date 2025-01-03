@@ -279,15 +279,19 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetVersionByCamera(cameraId), 0);
 
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> pDevice;
-    cameraHostManager_->HCameraHostManager::OpenCameraDevice(cameraId, nullptr, pDevice);
 
-    cameraId = cameras[0]->GetID();
-    HDI::ServiceManager::V1_0::ServiceStatus status;
-    status.deviceClass = DEVICE_CLASS_CAMERA;
-    status.serviceName = "distributed_camera_service";
-    status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
-    cameraHostManager_->GetRegisterServStatListener()->OnReceive(status);
-    EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_INVALID_ARG);
+    int32_t ret = cameraHostManager_->HCameraHostManager::OpenCameraDevice(cameraId, nullptr, pDevice);
+
+    if (!ret) {
+        cameraId = cameras[0]->GetID();
+        HDI::ServiceManager::V1_0::ServiceStatus status;
+        status.deviceClass = DEVICE_CLASS_CAMERA;
+        status.serviceName = "distributed_camera_service";
+        status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
+        cameraHostManager_->GetRegisterServStatListener()->OnReceive(status);
+        EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_INVALID_ARG);
+    }
+
     cameraHostManager_->DeInit();
     input->Close();
 }

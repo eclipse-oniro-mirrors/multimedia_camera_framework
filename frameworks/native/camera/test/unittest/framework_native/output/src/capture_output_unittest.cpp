@@ -151,6 +151,7 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
     EXPECT_NE(captureOutput->deathRecipient_, nullptr);
 
     captureOutput->stream_ = nullptr;
+    captureOutput->OnCameraServerDied(pid);
     captureOutput->UnregisterStreamBinderDied();
     EXPECT_EQ(captureOutput->stream_, nullptr);
 
@@ -161,6 +162,66 @@ HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_001, TestSize.Level0)
     session->Stop();
     session->Release();
     input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureoutput with GetOutputTypeString IsStreamCreated and ClearProfiles
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureoutput with GetOutputTypeString IsStreamCreated and ClearProfiles
+ */
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
+    ASSERT_NE(captureOutput, nullptr);
+
+    captureOutput->outputType_ = CAPTURE_OUTPUT_TYPE_PREVIEW;
+    const char* ret = captureOutput->GetOutputTypeString();
+    EXPECT_NE(ret, nullptr);
+
+    captureOutput->stream_ = nullptr;
+    bool result = captureOutput->IsStreamCreated();
+    EXPECT_FALSE(result);
+
+    captureOutput->ClearProfiles();
+    EXPECT_EQ(captureOutput->previewProfile_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureoutput with AddTag and RemoveTag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureoutput with AddTag and RemoveTag
+ */
+HWTEST_F(CameraCaptureOutputUnit, capture_output_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> captureOutput = CreatePhotoOutput();
+    ASSERT_NE(captureOutput, nullptr);
+
+    OHOS::CameraStandard::CaptureOutput::Tag tag = OHOS::CameraStandard::CaptureOutput::Tag::DYNAMIC_PROFILE;
+    captureOutput->AddTag(tag);
+    EXPECT_TRUE(captureOutput->IsTagSetted(tag));
+
+    captureOutput->RemoveTag(tag);
+    EXPECT_FALSE(captureOutput->IsTagSetted(tag));
 }
 
 }

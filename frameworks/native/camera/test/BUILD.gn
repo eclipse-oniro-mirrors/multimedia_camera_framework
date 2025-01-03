@@ -15,14 +15,8 @@ group("cameraframeworktest") {
   testonly = true
   deps = [
     "moduletest:camera_framework_moduletest",
-    "unittest:camera_deferred_base_unittest",
-    "unittest:camera_deferred_photo_processor_stratety_unittest",
-    "unittest:camera_deferred_proc_unittest",
-    "unittest:camera_deferred_processing_service_unittest",
-    "unittest:camera_deferred_session_unittest",
-    "unittest:camera_deferred_video_processor_stratety_unittest",
-    "unittest:camera_ndk_unittest_v1_1",
-    "unittest:deferred_processing_service_unittest",
+    "unittest/camera_deferred_unittest:camera_deferred_unittest",
+    "unittest/camera_ndk_unittest:camera_ndk_test",
     "unittest/camera_service:camera_service_unittest",
     "unittest/framework_native:camera_framework_native_unittest",
   ]

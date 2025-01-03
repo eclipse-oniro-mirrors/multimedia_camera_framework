@@ -414,5 +414,157 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_007, TestSize.Level0)
     video->SetCallback(setCallback);
     video->CameraServerDied(pid);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with OnSketchStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with OnSketchStatusChanged
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_008, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    std::shared_ptr<VideoOutputCallbackImpl> callback = std::make_shared<VideoOutputCallbackImpl>(video);
+    SketchStatus status = SketchStatus::STOPPING;
+    int32_t ret = callback->OnSketchStatusChanged(status);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with enableMirror
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with enableMirror
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_009, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    video->session_ = nullptr;
+    int32_t ret = video->enableMirror(true);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with AutoDeferredVideoEnhancement
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with AutoDeferredVideoEnhancement
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_010, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    video->session_ = nullptr;
+    int32_t ret = video->IsAutoDeferredVideoEnhancementSupported();
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+
+    ret = video->IsAutoDeferredVideoEnhancementEnabled();
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+
+    ret = video->EnableAutoDeferredVideoEnhancement(false);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with IsVideoStarted
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with IsVideoStarted
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_011, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    video->isVideoStarted_ = false;
+    int32_t ret = video->IsVideoStarted();
+    EXPECT_FALSE(ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with Rotation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with Rotation
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    video->session_ = nullptr;
+    std::vector<int32_t> rotations;
+    rotations.push_back(0);
+    int32_t ret = video->GetSupportedRotations(rotations);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+
+    bool isSupported = false;
+    ret = video->IsRotationSupported(isSupported);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+
+    int32_t rotation = 0;
+    ret = video->SetRotation(rotation);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+}
 }
 }

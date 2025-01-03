@@ -40,8 +40,8 @@ public:
     bool IsSupportMode(SceneMode mode);
 
     sptr<CaptureOutput> CreatePreviewOutput(Profile& profile);
-
     sptr<CaptureOutput> CreateVideoOutput(VideoProfile& videoProfile);
+    void Init();
 
     sptr<CameraManager> manager_;
     std::vector<sptr<CameraDevice>> cameras_;

@@ -1841,8 +1841,11 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_048, TestSize.Level0)
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    auto hCameraService = new HCameraService(0, true);
+    ASSERT_NE(cameras.size(), 0);
+    sptr<HCameraService> hCameraService = new HCameraService(0, true);
+    ASSERT_NE(hCameraService, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
 
     EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 0), CAMERA_OK);
     EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 1), CAMERA_OK);
@@ -1853,6 +1856,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level0)
     EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 0), CAMERA_OK);
     EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 1), CAMERA_OK);
     EXPECT_EQ(hCameraService->UpdateSkinToneSetting(nullptr, 1), CAMERA_OK);
+    hCameraService = nullptr;
 }
 }
 }

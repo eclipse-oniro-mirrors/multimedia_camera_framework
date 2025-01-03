@@ -25,6 +25,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "./manager/include",
     "./output/include",
     "./session/include",
+    "./ability/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
@@ -35,15 +36,21 @@ ohos_unittest("camera_framework_native_unittest") {
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
+    "${multimedia_camera_framework_path}/interfaces",
   ]
 
   sources = [
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "ability/src/camera_ability_unittest.cpp",
     "camera_utils/src/camera_utils_unittest.cpp",
     "device/src/camera_device_unittest.cpp",
     "input/src/camera_framework_input_unittest.cpp",
     "manager/src/camera_framework_manager_unittest.cpp",
+    "manager/src/prelaunch_config_unittest.cpp",
     "output/src/camera_output_capability_unittest.cpp",
+    "output/src/camera_photo_proxy_unittest.cpp",
     "output/src/capture_output_unittest.cpp",
     "output/src/deferred_photo_proxy_unittest.cpp",
     "output/src/depth_data_output_unittest.cpp",
@@ -53,6 +60,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "output/src/sketch_wrapper_unittest.cpp",
     "output/src/video_output_unittest.cpp",
     "session/src/capture_session_unittest.cpp",
+    "session/src/moon_capture_boost_feature_unittest.cpp",
     "session/src/night_session_unittest.cpp",
     "session/src/panorama_session_unittest.cpp",
     "session/src/photo_session_unittest.cpp",
@@ -61,6 +69,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "session/src/scan_session_unittest.cpp",
     "session/src/secure_camera_session_unittest.cpp",
     "session/src/slow_motion_session_unittest.cpp",
+    "session/src/time_lapse_photo_session_unittest.cpp",
     "session/src/video_session_unittest.cpp",
   ]
 
@@ -103,6 +112,16 @@ ohos_unittest("camera_framework_native_unittest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "window_manager:libdm_lite",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
 
   defines = [ "private=public" ]

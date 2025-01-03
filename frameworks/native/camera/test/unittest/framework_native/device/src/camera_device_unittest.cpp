@@ -147,5 +147,21 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_004, TestSize.Level0)
 
     EXPECT_EQ(cameras[0]->GetSupportedFoldStatus(), 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with GetCameraFoldScreenType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraFoldScreenType
+ */
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+
+    cameras[0]->foldScreenType_ = CameraFoldScreenType::CAMERA_FOLDSCREEN_UNSPECIFIED;
+    EXPECT_EQ(cameras[0]->GetCameraFoldScreenType(), CameraFoldScreenType::CAMERA_FOLDSCREEN_UNSPECIFIED);
+}
 }
 }

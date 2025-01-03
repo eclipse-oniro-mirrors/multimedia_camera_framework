@@ -48,10 +48,12 @@ void CameraPanoramaSessionUnit::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraPanoramaSessionUnit::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraPanoramaSessionUnit TearDown");
 }
 
@@ -181,8 +183,9 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level
 
             intResult = panoramaSession->CommitConfig();
             EXPECT_EQ(intResult, 0);
-
+            panoramaSession->LockForControl();
             panoramaSession->SetWhiteBalanceMode(AWB_MODE_LOCKED);
+            panoramaSession->UnlockForControl();
             WhiteBalanceMode mode;
             panoramaSession->GetWhiteBalanceMode(mode);
             EXPECT_EQ(AWB_MODE_LOCKED, mode);

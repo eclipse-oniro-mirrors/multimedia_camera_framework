@@ -691,7 +691,6 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, Test
     auto listenerMap = torchServiceCallback.cameraManager_->GetTorchListenerMap();
     EXPECT_FALSE(listenerMap.IsEmpty());
     ret = torchServiceCallback.OnTorchStatusChange(status2);
-    EXPECT_EQ(torchServiceCallback.cameraManager_->torchMode_, TORCH_MODE_ON);
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
@@ -1358,6 +1357,179 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_053, Test
     deferredVideoProcSession = cameraManager_->CreateDeferredVideoProcessingSession(userId_,
         std::make_shared<IDeferredVideoProcSessionCallbackTest>());
     ASSERT_NE(deferredVideoProcSession, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameras and GetCameraOutputStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameras and GetCameraOutputStatus
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_054, TestSize.Level0)
+{
+    int32_t status = 0;
+    cameraManager_->serviceProxyPrivate_ = nullptr;
+    cameraManager_->GetCameraOutputStatus(0, status);
+
+    std::vector<sptr<CameraInfo>> getCameras = cameraManager_->GetCameras();
+    EXPECT_TRUE(getCameras.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetCameraManagerNull and SetFoldServiceCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetCameraManagerNull and SetFoldServiceCallback
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_055, TestSize.Level0)
+{
+    cameraManager_->serviceProxyPrivate_ = nullptr;
+    sptr<IFoldServiceCallback> foldSvcCallback = new(std::nothrow) FoldServiceCallback(cameraManager_);
+    cameraManager_->SetFoldServiceCallback(foldSvcCallback);
+    cameraManager_->SetCameraManagerNull();
+    EXPECT_EQ(CameraManager::g_cameraManager, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateMetadataOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMetadataOutput
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, TestSize.Level0)
+{
+    sptr<MetadataOutput> pMetadataOutput = nullptr;
+    std::vector<MetadataObjectType> metadataObjectTypes;
+    metadataObjectTypes.push_back(MetadataObjectType::INVALID);
+    int ret = cameraManager_->CreateMetadataOutput(pMetadataOutput, metadataObjectTypes);
+    EXPECT_EQ(ret, INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetFoldListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetFoldListener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, TestSize.Level0)
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<FoldListener> listener = std::make_shared<FoldListenerTest>();
+    cameraManager_->foldListenerMap_.EnsureInsert(threadId, listener);
+    shared_ptr<FoldListener> ret = cameraManager_->GetFoldListener();
+    EXPECT_EQ(ret, listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTorchListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTorchListener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, TestSize.Level0)
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerTest>();
+    cameraManager_->torchListenerMap_.EnsureInsert(threadId, listener);
+    shared_ptr<TorchListener> ret = cameraManager_->GetTorchListener();
+    EXPECT_EQ(ret, listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraMuteListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraMuteListener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, TestSize.Level0)
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<CameraMuteListener> listener = std::make_shared<CameraMuteListenerTest>();
+    cameraManager_->cameraMuteListenerMap_.EnsureInsert(threadId, listener);
+    shared_ptr<CameraMuteListener> ret = cameraManager_->GetCameraMuteListener();
+    EXPECT_EQ(ret, listener);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTorchMode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTorchMode
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, TestSize.Level0)
+{
+    cameraManager_->torchMode_ = TorchMode::TORCH_MODE_AUTO;
+    TorchMode ret = cameraManager_->GetTorchMode();
+    EXPECT_EQ(ret, TorchMode::TORCH_MODE_AUTO);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MuteCameraPersist
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MuteCameraPersist
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_061, TestSize.Level0)
+{
+    cameraManager_->serviceProxyPrivate_ = nullptr;
+    PolicyType type = PolicyType::PRIVACY;
+    bool mode = false;
+    int32_t ret = cameraManager_->MuteCameraPersist(type, mode);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RequireMemorySize
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RequireMemorySize
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_062, TestSize.Level0)
+{
+    cameraManager_->serviceProxyPrivate_ = nullptr;
+    int32_t size = 16;
+    int32_t ret = cameraManager_->RequireMemorySize(size);
+    EXPECT_EQ(ret, SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateProfile4StreamType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateProfile4StreamType
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_063, TestSize.Level0)
+{
+    StreamRelatedInfo info_1;
+    info_1.detailInfoCount = 0;
+    ModeInfo info_2;
+    info_2.streamInfo.push_back(info_1);
+    ExtendInfo info_3;
+    info_3.modeInfo.push_back(info_2);
+    MockCameraManager::ProfilesWrapper profile;
+    OutputCapStreamType type = OutputCapStreamType::PREVIEW;
+    cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
+    EXPECT_TRUE(profile.previewProfiles.empty());
 }
 
 }

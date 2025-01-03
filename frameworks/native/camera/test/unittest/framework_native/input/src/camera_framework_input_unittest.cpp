@@ -408,5 +408,29 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize
         }
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test camerainput with SwitchCameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camerainput with SwitchCameraDevice
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_012, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(cameras[0]->GetID(), &deviceObj);
+    ASSERT_EQ(retCode, CameraErrorCode::SUCCESS);
+    camInput->SwitchCameraDevice(deviceObj, cameras[0]);
+    EXPECT_EQ(camInput->cameraObj_, cameras[0]);
+}
 }
 }

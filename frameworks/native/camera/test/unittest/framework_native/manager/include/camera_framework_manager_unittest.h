@@ -21,6 +21,28 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
+class CameraMuteListenerTest : public CameraMuteListener {
+public:
+    CameraMuteListenerTest() = default;
+    virtual ~CameraMuteListenerTest() = default;
+    virtual void OnCameraMute(bool muteMode) const {};
+};
+
+class TorchListenerTest : public TorchListener {
+public:
+    TorchListenerTest() = default;
+    virtual ~TorchListenerTest() = default;
+    virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const {};
+};
+
+class FoldListenerTest : public FoldListener {
+public:
+    FoldListenerTest() = default;
+    virtual ~FoldListenerTest() = default;
+    virtual void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const {};
+};
+
 class TorchListenerImpl : public TorchListener {
 public:
     TorchListenerImpl() = default;

@@ -910,5 +910,88 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_023, TestSize.Level0
     EXPECT_NE(metadatOutput->Stop(), CameraErrorCode::SUCCESS);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test MetadataObject when multiple construction parameters
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObject when multiple construction parameters
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_024, TestSize.Level0)
+{
+    MetadataObjectType type = MetadataObjectType::FACE;
+    int32_t timestamp = 0;
+    Rect rect = {0, 0, 0, 0};
+    int32_t objectId = 0;
+    int32_t confidence = 0;
+    std::shared_ptr<MetadataObject> object = std::make_shared<MetadataObject>(type, timestamp, rect,
+        objectId, confidence);
+    ASSERT_NE(object, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataObject with GetAppStateCallback and convert
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObject with GetAppStateCallback and convert
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_025, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    metadatOutput->appStateCallback_ = nullptr;
+    std::shared_ptr<MetadataStateCallback> ret = metadatOutput->GetAppStateCallback();
+    EXPECT_EQ(ret, nullptr);
+
+    std::vector<MetadataObjectType> typesOfMetadata;
+    typesOfMetadata.push_back(MetadataObjectType::FACE);
+    std::vector<int32_t> result = metadatOutput->convert(typesOfMetadata);
+    EXPECT_TRUE(std::find(result.begin(), result.end(), 0) != result.end());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataObjectListener with ProcessMetadataBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObjectListener with ProcessMetadataBuffer
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    std::shared_ptr<MetadataObjectListener> listener = std::make_shared<MetadataObjectListener>(metadatOutput);
+    sptr<SurfaceBuffer> buffer = nullptr;
+    int32_t ret = listener->ProcessMetadataBuffer(buffer, 0);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+}
 }
 }

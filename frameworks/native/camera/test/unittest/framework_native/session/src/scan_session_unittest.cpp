@@ -45,7 +45,7 @@ using namespace OHOS::HDI::Camera::V1_1;
 
 sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
 {
-    previewProfile = {};
+    previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -56,8 +56,8 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
         return nullptr;
     }
 
-    previewProfile = outputCapability->GetPreviewProfiles();
-    if (previewProfile.empty()) {
+    previewProfile_ = outputCapability->GetPreviewProfiles();
+    if (previewProfile_.empty()) {
         return nullptr;
     }
 
@@ -65,7 +65,7 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
     if (surface == nullptr) {
         return nullptr;
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile[0], surface);
+    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
 }
 
 sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePhotoOutput()
@@ -75,14 +75,14 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePhotoOutput()
     size.width = 1280;
     size.height = 960;
     Profile profile = Profile(format, size);
-    photoProfile.push_back(profile);
+    photoProfile_.push_back(profile);
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (surface == nullptr) {
         return nullptr;
     }
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile[0], surfaceProducer);
+    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
 }
 
 void CameraScanSessionUnitTest::SetUpTestCase(void) {}
@@ -99,10 +99,12 @@ void CameraScanSessionUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraScanSessionUnitTest::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraScanSessionUnitTest::TearDown");
 }
 
@@ -171,7 +173,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
     EXPECT_EQ(scanSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
     EXPECT_EQ(scanSession->AddOutput(preview), 0);
     EXPECT_EQ(scanSession->CommitConfig(), 0);
 
@@ -179,7 +181,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
     scanSession->CanAddOutput(output);
 
     scanSession->Release();
-    input->Close();
+    EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);
 }
 
 /*
@@ -227,8 +229,8 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
     EXPECT_EQ(scanSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), photoProfile_);
     EXPECT_EQ(scanSession->AddOutput(preview), 0);
 
     scanSession->CanAddOutput(photo);
@@ -241,7 +243,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 
     scanSession->Release();
-    input->Close();
+    EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);
 }
 
 /*
@@ -289,7 +291,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level0)
     EXPECT_EQ(scanSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
     EXPECT_EQ(scanSession->AddOutput(preview), 0);
 
     scanSession->CanAddOutput(photo);
@@ -302,7 +304,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 
     scanSession->Release();
-    input->Close();
+    EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);
 }
 
 }

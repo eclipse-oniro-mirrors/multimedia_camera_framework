@@ -28,8 +28,6 @@
 #include "token_setproc.h"
 
 #define METERING_MODE_UNDEFINE (-1)
-int32_t g_videoFd = -1;
-int32_t g_previewFd = -1;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -80,57 +78,10 @@ void ProfessionSessionUnitTest::SetUp()
     if (!IsSupportMode(sceneMode_)) {
         return;
     }
-    g_videoFd = -1;
-    g_previewFd = -1;
-    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
-    ASSERT_NE(cameraManagerObj, nullptr);
-
-    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
-    ASSERT_TRUE(sceneModes.size() != 0);
-
-    sptr<CameraOutputCapability> modeAbility =
-        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode_);
-    ASSERT_NE(modeAbility, nullptr);
-
-    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode_);
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(sceneMode_);
     ASSERT_NE(captureSession, nullptr);
     session_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     ASSERT_NE(session_, nullptr);
-
-    int32_t intResult = session_->BeginConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-    intResult = input_->Open();
-    EXPECT_EQ(intResult, 0);
-    Profile previewProfile;
-    VideoProfile videoProfile;
-    auto previewProfiles = modeAbility->GetPreviewProfiles();
-    auto videoProfiles = modeAbility->GetVideoProfiles();
-    for (const auto &vProfile : videoProfiles) {
-        for (const auto &pProfile : previewProfiles) {
-            if (vProfile.size_.width == pProfile.size_.width) {
-                previewProfile = pProfile;
-                videoProfile = vProfile;
-                break;
-            }
-        }
-    }
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
-    ASSERT_NE(previewOutput, nullptr);
-
-    intResult = session_->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
-    ASSERT_NE(videoOutput, nullptr);
-
-    intResult = session_->AddOutput(videoOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
 }
 
 void ProfessionSessionUnitTest::TearDown()
@@ -205,6 +156,48 @@ sptr<CaptureOutput> ProfessionSessionUnitTest::CreateVideoOutput(VideoProfile& v
     return videoOutput;
 }
 
+void ProfessionSessionUnitTest::Init()
+{
+    sptr<CameraOutputCapability> modeAbility =
+        manager_->GetSupportedOutputCapability(cameras_[0], sceneMode_);
+    ASSERT_NE(modeAbility, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+    intResult = input_->Open();
+    EXPECT_EQ(intResult, 0);
+    Profile previewProfile;
+    VideoProfile videoProfile;
+    auto previewProfiles = modeAbility->GetPreviewProfiles();
+    auto videoProfiles = modeAbility->GetVideoProfiles();
+    for (const auto &vProfile : videoProfiles) {
+        for (const auto &pProfile : previewProfiles) {
+            if (vProfile.size_.width == pProfile.size_.width) {
+                previewProfile = pProfile;
+                videoProfile = vProfile;
+                break;
+            }
+        }
+    }
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+}
+
 /*
  * Feature: Framework
  * Function: Testing multiple calls to set interface function returns normal.
@@ -216,6 +209,7 @@ sptr<CaptureOutput> ProfessionSessionUnitTest::CreateVideoOutput(VideoProfile& v
 HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, TestSize.Level0)
 {
     if (IsSupportMode(sceneMode_)) {
+        Init();
         bool isSupported = true;
         MeteringMode meteringMode = static_cast<MeteringMode>(METERING_MODE_UNDEFINE);
         session_->IsMeteringModeSupported(meteringMode, isSupported);
@@ -289,6 +283,7 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, Test
 HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, TestSize.Level0)
 {
     if (IsSupportMode(sceneMode_)) {
+        Init();
         session_->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
         EXPECT_NE(session_->exposureInfoCallback_, nullptr);
 
@@ -301,6 +296,40 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, Test
         session_->SetLuminationInfoCallback(make_shared<LuminationInfoCallbackMock>());
         EXPECT_NE(session_->luminationInfoCallback_, nullptr);
     }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ProfessionSession with SetExposureInfoCallback, SetIsoInfoCallback, SetApertureInfoCallback,
+ * SetLuminationInfoCallback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetExposureInfoCallback, SetIsoInfoCallback, SetApertureInfoCallback,
+ * SetLuminationInfoCallback for just call.
+ */
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<ProfessionSession> professionSession = static_cast<ProfessionSession*>(session.GetRefPtr());
+    ASSERT_NE(professionSession, nullptr);
+    std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
+    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+
+    professionSession->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
+    EXPECT_NE(professionSession->exposureInfoCallback_, nullptr);
+
+    professionSession->SetIsoInfoCallback(make_shared<IsoInfoCallbackMock>());
+    EXPECT_NE(professionSession->isoInfoCallback_, nullptr);
+
+    professionSession->SetApertureInfoCallback(make_shared<ApertureInfoCallbackMock>());
+    EXPECT_NE(professionSession->apertureInfoCallback_, nullptr);
+
+    professionSession->SetLuminationInfoCallback(make_shared<LuminationInfoCallbackMock>());
+    EXPECT_NE(professionSession->luminationInfoCallback_, nullptr);
 }
 }
 }

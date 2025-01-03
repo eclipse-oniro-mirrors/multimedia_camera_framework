@@ -658,5 +658,79 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_013, TestSize.Level0)
     previewOutput->stream_ = nullptr;
     previewOutput->CameraServerDied(pid);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with OnDeferredVideoEnhancementInfo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with OnDeferredVideoEnhancementInfo
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    std::shared_ptr<PreviewOutputCallbackImpl> callback = std::make_shared<PreviewOutputCallbackImpl>(previewOutput);
+
+    CaptureEndedInfoExt info = {0, 0, true, "1"};
+    int32_t ret = callback->OnDeferredVideoEnhancementInfo(info);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with OnResultMetadataChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with OnResultMetadataChanged
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_015, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION);
+    int32_t value = 90;
+    metadata->addEntry(OHOS_SENSOR_ORIENTATION, &value, sizeof(int32_t));
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
+    previewOutput->sketchWrapper_ = nullptr;
+    int32_t ret = previewOutput->OnResultMetadataChanged(OHOS_SENSOR_ORIENTATION, item);
+    EXPECT_EQ(ret, CAM_META_FAILURE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with JudegRotationFunc
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with JudegRotationFunc
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    int32_t imageRotation = 640;
+    int32_t ret = previewOutput->JudegRotationFunc(imageRotation);
+    EXPECT_EQ(ret, INVALID_ARGUMENT);
+}
 }
 }

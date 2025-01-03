@@ -1011,5 +1011,21 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level0)
     phtOutput->stream_ = nullptr;
     photoOutput->CameraServerDied(pid);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoCaptureSetting with GetLocation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with GetLocation
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
+    std::shared_ptr<Location> location;
+    settings->GetLocation(location);
+    EXPECT_EQ(location, settings->location_);
+}
 }
 }

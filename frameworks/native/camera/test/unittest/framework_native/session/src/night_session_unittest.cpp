@@ -38,7 +38,7 @@ namespace CameraStandard {
 
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
 {
-    previewProfile = {};
+    previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -48,8 +48,8 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
         return nullptr;
     }
 
-    previewProfile = outputCapability->GetPreviewProfiles();
-    if (previewProfile.empty()) {
+    previewProfile_ = outputCapability->GetPreviewProfiles();
+    if (previewProfile_.empty()) {
         return nullptr;
     }
 
@@ -57,12 +57,12 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
     if (surface == nullptr) {
         return nullptr;
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile[0], surface);
+    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
 }
 
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
 {
-    photoProfile = {};
+    photoProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -72,8 +72,8 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
         return nullptr;
     }
 
-    photoProfile = outputCapability->GetPhotoProfiles();
-    if (photoProfile.empty()) {
+    photoProfile_ = outputCapability->GetPhotoProfiles();
+    if (photoProfile_.empty()) {
         return nullptr;
     }
 
@@ -82,7 +82,7 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
         return nullptr;
     }
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile[0], surfaceProducer);
+    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
 }
 
 void CameraNightSessionUnit::SetUpTestCase(void) {}
@@ -93,10 +93,12 @@ void CameraNightSessionUnit::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraNightSessionUnit::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraPanarmaSessionUnit TearDown");
 }
 
@@ -162,8 +164,8 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level0)
     EXPECT_EQ(nightSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
     EXPECT_EQ(nightSession->AddOutput(preview), 0);
     EXPECT_EQ(nightSession->AddOutput(photo), 0);
     EXPECT_EQ(nightSession->CommitConfig(), 0);
@@ -219,8 +221,8 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level0)
     EXPECT_EQ(nightSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
     EXPECT_EQ(nightSession->AddOutput(preview), 0);
     EXPECT_EQ(nightSession->AddOutput(photo), 0);
     EXPECT_EQ(nightSession->CommitConfig(), 0);
@@ -275,8 +277,8 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level0)
     EXPECT_EQ(nightSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(NIGHT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(NIGHT), photoProfile_);
     EXPECT_EQ(nightSession->AddOutput(preview), 0);
     EXPECT_EQ(nightSession->AddOutput(photo), 0);
     EXPECT_EQ(nightSession->CommitConfig(), 0);
