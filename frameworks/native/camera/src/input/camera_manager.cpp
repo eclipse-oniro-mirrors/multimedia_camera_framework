@@ -1733,10 +1733,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
-        "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
-        profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
-        profilesWrapper.vidProfiles.size(), depthProfiles_.size());
 
     std::vector<MetadataObjectType> objectTypes = {};
     GetSupportedMetadataObjectType(metadata->get(), objectTypes);
@@ -1751,8 +1747,11 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     } else {
         cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     }
-    MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
-                   cameraOutputCapability->GetSupportedMetadataObjectType().size());
+    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+        "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu"
+        "SetMetadataTypes size = %{public}zu", profilesWrapper.photoProfiles.size(),
+        profilesWrapper.previewProfiles.size(), profilesWrapper.vidProfiles.size(),
+        depthProfiles_.size(), cameraOutputCapability->GetSupportedMetadataObjectType().size());
     return cameraOutputCapability;
 }
 
