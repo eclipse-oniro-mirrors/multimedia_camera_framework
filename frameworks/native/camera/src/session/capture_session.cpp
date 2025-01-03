@@ -4468,22 +4468,10 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto captureSession = GetCaptureSession();
-<<<<<<< HEAD
-    if (captureSession) {
-        int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
-        }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
-=======
     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
     int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror, isConfig);
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
->>>>>>> 79811b96 (修复动态照片前1.5s丢失问题)
     return CameraErrorCode::SUCCESS;
 }
 
