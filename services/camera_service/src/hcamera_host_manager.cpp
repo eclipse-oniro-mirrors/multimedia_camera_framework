@@ -233,7 +233,7 @@ const std::string& HCameraHostManager::CameraHostInfo::GetName()
 
 int32_t HCameraHostManager::CameraHostInfo::GetCameraHostVersion()
 {
-    MEDIA_INFO_LOG("cameraHostProxy_ GetVersion majorVer_: %{public}u, minorVers_: %{public}u", majorVer_, minorVer_);
+    MEDIA_DEBUG_LOG("cameraHostProxy_ GetVersion majorVer_: %{public}u, minorVers_: %{public}u", majorVer_, minorVer_);
     return GetVersionId(majorVer_, minorVer_);
 }
 
