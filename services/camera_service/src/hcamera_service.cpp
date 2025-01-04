@@ -1194,7 +1194,7 @@ int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos
     cameraHostManager_->GetCameras(cameraIds_);
     if ((find(cameraIds_.begin(), cameraIds_.end(), cameraId) != cameraIds_.end()) && IsPrelaunchSupported(cameraId)) {
         preCameraId_ = cameraId;
-        MEDIA_INFO_LOG("CameraHostInfo::prelaunch 111 for cameraId %{public}s", (cameraId).c_str());
+        MEDIA_INFO_LOG("CameraHostInfo::SetPrelaunchConfig for cameraId %{public}s", (cameraId).c_str());
         sptr<HCaptureSession> captureSession_ = nullptr;
         pid_t pid = IPCSkeleton::GetCallingPid();
         captureSessionsManager_.Find(pid, captureSession_);
@@ -1704,11 +1704,15 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc,
         "HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
     int count = 0;
-     for (auto& info : allStreamInfos) {
-         MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+    for (auto& info : allStreamInfos) {
+        MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
         count = (info.v1_0.streamId_ == 0) ? count++ : 0;
     }
-    if (!captureSession->iIsSessionCommited() ||  count > 1) {
+    CaptureSessionState currentState;
+    captureSession->GetSessionState(currentState);
+    bool isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)
+            || (currentState == CaptureSessionState::SESSION_STARTED);
+    if (!isCommitConfig || count > 1) {
         MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore stream is not commit or streamId is all 0");
         return CAMERA_INVALID_ARG;
     }
