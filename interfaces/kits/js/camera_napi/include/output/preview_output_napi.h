@@ -16,11 +16,15 @@
 #ifndef PREVIEW_OUTPUT_NAPI_H_
 #define PREVIEW_OUTPUT_NAPI_H_
 
+#include <mutex>
+#include <unordered_map>
 #include "camera_napi_event_emitter.h"
+#include "camera_napi_event_listener.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "image_receiver.h"
 #include "input/camera_manager.h"
+#include "js_native_api_types.h"
 #include "listener_base.h"
 #include "output/camera_output_capability.h"
 #include "output/preview_output.h"
@@ -85,7 +89,8 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraNapiEventEmitter<PreviewOutputNapi> {
+class PreviewOutputNapi : public CameraNapiEventEmitter<PreviewOutputNapi>,
+                          public CameraNapiEventListener<PreviewOutputCallback> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);
@@ -122,16 +127,10 @@ private:
 
     void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameStartCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameEndCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSketchStatusChangedCallbackListener(
@@ -139,7 +138,6 @@ private:
 
     napi_env env_;
     sptr<PreviewOutput> previewOutput_;
-    std::shared_ptr<PreviewOutputCallback> previewCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PreviewOutput> sPreviewOutput_;

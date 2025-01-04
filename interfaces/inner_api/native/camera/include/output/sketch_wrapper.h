@@ -44,7 +44,7 @@ public:
     int32_t Destroy();
 
     void OnSketchStatusChanged(SketchStatus sketchStatus, const SceneFeaturesMode& sceneFeaturesMode);
-    void SetPreviewStateCallback(std::shared_ptr<PreviewStateCallback> callback);
+    void SetPreviewOutputCallbackManager(wptr<PreviewOutputListenerManager> previewOutputCallbackManager);
     int32_t UpdateSketchRatio(float sketchRatio);
     void UpdateZoomRatio(float zoomRatio);
 
@@ -64,7 +64,7 @@ private:
     sptr<IStreamRepeat> sketchStream_;
     std::mutex sketchStatusChangeMutex_;
 
-    std::weak_ptr<PreviewStateCallback> previewStateCallback_;
+    wptr<PreviewOutputListenerManager> previewOutputCallbackManager_;
 
     volatile float sketchEnableRatio_ = -1.0f;
     volatile float currentZoomRatio_ = 1.0f;

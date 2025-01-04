@@ -117,15 +117,15 @@ int32_t SketchWrapper::StopSketchStream()
     return CAMERA_UNKNOWN_ERROR;
 }
 
-void SketchWrapper::SetPreviewStateCallback(std::shared_ptr<PreviewStateCallback> callback)
+void SketchWrapper::SetPreviewOutputCallbackManager(wptr<PreviewOutputListenerManager> previewOutputCallbackManager)
 {
-    previewStateCallback_ = callback;
+    previewOutputCallbackManager_ = previewOutputCallbackManager;
 }
 
 void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeaturesMode)
 {
-    auto callback = previewStateCallback_.lock();
-    CHECK_ERROR_RETURN(callback == nullptr);
+    auto manager = previewOutputCallbackManager_.promote();
+    CHECK_ERROR_RETURN(manager == nullptr);
     float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.sketchRatio != sketchReferenceRatio) {
@@ -136,14 +136,16 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
             currentSketchStatusData_.status, statusData.status, currentSketchStatusData_.sketchRatio,
             statusData.sketchRatio);
         currentSketchStatusData_ = statusData;
-        callback->OnSketchStatusDataChanged(currentSketchStatusData_);
+        manager->TriggerListener([&](PreviewStateCallback* previewStateCallback) {
+            previewStateCallback->OnSketchStatusDataChanged(currentSketchStatusData_);
+        });
     }
 }
 
 void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const SceneFeaturesMode& sceneFeaturesMode)
 {
-    auto callback = previewStateCallback_.lock();
-    CHECK_ERROR_RETURN(callback == nullptr);
+    auto manager = previewOutputCallbackManager_.promote();
+    CHECK_ERROR_RETURN(manager == nullptr);
     float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.status != sketchStatus ||
@@ -155,7 +157,9 @@ void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const Scene
             currentSketchStatusData_.status, statusData.status, currentSketchStatusData_.sketchRatio,
             statusData.sketchRatio);
         currentSketchStatusData_ = statusData;
-        callback->OnSketchStatusDataChanged(currentSketchStatusData_);
+        manager->TriggerListener([&](PreviewStateCallback* previewStateCallback) {
+            previewStateCallback->OnSketchStatusDataChanged(currentSketchStatusData_);
+        });
     }
 }
 

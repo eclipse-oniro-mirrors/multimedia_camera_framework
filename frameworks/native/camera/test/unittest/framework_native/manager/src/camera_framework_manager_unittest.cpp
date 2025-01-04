@@ -679,21 +679,20 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_024, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, TestSize.Level0)
 {
-    TorchServiceCallback torchServiceCallback(cameraManager_);
+    auto listenerManager = cameraManager_->GetTorchServiceListenerManager();
     TorchStatus status1 = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     TorchStatus status2 = TorchStatus::TORCH_STATUS_ON;
 
-    EXPECT_NE(torchServiceCallback.cameraManager_, nullptr);
-    EXPECT_TRUE(torchServiceCallback.cameraManager_->torchListenerMap_.IsEmpty());
-    auto ret = torchServiceCallback.OnTorchStatusChange(status1);
-    EXPECT_EQ(torchServiceCallback.cameraManager_->torchMode_, TORCH_MODE_OFF);
+    EXPECT_NE(listenerManager->GetCameraManager(), nullptr);
+    EXPECT_TRUE(listenerManager->GetListenerCount() == 0);
+    auto ret = listenerManager->OnTorchStatusChange(status1);
+    EXPECT_EQ(cameraManager_->torchMode_, TORCH_MODE_OFF);
     EXPECT_EQ(ret, CAMERA_OK);
 
     std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerImpl>();
-    torchServiceCallback.cameraManager_->RegisterTorchListener(listener);
-    auto listenerMap = torchServiceCallback.cameraManager_->GetTorchListenerMap();
-    EXPECT_FALSE(listenerMap.IsEmpty());
-    ret = torchServiceCallback.OnTorchStatusChange(status2);
+    cameraManager_->RegisterTorchListener(listener);
+    EXPECT_FALSE(listenerManager->GetListenerCount() == 0);
+    ret = listenerManager->OnTorchStatusChange(status2);
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
@@ -707,19 +706,19 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_026, TestSize.Level0)
 {
-    cameraManager_->torchListenerMap_.Clear();
+    auto listenerManager = cameraManager_->GetTorchServiceListenerManager();
+    listenerManager->ClearListeners();
     FoldServiceCallback foldServiceCallback(cameraManager_);
     FoldStatus status = FoldStatus::UNKNOWN_FOLD;
 
     EXPECT_NE(foldServiceCallback.cameraManager_, nullptr);
-    EXPECT_TRUE(foldServiceCallback.cameraManager_->torchListenerMap_.IsEmpty());
+    EXPECT_TRUE(listenerManager->GetListenerCount() == 0);
     auto ret = foldServiceCallback.OnFoldStatusChanged(status);
     EXPECT_EQ(ret, CAMERA_OK);
 
     std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerImpl>();
     cameraManager_->RegisterTorchListener(listener);
-    auto listenerMap = cameraManager_->GetTorchListenerMap();
-    EXPECT_FALSE(listenerMap.IsEmpty());
+    EXPECT_FALSE(listenerManager->GetListenerCount() == 0);
     ret = foldServiceCallback.OnFoldStatusChanged(status);
     EXPECT_EQ(ret, CAMERA_OK);
 }
@@ -1431,23 +1430,6 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, Test
     std::shared_ptr<FoldListener> listener = std::make_shared<FoldListenerTest>();
     cameraManager_->foldListenerMap_.EnsureInsert(threadId, listener);
     shared_ptr<FoldListener> ret = cameraManager_->GetFoldListener();
-    EXPECT_EQ(ret, listener);
-}
-
-/*
- * Feature: Framework
- * Function: Test GetTorchListener
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test GetTorchListener
- */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, TestSize.Level0)
-{
-    std::thread::id threadId = std::this_thread::get_id();
-    std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerTest>();
-    cameraManager_->torchListenerMap_.EnsureInsert(threadId, listener);
-    shared_ptr<TorchListener> ret = cameraManager_->GetTorchListener();
     EXPECT_EQ(ret, listener);
 }
 

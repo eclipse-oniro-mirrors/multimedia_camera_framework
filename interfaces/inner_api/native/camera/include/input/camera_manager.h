@@ -125,6 +125,8 @@ public:
     virtual ~FoldListener() = default;
     virtual void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const = 0;
 };
+
+class TorchServiceListenerManager;
 class CameraManager : public RefBase {
 public:
     virtual ~CameraManager();
@@ -586,7 +588,7 @@ public:
     bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
     /**
-     * @brief register torch listener
+     * @brief Register torch listener
      *
      * @param TorchListener listener object.
      * @return.
@@ -594,11 +596,19 @@ public:
     void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
 
     /**
-     * @brief get the camera mute listener
+     * @brief Unregister torch listener
      *
-     * @return TorchListener point..
+     * @param TorchListener listener object.
+     * @return.
      */
-    std::shared_ptr<TorchListener> GetTorchListener();
+    void UnregisterTorchListener(std::shared_ptr<TorchListener> listener);
+
+    /**
+     * @brief Get the TorchServiceListenerManager.
+     *
+     * @return TorchServiceListenerManager.
+     */
+    sptr<TorchServiceListenerManager> GetTorchServiceListenerManager();
 
     /**
      * @brief register fold status listener
@@ -617,7 +627,6 @@ public:
 
     SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> GetCameraMngrCallbackMap();
     SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> GetCameraMuteListenerMap();
-    SafeMap<std::thread::id, std::shared_ptr<TorchListener>> GetTorchListenerMap();
 
     SafeMap<std::thread::id, std::shared_ptr<FoldListener>> GetFoldListenerMap();
 
@@ -846,14 +855,13 @@ private:
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     std::mutex cameraMuteSvcCallbackMutex_;
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
-    std::mutex torchSvcCallbackMutex_;
-    sptr<ITorchServiceCallback> torchSvcCallback_;
     std::mutex foldSvcCallbackMutex_;
     sptr<IFoldServiceCallback> foldSvcCallback_;
 
     SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> cameraMngrCallbackMap_;
     SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> cameraMuteListenerMap_;
-    SafeMap<std::thread::id, std::shared_ptr<TorchListener>> torchListenerMap_;
+    sptr<TorchServiceListenerManager> torchServiceListenerManager_ = sptr<TorchServiceListenerManager>::MakeSptr();
+
     SafeMap<std::thread::id, std::shared_ptr<FoldListener>> foldListenerMap_;
 
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
@@ -891,10 +899,12 @@ private:
     wptr<CameraManager> cameraManager_ = nullptr;
 };
 
-class TorchServiceCallback : public HTorchServiceCallbackStub {
+class TorchServiceListenerManager : public HTorchServiceCallbackStub, public CameraListenerManager<TorchListener> {
 public:
-    explicit TorchServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
     int32_t OnTorchStatusChange(const TorchStatus status) override;
+
+    void SetCameraManager(wptr<CameraManager> cameraManager);
+    sptr<CameraManager> GetCameraManager();
 
 private:
     wptr<CameraManager> cameraManager_ = nullptr;

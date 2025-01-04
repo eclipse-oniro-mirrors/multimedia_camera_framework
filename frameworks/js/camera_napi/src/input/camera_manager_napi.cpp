@@ -352,28 +352,18 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
 void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo& torchStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnTorchStatusChangeCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    CHECK_ERROR_RETURN(scope == nullptr);
-    napi_value result[ARGS_TWO];
-    napi_value retVal;
-    napi_value propValue;
-
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-
-    napi_create_object(env_, &result[PARAM1]);
-
-    napi_get_boolean(env_, torchStatusInfo.isTorchAvailable, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isTorchAvailable", propValue);
-    napi_get_boolean(env_, torchStatusInfo.isTorchActive, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "isTorchActive", propValue);
-    napi_create_double(env_, torchStatusInfo.torchLevel, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "torchLevel", propValue);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("torchStatusChange", callbackNapiPara);
-    napi_close_handle_scope(env_, scope);
+    ExecuteCallbackScopeSafe("torchStatusChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        TorchStatusInfo info = torchStatusInfo;
+        CameraNapiObject torchStateObj {{
+            { "isTorchAvailable", &info.isTorchAvailable },
+            { "isTorchActive", &info.isTorchActive },
+            { "torchLevel", &info.torchLevel }
+        }};
+        callbackObj = torchStateObj.CreateNapiObjFromMap(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
@@ -1332,25 +1322,11 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
 void CameraManagerNapi::RegisterTorchStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(cameraManager_ == nullptr, "cameraManager_ is null!");
-    auto torchListener = std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
-    if (torchListener == nullptr) {
-        torchListener = make_shared<TorchListenerNapi>(env);
-        cameraManager_->RegisterTorchListener(torchListener);
-    }
-    torchListener->SaveCallbackReference(eventName, callback, isOnce);
-}
-
-void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
-{
-    CHECK_ERROR_RETURN_LOG(cameraManager_ == nullptr, "cameraManager_ is null!");
-    auto torchListener = std::static_pointer_cast<TorchListenerNapi>(cameraManager_->GetTorchListener());
-    if (torchListener == nullptr) {
-        MEDIA_ERR_LOG("torchListener is null");
-    } else {
-        torchListener->RemoveCallbackRef(eventName, callback);
-    }
+    RegisterCallbackListener(eventName, env, callback, args, isOnce);
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(
+        listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
+    cameraManager_->RegisterTorchListener(listener);
 }
 
 void CameraManagerNapi::RegisterFoldStatusCallbackListener(
@@ -1388,7 +1364,7 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
             &CameraManagerNapi::UnregisterCameraMuteCallbackListener } },
         { "torchStatusChange", {
             &CameraManagerNapi::RegisterTorchStatusCallbackListener,
-            &CameraManagerNapi::UnregisterTorchStatusCallbackListener } },
+            &CameraManagerNapi::UnregisterCallbackListener } },
         { "foldStatusChange", {
             &CameraManagerNapi::RegisterFoldStatusCallbackListener,
             &CameraManagerNapi::UnregisterFoldStatusCallbackListener } } };

@@ -123,7 +123,7 @@ public:
     const char* GetOutputTypeString();
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
-    void SetStream(sptr<IStreamCommon> stream);
+    virtual void SetStream(sptr<IStreamCommon> stream);
     bool IsStreamCreated();
     sptr<CaptureSession> GetSession();
     void SetSession(wptr<CaptureSession> captureSession);

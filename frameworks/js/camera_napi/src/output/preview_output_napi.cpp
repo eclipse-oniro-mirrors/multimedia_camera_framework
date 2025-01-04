@@ -17,11 +17,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <stdint.h>
 #include <string>
 #include <unistd.h>
 #include <uv.h>
 
 #include "camera_error_code.h"
+#include "camera_log.h"
 #include "camera_napi_const.h"
 #include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
@@ -151,10 +153,7 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
             if (callbackInfo) {
                 auto listener = callbackInfo->listener_.lock();
                 if (listener) {
-                    napi_handle_scope scope = nullptr;
-                    napi_open_handle_scope(callbackInfo->env_, &scope);
                     listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
-                    napi_close_handle_scope(callbackInfo->env_, scope);
                 }
                 delete callbackInfo;
             }
@@ -173,25 +172,16 @@ void PreviewOutputCallback::OnSketchStatusDataChangedCall(SketchStatusData sketc
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnSketchStatusChangedCall is called");
-    napi_value args[ARGS_TWO];
-    napi_value retVal;
-    napi_get_undefined(env_, &args[PARAM0]);
-    napi_value napiSketchStatus;
-    napi_value napiSketchStatusKey;
-    napi_value napiSketchRatio;
-    napi_value napiSketchRatioKey;
-    napi_value callbackObj;
-    napi_create_object(env_, &callbackObj);
-    napi_create_string_utf8(env_, "status", NAPI_AUTO_LENGTH, &napiSketchStatusKey);
-    napi_create_int32(env_, static_cast<int32_t>(sketchStatusData.status), &napiSketchStatus);
-    napi_set_property(env_, callbackObj, napiSketchStatusKey, napiSketchStatus);
-    napi_create_string_utf8(env_, "sketchRatio", NAPI_AUTO_LENGTH, &napiSketchRatioKey);
-    napi_create_double(env_, sketchStatusData.sketchRatio, &napiSketchRatio);
-    napi_set_property(env_, callbackObj, napiSketchRatioKey, napiSketchRatio);
-    args[PARAM1] = callbackObj;
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = args, .result = &retVal };
-    ExecuteCallback(CONST_SKETCH_STATUS_CHANGED, callbackNapiPara);
+    ExecuteCallbackScopeSafe(CONST_SKETCH_STATUS_CHANGED, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj;
+        CameraNapiObject sketchObj {{
+            { "status", reinterpret_cast<int32_t*>(&sketchStatusData.status) },
+            { "sketchRatio", &sketchStatusData.sketchRatio }
+        }};
+        callbackObj = sketchObj.CreateNapiObjFromMap(env_);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 void PreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
@@ -204,24 +194,22 @@ void PreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData& st
 void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
-    napi_value result[ARGS_ONE];
-    napi_value retVal;
-    napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
     std::string eventName = PreviewOutputEventTypeHelper.GetKeyString(eventType);
     if (eventName.empty()) {
         MEDIA_WARNING_LOG(
             "PreviewOutputCallback::UpdateJSCallback, event type is invalid %d", static_cast<int32_t>(eventType));
         return;
     }
-
-    if (eventType == PreviewOutputEventType::PREVIEW_FRAME_ERROR) {
-        napi_create_object(env_, &result[PARAM0]);
-        napi_create_int32(env_, value, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "code", propValue);
-    }
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-    ExecuteCallback(eventName, callbackNapiPara);
+    int32_t nonConstValue = value;
+    ExecuteCallbackScopeSafe(eventName, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        if (eventType == PreviewOutputEventType::PREVIEW_FRAME_ERROR) {
+            CameraNapiObject errObj { { { "code", &nonConstValue } } };
+            errCode = errObj.CreateNapiObjFromMap(env_);
+        }
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    });
 }
 
 PreviewOutputNapi::PreviewOutputNapi() : env_(nullptr) {}
@@ -594,72 +582,55 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
 void PreviewOutputNapi::RegisterFrameStartCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (previewCallback_ == nullptr) {
-        previewCallback_ = std::make_shared<PreviewOutputCallback>(env);
-        previewOutput_->SetCallback(previewCallback_);
-    }
-    previewCallback_->SaveCallbackReference(CONST_PREVIEW_FRAME_START, callback, isOnce);
-}
-
-void PreviewOutputNapi::UnregisterFrameStartCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
-{
-    CHECK_ERROR_RETURN_LOG(previewCallback_ == nullptr, "previewCallback is null");
-    previewCallback_->RemoveCallbackRef(CONST_PREVIEW_FRAME_START, callback);
+    RegisterCallbackListener(eventName, env, callback, args, isOnce);
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(
+        listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
 }
 
 void PreviewOutputNapi::RegisterFrameEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (previewCallback_ == nullptr) {
-        previewCallback_ = std::make_shared<PreviewOutputCallback>(env);
-        previewOutput_->SetCallback(previewCallback_);
-    }
-    previewCallback_->SaveCallbackReference(CONST_PREVIEW_FRAME_END, callback, isOnce);
-}
-void PreviewOutputNapi::UnregisterFrameEndCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
-{
-    CHECK_ERROR_RETURN_LOG(previewCallback_ == nullptr, "previewCallback is null");
-    previewCallback_->RemoveCallbackRef(CONST_PREVIEW_FRAME_END, callback);
+    RegisterCallbackListener(eventName, env, callback, args, isOnce);
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
 }
 
 void PreviewOutputNapi::RegisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (previewCallback_ == nullptr) {
-        previewCallback_ = std::make_shared<PreviewOutputCallback>(env);
-        previewOutput_->SetCallback(previewCallback_);
-    }
-    previewCallback_->SaveCallbackReference(CONST_PREVIEW_FRAME_ERROR, callback, isOnce);
-}
-
-void PreviewOutputNapi::UnregisterErrorCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
-{
-    CHECK_ERROR_RETURN_LOG(previewCallback_ == nullptr, "previewCallback is null");
-    previewCallback_->RemoveCallbackRef(CONST_PREVIEW_FRAME_ERROR, callback);
+    RegisterCallbackListener(eventName, env, callback, args, isOnce);
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
 }
 
 void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On sketchStatusChanged is called!");
-    if (previewCallback_ == nullptr) {
-        previewCallback_ = std::make_shared<PreviewOutputCallback>(env);
-        previewOutput_->SetCallback(previewCallback_);
-    }
-    previewCallback_->SaveCallbackReference(CONST_SKETCH_STATUS_CHANGED, callback, isOnce);
-    previewOutput_->OnNativeRegisterCallback(CONST_SKETCH_STATUS_CHANGED);
+    RegisterCallbackListener(eventName, env, callback, args, isOnce);
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(
+        listener == nullptr, "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener listener is null");
+    previewOutput_->SetCallback(listener);
+    previewOutput_->OnNativeRegisterCallback(eventName);
 }
 
 void PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi Off sketchStatusChanged is called!");
-    CHECK_ERROR_RETURN_LOG(previewCallback_ == nullptr, "previewCallback is null");
-    previewCallback_->RemoveCallbackRef(CONST_SKETCH_STATUS_CHANGED, callback);
-    previewOutput_->OnNativeUnregisterCallback(CONST_SKETCH_STATUS_CHANGED);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
+        return;
+    }
+    auto listener = GetEventListener(env);
+    CHECK_ERROR_RETURN_LOG(
+        listener == nullptr, "PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener listener is null");
+    UnregisterCallbackListener(eventName, env, callback, args);
+    previewOutput_->OnNativeUnregisterCallback(eventName);
 }
 
 const PreviewOutputNapi::EmitterFunctions& PreviewOutputNapi::GetEmitterFunctions()
@@ -667,13 +638,13 @@ const PreviewOutputNapi::EmitterFunctions& PreviewOutputNapi::GetEmitterFunction
     static const EmitterFunctions funMap = {
         { CONST_PREVIEW_FRAME_START, {
             &PreviewOutputNapi::RegisterFrameStartCallbackListener,
-            &PreviewOutputNapi::UnregisterFrameStartCallbackListener } },
+            &PreviewOutputNapi::UnregisterCallbackListener } },
         { CONST_PREVIEW_FRAME_END, {
             &PreviewOutputNapi::RegisterFrameEndCallbackListener,
-            &PreviewOutputNapi::UnregisterFrameEndCallbackListener } },
+            &PreviewOutputNapi::UnregisterCallbackListener } },
         { CONST_PREVIEW_FRAME_ERROR, {
             &PreviewOutputNapi::RegisterErrorCallbackListener,
-            &PreviewOutputNapi::UnregisterErrorCallbackListener } },
+            &PreviewOutputNapi::UnregisterCallbackListener } },
         { CONST_SKETCH_STATUS_CHANGED, {
             &PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener,
             &PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener } } };

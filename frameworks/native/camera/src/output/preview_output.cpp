@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <variant>
 
@@ -28,6 +29,10 @@
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "hstream_repeat_callback_stub.h"
+#include "image_format.h"
+#include "istream_repeat.h"
+#include "istream_repeat_callback.h"
 #include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
@@ -63,29 +68,23 @@ static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
+    MEDIA_INFO_LOG("PreviewOutput::PreviewOutput construct");
     PreviewFormat_ = 0;
     PreviewSize_.height = 0;
     PreviewSize_.width = 0;
+    previewOutputListenerManager_->SetPreviewOutput(this);
 }
 
-PreviewOutput::PreviewOutput() : PreviewOutput(nullptr)
-{
-    PreviewFormat_ = 0;
-    PreviewSize_.height = 0;
-    PreviewSize_.width = 0;
-}
+PreviewOutput::PreviewOutput() : PreviewOutput(nullptr) {}
 
 PreviewOutput::~PreviewOutput()
 {
+    MEDIA_INFO_LOG("PreviewOutput::PreviewOutput destruct");
 }
 
 int32_t PreviewOutput::Release()
 {
-    {
-        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-        svcCallback_ = nullptr;
-        appCallback_ = nullptr;
-    }
+    previewOutputListenerManager_->ClearListeners();
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Release");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -102,73 +101,64 @@ int32_t PreviewOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
-int32_t PreviewOutputCallbackImpl::OnFrameStarted()
+int32_t PreviewOutputListenerManager::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
-    auto item = previewOutput_.promote();
-    if (item != nullptr) {
-        auto callback = item->GetApplicationCallback();
-        if (callback != nullptr) {
-            callback->OnFrameStarted();
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
-        }
-    } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameStarted PreviewOutput is nullptr");
-    }
+    auto previewOutput = GetPreviewOutput();
+    CHECK_ERROR_RETURN_RET_LOG(
+        previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameStarted previewOutput is null");
+    previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
+        [](auto listener) { listener->OnFrameStarted(); });
     return CAMERA_OK;
 }
 
-int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
+int32_t PreviewOutputListenerManager::OnFrameEnded(int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    auto item = previewOutput_.promote();
-    if (item != nullptr) {
-        auto callback = item->GetApplicationCallback();
-        if (callback != nullptr) {
-            callback->OnFrameEnded(frameCount);
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
-        }
-    } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameEnded PreviewOutput is nullptr");
-    }
+    auto previewOutput = GetPreviewOutput();
+    CHECK_ERROR_RETURN_RET_LOG(
+        previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameEnded previewOutput is null");
+    previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
+        [&frameCount](auto listener) { listener->OnFrameEnded(frameCount); });
     return CAMERA_OK;
 }
 
-int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
+int32_t PreviewOutputListenerManager::OnFrameError(int32_t errorCode)
 {
     CAMERA_SYNC_TRACE;
-    auto item = previewOutput_.promote();
-    if (item != nullptr) {
-        auto callback = item->GetApplicationCallback();
-        if (callback != nullptr) {
-            callback->OnError(errorCode);
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
-        }
-    } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameError PreviewOutput is nullptr");
-    }
+    auto previewOutput = GetPreviewOutput();
+    CHECK_ERROR_RETURN_RET_LOG(
+        previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameError previewOutput is null");
+    previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
+        [&errorCode](auto listener) { listener->OnError(errorCode); });
     return CAMERA_OK;
 }
 
-int32_t PreviewOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
+int32_t PreviewOutputListenerManager::OnSketchStatusChanged(SketchStatus status)
 {
-    auto previewOutput = previewOutput_.promote();
-    if (previewOutput != nullptr) {
-        previewOutput->OnSketchStatusChanged(status);
-    } else {
-        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
-    }
+    CAMERA_SYNC_TRACE;
+    auto previewOutput = GetPreviewOutput();
+    CHECK_ERROR_RETURN_RET_LOG(previewOutput == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::OnSketchStatusChanged previewOutput is null");
+    previewOutput->OnSketchStatusChanged(status);
     return CAMERA_OK;
 }
 
-int32_t PreviewOutputCallbackImpl::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
+int32_t PreviewOutputListenerManager::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo)
 {
     MEDIA_INFO_LOG("PreviewOutput::OnDeferredVideoEnhancementInfo called");
     // empty impl
     return CAMERA_OK;
+}
+
+void PreviewOutputListenerManager::SetPreviewOutput(wptr<PreviewOutput> previewOutput)
+{
+    previewOutput_ = previewOutput;
+}
+
+sptr<PreviewOutput> PreviewOutputListenerManager::GetPreviewOutput()
+{
+    return previewOutput_.promote();
 }
 
 int32_t PreviewOutput::OnSketchStatusChanged(SketchStatus status)
@@ -276,13 +266,13 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
     MEDIA_DEBUG_LOG("PreviewOutput::CreateSketchWrapper enter sketchSize is:%{public}d x %{public}d", sketchSize.width,
         sketchSize.height);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, ServiceToCameraError(CAMERA_INVALID_STATE),
-        "EnableSketch session null");
+    CHECK_ERROR_RETURN_RET_LOG(
+        session == nullptr, ServiceToCameraError(CAMERA_INVALID_STATE), "EnableSketch session null");
     auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize);
     sketchWrapper_ = wrapper;
+    wrapper->SetPreviewOutputCallbackManager(previewOutputListenerManager_);
     auto metadata = GetDeviceMetadata();
     int32_t retCode = wrapper->Init(metadata, session->GetFeaturesMode());
-    wrapper->SetPreviewStateCallback(appCallback_);
     return ServiceToCameraError(retCode);
 }
 
@@ -326,14 +316,22 @@ int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
     return ServiceToCameraError(errCode);
 }
 
+void PreviewOutput::SetStream(sptr<IStreamCommon> stream)
+{
+    CaptureOutput::SetStream(stream);
+    CHECK_ERROR_RETURN_LOG(stream == nullptr, "PreviewOutput::SetStream stream is null");
+    sptr<IStreamRepeatCallback> callback = previewOutputListenerManager_;
+    static_cast<IStreamRepeat*>(stream.GetRefPtr())->SetCallback(callback);
+}
+
 int32_t PreviewOutput::CreateStream()
 {
     auto stream = GetStream();
-    CHECK_ERROR_RETURN_RET_LOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "PreviewOutput::CreateStream stream is not null");
+    CHECK_ERROR_RETURN_RET_LOG(
+        stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "PreviewOutput::CreateStream stream is not null");
     auto producer = GetBufferProducer();
-    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "PreviewOutput::CreateStream producer is null");
+    CHECK_ERROR_RETURN_RET_LOG(
+        producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "PreviewOutput::CreateStream producer is null");
     sptr<IStreamRepeat> streamPtr = nullptr;
     auto previewProfile = GetPreviewProfile();
     CHECK_ERROR_RETURN_RET_LOG(previewProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -341,6 +339,10 @@ int32_t PreviewOutput::CreateStream()
     int32_t res =
         CameraManager::GetInstance()->CreatePreviewOutputStream(streamPtr, *previewProfile, GetBufferProducer());
     SetStream(streamPtr);
+    CHECK_ERROR_RETURN_RET_LOG(
+        streamPtr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput::CreateStream streamPtr is null");
+    sptr<IStreamRepeatCallback> callback = previewOutputListenerManager_;
+    streamPtr->SetCallback(callback);
     return res;
 }
 
@@ -507,36 +509,14 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
-    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-    appCallback_ = callback;
-    if (appCallback_ != nullptr) {
-        if (svcCallback_ == nullptr) {
-            svcCallback_ = new (std::nothrow) PreviewOutputCallbackImpl(this);
-            if (svcCallback_ == nullptr) {
-                MEDIA_ERR_LOG("new PreviewOutputCallbackImpl Failed to register callback");
-                appCallback_ = nullptr;
-                return;
-            }
-        }
-        CHECK_ERROR_RETURN_LOG(GetStream() == nullptr, "PreviewOutput Failed to SetCallback!, GetStream is nullptr");
-        auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
-        int32_t errorCode = CAMERA_OK;
-        if (itemStream) {
-            errorCode = itemStream->SetCallback(svcCallback_);
-        } else {
-            MEDIA_ERR_LOG("PreviewOutput::SetCallback itemStream is nullptr");
-        }
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("PreviewOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
-            svcCallback_ = nullptr;
-            appCallback_ = nullptr;
-        }
-    }
-    if (sketchWrapper_ != nullptr) {
-        SketchWrapper* wrapper = static_cast<SketchWrapper*>(sketchWrapper_.get());
-        wrapper->SetPreviewStateCallback(appCallback_);
-    }
-    return;
+    // TODO ndk not remove listener
+    bool isSuccess = previewOutputListenerManager_->AddListener(callback);
+    CHECK_ERROR_PRINT_LOG(isSuccess, "PreviewOutput::SetCallback callback listener already exist");
+}
+
+void PreviewOutput::RemoveCallback(std::shared_ptr<PreviewStateCallback> callback)
+{
+    previewOutputListenerManager_->RemoveListener(callback);
 }
 
 const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverControlTags()
@@ -574,10 +554,9 @@ int32_t PreviewOutput::OnResultMetadataChanged(
     return CAM_META_SUCCESS;
 }
 
-std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
+sptr<PreviewOutputListenerManager> PreviewOutput::GetPreviewOutputListenerManager()
 {
-    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-    return appCallback_;
+    return previewOutputListenerManager_;
 }
 
 void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
@@ -615,12 +594,10 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
 void PreviewOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-    if (appCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
+    previewOutputListenerManager_->TriggerListener([](auto listener) {
         int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        appCallback_->OnError(serviceErrorType);
-    }
+        listener->OnError(serviceErrorType);
+    });
 }
 
 int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)

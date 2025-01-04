@@ -116,16 +116,18 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Le
     sketchSize.width = 640;
     sketchSize.height = 480;
 
-    SketchWrapper *sketchWrapper = new (std::nothrow)
-        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    auto sketchWrapper = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
     ASSERT_NE(sketchWrapper, nullptr);
     sketchWrapper->AutoStream();
+    sketchWrapper->SetPreviewOutputCallbackManager(
+        ((sptr<PreviewOutput>&)previewOutput)->GetPreviewOutputListenerManager());
 
     std::shared_ptr<PreviewStateCallback> previewStateCallback =
         std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
     EXPECT_NE(previewStateCallback, nullptr);
-    sketchWrapper->SetPreviewStateCallback(previewStateCallback);
-    EXPECT_NE(sketchWrapper->previewStateCallback_.lock(), nullptr);
+
+    ((sptr<PreviewOutput>&)previewOutput)->SetCallback(previewStateCallback);
+    EXPECT_NE(sketchWrapper->previewOutputCallbackManager_.promote(), nullptr);
 
     SketchStatus sketchStatus = SketchStatus::STARTING;
     std::shared_ptr<SceneFeaturesMode> sceneFeaturesMode = std::make_shared<SceneFeaturesMode>();

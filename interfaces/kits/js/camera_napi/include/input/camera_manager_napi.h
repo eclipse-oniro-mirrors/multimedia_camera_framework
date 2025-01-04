@@ -128,7 +128,8 @@ struct FoldStatusChangeCallbackInfo {
 };
 
 struct CameraNapiObject;
-class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi> {
+class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi>,
+                          public CameraNapiEventListener<TorchListenerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
@@ -189,8 +190,6 @@ private:
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterTorchStatusCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFoldStatusCallbackListener(

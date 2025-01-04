@@ -46,6 +46,7 @@
 #include "nativetoken_kit.h"
 #include "night_session.h"
 #include "parameter.h"
+#include "preview_output.h"
 #include "quick_shot_photo_session.h"
 #include "scan_session.h"
 #include "session/panorama_session.h"
@@ -5434,17 +5435,17 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.Level0)
 {
-    std::shared_ptr<PreviewOutputCallbackImpl> repeatCallback = std::make_shared<PreviewOutputCallbackImpl>();
+    sptr<PreviewOutputListenerManager> listenerManager = sptr<PreviewOutputListenerManager>::MakeSptr();
 
-    int32_t intResult = repeatCallback->OnFrameStarted();
+    int32_t intResult = listenerManager->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
 
     int32_t frameCount = 0;
-    intResult = repeatCallback->OnFrameEnded(frameCount);
+    intResult = listenerManager->OnFrameEnded(frameCount);
     EXPECT_EQ(intResult, 0);
 
     int32_t errorCode = 0;
-    intResult = repeatCallback->OnFrameError(errorCode);
+    intResult = listenerManager->OnFrameError(errorCode);
     EXPECT_EQ(intResult, 0);
 
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
@@ -5475,15 +5476,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
 
     callback = std::make_shared<AppCallback>();
     previewOutput_1->SetCallback(callback);
-    previewOutput_1->SetCallback(callback);
 
-    sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
-    ASSERT_NE(repeatCallback_2, nullptr);
+    sptr<PreviewOutputListenerManager> listenerManager2 = sptr<PreviewOutputListenerManager>::MakeSptr();
+    ASSERT_NE(listenerManager2, nullptr);
+    listenerManager2->SetPreviewOutput(previewOutput_1);
 
-    intResult = repeatCallback_2->OnFrameEnded(frameCount);
+    intResult = listenerManager2->OnFrameEnded(frameCount);
     EXPECT_EQ(intResult, 0);
 
-    intResult = repeatCallback_2->OnFrameError(errorCode);
+    intResult = listenerManager2->OnFrameError(errorCode);
     EXPECT_EQ(intResult, 0);
 }
 
@@ -6143,7 +6144,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_032, TestSize.L
     ASSERT_NE(previewOutput, nullptr);
 
     sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
-    callback = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
+    sptr<PreviewOutputListenerManager> listenerManager = sptr<PreviewOutputListenerManager>::MakeSptr();
+
+    callback = listenerManager;
     ASSERT_NE(callback, nullptr);
 
     intResult = repeat->SetCallback(callback);
@@ -7969,12 +7972,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_089, TestSize.L
     EXPECT_EQ(intResult, 0);
     sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
     ASSERT_NE(previewOutput_1, nullptr);
-    auto previewOutputCallbackImpl = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1.GetRefPtr());
-    ASSERT_NE(previewOutputCallbackImpl, nullptr);
-    EXPECT_EQ(previewOutputCallbackImpl->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
-    auto previewOutputCallbackImpl1 = new (std::nothrow) PreviewOutputCallbackImpl();
-    ASSERT_NE(previewOutputCallbackImpl1, nullptr);
-    EXPECT_EQ(previewOutputCallbackImpl1->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
+    sptr<PreviewOutputListenerManager> listenerManager = sptr<PreviewOutputListenerManager>::MakeSptr();
+    listenerManager->SetPreviewOutput(previewOutput_1);
+    ASSERT_NE(listenerManager, nullptr);
+    EXPECT_EQ(listenerManager->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
+    sptr<PreviewOutputListenerManager> listenerManager1 = sptr<PreviewOutputListenerManager>::MakeSptr();
+    ASSERT_NE(listenerManager1, nullptr);
+    EXPECT_EQ(listenerManager1->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
     session_->innerInputDevice_ = nullptr;
@@ -8054,7 +8058,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_091, TestSize.L
     bool canOpenCamera = true;
     EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), -1);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
+    torchSvcCallback = new(std::nothrow) TorchServiceListenerManager();
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
@@ -8478,7 +8482,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_105, TestSize.L
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
     hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
+    torchSvcCallback = new(std::nothrow) TorchServiceListenerManager();
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
