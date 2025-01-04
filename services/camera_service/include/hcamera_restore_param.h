@@ -47,6 +47,7 @@ public:
 
     void SetStreamInfo(std::vector<StreamInfo_V1_1> &streamInfos);
     void SetSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void UpdateExposureSetting(long timeInterval);
     void SetRestoreParamType(RestoreParamTypeOhos restoreParamType);
     void SetStartActiveTime(int activeTime);
     void SetCloseCameraTime(timeval closeCameraTime);
@@ -55,6 +56,7 @@ public:
     void SetFoldStatus(int foldStaus);
 
 private:
+    std::mutex restoreParamMutex_;
     std::string mClientName;
     std::string mCameraId;
     std::vector<StreamInfo_V1_1> mStreamInfos;

@@ -19,6 +19,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr uint32_t DELETE_EXPOSURE_TIME = 30 * 1000;
 HCameraRestoreParam::HCameraRestoreParam(std::string clientName, std::string cameraId,
     std::vector<StreamInfo_V1_1> streamInfos,
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings, RestoreParamTypeOhos restoreParamType,
@@ -100,7 +101,21 @@ void HCameraRestoreParam::SetStreamInfo(std::vector<StreamInfo_V1_1> &streamInfo
 
 void HCameraRestoreParam::SetSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
+    std::lock_guard<std::mutex> lock(restoreParamMutex_);
     mSettings = settings;
+}
+
+void HCameraRestoreParam::UpdateExposureSetting(long timeInterval)
+{
+    std::lock_guard<std::mutex> lock(restoreParamMutex_);
+    if (timeInterval < DELETE_EXPOSURE_TIME || mSettings == nullptr) {
+        return;
+    }
+    if (mOpMode == SceneMode::PROFESSIONAL_PHOTO || mOpMode == SceneMode::PROFESSIONAL_VIDEO
+        || mOpMode == SceneMode::TIMELAPSE_PHOTO) {
+        return;
+    }
+    OHOS::Camera::DeleteCameraMetadataItem(mSettings->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION);
 }
 
 void HCameraRestoreParam::SetRestoreParamType(RestoreParamTypeOhos restoreParamType)

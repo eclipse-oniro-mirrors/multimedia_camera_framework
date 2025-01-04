@@ -1744,6 +1744,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         defaultSettings->addEntry(OHOS_CAMERA_USER_ID, &userId, count);
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        int32_t exporseValue = item.data.i32[0];
+        defaultSettings->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exporseValue, count);
+    }
+
     uint8_t enableValue = true;
     defaultSettings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &enableValue, 1);
 
