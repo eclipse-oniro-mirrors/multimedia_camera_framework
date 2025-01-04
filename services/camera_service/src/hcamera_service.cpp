@@ -1699,7 +1699,6 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         cameraRestoreParam->SetSetting(defaultSettings);
     }
     CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_UNKNOWN_ERROR);
-    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %{public}d", effectParam.skinSmoothLevel);
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc,
         "HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
@@ -1712,10 +1711,8 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     captureSession->GetSessionState(currentState);
     bool isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)
             || (currentState == CaptureSessionState::SESSION_STARTED);
-    if (!isCommitConfig || count > 1) {
-        MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore stream is not commit or streamId is all 0");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((!isCommitConfig || count > 1), CAMERA_INVALID_ARG,
+        "HCameraService::SaveCurrentParamForRestore stream is not commit or streamId is all 0");
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
