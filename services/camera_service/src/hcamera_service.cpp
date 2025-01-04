@@ -1708,13 +1708,10 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
          MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
         count = (info.v1_0.streamId_ == 0) ? count++ : 0;
     }
-    CaptureSessionState currentState;
-    captureSession->GetSessionState(currentState);
-    bool isHasStartedStream = (currentState == CaptureSessionState::SESSION_STARTED);
-    if (isHasStartedStream ||  count > 1) {
-        MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore stream is not started or streamId is all 0");
+    if (!captureSession->iIsSessionCommited() ||  count > 1) {
+        MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore stream is not commit or streamId is all 0");
         return CAMERA_INVALID_ARG;
-     }
+    }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
