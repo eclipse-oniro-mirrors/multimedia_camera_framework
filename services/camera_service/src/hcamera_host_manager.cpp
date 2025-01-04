@@ -31,6 +31,7 @@ namespace CameraStandard {
 
 const std::string HCameraHostManager::LOCAL_SERVICE_NAME = "camera_service";
 const std::string HCameraHostManager::DISTRIBUTED_SERVICE_NAME = "distributed_camera_provider_service";
+constexpr uint32_t MILLISEC_TIME = 1000;
 
 using namespace OHOS::HDI::Camera::V1_0;
 struct HCameraHostManager::CameraDeviceInfo {
@@ -1022,9 +1023,9 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
         if (closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId)) {
             timeval openTime;
             gettimeofday(&openTime, nullptr);
-            long timeInterval = (openTime.tv_sec - closeTime.tv_sec)+
-                (openTime.tv_usec - closeTime.tv_usec) / 1000; // 1000 is Convert milliseconds to seconds
-            if ((long)(restoreParam->GetStartActiveTime() * 60) < timeInterval) { // 60 is 60 Seconds
+            long timeInterval = (openTime.tv_sec - closeTime.tv_sec) * MILLISEC_TIME +
+                (openTime.tv_usec - closeTime.tv_usec) / MILLISEC_TIME;
+            if ((long)(restoreParam->GetStartActiveTime() * 60 * MILLISEC_TIME) < timeInterval) { // 60 is 60 Seconds
                 MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get persistent");
                 cameraRestoreParam = restoreParam;
             } else {
