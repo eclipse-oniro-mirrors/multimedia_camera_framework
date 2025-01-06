@@ -1120,7 +1120,8 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 
 int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
 {
-    int32_t ret = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t ret = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, callerToken);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "CheckPermission arguments failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
         to_string(isMute), CameraReportUtils::GetCallerInfo());
@@ -1129,7 +1130,7 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
     bool targetMuteMode = isMute;
     const Security::AccessToken::PolicyType secPolicyType = g_policyTypeMap_[policyType];
     const Security::AccessToken::CallerType secCaller = Security::AccessToken::CallerType::CAMERA;
-    ret = Security::AccessToken::PrivacyKit::SetMutePolicy(secPolicyType, secCaller, isMute);
+    ret = Security::AccessToken::PrivacyKit::SetMutePolicy(secPolicyType, secCaller, isMute, callerToken);
     if (ret != Security::AccessToken::RET_SUCCESS) {
         MEDIA_ERR_LOG("MuteCameraPersist SetMutePolicy return false, policyType = %{public}d, retCode = %{public}d",
             static_cast<int32_t>(policyType), static_cast<int32_t>(ret));
