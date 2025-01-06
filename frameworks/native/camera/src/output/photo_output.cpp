@@ -229,9 +229,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
             if (ret == CAM_META_SUCCESS) {
                 photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, meta.data.ui32[1]);
             } else {
-                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d."
-                                  "exposureTime is not found",
-                    meta.data.ui32[0]);
+                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, exposureTime is not found");
             }
             break;
         }
