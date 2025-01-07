@@ -4459,24 +4459,19 @@ bool CaptureSession::IsMovingPhotoEnabled()
     return isMovingPhotoEnabled_;
 }
 
-int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror)
+int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("EnableMovingPhotoMirror %{public}d", isMirror);
+    MEDIA_INFO_LOG("EnableMovingPhotoMirror enter, isMirror: %{public}d", isMirror);
     if (!IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
-        }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+    int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror, isConfig);
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
 }
 
