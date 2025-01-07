@@ -1696,6 +1696,9 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
         surfaceName.c_str(), captureId);
     auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
     if (photoOutput->IsYuvOrHeifPhoto()) {
+        constexpr int32_t yuvFormat = 3;
+        photoProxy->format_ = yuvFormat;
+        photoProxy->imageFormat_ = yuvFormat;
         photoOutput->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
     }
 }
