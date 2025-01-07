@@ -50,7 +50,9 @@ public:
 
     virtual int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) = 0;
 
-    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) = 0;
+    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation) = 0;
+
+    virtual int32_t SetCameraApi(uint32_t apiCompatibleVersion) = 0;
 
     virtual int32_t ToggleAutoVideoFrameRate(bool isEnable) = 0;
 

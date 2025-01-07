@@ -603,13 +603,18 @@ bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     return isMirrorSupported;
 }
 
-int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion)
+int32_t HStreamRepeat::SetCameraRotation(bool isEnable, int32_t rotation)
 {
     enableCameraRotation_ = isEnable;
     CHECK_ERROR_RETURN_RET(rotation > STREAM_ROTATE_360, CAMERA_INVALID_ARG);
     setCameraRotation_ = STREAM_ROTATE_360 - rotation;
-    apiCompatibleVersion_ = apiCompatibleVersion;
     SetStreamTransform();
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::SetCameraApi(uint32_t apiCompatibleVersion)
+{
+    apiCompatibleVersion_ = apiCompatibleVersion;
     return CAMERA_OK;
 }
 
