@@ -1194,7 +1194,7 @@ int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos
     cameraHostManager_->GetCameras(cameraIds_);
     if ((find(cameraIds_.begin(), cameraIds_.end(), cameraId) != cameraIds_.end()) && IsPrelaunchSupported(cameraId)) {
         preCameraId_ = cameraId;
-        MEDIA_INFO_LOG("CameraHostInfo::prelaunch 111 for cameraId %{public}s", (cameraId).c_str());
+        MEDIA_INFO_LOG("CameraHostInfo::SetPrelaunchConfig for cameraId %{public}s", (cameraId).c_str());
         sptr<HCaptureSession> captureSession_ = nullptr;
         pid_t pid = IPCSkeleton::GetCallingPid();
         captureSessionsManager_.Find(pid, captureSession_);
@@ -1699,13 +1699,20 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         cameraRestoreParam->SetSetting(defaultSettings);
     }
     CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_UNKNOWN_ERROR);
-    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %{public}d", effectParam.skinSmoothLevel);
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc,
         "HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
+    int count = 0;
     for (auto& info : allStreamInfos) {
         MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+        count = (info.v1_0.streamId_ == 0) ? count++ : 0;
     }
+    CaptureSessionState currentState;
+    captureSession->GetSessionState(currentState);
+    bool isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)
+            || (currentState == CaptureSessionState::SESSION_STARTED);
+    CHECK_ERROR_RETURN_RET_LOG((!isCommitConfig || count > 1), CAMERA_INVALID_ARG,
+        "HCameraService::SaveCurrentParamForRestore stream is not commit or streamId is all 0");
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);

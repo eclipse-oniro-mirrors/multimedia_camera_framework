@@ -313,7 +313,7 @@ static const std::unordered_map<std::string, int32_t> mapColorEffectType = {
 
 static const std::unordered_map<std::string, int32_t> mapRestoreParamType = {
     {"NO_NEED_RESTORE_PARAM", 0},
-    {"PERSISTENT_DEFAULT_PARAM", 1},
+    {"PRESISTENT_DEFAULT_PARAM", 1},
     {"TRANSIENT_ACTIVE_PARAM", 2},
 };
 
