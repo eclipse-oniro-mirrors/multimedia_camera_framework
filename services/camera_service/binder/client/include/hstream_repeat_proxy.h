@@ -53,6 +53,15 @@ public:
 
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
 
+<<<<<<< HEAD
+=======
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
+
+    int32_t SetCameraApi(uint32_t apiCompatibleVersion) override;
+
+    int32_t ToggleAutoVideoFrameRate(bool isEnable) override;
+
+>>>>>>> a3e65b9f (fix api rotation)
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;
 };

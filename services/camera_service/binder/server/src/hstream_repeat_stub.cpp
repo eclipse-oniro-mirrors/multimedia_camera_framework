@@ -70,6 +70,15 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION):
             errCode = HandleSetCameraRotation(data);
             break;
+<<<<<<< HEAD
+=======
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE):
+            errCode = HandleToggleAutoVideoFrameRate(data);
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_API_VERSION):
+            errCode = HandleSetCameraApi(data);
+            break;
+>>>>>>> a3e65b9f (fix api rotation)
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -185,5 +194,38 @@ int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
 
     return errCode;
 }
+<<<<<<< HEAD
+=======
+
+int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+    int32_t rotation = data.ReadInt32();
+
+    int ret = SetCameraRotation(isEnable, rotation);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamRepeatStub::HandleSetCameraApi(MessageParcel& data)
+{
+    uint32_t apiCompatibleVersion = data.ReadUint32();
+
+    int ret = SetCameraApi(apiCompatibleVersion);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraApi failed : %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamRepeatStub::HandleToggleAutoVideoFrameRate(MessageParcel& data)
+{
+    CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);
+    bool isEnable = data.ReadBool();
+ 
+    int ret = ToggleAutoVideoFrameRate(isEnable);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+        "HStreamRepeatStub::HandleToggleAutoVideoFrameRate failed : %{public}d", ret);
+    return ret;
+}
+>>>>>>> a3e65b9f (fix api rotation)
 } // namespace CameraStandard
 } // namespace OHOS
