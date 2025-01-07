@@ -47,10 +47,12 @@ void CameraVideoSessionUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraVideoSessionUnitTest::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraVideoSessionUnitTest::TearDown");
 }
 
@@ -159,7 +161,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level0
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);

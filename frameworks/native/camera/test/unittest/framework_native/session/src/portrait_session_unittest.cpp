@@ -164,7 +164,7 @@ void CameraPortraitSessionUnitTest::PortraitSessionBeautyParams(sptr<PortraitSes
 
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
 {
-    previewProfile = {};
+    previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -174,8 +174,8 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
         return nullptr;
     }
 
-    previewProfile = outputCapability->GetPreviewProfiles();
-    if (previewProfile.empty()) {
+    previewProfile_ = outputCapability->GetPreviewProfiles();
+    if (previewProfile_.empty()) {
         return nullptr;
     }
 
@@ -183,12 +183,12 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
     if (surface == nullptr) {
         return nullptr;
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile[0], surface);
+    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
 }
 
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
 {
-    photoProfile = {};
+    photoProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -198,8 +198,8 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
         return nullptr;
     }
 
-    photoProfile = outputCapability->GetPhotoProfiles();
-    if (photoProfile.empty()) {
+    photoProfile_ = outputCapability->GetPhotoProfiles();
+    if (photoProfile_.empty()) {
         return nullptr;
     }
 
@@ -208,7 +208,7 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
         return nullptr;
     }
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile[0], surfaceProducer);
+    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
 }
 
 void CameraPortraitSessionUnitTest::SetUpTestCase(void) {}
@@ -219,10 +219,12 @@ void CameraPortraitSessionUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraPortraitSessionUnitTest::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraPortraitSessionUnitTest TearDown");
 }
 
@@ -298,8 +300,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
 
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
 
     ret = portraitSession->AddOutput(preview);
     EXPECT_EQ(ret, 0);
@@ -366,8 +368,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
 
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
 
     ret = portraitSession->AddOutput(preview);
     EXPECT_EQ(ret, 0);
@@ -430,8 +432,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
 
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
 
     ret = portraitSession->AddOutput(preview);
     EXPECT_EQ(ret, 0);
@@ -496,8 +498,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
 
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
 
     ret = portraitSession->AddOutput(preview);
     EXPECT_EQ(ret, 0);
@@ -563,8 +565,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.
 
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
 
     ret = portraitSession->AddOutput(preview);
     EXPECT_EQ(ret, 0);
@@ -623,8 +625,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.
     EXPECT_EQ(portraitSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
     EXPECT_EQ(portraitSession->AddOutput(preview), 0);
     EXPECT_EQ(portraitSession->AddOutput(photo), 0);
     EXPECT_EQ(portraitSession->CommitConfig(), 0);
@@ -694,8 +696,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.
     EXPECT_EQ(portraitSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
     EXPECT_EQ(portraitSession->AddOutput(preview), 0);
     EXPECT_EQ(portraitSession->AddOutput(photo), 0);
 
@@ -764,8 +766,8 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.
     EXPECT_EQ(portraitSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(PORTRAIT), previewProfile_);
+    info->modePhotoProfiles_.emplace(static_cast<int32_t>(PORTRAIT), photoProfile_);
     EXPECT_EQ(portraitSession->AddOutput(preview), 0);
     EXPECT_EQ(portraitSession->AddOutput(photo), 0);
     EXPECT_EQ(portraitSession->CommitConfig(), 0);

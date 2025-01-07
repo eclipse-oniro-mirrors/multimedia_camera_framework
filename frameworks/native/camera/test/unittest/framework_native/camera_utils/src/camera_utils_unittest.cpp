@@ -408,5 +408,6 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level0)
     int32_t ret = CameraFreeBufferHandle(handle);
     EXPECT_EQ(ret, 0);
 }
+
 } // CameraStandard
 } // OHOS

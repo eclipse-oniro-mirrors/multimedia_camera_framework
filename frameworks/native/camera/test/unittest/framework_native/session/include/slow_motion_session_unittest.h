@@ -43,8 +43,8 @@ private:
     int32_t uid_ = 0;
     int32_t userId_ = 0;
     sptr<CameraManager> cameraManager_ = nullptr;
-    std::vector<Profile> previewProfile;
-    std::vector<VideoProfile> profile;
+    std::vector<Profile> previewProfile_;
+    std::vector<VideoProfile> profile_;
 };
 
 }

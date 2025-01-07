@@ -54,10 +54,12 @@ void CameraSlowMotionSessionUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraSlowMotionSessionUnitTest::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraSlowMotionSessionUnitTest TearDown");
 }
 
@@ -86,7 +88,7 @@ void CameraSlowMotionSessionUnitTest::NativeAuthorization()
 
 sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
 {
-    previewProfile = {};
+    previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -97,8 +99,8 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
         return nullptr;
     }
 
-    previewProfile = outputCapability->GetPreviewProfiles();
-    if (previewProfile.empty()) {
+    previewProfile_ = outputCapability->GetPreviewProfiles();
+    if (previewProfile_.empty()) {
         return nullptr;
     }
 
@@ -106,12 +108,12 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
     if (surface == nullptr) {
         return nullptr;
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile[0], surface);
+    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
 }
 
 sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
 {
-    profile = {};
+    profile_ = {};
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
@@ -122,8 +124,8 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
         return nullptr;
     }
 
-    profile = outputCapability->GetVideoProfiles();
-    if (profile.empty()) {
+    profile_ = outputCapability->GetVideoProfiles();
+    if (profile_.empty()) {
         return nullptr;
     }
 
@@ -131,7 +133,7 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
     if (surface == nullptr) {
         return nullptr;
     }
-    return cameraManager_->CreateVideoOutput(profile[0], surface);
+    return cameraManager_->CreateVideoOutput(profile_[0], surface);
 }
 
 /**
@@ -160,10 +162,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    ASSERT_EQ(input->Open(), SUCCESS);
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
@@ -182,8 +181,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
 
     sptr<CameraDevice> info = session->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile);
-    info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), profile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile_);
+    info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), profile_);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
@@ -219,7 +218,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
@@ -238,8 +237,8 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
 
     sptr<CameraDevice> info = session->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
-    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile);
-    info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), profile);
+    info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile_);
+    info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), profile_);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
@@ -275,7 +274,38 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     std::shared_ptr<TestSlowMotionStateCallback> callback = std::make_shared<TestSlowMotionStateCallback>();
     slowSession->SetCallback(callback);
     EXPECT_EQ(slowSession->GetApplicationCallback(), callback);
+    EXPECT_EQ(camInput->GetCameraDevice()->Close(), 0);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test SecureCameraSession ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection for just call.
+ */
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<SlowMotionSession> slowMotionSession =
+        static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(slowMotionSession, nullptr);
+    SlowMotionSession::SlowMotionSessionMetadataResultProcessor processor(slowMotionSession);
+    uint64_t timestamp = 1;
+    auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    processor.ProcessCallbacks(timestamp, metadata);
+    slowMotionSession->SetCallback(nullptr);
+    slowMotionSession->OnSlowMotionStateChange(metadata);
+    EXPECT_EQ(slowMotionSession->GetApplicationCallback(), nullptr);
+
+    Rect rect;
+    slowMotionSession->NormalizeRect(rect);
+    EXPECT_EQ(rect.topLeftX, std::max(0.0, std::min(1.0, rect.topLeftX)));
+
+    bool isEnable = false;
+    EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
+}
 }
 }

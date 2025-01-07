@@ -30,6 +30,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "sketch_wrapper.h"
+#include "picture.h"
 
 using namespace testing::ext;
 
@@ -3415,6 +3416,221 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level0)
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
     EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FoldCallback with OnFoldStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnFoldStatusChanged for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = nullptr;
+    ASSERT_EQ(session, nullptr);
+    auto foldCallback = std::make_shared<FoldCallback>(session);
+    FoldStatus status = UNKNOWN_FOLD;
+    auto ret = foldCallback->OnFoldStatusChanged(status);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with CreateMediaLibrary, GetExposureCallback, GetFocusCallback, GetARCallback,
+ * IsVideoDeferred, SetMoonCaptureBoostStatusCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMediaLibrary, GetExposureCallback, GetFocusCallback, GetARCallback, IsVideoDeferred,
+ * SetMoonCaptureBoostStatusCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<SurfaceBuffer> surfaceBuffer;
+    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+    std::string uri;
+    int32_t cameraShotType;
+    string burstKey = "";
+    int64_t timestamp = 0000;
+    session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy,
+        uri, cameraShotType, burstKey, timestamp);
+
+    session->SetExposureCallback(nullptr);
+    EXPECT_EQ(session->GetExposureCallback(), nullptr);
+
+    session->SetFocusCallback(nullptr);
+    EXPECT_EQ(session->GetFocusCallback(), nullptr);
+
+    session->SetSmoothZoomCallback(nullptr);
+    EXPECT_EQ(session->GetSmoothZoomCallback(), nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+
+    session->isVideoDeferred_ = false;
+    EXPECT_FALSE(session->IsVideoDeferred());
+
+    session->SetMoonCaptureBoostStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMoonCaptureBoostStatusCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetSupportedPortraitThemeTypes, IsPortraitThemeSupported, SetPortraitThemeType,
+ * GetSupportedVideoRotations, IsVideoRotationSupported, SetVideoRotation, GetDepthFusionThreshold
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedPortraitThemeTypes, IsPortraitThemeSupported, SetPortraitThemeType,
+ * GetSupportedVideoRotations, IsVideoRotationSupported, SetVideoRotation, GetDepthFusionThreshold for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_003, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    std::vector<PortraitThemeType> supportedPortraitThemeTypes = {};
+    EXPECT_EQ(session->GetSupportedPortraitThemeTypes(supportedPortraitThemeTypes),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_FALSE(session->IsPortraitThemeSupported());
+    bool isSupported = false;
+    EXPECT_EQ(session->IsPortraitThemeSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    PortraitThemeType type = PortraitThemeType::NATURAL;
+    EXPECT_EQ(session->SetPortraitThemeType(type), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    std::vector<int32_t> supportedRotation = {};
+    EXPECT_EQ(session->GetSupportedVideoRotations(supportedRotation), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    EXPECT_FALSE(session->IsVideoRotationSupported());
+    isSupported = false;
+    EXPECT_EQ(session->IsVideoRotationSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    int32_t rotation = 0;
+    EXPECT_EQ(session->SetVideoRotation(rotation), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    std::vector<float> depthFusionThreshold = session->GetDepthFusionThreshold();
+    EXPECT_EQ(depthFusionThreshold.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsDepthFusionEnabled, IsMovingPhotoEnabled, SetMacroStatusCallback,
+ * IsSetEnableMacro, GeneratePreconfigProfiles, SetEffectSuggestionCallback, SetARCallback for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_004, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    session->isDepthFusionEnable_ = false;
+    EXPECT_FALSE(session->IsDepthFusionEnabled());
+
+    session->isMovingPhotoEnabled_ = false;
+    EXPECT_FALSE(session->IsMovingPhotoEnabled());
+
+    session->SetMacroStatusCallback(nullptr);
+    EXPECT_EQ(session->GetMacroStatusCallback(), nullptr);
+
+    session->isSetMacroEnable_ = false;
+    EXPECT_FALSE(session->IsSetEnableMacro());
+
+    PreconfigType preconfigType = PRECONFIG_720P;
+    ProfileSizeRatio preconfigRatio = UNSPECIFIED;
+    EXPECT_EQ(session->GeneratePreconfigProfiles(preconfigType, preconfigRatio), nullptr);
+
+    session->SetEffectSuggestionCallback(nullptr);
+    EXPECT_EQ(session->effectSuggestionCallback_, nullptr);
+
+    session->SetARCallback(nullptr);
+    EXPECT_EQ(session->GetARCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with EnableTripodDetection, IsAutoDeviceSwitchSupported, SetIsAutoSwitchDeviceStatus,
+ * EnableAutoDeviceSwitch, SwitchDevice, FindFrontCamera, StartVideoOutput, StopVideoOutput
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableTripodDetection, IsAutoDeviceSwitchSupported, SetIsAutoSwitchDeviceStatus,
+ * EnableAutoDeviceSwitch, SwitchDevice, FindFrontCamera, StartVideoOutput, StopVideoOutput for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_005, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    bool isEnable = false;
+    EXPECT_EQ(session->EnableTripodDetection(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    UsageType usageType = BOKEH;
+    bool enabled = false;
+    session->SetUsage(usageType, enabled);
+
+    bool isFoldable = CameraManager::GetInstance()->GetIsFoldable();
+    EXPECT_EQ(session->IsAutoDeviceSwitchSupported(), isFoldable);
+
+    bool enable = false;
+    session->SetIsAutoSwitchDeviceStatus(enable);
+    if (!isFoldable) {
+        EXPECT_EQ(session->EnableAutoDeviceSwitch(enable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    } else {
+        EXPECT_EQ(session->EnableAutoDeviceSwitch(enable), CameraErrorCode::SUCCESS);
+    }
+
+    EXPECT_FALSE(session->SwitchDevice());
+
+    auto cameraDeviceList = CameraManager::GetInstance()->GetSupportedCameras();
+    bool flag = true;
+    for (const auto& cameraDevice : cameraDeviceList) {
+        if (cameraDevice->GetPosition() == CAMERA_POSITION_FRONT) {
+            EXPECT_NE(session->FindFrontCamera(), nullptr);
+            flag = false;
+        }
+    }
+    if (flag) {
+        EXPECT_EQ(session->FindFrontCamera(), nullptr);
+    }
+
+    session->StartVideoOutput();
+    session->StopVideoOutput();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetAutoDeviceSwitchCallback, GetAutoDeviceSwitchCallback,
+ * ExecuteAllFunctionsInMap, CreateAndSetFoldServiceCallback, SetQualityPrioritization
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetAutoDeviceSwitchCallback, GetAutoDeviceSwitchCallback, ExecuteAllFunctionsInMap,
+ * CreateAndSetFoldServiceCallback, SetQualityPrioritization for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->SetAutoDeviceSwitchCallback(nullptr);
+    EXPECT_EQ(session->GetAutoDeviceSwitchCallback(), nullptr);
+
+    session->ExecuteAllFunctionsInMap();
+    EXPECT_TRUE(session->canAddFuncToMap_);
+
+    session->CreateAndSetFoldServiceCallback();
+    QualityPrioritization qualityPrioritization = HIGH_QUALITY;
+    EXPECT_EQ(session->SetQualityPrioritization(qualityPrioritization), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 }
 }

@@ -31,6 +31,8 @@
 #include "sketch_wrapper.h"
 #include "hcapture_session.h"
 #include "hcamera_service.h"
+#include "fluorescence_photo_session.h"
+#include "quick_shot_photo_session.h"
 
 using namespace testing::ext;
 namespace OHOS {
@@ -44,10 +46,12 @@ void CameraPhotoSessionUnitTest::SetUp()
 {
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager_, nullptr);
 }
 
 void CameraPhotoSessionUnitTest::TearDown()
 {
+    cameraManager_ = nullptr;
     MEDIA_DEBUG_LOG("CameraPhotoSessionUnitTest TearDown");
 }
 
@@ -73,7 +77,6 @@ void CameraPhotoSessionUnitTest::NativeAuthorization()
     SetSelfTokenID(tokenId_);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
-
 
 void CameraPhotoSessionUnitTest::TestPhotoSessionPreconfig(
     sptr<CaptureInput>& input, PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio)
@@ -177,5 +180,68 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize
     input->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test FluorescencePhotoSession CanAddOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanAddOutput for just call.
+ */
+HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::FLUORESCENCE_PHOTO);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<FluorescencePhotoSession> fluorescencePhotoSession =
+        static_cast<FluorescencePhotoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(fluorescencePhotoSession, nullptr);
+    sptr<CaptureOutput> output = nullptr;
+    EXPECT_FALSE(fluorescencePhotoSession->CanAddOutput(output));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FluorescencePhotoSession CanSetFrameRateRange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanSetFrameRateRange for just call.
+ */
+HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> photoSession = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(photoSession, nullptr);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+
+    int32_t minFps = 30;
+    int32_t maxFps = 60;
+    sptr<CaptureOutput> output = nullptr;
+    bool flag = photoSession->CanSetFrameRateRangeForOutput(minFps, maxFps, output);
+    EXPECT_EQ(photoSession->CanSetFrameRateRange(minFps, maxFps, output), flag);
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test QuickShotPhotoSession CanAddOutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanAddOutput for just call.
+ */
+HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<QuickShotPhotoSession> quickShotPhotoSession =
+        static_cast<QuickShotPhotoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(quickShotPhotoSession, nullptr);
+    sptr<CaptureOutput> output = nullptr;
+    EXPECT_FALSE(quickShotPhotoSession->CanAddOutput(output));
+}
 }
 }

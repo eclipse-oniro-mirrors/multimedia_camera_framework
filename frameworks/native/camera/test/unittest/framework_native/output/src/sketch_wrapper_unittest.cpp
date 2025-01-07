@@ -459,6 +459,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_007, TestSize.Le
     EXPECT_EQ(ret, CAMERA_OK);
     sketchWrapper->AutoStream();
 
+    sketchWrapper->g_sketchEnableRatioMap_.clear();
     float sketchRatio = sketchWrapper->GetSketchEnableRatio(session->GetFeaturesMode());
     EXPECT_EQ(sketchRatio, -1.0);
     sketchWrapper->hostStream_ = nullptr;

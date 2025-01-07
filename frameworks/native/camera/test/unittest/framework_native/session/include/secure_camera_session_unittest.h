@@ -23,8 +23,31 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class MockCameraDevice;
+class MockHCameraHostManager;
+class MockCameraManager;
 class SecureCameraSessionUnitTest : public testing::Test {
 public:
+    static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
+    static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
+    static const int32_t DEFAULT_MODE = 0;
+    static const int32_t PHOTO_MODE = 1;
+    static const int32_t VIDEO_MODE = 2;
+    static const int32_t PORTRAIT_MODE = 3;
+    static const int32_t NIGHT_MODE = 4;
+    static const int32_t SLOW_MODE = 6;
+    static const int32_t SCAN_MODE = 7;
+    static const int32_t MODE_FINISH = -1;
+    static const int32_t STREAM_FINISH = -1;
+    static const int32_t PREVIEW_STREAM = 0;
+    static const int32_t VIDEO_STREAM = 1;
+    static const int32_t PHOTO_STREAM = 2;
+    static const int32_t ABILITY_ID_ONE = 536870912;
+    static const int32_t ABILITY_ID_TWO = 536870914;
+    static const int32_t ABILITY_ID_THREE = 536870916;
+    static const int32_t ABILITY_ID_FOUR = 536870924;
+    static const int32_t ABILITY_FINISH = -1;
+
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
     /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
@@ -40,8 +63,10 @@ private:
     uint64_t tokenId_ = 0;
     int32_t uid_ = 0;
     int32_t userId_ = 0;
-    sptr<CameraManager> cameraManager_ = nullptr;
-    std::vector<Profile> previewProfile;
+    sptr<MockCameraDevice> mockCameraDevice_;
+    sptr<MockHCameraHostManager> mockCameraHostManager_;
+    sptr<CameraManager> cameraManager_;
+    std::vector<Profile> previewProfile_;
 };
 
 }
