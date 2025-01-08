@@ -900,7 +900,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     InsertOutputIntoSet(output);
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     sptr<IStreamCommon> stream = output->GetStream();
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) 
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     }
     int32_t errItemCode = CAMERA_UNKNOWN_ERROR;
