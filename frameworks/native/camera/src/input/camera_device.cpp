@@ -96,7 +96,7 @@ bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
-
+    
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
     if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
@@ -153,7 +153,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, camera isretractable: %{public}d, "
+                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
                    "moduleType: %{public}u, foldStatus: %{public}d", cameraPosition_, cameraType_, connectionType_,
                    foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
 }

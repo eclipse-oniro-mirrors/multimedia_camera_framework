@@ -142,8 +142,8 @@ ohos_shared_library("camera_framework") {
     "src/utils/camera_buffer_handle_utils.cpp",
     "src/utils/camera_rotation_api_utils.cpp",
     "src/utils/camera_security_utils.cpp",
-    "src/utils/dps_metadata_info.cpp",
     "src/utils/camera_timer.cpp",
+    "src/utils/dps_metadata_info.cpp",
     "src/utils/metadata_common_utils.cpp",
   ]
 

@@ -543,7 +543,7 @@ int32_t HCameraDevice::CloseDevice()
 int32_t HCameraDevice::closeDelayedDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice start");
-   CAMERA_SYNC_TRACE;
+    CAMERA_SYNC_TRACE;
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
     {
         std::lock_guard<std::mutex> lock(opMutex_);
