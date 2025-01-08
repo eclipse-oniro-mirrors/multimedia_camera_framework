@@ -44,6 +44,7 @@
 #include "ability/camera_ability_builder.h"
 #include "picture.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#include "camera_rotation_api_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -899,6 +900,19 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(errCode);
     }
     InsertOutputIntoSet(output);
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    sptr<IStreamCommon> stream = output->GetStream();
+    IStreamRepeat* repeatStream = nullptr;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    }
+    int32_t errItemCode = CAMERA_UNKNOWN_ERROR;
+    if (repeatStream) {
+        errItemCode = repeatStream->SetCameraApi(apiCompatibleVersion);
+        MEDIA_ERR_LOG("SetCameraApi!, errCode: %{public}d", errItemCode);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::SetCameraApi() repeatStream is nullptr");
+    }
     return ServiceToCameraError(errCode);
 }
 
