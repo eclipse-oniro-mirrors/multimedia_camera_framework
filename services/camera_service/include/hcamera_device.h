@@ -53,6 +53,7 @@ public:
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
     int32_t Close() override;
+    int32_t closeDelayed() override;
     int32_t Release() override;
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
     int32_t SetUsedAsPosition(uint8_t value) override;
@@ -144,6 +145,8 @@ public:
     bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
     int32_t CloseDevice();
+
+    int32_t closeDelayedDevice();
 
     void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
 

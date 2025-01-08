@@ -169,6 +169,13 @@ public:
     */
     uint32_t GetCameraOrientation();
 
+    /**
+    * @brief Get the camera isretractable.
+    *
+    * @return Returns the camera isretractable.
+    */
+    bool GetisRetractable();
+
     // or can we move definition completely in session only?
     /**
     * @brief Get the supported Zoom Ratio range.
@@ -250,6 +257,7 @@ private:
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
+    bool isRetractable_ = false;
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
     dmDeviceInfo dmDeviceInfo_ = {};

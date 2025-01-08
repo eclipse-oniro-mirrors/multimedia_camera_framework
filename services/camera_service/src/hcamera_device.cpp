@@ -344,6 +344,15 @@ int32_t HCameraDevice::Close()
     return result;
 }
 
+int32_t HCameraDevice::closeDelayed()
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayed Closing camera device: %{public}s", cameraID_.c_str());
+    int32_t result = closeDelayedDevice();
+    return result;
+}
+
 int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
@@ -528,6 +537,26 @@ int32_t HCameraDevice::CloseDevice()
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);
 #endif
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::closeDelayedDevice()
+{
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice start");
+   CAMERA_SYNC_TRACE;
+    sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
+    {
+        std::lock_guard<std::mutex> lock(opMutex_);
+        CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_OK);
+        hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
+    }
+    if (hdiCameraDeviceV1_2 != nullptr) {
+        int32_t errCode = hdiCameraDeviceV1_2->Reset();
+        CHECK_ERROR_RETURN_RET_LOG(errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR, CAMERA_UNKNOWN_ERROR,
+            "HCameraDevice::closeDelayedDevice ResetDevice error");
+        ResetCachedSettings();
+    }
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice end");
     return CAMERA_OK;
 }
 

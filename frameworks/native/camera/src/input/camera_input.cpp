@@ -29,6 +29,8 @@
 #include "metadata_common_utils.h"
 #include "output/metadata_output.h"
 #include "session/capture_session.h"
+#include "timer.h"
+#include "time_broker.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -125,6 +127,7 @@ void CameraInput::InitCameraInput()
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_ERROR_RETURN_LOG(!result, "CameraInput::CameraInput failed to add deathRecipient");
+    CameraTimer::GetInstance()->IncreaseUserCount();
 }
 
 void CameraInput::CameraServerDied(pid_t pid)
@@ -230,6 +233,40 @@ int CameraInput::Close()
     SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
     CameraDeviceSvcCallback_ = nullptr;
+    return ServiceToCameraError(retCode);
+}
+
+int CameraInput::closeDelayed(int32_t delayTime)
+{
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    MEDIA_INFO_LOG("Enter Into CameraInput::closeDelayed");
+    auto cameraObject = GetCameraDeviceInfo();
+    auto deviceObj = GetCameraDevice();
+    if (delayTime > 0 && deviceObj) {
+        std::shared_ptr<Camera::CameraMetadata> metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
+        uint32_t count = 1;
+        metadata->addEntry(OHOS_CONTROL_CAMERA_CLOSE_AFTER_SECONDS, &delayTime, count);
+        deviceObj->UpdateSetting(metadata);
+    }
+    if (deviceObj) {
+        MEDIA_INFO_LOG("CameraInput::closeDelayed() deviceObj is true");
+        retCode = deviceObj->closeDelayed();
+        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close closeDelayed Input, retCode: %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::closeDelayed() deviceObj is nullptr");
+    }
+    auto deviceWptr = wptr<ICameraDeviceService>(deviceObj);
+    constexpr int delayTaskTime = delayTime * 1000;
+    CameraTimer::GetInstance()->Register(
+        [deviceWptr] {
+            auto device = deviceWptr.promote();
+            if (device) {
+                MEDIA_INFO_LOG("Enter Into CameraInput::closeDelayed obj->close");
+                device->Close();
+            }
+        }, delayTaskTime, true);
+
     return ServiceToCameraError(retCode);
 }
 

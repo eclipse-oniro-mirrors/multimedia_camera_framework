@@ -67,6 +67,11 @@ int HCameraDeviceStub::OnRemoteRequest(
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT):
             errCode = HCameraDeviceStub::HandleDisableResult(data);
             break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DELAYED_CLOSE): {
+                CameraXCollie cameraXCollie("HCameraDeviceStub::delayedClose");
+                errCode = closeDelayed();
+            }
+            break;
         default:
             MEDIA_ERR_LOG("HCameraDeviceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
