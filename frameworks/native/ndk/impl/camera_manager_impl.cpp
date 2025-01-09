@@ -138,12 +138,8 @@ public:
             string cameraIds[cameraSize];
             for (size_t index = 0; index < cameraSize; index++) {
                 Camera_Device* cameraDevice = &supportedCameras[outSize];
-                auto itr = g_FwkCameraPositionToNdk_.find(foldStatusInfo.supportedCameras[index]->GetPosition());
-                if (itr == g_FwkCameraPositionToNdk_.end()) {
-                    MEDIA_ERR_LOG("Camera_Manager::OnFoldStatusChanged cameraPosition not found!");
-                    continue;
-                }
-                cameraDevice->cameraPosition = itr->second;
+                cameraDevice->cameraPosition =
+                    static_cast<Camera_Position>(foldStatusInfo.supportedCameras[index]->GetPosition());
                 cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
                 cameraDevice->cameraId = cameraIds[outSize].data();
                 cameraDevice->cameraType =
