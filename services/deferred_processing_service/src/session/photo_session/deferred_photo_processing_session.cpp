@@ -176,7 +176,7 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
     } else if (event == DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE) {
         DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
     } else {
-        DPSEventReport::GetInstance().SetEventInfo(dpsEventInfo);
+        DPSEventReport::GetInstance().UpdateEventInfo(dpsEventInfo);
     }
 }
 } // namespace DeferredProcessing

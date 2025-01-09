@@ -66,7 +66,8 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
         EVENT_KEY_HIGHJOBNUM, dpsEventInfo.highJobNum,
         EVENT_KEY_NORMALJOBNUM, dpsEventInfo.normalJobNum,
         EVENT_KEY_LOWJOBNUM, dpsEventInfo.lowJobNum,
-        EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
+        EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_,
+        EVENT_KEY_EXECUTIONMODE, dpsEventInfo.executionMode);
     RemoveEventInfo(imageId, userId);
 }
 
@@ -177,6 +178,7 @@ void DPSEventReport::UpdateEventInfo(DPSEventInfo& dpsEventInfo)
     UpdateRemoveTime(dpsEventInfo, dpsEventInfoTemp);
     UpdateTrailingTime(dpsEventInfo, dpsEventInfoTemp);
     UpdateSynchronizeTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateExecutionMode(dpsEventInfo, dpsEventInfoTemp);
 
     (imageIdToEventInfoTemp->second)[dpsEventInfo.imageId] = dpsEventInfo;
 }
@@ -322,6 +324,24 @@ void DPSEventReport::UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo
         dpsEventInfo.trailingTimeEndTime = dpsEventInfoSrc.trailingTimeEndTime;
     }
 }
+
+void DPSEventReport::UpdateExecutionMode(const std::string& imageId, int32_t userId, ExecutionMode executionMode)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
+    if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
+        (imageIdToEventInfoTemp->second)[imageId].executionMode = executionMode;
+    }
+}
+
+void DPSEventReport::UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
+{
+    if (dpsEventInfoSrc.executionMode >= ExecutionMode::HIGH_PERFORMANCE
+        && dpsEventInfoSrc.executionMode < ExecutionMode::DUMMY) {
+        dpsEventInfo.executionMode = dpsEventInfoSrc.executionMode;
+    }
+}
+
 } // namsespace DeferredProcessingService
 } // namespace CameraStandard
 } // namespace OHOS

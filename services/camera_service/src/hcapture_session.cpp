@@ -2026,6 +2026,8 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
+    string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
+    CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
@@ -2133,6 +2135,8 @@ std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContain
     }
     if (captureStream->GetAddPhotoProxyEnabled() == false) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
+        string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
+        CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
         photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
     } else {

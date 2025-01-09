@@ -41,6 +41,20 @@ sptr<CameraReportDfxUtils> &CameraReportDfxUtils::GetInstance()
     }
     return CameraReportDfxUtils::cameraReportDfx_;
 }
+
+void CameraReportDfxUtils::SetPictureId(int32_t captureId, std::string pictureId)
+{
+    MEDIA_DEBUG_LOG("CameraReportDfxUtils::SetPictureId set pictureId: %{public}s for captureID: %{public}d",
+                    pictureId.c_str(), captureId);
+    unique_lock<mutex> lock(mutex_);
+    {
+        map<int32_t, CaptureDfxInfo>::iterator iter = captureList_.find(captureId);
+        if (iter != captureList_.end()) {
+            auto& captureInfo = iter->second;
+            captureInfo.pictureId = pictureId;
+        }
+    }
+}
  
 void CameraReportDfxUtils::SetFirstBufferStartInfo(CaptureDfxInfo captureInfo)
 {
@@ -134,7 +148,9 @@ void CameraReportDfxUtils::ReportPerformanceDeferredPhoto(CaptureDfxInfo capture
         "PERFORMANCE_DEFERRED_PHOTO",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "MSG", captureInfo.isSystemApp ? "System Camera" : "Non-system camera",
+        "BUNDLE_NAME", captureInfo.bundleName,
         "CAPTURE_ID", captureInfo.captureId,
+        "PICTURE_ID", captureInfo.pictureId,
         "FIRST_BUFFER_COST_TIME", firstBufferCostTime,
         "PREPARE_PROXY_COST_TIME", prepareProxyCostTime,
         "ADD_PROXY_COSTTIME", addProxyCostTime);
