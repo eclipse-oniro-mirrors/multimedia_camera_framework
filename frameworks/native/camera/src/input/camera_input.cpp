@@ -257,7 +257,7 @@ int CameraInput::closeDelayed(int32_t delayTime)
         MEDIA_ERR_LOG("CameraInput::closeDelayed() deviceObj is nullptr");
     }
     auto deviceWptr = wptr<ICameraDeviceService>(deviceObj);
-    constexpr int delayTaskTime = delayTime * 1000;
+    const int delayTaskTime = delayTime * 1000;
     CameraTimer::GetInstance()->Register(
         [deviceWptr] {
             auto device = deviceWptr.promote();
