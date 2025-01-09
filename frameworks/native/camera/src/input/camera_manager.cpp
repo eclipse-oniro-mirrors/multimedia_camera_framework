@@ -1282,6 +1282,11 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     for (const auto& deviceInfo : cameraDeviceList) {
+        // The usb camera is added to the list and is not processed.
+        if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
         // Check for API compatibility
         if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
             bool isBackCamera = deviceInfo->GetPosition() == CAMERA_POSITION_BACK;
