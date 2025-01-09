@@ -425,12 +425,11 @@ napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
         [](napi_env env, void* date) {
             MEDIA_INFO_LOG("CameraInputNapi::closeDelayed running on worker");
             auto context = static_cast<CameraInputAsyncContext*>(date);
-            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr, "CameraInputNapi::closeDelayed async info is nullptr");
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr,
+                "CameraInputNapi::closeDelayed async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
-                MEDIA_INFO_LOG("closeDelayed is called->camerainput()->closeDelayed();");
                 context->errorCode = context->objectInfo->GetCameraInput()->closeDelayed(context->delayTime);
-                MEDIA_INFO_LOG("closeDelayed is called->camerainput()->closeDelayed() end;");
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
             });
         },

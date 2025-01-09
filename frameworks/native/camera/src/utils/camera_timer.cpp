@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,7 +49,6 @@ void CameraTimer::IncreaseUserCount()
         MEDIA_INFO_LOG("create timer thread");
     }
     ++userCount_;
-    return;
 }
 
 void CameraTimer::DecreaseUserCount()
@@ -59,7 +58,6 @@ void CameraTimer::DecreaseUserCount()
     if (userCount_.load() == 0 && timer_ != nullptr) {
         MEDIA_INFO_LOG("delete timer thread");
     }
-    return;
 }
 
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
@@ -82,7 +80,6 @@ void CameraTimer::Unregister(uint32_t timerId)
         timer_->Unregister(timerId);
         return;
     }
-    return;
 }
 } // namespace CameraStandard
 } // namespace OHOS
