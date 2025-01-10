@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -107,5 +107,438 @@ ohos_moduletest("camera_framework_moduletest") {
     cfi_cross_dso = false
     debug = false
     blocklist = "../../../../../cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_base_function_moduletest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "camera_base_function/include",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "camera_base_function/src/camera_base_function_moduletest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "graphic_surface:surface",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_deferred_photo_moduletest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./camera_deferred_photo/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/input",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session",
+    "${multimedia_camera_framework_path}/common/utils",
+  ]
+
+  sources =
+      [ "./camera_deferred_photo/src/camera_deferred_photo_moduletest.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "googletest:gmock_main",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "safwk:system_ability_fwk",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+
+  cflags = [
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_deferred_video_moduletest") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./camera_deferred_video/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+  ]
+
+  sources = [ "camera_deferred_video/src/camera_deferred_video_moduletest.cpp" ]
+
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:ability_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
+    "c_utils:utils",
+    "graphic_surface:surface",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+  ]
+
+  cflags = [
+    "-Werror=unused",
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_moving_photo_moduletest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "./camera_moving_photo/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [ "camera_moving_photo/src/camera_moving_photo_moduletest.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+  defines = [
+    "private=public",
+    "protected=public",
+  ]
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_format_YUV_moduletest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "./camera_format_YUV/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [ "camera_format_YUV/src/camera_format_YUV_moduletest.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+  defines = [
+    "private=public",
+    "protected=public",
+  ]
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
+  }
+}
+
+ohos_moduletest("camera_session_moduletest") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "./camera_session/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
+    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "camera_session/src/camera_session_moduletest.cpp",
+  ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "audio_framework:audio_capturer",
+    "audio_framework:audio_client",
+    "av_codec:av_codec_client",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+    "window_manager:libdm_lite",
+  ]
+
+  defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-fno-access-control",
+  ]
+
+  cflags_cc = cflags
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${multimedia_camera_framework_path}/cfi_blocklist.txt"
   }
 }
