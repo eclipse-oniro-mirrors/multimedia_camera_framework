@@ -75,9 +75,9 @@ ohos_unittest("camera_framework_native_unittest") {
   ]
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "${multimedia_camera_framework_path}/common:camera_utils",
   ]
 
   external_deps = [

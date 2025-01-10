@@ -93,6 +93,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
   ]
   external_deps = [
+    "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libcamera_proxy_1.0",
@@ -100,6 +101,7 @@ ohos_shared_library("camera_napi") {
     "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:color_manager",
     "graphic_surface:surface",
+    "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
@@ -110,8 +112,6 @@ ohos_shared_library("camera_napi") {
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
     "samgr:samgr_proxy",
-    "c_utils:utils",
-    "hilog:libhilog",
   ]
 
   public_external_deps = [
@@ -204,11 +204,11 @@ if (gen_camera_picker) {
       cfi_cross_dso = true
       debug = false
     }
-  cflags = [
-    "-fPIC",
-    "-Os",
-  ]
-  version_script = "libcamera_napi.map"
+    cflags = [
+      "-fPIC",
+      "-Os",
+    ]
+    version_script = "libcamera_napi.map"
 
     if (build_variant == "user") {
       cflags += [ "-DIS_RELEASE_VERSION" ]

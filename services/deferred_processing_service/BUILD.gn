@@ -150,9 +150,7 @@ ohos_shared_library("deferred_processing_service") {
   if (build_variant == "user") {
     cflags += [ "-DIS_RELEASE_VERSION" ]
   }
-  deps = [
-    "${multimedia_camera_framework_path}/common:camera_utils",
-  ]
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
