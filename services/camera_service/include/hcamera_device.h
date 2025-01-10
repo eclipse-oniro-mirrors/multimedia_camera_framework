@@ -35,6 +35,7 @@
 #include "v1_2/icamera_device.h"
 #include "v1_3/icamera_device.h"
 #include "v1_0/icamera_host.h"
+#include "dfx/camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -151,7 +152,7 @@ public:
 
 private:
     class FoldScreenListener;
-    static const std::vector<std::tuple<uint32_t, std::string, std::string>> reportTagInfos_;
+    static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
@@ -219,7 +220,7 @@ private:
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                     uint32_t tag, std::string tagName, std::string dfxUbStr);
+                     uint32_t tag, std::string tagName, DFX_UB_NAME dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
 #ifdef MEMMGR_OVERRID

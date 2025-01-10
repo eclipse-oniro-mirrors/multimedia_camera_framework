@@ -15,8 +15,6 @@
 
 #include "video_process_command.h"
 
-#include "basic_definitions.h"
-#include "dp_utils.h"
 #include "dps.h"
 
 namespace OHOS {

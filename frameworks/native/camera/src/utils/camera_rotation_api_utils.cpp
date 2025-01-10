@@ -17,11 +17,8 @@
 
 #include "bundle_mgr_interface.h"
 #include "camera_log.h"
-#include "ipc_skeleton.h"
 #include "iservice_registry.h"
-#include "parameters.h"
 #include "system_ability_definition.h"
-#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {

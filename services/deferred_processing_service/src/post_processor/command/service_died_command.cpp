@@ -15,7 +15,6 @@
 
 #include "service_died_command.h"
 
-#include "basic_definitions.h"
 #include "dps.h"
 
 namespace OHOS {

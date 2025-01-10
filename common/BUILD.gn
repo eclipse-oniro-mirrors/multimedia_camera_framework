@@ -15,10 +15,20 @@ import("//build/ohos.gni")
 import("../multimedia_camera_framework.gni")
 
 config("camera_utils_config") {
-  include_dirs = [ "utils" ]
+  include_dirs = [
+    "utils",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+  ]
 }
 
-ohos_source_set("camera_utils") {
+ohos_shared_library("camera_utils") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -26,18 +36,38 @@ ohos_source_set("camera_utils") {
   }
 
   branch_protector_ret = "pac_ret"
-
-  include_dirs = [ "utils" ]
+  cflags = [
+    "-Werror",
+    "-Os",
+  ]
 
   sources = [
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_power_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
     "utils/camera_dynamic_loader.cpp",
     "utils/camera_xcollie.cpp",
   ]
 
   external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
   ]
 
   defines = []
@@ -45,6 +75,11 @@ ohos_source_set("camera_utils") {
   if (hicollie_enable) {
     external_deps += [ "hicollie:libhicollie" ]
     defines += [ "HICOLLIE_ENABLE" ]
+  }
+
+  if (use_power_manager) {
+    external_deps += [ "power_manager:powermgr_client" ]
+    defines += [ "CAMERA_USE_POWER" ]
   }
 
   public_configs = [ ":camera_utils_config" ]

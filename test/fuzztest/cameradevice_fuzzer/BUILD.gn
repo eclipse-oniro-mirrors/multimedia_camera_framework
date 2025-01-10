@@ -62,6 +62,7 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
   deps = [
     "../../../frameworks/native/camera:camera_framework",
     "../../../services/camera_service:camera_service",
+    "../../../common:camera_utils",
   ]
   external_deps = [
     "ability_base:want",

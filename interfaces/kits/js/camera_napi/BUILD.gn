@@ -110,6 +110,8 @@ ohos_shared_library("camera_napi") {
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
     "samgr:samgr_proxy",
+    "c_utils:utils",
+    "hilog:libhilog",
   ]
 
   public_external_deps = [
@@ -133,7 +135,11 @@ ohos_shared_library("camera_napi") {
   cflags = [
     "-fPIC",
     "-DIMAGE_COLORSPACE_FLAG",
+    "-Os",
   ]
+
+  version_script = "libcamera_napi.map"
+
   if (build_variant == "user") {
     cflags += [ "-DIS_RELEASE_VERSION" ]
   }
@@ -198,7 +204,12 @@ if (gen_camera_picker) {
       cfi_cross_dso = true
       debug = false
     }
-    cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-Os",
+  ]
+  version_script = "libcamera_napi.map"
+
     if (build_variant == "user") {
       cflags += [ "-DIS_RELEASE_VERSION" ]
     }

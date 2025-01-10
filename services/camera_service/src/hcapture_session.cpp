@@ -32,8 +32,7 @@
 
 #include "avcodec_task_manager.h"
 #include "blocking_queue.h"
-#include "bundle_mgr_interface.h"
-#include "camera_dynamic_loader.h"
+#include "base_types.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
@@ -44,26 +43,21 @@
 #include "deferred_processing_service.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "display_manager.h"
-#include "errors.h"
 #include "fixed_size_list.h"
-#include "hcamera_device_manager.h"
 #include "hcamera_restore_param.h"
 #include "hstream_capture.h"
 #include "hstream_common.h"
 #include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
-#include "icamera_util.h"
 #include "icapture_session.h"
 #include "iconsumer_surface.h"
 #include "image_type.h"
 #include "ipc_skeleton.h"
-#include "iservice_registry.h"
 #include "istream_common.h"
 #include "media_library/photo_asset_interface.h"
 #include "media_library/photo_asset_proxy.h"
 #include "media_photo_asset_proxy.h"
-#include "metadata_utils.h"
 #include "moving_photo/moving_photo_surface_wrapper.h"
 #include "moving_photo_video_cache.h"
 #include "parameters.h"
@@ -72,7 +66,6 @@
 #include "smooth_zoom.h"
 #include "surface.h"
 #include "surface_buffer.h"
-#include "system_ability_definition.h"
 #include "v1_0/types.h"
 #include "camera_report_dfx_uitls.h"
 
@@ -1917,7 +1910,7 @@ void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
     StartRecord(timestamp, realRotation, captureId);
 }
 
-std::string HCaptureSession::CreateDisplayName(const std::string& suffix)
+std::string HCaptureSession::CreateDisplayName()
 {
     struct tm currentTime;
     std::string formattedTime = "";
@@ -2023,7 +2016,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
     photoProxy->CameraFreeBufferHandle();
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->ReadFromParcel(data);
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName());
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
@@ -2161,9 +2154,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     photoProxy->CameraFreeBufferHandle();
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->ReadFromParcel(data);
-    PhotoFormat photoFormat = cameraPhotoProxy->GetFormat();
-    std::string formatSuffix = photoFormat == PhotoFormat::HEIF ? suffixHeif : suffixJpeg;
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(formatSuffix));
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName());
     int32_t captureId = cameraPhotoProxy->GetCaptureId();
     bool isBursting = false;
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);

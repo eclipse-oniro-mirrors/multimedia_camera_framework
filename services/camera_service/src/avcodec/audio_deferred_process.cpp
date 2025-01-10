@@ -17,7 +17,6 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
-#include "sample_info.h"
 #include <cstring>
 
 namespace OHOS {

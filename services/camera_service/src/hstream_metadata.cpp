@@ -21,7 +21,6 @@
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
-#include "camera_report_uitls.h"
 #include <cstdint>
 #include <unordered_set>
 

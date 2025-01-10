@@ -15,7 +15,6 @@
  
 #include "hcamera_window_manager_callback_stub.h"
 #include "camera_log.h"
-#include "camera_service_ipc_interface_code.h"
  
 namespace OHOS {
 namespace CameraStandard {

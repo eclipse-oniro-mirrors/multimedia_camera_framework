@@ -15,12 +15,10 @@
 
 #include <sys/mman.h>
 #include "deferred_proc_session/deferred_photo_proc_session.h"
-#include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "camera_log.h"
 #include "camera_util.h"
 #include "system_ability_definition.h"
-#include "camera_error_code.h"
 #include "picture.h"
 
 namespace OHOS {

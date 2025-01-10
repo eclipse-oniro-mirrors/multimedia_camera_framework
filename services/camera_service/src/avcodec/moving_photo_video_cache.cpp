@@ -20,11 +20,8 @@
 #include <fcntl.h>
 #include <memory>
 #include <utility>
-#include "external_window.h"
-#include "native_buffer_inner.h"
 #include "camera_log.h"
 #include "refbase.h"
-#include "surface_buffer.h"
 
 namespace {
     using namespace std::string_literals;

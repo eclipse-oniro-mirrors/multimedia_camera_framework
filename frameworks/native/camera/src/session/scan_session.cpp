@@ -14,7 +14,6 @@
  */
  
 #include "session/scan_session.h"
-#include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
 #include "camera_log.h"

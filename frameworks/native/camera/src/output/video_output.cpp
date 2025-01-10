@@ -18,9 +18,7 @@
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
-#include "hstream_repeat_callback_stub.h"
 #include "input/camera_device.h"
-#include "input/camera_input.h"
 #include "istream_repeat.h"
 
 namespace OHOS {

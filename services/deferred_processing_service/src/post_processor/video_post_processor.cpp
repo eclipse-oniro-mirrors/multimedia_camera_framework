@@ -21,15 +21,12 @@
 #include "dp_log.h"
 #include "dp_timer.h"
 #include "dps.h"
-#include "dps_event_report.h"
 #include "events_monitor.h"
 #include "hdf_device_class.h"
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "mpeg_manager_factory.h"
-#include "service_died_command.h"
 #include "v1_3/types.h"
-#include "video_process_command.h"
 
 namespace OHOS {
 namespace CameraStandard {

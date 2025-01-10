@@ -14,7 +14,6 @@
  */
 
 #include "ability/camera_ability_const.h"
-#include "camera_util.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
 
 namespace OHOS {

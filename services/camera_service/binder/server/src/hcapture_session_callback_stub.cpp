@@ -15,7 +15,6 @@
 
 #include "hcapture_session_callback_stub.h"
 #include "camera_log.h"
-#include "metadata_utils.h"
 #include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {

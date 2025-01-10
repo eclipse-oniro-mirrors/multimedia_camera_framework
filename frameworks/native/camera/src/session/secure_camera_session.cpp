@@ -14,11 +14,8 @@
  */
 
 #include "session/secure_camera_session.h"
-#include "input/camera_input.h"
-#include "input/camera_manager.h"
-#include "output/camera_output_capability.h"
+#include "istream_repeat.h"
 #include "camera_log.h"
-#include "camera_error_code.h"
 #include "camera_util.h"
 
 namespace OHOS {

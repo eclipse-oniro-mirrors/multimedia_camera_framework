@@ -15,7 +15,6 @@
 
 #include "deferred_photo_processing_session_stub.h"
 #include "deferred_processing_service_ipc_interface_code.h"
-#include "metadata_utils.h"
 #include "dp_log.h"
 
 namespace OHOS {

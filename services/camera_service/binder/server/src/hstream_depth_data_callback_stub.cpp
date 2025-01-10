@@ -16,7 +16,6 @@
 #include "hstream_depth_data_callback_stub.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
-#include "istream_depth_data_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {

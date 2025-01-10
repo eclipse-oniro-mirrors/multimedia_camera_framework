@@ -18,9 +18,6 @@
 #include "camera_window_manager_agent.h"
 #include "camera_window_manager_client.h"
 #include "ipc_skeleton.h"
-#include "hcamera_service_proxy.h"
-#include "system_ability_definition.h"
-#include "iservice_registry.h"
 #include "hcamera_device_manager.h"
 #include <mutex>
 

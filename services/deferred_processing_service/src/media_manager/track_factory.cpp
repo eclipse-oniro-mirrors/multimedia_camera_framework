@@ -17,7 +17,6 @@
 
 #include "basic_definitions.h"
 #include "dp_log.h"
-#include "media_format.h"
 
 namespace OHOS {
 namespace CameraStandard {

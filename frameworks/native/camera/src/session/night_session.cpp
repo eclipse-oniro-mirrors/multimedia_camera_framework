@@ -14,12 +14,7 @@
  */
 
 #include "session/night_session.h"
-#include "camera_util.h"
-#include "input/camera_input.h"
 #include "camera_log.h"
-#include "output/photo_output.h"
-#include "output/preview_output.h"
-#include "output/video_output.h"
 
 namespace OHOS {
 namespace CameraStandard {

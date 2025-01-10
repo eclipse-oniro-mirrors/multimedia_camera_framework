@@ -28,16 +28,10 @@
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
-#include "hstream_repeat_callback_stub.h"
-#include "image_format.h"
 #include "metadata_common_utils.h"
-#include "pixel_map.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
 #include "parameters.h"
-#include "bundle_mgr_interface.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "camera_rotation_api_utils.h"
 
 namespace OHOS {

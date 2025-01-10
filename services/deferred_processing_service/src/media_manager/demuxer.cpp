@@ -15,7 +15,6 @@
 
 #include "demuxer.h"
 
-#include "avcodec_errors.h"
 #include "dp_log.h"
 
 namespace OHOS {

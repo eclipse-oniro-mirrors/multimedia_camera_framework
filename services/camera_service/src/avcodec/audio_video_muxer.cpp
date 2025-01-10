@@ -17,8 +17,6 @@
 #include <unistd.h>
 #include "audio_video_muxer.h"
 #include "camera_log.h"
-#include "native_mfmagic.h"
-#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {

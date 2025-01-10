@@ -19,7 +19,6 @@
 #include <cstdint>
 #include "media_photo_asset_proxy.h"
 #include "system_ability_definition.h"
-#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
