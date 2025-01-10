@@ -19,7 +19,6 @@
 #include <map>
 #include <mutex>
 #include <refbase.h>
-#include "bms_adapter.h"
  
 namespace OHOS {
 namespace CameraStandard {

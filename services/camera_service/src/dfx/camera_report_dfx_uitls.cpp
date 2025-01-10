@@ -16,6 +16,7 @@
 #include <mutex>
 #include <cinttypes>
 #include <unordered_map>
+#include "bms_adapter.h"
 #include "camera_report_dfx_uitls.h"
  
 #include "camera_util.h"
