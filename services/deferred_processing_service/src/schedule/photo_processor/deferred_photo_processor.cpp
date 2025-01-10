@@ -196,6 +196,7 @@ void DeferredPhotoProcessor::PostProcess(const DeferredPhotoWorkPtr& work)
     repository_->SetJobRunning(postedImageId_);
     postProcessor_->SetExecutionMode(executionMode);
     postProcessor_->ProcessImage(postedImageId_);
+    DPSEventReport::GetInstance().UpdateExecutionMode(postedImageId_, userId_, executionMode);
     DPSEventReport::GetInstance().ReportImageModeChange(executionMode);
 }
 

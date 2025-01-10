@@ -31,6 +31,7 @@
 #include "media_library/photo_asset_interface.h"
 #include "media_library/photo_asset_proxy.h"
 #include "camera_report_dfx_uitls.h"
+#include "bms_adapter.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -468,6 +469,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CaptureDfxInfo captureDfxInfo;
     captureDfxInfo.captureId = preparedCaptureId;
     captureDfxInfo.isSystemApp = CheckSystemApp();
+    captureDfxInfo.bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
     CameraReportDfxUtils::GetInstance()->SetFirstBufferStartInfo(captureDfxInfo);
 
     CaptureInfo captureInfoPhoto;
@@ -944,6 +946,9 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy>
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->ReadFromParcel(data);
     SetCameraPhotoProxyInfo(cameraPhotoProxy);
+    int32_t captureId = cameraPhotoProxy->GetCaptureId();
+    string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
+    CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
     photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
