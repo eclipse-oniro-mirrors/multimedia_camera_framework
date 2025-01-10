@@ -17,9 +17,7 @@
 #include <memory>
 #include <mutex>
 
-#include "camera_error_code.h"
 #include "camera_log.h"
-#include "camera_manager.h"
 #include "capture_session.h"
 
 namespace OHOS {

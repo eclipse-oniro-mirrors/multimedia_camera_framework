@@ -14,7 +14,6 @@
  */
 
 #include "audio_encoder.h"
-#include "external_window.h"
 #include "native_avbuffer.h"
 #include "sample_callback.h"
 #include "camera_log.h"

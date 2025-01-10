@@ -19,9 +19,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "buffer_handle_utils.h"
 #include "camera_log.h"
-#include "dps_metadata_info.h"
 
 
 namespace OHOS {

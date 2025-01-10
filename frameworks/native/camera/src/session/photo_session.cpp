@@ -22,11 +22,8 @@
 #include "camera_device.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
-#include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
-#include "icapture_session.h"
-#include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
 

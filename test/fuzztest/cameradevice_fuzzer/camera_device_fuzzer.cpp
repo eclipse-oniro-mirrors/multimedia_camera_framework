@@ -20,12 +20,11 @@
 #include "input/camera_manager.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
-#include "access_token.h"
-#include "hap_token_info.h"
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "hcamera_device.h"
 using namespace std;
 
 const uint8_t TEST_NUM = 6;

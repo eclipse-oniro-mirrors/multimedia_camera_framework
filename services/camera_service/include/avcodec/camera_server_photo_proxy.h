@@ -24,17 +24,17 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace Media;
-static const std::string prefix = "IMG_";
-static const std::string suffixJpeg = "jpg";
-static const std::string suffixHeif = "heic";
-static const std::string connector = "_";
-static const std::string burstTag = "BURST";
-static const std::string coverTag = "_COVER";
-static const char placeholder = '0';
-static const int yearWidth = 4;
-static const int otherWidth = 2;
-static const int burstWidth = 3;
-static const int startYear = 1900;
+constexpr const char* prefix = "IMG_";
+constexpr const char* suffixJpeg = "jpg";
+constexpr const char* suffixHeif = "heic";
+constexpr const char* connector = "_";
+constexpr const char* burstTag = "BURST";
+constexpr const char* coverTag = "_COVER";
+constexpr const char placeholder = '0';
+constexpr const int8_t yearWidth = 4;
+constexpr const int8_t otherWidth = 2;
+constexpr const int8_t burstWidth = 3;
+constexpr const int16_t startYear = 1900;
 
 static const std::map<int32_t, int32_t> modeMap = {
     { 3, 23},
@@ -55,7 +55,7 @@ static const std::map<int32_t, PhotoFormat> formatMap = {
     {3, PhotoFormat::YUV}
 };
 
-std::string CreateDisplayName(const std::string& suffix);
+std::string CreateDisplayName();
 class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();

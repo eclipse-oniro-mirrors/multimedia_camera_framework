@@ -30,11 +30,9 @@
 #include "audio_record.h"
 #include "audio_video_muxer.h"
 #include "camera_log.h"
-#include "external_window.h"
 #include "frame_record.h"
 #include "native_avbuffer.h"
 #include "native_avbuffer_info.h"
-#include "native_buffer_inner.h"
 #include "sample_info.h"
 #include "native_mfmagic.h"
 

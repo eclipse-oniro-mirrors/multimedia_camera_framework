@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "access_token.h"
-#include "accesstoken_kit.h"
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
@@ -34,11 +33,10 @@
 #include "camera_common_event_manager.h"
 #include "datashare_helper.h"
 #include "datashare_predicates.h"
-#include "datashare_result_set.h"
 #include "deferred_processing_service.h"
 #include "hcamera_preconfig.h"
 #ifdef DEVICE_MANAGER
-#include "device_manager_impl.h"
+#include "device_manager.h"
 #endif
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"

@@ -19,12 +19,8 @@ ohos_shared_library("deferred_processing_service") {
   sources = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
     "binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
-    "binder/client/src/deferred_photo_processing_session_proxy.cpp",
     "binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
-    "binder/client/src/deferred_video_processing_session_proxy.cpp",
-    "binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
     "binder/server/src/deferred_photo_processing_session_stub.cpp",
-    "binder/server/src/deferred_video_processing_session_callback_stub.cpp",
     "binder/server/src/deferred_video_processing_session_stub.cpp",
     "src/base/buffer_info.cpp",
     "src/base/buffer_manager/shared_buffer.cpp",
@@ -32,17 +28,6 @@ ohos_shared_library("deferred_processing_service") {
     "src/base/command_server/command_server.cpp",
     "src/base/command_server/command_server_impl.cpp",
     "src/base/dps.cpp",
-    "src/base/task_manager/task_group/base_task_group.cpp",
-    "src/base/task_manager/task_group/delayed_task_group.cpp",
-    "src/base/task_manager/task_group/task_group.cpp",
-    "src/base/task_manager/task_manager.cpp",
-    "src/base/task_manager/task_registry.cpp",
-    "src/base/task_manager/thread_pool.cpp",
-    "src/base/task_manager/thread_utils.cpp",
-    "src/base/timer/core/timer_core.cpp",
-    "src/base/timer/steady_clock.cpp",
-    "src/base/timer/time_broker.cpp",
-    "src/base/timer/timer.cpp",
     "src/deferred_processing_service.cpp",
     "src/dfx/dps_event_report.cpp",
     "src/dfx/dps_video_report.cpp",
@@ -105,13 +90,11 @@ ohos_shared_library("deferred_processing_service") {
     "src/session/session_manager.cpp",
     "src/session/video_session/deferred_video_processing_session.cpp",
     "src/session/video_session/video_session_info.cpp",
-    "src/utils/dp_power_manager.cpp",
-    "src/utils/dp_timer.cpp",
-    "src/utils/dp_utils.cpp",
   ]
   cflags = [
     "-fPIC",
     "-Wall",
+    "-Os",
   ]
 
   if (!use_clang_coverage) {
@@ -167,6 +150,7 @@ ohos_shared_library("deferred_processing_service") {
   if (build_variant == "user") {
     cflags += [ "-DIS_RELEASE_VERSION" ]
   }
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

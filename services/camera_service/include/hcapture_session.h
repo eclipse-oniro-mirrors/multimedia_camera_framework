@@ -307,7 +307,7 @@ private:
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);
         return cameraDevice_;
     }
-    string CreateDisplayName(const std::string& suffix);
+    string CreateDisplayName();
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();

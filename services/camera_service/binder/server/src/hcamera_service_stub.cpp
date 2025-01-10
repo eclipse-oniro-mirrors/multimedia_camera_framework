@@ -21,13 +21,11 @@
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "camera_xcollie.h"
-#include "hcamera_service.h"
+#include "hcapture_session.h"
 #include "input/i_standard_camera_listener.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #ifdef MEMMGR_OVERRID
-#include "mem_mgr_client.h"
-#include "mem_mgr_constant.h"
 #endif
 
 namespace OHOS {

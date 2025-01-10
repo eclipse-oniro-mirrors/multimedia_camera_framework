@@ -23,11 +23,7 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
-#include "image_format.h"
-#include "image_source.h"
-#include "image_type.h"
 #include "istream_repeat_callback.h"
-#include "surface_type.h"
 
 namespace OHOS {
 namespace CameraStandard {

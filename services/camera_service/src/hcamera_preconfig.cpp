@@ -26,7 +26,6 @@
 #include "camera_device_ability_items.h"
 #include "camera_metadata_info.h"
 #include "hcamera_host_manager.h"
-#include "metadata_utils.h"
 #include "v1_3/types.h"
 
 namespace OHOS {

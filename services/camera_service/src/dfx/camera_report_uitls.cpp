@@ -19,7 +19,6 @@
 #include "bms_adapter.h"
 #include "camera_report_uitls.h"
 
-#include "camera_util.h"
 #include "camera_log.h"
 #include "hisysevent.h"
 #include "ipc_skeleton.h"
@@ -29,13 +28,42 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 
+constexpr const char* DFX_BEHAVIOR_MAP[] = {
+    "ZoomRatio",                // DFX_UB_SET_ZOOMRATIO
+    "ZoomRatio",                // DFX_UB_SET_SMOOTHZOOM
+    "VideoStabilizationMode",   // DFX_UB_SET_VIDEOSTABILIZATIONMODE
+    "FilterType",               // DFX_UB_SET_FILTER
+    "PortraitEffect",           // DFX_UB_SET_PORTRAITEFFECT
+    "BeautyValue",              // DFX_UB_SET_BEAUTY_AUTOVALUE
+    "SkinSmooth",               // DFX_UB_SET_BEAUTY_SKINSMOOTH
+    "FaceSlender",              // DFX_UB_SET_BEAUTY_FACESLENDER
+    "SkinTone",                 // DFX_UB_SET_BEAUTY_SKINTONE
+    "FocusMode",                // DFX_UB_SET_FOCUSMODE
+    "FocusPoint",               // DFX_UB_SET_FOCUSPOINT
+    "ExposureMode",             // DFX_UB_SET_EXPOSUREMODE
+    "ExposureBias",             // DFX_UB_SET_EXPOSUREBIAS
+    "MeteringPoint",            // DFX_UB_SET_METERINGPOINT
+    "FlashMode",                // DFX_UB_SET_FLASHMODE
+    "FrameRateRange",           // DFX_UB_SET_FRAMERATERANGE
+    "MuteCamera",               // DFX_UB_MUTE_CAMERA
+    "SetQualityPrioritization"  // DFX_UB_SET_QUALITY_PRIORITIZATION
+};
+
+const char* GetBehaviorImagingKey(DFX_UB_NAME behavior)
+{
+    if (behavior < 0 || behavior >= sizeof(DFX_BEHAVIOR_MAP) / sizeof(DFX_BEHAVIOR_MAP[0])) {
+        return nullptr;
+    }
+    return DFX_BEHAVIOR_MAP[behavior];
+};
+
 void CameraReportUtils::SetOpenCamPerfPreInfo(const string& cameraId, CallerInfo caller)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfPreInfo");
+    MEDIA_DEBUG_LOG("SetOpenCamPerfPreInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfPreInfo caller changed");
+            MEDIA_DEBUG_LOG("SetOpenCamPerfPreInfo caller changed");
             isModeChanging_ = false;
         }
         openCamPerfStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
@@ -47,17 +75,17 @@ void CameraReportUtils::SetOpenCamPerfPreInfo(const string& cameraId, CallerInfo
 
 void CameraReportUtils::SetOpenCamPerfStartInfo(const string& cameraId, CallerInfo caller)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfStartInfo");
+    MEDIA_DEBUG_LOG("SetOpenCamPerfStartInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfStartInfo caller changed");
+            MEDIA_DEBUG_LOG("SetOpenCamPerfStartInfo caller changed");
             isModeChanging_ = false;
         }
         if (!isPrelaunching_) {
             openCamPerfStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
             isOpening_ = true;
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfStartInfo update start time");
+            MEDIA_DEBUG_LOG("SetOpenCamPerfStartInfo update start time");
         }
         preCameraId_ = cameraId_;
         cameraId_ = cameraId;
@@ -67,15 +95,15 @@ void CameraReportUtils::SetOpenCamPerfStartInfo(const string& cameraId, CallerIn
 
 void CameraReportUtils::SetOpenCamPerfEndInfo()
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfEndInfo");
+    MEDIA_DEBUG_LOG("SetOpenCamPerfEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (!isPrelaunching_ && !isOpening_) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfEndInfo not ready");
+            MEDIA_DEBUG_LOG("SetOpenCamPerfEndInfo not ready");
             return;
         }
         if (isSwitching_) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetOpenCamPerfEndInfo cancel report");
+            MEDIA_DEBUG_LOG("SetOpenCamPerfEndInfo cancel report");
             isOpening_ = false;
             isPrelaunching_ = false;
             return;
@@ -90,7 +118,7 @@ void CameraReportUtils::SetOpenCamPerfEndInfo()
 
 void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const string& startType)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::ReportOpenCameraPerf costTime: %{public}" PRIu64 "", costTime);
+    MEDIA_DEBUG_LOG("ReportOpenCameraPerf costTime: %{public}" PRIu64 "", costTime);
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "PERFORMANCE_START",
@@ -107,7 +135,7 @@ void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const string& st
 
 void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo caller)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetModeChangePerfStartInfo");
+    MEDIA_DEBUG_LOG("SetModeChangePerfStartInfo");
     unique_lock<mutex> lock(mutex_);
     {
         modeChangeStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
@@ -120,7 +148,7 @@ void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo c
 
 void CameraReportUtils::updateModeChangePerfInfo(int32_t curMode, CallerInfo caller)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::updateModeChangePerfInfo");
+    MEDIA_DEBUG_LOG("updateModeChangePerfInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
@@ -134,15 +162,15 @@ void CameraReportUtils::updateModeChangePerfInfo(int32_t curMode, CallerInfo cal
 
 void CameraReportUtils::SetModeChangePerfEndInfo()
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetModeChangePerfEndInfo");
+    MEDIA_DEBUG_LOG("SetModeChangePerfEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (!isModeChanging_) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetModeChangePerfEndInfo cancel report");
+            MEDIA_DEBUG_LOG("SetModeChangePerfEndInfo cancel report");
             return;
         }
         if (curMode_ == preMode_ || isSwitching_) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetModeChangePerfEndInfo mode not changed");
+            MEDIA_DEBUG_LOG("SetModeChangePerfEndInfo mode not changed");
             isModeChanging_ = false;
             return;
         }
@@ -155,7 +183,7 @@ void CameraReportUtils::SetModeChangePerfEndInfo()
 
 void CameraReportUtils::ReportModeChangePerf(uint64_t costTime)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::ReportModeChangePerf costTime:  %{public}" PRIu64 "", costTime);
+    MEDIA_DEBUG_LOG("ReportModeChangePerf costTime:  %{public}" PRIu64 "", costTime);
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "PERFORMANCE_MODE_CHANGE",
@@ -173,7 +201,7 @@ void CameraReportUtils::ReportModeChangePerf(uint64_t costTime)
 
 void CameraReportUtils::SetCapturePerfStartInfo(DfxCaptureInfo captureInfo)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetCapturePerfStartInfo captureID: %{public}d", captureInfo.captureId);
+    MEDIA_DEBUG_LOG("SetCapturePerfStartInfo captureID: %{public}d", captureInfo.captureId);
     captureInfo.captureStartTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
     unique_lock<mutex> lock(mutex_);
     captureList_.insert(pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
@@ -181,12 +209,12 @@ void CameraReportUtils::SetCapturePerfStartInfo(DfxCaptureInfo captureInfo)
 
 void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetCapturePerfEndInfo start");
+    MEDIA_DEBUG_LOG("SetCapturePerfEndInfo start");
     unique_lock<mutex> lock(mutex_);
     {
         map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
         if (iter != captureList_.end()) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetCapturePerfEndInfo");
+            MEDIA_DEBUG_LOG("SetCapturePerfEndInfo");
             auto dfxCaptureInfo = iter->second;
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
             ReportCapturePerf(dfxCaptureInfo);
@@ -198,7 +226,7 @@ void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId)
 
 void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::ReportCapturePerf captureInfo");
+    MEDIA_DEBUG_LOG("ReportCapturePerf captureInfo");
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "PERFORMANCE_CAPTURE",
@@ -215,7 +243,7 @@ void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
 
 void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetSwitchCamPerfStartInfo");
+    MEDIA_DEBUG_LOG("SetSwitchCamPerfStartInfo");
     unique_lock<mutex> lock(mutex_);
     {
         switchCamPerfStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
@@ -226,11 +254,11 @@ void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
 
 void CameraReportUtils::SetSwitchCamPerfEndInfo()
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetSwitchCamPerfEndInfo");
+    MEDIA_DEBUG_LOG("SetSwitchCamPerfEndInfo");
     unique_lock<mutex> lock(mutex_);
     {
         if (!isSwitching_) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetSwitchCamPerfEndInfo cancel report");
+            MEDIA_DEBUG_LOG("SetSwitchCamPerfEndInfo cancel report");
             return;
         }
 
@@ -242,7 +270,7 @@ void CameraReportUtils::SetSwitchCamPerfEndInfo()
 
 void CameraReportUtils::ReportSwitchCameraPerf(uint64_t costTime)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::ReportSwitchCameraPerf costTime:  %{public}" PRIu64 "", costTime);
+    MEDIA_DEBUG_LOG("ReportSwitchCameraPerf costTime:  %{public}" PRIu64 "", costTime);
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "PERFORMANCE_SWITCH_CAMERA",
@@ -265,7 +293,7 @@ CallerInfo CameraReportUtils::GetCallerInfo()
     callerInfo.uid = IPCSkeleton::GetCallingUid();
     callerInfo.tokenID = IPCSkeleton::GetCallingTokenID();
     callerInfo.bundleName = BmsAdapter::GetInstance()->GetBundleName(callerInfo.uid);
-    MEDIA_DEBUG_LOG("CameraReportUtils::GetCallerInfo pid:%{public}d uid:%{public}d", callerInfo.pid, callerInfo.uid);
+    MEDIA_DEBUG_LOG("GetCallerInfo pid:%{public}d uid:%{public}d", callerInfo.pid, callerInfo.uid);
     return callerInfo;
 }
 
@@ -302,38 +330,42 @@ void CameraReportUtils::ReportCameraError(string funcName,
         "MSG", str);
 }
 
-void CameraReportUtils::ReportUserBehavior(string behaviorName,
+void CameraReportUtils::ReportUserBehavior(DFX_UB_NAME behaviorName,
                                            string value,
                                            CallerInfo callerInfo)
 {
     unique_lock<mutex> lock(mutex_);
     {
         if (!IsBehaviorNeedReport(behaviorName, value)) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::ReportUserBehavior cancle");
+            MEDIA_DEBUG_LOG("ReportUserBehavior cancle");
             return;
         }
-        MEDIA_DEBUG_LOG("CameraReportUtils::ReportUserBehavior");
-        stringstream ss;
-        ss << S_BEHAVIORNAME << behaviorName
-        << S_VALUE << value
-        << S_CUR_MODE << curMode_
-        << S_CUR_CAMERAID << cameraId_
-        << S_CPID << callerInfo.pid
-        << S_CUID << callerInfo.uid
-        << S_CTOKENID << callerInfo.tokenID
-        << S_CBUNDLENAME << callerInfo.bundleName;
+        MEDIA_DEBUG_LOG("ReportUserBehavior");
+        const char* behaviorString = GetBehaviorImagingKey(behaviorName);
+        if (behaviorString == nullptr) {
+            MEDIA_ERR_LOG("ReportUserBehavior error imagingKey not found.");
+            return;
+        }
+        std::string str = "behaviorName:" + std::string(behaviorString)
+            + ",value:" + value
+            + ",curMode:" + to_string(curMode_)
+            + ",curCameraId:" + cameraId_
+            + ",cPid:" + to_string(callerInfo.pid)
+            + ",cUid:" + to_string(callerInfo.uid)
+            + ",cTokenID:" + to_string(callerInfo.tokenID)
+            + ",cBundleName:" + callerInfo.bundleName;
         
         HiSysEventWrite(
             HiviewDFX::HiSysEvent::Domain::CAMERA,
             "USER_BEHAVIOR",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-            "MSG", ss.str());
+            "MSG", str);
     }
 }
 
 void CameraReportUtils::ReportImagingInfo(DfxCaptureInfo dfxCaptureInfo)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::ReportImagingInfo");
+    MEDIA_DEBUG_LOG("ReportImagingInfo");
     stringstream ss;
     ss << "CurMode:" << curMode_ << ",CameraId:" << cameraId_ << ",Profile:" << profile_;
     for (auto it = imagingValueList_.begin(); it != imagingValueList_.end(); it++) {
@@ -362,14 +394,13 @@ void CameraReportUtils::UpdateImagingInfo(const string& imagingKey, const string
     }
 }
 
-bool CameraReportUtils::IsBehaviorNeedReport(const string& behaviorName, const string& value)
+bool CameraReportUtils::IsBehaviorNeedReport(DFX_UB_NAME behaviorName, const string& value)
 {
-    auto it = mapBehaviorImagingKey.find(behaviorName);
-    if (it == mapBehaviorImagingKey.end()) {
+    const char* imagingKey = GetBehaviorImagingKey(behaviorName);
+    if (imagingKey == nullptr) {
         MEDIA_ERR_LOG("IsBehaviorNeedReport error imagingKey not found.");
         return true;
     }
-    const string& imagingKey = it->second;
     auto valueIt = imagingValueList_.find(imagingKey);
     if (valueIt != imagingValueList_.end()) {
         if (valueIt->second == value) {
@@ -391,7 +422,7 @@ void CameraReportUtils::ResetImagingValue()
 
 void CameraReportUtils::SetVideoStartInfo(DfxCaptureInfo captureInfo)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetVideoStartInfo captureID: %{public}d", captureInfo.captureId);
+    MEDIA_DEBUG_LOG("SetVideoStartInfo captureID: %{public}d", captureInfo.captureId);
     captureInfo.captureStartTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
     unique_lock<mutex> lock(mutex_);
     captureList_.insert(pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
@@ -399,12 +430,12 @@ void CameraReportUtils::SetVideoStartInfo(DfxCaptureInfo captureInfo)
 
 void CameraReportUtils::SetVideoEndInfo(int32_t captureId)
 {
-    MEDIA_DEBUG_LOG("CameraReportUtils::SetVideoEndInfo start");
+    MEDIA_DEBUG_LOG("SetVideoEndInfo start");
     unique_lock<mutex> lock(mutex_);
     {
         map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
         if (iter != captureList_.end()) {
-            MEDIA_DEBUG_LOG("CameraReportUtils::SetVideoEndInfo");
+            MEDIA_DEBUG_LOG("SetVideoEndInfo");
             auto dfxCaptureInfo = iter->second;
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
             imagingValueList_.emplace("VideoDuration",

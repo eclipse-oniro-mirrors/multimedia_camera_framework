@@ -21,8 +21,6 @@
 #include "camera_log.h"
 #include "hcamera_device.h"
 #include "hcapture_session.h"
-#include "ipc_skeleton.h"
-#include "types.h"
 
 namespace OHOS {
 namespace CameraStandard {

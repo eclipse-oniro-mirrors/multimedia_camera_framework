@@ -16,7 +16,6 @@
 #include "battery_level_strategy.h"
 
 #ifdef CAMERA_USE_BATTERY
-#include "battery_info.h"
 #endif
 #include "events_monitor.h"
 

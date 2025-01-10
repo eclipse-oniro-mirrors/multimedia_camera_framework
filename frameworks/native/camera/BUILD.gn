@@ -16,10 +16,10 @@ import("./../../../multimedia_camera_framework.gni")
 
 config("camera_framework_public_config") {
   include_dirs = [
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/input",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/session",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/deferred_proc_session",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
     "../interfaces/inner_api/native/camera/include/mode",
@@ -29,18 +29,13 @@ config("camera_framework_public_config") {
 
 config("camera_framework_local_config") {
   include_dirs = [
-    "//foundation/multimedia/camera_framework/services/camera_service/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/common/utils",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
@@ -63,42 +58,26 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_capture_proxy.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_depth_data_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_metadata_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_device_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/src/icamera_util.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_capture_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_metadata_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_device_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_listener_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
     "src/ability/camera_ability.cpp",
     "src/ability/camera_ability_builder.cpp",
     "src/ability/camera_ability_const.cpp",
@@ -150,6 +129,7 @@ ohos_shared_library("camera_framework") {
     "-fPIC",
     "-Wall",
     "-DSUPPORT_CAMERA_AUTH",
+    "-Os",
   ]
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
@@ -181,6 +161,8 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
   ]
+
+  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
 
   external_deps = [
     "access_token:libtokenid_sdk",

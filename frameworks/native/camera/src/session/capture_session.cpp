@@ -32,7 +32,6 @@
 #include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "features/moon_capture_boost_feature.h"
-#include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"

@@ -27,7 +27,6 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
-#include "camera_dynamic_loader.h"
 #include "media_library/photo_asset_interface.h"
 #include "media_library/photo_asset_proxy.h"
 #include "camera_report_dfx_uitls.h"
@@ -917,7 +916,7 @@ int32_t HStreamCapture::SetCameraPhotoRotation(bool isEnable)
 void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy)
 {
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo get captureStream");
-    cameraPhotoProxy->SetDisplayName(CreateDisplayName(format_ == OHOS_CAMERA_FORMAT_HEIC ? suffixHeif : suffixJpeg));
+    cameraPhotoProxy->SetDisplayName(CreateDisplayName());
     cameraPhotoProxy->SetShootingMode(GetMode());
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo quality:%{public}d, format:%{public}d",
         cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());

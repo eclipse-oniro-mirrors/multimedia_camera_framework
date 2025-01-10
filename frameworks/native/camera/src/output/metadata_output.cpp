@@ -26,8 +26,6 @@
 #include "camera_manager.h"
 #include "camera_security_utils.h"
 #include "camera_util.h"
-#include "foundation/multimedia/camera_framework/interfaces/kits/native/include/camera/camera.h"
-#include "input/camera_input.h"
 #include "session/capture_session.h"
 
 namespace OHOS {

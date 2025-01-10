@@ -18,10 +18,8 @@
 #include <unordered_map>
 #include "camera_report_dfx_uitls.h"
  
-#include "camera_util.h"
 #include "camera_log.h"
 #include "hisysevent.h"
-#include "ipc_skeleton.h"
 #include "steady_clock.h"
  
 namespace OHOS {
