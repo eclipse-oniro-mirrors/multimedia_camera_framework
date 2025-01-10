@@ -31,6 +31,7 @@
 #include "media_library/photo_asset_interface.h"
 #include "media_library/photo_asset_proxy.h"
 #include "camera_report_dfx_uitls.h"
+#include "bms_adapter.h"
 
 namespace OHOS {
 namespace CameraStandard {
