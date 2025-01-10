@@ -1,0 +1,176 @@
+# Copyright (C) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/ohos/ace/ace.gni")
+import("./../../multimedia_camera_framework.gni")
+
+config("camera_ffi_public_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
+
+ohos_shared_library("cj_camera_ffi") {
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":camera_ffi_public_config" ]
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/innerkits/include",
+    "${multimedia_camera_framework_path}/frameworks/cj/camera/include",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  cflags = [ "-fPIC" ]
+  cflags_cc = cflags
+
+  if (!defined(defines)) {
+    defines = []
+  }
+
+  if (!ohos_indep_compiler_enable && !build_ohos_sdk &&
+      product_name != "qemu-arm-linux-min" &&
+      product_name != "rk3568_mini_system") {
+    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+    external_deps = [
+      "ability_base:base",
+      "ability_base:configuration",  # configuration.h
+      "ability_base:want",
+      "ability_runtime:ability_context_native",  # ability_context.h
+      "ability_runtime:ability_manager",  # pixel_map.h
+      "ability_runtime:napi_base_context",  # napi_base_context.h
+      "ace_engine:ace_uicontent",
+      "c_utils:utils",
+      "drivers_interface_camera:libcamera_proxy_1.0",
+      "drivers_interface_camera:libcamera_proxy_1.1",
+      "graphic_surface:surface",
+      "hilog:libhilog",
+      "hitrace:hitrace_meter",
+      "image_framework:image",
+      "image_framework:image_native",
+      "ipc:ipc_core",
+      "napi:ace_napi",
+      "napi:cj_bind_ffi",
+      "napi:cj_bind_native",
+    ]
+    sources = [
+      "camera/src/camera_ffi.cpp",
+      "camera/src/camera_input_impl.cpp",
+      "camera/src/camera_manager_impl.cpp",
+      "camera/src/camera_session_impl.cpp",
+      "camera/src/camera_utils.cpp",
+      "camera/src/metadata_output_impl.cpp",
+      "camera/src/photo_output_impl.cpp",
+      "camera/src/preview_output_impl.cpp",
+      "camera/src/video_output_impl.cpp",
+    ]
+  } else {
+    defines += [ "PREVIEWER" ]
+
+    external_deps = [ "napi:cj_bind_ffi" ]
+  }
+
+  if (is_ohos) {
+    defines += [ "OHOS_PLATFORM" ]
+  }
+
+  innerapi_tags = [ "platformsdk" ]
+
+  subsystem_name = "multimedia"
+  part_name = "camera_framework"
+}
+
+ohos_shared_library("cj_camera_picker_ffi") {
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":camera_ffi_public_config" ]
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/frameworks/native/camera/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/innerkits/include",
+    "${multimedia_camera_framework_path}/frameworks/cj/camera_picker/include",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  cflags = [ "-fPIC" ]
+  cflags_cc = cflags
+
+  if (!defined(defines)) {
+    defines = []
+  }
+
+  if (!ohos_indep_compiler_enable && !build_ohos_sdk &&
+      product_name != "qemu-arm-linux-min" &&
+      product_name != "rk3568_mini_system") {
+    deps = [
+      ":cj_camera_ffi",
+      "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    ]
+    external_deps = [
+      "ability_base:base",
+      "ability_base:configuration",  # configuration.h
+      "ability_base:want",
+      "ability_runtime:ability_context_native",  # ability_context.h
+      "ability_runtime:ability_manager",  # pixel_map.h
+      "ability_runtime:napi_base_context",  # napi_base_context.h
+      "ability_runtime:ui_extension",  # ui_extension_context.h
+      "ace_engine:ace_uicontent",
+      "c_utils:utils",
+      "drivers_interface_camera:libcamera_proxy_1.0",
+      "drivers_interface_camera:libcamera_proxy_1.1",
+      "graphic_surface:surface",
+      "hilog:libhilog",
+      "hitrace:hitrace_meter",
+      "image_framework:image",
+      "image_framework:image_native",
+      "ipc:ipc_core",
+      "napi:ace_napi",
+      "napi:cj_bind_ffi",
+      "napi:cj_bind_native",
+    ]
+    sources = [
+      "camera_picker/src/camera_picker_ffi.cpp",
+      "camera_picker/src/camera_picker_impl.cpp",
+    ]
+  } else {
+    defines += [ "PREVIEWER" ]
+
+    external_deps = [ "napi:cj_bind_ffi" ]
+  }
+
+  if (is_ohos) {
+    defines += [ "OHOS_PLATFORM" ]
+  }
+
+  innerapi_tags = [ "platformsdk" ]
+
+  subsystem_name = "multimedia"
+  part_name = "camera_framework"
+}
