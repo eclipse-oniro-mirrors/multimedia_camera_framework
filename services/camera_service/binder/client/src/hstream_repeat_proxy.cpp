@@ -254,7 +254,6 @@ int32_t HStreamRepeatProxy::GetMirror(bool& isEnable)
     return error;
 }
 
-
 int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
 {
     MessageParcel data;
