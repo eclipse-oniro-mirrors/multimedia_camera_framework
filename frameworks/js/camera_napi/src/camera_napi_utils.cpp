@@ -413,7 +413,7 @@ napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vecto
     return result;
 }
 
-napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status status,
+napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status &status,
     std::vector<int32_t> nativeArray)
 {
     MEDIA_DEBUG_LOG("CreateJSArray is called");
