@@ -173,7 +173,7 @@ int32_t HStreamRepeatStub::HandleGetMirror(MessageParcel& data, MessageParcel& r
     MEDIA_INFO_LOG("HCameraServiceStub HandleGetMirror result: %{public}d, isMuted: %{public}d", ret, isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isEnable), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleGetMirror Write isEnable failed");
-     return ret;
+    return ret;
 }
 
 int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
