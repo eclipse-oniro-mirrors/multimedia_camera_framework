@@ -13031,5 +13031,65 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supp
     EXPECT_EQ(intResult, CAMERA_OK);
     EXPECT_EQ(isSupported, false);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test auto aigc photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test AutoAigcPhoto enable
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_auto_aigc_photo_enable, TestSize.Level0)
+{
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    bool isEnabled = false;
+    int32_t intResult = camSession->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
+    ASSERT_NE(input, nullptr);
+
+    intResult = camSession->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isAutoAigcPhotoSupported;
+    intResult = photoOutput_1->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    EXPECT_EQ(isAutoAigcPhotoSupported, true);
+
+    intResult = photoOutput_1->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    EXPECT_EQ(intResult, SESSION_NOT_RUNNING);
+
+    intResult = photoOutput_1->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, SERVICE_FATL_ERROR);
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -1938,7 +1938,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isAutoCloudImageEnhancementSupported", IsAutoCloudImageEnhancementSupported),
         DECLARE_NAPI_FUNCTION("enableAutoCloudImageEnhancement", EnableAutoCloudImageEnhancement),
         DECLARE_NAPI_FUNCTION("isDepthDataDeliverySupported", IsDepthDataDeliverySupported),
-        DECLARE_NAPI_FUNCTION("enableDepthDataDelivery", EnableDepthDataDelivery)
+        DECLARE_NAPI_FUNCTION("enableDepthDataDelivery", EnableDepthDataDelivery),
+        DECLARE_NAPI_FUNCTION("isAutoAigcPhotoSupported", IsAutoAigcPhotoSupported),
+        DECLARE_NAPI_FUNCTION("enableAutoAigcPhoto", EnableAutoAigcPhoto),
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -3333,5 +3335,68 @@ napi_value PhotoOutputNapi::EnableDepthDataDelivery(napi_env env, napi_callback_
     }
     return CameraNapiUtils::GetUndefinedValue(env);
 }
+
+napi_value PhotoOutputNapi::IsAutoAigcPhotoSupported(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoAigcPhotoSupported is called!");
+        return result;
+    }
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsAutoAigcPhotoSupported is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAigcPhotoSupported parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAigcPhotoSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return result;
+    }
+    bool isAutoAigcPhotoSupported = false;
+    int32_t retCode =
+        photoOutputNapi->photoOutput_->IsAutoAigcPhotoSupported(
+            isAutoAigcPhotoSupported);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+    napi_get_boolean(env, isAutoAigcPhotoSupported, &result);
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsAutoAigcPhotoSupported is %{public}d",
+        isAutoAigcPhotoSupported);
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableAutoAigcPhoto(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoAigcPhoto is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoAigcPhoto is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoAigcPhoto parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoAigcPhoto get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return result;
+    }
+
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoAigcPhoto(isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoAigcPhoto fail %{public}d", retCode);
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoAigcPhoto success");
+    return result;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

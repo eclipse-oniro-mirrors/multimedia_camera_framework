@@ -6234,5 +6234,30 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     return CameraErrorCode::SUCCESS;
 }
 
+int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoAigcPhoto enabled:%{public}d", enabled);
+
+    LockForControl();
+    CHECK_ERROR_RETURN_RET_LOG(
+        changedMetadata_ == nullptr, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto changedMetadata_ is NULL");
+    int32_t res = CameraErrorCode::SUCCESS;
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t autoAigcPhoto = static_cast<uint8_t>(enabled); // 三目表达式处理，不使用强转
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_AIGC_PHOTO, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !status, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto failed to set type!");
+    UnlockForControl();
+
+    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoAigcPhoto failed");
+    return res;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
