@@ -143,6 +143,8 @@ CameraManager::CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::CameraManager construct enter");
     torchServiceListenerManager_->SetCameraManager(this);
+    sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
+    SetTorchServiceCallback(callback);
 }
 
 CameraManager::~CameraManager()
@@ -991,12 +993,8 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 
 void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
-    // TODO ndk not remove listener
     bool isSuccess = torchServiceListenerManager_->AddListener(listener);
     CHECK_ERROR_PRINT_LOG(isSuccess, "CameraManager::RegisterTorchListener listener already exist");
-
-    // TODO move this.
-    CreateAndSetTorchServiceCallback();
 }
 
 void CameraManager::UnregisterTorchListener(std::shared_ptr<TorchListener> listener)
@@ -1909,18 +1907,6 @@ void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callbac
     int32_t retCode = serviceProxy->SetTorchCallback(callback);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
         "SetTorchServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
-    return;
-}
-
-void CameraManager::CreateAndSetTorchServiceCallback()
-{
-    auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_LOG(
-        serviceProxy == nullptr, "CameraManager::CreateAndSetTorchServiceCallback serviceProxy is null");
-    sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
-    int32_t retCode = serviceProxy->SetTorchCallback(callback);
-    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
-        "CreateAndSetTorchServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
 }
 
 void CameraManager::SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback)

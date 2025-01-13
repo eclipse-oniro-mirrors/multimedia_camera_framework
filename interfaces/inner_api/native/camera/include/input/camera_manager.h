@@ -748,7 +748,6 @@ private:
     void SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback);
     void CreateAndSetCameraServiceCallback();
     void CreateAndSetCameraMuteServiceCallback();
-    void CreateAndSetTorchServiceCallback();
     void CreateAndSetFoldServiceCallback();
     int32_t CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
         const std::vector<MetadataObjectType>& metadataObjectTypes = {});

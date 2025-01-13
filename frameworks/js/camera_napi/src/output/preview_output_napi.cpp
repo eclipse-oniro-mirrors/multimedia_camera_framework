@@ -17,9 +17,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <stdint.h>
 #include <string>
-#include <unistd.h>
 #include <uv.h>
 
 #include "camera_error_code.h"

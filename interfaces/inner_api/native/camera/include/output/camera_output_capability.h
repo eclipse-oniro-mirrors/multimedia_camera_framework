@@ -41,7 +41,7 @@ typedef struct {
     uint32_t maxFps;
 } Fps;
 
-enum CameraFormat : int32_t{
+enum CameraFormat : int32_t {
     CAMERA_FORMAT_INVALID = -1,
     CAMERA_FORMAT_YCBCR_420_888 = 2,
     CAMERA_FORMAT_RGBA_8888 = 3,

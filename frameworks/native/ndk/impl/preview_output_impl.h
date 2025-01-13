@@ -16,13 +16,20 @@
 #ifndef OHOS_PREVIEW_OUTPUT_IMPL_H
 #define OHOS_PREVIEW_OUTPUT_IMPL_H
 
+#include <mutex>
+#include <unordered_map>
+
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/preview_output.h"
 #include "output/preview_output.h"
 
+namespace OHOS::CameraStandard {
+class InnerPreviewOutputCallback;
+}
+
 struct Camera_PreviewOutput {
 public:
-    explicit Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput> &innerPreviewOutput);
+    explicit Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput>& innerPreviewOutput);
     ~Camera_PreviewOutput();
 
     Camera_ErrorCode RegisterCallback(PreviewOutput_Callbacks* callback);
@@ -52,6 +59,20 @@ public:
     Camera_ErrorCode SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
 private:
+    inline void SetCallbackMapValue(
+        PreviewOutput_Callbacks* key, std::shared_ptr<OHOS::CameraStandard::InnerPreviewOutputCallback> value)
+    {
+        if (key == nullptr) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(callbackMapMutex_);
+        callbackMap_[key] = value;
+    }
+
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
+
+    std::mutex callbackMapMutex_;
+    std::unordered_map<PreviewOutput_Callbacks*, std::shared_ptr<OHOS::CameraStandard::InnerPreviewOutputCallback>>
+        callbackMap_;
 };
 #endif // OHOS_PREVIEW_OUTPUT_IMPL_H

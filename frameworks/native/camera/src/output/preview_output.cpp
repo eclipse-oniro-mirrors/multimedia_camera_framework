@@ -509,7 +509,6 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
-    // TODO ndk not remove listener
     bool isSuccess = previewOutputListenerManager_->AddListener(callback);
     CHECK_ERROR_PRINT_LOG(isSuccess, "PreviewOutput::SetCallback callback listener already exist");
 }

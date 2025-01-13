@@ -93,7 +93,8 @@ void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCal
         callbackList.refList.size());
 }
 
-void ListenerBase::ExecuteCallbackScopeSafe(const std::string eventName, const std::function<ExecuteCallbackData()> fun) const
+void ListenerBase::ExecuteCallbackScopeSafe(
+    const std::string eventName, const std::function<ExecuteCallbackData()> fun) const
 {
     napi_handle_scope scope_ = nullptr;
     napi_open_handle_scope(env_, &scope_);
