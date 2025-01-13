@@ -1571,6 +1571,8 @@ public:
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
+    int32_t EnableAutoAigcPhoto(bool enabled);
+
     // White Balance
     /**
     * @brief Get Metering mode.
