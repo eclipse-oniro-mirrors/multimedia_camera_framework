@@ -153,14 +153,20 @@
             }
           ],
           "test": [
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
-            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_base_function_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_photo_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_video_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_format_YUV_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_moving_photo_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_session_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/camera_deferred_unittest:camera_deferred_unittest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/camera_ndk_unittest:camera_ndk_test",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/camera_service:camera_service_unittest",
-            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/framework_native:camera_framework_native_unittest"
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/framework_native:camera_framework_native_unittest",
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video"
           ]
         }
     }
