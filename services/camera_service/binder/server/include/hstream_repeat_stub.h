@@ -36,6 +36,7 @@ private:
     int32_t HandleUpdateSketchRatio(MessageParcel& data);
     int32_t HandleSetFrameRate(MessageParcel& data);
     int32_t HandleSetMirror(MessageParcel& data);
+    int32_t HandleGetMirror(MessageParcel& data, MessageParcel& reply);
     int32_t HandleAttachMetaSurface(MessageParcel& data);
     int32_t HandleSetCameraRotation(MessageParcel& data);
     int32_t HandleSetCameraApi(MessageParcel& data);

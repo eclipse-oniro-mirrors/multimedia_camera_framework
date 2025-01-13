@@ -194,6 +194,30 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
 }
 
 /**
+ * @since 16
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_isMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported)
+{
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSupported is null!");
+    return videoOutput->isMirrorSupported(isSupported);
+}
+
+/**
+ * @since 16
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_enableMirror(Camera_VideoOutput* videoOutput, bool mirrorMode)
+{
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    return videoOutput->enableMirror(mirrorMode);
+}
+
+/**
  * @since 12
  * @version 1.0
  */
