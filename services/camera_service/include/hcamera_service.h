@@ -128,6 +128,8 @@ public:
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
 //    std::string GetClientBundle(int uid);
+    int32_t IsTorchSupported(bool &isTorchSupported) override;
+    int32_t IsCameraMuteSupported(bool& isCameraMuteSupported) override;
     int32_t IsCameraMuted(bool& muteMode) override;
     int32_t SetTorchLevel(float level) override;
     int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;

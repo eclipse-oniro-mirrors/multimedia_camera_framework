@@ -184,15 +184,10 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     bool isSupportSecCamera = false;
     auto cameraObject = GetCameraDeviceInfo();
     if (isEnableSecureCamera && cameraObject) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
-        CHECK_ERROR_RETURN_RET_LOG(baseMetadata == nullptr, retCode,
-            "CameraInput::GetMetaSetting Failed to find baseMetadata");
-        camera_metadata_item_t item;
-        retCode = OHOS::Camera::FindCameraMetadataItem(baseMetadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
-        CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS || item.count == 0, retCode,
-            "CaptureSession::GetSupportedModes Failed with return code %{public}d", retCode);
-        for (uint32_t i = 0; i < item.count; i++) {
-            if (item.data.u8[i] == SECURE) {
+        std::vector<SceneMode> supportedModes = cameraObject->GetSupportedModes();
+        CHECK_ERROR_RETURN_RET_LOG(supportedModes.empty(), retCode, "CameraInput::GetSupportedModes Failed");
+        for (uint32_t i = 0; i < supportedModes.size(); i++) {
+            if (supportedModes[i] == SECURE) {
                 isSupportSecCamera = true;
             }
         }

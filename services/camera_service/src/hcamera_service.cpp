@@ -384,29 +384,9 @@ int32_t HCameraService::GetCameraAbility(std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
 {
     CAMERA_SYNC_TRACE;
-    int32_t ret = CAMERA_OK;
     MEDIA_DEBUG_LOG("HCameraService::GetCameraAbility");
-
-    std::vector<std::string> cameraIds;
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-    ret = GetCameras(cameraIds, cameraAbilityList);
+    int32_t ret = cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret, "HCameraService::GetCameraAbility failed");
-
-    int32_t index = 0;
-    for (auto id : cameraIds) {
-        if (id.compare(cameraId) == 0) {
-            break;
-        }
-        index++;
-    }
-    int32_t abilityIndex = 0;
-    for (auto it : cameraAbilityList) {
-        if (abilityIndex == index) {
-            cameraAbility = it;
-            break;
-        }
-        abilityIndex++;
-    }
     return ret;
 }
 
@@ -1295,6 +1275,44 @@ void HCameraService::SetServiceStatus(CameraServiceStatus serviceStatus)
     lock_guard<mutex> lock(serviceStatusMutex_);
     serviceStatus_ = serviceStatus;
     MEDIA_DEBUG_LOG("HCameraService::SetServiceStatus success. serviceStatus: %{public}d", serviceStatus);
+}
+
+int32_t HCameraService::IsTorchSupported(bool &isTorchSupported)
+{
+    isTorchSupported = false;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode, "HCameraService::IsTorchSupported failed");
+    for (auto& cameraAbility : cameraAbilityList) {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_FLASH_AVAILABLE, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0) {
+            MEDIA_DEBUG_LOG("OHOS_ABILITY_FLASH_AVAILABLE is %{public}d", item.data.u8[0]);
+            if (item.data.u8[0] == 1) {
+                isTorchSupported = true;
+                break;
+            }
+        }
+    }
+    MEDIA_DEBUG_LOG("HCameraService::isTorchSupported success. isTorchSupported: %{public}d", isTorchSupported);
+    return retCode;
+}
+
+int32_t HCameraService::IsCameraMuteSupported(bool &isCameraMuteSupported)
+{
+    isCameraMuteSupported = false;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode, "HCameraService::IsCameraMuteSupported failed");
+    for (auto& cameraId : cameraIds) {
+        isCameraMuteSupported = IsCameraMuteSupported(cameraId);
+        if (isCameraMuteSupported) {
+            break;
+        }
+    }
+    return retCode;
 }
 
 int32_t HCameraService::IsCameraMuted(bool& muteMode)

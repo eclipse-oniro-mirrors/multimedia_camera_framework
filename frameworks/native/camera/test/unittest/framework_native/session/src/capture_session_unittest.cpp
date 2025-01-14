@@ -1788,7 +1788,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     ASSERT_NE(preview, nullptr);
     auto macroStatusCallback = std::make_shared<AppMacroStatusCallback>();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
 
     EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
     EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
@@ -1799,6 +1798,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_019, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     EXPECT_EQ(session->CommitConfig(), 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
     EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
 
     ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = nullptr;

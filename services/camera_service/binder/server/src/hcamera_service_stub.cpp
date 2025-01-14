@@ -107,6 +107,12 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST):
             errCode = HCameraServiceStub::HandleMuteCameraPersist(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_TORCH_SUPPORTED):
+            errCode = HCameraServiceStub::HandleIsTorchSupported(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_MUTE_SUPPORTED):
+            errCode = HCameraServiceStub::HandleIsCameraMuteSupported(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED):
             cameraXCollie.CancelCameraXCollie();
             errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
@@ -222,6 +228,28 @@ int HCameraServiceStub::HandleCreateCameraDevice(MessageParcel& data, MessagePar
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteRemoteObject(device->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateCameraDevice Write CameraDevice obj failed");
 
+    return ret;
+}
+
+int HCameraServiceStub::HandleIsTorchSupported(MessageParcel &data, MessageParcel &reply)
+{
+    bool isTorchSupported = false;
+    int32_t ret = IsTorchSupported(isTorchSupported);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleIsTorchSupported result: %{public}d, isTorchSupported: %{public}d",
+        ret, isTorchSupported);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isTorchSupported), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleIsTorchSupported Write isTorchSupported failed");
+    return ret;
+}
+
+int HCameraServiceStub::HandleIsCameraMuteSupported(MessageParcel &data, MessageParcel &reply)
+{
+    bool isCameraMuteSupported = false;
+    int32_t ret = IsCameraMuteSupported(isCameraMuteSupported);
+    MEDIA_INFO_LOG("HCameraServiceStub  isCameraMuteSupported result: %{public}d, isTorchSupported: %{public}d",
+        ret, isCameraMuteSupported);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isCameraMuteSupported), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleIsCameraMuteSupported Write isCameraMuteSupported failed");
     return ret;
 }
 

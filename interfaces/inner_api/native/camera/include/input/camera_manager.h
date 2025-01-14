@@ -150,10 +150,10 @@ public:
     std::vector<SceneMode> GetSupportedModes(sptr<CameraDevice>& camera);
 
     /**
-     * @brief Get extend output capaility of the mode of the given camera.
+     * @brief Get extend output capaility of the mode of the given camera from cameraDevice.
      *
      * @param Camera device for which extend capability need to be fetched.
-     * @return Returns vector the ability of the mode of cameraDevice of available camera.
+     * @return Returns vector the ability of the mode of cameraDevice of available camera from cameraDevice.
      */
     sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0);
 
@@ -749,12 +749,11 @@ private:
     void CameraServerDied(pid_t pid);
     int32_t AddServiceProxyDeathRecipient();
     void RemoveServiceProxyDeathRecipient();
-
+    sptr<CameraOutputCapability> ParseSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility = nullptr);
     void ParseProfileLevel(
         ProfilesWrapper& profilesWrapper, const int32_t modeName, const camera_metadata_item_t& item);
     void CreateProfileLevel4StreamType(ProfilesWrapper& profilesWrapper, int32_t specId, StreamInfo& streamInfo);
-    void GetSupportedMetadataObjectType(
-        common_metadata_header_t* metadata, std::vector<MetadataObjectType>& objectTypes);
     void CreateProfile4StreamType(ProfilesWrapper& profilesWrapper, OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
@@ -773,7 +772,7 @@ private:
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
     void ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
-    void SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
+    void SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     SceneMode GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper);
     void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
         camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);

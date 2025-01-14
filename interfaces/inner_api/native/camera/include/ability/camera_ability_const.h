@@ -29,7 +29,16 @@ enum CM_ColorSpaceType : int32_t;
 }}}}}}
 
 namespace OHOS {
+namespace HDI {
+namespace Camera {
+namespace V1_3 {
+enum OperationMode : int32_t;
+}}}}
+
+namespace OHOS {
 namespace CameraStandard {
+enum SceneMode : int32_t;
+enum class MetadataObjectType : int32_t;
 
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 
@@ -142,6 +151,9 @@ extern const std::unordered_map<CameraPortraitThemeTypes, PortraitThemeType> g_m
 extern const std::vector<VideoRotation> g_fwkVideoRotationVector_;
 extern const std::unordered_map<CameraQualityPrioritization, QualityPrioritization> g_metaQualityPrioritizationMap_;
 extern const std::unordered_map<QualityPrioritization, CameraQualityPrioritization> g_fwkQualityPrioritizationMap_;
+extern const std::unordered_map<OHOS::HDI::Camera::V1_3::OperationMode, SceneMode> g_metaToFwSupportedMode_;
+extern const std::unordered_map<SceneMode, OHOS::HDI::Camera::V1_3::OperationMode> g_fwToMetaSupportedMode_;
+extern const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_;
 
 template <typename S, typename T>
 void g_transformValidData(

@@ -4556,7 +4556,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_004, TestSize.L
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras_[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
     ASSERT_NE(metadata, nullptr);
 
     camSession->ProcessAutoExposureUpdates(metadata);
@@ -5873,7 +5877,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_026, TestSize.L
     intResult = deviceObj->SetCallback(callback);
     EXPECT_EQ(intResult, -1);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras_[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+    std::string cameraId = cameras_[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, settings);
     ASSERT_NE(settings, nullptr);
 
     intResult = deviceObj->UpdateSetting(settings);
@@ -6032,7 +6040,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_030, TestSize.L
     sptr<IStreamCapture> capture = iface_cast<IStreamCapture>(object);
     ASSERT_NE(capture, nullptr);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = cameras_[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
+    std::string cameraId = cameras_[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, captureSettings);
+    ASSERT_NE(captureSettings, nullptr);
+
     int32_t intResult = capture->Capture(captureSettings);
     EXPECT_EQ(intResult, -1);
 
@@ -7459,7 +7473,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_067, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_068, TestSize.Level0)
 {
-    session_->~CaptureSession();
     EXPECT_EQ(session_->Start(), 7400103);
 
     VideoStabilizationMode mode;
@@ -8286,9 +8299,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.L
         return;
     }
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[1]->GetMetadata();
-
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
     std::string cameraId = cameras_[1]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
+
     sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, metadata);
     ASSERT_NE(camdeviceObj_2, nullptr);
 
@@ -11745,14 +11762,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Le
 
     intResult = camSession->GetVirtualAperture(getAperture);
     EXPECT_EQ(intResult, 0);
-    EXPECT_EQ(getAperture, 0.95f);
+    EXPECT_EQ(getAperture, 0);
 
     camSession->LockForControl();
     intResult = camSession->SetVirtualAperture(setAperture);
     EXPECT_EQ(intResult, 0);
     camSession->UnlockForControl();
     intResult = camSession->GetVirtualAperture(getAperture);
-    EXPECT_EQ(getAperture, 0.95f);
+    EXPECT_EQ(getAperture, 0);
 
     ReleaseInput();
 

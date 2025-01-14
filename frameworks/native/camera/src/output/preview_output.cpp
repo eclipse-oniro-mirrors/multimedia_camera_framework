@@ -656,7 +656,6 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     CHECK_ERROR_RETURN_RET_LOG(imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
         "PreviewOutput GetPreviewRotation error!, invalid argument");
     int32_t sensorOrientation = 0;
-    camera_metadata_item_t item;
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
@@ -668,16 +667,11 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput GetPreviewRotation error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraObj->GetCameraOrientation();
     result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
@@ -704,7 +698,6 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     CHECK_ERROR_RETURN_RET_LOG(imageRotation % ROTATION_90_DEGREES != 0, INVALID_ARGUMENT,
         "PreviewOutput SetPreviewRotation error!, invalid argument");
     int32_t sensorOrientation = 0;
-    camera_metadata_item_t item;
     ImageRotation result = ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
@@ -716,12 +709,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PreviewOutput Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraObj->GetCameraOrientation();
     result = isDisplayLocked ? ImageRotation(sensorOrientation) : ImageRotation(imageRotation);
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);

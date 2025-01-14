@@ -77,8 +77,10 @@ typedef struct dmDeviceInfo {
 class CameraDevice : public RefBase {
 public:
     explicit CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    explicit CameraDevice(
+    [[deprecated]] explicit CameraDevice(
         std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo);
+    explicit CameraDevice(
+        std::string cameraID, dmDeviceInfo deviceInfo, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     virtual ~CameraDevice() = default;
     /**
     * @brief Get the camera Id.
@@ -95,16 +97,28 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
 
     /**
+    * @brief Release cachedMetadata.
+    */
+    void ReleaseMetadata();
+
+    /**
+     * @brief Add metadata to the camera device.
+     *
+     * @param srcMetadata metadata got from proxy from service.
+     */
+    void AddMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
+    
+    /**
     * @brief Reset cachedMetadata_ to default status
     */
-    void ResetMetadata();
+    [[deprecated]] void ResetMetadata();
 
     /**
     * @brief Get the current camera static abilities.
     *
     * @return Returns the current camera static abilities.
     */
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> GetCameraAbility();
+    [[deprecated]] const std::shared_ptr<OHOS::Camera::CameraMetadata> GetCameraAbility();
 
     /**
     * @brief Get the position of the camera.
@@ -140,6 +154,27 @@ public:
     * @return Returns the Camera type of the camera.
     */
     CameraFoldScreenType GetCameraFoldScreenType();
+
+    /**
+    * @brief Get the SupportedModes for device.
+    *
+    * @return Returns the SupportedModes of the camera.
+    */
+    std::vector<SceneMode> GetSupportedModes() const;
+
+    /**
+    * @brief Get the SupportedObjectTypes for device.
+    *
+    * @return Returns the Camera SupportedObjectTypes of the camera.
+    */
+    std::vector<MetadataObjectType> GetObjectTypes() const;
+
+    /**
+    * @brief Get the IsPrelaunch for device.
+    *
+    * @return Returns the Camera IsPrelaunch of the camera.
+    */
+    bool IsPrelaunch() const;
 
     /**
     * @brief Get the Distributed Camera Host Name.
@@ -237,6 +272,7 @@ public:
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
+    std::unordered_map<int32_t, std::vector<DepthProfile>> modeDepthProfiles_ = {};
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
     CameraPosition usedAsCameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
@@ -252,6 +288,9 @@ private:
     uint32_t cameraOrientation_ = 0;
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
+    std::vector<SceneMode> supportedModes_ = {};
+    std::vector<MetadataObjectType> objectTypes_ = {};
+    bool isPrelaunch_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;

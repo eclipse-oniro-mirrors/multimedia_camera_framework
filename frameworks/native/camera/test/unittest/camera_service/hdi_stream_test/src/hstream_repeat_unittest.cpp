@@ -29,6 +29,8 @@ using ::testing::Return;
 using ::testing::_;
 namespace OHOS {
 namespace CameraStandard {
+const uint32_t METADATA_ITEM_SIZE = 20;
+const uint32_t METADATA_DATA_SIZE = 200;
 using namespace OHOS::HDI::Camera::V1_1;
 class MockStreamOperator : public OHOS::HDI::Camera::V1_1::IStreamOperator {
 public:
@@ -855,7 +857,8 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level0)
     EXPECT_EQ(streamRepeat->AddDeferredSurface(producer), CAMERA_INVALID_ARG);
     streamRepeat->DumpStreamInfo(infoDumper);
     EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = new MockStreamOperator();
     EXPECT_EQ(streamRepeat->LinkInput(streamOperator, metadata), CAMERA_OK);

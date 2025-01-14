@@ -440,7 +440,7 @@ public:
      *
      * @param CaptureInput to be removed from session.
      */
-    int32_t RemoveInput(sptr<CaptureInput>& input);
+    virtual int32_t RemoveInput(sptr<CaptureInput>& input);
 
     /**
      * @brief Remove CaptureOutput for the capture session.
@@ -533,7 +533,7 @@ public:
      * @brief Releases CaptureSession instance.
      * @return Returns errCode.
      */
-    int32_t Release();
+    virtual int32_t Release();
 
     /**
      * @brief create new device control setting.
@@ -1551,6 +1551,8 @@ public:
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     virtual std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
+
+    void GetMetadataFromService(sptr<CameraDevice> device);
 
     void ExecuteAbilityChangeCallback();
     void SetAbilityCallback(std::shared_ptr<AbilityCallback> abilityCallback);

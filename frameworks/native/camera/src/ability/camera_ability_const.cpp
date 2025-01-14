@@ -14,10 +14,14 @@
  */
 
 #include "ability/camera_ability_const.h"
+#include "camera_util.h"
+#include "camera/v1_3/types.h"
+#include "capture_scene_const.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
-
+#include "istream_metadata.h"
 namespace OHOS {
 namespace CameraStandard {
+using OHOS::HDI::Camera::V1_3::OperationMode;
 
 const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_ = {
     {OHOS_CAMERA_FLASH_MODE_CLOSE, FLASH_MODE_CLOSE},
@@ -172,6 +176,64 @@ const std::vector<VideoRotation> g_fwkVideoRotationVector_ = {
     VideoRotation::ROTATION_90,
     VideoRotation::ROTATION_180,
     VideoRotation::ROTATION_270
+};
+
+const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
+    {OperationMode::NORMAL, NORMAL},
+    {OperationMode::CAPTURE, CAPTURE},
+    {OperationMode::VIDEO, VIDEO},
+    {OperationMode::PORTRAIT, PORTRAIT},
+    {OperationMode::NIGHT, NIGHT},
+    {OperationMode::PROFESSIONAL_PHOTO, PROFESSIONAL_PHOTO},
+    {OperationMode::PROFESSIONAL_VIDEO, PROFESSIONAL_VIDEO},
+    {OperationMode::SLOW_MOTION, SLOW_MOTION},
+    {OperationMode::SCAN_CODE, SCAN},
+    {OperationMode::CAPTURE_MACRO, CAPTURE_MACRO},
+    {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
+    {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
+    {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
+    {OperationMode::SECURE, SECURE},
+    {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
+    {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
+    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
+    {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
+    {OperationMode::TIMELAPSE_PHOTO, TIMELAPSE_PHOTO},
+    {OperationMode::FLUORESCENCE_PHOTO, FLUORESCENCE_PHOTO},
+};
+
+const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
+    {NORMAL, OperationMode::NORMAL},
+    {CAPTURE,  OperationMode::CAPTURE},
+    {VIDEO,  OperationMode::VIDEO},
+    {PORTRAIT,  OperationMode::PORTRAIT},
+    {NIGHT,  OperationMode::NIGHT},
+    {PROFESSIONAL_PHOTO,  OperationMode::PROFESSIONAL_PHOTO},
+    {PROFESSIONAL_VIDEO,  OperationMode::PROFESSIONAL_VIDEO},
+    {SLOW_MOTION,  OperationMode::SLOW_MOTION},
+    {SCAN, OperationMode::SCAN_CODE},
+    {CAPTURE_MACRO, OperationMode::CAPTURE_MACRO},
+    {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
+    {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
+    {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
+    {SECURE, OperationMode::SECURE},
+    {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
+    {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
+    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
+    {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
+    {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
+    {FLUORESCENCE_PHOTO, OperationMode::FLUORESCENCE_PHOTO},
+};
+
+const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_ = {
+    {StatisticsDetectType::OHOS_CAMERA_HUMAN_FACE_DETECT, MetadataObjectType::FACE},
+    {StatisticsDetectType::OHOS_CAMERA_HUMAN_BODY_DETECT, MetadataObjectType::HUMAN_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_CAT_FACE_DETECT, MetadataObjectType::CAT_FACE},
+    {StatisticsDetectType::OHOS_CAMERA_CAT_BODY_DETECT, MetadataObjectType::CAT_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_DOG_FACE_DETECT, MetadataObjectType::DOG_FACE},
+    {StatisticsDetectType::OHOS_CAMERA_DOG_BODY_DETECT, MetadataObjectType::DOG_BODY},
+    {StatisticsDetectType::OHOS_CAMERA_SALIENT_DETECT, MetadataObjectType::SALIENT_DETECTION},
+    {StatisticsDetectType::OHOS_CAMERA_BAR_CODE_DETECT, MetadataObjectType::BAR_CODE_DETECTION},
+    {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION}
 };
 } // namespace CameraStandard
 } // namespace OHOS
