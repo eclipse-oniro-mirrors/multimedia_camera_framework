@@ -204,7 +204,7 @@ Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* f
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_VideoOutput::isMirrorSupported(bool* isSupported)
+Camera_ErrorCode Camera_VideoOutput::IsMirrorSupported(bool* isSupported)
 {
     CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "innerVideoOutput_ is nullptr");
@@ -214,7 +214,7 @@ Camera_ErrorCode Camera_VideoOutput::isMirrorSupported(bool* isSupported)
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_VideoOutput::enableMirror(bool mirrorMode)
+Camera_ErrorCode Camera_VideoOutput::EnableMirror(bool mirrorMode)
 {
     CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "innerVideoOutput_ is nullptr");

@@ -47,9 +47,9 @@ public:
 
     Camera_ErrorCode GetActiveFrameRate(Camera_FrameRateRange* frameRateRange);
 
-    Camera_ErrorCode isMirrorSupported(bool* isSupported);
+    Camera_ErrorCode IsMirrorSupported(bool* isSupported);
 
-    Camera_ErrorCode enableMirror(bool mirrorMode);
+    Camera_ErrorCode EnableMirror(bool mirrorMode);
 
     Camera_ErrorCode GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation);
 
