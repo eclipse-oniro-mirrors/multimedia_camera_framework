@@ -28,6 +28,22 @@ HCameraDeviceProxy::~HCameraDeviceProxy()
     MEDIA_INFO_LOG("~HCameraDeviceProxy is called");
 }
 
+int32_t HCameraDeviceProxy::closeDelayed()
+{
+    MEDIA_INFO_LOG("HCameraDeviceProxy::closeDelayed() start");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(false);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DELAYED_CLOSE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy closeDelayed failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraDeviceProxy::Open()
 {
     MessageParcel data;

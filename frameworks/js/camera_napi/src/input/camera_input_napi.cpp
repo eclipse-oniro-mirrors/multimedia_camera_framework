@@ -222,6 +222,7 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_input_props[] = {
         DECLARE_NAPI_FUNCTION("open", Open),
         DECLARE_NAPI_FUNCTION("close", Close),
+        DECLARE_NAPI_FUNCTION("closeDelayed", closeDelayed),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
@@ -395,6 +396,50 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
     } else {
         asyncContext->queueTask =
             CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::Close");
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("closeDelayed is called");
+    std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
+        "CameraInputNapi::closeDelayed", CameraNapiUtils::IncrementAndGet(cameraInputTaskId));
+    int32_t delayTime  = 0 ;
+    auto asyncFunction = std::make_shared<CameraNapiAsyncFunction>(
+        env, "closeDelayed", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction, delayTime);
+    asyncContext->delayTime = delayTime;
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraInputNapi::closeDelayed invalid argument");
+        return nullptr;
+    }
+    asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* date) {
+            MEDIA_INFO_LOG("CameraInputNapi::closeDelayed running on worker");
+            auto context = static_cast<CameraInputAsyncContext*>(date);
+            CHECK_ERROR_RETURN_LOG(context->objectInfo == nullptr,
+                "CameraInputNapi::closeDelayed async info is nullptr");
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                context->errorCode = context->objectInfo->GetCameraInput()->closeDelayed(context->delayTime);
+                context->status = context->errorCode == CameraErrorCode::SUCCESS;
+            });
+        },
+        AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::closeDelayed");
+        asyncFunction->Reset();
+    } else {
+        asyncContext->queueTask =
+            CameraNapiWorkerQueueKeeper::GetInstance()->AcquireWorkerQueueTask("CameraInputNapi::closeDelayed");
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }

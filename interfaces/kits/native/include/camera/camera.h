@@ -753,6 +753,11 @@ typedef struct Camera_Device {
      * Camera connection type attribute.
      */
     Camera_Connection connectionType;
+
+    /**
+     * Camera isretractable.
+     */
+    bool isRetractable;
 } Camera_Device;
 
 /**

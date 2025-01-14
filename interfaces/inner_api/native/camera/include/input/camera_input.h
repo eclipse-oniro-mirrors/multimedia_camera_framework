@@ -32,6 +32,7 @@
 #include "icamera_device_service_callback.h"
 #include "metadata_common_utils.h"
 #include "output/camera_output_capability.h"
+#include "camera_timer.h"
 namespace OHOS {
 namespace CameraStandard {
 class ErrorCallback {
@@ -76,6 +77,11 @@ public:
     * @brief close camera.
     */
     int Close() override;
+
+    /**
+    * @brief closeDelayed camera.
+    */
+    int closeDelayed(int32_t delayTime);
 
     /**
     * @brief create new device control setting.

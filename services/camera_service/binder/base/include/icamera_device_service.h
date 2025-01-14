@@ -30,6 +30,8 @@ public:
 
     virtual int32_t Close() = 0;
 
+    virtual int32_t closeDelayed() = 0;
+
     virtual int32_t Release() = 0;
 
     virtual int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) = 0;

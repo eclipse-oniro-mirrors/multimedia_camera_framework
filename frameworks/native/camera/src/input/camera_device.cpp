@@ -96,7 +96,7 @@ bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
-
+    
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
     if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
@@ -134,6 +134,12 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         cameraOrientation_ = static_cast<uint32_t>(item.data.i32[0]);
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        isRetractable_ = static_cast<bool>(item.data.u8[0]);
+        MEDIA_INFO_LOG("Get isRetractable_  = %{public}d", isRetractable_);
+    }
+
     uint32_t moduleTypeTagId;
     if (isFindModuleTypeTag(moduleTypeTagId)) {
         ret = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
@@ -147,9 +153,9 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, "
+                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
                    "moduleType: %{public}u, foldStatus: %{public}d", cameraPosition_, cameraType_, connectionType_,
-                   foldScreenType_, cameraOrientation_, moduleType_, foldStatus_);
+                   foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
 }
 
 std::string CameraDevice::GetID()
@@ -222,6 +228,11 @@ std::string CameraDevice::GetNetWorkId()
 uint32_t CameraDevice::GetCameraOrientation()
 {
     return cameraOrientation_;
+}
+
+bool CameraDevice::GetisRetractable()
+{
+    return isRetractable_;
 }
 
 uint32_t CameraDevice::GetModuleType()

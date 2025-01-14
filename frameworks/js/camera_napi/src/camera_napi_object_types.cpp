@@ -87,6 +87,7 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
     auto hostDeviceName = Hold<std::string>(cameraDevice_.GetHostName());
     auto hostDeviceType = Hold<uint32_t>(cameraDevice_.GetDeviceType());
     auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetCameraOrientation());
+    auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "cameraId", cameraId },
         { "cameraPosition", cameraPosition },
@@ -94,7 +95,8 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
         { "connectionType", connectionType },
         { "hostDeviceName", hostDeviceName },
         { "hostDeviceType", hostDeviceType },
-        { "cameraOrientation", cameraOrientation } });
+        { "cameraOrientation", cameraOrientation },
+        { "isRetractable", isRetractable } });
 }
 
 CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()

@@ -93,6 +93,7 @@ public:
 
     static napi_value Open(napi_env env, napi_callback_info info);
     static napi_value Close(napi_env env, napi_callback_info info);
+    static napi_value closeDelayed(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
@@ -132,6 +133,7 @@ struct CameraInputAsyncContext : public AsyncContext {
     CameraInputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     CameraInputNapi* objectInfo = nullptr;
     bool isEnableSecCam = false;
+    int32_t delayTime  = 0 ;
     uint64_t secureCameraSeqId = 0L;
 };
 } // namespace CameraStandard
