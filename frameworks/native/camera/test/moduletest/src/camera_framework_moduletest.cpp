@@ -8229,7 +8229,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_098, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_099, TestSize.Level0)
 {
     auto photoOutput1 = CreatePhotoOutput();
+    EXPECT_NE(photoOutput1, nullptr);
     auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
+    EXPECT_NE(photoOutput, nullptr);
     photoOutput->Release();
     photoOutput->ConfirmCapture();
 }
@@ -11128,22 +11130,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_078, TestSize.Le
 
     intResult = quickShotPhotoSession->Stop();
     EXPECT_EQ(intResult, 0);
-}
-/*
- * Feature: Framework
- * Function: Test cameraStatus with bundleName
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test master ai
- */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Level0)
-{
-    if (!IsSupportNow()) {
-        return;
-    }
-    constexpr int32_t waitForCallbackTime = 5;
-    sleep(waitForCallbackTime);
 }
 
 /*
