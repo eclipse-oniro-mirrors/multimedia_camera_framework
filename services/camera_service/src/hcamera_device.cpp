@@ -637,7 +637,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
-    std::lock_guard<std::mutex> lock(opMutex_);
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     if (updateSettings_ == nullptr || !CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_)) {
         updateSettings_ = settings;
     }
