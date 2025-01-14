@@ -36,14 +36,9 @@ private:
     int32_t HandleUpdateSketchRatio(MessageParcel& data);
     int32_t HandleSetFrameRate(MessageParcel& data);
     int32_t HandleSetCameraRotation(MessageParcel& data);
+    int32_t HandleSetCameraApi(MessageParcel& data);
     int32_t HandleSetMirror(MessageParcel& data);
     int32_t HandleAttachMetaSurface(MessageParcel& data);
-<<<<<<< HEAD
-=======
-    int32_t HandleSetCameraRotation(MessageParcel& data);
-    int32_t HandleSetCameraApi(MessageParcel& data);
-    int32_t HandleToggleAutoVideoFrameRate(MessageParcel& data);
->>>>>>> a3e65b9f (fix api rotation)
 };
 } // namespace CameraStandard
 } // namespace OHOS

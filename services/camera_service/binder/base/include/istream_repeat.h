@@ -44,7 +44,9 @@ public:
 
     virtual int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) = 0;
 
-    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) = 0;
+    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation) = 0;
+
+    virtual int32_t SetCameraApi(uint32_t apiCompatibleVersion) = 0;
 
     virtual int32_t EnableSecure(bool isEnable = false) = 0;
     
@@ -52,15 +54,6 @@ public:
 
     virtual int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) = 0;
 
-<<<<<<< HEAD
-=======
-    virtual int32_t SetCameraRotation(bool isEnable, int32_t rotation) = 0;
-
-    virtual int32_t SetCameraApi(uint32_t apiCompatibleVersion) = 0;
-
-    virtual int32_t ToggleAutoVideoFrameRate(bool isEnable) = 0;
-
->>>>>>> a3e65b9f (fix api rotation)
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };
 } // namespace CameraStandard
