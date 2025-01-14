@@ -250,7 +250,7 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 16
  */
-Camera_ErrorCode OH_VideoOutput_isMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported);
+Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported);
 
 /**
  * @brief Enable or disable mirror mode for videoOutput
@@ -262,7 +262,7 @@ Camera_ErrorCode OH_VideoOutput_isMirrorSupported(Camera_VideoOutput* videoOutpu
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 16
  */
-Camera_ErrorCode OH_VideoOutput_enableMirror(Camera_VideoOutput* videoOutput, bool mirrorMode);
+Camera_ErrorCode OH_VideoOutput_EnableMirror(Camera_VideoOutput* videoOutput, bool mirrorMode);
 
 /**
  * @brief Gets the video rotation angle.
