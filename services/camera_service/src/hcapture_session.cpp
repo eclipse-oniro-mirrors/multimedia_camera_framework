@@ -123,7 +123,7 @@ int32_t HCaptureSession::Initialize(const uint32_t callerToken, int32_t opMode)
         CHECK_EXECUTE(disconnectDevice != nullptr,
             disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
 
-        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
+        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession reach max session limit, release the oldest one");
         poppedSession->Release();
     }
 
@@ -234,7 +234,7 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     result = false;
-    stateMachine_.StateGuard([this, &errorCode](const CaptureSessionState currentState) {
+    stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
             MEDIA_ERR_LOG("HCaptureSession::CanAddInput Need to call BeginConfig before adding input");
             errorCode = CAMERA_INVALID_STATE;
@@ -243,6 +243,12 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
         if ((GetCameraDevice() != nullptr)) {
             MEDIA_ERR_LOG("HCaptureSession::CanAddInput Only one input is supported");
             errorCode = CAMERA_INVALID_SESSION_CFG;
+            return;
+        }
+        sptr<HCameraDevice> hCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
+        auto deviceSession = hCameraDevice->GetStreamOperatorCallback();
+        if (deviceSession != nullptr) {
+            errorCode = CAMERA_OPERATION_NOT_ALLOWED;
             return;
         }
     });
@@ -278,6 +284,11 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         }
         sptr<HCameraDevice> hCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
         MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
+        auto deviceSession = hCameraDevice->GetStreamOperatorCallback();
+        if (deviceSession != nullptr) {
+            errorCode = CAMERA_OPERATION_NOT_ALLOWED;
+            return;
+        }
         hCameraDevice->SetStreamOperatorCallback(this);
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
@@ -503,6 +514,7 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
                 "HCaptureSession::RemoveInput camera id is %{public}s", currentDevice->GetCameraId().c_str());
             currentDevice->ResetDeviceSettings();
             SetCameraDevice(nullptr);
+            currentDevice->SetStreamOperatorCallback(nullptr);
         } else {
             MEDIA_ERR_LOG("HCaptureSession::RemoveInput Invalid camera device");
             errorCode = CAMERA_INVALID_SESSION_CFG;

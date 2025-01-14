@@ -96,8 +96,10 @@ sptr<HCaptureSession> HCameraSessionManager::AddSession(pid_t pid, sptr<HCapture
     if (session == nullptr) {
         return nullptr;
     }
+
+    // TODO test limit is 8, actual limit is one
     static bool s_groupSizeLimit =
-        (system::GetParameter("const.camera.multicamera.enable", "false") == "true") ? GROUP_SIZE_LIMIT : 1;
+        (system::GetParameter("const.camera.multicamera.enable", "false") == "true") ? GROUP_SIZE_LIMIT : 8;
 
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto& list = totalSessionMap_[pid];
