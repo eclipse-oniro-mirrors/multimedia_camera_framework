@@ -210,11 +210,11 @@ int32_t HStreamRepeatProxy::SetCameraRotation(bool isEnable, int32_t rotation)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
+
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(isEnable);
     data.WriteInt32(rotation);
- 
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_PRIVIEW_ROTATION), data, reply, option);
     if (error != ERR_NONE) {
@@ -228,10 +228,10 @@ int32_t HStreamRepeatProxy::SetCameraApi(uint32_t apiCompatibleVersion)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
+
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteUint32(apiCompatibleVersion);
- 
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_API_VERSION), data, reply, option);
     if (error != ERR_NONE) {
