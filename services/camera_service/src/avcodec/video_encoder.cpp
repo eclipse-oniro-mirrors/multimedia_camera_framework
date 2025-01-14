@@ -168,8 +168,6 @@ int32_t VideoEncoder::NotifyEndOfStream()
 
 int32_t VideoEncoder::FreeOutputData(uint32_t bufferIndex)
 {
-    std::lock_guard<std::mutex> lock(encoderMutex_);
-    CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
     int32_t ret = OH_VideoEncoder_FreeOutputBuffer(encoder_, bufferIndex);
     CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1,
         "Free output data failed, ret: %{public}d", ret);
@@ -273,6 +271,8 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
+        std::lock_guard<std::mutex> encoderLock(encoderMutex_);
+        CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "Encode when encoder is stop");
         if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
