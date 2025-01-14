@@ -18,9 +18,7 @@
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
-#include "hstream_repeat_callback_stub.h"
 #include "input/camera_device.h"
-#include "input/camera_input.h"
 #include "istream_repeat.h"
 
 namespace OHOS {
@@ -480,8 +478,18 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     } else if (cameraPosition == CAMERA_POSITION_FRONT || CAMERA_POSITION_FOLD_INNER) {
         result = (ImageRotation)((sensorOrientation - imageRotation + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
-    MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d",
-        result, sensorOrientation);
+    bool isMirrorEnabled = false;
+    if (result != ImageRotation::ROTATION_0 && result != ImageRotation::ROTATION_180 && IsMirrorSupported()) {
+        auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+        if (itemStream != nullptr) {
+            ret = itemStream->GetMirror(isMirrorEnabled);
+            CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret), "VideoOutput::getMirror failed");
+            result = (isMirrorEnabled == false) ? result :
+                (ImageRotation)((result + ImageRotation::ROTATION_180) % CAPTURE_ROTATION_BASE);
+        }
+    }
+    MEDIA_INFO_LOG("VideoOutput GetVideoRotation :result %{public}d, sensorOrientation:%{public}d, "
+        "isMirrorEnabled%{public}d", result, sensorOrientation, isMirrorEnabled);
     return result;
 }
 

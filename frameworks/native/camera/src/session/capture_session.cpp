@@ -32,7 +32,6 @@
 #include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "features/moon_capture_boost_feature.h"
-#include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
@@ -44,6 +43,7 @@
 #include "ability/camera_ability_builder.h"
 #include "picture.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#include "camera_rotation_api_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -899,6 +899,19 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(errCode);
     }
     InsertOutputIntoSet(output);
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    sptr<IStreamCommon> stream = output->GetStream();
+    IStreamRepeat* repeatStream = nullptr;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    }
+    int32_t errItemCode = CAMERA_UNKNOWN_ERROR;
+    if (repeatStream) {
+        errItemCode = repeatStream->SetCameraApi(apiCompatibleVersion);
+        MEDIA_ERR_LOG("SetCameraApi!, errCode: %{public}d", errItemCode);
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::SetCameraApi() repeatStream is nullptr");
+    }
     return ServiceToCameraError(errCode);
 }
 
@@ -6219,6 +6232,31 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoAigcPhoto enabled:%{public}d", enabled);
+
+    LockForControl();
+    CHECK_ERROR_RETURN_RET_LOG(
+        changedMetadata_ == nullptr, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto changedMetadata_ is NULL");
+    int32_t res = CameraErrorCode::SUCCESS;
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t autoAigcPhoto = static_cast<uint8_t>(enabled); // 三目表达式处理，不使用强转
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_AIGC_PHOTO, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !status, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto failed to set type!");
+    UnlockForControl();
+
+    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoAigcPhoto failed");
+    return res;
 }
 
 } // namespace CameraStandard

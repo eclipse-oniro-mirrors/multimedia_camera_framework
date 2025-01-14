@@ -67,7 +67,12 @@ ohos_shared_library("ohcamera") {
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
 
-  cflags = [ "-Werror" ]
+  cflags = [
+    "-Werror",
+    "-Os",
+  ]
+
+  version_script = "libcamera_ndk.map"
 
   external_deps = [
     "c_utils:utils",

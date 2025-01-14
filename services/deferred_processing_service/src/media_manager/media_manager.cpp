@@ -17,7 +17,6 @@
 
 #include "basic_definitions.h"
 #include "dp_log.h"
-#include "track.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -464,6 +464,18 @@ public:
     int32_t EnableMovingPhoto(bool enabled);
     bool UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy);
 
+    /**
+     * Confirm if auto aigc photo supported.
+     *
+     * @return Return the supported result.
+     */
+    int32_t IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported);
+
+    /**
+     * @brief Enable auto aigc photo.
+     */
+    int32_t EnableAutoAigcPhoto(bool enabled);
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;

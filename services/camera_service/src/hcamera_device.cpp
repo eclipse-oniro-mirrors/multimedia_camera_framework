@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "camera_device_ability_items.h"
-#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_fwk_metadata_utils.h"
 #include "camera_metadata_info.h"
@@ -40,12 +39,9 @@
 #include "v1_0/types.h"
 #include "os_account_manager.h"
 #include "deferred_processing_service.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "camera_timer.h"
 #include "camera_report_uitls.h"
 #include "common_event_manager.h"
-#include "common_event_support.h"
 #include "common_event_data.h"
 #include "want.h"
 #include "parameters.h"
@@ -61,7 +57,7 @@ static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS 
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 CallerInfo caller_;
 
-const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice::reportTagInfos_ = {
+const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> HCameraDevice::reportTagInfos_ = {
     {OHOS_CONTROL_FLASH_MODE, "OHOS_CONTROL_FLASH_MODE", DFX_UB_SET_FLASHMODE},
     {OHOS_CONTROL_FOCUS_MODE, "OHOS_CONTROL_FOCUS_MODE", DFX_UB_SET_FOCUSMODE},
     {OHOS_CONTROL_QUALITY_PRIORITIZATION, "OHOS_CONTROL_QUALITY_PRIORITIZATION", DFX_UB_SET_QUALITY_PRIORITIZATION},
@@ -666,7 +662,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
-    std::lock_guard<std::mutex> lock(opMutex_);
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     if (updateSettings_ == nullptr || !CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_)) {
         updateSettings_ = settings;
     }
@@ -764,7 +760,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
 {
     caller_ = CameraReportUtils::GetCallerInfo();
     for (const auto &tagInfo : reportTagInfos_) {
-        std::string tagName, dfxUbStr;
+        std::string tagName;
+        DFX_UB_NAME dfxUbStr;
         uint32_t tag;
         std::tie(tag, tagName, dfxUbStr) = tagInfo;
         DebugLogTag(settings, tag, tagName, dfxUbStr);
@@ -776,7 +773,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
 }
 
 void HCameraDevice::DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-                                uint32_t tag, std::string tagName, std::string dfxUbStr)
+                                uint32_t tag, std::string tagName, DFX_UB_NAME dfxUbStr)
 {
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);

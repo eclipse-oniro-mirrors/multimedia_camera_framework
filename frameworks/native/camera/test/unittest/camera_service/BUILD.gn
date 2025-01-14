@@ -29,6 +29,7 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
     "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
+    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",

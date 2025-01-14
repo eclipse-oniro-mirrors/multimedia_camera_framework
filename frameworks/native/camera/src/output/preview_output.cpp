@@ -28,16 +28,10 @@
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
-#include "hstream_repeat_callback_stub.h"
-#include "image_format.h"
 #include "metadata_common_utils.h"
-#include "pixel_map.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
 #include "parameters.h"
-#include "bundle_mgr_interface.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "camera_rotation_api_utils.h"
 
 namespace OHOS {
@@ -696,7 +690,9 @@ int32_t PreviewOutput::JudegRotationFunc(int32_t imageRotation)
     if (imageRotation > CAPTURE_ROTATION_BASE) {
         return INVALID_ARGUMENT;
     }
-    if (deviceType == "tablet") {
+    bool isTableFlag = system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (isTableFlag && apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = ((imageRotation - ROTATION_90_DEGREES + CAPTURE_ROTATION_BASE) % CAPTURE_ROTATION_BASE);
     }
     return imageRotation;
@@ -720,7 +716,6 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
-    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
@@ -733,7 +728,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
-        errCode = itemStream->SetCameraRotation(true, result, apiCompatibleVersion);
+        errCode = itemStream->SetCameraRotation(true, result);
         CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
             "Failed to SetCameraRotation!, errCode: %{public}d", errCode);
     } else {

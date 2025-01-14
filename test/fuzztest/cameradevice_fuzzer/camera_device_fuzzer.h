@@ -17,8 +17,8 @@
 #define CAMERADEVICE_FUZZER_H
 #define FUZZ_PROJECT_NAME "cameradevice_fuzzer"
 #include <iostream>
-#include "hcamera_host_manager.h"
-#include "hcamera_device.h"
+#include "icamera_device_service_callback.h"
+#include "v1_3/icamera_device.h"
 namespace OHOS {
 namespace CameraStandard {
 
@@ -63,6 +63,7 @@ public:
     }
 };
 
+using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
 class IStreamOperatorCallbackMock : public IStreamOperatorCallback {
 public:
     inline int32_t OnCaptureReady(int32_t captureId,

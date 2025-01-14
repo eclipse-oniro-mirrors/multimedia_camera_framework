@@ -8229,7 +8229,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_098, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_099, TestSize.Level0)
 {
     auto photoOutput1 = CreatePhotoOutput();
+    EXPECT_NE(photoOutput1, nullptr);
     auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
+    EXPECT_NE(photoOutput, nullptr);
     photoOutput->Release();
     photoOutput->ConfirmCapture();
 }
@@ -11129,22 +11131,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_078, TestSize.Le
     intResult = quickShotPhotoSession->Stop();
     EXPECT_EQ(intResult, 0);
 }
-/*
- * Feature: Framework
- * Function: Test cameraStatus with bundleName
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test master ai
- */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Level0)
-{
-    if (!IsSupportNow()) {
-        return;
-    }
-    constexpr int32_t waitForCallbackTime = 5;
-    sleep(waitForCallbackTime);
-}
 
 /*
  * Feature: Framework
@@ -13030,6 +13016,66 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_module_is_raw_delivery_supp
     intResult = ((sptr<PhotoOutput>&)photoOutput)->IsRawDeliverySupported(isSupported);
     EXPECT_EQ(intResult, CAMERA_OK);
     EXPECT_EQ(isSupported, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test auto aigc photo
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test AutoAigcPhoto enable
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_auto_aigc_photo_enable, TestSize.Level0)
+{
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    bool isEnabled = false;
+    int32_t intResult = camSession->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
+    ASSERT_NE(input, nullptr);
+
+    intResult = camSession->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isAutoAigcPhotoSupported;
+    intResult = photoOutput_1->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    EXPECT_EQ(isAutoAigcPhotoSupported, true);
+
+    intResult = photoOutput_1->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = photoOutput_1->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    EXPECT_EQ(intResult, SESSION_NOT_RUNNING);
+
+    intResult = photoOutput_1->EnableAutoAigcPhoto(isEnabled);
+    EXPECT_EQ(intResult, SERVICE_FATL_ERROR);
 }
 } // namespace CameraStandard
 } // namespace OHOS

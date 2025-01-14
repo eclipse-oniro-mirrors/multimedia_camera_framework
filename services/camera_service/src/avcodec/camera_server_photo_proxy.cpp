@@ -21,7 +21,6 @@
 #include "camera_log.h"
 #include "datetime_ex.h"
 #include "camera_server_photo_proxy.h"
-#include "format.h"
 #include "photo_proxy.h"
 
 namespace OHOS {
@@ -79,7 +78,7 @@ int32_t CameraServerPhotoProxy::CameraFreeBufferHandle(BufferHandle *handle)
     return 0;
 }
 
-std::string CreateDisplayName(const std::string& suffix)
+std::string CreateDisplayName()
 {
     struct tm currentTime;
     std::string formattedTime = "";

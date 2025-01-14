@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_REPORT_DFX_UITLS_H
  
 #include <map>
+#include <mutex>
 #include <refbase.h>
  
 namespace OHOS {
@@ -24,6 +25,8 @@ namespace CameraStandard {
 
 struct CaptureDfxInfo {
     int32_t captureId;
+    std::string bundleName;
+    std::string pictureId;
     bool isSystemApp;
     uint64_t firstBufferStartTime;
     uint64_t firstBufferEndTime;
@@ -36,6 +39,8 @@ struct CaptureDfxInfo {
 class CameraReportDfxUtils : public RefBase {
 public:
     static sptr<CameraReportDfxUtils> &GetInstance();
+
+    void SetPictureId(int32_t captureId, std::string pictureId);
  
     void SetFirstBufferStartInfo(CaptureDfxInfo captureInfo);
     void SetFirstBufferEndInfo(int32_t captureId);

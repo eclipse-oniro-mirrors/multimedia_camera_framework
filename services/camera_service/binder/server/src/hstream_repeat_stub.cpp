@@ -64,6 +64,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR):
             errCode = HandleSetMirror(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_GET_STREAM_MIRROR):
+            errCode = HandleGetMirror(data, reply);
+            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE):
             errCode = HandleAttachMetaSurface(data);
             break;
@@ -72,6 +75,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
             break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE):
             errCode = HandleToggleAutoVideoFrameRate(data);
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_API_VERSION):
+            errCode = HandleSetCameraApi(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
@@ -160,6 +166,16 @@ int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
     return ret;
 }
 
+int32_t HStreamRepeatStub::HandleGetMirror(MessageParcel& data, MessageParcel& reply)
+{
+    bool isEnable = false;
+    int ret = GetMirror(isEnable);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleGetMirror result: %{public}d, isMuted: %{public}d", ret, isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isEnable), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetMirror Write isEnable failed");
+    return ret;
+}
+
 int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
@@ -182,13 +198,21 @@ int32_t HStreamRepeatStub::HandleSetCameraRotation(MessageParcel& data)
 {
     bool isEnable = data.ReadBool();
     int32_t rotation = data.ReadInt32();
-    uint32_t apiCompatibleVersion = data.ReadUint32();
 
-    int ret = SetCameraRotation(isEnable, rotation, apiCompatibleVersion);
+    int ret = SetCameraRotation(isEnable, rotation);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraRotation failed : %{public}d", ret);
     return ret;
 }
- 
+
+int32_t HStreamRepeatStub::HandleSetCameraApi(MessageParcel& data)
+{
+    uint32_t apiCompatibleVersion = data.ReadUint32();
+
+    int ret = SetCameraApi(apiCompatibleVersion);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::SetCameraApi failed : %{public}d", ret);
+    return ret;
+}
+
 int32_t HStreamRepeatStub::HandleToggleAutoVideoFrameRate(MessageParcel& data)
 {
     CHECK_ERROR_RETURN_RET(!CheckSystemApp(), CAMERA_NO_PERMISSION);

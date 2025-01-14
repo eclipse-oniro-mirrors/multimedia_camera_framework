@@ -15,8 +15,7 @@
 
 #include "deferred_photo_processing_session_proxy.h"
 #include "deferred_processing_service_ipc_interface_code.h"
-#include "metadata_utils.h"
-#include "utils/dp_log.h"
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {

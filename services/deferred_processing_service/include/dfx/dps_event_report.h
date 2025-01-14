@@ -47,6 +47,7 @@ const std::string EVENT_KEY_EXCUTIONMODE = "EXCUTIONMODE";
 const std::string EVENT_KEY_CHANGEREASON = "CHANGEREASON";
 const std::string EVENT_KEY_EXCEPTIONSOURCE = "EXCEPTIONSOURCE";
 const std::string EVENT_KEY_EXCEPTIONCAUSE = "EXCEPTIONCAUSE";
+const std::string EVENT_KEY_EXECUTIONMODE = "EXECUTIONMODE";
 
 struct DPSEventInfo {
     std::string imageId;
@@ -72,11 +73,11 @@ struct DPSEventInfo {
     int32_t normalJobNum;
     int32_t lowJobNum;
     int temperatureLevel;
-    ExecutionMode executionMode;
     PhotoJobType photoJobType;
     EventType changeReason;
     ExceptionSource exceptionSource;
     ExceptionCause exceptionCause;
+    ExecutionMode executionMode = ExecutionMode::DUMMY;
 };
 
 class DPSEventReport {
@@ -100,6 +101,7 @@ public:
     void UpdateEventInfo(DPSEventInfo& dpsEventInfo);
     void UpdateProcessDoneTime(const std::string& imageId, int32_t userId);
     void UpdateRemoveTime(const std::string& imageId, int32_t userId);
+    void UpdateExecutionMode(const std::string& imageId, int32_t userId, ExecutionMode executionMode);
 
 private:
     DPSEventInfo GetEventInfo(const std::string& imageId, int32_t userId);
@@ -110,6 +112,7 @@ private:
     void UpdateRestoreTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     void UpdateRemoveTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     void UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     int GetTotalTime (uint64_t beginTime, uint64_t endTime);
     std::mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo

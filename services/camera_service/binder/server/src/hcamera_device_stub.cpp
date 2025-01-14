@@ -19,7 +19,6 @@
 #include "camera_xcollie.h"
 #include "metadata_utils.h"
 #include "camera_service_ipc_interface_code.h"
-#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {

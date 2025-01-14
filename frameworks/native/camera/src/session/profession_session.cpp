@@ -17,12 +17,7 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
-#include "hcapture_session_callback_stub.h"
 #include "metadata_common_utils.h"
-#include "input/camera_input.h"
-#include "output/photo_output.h"
-#include "output/preview_output.h"
-#include "output/video_output.h"
 #include <algorithm>
 #include <cstdint>
 

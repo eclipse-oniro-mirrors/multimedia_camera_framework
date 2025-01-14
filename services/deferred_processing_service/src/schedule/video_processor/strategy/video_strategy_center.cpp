@@ -15,7 +15,6 @@
 
 #include "video_strategy_center.h"
 
-#include "battery_level_strategy.h"
 #include "dp_log.h"
 #include "dps_event_report.h"
 #include "events_info.h"

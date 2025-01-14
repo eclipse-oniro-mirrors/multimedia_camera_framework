@@ -78,12 +78,14 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
+    int32_t GetMirror(bool& isEnable) override;
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
     int32_t SetPreviewRotation(std::string &deviceClass);
     void SetStreamTransform(int disPlayRotation = -1);
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
-    int32_t SetCameraRotation(bool isEnable, int32_t rotation, uint32_t apiCompatibleVersion) override;
+    int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
+    int32_t SetCameraApi(uint32_t apiCompatibleVersion) override;
     int32_t ToggleAutoVideoFrameRate(bool isEnable) override;
 
 private:

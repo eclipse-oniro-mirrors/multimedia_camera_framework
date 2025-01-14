@@ -39,6 +39,7 @@ constexpr uint32_t DEFAULT_SAMPLERATE = 48000;
 constexpr uint32_t SAMPLERATE_32000 = 32000;
 constexpr uint64_t DEFAULT_BITRATE = 48000;
 constexpr uint32_t DEFAULT_CHANNEL_COUNT = 1;
+constexpr uint32_t DEFAULT_PROFILE = 0;
 constexpr int32_t AUDIO_ENCODE_EXPIREATION_TIME = 10;
 constexpr OH_AudioChannelLayout CHANNEL_LAYOUT = OH_AudioChannelLayout::CH_LAYOUT_MONO;
 constexpr OH_BitsPerSample SAMPLE_FORMAT = OH_BitsPerSample::SAMPLE_S16LE;

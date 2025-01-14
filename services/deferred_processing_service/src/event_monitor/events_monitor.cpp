@@ -16,7 +16,6 @@
 #include "events_monitor.h"
 
 #include "dp_log.h"
-#include "dp_utils.h"
 #include "dps_event_report.h"
 #include "dps.h"
 #include "event_status_change_command.h"

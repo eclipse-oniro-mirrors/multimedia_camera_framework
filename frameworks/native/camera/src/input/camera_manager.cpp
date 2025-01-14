@@ -36,12 +36,10 @@
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
 #include "display_manager.h"
-#include "dps_metadata_info.h"
 #include "icamera_util.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_capture.h"
-#include "istream_common.h"
 #include "light_painting_session.h"
 #include "quick_shot_photo_session.h"
 #include "session/capture_session.h"
@@ -1282,6 +1280,11 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     for (const auto& deviceInfo : cameraDeviceList) {
+        // The usb camera is added to the list and is not processed.
+        if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
         // Check for API compatibility
         if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
             bool isBackCamera = deviceInfo->GetPosition() == CAMERA_POSITION_BACK;

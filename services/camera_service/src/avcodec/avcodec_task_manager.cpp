@@ -30,11 +30,9 @@
 #include "audio_record.h"
 #include "audio_video_muxer.h"
 #include "camera_log.h"
-#include "external_window.h"
 #include "frame_record.h"
 #include "native_avbuffer.h"
 #include "native_avbuffer_info.h"
-#include "native_buffer_inner.h"
 #include "sample_info.h"
 #include "native_mfmagic.h"
 
@@ -168,6 +166,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, SAMPLERATE_32000);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
+    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_PROFILE, DEFAULT_PROFILE);
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
     #endif
     int metaTrackId = -1;

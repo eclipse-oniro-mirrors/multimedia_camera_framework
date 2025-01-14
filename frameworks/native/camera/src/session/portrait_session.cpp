@@ -16,12 +16,6 @@
 #include "session/portrait_session.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "hcapture_session_callback_stub.h"
-#include "input/camera_input.h"
-#include "metadata_common_utils.h"
-#include "output/photo_output.h"
-#include "output/preview_output.h"
-#include "output/video_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
