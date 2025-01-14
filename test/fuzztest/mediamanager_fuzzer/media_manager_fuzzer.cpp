@@ -17,6 +17,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include "camera_log.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,7 +28,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-MediaManager *MediaManagerFuzzer::fuzz_ = nullptr;
+std::shared_ptr<MediaManager> MediaManagerFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -65,7 +66,7 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new MediaManager();
+        fuzz_ = std::make_shared<MediaManager>();
     }
     auto inFd = GetData<int32_t>();
     auto outFd = GetData<int32_t>();
@@ -160,10 +161,10 @@ void MediaManagerFuzzer::WriterFuzzTest()
     uint8_t randomIndex = GetData<uint8_t>() % memoryFlags.size();
     MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
 
-    std::shared_ptr<AVAllocator> avAllocator_ =
+    std::shared_ptr<AVAllocator> avAllocator =
         AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
-    int32_t capacity_ = GetData<int32_t>();
-    std::shared_ptr<AVBuffer> sample = AVBuffer::CreateAVBuffer(avAllocator_, capacity_);
+    int32_t capacity = GetData<int32_t>();
+    std::shared_ptr<AVBuffer> sample = AVBuffer::CreateAVBuffer(avAllocator, capacity);
     writer->Start();
 }
 

@@ -17,6 +17,7 @@
 #define DEFERREDPROCESSING_SESSION_STUB_FUZZER_H
 
 #include <iostream>
+#include <memory>
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_photo_processing_session_stub.h"
@@ -63,8 +64,8 @@ public:
 
 class DeferredPhotoProcessingSessionStubFuzzer {
 public:
-static DeferredPhotoProcessingSessionStubFuzz *fuzz_;
-static DPSProwerManager *manager_;
+static std::shared_ptr<DeferredPhotoProcessingSessionStubFuzz> fuzz_;
+static std::shared_ptr<DPSProwerManager> manager_;
 static void OnRemoteRequest(int32_t code);
 static void FuzzTest();
 };

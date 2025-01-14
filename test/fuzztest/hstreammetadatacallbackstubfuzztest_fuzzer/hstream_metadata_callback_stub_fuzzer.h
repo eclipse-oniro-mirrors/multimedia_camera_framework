@@ -17,6 +17,7 @@
 #define HSTREAM_METADATA_CALLBACK_STUB_FUZZER_H
 
 #include "hstream_metadata_callback_stub.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +38,7 @@ public:
 
 class HStreamMetadataCallbackStubFuzzer {
 public:
-static HStreamMetadataCallbackStubFuzz *fuzz_;
+static std::shared_ptr<HStreamMetadataCallbackStubFuzz> fuzz_;
 static void OnRemoteRequest(int32_t code);
 };
 } //CameraStandard

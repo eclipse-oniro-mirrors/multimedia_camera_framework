@@ -18,6 +18,7 @@
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,8 +30,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DeferredVideoController *DeferredVideoControllerFuzzer::fuzz_ = nullptr;
-VideoStrategyCenter *DeferredVideoControllerFuzzer::center_ = nullptr;
+std::shared_ptr<DeferredVideoController> DeferredVideoControllerFuzzer::fuzz_{nullptr};
+std::shared_ptr<VideoStrategyCenter> DeferredVideoControllerFuzzer::center_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -79,7 +80,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
     if (center_ == nullptr) {
-        center_ = new DeferredProcessing::VideoStrategyCenter(userId, repository);
+        center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
     }
     const std::shared_ptr<VideoPostProcessor> postProcessor =
         std::make_shared<VideoPostProcessor>(userId);
@@ -88,7 +89,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     std::shared_ptr<DeferredVideoProcessor> processor =
         std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredVideoController(userId, repository, processor);
+        fuzz_ = std::make_shared<DeferredVideoController>(userId, repository, processor);
     }
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
@@ -96,10 +97,10 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
         std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     fuzz_->Initialize();
     fuzz_->OnVideoJobChanged(jobPtr);
-    constexpr int32_t EXECUTION_MODE_COUNT1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % EXECUTION_MODE_COUNT1);
-    constexpr int32_t EXECUTION_MODE_COUNT2 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 1;
-    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % EXECUTION_MODE_COUNT2);
+    constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
+    constexpr int32_t executionModeCount2 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 1;
+    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % executionModeCount2);
     std::shared_ptr<DeferredVideoWork> work =
         std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, dstFd);
     fuzz_->HandleSuccess(work);

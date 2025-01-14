@@ -16,6 +16,7 @@
 #ifndef CAMERA_INPUT_FUZZER_H
 #define CAMERA_INPUT_FUZZER_H
 
+#include <memory>
 #include "hstream_capture_stub.h"
 
 namespace OHOS {
@@ -23,7 +24,7 @@ namespace CameraStandard {
 
 class HStreamCaptureStubFuzzer {
 public:
-static HStreamCaptureStub *fuzz_;
+static std::shared_ptr<HStreamCaptureStub> fuzz_;
 static void HStreamCaptureStubFuzzTest();
 };
 } //CameraStandard

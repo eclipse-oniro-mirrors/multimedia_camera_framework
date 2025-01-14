@@ -18,6 +18,7 @@
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
+#include <memory>
 
 using namespace std;
 
@@ -25,9 +26,9 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
-VideoPostProcessor *VideoPostProcessorFuzzer::processor = nullptr;
-DeferredVideoWork *VideoPostProcessorFuzzer::work = nullptr;
-VideoPostProcessor::VideoProcessListener *VideoPostProcessorFuzzer::listener = nullptr;
+std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor{nullptr};
+std::shared_ptr<DeferredVideoWork> VideoPostProcessorFuzzer::work{nullptr};
+std::shared_ptr<VideoPostProcessor::VideoProcessListener> VideoPostProcessorFuzzer::listener{nullptr};
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
@@ -71,12 +72,12 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
         return;
     }
     int32_t userId = GetData<int32_t>();
-    processor = new VideoPostProcessor(userId);
+    processor = std::make_shared<VideoPostProcessor>(userId);
     if (processor == nullptr) {
         return;
     }
-    constexpr int32_t EXECUTION_MODE_COUNT1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % EXECUTION_MODE_COUNT1);
+    constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
     processor->SetExecutionMode(selectedExecutionMode);
     processor->SetDefaultExecutionMode();
     uint8_t randomNum = GetData<uint8_t>();
@@ -96,14 +97,14 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     processor->StopTimer(work);
     processor->ProcessRequest(work);
     processor->RemoveRequest(videoId);
-    constexpr int32_t EXECUTION_MODE_COUNT2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
-    ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % EXECUTION_MODE_COUNT2);
-    constexpr int32_t EXECUTION_MODE_COUNT3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
-    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % EXECUTION_MODE_COUNT3);
-    constexpr int32_t EXECUTION_MODE_COUNT4 = static_cast<int32_t>(MediaResult::PAUSE) + 2;
-    MediaResult selectedMediaResult = static_cast<MediaResult>(GetData<uint8_t>() % EXECUTION_MODE_COUNT4);
-    constexpr int32_t EXECUTION_MODE_COUNT5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
-    HdiStatus selectedHdiStatus = static_cast<HdiStatus>(GetData<uint8_t>() % EXECUTION_MODE_COUNT5);
+    constexpr int32_t executionModeCount2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
+    ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % executionModeCount2);
+    constexpr int32_t executionModeCount3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
+    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % executionModeCount3);
+    constexpr int32_t executionModeCount4 = static_cast<int32_t>(MediaResult::PAUSE) + 2;
+    MediaResult selectedMediaResult = static_cast<MediaResult>(GetData<uint8_t>() % executionModeCount4);
+    constexpr int32_t executionModeCount5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
+    HdiStatus selectedHdiStatus = static_cast<HdiStatus>(GetData<uint8_t>() % executionModeCount5);
     processor->PauseRequest(videoId, selectedScheduleType);
     sptr<IPCFileDescriptor> inputFd_ = nullptr;
     processor->StartMpeg(videoId, inputFd_);
@@ -121,7 +122,7 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2()
         return;
     }
     int32_t userId = GetData<int32_t>();
-    processor = new VideoPostProcessor(userId);
+    processor = std::make_shared<VideoPostProcessor>(userId);
     if (processor == nullptr) {
         return;
     }

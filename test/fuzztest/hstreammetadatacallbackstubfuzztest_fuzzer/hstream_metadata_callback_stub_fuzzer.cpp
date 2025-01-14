@@ -24,6 +24,7 @@
 #include "iconsumer_surface.h"
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,7 +35,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 static constexpr int32_t MAX_CODE_NUM = 1;
-HStreamMetadataCallbackStubFuzz *HStreamMetadataCallbackStubFuzzer::fuzz_ = nullptr;
+std::shared_ptr<HStreamMetadataCallbackStubFuzz> HStreamMetadataCallbackStubFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -72,7 +73,7 @@ void HStreamMetadataCallbackStubFuzzer::OnRemoteRequest(int32_t code)
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new HStreamMetadataCallbackStubFuzz();
+        fuzz_ = std::make_shared<HStreamMetadataCallbackStubFuzz>();
     }
     MessageParcel reply;
     MessageOption option;

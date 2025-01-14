@@ -17,6 +17,7 @@
 #define HSTREAM_DEPTH_STUB_FUZZER_H
 
 #include "hstream_depth_data_stub.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -51,7 +52,7 @@ public:
 
 class HStreamDepthDataStubFuzzer {
 public:
-static HStreamDepthDataStubFuzz *fuzz_;
+static std::shared_ptr<HStreamDepthDataStubFuzz> fuzz_;
 static void OnRemoteRequest(int32_t code);
 };
 } //CameraStandard

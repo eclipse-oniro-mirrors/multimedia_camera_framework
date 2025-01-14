@@ -25,6 +25,7 @@
 #include "nativetoken_kit.h"
 #include "camera_log.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,8 +38,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DeferredPhotoProcessingSessionStubFuzz *DeferredPhotoProcessingSessionStubFuzzer::fuzz_ = nullptr;
-DPSProwerManager *DeferredPhotoProcessingSessionStubFuzzer::manager_ = nullptr;
+std::shared_ptr<DeferredPhotoProcessingSessionStubFuzz> DeferredPhotoProcessingSessionStubFuzzer::fuzz_{nullptr};
+std::shared_ptr<DPSProwerManager> DeferredPhotoProcessingSessionStubFuzzer::manager_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -76,7 +77,7 @@ void DeferredPhotoProcessingSessionStubFuzzer::OnRemoteRequest(int32_t code)
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredPhotoProcessingSessionStubFuzz();
+        fuzz_ = std::make_shared<DeferredPhotoProcessingSessionStubFuzz>();
     }
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(DeferredPhotoProcessingSessionStubFuzz::GetDescriptor());
@@ -93,7 +94,7 @@ void DeferredPhotoProcessingSessionStubFuzzer::FuzzTest()
         return;
     }
     if (manager_ == nullptr) {
-        manager_ = new DPSProwerManager();
+        manager_ = std::make_shared<DPSProwerManager>();
     }
     manager_->EnableAutoSuspend();
     uint32_t time = GetData<uint32_t>();

@@ -18,6 +18,7 @@
 #include "message_parcel.h"
 #include "camera_log.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,7 +29,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-MoonCaptureBoostFeature *MoonCaptureBoostFeatureFuzzer::fuzz_ = nullptr;
+std::shared_ptr<MoonCaptureBoostFeature> MoonCaptureBoostFeatureFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -68,7 +69,7 @@ void MoonCaptureBoostFeatureFuzzer::MoonCaptureBoostFeatureFuzzTest()
     if (fuzz_ == nullptr) {
         SceneMode relatedMode = SceneMode::CAPTURE;
         auto deviceAbility = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-        fuzz_ = new MoonCaptureBoostFeature(relatedMode, deviceAbility);
+        fuzz_ = std::make_shared<MoonCaptureBoostFeature>(relatedMode, deviceAbility);
     }
     fuzz_->GetSketchEnableRatio();
     auto inputZoomRatio = GetData<float>();

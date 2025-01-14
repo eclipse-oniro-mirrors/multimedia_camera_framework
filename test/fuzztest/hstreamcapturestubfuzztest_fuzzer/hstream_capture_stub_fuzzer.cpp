@@ -26,6 +26,7 @@
 #include "iconsumer_surface.h"
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,10 +36,11 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-HStreamCaptureStub *HStreamCaptureStubFuzzer::fuzz_ = nullptr;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
+
+std::shared_ptr<HStreamCaptureStub> HStreamCaptureStubFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -79,7 +81,7 @@ void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest()
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
         CHECK_ERROR_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        fuzz_ = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+        fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
     MessageParcel data;
     data.WriteRawData(RAW_DATA, g_dataSize);

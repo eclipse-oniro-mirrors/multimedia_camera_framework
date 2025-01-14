@@ -19,6 +19,7 @@
 #include "hstream_capture_stub.h"
 #include "hstream_capture.h"
 #include "hcamera_device.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -93,7 +94,7 @@ public:
 class HStreamCaptureFuzzer {
 public:
 static bool hasPermission;
-static HStreamCapture *fuzz_;
+static std::shared_ptr<HStreamCapture> fuzz_;
 static void HStreamCaptureFuzzTest1();
 static void HStreamCaptureFuzzTest2();
 };

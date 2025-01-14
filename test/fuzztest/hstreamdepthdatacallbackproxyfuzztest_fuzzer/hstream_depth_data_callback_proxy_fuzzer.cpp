@@ -35,7 +35,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-HStreamDepthDataCallbackProxy *HStreamDepthDataCallbackProxyFuzzer::fuzz_ = nullptr;
+std::shared_ptr<HStreamDepthDataCallbackProxy> HStreamDepthDataCallbackProxyFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -81,7 +81,7 @@ void HStreamDepthDataCallbackProxyFuzzer::HStreamDepthDataCallbackProxyFuzzTest(
         if (impl == nullptr) {
             return;
         }
-        fuzz_ = new HStreamDepthDataCallbackProxy(impl);
+        fuzz_ = std::make_shared<HStreamDepthDataCallbackProxy>(impl);
     }
 }
 

@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "message_parcel.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,7 +28,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-CommandServer *CommandServerFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CommandServer> CommandServerFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -66,7 +67,7 @@ void CommandServerFuzzer::CommandServerFuzzTest()
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new CommandServer();
+        fuzz_ = std::make_shared<CommandServer>();
     }
     int32_t threadPriority = GetData<int32_t>();
     fuzz_->SetThreadPriority(threadPriority);

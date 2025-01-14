@@ -32,7 +32,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DeferredVideoProcessingSessionStubFuzz *DeferredVideoProcessingSessionStubFuzzer::fuzz_ = nullptr;
+std::shared_ptr<DeferredVideoProcessingSessionStubFuzz>
+    DeferredVideoProcessingSessionStubFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -71,7 +72,7 @@ void DeferredVideoProcessingSessionStubFuzzer::OnRemoteRequest(int32_t code)
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredVideoProcessingSessionStubFuzz();
+        fuzz_ = std::make_shared<DeferredVideoProcessingSessionStubFuzz>();
     }
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(DeferredVideoProcessingSessionStubFuzz::GetDescriptor());

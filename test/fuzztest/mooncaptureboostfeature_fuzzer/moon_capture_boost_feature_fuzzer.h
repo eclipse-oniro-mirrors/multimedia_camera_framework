@@ -17,13 +17,14 @@
 #define MOON_CAPTURE_BOOST_FEATURE_FUZZER_H
 
 #include "moon_capture_boost_feature.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class MoonCaptureBoostFeatureFuzzer {
 public:
-static MoonCaptureBoostFeature *fuzz_;
+static std::shared_ptr<MoonCaptureBoostFeature> fuzz_;
 static void MoonCaptureBoostFeatureFuzzTest();
 };
 } //CameraStandard

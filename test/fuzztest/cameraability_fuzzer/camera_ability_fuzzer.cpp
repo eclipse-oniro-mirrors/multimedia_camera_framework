@@ -34,7 +34,7 @@ static size_t g_dataSize = 0;
 static size_t g_pos;
 
 const int32_t NUM_TWO = 2;
-CameraAbility *CameraAbilityFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CameraAbility> CameraAbilityFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -95,7 +95,7 @@ void CameraAbilityFuzzer::CameraAbilityFuzzTest()
 
     GetPermission();
     if (fuzz_ == nullptr) {
-        fuzz_ = new CameraAbility();
+        fuzz_ = std::make_shared<CameraAbility>();
     }
     fuzz_->HasFlash();
     FlashMode flashMode = static_cast<FlashMode>(

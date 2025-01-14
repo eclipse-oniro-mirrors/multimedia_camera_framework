@@ -17,14 +17,15 @@
 #define MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H
 
 #include "moving_photo_surface_wrapper.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class MovingPhotoSurfaceWrapperFuzzer {
 public:
-static MovingPhotoSurfaceWrapper *fuzz_;
-static MovingPhotoSurfaceWrapper::BufferConsumerListener *listener_;
+static std::shared_ptr<MovingPhotoSurfaceWrapper> fuzz_;
+static std::shared_ptr<MovingPhotoSurfaceWrapper::BufferConsumerListener> listener_;
 static void MovingPhotoSurfaceWrapperFuzzTest();
 };
 } //CameraStandard

@@ -20,6 +20,7 @@
 #include "video_job_repository.h"
 #include "video_strategy_center.h"
 #include "video_post_processor.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,8 +35,8 @@ public:
 
 class DeferredVideoProcessorFuzzer {
 public:
-static DeferredProcessing::DeferredVideoProcessor *fuzz_;
-static DeferredProcessing::VideoStrategyCenter *center_;
+static std::shared_ptr<DeferredProcessing::DeferredVideoProcessor> fuzz_;
+static std::shared_ptr<DeferredProcessing::VideoStrategyCenter> center_;
 
 static void DeferredVideoProcessorFuzzTest();
 };

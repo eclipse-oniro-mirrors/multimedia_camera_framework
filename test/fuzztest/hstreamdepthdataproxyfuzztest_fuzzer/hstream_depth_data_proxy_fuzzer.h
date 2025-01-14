@@ -20,6 +20,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "token_setproc.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -62,7 +63,7 @@ public:
 
 class HStreamDepthDataProxyFuzzer {
 public:
-static HStreamDepthDataProxy *fuzz_;
+static std::shared_ptr<HStreamDepthDataProxy> fuzz_;
 static void HStreamDepthDataProxyFuzzTest();
 };
 } //CameraStandard

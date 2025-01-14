@@ -18,11 +18,12 @@
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-VideoStrategyCenter *VideoStrategyCenterFuzzer::fuzz_ = nullptr;
+std::shared_ptr<VideoStrategyCenter> VideoStrategyCenterFuzzer::fuzz_{nullptr};
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
@@ -83,7 +84,7 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     repository->SetJobError(videoId);
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredProcessing::VideoStrategyCenter(userId, repository);
+        fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
     }
     fuzz_->GetWork();
     fuzz_->GetJob();
