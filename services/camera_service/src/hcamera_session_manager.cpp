@@ -20,6 +20,7 @@
 #include <sched.h>
 #include <stdint.h>
 
+#include "camera_util.h"
 #include "hcapture_session.h"
 #include "parameters.h"
 
@@ -91,26 +92,20 @@ sptr<HCaptureSession> HCameraSessionManager::GetGroupDefaultSession(pid_t pid)
     return list.front();
 }
 
-sptr<HCaptureSession> HCameraSessionManager::AddSession(pid_t pid, sptr<HCaptureSession> session)
+CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
 {
     if (session == nullptr) {
-        return nullptr;
+        return CAMERA_INVALID_ARG;
     }
-
-    // TODO test limit is 8, actual limit is one
-    static bool s_groupSizeLimit =
-        (system::GetParameter("const.camera.multicamera.enable", "false") == "true") ? GROUP_SIZE_LIMIT : 8;
-
+    auto pid = session->GetPid();
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto& list = totalSessionMap_[pid];
     list.emplace_back(session);
 
-    if (list.size() > s_groupSizeLimit) {
-        sptr<HCaptureSession> poppedSession = list.front();
-        list.pop_front();
-        return poppedSession;
+    if (list.size() > GROUP_SIZE_LIMIT) {
+        return CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED;
     }
-    return nullptr;
+    return CAMERA_OK;
 }
 
 void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)

@@ -37,6 +37,7 @@
 #include "datashare_predicates.h"
 #include "deferred_processing_service.h"
 #include "hcamera_preconfig.h"
+#include "hcamera_session_manager.h"
 #ifdef DEVICE_MANAGER
 #include "device_manager.h"
 #endif
@@ -519,9 +520,9 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> captureSession = HCaptureSession::NewInstance(callerToken, opMode);
-    if (captureSession == nullptr) {
-        rc = CAMERA_ALLOC_ERROR;
+    sptr<HCaptureSession> captureSession = nullptr;
+    rc = HCaptureSession::NewInstance(callerToken, opMode, captureSession);
+    if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::CreateCaptureSession allocation failed");
         CameraReportUtils::ReportCameraError(
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());

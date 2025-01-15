@@ -23,6 +23,7 @@
 #include <ostream>
 #include <parameters.h>
 #include <sstream>
+#include <stdint.h>
 
 #include "ability/camera_ability_parse_util.h"
 #include "aperture_video_session.h"
@@ -230,7 +231,7 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession()
 {
     CAMERA_SYNC_TRACE;
     sptr<CaptureSession> captureSession = nullptr;
-    int ret = CreateCaptureSession(&captureSession);
+    int ret = CreateCaptureSession(captureSession, SceneMode::NORMAL);
     CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, nullptr,
         "Failed to CreateCaptureSession with error code:%{public}d", ret);
     return captureSession;
@@ -281,29 +282,12 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
 
 sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
 {
-    CAMERA_SYNC_TRACE;
-    sptr<ICaptureSession> session = nullptr;
-
-    int32_t retCode = CAMERA_OK;
-    auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, nullptr, "CreateCaptureSession(mode) serviceProxy is nullptr");
-    OperationMode opMode = OperationMode::NORMAL;
-    if (!ConvertFwkToMetaMode(mode, opMode)) {
-        MEDIA_ERR_LOG("CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
-    }
-    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession prepare proxy execute");
-    retCode = serviceProxy->CreateCaptureSession(session, opMode);
-    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, mode %{public}d ret %{public}d",
-        mode, retCode);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK || session == nullptr, nullptr,
-        "Failed to get capture session object from hcamera service!, %{public}d", retCode);
-        sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
-    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr, "failed to new captureSession!");
-        captureSession->SetMode(mode);
-        return captureSession;
+    sptr<CaptureSession> session = nullptr;
+    CreateCaptureSession(session, mode);
+    return session;
 }
 
-int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
+int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSession, SceneMode mode)
 {
     CAMERA_SYNC_TRACE;
     sptr<ICaptureSession> session = nullptr;
@@ -311,18 +295,21 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CreateCaptureSession(pCaptureSession) serviceProxy is nullptr");
-
-    int32_t retCode = serviceProxy->CreateCaptureSession(session);
+    OperationMode opMode = OperationMode::NORMAL;
+    if (!ConvertFwkToMetaMode(mode, opMode)) {
+        MEDIA_ERR_LOG("CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
+    }
+    int32_t retCode = serviceProxy->CreateCaptureSession(session,opMode);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateCaptureSession(pCaptureSession) Failed to get captureSession object from hcamera service! "
         "%{public}d", retCode);
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSession(pCaptureSession) Failed to CreateCaptureSession with session is null");
-    captureSession = new(std::nothrow) CaptureSession(session);
+    captureSession = CreateCaptureSessionImpl(mode, session);
     CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSession(pCaptureSession) failed to new captureSession!");
 
-    *pCaptureSession = captureSession;
+    pCaptureSession = captureSession;
     return CameraErrorCode::SUCCESS;
 }
 

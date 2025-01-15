@@ -22,9 +22,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <new>
 #include <sched.h>
+#include <stdint.h>
 #include <string>
 #include <sync_fence.h>
 #include <utility>
@@ -46,6 +48,7 @@
 #include "display_manager.h"
 #include "fixed_size_list.h"
 #include "hcamera_restore_param.h"
+#include "hcamera_service.h"
 #include "hcamera_session_manager.h"
 #include "hstream_capture.h"
 #include "hstream_common.h"
@@ -103,51 +106,44 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
     { CaptureSessionState::SESSION_RELEASED, "Released" }, { CaptureSessionState::SESSION_STARTED, "Started" }
 };
 
-sptr<HCaptureSession> HCaptureSession::NewInstance(const uint32_t callerToken, int32_t opMode)
+CamServiceError HCaptureSession::NewInstance(
+    const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession)
 {
-    sptr<HCaptureSession> session = new HCaptureSession();
-    CHECK_ERROR_RETURN_RET(session->Initialize(callerToken, opMode) == CAMERA_OK, session);
-    return nullptr;
-}
+    CamServiceError errCode = CAMERA_OK;
+    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, opMode);
+    if(session == nullptr) {
+        return CAMERA_ALLOC_ERROR;
+    }
 
-int32_t HCaptureSession::Initialize(const uint32_t callerToken, int32_t opMode)
-{
-    pid_ = IPCSkeleton::GetCallingPid();
-    uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
     auto& sessionManager = HCameraSessionManager::GetInstance();
-    MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).",
-        sessionManager.GetTotalSessionSize(), pid_);
-    auto poppedSession = sessionManager.AddSession(pid_, this);
-    if (poppedSession != nullptr) {
-        auto disconnectDevice = poppedSession->GetCameraDevice();
+    MEDIA_DEBUG_LOG("HCaptureSession::NewInstance start, total session:(%{public}zu), current pid(%{public}d).",
+        sessionManager.GetTotalSessionSize(), session->pid_);
+    auto previousSession = sessionManager.GetGroupDefaultSession(session->pid_);
+    errCode = sessionManager.AddSession(session); // Do not move this AddSession after RemoveSession
+    if (previousSession != nullptr && system::GetParameter("const.camera.multicamera.enable", "false") != "true") {
+        auto disconnectDevice = previousSession->GetCameraDevice();
         CHECK_EXECUTE(disconnectDevice != nullptr,
             disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
 
-        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession reach max session limit, release the oldest one");
-        poppedSession->Release();
+        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession not support multicamera, release last one.");
+        previousSession->Release();
+        sessionManager.RemoveSession(previousSession);
     }
-
-    callerToken_ = callerToken;
-    opMode_ = opMode;
-    featureMode_ = 0;
-    CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
-    MEDIA_INFO_LOG("HCaptureSession: camera stub services(%{public}zu). opMode_= %{public}d",
-        sessionManager.GetTotalSessionSize(), opMode_);
-    return CAMERA_OK;
-}
-
-HCaptureSession::HCaptureSession()
-{
-    pid_ = 0;
-    uid_ = 0;
-    callerToken_ = 0;
-    opMode_ = 0;
-    featureMode_ = 0;
+    if (errCode == CAMERA_OK) {
+        outSession = session;
+    }
+    MEDIA_INFO_LOG("HCaptureSession::NewInstance end, total session:(%{public}zu). current opMode_= %{public}d "
+                   "errorCode:%{public}d",
+        sessionManager.GetTotalSessionSize(), opMode, errCode);
+    return errCode;
 }
 
 HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 {
-    Initialize(callingTokenId, opMode);
+    pid_ = IPCSkeleton::GetCallingPid();
+    uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
+    callerToken_ = callingTokenId;
+    opMode_ = opMode;
 }
 
 HCaptureSession::~HCaptureSession()
@@ -2117,15 +2113,15 @@ int32_t HCaptureSession::SetFeatureMode(int32_t featureMode)
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
+int32_t HCaptureSession::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureStarted captureId:%{public}d, streamIds:%{public}s", captureId,
+    MEDIA_INFO_LOG("HCaptureSession::OnCaptureStarted captureId:%{public}d, streamIds:%{public}s", captureId,
         Container2String(streamIds.begin(), streamIds.end()).c_str());
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted StreamId: %{public}d not found", streamId);
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureStarted StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
             CastStream<HStreamRepeat>(curStream)->OnFrameStarted();
@@ -2206,20 +2202,20 @@ void HCaptureSession::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
     MEDIA_INFO_LOG("StartOnceRecord end");
 }
 
-int32_t StreamOperatorCallback::OnCaptureStarted_V1_2(
+int32_t HCaptureSession::OnCaptureStarted_V1_2(
     int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 captureId:%{public}d", captureId);
+    MEDIA_INFO_LOG("HCaptureSession::OnCaptureStarted_V1_2 captureId:%{public}d", captureId);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 StreamId: %{public}d not found."
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureStarted_V1_2 StreamId: %{public}d not found."
                           " exposureTime: %{public}u",
                 captureInfo.streamId_, captureInfo.exposureTime_);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 StreamId: %{public}d."
+            MEDIA_DEBUG_LOG("HCaptureSession::OnCaptureStarted_V1_2 StreamId: %{public}d."
                             " exposureTime: %{public}u",
                 captureInfo.streamId_, captureInfo.exposureTime_);
             CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId, captureInfo.exposureTime_);
@@ -2228,14 +2224,14 @@ int32_t StreamOperatorCallback::OnCaptureStarted_V1_2(
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
+int32_t HCaptureSession::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEnded");
+    MEDIA_INFO_LOG("HCaptureSession::OnCaptureEnded");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureEnded StreamId: %{public}d not found."
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureEnded StreamId: %{public}d not found."
                           " Framecount: %{public}d",
                 captureInfo.streamId_, captureInfo.frameCount_);
             return CAMERA_INVALID_ARG;
@@ -2248,15 +2244,15 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureEndedExt(
+int32_t HCaptureSession::OnCaptureEndedExt(
     int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt captureId:%{public}d", captureId);
+    MEDIA_INFO_LOG("HCaptureSession::OnCaptureEndedExt captureId:%{public}d", captureId);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureEndedExt StreamId: %{public}d not found."
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureEndedExt StreamId: %{public}d not found."
                           " Framecount: %{public}d",
                 captureInfo.streamId_, captureInfo.frameCount_);
             return CAMERA_INVALID_ARG;
@@ -2267,7 +2263,7 @@ int32_t StreamOperatorCallback::OnCaptureEndedExt(
             extInfo.frameCount = captureInfo.frameCount_;
             extInfo.isDeferredVideoEnhancementAvailable = captureInfo.isDeferredVideoEnhancementAvailable_;
             extInfo.videoId = captureInfo.videoId_;
-            MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt captureId:%{public}d videoId:%{public}s "
+            MEDIA_INFO_LOG("HCaptureSession::OnCaptureEndedExt captureId:%{public}d videoId:%{public}s "
                            "isDeferredVideo:%{public}d",
                 captureId, extInfo.videoId.c_str(), extInfo.isDeferredVideoEnhancementAvailable);
             CastStream<HStreamRepeat>(curStream)->OnDeferredVideoEnhancementInfo(extInfo);
@@ -2276,14 +2272,14 @@ int32_t StreamOperatorCallback::OnCaptureEndedExt(
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
+int32_t HCaptureSession::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureError");
+    MEDIA_INFO_LOG("HCaptureSession::OnCaptureError");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& errInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(errInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureError StreamId: %{public}d not found."
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureError StreamId: %{public}d not found."
                           " Error: %{public}d",
                 errInfo.streamId_, errInfo.error_);
             return CAMERA_INVALID_ARG;
@@ -2298,10 +2294,10 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnFrameShutter(
+int32_t HCaptureSession::OnFrameShutter(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRIu64, timestamp);
+    MEDIA_INFO_LOG("HCaptureSession::OnFrameShutter ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
@@ -2312,17 +2308,17 @@ int32_t StreamOperatorCallback::OnFrameShutter(
             StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId);
             captureStream->OnFrameShutter(captureId, timestamp);
         } else {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutter StreamId: %{public}d not found", streamId);
+            MEDIA_ERR_LOG("HCaptureSession::OnFrameShutter StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         }
     }
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnFrameShutterEnd(
+int32_t HCaptureSession::OnFrameShutterEnd(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
+    MEDIA_INFO_LOG("HCaptureSession::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
@@ -2331,33 +2327,33 @@ int32_t StreamOperatorCallback::OnFrameShutterEnd(
             captureStream->rotationMap_.Erase(captureId);
             captureStream->OnFrameShutterEnd(captureId, timestamp);
         } else {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
+            MEDIA_ERR_LOG("HCaptureSession::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         }
     }
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureReady(
+int32_t HCaptureSession::OnCaptureReady(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureReady");
+    MEDIA_DEBUG_LOG("HCaptureSession::OnCaptureReady");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
         } else {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureReady StreamId: %{public}d not found", streamId);
+            MEDIA_ERR_LOG("HCaptureSession::OnCaptureReady StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
         }
     }
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
+int32_t HCaptureSession::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
 {
-    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnResult");
+    MEDIA_DEBUG_LOG("HCaptureSession::OnResult");
     sptr<HStreamCommon> curStream;
     const int32_t metaStreamId = -1;
     if (streamId == metaStreamId) {
@@ -2368,7 +2364,7 @@ int32_t StreamOperatorCallback::OnResult(int32_t streamId, const std::vector<uin
     if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::METADATA)) {
         CastStream<HStreamMetadata>(curStream)->OnMetaResult(streamId, result);
     } else {
-        MEDIA_ERR_LOG("StreamOperatorCallback::OnResult StreamId: %{public}d is null or not Not adapted", streamId);
+        MEDIA_ERR_LOG("HCaptureSession::OnResult StreamId: %{public}d is null or not Not adapted", streamId);
         return CAMERA_INVALID_ARG;
     }
     return CAMERA_OK;

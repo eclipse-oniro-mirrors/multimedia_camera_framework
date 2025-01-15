@@ -78,8 +78,10 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest()
         return;
     }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session;
     if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCaptureSession>();
+        HCaptureSession::NewInstance(0, 0, session);
+        fuzz_ = session;
     }
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();

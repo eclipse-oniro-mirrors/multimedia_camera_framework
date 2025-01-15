@@ -134,31 +134,6 @@ private:
     std::map<const StreamType, std::list<sptr<HStreamCommon>>> streams_;
 };
 
-class StreamOperatorCallback : public OHOS::HDI::Camera::V1_3::IStreamOperatorCallback {
-public:
-    StreamOperatorCallback() = default;
-    virtual ~StreamOperatorCallback() = default;
-
-    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
-    int32_t OnCaptureStarted_V1_2(
-        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
-    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
-    int32_t OnCaptureEndedExt(
-        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
-    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
-    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
-
-    virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
-    virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
-    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) = 0;
-
-private:
-    std::mutex cbMutex_;
-};
-
 class SessionDrainImageCallback;
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
@@ -220,11 +195,9 @@ private:
 
 class CameraInfoDumper;
 
-class EXPORT_API HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
+class EXPORT_API HCaptureSession : public HCaptureSessionStub, public OHOS::HDI::Camera::V1_3::IStreamOperatorCallback {
 public:
-    static sptr<HCaptureSession> NewInstance(const uint32_t callerToken, int32_t opMode);
-    HCaptureSession();
-    explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
+    static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
 
     int32_t BeginConfig() override;
@@ -269,10 +242,10 @@ public:
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
-    const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
-    const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
+    const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
+    const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId);
     int32_t SetFeatureMode(int32_t featureMode) override;
-    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) override;
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;
@@ -288,9 +261,22 @@ public:
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
-        
+
+    // IStreamOperatorCallback interfaces.
+    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
+    int32_t OnCaptureStarted_V1_2(
+        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
+    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
+    int32_t OnCaptureEndedExt(
+        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
+    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
+    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
+
 private:
-    int32_t Initialize(const uint32_t callerToken, int32_t opMode);
+    explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
@@ -361,6 +347,9 @@ private:
         static int32_t CalcSensorRotation(int32_t sensorDegree);
         static int32_t CalcRotationDegree(GravityData data);
     #endif
+
+    std::mutex cbMutex_;
+
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
     std::mutex cameraDeviceLock_;
     sptr<HCameraDevice> cameraDevice_;
@@ -369,11 +358,11 @@ private:
     #ifdef CAMERA_USE_SENSOR
         SensorUser user;
     #endif
-    pid_t pid_;
-    uid_t uid_;
-    uint32_t callerToken_;
-    int32_t opMode_;
-    int32_t featureMode_;
+    pid_t pid_ = 0;
+    uid_t uid_ = 0;
+    uint32_t callerToken_ = 0;
+    int32_t opMode_ = 0;
+    int32_t featureMode_ = 0;
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;

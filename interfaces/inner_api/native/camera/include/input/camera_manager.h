@@ -20,6 +20,7 @@
 #include <iostream>
 #include <mutex>
 #include <refbase.h>
+#include <stdint.h>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -226,10 +227,11 @@ public:
     /**
      * @brief Create capture session.
      *
-     * @param Returns pointer to capture session.
+     * @param pCaptureSession pointer to capture session.
+     * @param mode Target mode
      * @return Returns error code.
      */
-    int CreateCaptureSession(sptr<CaptureSession>* pCaptureSession);
+    int32_t CreateCaptureSession(sptr<CaptureSession>& pCaptureSession, SceneMode mode);
 
     /**
      * @brief Create photo output instance using surface.

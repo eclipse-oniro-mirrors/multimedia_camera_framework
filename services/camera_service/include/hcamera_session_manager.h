@@ -20,8 +20,10 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <stdint.h>
 #include <unordered_map>
 
+#include "camera_util.h"
 #include "refbase.h"
 #include "singleton.h"
 
@@ -37,7 +39,7 @@ public:
     std::list<sptr<HCaptureSession>> GetTotalSession();
     std::list<sptr<HCaptureSession>> GetGroupSessions(pid_t pid);
     sptr<HCaptureSession> GetGroupDefaultSession(pid_t pid);
-    sptr<HCaptureSession> AddSession(pid_t pid, sptr<HCaptureSession> session);
+    CamServiceError AddSession(sptr<HCaptureSession> session);
     void RemoveSession(sptr<HCaptureSession> session);
     void RemoveGroup(pid_t pid);
 
