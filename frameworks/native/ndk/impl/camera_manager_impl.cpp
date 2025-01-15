@@ -65,17 +65,10 @@ public:
         string cameraId = cameraStatusInfo.cameraDevice->GetID();
         statusInfo.camera->cameraId = cameraId.data();
         MEDIA_INFO_LOG("cameraId is %{public}s", statusInfo.camera->cameraId);
-        auto itr = g_FwkCameraPositionToNdk_.find(cameraStatusInfo.cameraDevice->GetPosition());
-        if (itr != g_FwkCameraPositionToNdk_.end()) {
-            statusInfo.camera->cameraPosition = itr->second;
-        } else {
-            MEDIA_ERR_LOG("OnCameraStatusChanged cameraPosition not found!");
-            return;
-        }
+        statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
-        statusInfo.camera->cameraOrientation = cameraStatusInfo.cameraDevice->GetCameraOrientation();
         statusInfo.status = static_cast<Camera_Status>(cameraStatusInfo.cameraStatus);
         if (cameraManager_ != nullptr && callback_.onCameraStatus != nullptr) {
             callback_.onCameraStatus(cameraManager_, &statusInfo);
@@ -140,12 +133,8 @@ public:
             string cameraIds[cameraSize];
             for (size_t index = 0; index < cameraSize; index++) {
                 Camera_Device* cameraDevice = &supportedCameras[outSize];
-                auto itr = g_FwkCameraPositionToNdk_.find(foldStatusInfo.supportedCameras[index]->GetPosition());
-                if (itr == g_FwkCameraPositionToNdk_.end()) {
-                    MEDIA_ERR_LOG("Camera_Manager::OnFoldStatusChanged cameraPosition not found!");
-                    continue;
-                }
-                cameraDevice->cameraPosition = itr->second;
+                cameraDevice->cameraPosition =
+                    static_cast<Camera_Position>(foldStatusInfo.supportedCameras[index]->GetPosition());
                 cameraIds[outSize] = foldStatusInfo.supportedCameras[index]->GetID();
                 cameraDevice->cameraId = cameraIds[outSize].data();
                 cameraDevice->cameraType =
@@ -233,7 +222,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
-        outCameras[index].cameraOrientation = cameraObjList[index]->GetCameraOrientation();
     }
     *size = cameraSize;
     *cameras = outCameras;

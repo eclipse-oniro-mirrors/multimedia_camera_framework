@@ -30,6 +30,7 @@
 #include "camera_log.h"
 #include "camera_security_utils.h"
 #include "camera_util.h"
+#include "camera_rotation_api_utils.h"
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
 #include "display_manager.h"
@@ -1268,21 +1269,28 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     }
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
-    for (auto& deviceInfo : cameraDeviceList) {
-        if (deviceInfo->GetPosition() == CAMERA_POSITION_BACK &&
-            (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    for (const auto& deviceInfo : cameraDeviceList) {
+        // The usb camera is added to the list and is not processed.
+        if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
-        // Compatible with adaptive applications
-        if ((deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-             deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) &&
-            (foldScreenType_[0] != '2' && foldScreenType_[0] != '4')) {
-            supportedCameraDeviceList.emplace_back(deviceInfo);
-            continue;
+        // Check for API compatibility
+        if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+            bool isBackCamera = deviceInfo->GetPosition() == CAMERA_POSITION_BACK;
+            bool isInnerOrFrontCamera = (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
+                deviceInfo->GetPosition() == CAMERA_POSITION_FRONT);
+            bool isUnsupportedFoldScreenType = (foldScreenType_[0] != '2' && foldScreenType_[0] != '4');
+
+            if ((isBackCamera || isInnerOrFrontCamera) && isUnsupportedFoldScreenType) {
+                supportedCameraDeviceList.emplace_back(deviceInfo);
+                continue;
+            }
         }
 
         auto supportedFoldStatus = deviceInfo->GetSupportedFoldStatus();
+
         auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
         if (it == g_metaToFwCameraFoldStatus_.end()) {
             MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
@@ -1405,26 +1413,24 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateCameraInput Camera object is null");
-    // Compatible with adaptive applications
+    // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position: %{public}d", curFoldStatus,
                    camera->GetPosition());
-    if ((curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN &&
+        (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
         camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT && foldScreenType_[0] != '4') {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
         sptr<CameraDevice> cameraInfo;
-        for (size_t i = 0; i < cameraObjList.size(); i++) {
-            sptr<CameraDevice> cameraDevice = cameraObjList[i];
-            if (cameraDevice == nullptr) {
-                continue;
-            }
-            if (cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
+        for (const auto& cameraDevice : cameraObjList) {
+            if (cameraDevice != nullptr &&
+                cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
                 camera = cameraDevice;
                 break;
             }
         }
     }
-
     sptr<ICameraDeviceService> deviceObj = nullptr;
     int32_t retCode = CreateCameraDevice(camera->GetID(), &deviceObj);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, retCode,
