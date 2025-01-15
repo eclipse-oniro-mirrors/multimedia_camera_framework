@@ -2169,8 +2169,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
         ProcessPhotoProxy(streamContainer_, captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
-        int32_t videoFd = photoAssetProxy->GetVideoFd();
-        MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
+        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
         if (taskManager_) {
             taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }

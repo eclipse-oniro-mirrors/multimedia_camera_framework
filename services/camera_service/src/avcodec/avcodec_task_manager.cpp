@@ -58,7 +58,7 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     audioEncoder_ = make_unique<AudioEncoder>();
     #endif
     // Create Task Manager
-    videoEncoder_ = make_unique<VideoEncoder>(type);
+    videoEncoder_ = make_shared<VideoEncoder>(type);
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -95,6 +95,9 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
         isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
+        } else {
+            sptr<SurfaceBuffer> releaseBuffer;
+            thisPtr->videoEncoder_->DetachCodecBuffer(releaseBuffer, frameRecord);
         }
         frameRecord->SetEncodedResult(isEncodeSuccess);
         frameRecord->SetFinishStatus();
