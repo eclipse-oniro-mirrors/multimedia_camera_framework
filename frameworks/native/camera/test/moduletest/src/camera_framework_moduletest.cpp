@@ -800,6 +800,57 @@ Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutp
     return profile;
 }
 
+std::optional<Profile> CameraFrameworkModuleTest::GetPreviewProfileByFormat(
+    sptr<CameraOutputCapability> &modeAbility, uint32_t width, uint32_t height, CameraFormat format)
+{
+    std::vector<Profile> profiles = modeAbility->GetPreviewProfiles();
+    auto it = std::find_if(profiles.begin(), profiles.end(), [width, height, format](Profile &profile) {
+        return profile.GetSize().width == width && profile.GetSize().height == height &&
+               profile.GetCameraFormat() == format;
+    });
+    if (it != profiles.end()) {
+        MEDIA_ERR_LOG("GetPreviewProfileByFormat format:%{public}d width:%{public}d height:%{public}d",
+            it->GetCameraFormat(),
+            it->GetSize().width,
+            it->GetSize().height);
+        return *it;
+    } else {
+        MEDIA_ERR_LOG(
+            "No profile found for format:%{public}d width:%{public}d height:%{public}d", format, width, height);
+        return std::nullopt;
+    }
+}
+
+std::optional<VideoProfile> CameraFrameworkModuleTest::GetVideoProfileByFormat(
+    sptr<CameraOutputCapability> &modeAbility, uint32_t width, uint32_t height, CameraFormat videoFormat,
+    uint32_t maxFps)
+{
+    std::vector<VideoProfile> profiles = modeAbility->GetVideoProfiles();
+    auto it =
+        std::find_if(profiles.begin(), profiles.end(), [width, height, videoFormat, maxFps](VideoProfile &profile) {
+            std::cout << "videoProfile found format: " << profile.GetCameraFormat()
+                      << " width: " << profile.GetSize().width << " height: " << profile.GetSize().height
+                      << " maxFps: " << profile.GetFrameRates()[1] << std::endl;
+            return profile.GetSize().width == width && profile.GetSize().height == height &&
+                   profile.GetCameraFormat() == videoFormat && profile.GetFrameRates()[1] == maxFps;
+        });
+    if (it != profiles.end()) {
+        MEDIA_ERR_LOG("videoProfile found format:%{public}d width:%{public}d height:%{public}d maxFps:%{public}d",
+            it->GetCameraFormat(),
+            it->GetSize().width,
+            it->GetSize().height,
+            it->GetFrameRates()[1]);
+        return *it;
+    } else {
+        MEDIA_ERR_LOG("No videoProfile for format:%{public}d width:%{public}d height:%{public}d maxFps:%{public}d",
+            videoFormat,
+            width,
+            height,
+            maxFps);
+        return std::nullopt;
+    }
+}
+
 SelectProfiles CameraFrameworkModuleTest::SelectWantedProfiles(
     sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted)
 {
@@ -13076,6 +13127,99 @@ HWTEST_F(CameraFrameworkModuleTest, test_auto_aigc_photo_enable, TestSize.Level0
 
     intResult = photoOutput_1->EnableAutoAigcPhoto(isEnabled);
     EXPECT_EQ(intResult, SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test set video support HDR_VIVID with 60FPS
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set video support HDR_VIVID with 60FPS
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_video_support_hdr_60fps, TestSize.Level0)
+{
+    SceneMode videoMode = SceneMode::VIDEO;
+    if (!IsSupportMode(videoMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], videoMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(videoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    int32_t intResult = videoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t width = 1920;
+    uint32_t height = 1080;
+    uint32_t maxFps = 60;
+    CameraFormat previewFormat = CAMERA_FORMAT_YCRCB_P010;
+    CameraFormat videoFormat = CAMERA_FORMAT_YCRCB_P010;
+
+    auto previewProfileOpt = GetPreviewProfileByFormat(modeAbility, width, height, previewFormat);
+    if(!previewProfileOpt) {
+        std::cout << "previewProfile not support" << std::endl;
+        return;
+    }
+    Profile previewProfile = previewProfileOpt.value();
+    EXPECT_EQ(previewProfile.GetCameraFormat(), CAMERA_FORMAT_YCRCB_P010);
+    std::cout << "previewProfile support" << std::endl;
+
+    auto videoProfileOpt = GetVideoProfileByFormat(modeAbility, width, height, videoFormat, maxFps);
+    if(!videoProfileOpt) {
+        std::cout << "videoProfile not support" << std::endl;
+        return;
+    }
+    VideoProfile videoProfile = videoProfileOpt.value();
+    EXPECT_EQ(videoProfile.GetCameraFormat(), CAMERA_FORMAT_YCRCB_P010);
+    std::cout << "videoProfile support" << std::endl;
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = videoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<ColorSpace> colors = videoSession->GetSupportedColorSpaces();
+    bool supportHdrVivid = false;
+    for (const auto& color : colors) {
+        std::cout << "ColorSpace: " << color << std::endl;
+        if (BT2020_HLG_LIMIT == color) {
+            std::cout << "support hdr vivid!" << std::endl;
+            supportHdrVivid = true;
+            break;
+        }
+    }
+    if (supportHdrVivid) {
+        intResult = videoSession->SetColorSpace(BT2020_HLG_LIMIT);
+        EXPECT_EQ(intResult, 0);
+        ColorSpace curColorSpace = COLOR_SPACE_UNKNOWN;
+        intResult = videoSession->GetActiveColorSpace(curColorSpace);
+        EXPECT_EQ(intResult, 0);
+        EXPECT_EQ(curColorSpace, BT2020_HLG_LIMIT);
+    }
+    intResult = videoSession->Release();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS
