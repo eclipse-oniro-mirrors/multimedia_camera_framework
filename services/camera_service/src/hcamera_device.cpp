@@ -1038,6 +1038,10 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
     MEDIA_ERR_LOG("CameraDeviceCallback::OnError() is called!, type: %{public}d,"
                     "cameraID_: %{public}s, cameraPid: %{public}d.",
         type, cameraID_.c_str(), cameraPid_);
+    if (errType == OHOS::HDI::Camera::V1_3::SENSOR_DATA_ERROR) {
+        NotifyCameraStatus(HdiToCameraErrorType(errType), errorMsg);
+        return CAMERA_OK;
+    }
     NotifyCameraStatus(HdiToCameraErrorType(errType));
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
@@ -1501,7 +1505,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
 }
 
-void HCameraDevice::NotifyCameraStatus(int32_t state)
+void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
 {
     OHOS::AAFwk::Want want;
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus strat");
@@ -1511,9 +1515,11 @@ void HCameraDevice::NotifyCameraStatus(int32_t state)
     want.SetParam(CAMERA_STATE, state);
     int32_t type = GetCameraType();
     want.SetParam(IS_SYSTEM_CAMERA, type);
+    want.SetParam(CAMERA_MSG, msg);
     MEDIA_DEBUG_LOG(
-        "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, cameraType: %{public}d: ",
-        clientUserId_, cameraID_.c_str(), state, type);
+        "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, "
+        "cameraType: %{public}d, msg: %{public}d",
+        clientUserId_, cameraID_.c_str(), state, type, msg);
     EventFwk::CommonEventData CommonEventData { want };
     EventFwk::CommonEventPublishInfo publishInfo;
     std::vector<std::string> permissionVec { OHOS_PERMISSION_MANAGE_CAMERA_CONFIG };

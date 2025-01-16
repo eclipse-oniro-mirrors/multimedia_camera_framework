@@ -141,7 +141,7 @@ public:
 
     bool CheckMovingPhotoSupported(int32_t mode);
 
-    void NotifyCameraStatus(int32_t type);
+    void NotifyCameraStatus(int32_t state, int32_t msg = 0);
 
     bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
