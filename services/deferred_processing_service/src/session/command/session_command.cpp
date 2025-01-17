@@ -16,6 +16,7 @@
 #include "session_command.h"
 
 #include "dps.h"
+#include "events_monitor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -61,6 +62,8 @@ int32_t AddPhotoSessionCommand::Executing()
         schedulerManager_->CreatePhotoProcessor(photoInfo_->GetUserId(), coordinator->GetImageProcCallbacks());
     }
     coordinator->AddPhotoSession(photoInfo_);
+    EventsMonitor::GetInstance().NotifyEventToObervers(photoInfo_->GetUserId(),
+        EventType::MEDIA_LIBRARY_STATUS_EVENT, true);
     return DP_OK;
 }
 
@@ -78,6 +81,8 @@ int32_t DeletePhotoSessionCommand::Executing()
     auto coordinator = sessionManager_->GetSessionCoordinator();
     DP_CHECK_ERROR_RETURN_RET_LOG(coordinator == nullptr, DP_NULL_POINTER, "SessionCoordinator is nullptr.");
     coordinator->DeletePhotoSession(photoInfo_->GetUserId());
+    EventsMonitor::GetInstance().NotifyEventToObervers(photoInfo_->GetUserId(),
+        EventType::MEDIA_LIBRARY_STATUS_EVENT, false);
     return DP_OK;
 }
 
