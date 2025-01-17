@@ -318,8 +318,14 @@ int32_t CaptureSession::CommitConfig()
     }
     // DELIVERY_PHOTO for default when commit
     if (photoOutput_ && !isDeferTypeSetted_) {
-        EnableDeferredType(((sptr<PhotoOutput> &)photoOutput_)->IsEnableDeferred() ? DELIVERY_PHOTO
-            : DELIVERY_NONE, false);
+        sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput>&)photoOutput_;
+        int32_t supportCode = photoOutput->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
+        MEDIA_INFO_LOG("CaptureSession::CommitConfig supportCode:%{public}d", supportCode);
+        if (supportCode == 0) {
+            EnableDeferredType(photoOutput->IsEnableDeferred() ? DELIVERY_PHOTO : DELIVERY_NONE, false);
+        } else {
+            EnableDeferredType(DELIVERY_NONE, false);
+        }
         SetUserId();
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
