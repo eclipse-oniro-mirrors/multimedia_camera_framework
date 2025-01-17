@@ -1047,7 +1047,6 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     MEDIA_DEBUG_LOG("PhotoOutput GetPhotoRotation is called");
     int32_t sensorOrientation = 0;
     CameraPosition cameraPosition;
-    camera_metadata_item_t item;
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
@@ -1062,12 +1061,7 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     cameraPosition = cameraObj->GetPosition();
     CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, cameraPosition is unspecified");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PhotoOutput Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraObj->GetCameraOrientation();
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);

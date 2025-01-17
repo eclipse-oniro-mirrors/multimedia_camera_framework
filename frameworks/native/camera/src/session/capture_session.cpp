@@ -568,6 +568,19 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
     return ret;
 }
 
+void CaptureSession::GetMetadataFromService(sptr<CameraDevice> device)
+{
+    CHECK_ERROR_RETURN_LOG(device == nullptr, "GetMetadataFromService device is nullptr");
+    auto cameraId = device->GetID();
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "GetMetadataFromService serviceProxy is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    serviceProxy->GetCameraAbility(cameraId, metaData);
+    CHECK_ERROR_RETURN_LOG(metaData == nullptr,
+        "GetMetadataFromService GetDeviceMetadata failed");
+    device->AddMetadata(metaData);
+}
+
 int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
@@ -592,6 +605,8 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
         return ServiceToCameraError(errCode);
     }
     SetInputDevice(input);
+    auto inputDeviceInfo = input->GetCameraDeviceInfo();
+    GetMetadataFromService(inputDeviceInfo);
     CheckSpecSearch();
     input->SetMetadataResultProcessor(GetMetadataResultProcessor());
     UpdateDeviceDeferredability();
@@ -1019,7 +1034,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         errCode = captureSession->RemoveInput(device);
         auto deviceInfo = input->GetCameraDeviceInfo();
         if (deviceInfo != nullptr) {
-            deviceInfo->ResetMetadata();
+            deviceInfo->ReleaseMetadata();
         }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
@@ -1140,6 +1155,10 @@ int32_t CaptureSession::Release()
         MEDIA_DEBUG_LOG("Release capture session, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession is nullptr");
+    }
+    auto inputDevice = GetInputDevice();
+    if (inputDevice != nullptr && inputDevice->GetCameraDeviceInfo() != nullptr) {
+        inputDevice->GetCameraDeviceInfo()->ReleaseMetadata();
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
@@ -4408,7 +4427,7 @@ std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeat
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET(deviceInfo == nullptr, nullptr);
-    auto deviceAbility = deviceInfo->GetCameraAbility();
+    auto deviceAbility = deviceInfo->GetMetadata();
     CHECK_ERROR_RETURN_RET(deviceAbility == nullptr, nullptr);
 
     auto currentMode = GetMode();

@@ -451,7 +451,6 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     MEDIA_DEBUG_LOG("VideoOutput GetVideoRotation is called");
     int32_t sensorOrientation = 0;
     CameraPosition cameraPosition;
-    camera_metadata_item_t item;
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
@@ -466,12 +465,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     cameraPosition = cameraObj->GetPosition();
     CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
         "VideoOutput GetVideoRotation error!, cameraPosition is unspecified");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "GetVideoRotation Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraObj->GetCameraOrientation();
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
@@ -482,7 +476,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     if (result != ImageRotation::ROTATION_0 && result != ImageRotation::ROTATION_180 && IsMirrorSupported()) {
         auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
         if (itemStream != nullptr) {
-            ret = itemStream->GetMirror(isMirrorEnabled);
+            int32_t ret = itemStream->GetMirror(isMirrorEnabled);
             CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret), "VideoOutput::getMirror failed");
             result = (isMirrorEnabled == false) ? result :
                 (ImageRotation)((result + ImageRotation::ROTATION_180) % CAPTURE_ROTATION_BASE);

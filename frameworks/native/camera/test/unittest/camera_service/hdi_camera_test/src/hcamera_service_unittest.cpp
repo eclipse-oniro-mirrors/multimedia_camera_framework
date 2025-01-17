@@ -464,7 +464,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_013, TestSize.Level0)
 
     cameraHostManager_->Init();
     std::string cameraId = cameras[0]->GetID();
-    shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility = cameras[0]->GetMetadata();
+    shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
     common_metadata_header_t* metadataEntry = cameraAbility->get();
     OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
@@ -1844,7 +1844,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level0)
     ASSERT_NE(cameras.size(), 0);
     sptr<HCameraService> hCameraService = new HCameraService(0, true);
     ASSERT_NE(hCameraService, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     ASSERT_NE(metadata, nullptr);
 
     EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 0), CAMERA_OK);

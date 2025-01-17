@@ -788,12 +788,9 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
     EXPECT_EQ(session->Start(), 0);
 
     sptr<CameraDevice> cameraObj = phtOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
-    cameraObj->cameraPosition_ = CAMERA_POSITION_BACK;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION);
-    int32_t value = 90;
-    metadata->addEntry(OHOS_SENSOR_ORIENTATION, &value, sizeof(int32_t));
     int32_t imageRotation = 90;
+    cameraObj->cameraPosition_ = CAMERA_POSITION_BACK;
+    cameraObj->cameraOrientation_ = imageRotation;
     int32_t ret = phtOutput->GetPhotoRotation(imageRotation);
     EXPECT_EQ(ret, 180);
 

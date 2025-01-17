@@ -901,6 +901,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
             MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata using main sensor: %{public}s", info->GetID().c_str());
             return info->GetMetadata();
         }
+        if ((*physicalCameraDevice)->GetMetadata() == nullptr) {
+            GetMetadataFromService(*physicalCameraDevice);
+        }
         return (*physicalCameraDevice)->GetMetadata();
     }
     auto inputDevice = GetInputDevice();
@@ -912,6 +915,28 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
         cameraObj->GetID().c_str());
     return cameraObj->GetMetadata();
+}
+
+int32_t ProfessionSession::RemoveInput(sptr<CaptureInput>& input)
+{
+    int32_t ret = CaptureSession::RemoveInput(input);
+    for (auto &deviceChoose : supportedDevices_) {
+        if (deviceChoose->GetMetadata() != nullptr) {
+            deviceChoose->ReleaseMetadata();
+        }
+    }
+    return ret;
+}
+
+int32_t ProfessionSession::Release()
+{
+    for (auto &deviceChoose : supportedDevices_) {
+        if (deviceChoose->GetMetadata() != nullptr) {
+            deviceChoose->ReleaseMetadata();
+        }
+    }
+    supportedDevices_.clear();
+    return CaptureSession::Release();
 }
 
 void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbacks(

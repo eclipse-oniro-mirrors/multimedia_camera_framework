@@ -547,9 +547,12 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_020, Test
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    EXPECT_NE(metadata, nullptr);
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     CameraManager::ProfilesWrapper profilesWrapper = {};
@@ -982,9 +985,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_039, Test
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
-    int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(PORTRAIT);
     std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 }
@@ -1002,9 +1004,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_040, Test
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
     SceneMode mode = PORTRAIT;
-    int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(PORTRAIT);
     std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
@@ -1050,7 +1051,12 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, Test
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     CameraManager::ProfilesWrapper wrapper = {};
@@ -1087,9 +1093,6 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_043, Test
     ret = cameraManager_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(ret, 7400201);
-    cameraManager_->cameraDeviceList_ = {};
-    bool isTorchSupported = cameraManager_->IsTorchSupported();
-    EXPECT_EQ(isTorchSupported, false);
 }
 
 /*
@@ -1116,7 +1119,6 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_044, Test
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
     cameraManager_->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
 
-    cameraManager_->cameraDeviceList_ = {};
     string cameraId = "";
     cameraManager_->GetCameraDeviceFromId(cameraId);
     bool isTorchSupported = cameraManager_->IsTorchSupported();
@@ -1172,9 +1174,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_047, Test
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
     SceneMode mode = PORTRAIT;
-    int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(PORTRAIT);
     std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 

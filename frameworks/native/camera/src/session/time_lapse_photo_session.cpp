@@ -48,6 +48,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
             MEDIA_DEBUG_LOG("%{public}s: using main sensor: %{public}s", __FUNCTION__, info->GetID().c_str());
             return info->GetMetadata();
         }
+        if ((*physicalCameraDevice)->GetMetadata() == nullptr) {
+            GetMetadataFromService(*physicalCameraDevice);
+        }
         return (*physicalCameraDevice)->GetMetadata();
     }
     auto inputDevice = GetInputDevice();
@@ -59,6 +62,28 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> TimeLapsePhotoSession::GetMetadata
     MEDIA_DEBUG_LOG("%{public}s: no physicalCamera, using current camera device:%{public}s", __FUNCTION__,
         cameraObj->GetID().c_str());
     return cameraObj->GetMetadata();
+}
+
+int32_t TimeLapsePhotoSession::RemoveInput(sptr<CaptureInput>& input)
+{
+    int32_t ret = CaptureSession::RemoveInput(input);
+    for (auto &deviceChoose : supportedDevices_) {
+        if (deviceChoose->GetMetadata() != nullptr) {
+            deviceChoose->ReleaseMetadata();
+        }
+    }
+    return ret;
+}
+
+int32_t TimeLapsePhotoSession::Release()
+{
+    for (auto &deviceChoose : supportedDevices_) {
+        if (deviceChoose->GetMetadata() != nullptr) {
+            deviceChoose->ReleaseMetadata();
+        }
+    }
+    supportedDevices_.clear();
+    return CaptureSession::Release();
 }
 
 void TimeLapsePhotoSessionMetadataResultProcessor::ProcessCallbacks(

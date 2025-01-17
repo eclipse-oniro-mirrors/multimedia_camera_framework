@@ -202,7 +202,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_004, TestSize.Level0)
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     camDevice->CheckOnResultData(cameraResult);
-    cameraResult = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    cameraProxy->GetCameraAbility(cameraId, cameraResult);
+    ASSERT_NE(cameraResult, nullptr);
     camDevice->CheckOnResultData(cameraResult);
 
     uint32_t interfaceCode = 0;
@@ -518,7 +521,11 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_014, TestSize.Level0)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+    cameraProxy->GetCameraAbility(cameraId, settings);
+    ASSERT_NE(settings, nullptr);
     EXPECT_EQ(camDevice->UpdateSettingOnce(settings), 0);
 
     camDevice->RegisterFoldStatusListener();
@@ -600,7 +607,11 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_017, TestSize.Level0)
     std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
     camDevice->CreateStreams(streamInfos);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings;
+    cameraProxy->GetCameraAbility(cameraId, deviceSettings);
+    ASSERT_NE(deviceSettings, nullptr);
     int32_t operationMode = 0;
     camDevice->streamOperator_ = nullptr;
     EXPECT_EQ(camDevice->CommitStreams(deviceSettings, operationMode), CAMERA_UNKNOWN_ERROR);
