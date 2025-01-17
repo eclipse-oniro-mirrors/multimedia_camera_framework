@@ -39,8 +39,9 @@ public:
     void Stop();
     void Release();
     void GetAudioRecords(int64_t startTime, int64_t endTime, vector<sptr<AudioRecord>> &audioRecords);
-    sptr<AudioDeferredProcess> GetAudioDeferredProcess();
     AudioChannel getMicNum();
+    AudioStreamInfo deferredInputOptions_;
+    AudioStreamInfo deferredOutputOptions_;
 
 private:
     bool CreateAudioCapturer();
@@ -49,7 +50,6 @@ private:
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
-    sptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
 };
 } // CameraStandard
 } // OHOS
