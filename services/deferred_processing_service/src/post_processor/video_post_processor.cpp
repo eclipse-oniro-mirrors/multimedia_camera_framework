@@ -38,19 +38,19 @@ namespace {
 
 DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
-    DpsError code = DpsError::DPS_ERROR_UNKNOW;
+    DpsError code = DPS_ERROR_UNKNOW;
     switch (errorCode) {
         case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID:
-            code = DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID;
+            code = DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID;
             break;
         case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_PROCESS:
-            code = DpsError::DPS_ERROR_VIDEO_PROC_FAILED;
+            code = DPS_ERROR_VIDEO_PROC_FAILED;
             break;
         case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_TIMEOUT:
-            code = DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT;
+            code = DPS_ERROR_VIDEO_PROC_TIMEOUT;
             break;
         case OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT:
-            code = DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED;
+            code = DPS_ERROR_VIDEO_PROC_INTERRUPTED;
             break;
         default:
             DP_ERR_LOG("unexpected error code: %{public}d.", errorCode);
@@ -185,14 +185,16 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     auto session = GetVideoSession();
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
     if (session == nullptr) {
-        DP_ERR_LOG("process videoId: %{public}s failed, video session is nullptr", videoId.c_str());
-        OnError(videoId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+        DP_ERR_LOG("Process videoId: %{public}s failed, video session is nullptr", videoId.c_str());
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_SESSION_NOT_READY_TEMPORARILY));
         return;
     }
 
     auto inFd = work->GetDeferredVideoJob()->GetInputFd();
-    DP_CHECK_ERROR_RETURN_LOG(!StartMpeg(videoId, inFd), "mpeg start failed.");
-    DP_CHECK_ERROR_RETURN_LOG(!PrepareStreams(videoId, inFd->GetFd()), "prepaer video failed.");
+    bool result = StartMpeg(videoId, inFd) && PrepareStreams(videoId, inFd->GetFd());
+    if (!result) {
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
+    }
 
     StartTimer(videoId, work);
     auto startTime = mpegManager_->GetProcessTimeStamp();
@@ -321,7 +323,7 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
     auto resultFd = mpegManager_->GetResultFd();
     if (resultFd == nullptr) {
         DP_ERR_LOG("get video fd failed, videoId: %{public}s", videoId.c_str());
-        OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED);
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
         return false;
     }
 
@@ -332,7 +334,7 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
     copyFileByFd(tempFd, outFd);
     if (IsFileEmpty(outFd)) {
         DP_ERR_LOG("muxer video size is empty, videoId: %{public}s", videoId.c_str());
-        OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED);
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
         return false;
     }
 
@@ -390,7 +392,7 @@ void VideoPostProcessor::OnSessionDied()
         crashJobs.emplace_back(item.first);
     }
     for (const auto& videoId : crashJobs) {
-        OnError(videoId, DPS_ERROR_VIDEO_PROC_INTERRUPTED);
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_INTERRUPTED));
     }
     crashJobs.clear();
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
@@ -440,7 +442,7 @@ void VideoPostProcessor::OnStateChanged(HdiStatus hdiStatus)
 void VideoPostProcessor::OnTimerOut(const std::string& videoId)
 {
     DP_INFO_LOG("DpsTimer end, videoId: %{public}s", videoId.c_str());
-    OnError(videoId, DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT);
+    DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_TIMEOUT));
 }
 
 void VideoPostProcessor::ConnectService()

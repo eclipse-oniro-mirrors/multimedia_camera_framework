@@ -607,7 +607,7 @@ void PhotoPostProcessor::ProcessImage(const std::string& imageId)
     auto session = GetPhotoSession();
     if (session == nullptr) {
         DP_ERR_LOG("Failed to process imageId: %{public}s, photo session is nullptr", imageId.c_str());
-        OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(imageId, DPS_ERROR_SESSION_NOT_READY_TEMPORARILY));
         return;
     }
 
@@ -711,11 +711,11 @@ void PhotoPostProcessor::OnSessionDied()
         } else {
             imageId2CrashCount_[item.first] += 1;
         }
+        DpsError code = DPS_ERROR_SESSION_NOT_READY_TEMPORARILY;
         if (imageId2CrashCount_[item.first] >= MAX_CONSECUTIVE_CRASH_COUNT) {
-            OnError(item.first, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
-        } else {
-            OnError(item.first, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+            code = DPS_ERROR_IMAGE_PROC_FAILED;
         }
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(item.first, code));
     }
 }
 
@@ -727,7 +727,7 @@ void PhotoPostProcessor::SetCallback(const std::weak_ptr<IImageProcessCallbacks>
 void PhotoPostProcessor::OnTimerOut(const std::string& imageId)
 {
     DP_INFO_LOG("DPS_TIMER: Executed imageId: %{public}s", imageId.c_str());
-    OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    DP_CHECK_EXECUTE(processResult_, processResult_->OnError(imageId, DPS_ERROR_IMAGE_PROC_TIMEOUT));
 }
 
 void PhotoPostProcessor::ConnectService()
