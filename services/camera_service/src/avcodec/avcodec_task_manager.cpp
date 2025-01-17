@@ -216,15 +216,14 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
-            MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
-            OH_AVBuffer *buffer = choosedBuffer[index]->encodedBuffer;
+            OH_AVBuffer* buffer = choosedBuffer[index]->encodedBuffer;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
-                OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
+                OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
                 CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
                 OH_AVBuffer_GetBufferAttr(buffer, &attr);
                 attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
+                MEDIA_DEBUG_LOG("choosed buffer pts: %{public}" PRIu64, attr.pts);
                 OH_AVBuffer_SetBufferAttr(buffer, &attr);
                 muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
             }
