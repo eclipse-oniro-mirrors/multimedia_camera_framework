@@ -287,7 +287,7 @@ private:
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
 #ifdef CAMERA_USE_SENSOR
-    SensorUser user;
+    SensorUser user = { "", nullptr, nullptr };
 #endif
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;

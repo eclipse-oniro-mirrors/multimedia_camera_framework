@@ -327,7 +327,7 @@ napi_value VideoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     return CameraNapiObjVideoProfile(*profile).GenerateNapiValue(env);
 }
 
-static napi_value CreateJSArray(napi_env env, napi_status status, std::vector<VideoMetaType> nativeArray)
+static napi_value CreateJSArray(napi_env env, napi_status &status, std::vector<VideoMetaType> nativeArray)
 {
     MEDIA_DEBUG_LOG("CreateJSArray is called");
     napi_value jsArray = nullptr;

@@ -261,7 +261,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
 
     std::string cameraId = cameras[0]->GetID();
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetCameras(cameraIds), 0);
-    cameraHostManager_->RemoveCameraHost( HCameraHostManager::LOCAL_SERVICE_NAME);
+    cameraHostManager_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::GetCameraAbility(cameraId, ability), CAMERA_INVALID_ARG);
     EXPECT_EQ(cameraHostManager_->HCameraHostManager::SetFlashlight(cameraId, false), CAMERA_INVALID_ARG);
