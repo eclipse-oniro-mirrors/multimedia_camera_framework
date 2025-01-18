@@ -59,6 +59,8 @@ public:
     int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings = false);
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
+    int32_t UnSetCallback() override;
+
     int32_t OnFrameStarted();
     int32_t OnFrameEnded(int32_t frameCount);
     int32_t OnFrameError(int32_t errorType);

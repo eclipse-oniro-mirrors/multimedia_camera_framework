@@ -34,6 +34,8 @@ public:
 
     virtual int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) = 0;
 
+    virtual int32_t UnSetCallback() = 0;
+
     virtual int32_t Release() = 0;
 
     virtual int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) = 0;

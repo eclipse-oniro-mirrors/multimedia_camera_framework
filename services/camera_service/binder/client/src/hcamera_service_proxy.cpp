@@ -167,6 +167,20 @@ int32_t HCameraServiceProxy::SetCameraCallback(sptr<ICameraServiceCallback>& cal
     return error;
 }
 
+int32_t HCameraServiceProxy::UnSetCameraCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_CAMERA_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy UnSetCameraCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
 {
     MessageParcel data;
@@ -186,6 +200,20 @@ int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& c
     return error;
 }
 
+int32_t HCameraServiceProxy::UnSetMuteCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_MUTE_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy UnSetMuteCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 {
     MessageParcel data;
@@ -193,14 +221,26 @@ int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callb
     MessageOption option;
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
         "HCameraServiceProxy SetTorchCallback callback is null");
-
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK), data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy SetTorchCallback failed, error: %{public}d", error);
+    return error;
+}
 
+int32_t HCameraServiceProxy::UnSetTorchCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_TORCH_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy UnSetTorchCallback failed, error: %{public}d", error);
+    }
     return error;
 }
 
@@ -220,6 +260,20 @@ int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& c
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
         "HCameraServiceProxy SetFoldStatusCallback failed, error: %{public}d", error);
 
+    return error;
+}
+
+int32_t HCameraServiceProxy::UnSetFoldStatusCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_FOLD_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy UnSetFoldStatusCallback failed, error: %{public}d", error);
+    }
     return error;
 }
 

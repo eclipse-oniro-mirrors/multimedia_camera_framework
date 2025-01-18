@@ -217,6 +217,7 @@ public:
 
     static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
+    int32_t UnSetCallback() override;
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;

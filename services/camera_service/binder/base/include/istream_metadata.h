@@ -43,6 +43,8 @@ public:
 
     virtual int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) = 0;
 
+    virtual int32_t UnSetCallback() = 0;
+
     virtual int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) = 0;
 
     virtual int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) = 0;

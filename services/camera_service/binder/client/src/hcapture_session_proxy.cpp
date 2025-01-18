@@ -210,6 +210,20 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
     return error;
 }
 
+int32_t HCaptureSessionProxy::UnSetCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy UnSetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
 {
     MessageParcel data;

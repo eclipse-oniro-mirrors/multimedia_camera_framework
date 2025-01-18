@@ -67,6 +67,7 @@ public:
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
+    int32_t UnSetCallback() override;
     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;

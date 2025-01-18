@@ -81,6 +81,20 @@ int32_t HStreamMetadataProxy::SetCallback(sptr<IStreamMetadataCallback> &callbac
     return error;
 }
 
+int32_t HStreamMetadataProxy::UnSetCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_UNSET_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamMetadataProxy UnSetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamMetadataProxy::EnableMetadataType(std::vector<int32_t> metadataTypes)
 {
     MessageParcel data;

@@ -65,11 +65,19 @@ public:
 
     virtual int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) = 0;
 
+    virtual int32_t UnSetCameraCallback() = 0;
+
     virtual int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) = 0;
+
+    virtual int32_t UnSetMuteCallback() = 0;
 
     virtual int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) = 0;
 
+    virtual int32_t UnSetTorchCallback() = 0;
+
     virtual int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) = 0;
+
+    virtual int32_t UnSetFoldStatusCallback() = 0;
 
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) = 0;

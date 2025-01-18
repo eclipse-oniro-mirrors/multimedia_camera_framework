@@ -746,7 +746,7 @@ private:
     void InitCameraManager();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
-    void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
+    int32_t SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
     void SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback);
     void CreateAndSetCameraServiceCallback();
     void CreateAndSetCameraMuteServiceCallback();

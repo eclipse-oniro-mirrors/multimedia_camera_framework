@@ -31,6 +31,8 @@ public:
 
     virtual int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) = 0;
 
+    virtual int32_t UnSetCallback() = 0;
+
     virtual int32_t SetDataAccuracy(int32_t dataAccuracy) = 0;
 
     virtual int32_t Release() = 0;
@@ -39,4 +41,4 @@ public:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_H
+#endif // OHOS_CAMERA_ISTREAM_DEPTH_DATA_H

@@ -144,8 +144,6 @@ CameraManager::CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::CameraManager construct enter");
     torchServiceListenerManager_->SetCameraManager(this);
-    sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
-    SetTorchServiceCallback(callback);
 }
 
 CameraManager::~CameraManager()
@@ -857,8 +855,12 @@ void CameraManager::OnCameraServerAlive()
         std::lock_guard<std::mutex> lock(cameraMuteSvcCallbackMutex_);
         CHECK_EXECUTE(cameraMuteSvcCallback_ != nullptr, SetCameraMuteServiceCallback(cameraMuteSvcCallback_));
     }
-    sptr<ITorchServiceCallback> torchServiceCallback = torchServiceListenerManager_;
-    SetTorchServiceCallback(torchServiceCallback);
+
+    if (torchServiceListenerManager_->GetListenerCount() > 0) {
+        sptr<ITorchServiceCallback> torchServiceCallback = torchServiceListenerManager_;
+        SetTorchServiceCallback(torchServiceCallback);
+    }
+
     {
         std::lock_guard<std::mutex> lock(foldSvcCallbackMutex_);
         CHECK_EXECUTE(foldSvcCallback_ != nullptr, SetFoldServiceCallback(foldSvcCallback_));
@@ -980,6 +982,10 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 
 void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
+    if(torchServiceListenerManager_->GetListenerCount() == 0) {
+        sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
+        SetTorchServiceCallback(callback);
+    }
     bool isSuccess = torchServiceListenerManager_->AddListener(listener);
     CHECK_ERROR_PRINT_LOG(isSuccess, "CameraManager::RegisterTorchListener listener already exist");
 }
@@ -987,6 +993,10 @@ void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 void CameraManager::UnregisterTorchListener(std::shared_ptr<TorchListener> listener)
 {
     torchServiceListenerManager_->RemoveListener(listener);
+    if (torchServiceListenerManager_->GetListenerCount() == 0) {
+        sptr<ITorchServiceCallback> nullCallback = nullptr;
+        SetTorchServiceCallback(nullCallback);
+    }
 }
 
 sptr<TorchServiceListenerManager> CameraManager::GetTorchServiceListenerManager()
@@ -1886,14 +1896,15 @@ int32_t FoldServiceCallback::OnFoldStatusChanged(const FoldStatus status)
     return CAMERA_OK;
 }
 
-void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback)
+int32_t CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback)
 {
     auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
-        "CameraManager::SetTorchServiceCallback serviceProxy is null");
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CameraManager::SetTorchServiceCallback serviceProxy is null");
     int32_t retCode = serviceProxy->SetTorchCallback(callback);
-    CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, CAMERA_UNKNOWN_ERROR,
         "SetTorchServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
+    return CAMERA_OK;
 }
 
 void CameraManager::SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback)

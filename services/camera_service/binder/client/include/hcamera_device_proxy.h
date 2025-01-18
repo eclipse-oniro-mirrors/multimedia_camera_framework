@@ -39,6 +39,8 @@ public:
 
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
 
+    int32_t UnSetCallback() override;
+
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) override;
 
     int32_t SetUsedAsPosition(uint8_t value) override;

@@ -313,7 +313,7 @@ void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
 
 TorchListenerNapi::TorchListenerNapi(napi_env env): ListenerBase(env)
 {
-    MEDIA_DEBUG_LOG("TorchListenerNapi is called.");
+    MEDIA_INFO_LOG("TorchListenerNapi is called.");
 }
 
 TorchListenerNapi::~TorchListenerNapi()

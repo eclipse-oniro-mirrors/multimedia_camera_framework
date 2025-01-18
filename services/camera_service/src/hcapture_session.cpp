@@ -1642,7 +1642,12 @@ int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback>& callback)
     if (callback == nullptr) {
         MEDIA_WARNING_LOG("HCaptureSession::SetCallback callback is null, we should clear the callback");
     }
+    // Not implement yet.
+    return CAMERA_OK;
+}
 
+int32_t HCaptureSession::UnSetCallback()
+{
     // Not implement yet.
     return CAMERA_OK;
 }

@@ -922,6 +922,13 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
+    deviceSvcCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
 sptr<ICameraDeviceServiceCallback> HCameraDevice::GetDeviceServiceCallback()
 {
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
@@ -1374,6 +1381,7 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK:
+        case CameraDeviceInterfaceCode::CAMERA_DEVICE_UNSET_CALLBACK:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT:

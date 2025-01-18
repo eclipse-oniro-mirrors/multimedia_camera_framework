@@ -70,6 +70,9 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK):
             errCode = HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
             errCode = HandleGetSessionState(reply);
             break;

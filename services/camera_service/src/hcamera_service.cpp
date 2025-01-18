@@ -789,9 +789,13 @@ void HCameraService::OnMute(bool muteMode)
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
-    if (peerCallback_ != nullptr) {
-        MEDIA_INFO_LOG("HCameraService::NotifyMuteCamera peerCallback current camera muteMode:%{public}d", muteMode);
-        peerCallback_->NotifyMuteCamera(muteMode);
+    {
+        std::lock_guard<std::mutex> peerLock(peerCallbackMutex_);
+        if (peerCallback_ != nullptr) {
+            MEDIA_INFO_LOG(
+                "HCameraService::NotifyMuteCamera peerCallback current camera muteMode:%{public}d", muteMode);
+            peerCallback_->NotifyMuteCamera(muteMode);
+        }
     }
 }
 
@@ -894,6 +898,12 @@ int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetCameraCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetCameraCallback(pid);
+}
+
 int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
 {
     lock_guard<mutex> lock(muteCbMutex_);
@@ -911,6 +921,12 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetMuteCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetMuteCallback(pid);
+}
+
 int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
@@ -923,6 +939,12 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
     MEDIA_INFO_LOG("HCameraService::SetTorchCallback notify pid = %{public}d", pid);
     callback->OnTorchStatusChange(torchStatus_);
     return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetTorchCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetTorchCallback(pid);
 }
 
 int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback)
@@ -940,6 +962,12 @@ int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callba
         foldServiceCallbacks_.insert(make_pair(pid, callback));
     }
     return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetFoldStatusCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetFoldStatusCallback(pid);
 }
 
 int32_t HCameraService::UnSetCameraCallback(pid_t pid)
@@ -1283,7 +1311,10 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 {
     MEDIA_INFO_LOG("SetPeerCallback get callback");
     CHECK_ERROR_RETURN_RET(callback == nullptr, CAMERA_INVALID_ARG);
-    peerCallback_ = callback;
+    {
+        std::lock_guard<std::mutex> lock(peerCallbackMutex_);
+        peerCallback_ = callback;
+    }
     MEDIA_INFO_LOG("HCameraService::SetPeerCallback current muteMode:%{public}d", muteModeStored_);
     callback->NotifyMuteCamera(muteModeStored_);
     HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
@@ -1293,7 +1324,10 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 int32_t HCameraService::UnsetPeerCallback()
 {
     MEDIA_INFO_LOG("UnsetPeerCallback callback");
-    peerCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(peerCallbackMutex_);
+        peerCallback_ = nullptr;
+    }
     HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
     return CAMERA_OK;
 }

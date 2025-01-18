@@ -157,6 +157,13 @@ int32_t HStreamMetadata::SetCallback(sptr<IStreamMetadataCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HStreamMetadata::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamMetadataCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
 int32_t HStreamMetadata::EnableOrDisableMetadataType(const std::vector<int32_t>& metadataTypes, const bool enable)
 {
     MEDIA_DEBUG_LOG("HStreamMetadata::EnableOrDisableMetadataType enable: %{public}d, metadataTypes size: %{public}zu",

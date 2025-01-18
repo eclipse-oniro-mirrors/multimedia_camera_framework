@@ -87,6 +87,20 @@ int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback>& callback)
     return error;
 }
 
+int32_t HStreamRepeatProxy::UnSetCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_UNSET_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy UnSetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
     MessageParcel data;

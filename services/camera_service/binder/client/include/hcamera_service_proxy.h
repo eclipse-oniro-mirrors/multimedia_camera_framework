@@ -42,12 +42,16 @@ public:
     int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device) override;
 
     int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
+    int32_t UnSetCameraCallback() override;
 
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
+    int32_t UnSetMuteCallback() override;
 
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+    int32_t UnSetTorchCallback() override;
 
     int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
+    int32_t UnSetFoldStatusCallback() override;
 
     int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;

@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+#include <mutex>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <iostream>
@@ -118,9 +119,13 @@ public:
     int32_t UnSetAllCallback(pid_t pid) override;
     int32_t CloseCameraForDestory(pid_t pid) override;
     int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
+    int32_t UnSetCameraCallback() override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
+    int32_t UnSetMuteCallback() override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+    int32_t UnSetTorchCallback() override;
     int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
+    int32_t UnSetFoldStatusCallback() override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
@@ -252,6 +257,7 @@ private:
 #endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
+
     mutex mutex_;
     mutex cameraCbMutex_;
     mutex muteCbMutex_;
@@ -275,7 +281,10 @@ private:
     bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_;
+
+    std::mutex peerCallbackMutex_;
     sptr<ICameraBroker> peerCallback_;
+
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
 #ifdef CAMERA_USE_SENSOR

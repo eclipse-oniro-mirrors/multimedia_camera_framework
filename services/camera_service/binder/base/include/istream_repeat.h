@@ -31,6 +31,8 @@ public:
 
     virtual int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) = 0;
 
+    virtual int32_t UnSetCallback() = 0;
+
     virtual int32_t Release() = 0;
 
     virtual int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) = 0;

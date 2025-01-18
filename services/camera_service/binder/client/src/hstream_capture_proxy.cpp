@@ -101,6 +101,20 @@ int32_t HStreamCaptureProxy::SetCallback(sptr<IStreamCaptureCallback> &callback)
     return error;
 }
 
+int32_t HStreamCaptureProxy::UnSetCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_UNSET_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)
 {
     MessageParcel data;

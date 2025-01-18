@@ -347,6 +347,13 @@ int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamRepeatCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
