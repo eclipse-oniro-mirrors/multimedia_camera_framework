@@ -318,8 +318,14 @@ int32_t CaptureSession::CommitConfig()
     }
     // DELIVERY_PHOTO for default when commit
     if (photoOutput_ && !isDeferTypeSetted_) {
-        EnableDeferredType(((sptr<PhotoOutput> &)photoOutput_)->IsEnableDeferred() ? DELIVERY_PHOTO
-            : DELIVERY_NONE, false);
+        sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput>&)photoOutput_;
+        int32_t supportCode = photoOutput->IsDeferredImageDeliverySupported(DELIVERY_PHOTO);
+        MEDIA_INFO_LOG("CaptureSession::CommitConfig supportCode:%{public}d", supportCode);
+        if (supportCode == 0) {
+            EnableDeferredType(photoOutput->IsEnableDeferred() ? DELIVERY_PHOTO : DELIVERY_NONE, false);
+        } else {
+            EnableDeferredType(DELIVERY_NONE, false);
+        }
         SetUserId();
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -568,6 +574,19 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
     return ret;
 }
 
+void CaptureSession::GetMetadataFromService(sptr<CameraDevice> device)
+{
+    CHECK_ERROR_RETURN_LOG(device == nullptr, "GetMetadataFromService device is nullptr");
+    auto cameraId = device->GetID();
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "GetMetadataFromService serviceProxy is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    serviceProxy->GetCameraAbility(cameraId, metaData);
+    CHECK_ERROR_RETURN_LOG(metaData == nullptr,
+        "GetMetadataFromService GetDeviceMetadata failed");
+    device->AddMetadata(metaData);
+}
+
 int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
@@ -592,6 +611,8 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
         return ServiceToCameraError(errCode);
     }
     SetInputDevice(input);
+    auto inputDeviceInfo = input->GetCameraDeviceInfo();
+    GetMetadataFromService(inputDeviceInfo);
     CheckSpecSearch();
     input->SetMetadataResultProcessor(GetMetadataResultProcessor());
     UpdateDeviceDeferredability();
@@ -1019,7 +1040,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         errCode = captureSession->RemoveInput(device);
         auto deviceInfo = input->GetCameraDeviceInfo();
         if (deviceInfo != nullptr) {
-            deviceInfo->ResetMetadata();
+            deviceInfo->ReleaseMetadata();
         }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
@@ -1140,6 +1161,10 @@ int32_t CaptureSession::Release()
         MEDIA_DEBUG_LOG("Release capture session, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession is nullptr");
+    }
+    auto inputDevice = GetInputDevice();
+    if (inputDevice != nullptr && inputDevice->GetCameraDeviceInfo() != nullptr) {
+        inputDevice->GetCameraDeviceInfo()->ReleaseMetadata();
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
@@ -4408,7 +4433,7 @@ std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeat
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET(deviceInfo == nullptr, nullptr);
-    auto deviceAbility = deviceInfo->GetCameraAbility();
+    auto deviceAbility = deviceInfo->GetMetadata();
     CHECK_ERROR_RETURN_RET(deviceAbility == nullptr, nullptr);
 
     auto currentMode = GetMode();
@@ -6232,6 +6257,31 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoAigcPhoto enabled:%{public}d", enabled);
+
+    LockForControl();
+    CHECK_ERROR_RETURN_RET_LOG(
+        changedMetadata_ == nullptr, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto changedMetadata_ is NULL");
+    int32_t res = CameraErrorCode::SUCCESS;
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t autoAigcPhoto = static_cast<uint8_t>(enabled); // 三目表达式处理，不使用强转
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_AIGC_PHOTO, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_AIGC_PHOTO, &autoAigcPhoto, 1);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !status, PARAMETER_ERROR, "CaptureSession::EnableAutoAigcPhoto failed to set type!");
+    UnlockForControl();
+
+    CHECK_ERROR_PRINT_LOG(res != CameraErrorCode::SUCCESS, "CaptureSession::EnableAutoAigcPhoto failed");
+    return res;
 }
 
 } // namespace CameraStandard

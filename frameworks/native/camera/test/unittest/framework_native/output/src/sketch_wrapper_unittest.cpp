@@ -44,6 +44,8 @@ using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
+const uint32_t METADATA_ITEM_SIZE = 20;
+const uint32_t METADATA_DATA_SIZE = 200;
 using namespace OHOS::HDI::Camera::V1_1;
 
 void CameraSketchWrapperOutputUnit::SetUpTestCase(void) {}
@@ -155,10 +157,6 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_002, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
-        cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
     int32_t width = 1440;
     int32_t height = 1080;
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
@@ -209,10 +207,6 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_003, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
-        cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
     int32_t width = 1440;
     int32_t height = 1080;
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
@@ -256,10 +250,6 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Le
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
-        cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
 
     int32_t width = 1440;
     int32_t height = 1080;
@@ -315,7 +305,8 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     ASSERT_NE(deviceMetadata, nullptr);
     session->GetFeaturesMode();
     Profile previewProfile = Profile(CAMERA_FORMAT_YCBCR_420_888, previewSize);
@@ -374,7 +365,8 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_006, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     ASSERT_NE(deviceMetadata, nullptr);
 
     int32_t width = 1440;
@@ -429,7 +421,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_007, TestSize.Le
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
-        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     ASSERT_NE(deviceMetadata, nullptr);
 
     int32_t width = 1440;
@@ -483,10 +475,6 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Le
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
-        cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
     int32_t width = 1440;
     int32_t height = 1080;
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
@@ -509,7 +497,8 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Le
     ASSERT_NE(sketchWrapper, nullptr);
 
     auto modeName = session->GetFeaturesMode();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     std::vector<int32_t> testStreamInfo = { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0 };
     metadata->addEntry(
         OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, testStreamInfo.data(), testStreamInfo.size());

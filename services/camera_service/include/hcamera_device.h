@@ -54,6 +54,7 @@ public:
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
     int32_t Close() override;
+    int32_t closeDelayed() override;
     int32_t Release() override;
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
     int32_t SetUsedAsPosition(uint8_t value) override;
@@ -140,11 +141,13 @@ public:
 
     bool CheckMovingPhotoSupported(int32_t mode);
 
-    void NotifyCameraStatus(int32_t type);
+    void NotifyCameraStatus(int32_t state, int32_t msg = 0);
 
     bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
     int32_t CloseDevice();
+
+    int32_t closeDelayedDevice();
 
     void SetMovingPhotoStartTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
@@ -154,7 +157,8 @@ private:
     class FoldScreenListener;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
 
-    std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
+    std::mutex opMutex_; // Lock the operations streamOperator_, and hdiCameraDevice_.
+    std::mutex settingsMutex_; // Lock the operation updateSettings_.
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;

@@ -101,68 +101,10 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_DEPTH_32, OHOS_CAMERA_FORMAT_DEPTH_32}
 };
 
-const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
-    {OperationMode::NORMAL, NORMAL},
-    {OperationMode::CAPTURE, CAPTURE},
-    {OperationMode::VIDEO, VIDEO},
-    {OperationMode::PORTRAIT, PORTRAIT},
-    {OperationMode::NIGHT, NIGHT},
-    {OperationMode::PROFESSIONAL_PHOTO, PROFESSIONAL_PHOTO},
-    {OperationMode::PROFESSIONAL_VIDEO, PROFESSIONAL_VIDEO},
-    {OperationMode::SLOW_MOTION, SLOW_MOTION},
-    {OperationMode::SCAN_CODE, SCAN},
-    {OperationMode::CAPTURE_MACRO, CAPTURE_MACRO},
-    {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
-    {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
-    {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
-    {OperationMode::SECURE, SECURE},
-    {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
-    {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
-    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
-    {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
-    {OperationMode::TIMELAPSE_PHOTO, TIMELAPSE_PHOTO},
-    {OperationMode::FLUORESCENCE_PHOTO, FLUORESCENCE_PHOTO},
-};
-
-const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
-    {NORMAL, OperationMode::NORMAL},
-    {CAPTURE,  OperationMode::CAPTURE},
-    {VIDEO,  OperationMode::VIDEO},
-    {PORTRAIT,  OperationMode::PORTRAIT},
-    {NIGHT,  OperationMode::NIGHT},
-    {PROFESSIONAL_PHOTO,  OperationMode::PROFESSIONAL_PHOTO},
-    {PROFESSIONAL_VIDEO,  OperationMode::PROFESSIONAL_VIDEO},
-    {SLOW_MOTION,  OperationMode::SLOW_MOTION},
-    {SCAN, OperationMode::SCAN_CODE},
-    {CAPTURE_MACRO, OperationMode::CAPTURE_MACRO},
-    {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
-    {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
-    {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
-    {SECURE, OperationMode::SECURE},
-    {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
-    {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
-    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
-    {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
-    {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
-    {FLUORESCENCE_PHOTO, OperationMode::FLUORESCENCE_PHOTO},
-};
-
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
     {OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE, UNKNOWN_FOLD},
     {OHOS_CAMERA_FOLD_STATUS_EXPANDED, EXPAND},
     {OHOS_CAMERA_FOLD_STATUS_FOLDED, FOLDED}
-};
-
-const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_ = {
-    {StatisticsDetectType::OHOS_CAMERA_HUMAN_FACE_DETECT, MetadataObjectType::FACE},
-    {StatisticsDetectType::OHOS_CAMERA_HUMAN_BODY_DETECT, MetadataObjectType::HUMAN_BODY},
-    {StatisticsDetectType::OHOS_CAMERA_CAT_FACE_DETECT, MetadataObjectType::CAT_FACE},
-    {StatisticsDetectType::OHOS_CAMERA_CAT_BODY_DETECT, MetadataObjectType::CAT_BODY},
-    {StatisticsDetectType::OHOS_CAMERA_DOG_FACE_DETECT, MetadataObjectType::DOG_FACE},
-    {StatisticsDetectType::OHOS_CAMERA_DOG_BODY_DETECT, MetadataObjectType::DOG_BODY},
-    {StatisticsDetectType::OHOS_CAMERA_SALIENT_DETECT, MetadataObjectType::SALIENT_DETECTION},
-    {StatisticsDetectType::OHOS_CAMERA_BAR_CODE_DETECT, MetadataObjectType::BAR_CODE_DETECTION},
-    {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -1221,37 +1163,32 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
             }
 
             auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
-            sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, cameraAbility, dmDeviceInfo);
+            sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
             if (cameraObj == nullptr) {
                 MEDIA_ERR_LOG("failed to new CameraDevice!");
                 continue;
             }
+            SetProfile(cameraObj, cameraAbility);
             deviceInfoList.emplace_back(cameraObj);
         }
     } else {
         MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
     }
-    SetProfile(deviceInfoList);
     AlignVideoFpsProfile(deviceInfoList);
     return deviceInfoList;
 }
 
-void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
+void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    for (auto& cameraObj : cameraObjList) {
-        if (cameraObj == nullptr) {
-            continue;
-        }
-        std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
-        if (supportedModes.empty()) {
-            auto capability = GetSupportedOutputCapability(cameraObj);
-            cameraObj->SetProfile(capability);
-        } else {
-            supportedModes.emplace_back(NORMAL);
-            for (const auto &modeName : supportedModes) {
-                auto capability = GetSupportedOutputCapability(cameraObj, modeName);
-                cameraObj->SetProfile(capability, modeName);
-            }
+    std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
+    if (supportedModes.empty()) {
+        auto capability = ParseSupportedOutputCapability(cameraObj, 0, metadata);
+        cameraObj->SetProfile(capability);
+    } else {
+        supportedModes.emplace_back(NORMAL);
+        for (const auto &modeName : supportedModes) {
+            auto capability = ParseSupportedOutputCapability(cameraObj, modeName, metadata);
+            cameraObj->SetProfile(capability, modeName);
         }
     }
 }
@@ -1315,22 +1252,10 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 
 std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& camera)
 {
-    std::vector<SceneMode> supportedModes = {};
-
-    std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedModes);
-    camera_metadata_item_t item;
-    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
-    CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS || item.count == 0, supportedModes,
-        "CameraManager::GetSupportedModes Failed with return code %{public}d", retCode);
-    for (uint32_t i = 0; i < item.count; i++) {
-        SceneMode scMode = SceneMode::NORMAL;
-        if (ConvertMetaToFwkMode(static_cast<OperationMode>(item.data.u8[i]), scMode)) {
-            supportedModes.emplace_back(scMode);
-        }
-    }
-    MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedModes.size());
-    return supportedModes;
+    CHECK_ERROR_RETURN_RET(camera == nullptr, {});
+    std::vector<SceneMode> supportedSceneModes = camera->GetSupportedModes();
+    MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedSceneModes.size());
+    return supportedSceneModes;
 }
 
 void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
@@ -1756,23 +1681,50 @@ void CameraManager::ParseCapability(ProfilesWrapper& profilesWrapper, sptr<Camer
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName)
     __attribute__((no_sanitize("cfi")))
 {
-    MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
     CHECK_ERROR_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_ERROR_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, nullptr);
+    cameraOutputCapability->SetPhotoProfiles(camera->modePhotoProfiles_[modeName]);
+    cameraOutputCapability->SetPreviewProfiles(camera->modePreviewProfiles_[modeName]);
+    if (!isPhotoMode_.count(modeName)) {
+        cameraOutputCapability->SetVideoProfiles(camera->modeVideoProfiles_[modeName]);
+    }
+    cameraOutputCapability->SetDepthProfiles(camera->modeDepthProfiles_[modeName]);
+
+    std::vector<MetadataObjectType> objectTypes = camera->GetObjectTypes();
+
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
+        if (std::any_of(objectTypes.begin(), objectTypes.end(),
+                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
+            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
+        } else {
+            cameraOutputCapability->SetSupportedMetadataObjectType({});
+        }
+    } else {
+        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+    }
+    return cameraOutputCapability;
+}
+
+sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+{
+    MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
+    CHECK_ERROR_RETURN_RET(camera == nullptr || cameraAbility == nullptr, nullptr);
+    sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
+    CHECK_ERROR_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
     camera_metadata_item_t item;
     ProfilesWrapper profilesWrapper = {};
     depthProfiles_.clear();
     photoFormats_.clear();
-    photoFormats_ = GetSupportPhotoFormat(modeName, metadata);
+    photoFormats_ = GetSupportPhotoFormat(modeName, cameraAbility);
 
-    ParseCapability(profilesWrapper, camera, modeName, item, metadata);
+    ParseCapability(profilesWrapper, camera, modeName, item, cameraAbility);
     SceneMode profileMode = static_cast<SceneMode>(modeName);
     auto fallbackMode = GetFallbackConfigMode(profileMode, profilesWrapper);
     if (profileMode != fallbackMode) {
-        ParseCapability(profilesWrapper, camera, fallbackMode, item, metadata);
+        ParseCapability(profilesWrapper, camera, fallbackMode, item, cameraAbility);
     }
     FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
@@ -1785,40 +1737,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
         profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
         profilesWrapper.vidProfiles.size(), depthProfiles_.size());
-    std::vector<MetadataObjectType> objectTypes = {};
-    GetSupportedMetadataObjectType(metadata->get(), objectTypes);
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
-        if (std::any_of(objectTypes.begin(), objectTypes.end(),
-                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
-            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
-        } else {
-            cameraOutputCapability->SetSupportedMetadataObjectType({});
-        }
-    } else {
-        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-    }
-    MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
-                   cameraOutputCapability->GetSupportedMetadataObjectType().size());
     return cameraOutputCapability;
-}
-
-void CameraManager::GetSupportedMetadataObjectType(common_metadata_header_t* metadata,
-                                                   std::vector<MetadataObjectType>& objectTypes)
-{
-    camera_metadata_item_t metadataItem;
-    int32_t ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &metadataItem);
-    if (ret == CAM_META_SUCCESS) {
-        for (uint32_t index = 0; index < metadataItem.count; index++) {
-            auto iterator =
-                g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(metadataItem.data.u8[index]));
-            CHECK_ERROR_PRINT_LOG(iterator == g_metaToFwCameraMetaDetect_.end(),
-                "Not supported metadataItem %{public}d", metadataItem.data.u8[index]);
-            if (iterator != g_metaToFwCameraMetaDetect_.end()) {
-                objectTypes.push_back(iterator->second);
-            }
-        }
-    }
 }
 
 vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName,
@@ -2130,36 +2049,12 @@ bool CameraManager::IsCameraMuteSupported()
         return isCameraMuteSupported;
     }
 
-    std::vector<sptr<CameraDevice>> cameraDeviceList;
-    if (IsCameraDeviceListCached()) {
-        cameraDeviceList = GetCameraDeviceList();
-    } else {
-        cameraDeviceList = GetCameraDeviceListFromServer();
-    }
-
-    for (auto& cameraDeviceInfo : cameraDeviceList) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraDeviceInfo->GetMetadata();
-        CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
-        camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
-        CHECK_ERROR_RETURN_RET_LOG(ret != 0, isCameraMuteSupported,
-            "Failed to get stream configuration or Invalid stream configuation "
-            "OHOS_ABILITY_MUTE_MODES ret = %{public}d",
-            ret);
-        for (uint32_t i = 0; i < item.count; i++) {
-            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", i, item.data.u8[i]);
-            if (item.data.u8[i] == OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK) {
-                isCameraMuteSupported = true;
-                break;
-            }
-        }
-        if (isCameraMuteSupported) {
-            break;
-        }
-    }
-    if (!cameraDeviceList.empty()) {
-        CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MUTE, isCameraMuteSupported);
-    }
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, false, "IsCameraMuteSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->IsCameraMuteSupported(isCameraMuteSupported);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, false, "IsCameraMuteSupported call failed, retCode: %{public}d",
+        retCode);
+    CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_MUTE, isCameraMuteSupported);
     return isCameraMuteSupported;
 }
 
@@ -2212,19 +2107,7 @@ int32_t CameraManager::PreSwitchCamera(const std::string cameraId)
 bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 {
     CHECK_ERROR_RETURN_RET(camera == nullptr, false);
-    bool isPrelaunch = false;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
-    if (ret == 0) {
-        MEDIA_INFO_LOG("CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
-                       item.data.u8[0]);
-        isPrelaunch = (item.data.u8[0] == 1);
-    } else {
-        MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
-    }
-    return isPrelaunch;
+    return camera->IsPrelaunch();
 }
 
 bool CameraManager::IsTorchSupported()
@@ -2235,30 +2118,12 @@ bool CameraManager::IsTorchSupported()
         return isCameraTorchSupported;
     }
 
-    std::vector<sptr<CameraDevice>> cameraDeviceList;
-    if (IsCameraDeviceListCached()) {
-        cameraDeviceList = GetCameraDeviceList();
-    } else {
-        cameraDeviceList = GetCameraDeviceListFromServer();
-    }
-
-    for (auto& cameraDeviceInfo : cameraDeviceList) {
-        std::shared_ptr<Camera::CameraMetadata> metadata = cameraDeviceInfo->GetMetadata();
-        CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
-        camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_AVAILABLE, &item);
-        if (ret == CAM_META_SUCCESS && item.count > 0) {
-            MEDIA_INFO_LOG("OHOS_ABILITY_FLASH_AVAILABLE is %{public}d", item.data.u8[0]);
-            if (item.data.u8[0] == 1) {
-                isCameraTorchSupported = true;
-                break;
-            }
-        }
-    }
-
-    if (!cameraDeviceList.empty()) {
-        CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_TORCH, isCameraTorchSupported);
-    }
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, false, "IsTorchSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->IsTorchSupported(isCameraTorchSupported);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, false, "IsTorchSupported call failed, retCode: %{public}d",
+        retCode);
+    CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_SUPPORT_TORCH, isCameraTorchSupported);
     return isCameraTorchSupported;
 }
 

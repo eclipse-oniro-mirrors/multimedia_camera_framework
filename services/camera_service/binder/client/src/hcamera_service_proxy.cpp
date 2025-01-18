@@ -110,6 +110,7 @@ int32_t HCameraServiceProxy::GetCameraIds(std::vector<std::string> &cameraIds)
 int32_t HCameraServiceProxy::GetCameraAbility(std::string &cameraId,
     std::shared_ptr<Camera::CameraMetadata> &cameraAbility)
 {
+    CAMERA_SYNC_TRACE;
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -619,6 +620,45 @@ int32_t HCameraServiceProxy::PreSwitchCamera(const std::string cameraId)
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA), data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::PreSwitchCamera failed, error: %{public}d", error);
 
+    return error;
+}
+
+int32_t HCameraServiceProxy::IsTorchSupported(bool &isTorchSupported)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_TORCH_SUPPORTED), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::IsTorchSupported failed, error: %{public}d", error);
+        return error;
+    }
+
+    isTorchSupported = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy IsTorchSupported Read isTorchSupported is %{public}d", isTorchSupported);
+    return error;
+}
+
+int32_t HCameraServiceProxy::IsCameraMuteSupported(bool &isCameraMuteSupported)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_MUTE_SUPPORTED), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuteSupported failed, error: %{public}d", error);
+        return error;
+    }
+
+    isCameraMuteSupported = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuteSupported Read isCameraMuteSupported is %{public}d",
+                    isCameraMuteSupported);
     return error;
 }
 

@@ -78,6 +78,8 @@ public:
         iso_ = 0;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata() override;
+    int32_t RemoveInput(sptr<CaptureInput>& input) override;
+    int32_t Release() override;
 
     int32_t IsTryAENeeded(bool& result);
     int32_t StartTryAE();

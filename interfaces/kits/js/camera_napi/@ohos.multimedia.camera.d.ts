@@ -8702,6 +8702,37 @@ function getCameraManager(context: Context): CameraManager;
      * @since 12
      */
     getPhotoRotation(deviceDegree: number): ImageRotation;
+
+    /**
+     * Confirm if auto aigc photo supported.
+     *
+     * @returns { boolean } TRUE if auto aigc photo is supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes:
+     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
+     * 3. Parameter verification failed.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 16
+     */
+    isAutoAigcPhotoSupported(): boolean;
+
+    /**
+     * Enable auto aigc photo.
+     *
+     * @param { boolean } enabled - Target state for auto aigc photo.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes:
+     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
+     * 3. Parameter verification failed.
+     * @throws { BusinessError } 7400104 - session is not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 16
+     */
+    enableAutoAigcPhoto(enabled: boolean): void;    
   }
 
   /**

@@ -29,6 +29,7 @@
 #include "audio_capturer_session.h"
 #include "audio_record.h"
 #include "audio_video_muxer.h"
+#include "audio_deferred_process.h"
 #include "camera_log.h"
 #include "frame_record.h"
 #include "native_avbuffer.h"
@@ -58,7 +59,7 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     audioEncoder_ = make_unique<AudioEncoder>();
     #endif
     // Create Task Manager
-    videoEncoder_ = make_unique<VideoEncoder>(type);
+    videoEncoder_ = make_shared<VideoEncoder>(type);
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -95,6 +96,9 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
         isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
+        } else {
+            sptr<SurfaceBuffer> releaseBuffer;
+            thisPtr->videoEncoder_->DetachCodecBuffer(releaseBuffer, frameRecord);
         }
         frameRecord->SetEncodedResult(isEncodeSuccess);
         frameRecord->SetFinishStatus();
@@ -336,15 +340,32 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
 void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
+    CAMERA_SYNC_TRACE;
     int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-    if (audioCapturerSession_ && audioCapturerSession_->GetAudioDeferredProcess()) {
+    if (audioCapturerSession_) {
         int64_t startTime = NanosecToMillisec(videoStartTime);
         int64_t endTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
         audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
+        auto audioDeferredProcess = new AudioDeferredProcess();
+        audioDeferredProcess->StoreOptions(audioCapturerSession_->deferredInputOptions_,
+            audioCapturerSession_->deferredOutputOptions_);
+        if (!audioDeferredProcess || audioDeferredProcess->GetOfflineEffectChain() != 0) {
+            return;
+        }
+        if (audioDeferredProcess->ConfigOfflineAudioEffectChain() != 0) {
+            return;
+        }
+        if (audioDeferredProcess->PrepareOfflineAudioEffectChain() != 0) {
+            return;
+        }
+        if (audioDeferredProcess->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+            audioCapturerSession_->deferredOutputOptions_) != 0) {
+            return;
+        }
+        audioDeferredProcess->Process(audioRecords, processedAudioRecords);
     }
 }
 

@@ -737,9 +737,8 @@ HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_unittest_001, TestSi
 HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    int32_t modeSet = static_cast<int32_t>(NORMAL);
-    metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+    cameras[0]->supportedModes_.clear();
+    cameras[0]->supportedModes_.push_back(NORMAL);
     for (sptr<CameraDevice> camDevice : cameras) {
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         ASSERT_TRUE(modes.size() != 0);

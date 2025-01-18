@@ -124,6 +124,10 @@ void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->EnableAutoHighQualityPhoto(data.ReadBool());
     output->IsEnableDeferred();
     output->GetDefaultCaptureSetting();
+    bool isAutoAigcPhotoSupported;
+    output->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    data.RewindRead(0);
+    output->EnableAutoHighQualityPhoto(data.ReadBool());
     output->Release();
 }
 

@@ -358,6 +358,19 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata() override;
 
     /**
+     * @brief Remove CaptureInput for the profession session.
+     *
+     * @param CaptureInput to be removed from session.
+     */
+    int32_t RemoveInput(sptr<CaptureInput>& input) override;
+
+    /**
+     * @brief Releases ProfessionSession instance.
+     * @return Returns errCode.
+     */
+    int32_t Release() override;
+
+    /**
      * @brief Determine if the given Ouput can be added to session.
      *
      * @param output to be added to session.

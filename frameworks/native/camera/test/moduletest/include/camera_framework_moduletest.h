@@ -306,6 +306,10 @@ public:
     void GetSupportedOutputCapability();
     Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
                                           camera_rational_t ratio, CameraFormat format);
+    std::optional<Profile> GetPreviewProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
+        uint32_t width, uint32_t height, CameraFormat previewFormat);
+    std::optional<VideoProfile> GetVideoProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
+        uint32_t width, uint32_t height, CameraFormat videoFormat, uint32_t maxFps);
     SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);

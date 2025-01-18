@@ -35,6 +35,8 @@ public:
 
     int32_t Release() override;
 
+    int32_t closeDelayed() override;
+
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
 
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) override;

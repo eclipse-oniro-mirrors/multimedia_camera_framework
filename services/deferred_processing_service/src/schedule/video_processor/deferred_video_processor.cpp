@@ -15,6 +15,7 @@
 
 #include "deferred_video_processor.h"
 
+#include "basic_definitions.h"
 #include "dps_video_report.h"
 #include "dp_utils.h"
 
@@ -36,6 +37,8 @@ DeferredVideoProcessor::~DeferredVideoProcessor()
 void DeferredVideoProcessor::Initialize()
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+
     postProcessor_->Initialize();
 }
 
@@ -43,14 +46,20 @@ void DeferredVideoProcessor::AddVideo(const std::string& videoId,
     const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
 {
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     repository_->AddVideoJob(videoId, srcFd, dstFd);
 }
 
 void DeferredVideoProcessor::RemoveVideo(const std::string& videoId, bool restorable)
 {
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     bool isNeedStop = repository_->RemoveVideoJob(videoId, restorable);
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s, isNeedStop: %{public}d, restorable: %{public}d",
         videoId.c_str(), isNeedStop, restorable);
+    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+
     DP_CHECK_EXECUTE(isNeedStop, postProcessor_->PauseRequest(videoId, ScheduleType::REMOVE));
     DP_CHECK_EXECUTE(!restorable, postProcessor_->RemoveRequest(videoId));
 }
@@ -58,6 +67,8 @@ void DeferredVideoProcessor::RemoveVideo(const std::string& videoId, bool restor
 void DeferredVideoProcessor::RestoreVideo(const std::string& videoId)
 {
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     repository_->RestoreVideoJob(videoId);
 }
 
@@ -65,7 +76,11 @@ void DeferredVideoProcessor::OnProcessDone(const int32_t userId,
     const std::string& videoId, const sptr<IPCFileDescriptor>& ipcFd)
 {
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s, fd: %{public}d", videoId.c_str(), ipcFd->GetFd());
+    DP_CHECK_ERROR_RETURN_LOG(callback_ == nullptr, "IVideoProcessCallbacks is nullptr.");
+
     callback_->OnProcessDone(userId, videoId, ipcFd);
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     repository_->SetJobCompleted(videoId);
     DfxVideoReport::GetInstance().ReportCompleteVideoEvent(videoId);
 }
@@ -73,7 +88,11 @@ void DeferredVideoProcessor::OnProcessDone(const int32_t userId,
 void DeferredVideoProcessor::OnError(const int32_t userId, const std::string& videoId, DpsError errorCode)
 {
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
+    DP_CHECK_ERROR_RETURN_LOG(callback_ == nullptr, "IVideoProcessCallbacks is nullptr.");
+
     DP_CHECK_EXECUTE(IsFatalError(errorCode), callback_->OnError(userId, videoId, errorCode));
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) {
         repository_->SetJobPause(videoId);
     } else if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID ||
@@ -92,8 +111,12 @@ void DeferredVideoProcessor::OnStateChanged(const int32_t userId, DpsStatus stat
 void DeferredVideoProcessor::PostProcess(const DeferredVideoWorkPtr& work)
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
     repository_->SetJobRunning(videoId);
+    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+    
     postProcessor_->ProcessRequest(work);
     DfxVideoReport::GetInstance().ReportResumeVideoEvent(videoId);
 }

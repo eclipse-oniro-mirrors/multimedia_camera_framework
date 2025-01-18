@@ -77,6 +77,20 @@ CameraDevice::CameraDevice(
     }
 }
 
+CameraDevice::CameraDevice(
+    std::string cameraID, dmDeviceInfo deviceInfo, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+    : cameraID_(cameraID)
+{
+    dmDeviceInfo_.deviceName = deviceInfo.deviceName;
+    dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
+    dmDeviceInfo_.networkId = deviceInfo.networkId;
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
+        dmDeviceInfo_.deviceName.c_str());
+    if (metadata != nullptr) {
+        init(metadata->get());
+    }
+}
+
 bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 {
     std::vector<vendorTag_t> infos;
@@ -96,7 +110,7 @@ bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
 void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
-
+    
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
     if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
@@ -134,6 +148,12 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         cameraOrientation_ = static_cast<uint32_t>(item.data.i32[0]);
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_IS_RETRACTABLE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        isRetractable_ = static_cast<bool>(item.data.u8[0]);
+        MEDIA_INFO_LOG("Get isRetractable_  = %{public}d", isRetractable_);
+    }
+
     uint32_t moduleTypeTagId;
     if (isFindModuleTypeTag(moduleTypeTagId)) {
         ret = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
@@ -146,10 +166,34 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
 
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        for (uint32_t i = 0; i < item.count; i++) {
+            auto it = g_metaToFwSupportedMode_.find(static_cast<HDI::Camera::V1_3::OperationMode>(item.data.u8[i]));
+            if (it != g_metaToFwSupportedMode_.end()) {
+                supportedModes_.emplace_back(it->second);
+            }
+        }
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_STATISTICS_DETECT_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        for (uint32_t i = 0; i < item.count; i++) {
+            auto iterator = g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(item.data.u8[i]));
+            if (iterator != g_metaToFwCameraMetaDetect_.end()) {
+                objectTypes_.push_back(iterator->second);
+            }
+        }
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+
+    isPrelaunch_ = (ret == CAM_META_SUCCESS && item.data.u8[0] == 1);
+
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, "
+                   "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
                    "moduleType: %{public}u, foldStatus: %{public}d", cameraPosition_, cameraType_, connectionType_,
-                   foldScreenType_, cameraOrientation_, moduleType_, foldStatus_);
+                   foldScreenType_, cameraOrientation_, isRetractable_, moduleType_, foldStatus_);
 }
 
 std::string CameraDevice::GetID()
@@ -161,6 +205,18 @@ std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 {
     std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
     return cachedMetadata_;
+}
+
+void CameraDevice::AddMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
+{
+    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
+    cachedMetadata_ = MetadataCommonUtils::CopyMetadata(srcMetadata);
+}
+
+void CameraDevice::ReleaseMetadata()
+{
+    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
+    cachedMetadata_ = nullptr;
 }
 
 void CameraDevice::ResetMetadata()
@@ -204,6 +260,21 @@ CameraFoldScreenType CameraDevice::GetCameraFoldScreenType()
     return foldScreenType_;
 }
 
+std::vector<SceneMode> CameraDevice::GetSupportedModes() const
+{
+    return supportedModes_;
+}
+
+std::vector<MetadataObjectType> CameraDevice::GetObjectTypes() const
+{
+    return objectTypes_;
+}
+
+bool CameraDevice::IsPrelaunch() const
+{
+    return isPrelaunch_;
+}
+
 std::string CameraDevice::GetHostName()
 {
     return dmDeviceInfo_.deviceName;
@@ -222,6 +293,11 @@ std::string CameraDevice::GetNetWorkId()
 uint32_t CameraDevice::GetCameraOrientation()
 {
     return cameraOrientation_;
+}
+
+bool CameraDevice::GetisRetractable()
+{
+    return isRetractable_;
 }
 
 uint32_t CameraDevice::GetModuleType()
@@ -243,7 +319,9 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     uint32_t zoomRangeCount = 2;
     camera_metadata_item_t item;
 
-    ret = Camera::FindCameraMetadataItem(baseAbility_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(cachedMetadata_ != nullptr, {},
+        "Failed to get zoom ratio range with cachedMetadata_ is nullptr");
+    ret = Camera::FindCameraMetadataItem(cachedMetadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
         "Failed to get zoom ratio range with return code %{public}d", ret);
     CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {},
@@ -266,11 +344,14 @@ void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
     modePreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
     modePhotoProfiles_[NORMAL] = capability->GetPhotoProfiles();
     modeVideoProfiles_[NORMAL] = capability->GetVideoProfiles();
+    modeDepthProfiles_[NORMAL] = capability->GetDepthProfiles();
     modePreviewProfiles_[CAPTURE] = capability->GetPreviewProfiles();
     modePhotoProfiles_[CAPTURE] = capability->GetPhotoProfiles();
+    modeDepthProfiles_[CAPTURE] = capability->GetDepthProfiles();
     modePreviewProfiles_[VIDEO] = capability->GetPreviewProfiles();
     modePhotoProfiles_[VIDEO] = capability->GetPhotoProfiles();
     modeVideoProfiles_[VIDEO] = capability->GetVideoProfiles();
+    modeDepthProfiles_[VIDEO] = capability->GetDepthProfiles();
 }
 
 void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability, int32_t modeName)
@@ -281,6 +362,7 @@ void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability, int32_t m
     modePreviewProfiles_[modeName] = capability->GetPreviewProfiles();
     modePhotoProfiles_[modeName] = capability->GetPhotoProfiles();
     modeVideoProfiles_[modeName] = capability->GetVideoProfiles();
+    modeDepthProfiles_[modeName] = capability->GetDepthProfiles();
 }
 
 std::vector<float> CameraDevice::GetExposureBiasRange()

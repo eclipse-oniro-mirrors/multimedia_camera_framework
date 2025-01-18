@@ -325,6 +325,8 @@ public:
     static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
+    static napi_value IsAutoAigcPhotoSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoAigcPhoto(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;

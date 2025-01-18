@@ -22,6 +22,8 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+const uint32_t METADATA_ITEM_SIZE = 20;
+const uint32_t METADATA_DATA_SIZE = 200;
 void HStreamMetadataUnit::SetUpTestCase(void) {}
 
 void HStreamMetadataUnit::TearDownTestCase(void) {}
@@ -71,7 +73,8 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level0)
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format, {1});
     ASSERT_NE(streamMetadata, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
     streamMetadata->LinkInput(streamOperator, metadata);
@@ -102,7 +105,8 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level0)
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format, {1});
     ASSERT_NE(streamMetadata, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     streamMetadata->Start();
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
     streamMetadata->LinkInput(streamOperator, metadata);

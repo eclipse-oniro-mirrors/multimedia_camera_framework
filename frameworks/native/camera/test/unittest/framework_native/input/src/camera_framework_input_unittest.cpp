@@ -204,8 +204,11 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_006, TestSize
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, deviceMetadata);
     ASSERT_NE(deviceMetadata, nullptr);
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
@@ -266,9 +269,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_008, TestSize
     ASSERT_FALSE(cameras.empty());
 
     for (sptr<CameraDevice> camDevice : cameras) {
-        int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-        std::shared_ptr<Camera::CameraMetadata> metadata = camDevice->GetMetadata();
-        metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+        camDevice->supportedModes_.clear();
+        camDevice->supportedModes_.push_back(PORTRAIT);
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         ASSERT_TRUE(modes.size() != 0);
 
@@ -305,9 +307,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_009, TestSize
     ASSERT_FALSE(cameras.empty());
 
     for (sptr<CameraDevice> camDevice : cameras) {
-        int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-        std::shared_ptr<Camera::CameraMetadata> metadata = camDevice->GetMetadata();
-        metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+        camDevice->supportedModes_.clear();
+        camDevice->supportedModes_.push_back(PORTRAIT);
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         ASSERT_TRUE(modes.size() != 0);
 
@@ -344,9 +345,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_010, TestSize
     ASSERT_FALSE(cameras.empty());
 
     for (sptr<CameraDevice> camDevice : cameras) {
-        int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-        std::shared_ptr<Camera::CameraMetadata> metadata = camDevice->GetMetadata();
-        metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+        camDevice->supportedModes_.clear();
+        camDevice->supportedModes_.push_back(PORTRAIT);
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         ASSERT_TRUE(modes.size() != 0);
 
@@ -383,9 +383,8 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_011, TestSize
     ASSERT_FALSE(cameras.empty());
 
     for (sptr<CameraDevice> camDevice : cameras) {
-        int32_t modeSet = static_cast<int32_t>(PORTRAIT);
-        std::shared_ptr<Camera::CameraMetadata> metadata = camDevice->GetMetadata();
-        metadata->addEntry(OHOS_ABILITY_CAMERA_MODES, &modeSet, 1);
+        camDevice->supportedModes_.clear();
+        camDevice->supportedModes_.push_back(PORTRAIT);
         std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
         ASSERT_TRUE(modes.size() != 0);
 

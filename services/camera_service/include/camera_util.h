@@ -54,6 +54,7 @@ static const std::string CLIENT_USER_ID = "clientUserId";
 static const std::string CAMERA_ID = "cameraId";
 static const std::string CAMERA_STATE = "cameraState";
 static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
+static const std::string CAMERA_MSG = "CameraMsg";
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
 

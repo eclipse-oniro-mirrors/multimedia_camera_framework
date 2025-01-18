@@ -838,7 +838,7 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
     MEDIA_INFO_LOG("IsDeferredImageDeliverySupported curMode:%{public}d, modeSupportType:%{public}d",
         curMode, modeSupportType);
     if (modeSupportType == type) {
-        isSupported = 0;
+        isSupported = 0; // -1:not support 0:support
     }
     return isSupported;
 }
@@ -1047,7 +1047,6 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     MEDIA_DEBUG_LOG("PhotoOutput GetPhotoRotation is called");
     int32_t sensorOrientation = 0;
     CameraPosition cameraPosition;
-    camera_metadata_item_t item;
     ImageRotation result = ImageRotation::ROTATION_0;
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
@@ -1062,12 +1061,7 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     cameraPosition = cameraObj->GetPosition();
     CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, cameraPosition is unspecified");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
-        "PhotoOutput Can not find OHOS_SENSOR_ORIENTATION");
-    sensorOrientation = item.data.i32[0];
+    sensorOrientation = cameraObj->GetCameraOrientation();
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
@@ -1088,5 +1082,65 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
         result, sensorOrientation);
     return result;
 }
+
+int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
+{
+    MEDIA_INFO_LOG("PhotoOutput::IsAutoAigcPhotoSupported enter");
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput::IsAutoAigcPhotoSupportederror, captureSession is nullptr");
+
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput::IsAutoAigcPhotoSupported, inputDevice is nullptr");
+
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, cameraObj is nullptr");
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(
+        metadata == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, metadata is nullptr");
+
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_AIGC_PHOTO, &item);
+    if (ret == CAM_META_SUCCESS) {
+        if (item.count == 0) {
+            MEDIA_WARNING_LOG("PhotoOutput::IsAutoAigcPhotoSupported item is nullptr");
+            return CAMERA_OK;
+        }
+        SceneMode currentSceneMode = session->GetMode();
+        for (int i = 0; i < static_cast<int>(item.count); i++) {
+            if (currentSceneMode == static_cast<int>(item.data.i32[i])) {
+                isAutoAigcPhotoSupported = true;
+                return CAMERA_OK;
+            }
+        }
+    }
+    MEDIA_INFO_LOG("PhotoOutput::IsAutoAigcPhotoSupported result: %{public}d ", isAutoAigcPhotoSupported);
+    return CAMERA_OK;
+}
+
+int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
+{
+    MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto enter, enabled: %{public}d", enabled);
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, SESSION_NOT_RUNNING,
+        "PhotoOutput::EnableAutoAigcPhoto error, captureSession is nullptr");
+
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
+        "PhotoOutput::EnableAutoAigcPhoto error, inputDevice is nullptr");
+
+    bool isAutoAigcPhotoSupported = false;
+    int32_t ret = IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableAutoAigcPhoto error");
+    CHECK_ERROR_RETURN_RET_LOG(
+        !isAutoAigcPhotoSupported, PARAMETER_ERROR, "PhotoOutput::EnableAutoAigcPhoto not supported");
+    int32_t res = captureSession->EnableAutoCloudImageEnhancement(enabled);
+    MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto result: %{public}d", res);
+    return res;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -27,6 +27,7 @@
 #include "camera_log.h"
 #include "int_wrapper.h"
 #include "js_native_api.h"
+#include "modal_ui_extension_config.h"
 #include "napi/native_common.h"
 #include "napi_base_context.h"
 #include "string_wrapper.h"
@@ -259,7 +260,6 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
     Ace::ModalUIExtensionConfig config;
-    config.prohibitedRemoveByNavigation = false;
     auto uiContent = pickerContextProxy->GetUIContent();
     if (uiContent == nullptr) {
         MEDIA_ERR_LOG("StartCameraAbility fail uiContent is null");
@@ -271,6 +271,9 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
         return nullptr;
     }
+    Ace::ModalUIExtensionAllowedUpdateConfig updateConfig;
+    updateConfig.prohibitedRemoveByNavigation = false;
+    uiContent->UpdateModalUIExtensionConfig(sessionId, updateConfig);
     uiExtCallback->SetSessionId(sessionId);
     return uiExtCallback;
 }

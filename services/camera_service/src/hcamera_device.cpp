@@ -340,6 +340,15 @@ int32_t HCameraDevice::Close()
     return result;
 }
 
+int32_t HCameraDevice::closeDelayed()
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayed Closing camera device: %{public}s", cameraID_.c_str());
+    int32_t result = closeDelayedDevice();
+    return result;
+}
+
 int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
@@ -527,6 +536,26 @@ int32_t HCameraDevice::CloseDevice()
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::closeDelayedDevice()
+{
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice start");
+    CAMERA_SYNC_TRACE;
+    sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
+    {
+        std::lock_guard<std::mutex> lock(opMutex_);
+        CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_OK);
+        hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
+    }
+    if (hdiCameraDeviceV1_2 != nullptr) {
+        int32_t errCode = hdiCameraDeviceV1_2->Reset();
+        CHECK_ERROR_RETURN_RET_LOG(errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR, CAMERA_UNKNOWN_ERROR,
+            "HCameraDevice::closeDelayedDevice ResetDevice error");
+        ResetCachedSettings();
+    }
+    MEDIA_INFO_LOG("HCameraDevice::closeDelayedDevice end");
+    return CAMERA_OK;
+}
+
 int32_t HCameraDevice::Release()
 {
     Close();
@@ -633,7 +662,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_ERROR_RETURN_RET_LOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
-    std::lock_guard<std::mutex> lock(opMutex_);
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     if (updateSettings_ == nullptr || !CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_)) {
         updateSettings_ = settings;
     }
@@ -1009,6 +1038,10 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
     MEDIA_ERR_LOG("CameraDeviceCallback::OnError() is called!, type: %{public}d,"
                     "cameraID_: %{public}s, cameraPid: %{public}d.",
         type, cameraID_.c_str(), cameraPid_);
+    if (errType == OHOS::HDI::Camera::V1_3::SENSOR_DATA_ERROR) {
+        NotifyCameraStatus(HdiToCameraErrorType(errType), errorMsg);
+        return CAMERA_OK;
+    }
     NotifyCameraStatus(HdiToCameraErrorType(errType));
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
@@ -1472,7 +1505,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
 }
 
-void HCameraDevice::NotifyCameraStatus(int32_t state)
+void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
 {
     OHOS::AAFwk::Want want;
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus strat");
@@ -1482,9 +1515,11 @@ void HCameraDevice::NotifyCameraStatus(int32_t state)
     want.SetParam(CAMERA_STATE, state);
     int32_t type = GetCameraType();
     want.SetParam(IS_SYSTEM_CAMERA, type);
+    want.SetParam(CAMERA_MSG, msg);
     MEDIA_DEBUG_LOG(
-        "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, cameraType: %{public}d: ",
-        clientUserId_, cameraID_.c_str(), state, type);
+        "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, "
+        "cameraType: %{public}d, msg: %{public}d",
+        clientUserId_, cameraID_.c_str(), state, type, msg);
     EventFwk::CommonEventData CommonEventData { want };
     EventFwk::CommonEventPublishInfo publishInfo;
     std::vector<std::string> permissionVec { OHOS_PERMISSION_MANAGE_CAMERA_CONFIG };
