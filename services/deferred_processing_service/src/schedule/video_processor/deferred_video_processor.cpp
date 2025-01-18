@@ -67,7 +67,7 @@ void DeferredVideoProcessor::RemoveVideo(const std::string& videoId, bool restor
 void DeferredVideoProcessor::RestoreVideo(const std::string& videoId)
 {
     DP_DEBUG_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
-    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
 
     repository_->RestoreVideoJob(videoId);
 }
