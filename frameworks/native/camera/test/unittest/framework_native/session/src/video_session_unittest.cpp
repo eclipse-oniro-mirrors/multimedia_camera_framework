@@ -187,7 +187,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level0
     sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
     ASSERT_NE(cameraService, nullptr);
 
-    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager_);
+    sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);

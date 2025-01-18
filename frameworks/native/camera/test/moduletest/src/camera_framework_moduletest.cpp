@@ -38,6 +38,7 @@
 #include "hcamera_device_proxy.h"
 #include "hcamera_service.h"
 #include "hcamera_service_stub.h"
+#include "icamera_service_callback.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
@@ -1130,7 +1131,7 @@ void CameraFrameworkModuleTest::SetUp()
     // set hap token please use SetHapToken();
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
-    manager_->SetCallback(std::make_shared<AppCallback>());
+    manager_->RegisterCameraStatusCallback(std::make_shared<AppCallback>());
 
     cameras_ = manager_->GetSupportedCameras();
     ASSERT_TRUE(cameras_.size() != 0);
@@ -5812,12 +5813,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.L
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     ASSERT_NE(serviceProxy, nullptr);
 
-    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(manager_);
+
+    sptr<ICameraServiceCallback> callback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
     EXPECT_EQ(intResult, -1);
 
-    sptr<ICameraMuteServiceCallback> callback_2 = new (std::nothrow) CameraMuteServiceCallback(manager_);
+    sptr<ICameraMuteServiceCallback> callback_2 = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     serviceProxy->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, -1);
@@ -6266,13 +6268,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_035, TestSize.L
 
     manager_->MuteCamera(cameraMuted);
 
-    sptr<CameraMuteServiceCallback> muteService = new (std::nothrow) CameraMuteServiceCallback(nullptr);
+    sptr<ICameraMuteServiceCallback> muteService = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(muteService, nullptr);
 
     int32_t muteCameraState = muteService->OnCameraMute(cameraMuted);
     EXPECT_EQ(muteCameraState, 0);
 
-    muteService = new (std::nothrow) CameraMuteServiceCallback(manager_);
+    muteService = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(muteService, nullptr);
 
     muteCameraState = muteService->OnCameraMute(cameraMuted);
@@ -6295,7 +6297,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
 
-    sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback(nullptr);
+    sptr<ICameraServiceCallback> camServiceCallback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(camServiceCallback, nullptr);
     int32_t cameraStatusChanged = camServiceCallback->OnFlashlightStatusChanged(cameraIdtest, status);
     EXPECT_EQ(cameraStatusChanged, 0);
@@ -7290,9 +7292,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_063, TestSize.L
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
-    std::shared_ptr<CameraManagerCallback> camMnagerCallback = std::make_shared<AppCallback>();
+    std::shared_ptr<CameraStatusListener> camMnagerCallback = std::make_shared<AppCallback>();
     camMnagerCallback = nullptr;
-    manager_->SetCallback(camMnagerCallback);
+    manager_->RegisterCameraStatusCallback(camMnagerCallback);
 
     int32_t intResult = camSession->Release();
     EXPECT_EQ(intResult, 0);
@@ -12489,7 +12491,7 @@ HWTEST_F(CameraFrameworkModuleTest, test_folded_state_callback, TestSize.Level0)
     camManagerObj->OnCameraServerAlive();
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     camManagerObj->RegisterFoldListener(callback);
-    EXPECT_EQ((camManagerObj->GetFoldListenerMap()).Size(), 1);
+    EXPECT_EQ(camManagerObj->GetFoldStatusListenerManager()->GetListenerCount(), 1);
 }
 
 /*

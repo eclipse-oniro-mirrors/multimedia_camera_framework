@@ -30,15 +30,16 @@
 
 namespace OHOS::CameraStandard {
 class InnerCameraManagerTorchStatusCallback;
+class InnerCameraManagerCameraStatusCallback;
 }
 struct Camera_Manager {
 public:
     Camera_Manager();
     ~Camera_Manager();
 
-    Camera_ErrorCode RegisterCallback(CameraManager_Callbacks* callback);
+    Camera_ErrorCode RegisterCallback(CameraManager_Callbacks* cameraStatusCallback);
 
-    Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* callback);
+    Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback);
 
     Camera_ErrorCode RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
 
@@ -130,12 +131,27 @@ private:
         torchStatusCallbackMap_[key] = value;
     }
 
+    inline void SetCameraStatusListenerMapValue(CameraManager_Callbacks* key,
+        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback> value)
+    {
+        if (key == nullptr) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(cameraStatusCallbackMapMutex_);
+        cameraStatusCallbackMap_[key] = value;
+    }
+
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
 
     std::mutex torchStatusCallbackMapMutex_;
     std::unordered_map<OH_CameraManager_TorchStatusCallback,
         std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>>
         torchStatusCallbackMap_;
+
+    std::mutex cameraStatusCallbackMapMutex_;
+    std::unordered_map<CameraManager_Callbacks*,
+        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>>
+        cameraStatusCallbackMap_;
 
     static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;
 };

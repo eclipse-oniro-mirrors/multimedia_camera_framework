@@ -324,7 +324,7 @@ int main(int argc, char **argv)
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     MEDIA_INFO_LOG("Setting callback to listen camera status and flash status");
-    camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
+    camManagerObj->RegisterCameraStatusCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     CHECK_ERROR_RETURN_RET(cameraObjList.size() == 0, 0);
     sptr<CameraDevice> device = cameraObjList[0];
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
     portraitSession->Stop();
     portraitSession->Release();
     cameraInput->Release();
-    camManagerObj->SetCallback(nullptr);
+    camManagerObj->RegisterCameraStatusCallback(nullptr);
 
     MEDIA_INFO_LOG("Camera new sample end.");
     return 0;

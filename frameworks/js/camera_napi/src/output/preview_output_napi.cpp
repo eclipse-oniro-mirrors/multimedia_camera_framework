@@ -580,8 +580,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
 void PreviewOutputNapi::RegisterFrameStartCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    auto listener = GetEventListener(env);
+    auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_ERROR_RETURN_LOG(
         listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
@@ -590,8 +589,7 @@ void PreviewOutputNapi::RegisterFrameStartCallbackListener(
 void PreviewOutputNapi::RegisterFrameEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    auto listener = GetEventListener(env);
+    auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
 }
@@ -599,18 +597,27 @@ void PreviewOutputNapi::RegisterFrameEndCallbackListener(
 void PreviewOutputNapi::RegisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    auto listener = GetEventListener(env);
+    auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_ERROR_RETURN_LOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
+}
+
+void PreviewOutputNapi::UnregisterCommonCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    auto listener = UnregisterCallbackListener(eventName, env, callback, args);
+    CHECK_ERROR_RETURN_LOG(listener == nullptr,
+        "PreviewOutputNapi::UnregisterCommonCallbackListener %{public}s listener is null", eventName.c_str());
+    if (listener->IsEmpty(eventName)) {
+        previewOutput_->RemoveCallback(listener);
+    }
 }
 
 void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On sketchStatusChanged is called!");
-    RegisterCallbackListener(eventName, env, callback, args, isOnce);
-    auto listener = GetEventListener(env);
+    auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_ERROR_RETURN_LOG(
         listener == nullptr, "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener listener is null");
     previewOutput_->SetCallback(listener);
@@ -624,11 +631,14 @@ void PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener(
         MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
         return;
     }
-    auto listener = GetEventListener(env);
+
+    auto listener = UnregisterCallbackListener(eventName, env, callback, args);
     CHECK_ERROR_RETURN_LOG(
         listener == nullptr, "PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener listener is null");
-    UnregisterCallbackListener(eventName, env, callback, args);
     previewOutput_->OnNativeUnregisterCallback(eventName);
+    if (listener->IsEmpty(eventName)) {
+        previewOutput_->RemoveCallback(listener);
+    }
 }
 
 const PreviewOutputNapi::EmitterFunctions& PreviewOutputNapi::GetEmitterFunctions()
@@ -636,13 +646,13 @@ const PreviewOutputNapi::EmitterFunctions& PreviewOutputNapi::GetEmitterFunction
     static const EmitterFunctions funMap = {
         { CONST_PREVIEW_FRAME_START, {
             &PreviewOutputNapi::RegisterFrameStartCallbackListener,
-            &PreviewOutputNapi::UnregisterCallbackListener } },
+            &PreviewOutputNapi::UnregisterCommonCallbackListener } },
         { CONST_PREVIEW_FRAME_END, {
             &PreviewOutputNapi::RegisterFrameEndCallbackListener,
-            &PreviewOutputNapi::UnregisterCallbackListener } },
+            &PreviewOutputNapi::UnregisterCommonCallbackListener } },
         { CONST_PREVIEW_FRAME_ERROR, {
             &PreviewOutputNapi::RegisterErrorCallbackListener,
-            &PreviewOutputNapi::UnregisterCallbackListener } },
+            &PreviewOutputNapi::UnregisterCommonCallbackListener } },
         { CONST_SKETCH_STATUS_CHANGED, {
             &PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener,
             &PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener } } };

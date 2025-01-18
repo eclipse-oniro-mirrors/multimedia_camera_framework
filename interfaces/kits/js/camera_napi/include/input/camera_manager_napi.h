@@ -37,7 +37,7 @@ enum CameraManagerAsyncCallbackModes {
     CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
 };
 
-class CameraManagerCallbackNapi : public CameraManagerCallback, public ListenerBase,
+class CameraManagerCallbackNapi : public CameraStatusListener, public ListenerBase,
     public std::enable_shared_from_this<CameraManagerCallbackNapi> {
 public:
     explicit CameraManagerCallbackNapi(napi_env env);
@@ -127,9 +127,11 @@ struct FoldStatusChangeCallbackInfo {
     }
 };
 
-struct CameraNapiObject;
 class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi>,
-                          public CameraNapiEventListener<TorchListenerNapi> {
+                          public CameraNapiEventListener<TorchListenerNapi>,
+                          public CameraNapiEventListener<CameraManagerCallbackNapi>,
+                          public CameraNapiEventListener<CameraMuteListenerNapi>,
+                          public CameraNapiEventListener<FoldListenerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
@@ -177,7 +179,7 @@ private:
         napi_env env, napi_callback_info info, CameraManagerNapi*& cameraManagerNapi, int32_t& jsSceneMode);
 
     static void RemoveDuplicatesProfile(sptr<CameraOutputCapability>& outputCapability);
-    template <typename T>
+    template<typename T>
     static void RemoveDuplicatesProfile(std::vector<T>& profiles);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
@@ -190,15 +192,13 @@ private:
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
+    void UnRegisterTorchStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFoldStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
-    std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
-    std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
-    std::shared_ptr<TorchListenerNapi> torchListener_;
-    std::shared_ptr<FoldListenerNapi> foldListener_;
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;

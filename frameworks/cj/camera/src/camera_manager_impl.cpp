@@ -220,7 +220,7 @@ void CJCameraManager::OnCameraStatusChanged(int64_t callbackId)
 {
     if (cameraManagerCallback_ == nullptr) {
         cameraManagerCallback_ = std::make_shared<CJCameraManagerCallback>();
-        cameraManager_->SetCallback(cameraManagerCallback_);
+        cameraManager_->RegisterCameraStatusCallback(cameraManagerCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJCameraStatusInfo info)>(callbackId);
     auto callback = [lambda = CJLambda::Create(cFunc)](const CameraStatusInfo &cameraStatusInfo) -> void {

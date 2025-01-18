@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     MEDIA_DEBUG_LOG("Setting callback to listen camera status and flash status");
-    camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
+    camManagerObj->RegisterCameraStatusCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     if (cameraObjList.size() == 0) {
         MEDIA_DEBUG_LOG("No camera devices");
@@ -512,7 +512,7 @@ int main(int argc, char **argv)
     // Close video file
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
     cameraInput->Release();
-    camManagerObj->SetCallback(nullptr);
+    camManagerObj->RegisterCameraStatusCallback(nullptr);
     MEDIA_DEBUG_LOG("Camera new sample end.");
     return 0;
 }

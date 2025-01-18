@@ -26,7 +26,7 @@ namespace CameraStandard {
 template<typename T, typename = std::enable_if_t<std::is_base_of_v<ListenerBase, T>>>
 class CameraNapiEventListener {
 public:
-    inline void RegisterCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+    std::shared_ptr<T> RegisterCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce)
     {
         std::shared_ptr<T> listener = nullptr;
@@ -39,27 +39,29 @@ public:
             }
         }
         listener->SaveCallbackReference(eventName, callback, isOnce);
+        return listener;
     }
 
-    inline void UnregisterCallbackListener(
+    std::shared_ptr<T> UnregisterCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
     {
         std::lock_guard<std::mutex> lock(eventListenerMapMutex_);
         auto listener = GetEventListenerNoLock(env);
         if (listener == nullptr) {
-            return;
+            return nullptr;
         }
         listener->RemoveCallbackRef(eventName, callback);
+        return listener;
     }
 
-    inline std::shared_ptr<T> GetEventListener(napi_env env)
-    {
-        std::lock_guard<std::mutex> lock(eventListenerMapMutex_);
-        return GetEventListenerNoLock(env);
-    }
+    // std::shared_ptr<T> GetEventListener(napi_env env)
+    // {
+    //     std::lock_guard<std::mutex> lock(eventListenerMapMutex_);
+    //     return GetEventListenerNoLock(env);
+    // }
 
 private:
-    inline std::shared_ptr<T> GetEventListenerNoLock(napi_env env)
+    std::shared_ptr<T> GetEventListenerNoLock(napi_env env)
     {
         auto it = eventListenerMap_.find(env);
         if (it == eventListenerMap_.end()) {
@@ -68,7 +70,7 @@ private:
         return it->second;
     }
 
-    inline void SetEventListenerNoLock(napi_env env, std::shared_ptr<T> eventListener)
+    void SetEventListenerNoLock(napi_env env, std::shared_ptr<T> eventListener)
     {
         eventListenerMap_[env] = eventListener;
     }

@@ -55,13 +55,15 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
     {Camera_TorchMode::AUTO, TorchMode::TORCH_MODE_AUTO}
 };
 
-class InnerCameraManagerCallback : public CameraManagerCallback {
+namespace OHOS::CameraStandard {
+class InnerCameraManagerCameraStatusCallback : public CameraStatusListener {
 public:
-    InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
-        : cameraManager_(cameraManager), callback_(*callback) {}
-    ~InnerCameraManagerCallback() {}
+    InnerCameraManagerCameraStatusCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
+        : cameraManager_(cameraManager), callback_(*callback)
+    {}
+    ~InnerCameraManagerCameraStatusCallback() {}
 
-    void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override
+    void OnCameraStatusChanged(const CameraStatusInfo& cameraStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnCameraStatusChanged is called!");
         Camera_StatusInfo statusInfo;
@@ -79,7 +81,7 @@ public:
             callback_.onCameraStatus(cameraManager_, &statusInfo));
     }
 
-    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override
+    void OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const override
     {
         MEDIA_DEBUG_LOG("OnFlashlightStatusChanged is called!");
         (void)cameraID;
@@ -91,7 +93,6 @@ private:
     CameraManager_Callbacks callback_;
 };
 
-namespace OHOS::CameraStandard {
 class InnerCameraManagerTorchStatusCallback : public TorchListener {
 public:
     InnerCameraManagerTorchStatusCallback(
@@ -173,17 +174,29 @@ Camera_Manager::~Camera_Manager()
     }
 }
 
-Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* callback)
+Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    shared_ptr<InnerCameraManagerCallback> innerCallback =
-                make_shared<InnerCameraManagerCallback>(this, callback);
-    cameraManager_->SetCallback(innerCallback);
+    shared_ptr<InnerCameraManagerCameraStatusCallback> innerCallback =
+        make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
+    cameraManager_->RegisterCameraStatusCallback(innerCallback);
+    SetCameraStatusListenerMapValue(cameraStatusCallback, innerCallback);
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* callback)
+Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    cameraManager_->SetCallback(nullptr);
+    shared_ptr<InnerCameraManagerCameraStatusCallback> callback = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(cameraStatusCallbackMapMutex_);
+        auto it = cameraStatusCallbackMap_.find(cameraStatusCallback);
+        if (it != cameraStatusCallbackMap_.end()) {
+            callback = it->second;
+            cameraStatusCallbackMap_.erase(it);
+        }
+    }
+    if (callback != nullptr) {
+        cameraManager_->UnRegisterCameraStatusCallback(callback);
+    }
     return CAMERA_OK;
 }
 

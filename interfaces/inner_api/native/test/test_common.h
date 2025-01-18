@@ -64,7 +64,7 @@ public:
     static int32_t SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode operationMode, int32_t &fd);
 };
 
-class TestCameraMngerCallback : public CameraManagerCallback {
+class TestCameraMngerCallback : public CameraStatusListener {
 public:
     explicit TestCameraMngerCallback(const char* testName);
     virtual ~TestCameraMngerCallback() = default;

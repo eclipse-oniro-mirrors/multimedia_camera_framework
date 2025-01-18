@@ -131,6 +131,8 @@ private:
         const std::vector<napi_value>& args, bool isOnce);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCommonCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSketchStatusChangedCallbackListener(
