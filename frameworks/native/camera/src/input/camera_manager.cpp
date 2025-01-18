@@ -2134,6 +2134,12 @@ bool CameraManager::IsTorchModeSupported(TorchMode mode)
 
 TorchMode CameraManager::GetTorchMode()
 {
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, torchMode_, "GetTorchMode serviceProxy is null");
+    int32_t status = 0;
+    int32_t retCode = serviceProxy->GetTorchStatus(status);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, torchMode_, "GetTorchMode call failed, retCode: %{public}d", retCode);
+    torchMode_ = (status == static_cast<int32_t>(TorchStatus::TORCH_STATUS_ON)) ? TORCH_MODE_ON : TORCH_MODE_OFF;
     return torchMode_;
 }
 
