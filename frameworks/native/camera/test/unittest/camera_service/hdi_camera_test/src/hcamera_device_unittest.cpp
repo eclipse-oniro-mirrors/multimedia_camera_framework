@@ -163,7 +163,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_003, TestSize.Level0)
     ASSERT_NE(camDevice, nullptr);
 
     camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
+    camDevice->UnregisterFoldStatusListener();
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings;
     camDevice->UpdateDeviceOpenLifeCycleSettings(changedSettings);
@@ -529,7 +529,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_014, TestSize.Level0)
     EXPECT_EQ(camDevice->UpdateSettingOnce(settings), 0);
 
     camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
+    camDevice->UnregisterFoldStatusListener();
 }
 
 /*
@@ -548,12 +548,12 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_015, TestSize.Level0)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
-    camDevice->UnRegisterFoldStatusListener();
+    camDevice->UnregisterFoldStatusListener();
     camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
+    camDevice->UnregisterFoldStatusListener();
     camDevice->cameraHostManager_ = nullptr;
     camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
+    camDevice->UnregisterFoldStatusListener();
 
     std::vector<int32_t> results = {};
     EXPECT_EQ(camDevice->EnableResult(results), CAMERA_INVALID_ARG);

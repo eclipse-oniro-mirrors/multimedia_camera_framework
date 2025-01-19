@@ -18,19 +18,22 @@
 
 #include <mutex>
 #include <unordered_map>
+
+#include "camera_input_impl.h"
+#include "capture_session_impl.h"
+#include "input/camera_manager.h"
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/camera_manager.h"
-#include "input/camera_manager.h"
-#include "capture_session_impl.h"
-#include "camera_input_impl.h"
+#include "metadata_output_impl.h"
+#include "ndk_callback_map.h"
+#include "photo_output_impl.h"
 #include "preview_output_impl.h"
 #include "video_output_impl.h"
-#include "photo_output_impl.h"
-#include "metadata_output_impl.h"
 
 namespace OHOS::CameraStandard {
 class InnerCameraManagerTorchStatusCallback;
 class InnerCameraManagerCameraStatusCallback;
+class InnerCameraManagerFoldStatusCallback;
 }
 struct Camera_Manager {
 public:
@@ -121,37 +124,16 @@ private:
     Camera_ErrorCode GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
         std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
 
-    inline void SetTorchListenerMapValue(OH_CameraManager_TorchStatusCallback key,
-        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback> value)
-    {
-        if (key == nullptr) {
-            return;
-        }
-        std::lock_guard<std::mutex> lock(torchStatusCallbackMapMutex_);
-        torchStatusCallbackMap_[key] = value;
-    }
-
-    inline void SetCameraStatusListenerMapValue(CameraManager_Callbacks* key,
-        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback> value)
-    {
-        if (key == nullptr) {
-            return;
-        }
-        std::lock_guard<std::mutex> lock(cameraStatusCallbackMapMutex_);
-        cameraStatusCallbackMap_[key] = value;
-    }
-
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
 
-    std::mutex torchStatusCallbackMapMutex_;
-    std::unordered_map<OH_CameraManager_TorchStatusCallback,
-        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>>
-        torchStatusCallbackMap_;
-
-    std::mutex cameraStatusCallbackMapMutex_;
-    std::unordered_map<CameraManager_Callbacks*,
-        std::shared_ptr<OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>>
+    NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
         cameraStatusCallbackMap_;
+
+    NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange, OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
+        cameraFoldStatusCallbackMap_;
+
+    NDKCallbackMap<OH_CameraManager_TorchStatusCallback, OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
+        torchStatusCallbackMap_;
 
     static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;
 };

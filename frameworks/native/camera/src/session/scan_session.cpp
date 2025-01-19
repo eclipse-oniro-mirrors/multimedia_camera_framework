@@ -110,10 +110,10 @@ void ScanSession::RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessSta
     SetBrightnessStatusReport(SWTCH_ON);
 }
  
-void ScanSession::UnRegisterBrightnessStatusCallback()
+void ScanSession::UnregisterBrightnessStatusCallback()
 {
     CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
-        "ScanSession::UnRegisterBrightnessStatusCallback Session is not Commited");
+        "ScanSession::UnregisterBrightnessStatusCallback Session is not Commited");
     SetBrightnessStatusCallback(nullptr);
     SetBrightnessStatusReport(SWTCH_OFF);
 }

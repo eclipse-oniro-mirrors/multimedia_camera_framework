@@ -84,21 +84,13 @@ Camera_ErrorCode Camera_PreviewOutput::RegisterCallback(PreviewOutput_Callbacks*
 {
     shared_ptr<InnerPreviewOutputCallback> innerCallback = make_shared<InnerPreviewOutputCallback>(this, callback);
     innerPreviewOutput_->SetCallback(innerCallback);
-    SetCallbackMapValue(callback, innerCallback);
+    callbackMap_.SetMapValue(callback, innerCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PreviewOutput::UnregisterCallback(PreviewOutput_Callbacks* callback)
 {
-    std::shared_ptr<PreviewStateCallback> innerCallback = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(callbackMapMutex_);
-        auto it = callbackMap_.find(callback);
-        if (it != callbackMap_.end()) {
-            innerCallback = it->second;
-            callbackMap_.erase(it);
-        }
-    }
+    auto innerCallback = callbackMap_.RemoveValue(callback);
     if (innerCallback != nullptr) {
         innerPreviewOutput_->RemoveCallback(innerCallback);
     }

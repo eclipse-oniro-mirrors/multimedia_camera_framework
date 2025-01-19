@@ -26,7 +26,6 @@
 #include <mutex>
 #include <new>
 #include <sched.h>
-#include <stdint.h>
 #include <string>
 #include <sync_fence.h>
 #include <utility>
@@ -426,7 +425,7 @@ void HCaptureSession::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
     displayListener_->AddHstreamRepeatForListener(repeat);
 }
 
-void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream)
+void HCaptureSession::UnregisterDisplayListener(sptr<HStreamRepeat> repeatStream)
 {
     CHECK_EXECUTE(displayListener_, displayListener_->RemoveHstreamRepeatForListener(repeatStream));
 }
@@ -562,7 +561,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
             if (enableStreamRotate_ && repeatSteam != nullptr &&
                 repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
-                UnRegisterDisplayListener(repeatSteam);
+                UnregisterDisplayListener(repeatSteam);
             }
             errorCode = RemoveOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {
@@ -1330,7 +1329,7 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
     if (isSetMotionPhoto_) {
         RegisterSensorCallback();
     } else {
-        UnRegisterSensorCallback();
+        UnregisterSensorCallback();
     }
 #endif
     auto device = GetCameraDevice();
@@ -1580,7 +1579,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
 #ifdef CAMERA_USE_SENSOR
-        CHECK_EXECUTE(isSetMotionPhoto_, UnRegisterSensorCallback());
+        CHECK_EXECUTE(isSetMotionPhoto_, UnregisterSensorCallback());
 #endif
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
@@ -1757,16 +1756,16 @@ void HCaptureSession::RegisterSensorCallback()
     }
 }
 
-void HCaptureSession::UnRegisterSensorCallback()
+void HCaptureSession::UnregisterSensorCallback()
 {
     std::lock_guard<std::mutex> lock(sensorLock_);
     int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_GRAVITY, &user);
     int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_GRAVITY, &user);
     if (deactivateRet == CAMERA_OK && unsubscribeRet == CAMERA_OK) {
-        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
+        MEDIA_INFO_LOG("HCameraService.UnregisterSensorCallback success.");
         isRegisterSensorSuccess_ = false;
     } else {
-        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback failed.");
+        MEDIA_INFO_LOG("HCameraService.UnregisterSensorCallback failed.");
     }
 }
 

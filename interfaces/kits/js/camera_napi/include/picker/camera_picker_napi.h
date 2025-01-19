@@ -18,7 +18,7 @@
 
 #include <atomic>
 #include <memory>
-#include <stdint.h>
+#include <cstdint>
 
 #include "ability_context.h"
 #include "camera_device.h"

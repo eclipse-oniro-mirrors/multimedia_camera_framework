@@ -17,7 +17,7 @@
 #define OHOS_CAMERA_INFO_DUMPER_H
 
 #include <list>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 namespace OHOS {

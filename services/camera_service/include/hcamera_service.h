@@ -163,7 +163,7 @@ public:
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
-    void UnRegisterFoldStatusListener();
+    void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
@@ -252,7 +252,7 @@ private:
     int32_t UnSetTorchCallback(pid_t pid);
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
-    void UnRegisterSensorCallback();
+    void UnregisterSensorCallback();
     static void DropDetectionDataCallbackImpl(SensorEvent *event);
 #endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,

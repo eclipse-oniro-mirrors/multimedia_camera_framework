@@ -20,7 +20,6 @@
 #include <iostream>
 #include <mutex>
 #include <refbase.h>
-#include <stdint.h>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -500,7 +499,7 @@ public:
      *
      * @param listener CameraStatusListener pointer.
      */
-    void UnRegisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener);
+    void UnregisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener);
 
     /**
      * @brief Get the camera status listener manager.

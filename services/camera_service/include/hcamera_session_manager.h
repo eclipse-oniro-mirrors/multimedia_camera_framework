@@ -20,7 +20,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
-#include <stdint.h>
+#include <cstdint>
 #include <unordered_map>
 
 #include "camera_util.h"

@@ -34,7 +34,7 @@ public:
     static float GetSketchEnableRatio(const SceneFeaturesMode& sceneFeaturesMode);
     static void UpdateSketchStaticInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
 
-    explicit SketchWrapper(sptr<IStreamCommon> hostStream, const Size size);
+    explicit SketchWrapper(wptr<IStreamCommon> hostStream, const Size size);
     virtual ~SketchWrapper();
     int32_t Init(
         std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, const SceneFeaturesMode& sceneFeaturesMode);

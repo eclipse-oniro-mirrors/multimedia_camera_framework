@@ -36,7 +36,7 @@ std::map<SceneFeaturesMode, std::vector<SketchReferenceFovRange>> SketchWrapper:
 std::mutex SketchWrapper::g_sketchEnableRatioMutex_;
 std::map<SceneFeaturesMode, float> SketchWrapper::g_sketchEnableRatioMap_;
 
-SketchWrapper::SketchWrapper(sptr<IStreamCommon> hostStream, const Size size)
+SketchWrapper::SketchWrapper(wptr<IStreamCommon> hostStream, const Size size)
     : hostStream_(hostStream), sketchSize_(size)
 {}
 

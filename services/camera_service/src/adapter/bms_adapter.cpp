@@ -38,7 +38,7 @@ BmsAdapter::BmsAdapter()
 
 BmsAdapter::~BmsAdapter()
 {
-    UnRegisterListener();
+    UnregisterListener();
 }
 
 sptr<BmsAdapter> BmsAdapter::GetInstance()
@@ -111,9 +111,9 @@ bool BmsAdapter::RegisterListener()
     return true;
 }
 
-bool BmsAdapter::UnRegisterListener()
+bool BmsAdapter::UnregisterListener()
 {
-    MEDIA_INFO_LOG("Enter Into BmsAdapter::UnRegisterListener");
+    MEDIA_INFO_LOG("Enter Into BmsAdapter::UnregisterListener");
     CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ is null not need unregister");
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "samgr is null");

@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <iostream>
 #include <refbase.h>
-#include <stdint.h>
 #include <vector>
 
 #include "istream_repeat_callback.h"

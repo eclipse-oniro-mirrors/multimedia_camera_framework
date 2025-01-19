@@ -336,14 +336,14 @@ private:
     void DynamicConfigStream();
     bool IsNeedDynamicConfig();
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
-    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
+    void UnregisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
 
     #ifdef CAMERA_USE_SENSOR
         std::mutex sensorLock_;
         bool isRegisterSensorSuccess_ = false;
         void RegisterSensorCallback();
-        void UnRegisterSensorCallback();
+        void UnregisterSensorCallback();
         static void GravityDataCallbackImpl(SensorEvent *event);
         static int32_t CalcSensorRotation(int32_t sensorDegree);
         static int32_t CalcRotationDegree(GravityData data);

@@ -116,16 +116,15 @@ private:
     Camera_Manager* cameraManager_;
     OH_CameraManager_TorchStatusCallback torchStatusCallback_ = nullptr;
 };
-} // namespace OHOS::CameraStandard
 
 class InnerCameraManagerFoldStatusCallback : public FoldListener {
 public:
-    InnerCameraManagerFoldStatusCallback(Camera_Manager* cameraManager,
-        OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
+    InnerCameraManagerFoldStatusCallback(
+        Camera_Manager* cameraManager, OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
         : cameraManager_(cameraManager), foldStatusCallback_(foldStatusCallback) {};
     ~InnerCameraManagerFoldStatusCallback() = default;
 
-    void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override
+    void OnFoldStatusChanged(const FoldStatusInfo& foldStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnFoldStatusChanged is called!");
         if (cameraManager_ != nullptr && (foldStatusCallback_ != nullptr)) {
@@ -155,10 +154,12 @@ public:
             foldStatusCallback_(cameraManager_, &statusInfo);
         }
     }
+
 private:
     Camera_Manager* cameraManager_;
     OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback_ = nullptr;
 };
+} // namespace OHOS::CameraStandard
 
 Camera_Manager::Camera_Manager()
 {
@@ -176,50 +177,32 @@ Camera_Manager::~Camera_Manager()
 
 Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    shared_ptr<InnerCameraManagerCameraStatusCallback> innerCallback =
-        make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
+    auto innerCallback = make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
     cameraManager_->RegisterCameraStatusCallback(innerCallback);
-    SetCameraStatusListenerMapValue(cameraStatusCallback, innerCallback);
+    cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    shared_ptr<InnerCameraManagerCameraStatusCallback> callback = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(cameraStatusCallbackMapMutex_);
-        auto it = cameraStatusCallbackMap_.find(cameraStatusCallback);
-        if (it != cameraStatusCallbackMap_.end()) {
-            callback = it->second;
-            cameraStatusCallbackMap_.erase(it);
-        }
-    }
+    auto callback = cameraStatusCallbackMap_.RemoveValue(cameraStatusCallback);
     if (callback != nullptr) {
-        cameraManager_->UnRegisterCameraStatusCallback(callback);
+        cameraManager_->UnregisterCameraStatusCallback(callback);
     }
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
-    shared_ptr<InnerCameraManagerTorchStatusCallback> innerTorchStatusCallback =
-        make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
+    auto innerTorchStatusCallback = make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
     cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
-    SetTorchListenerMapValue(torchStatusCallback, innerTorchStatusCallback);
+    torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
-    shared_ptr<InnerCameraManagerTorchStatusCallback> callback = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(torchStatusCallbackMapMutex_);
-        auto it = torchStatusCallbackMap_.find(torchStatusCallback);
-        if (it != torchStatusCallbackMap_.end()) {
-            callback = it->second;
-            torchStatusCallbackMap_.erase(it);
-        }
-    }
+    auto callback = torchStatusCallbackMap_.RemoveValue(torchStatusCallback);
     if (callback != nullptr) {
         cameraManager_->UnregisterTorchListener(callback);
     }
@@ -887,17 +870,20 @@ Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
 
 Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
 {
-    shared_ptr<InnerCameraManagerFoldStatusCallback> innerFoldStatusCallback =
-                make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
-    CHECK_ERROR_RETURN_RET_LOG(innerFoldStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "create innerFoldStatusCallback failed!");
+    auto innerFoldStatusCallback = make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
+    CHECK_ERROR_RETURN_RET_LOG(
+        innerFoldStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerFoldStatusCallback failed!");
     cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
+    cameraFoldStatusCallbackMap_.SetMapValue(foldStatusCallback, innerFoldStatusCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::UnregisterFoldStatusCallback(
     OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)
 {
-    cameraManager_->RegisterFoldListener(nullptr);
+    auto callback = cameraFoldStatusCallbackMap_.RemoveValue(foldStatusCallback);
+    if (callback != nullptr) {
+        cameraManager_->UnregisterFoldListener(callback);
+    }
     return CAMERA_OK;
 }

@@ -16,9 +16,9 @@
 #include "hcamera_session_manager.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <sched.h>
-#include <stdint.h>
 
 #include "camera_util.h"
 #include "hcapture_session.h"

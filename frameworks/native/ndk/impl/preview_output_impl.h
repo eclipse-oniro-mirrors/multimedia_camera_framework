@@ -21,6 +21,7 @@
 
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/preview_output.h"
+#include "ndk_callback_map.h"
 #include "output/preview_output.h"
 
 namespace OHOS::CameraStandard {
@@ -59,20 +60,8 @@ public:
     Camera_ErrorCode SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked);
 
 private:
-    inline void SetCallbackMapValue(
-        PreviewOutput_Callbacks* key, std::shared_ptr<OHOS::CameraStandard::InnerPreviewOutputCallback> value)
-    {
-        if (key == nullptr) {
-            return;
-        }
-        std::lock_guard<std::mutex> lock(callbackMapMutex_);
-        callbackMap_[key] = value;
-    }
-
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 
-    std::mutex callbackMapMutex_;
-    std::unordered_map<PreviewOutput_Callbacks*, std::shared_ptr<OHOS::CameraStandard::InnerPreviewOutputCallback>>
-        callbackMap_;
+    NDKCallbackMap<PreviewOutput_Callbacks*, OHOS::CameraStandard::InnerPreviewOutputCallback> callbackMap_;
 };
 #endif // OHOS_PREVIEW_OUTPUT_IMPL_H

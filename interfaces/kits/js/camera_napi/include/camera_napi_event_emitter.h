@@ -16,7 +16,7 @@
 #ifndef CAMERA_NAPI_EVENT_EMITTER_H
 #define CAMERA_NAPI_EVENT_EMITTER_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "camera_log.h"
 #include "camera_napi_callback_param_parser.h"

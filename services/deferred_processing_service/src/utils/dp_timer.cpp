@@ -49,7 +49,7 @@ uint32_t DpsTimer::StartTimer(const TimerCallback& callback, uint32_t interval)
 void DpsTimer::StopTimer(uint32_t& timerId)
 {
     DP_DEBUG_LOG("timer shutting down, timerId = %{public}u", timerId);
-    DP_CHECK_ERROR_RETURN_LOG(timerId == INVALID_TIMEID, "UnRegister timer failed, timerId is invalid");
+    DP_CHECK_ERROR_RETURN_LOG(timerId == INVALID_TIMEID, "Unregister timer failed, timerId is invalid");
     DP_CHECK_ERROR_RETURN_LOG(timer_ == nullptr, "DpsTimer is nullptr");
 
     timer_->Unregister(timerId);

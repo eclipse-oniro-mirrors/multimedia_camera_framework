@@ -16,6 +16,7 @@
 #include "output/preview_output.h"
 
 #include <cstdint>
+#include <fstream>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -28,16 +29,16 @@
 #include "camera_manager.h"
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
+#include "camera_rotation_api_utils.h"
 #include "camera_util.h"
 #include "hstream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
 #include "metadata_common_utils.h"
+#include "parameters.h"
 #include "session/capture_session.h"
 #include "sketch_wrapper.h"
-#include "parameters.h"
-#include "camera_rotation_api_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -87,9 +88,10 @@ int32_t PreviewOutput::Release()
     previewOutputListenerManager_->ClearListeners();
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Release");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+    auto stream = GetStream();
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PreviewOutput Failed to Release!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -175,8 +177,9 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 {
     MEDIA_INFO_LOG("PreviewOutput::AddDeferredSurface called");
     CHECK_ERROR_RETURN_LOG(surface == nullptr, "PreviewOutput::AddDeferredSurface surface is null");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
-    CHECK_ERROR_RETURN_LOG(!itemStream, "PreviewOutput::AddDeferredSurface itemStream is null");
+    auto stream = GetStream();
+    CHECK_ERROR_RETURN_LOG(!stream, "PreviewOutput::AddDeferredSurface itemStream is null");
+    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     itemStream->AddDeferredSurface(surface->GetProducer());
 }
 
@@ -185,11 +188,12 @@ int32_t PreviewOutput::Start()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Start");
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PreviewOutput Failed to Start, session not commited");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "PreviewOutput Failed to Start, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to Start, session not commited");
+    auto stream = GetStream();
+    CHECK_ERROR_RETURN_RET_LOG(
+        stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Start, GetStream is nullptr");
+    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -204,9 +208,10 @@ int32_t PreviewOutput::Stop()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Stop");
-    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "PreviewOutput Failed to Stop, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    CHECK_ERROR_RETURN_RET_LOG(
+        stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Stop, GetStream is nullptr");
+    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -377,7 +382,8 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     CHECK_ERROR_RETURN_RET_LOG(minFrameRate == previewFrameRateRange_[0] && maxFrameRate == previewFrameRateRange_[1],
         CameraErrorCode::INVALID_ARGUMENT, "PreviewOutput::SetFrameRate The frame rate does not need to be set.");
     std::vector<int32_t> frameRateRange = {minFrameRate, maxFrameRate};
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
@@ -509,13 +515,30 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
+    auto stream = GetStream();
+    CHECK_ERROR_RETURN(stream == nullptr);
     bool isSuccess = previewOutputListenerManager_->AddListener(callback);
-    CHECK_ERROR_PRINT_LOG(isSuccess, "PreviewOutput::SetCallback callback listener already exist");
+    CHECK_ERROR_RETURN(!isSuccess);
+    if (previewOutputListenerManager_->GetListenerCount() == 1) {
+        sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
+        auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        int32_t errCode = itemStream->SetCallback(ipcCallback);
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
+            previewOutputListenerManager_->RemoveListener(callback);
+        }
+    }
 }
 
 void PreviewOutput::RemoveCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
     previewOutputListenerManager_->RemoveListener(callback);
+    if (previewOutputListenerManager_->GetListenerCount() == 0) {
+        auto stream = GetStream();
+        CHECK_ERROR_RETURN(stream == nullptr);
+        auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        itemStream->UnSetCallback();
+    }
 }
 
 const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverControlTags()

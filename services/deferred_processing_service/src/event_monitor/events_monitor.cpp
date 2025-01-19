@@ -227,7 +227,7 @@ void CommonEventListener::OnRemoveSystemAbility(int32_t systemAbilityId, const s
     std::lock_guard<std::mutex> lock(eventSubscriberMutex_);
     DP_CHECK_RETURN(eventSubscriber_ == nullptr);
     DP_DEBUG_LOG("saId: %{public}d", systemAbilityId);
-    DP_CHECK_ERROR_RETURN_LOG(eventSubscriber_ == nullptr, "UnRegisterEventStatus failed, eventSubscriber is nullptr");
+    DP_CHECK_ERROR_RETURN_LOG(eventSubscriber_ == nullptr, "UnregisterEventStatus failed, eventSubscriber is nullptr");
     eventSubscriber_->UnSubscribe();
 }
 

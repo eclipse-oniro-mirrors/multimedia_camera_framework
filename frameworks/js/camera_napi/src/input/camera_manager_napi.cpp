@@ -1282,7 +1282,7 @@ void CameraManagerNapi::UnregisterCameraStatusCallbackListener(
         CameraNapiEventListener<CameraManagerCallbackNapi>::UnregisterCallbackListener(eventName, env, callback, args);
     CHECK_ERROR_RETURN(listener == nullptr);
     if (listener->IsEmpty(eventName)) {
-        cameraManager_->UnRegisterCameraStatusCallback(listener);
+        cameraManager_->UnregisterCameraStatusCallback(listener);
     }
 }
 
@@ -1319,7 +1319,7 @@ void CameraManagerNapi::RegisterTorchStatusCallbackListener(
     cameraManager_->RegisterTorchListener(listener);
 }
 
-void CameraManagerNapi::UnRegisterTorchStatusCallbackListener(
+void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     auto listener =
@@ -1362,7 +1362,7 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
             &CameraManagerNapi::UnregisterCameraMuteCallbackListener } },
         { "torchStatusChange", {
             &CameraManagerNapi::RegisterTorchStatusCallbackListener,
-            &CameraManagerNapi::UnRegisterTorchStatusCallbackListener } },
+            &CameraManagerNapi::UnregisterTorchStatusCallbackListener } },
         { "foldStatusChange", {
             &CameraManagerNapi::RegisterFoldStatusCallbackListener,
             &CameraManagerNapi::UnregisterFoldStatusCallbackListener } } };

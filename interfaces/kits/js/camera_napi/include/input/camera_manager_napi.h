@@ -192,7 +192,7 @@ private:
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
-    void UnRegisterTorchStatusCallbackListener(
+    void UnregisterTorchStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);

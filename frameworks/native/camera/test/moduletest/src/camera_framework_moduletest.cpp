@@ -4118,7 +4118,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_055, TestSi
 
     EXPECT_EQ(g_brightnessStatusChanged, true);
 
-    scanSession->UnRegisterBrightnessStatusCallback();
+    scanSession->UnregisterBrightnessStatusCallback();
     intResult = scanSession->Stop();
     EXPECT_EQ(intResult, 0);
 

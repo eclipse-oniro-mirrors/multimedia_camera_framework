@@ -152,9 +152,9 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
-    UnRegisterFoldStatusListener();
+    UnregisterFoldStatusListener();
 #ifdef CAMERA_USE_SENSOR
-    UnRegisterSensorCallback();
+    UnregisterSensorCallback();
 #endif
     DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
@@ -1054,12 +1054,12 @@ void HCameraService::RegisterFoldStatusListener()
     isFoldRegister = true;
 }
 
-void HCameraService::UnRegisterFoldStatusListener()
+void HCameraService::UnregisterFoldStatusListener()
 {
-    MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
+    MEDIA_INFO_LOG("UnregisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
     preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
-    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
+    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnregisterFoldStatusListener failed");
     isFoldRegister = false;
 }
 
@@ -1729,12 +1729,12 @@ void HCameraService::RegisterSensorCallback()
     }
 }
 
-void HCameraService::UnRegisterSensorCallback()
+void HCameraService::UnregisterSensorCallback()
 {
     int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     if (deactivateRet == SENSOR_SUCCESS && unsubscribeRet == SENSOR_SUCCESS) {
-        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
+        MEDIA_INFO_LOG("HCameraService.UnregisterSensorCallback success.");
     }
 }
 
