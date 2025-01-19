@@ -266,13 +266,24 @@ private:
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
+    FoldStatus cachedFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    map<string, CameraStatusCallbacksInfo> cameraStatusCallbacks_;
+
+    void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);
+    std::shared_ptr<CameraStatusCallbacksInfo> GetCachedCameraStatus(const string& cameraId);
+    std::mutex cameraStatusCallbacksMutex_;
+    map<string, std::shared_ptr<CameraStatusCallbacksInfo>> cameraStatusCallbacks_;
+
+    void CacheFlashStatus(const string& cameraId, FlashStatus flashStatus);
+    FlashStatus GetCachedFlashStatus(const string& cameraId);
+    std::mutex flashStatusCallbacksMutex_;
+    map<string, FlashStatus> flashStatusCallbacks_;
+
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
