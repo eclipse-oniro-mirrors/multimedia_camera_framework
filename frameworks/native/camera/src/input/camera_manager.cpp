@@ -187,7 +187,7 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
 
     if (cameraStatusInfo.cameraDevice) {
         auto listenerManager = cameraManager->GetCameraStatusListenerManager();
-        MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}d", listenerManager->GetListenerCount());
+        MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
         listenerManager->TriggerListener([&](auto listener) { listener->OnCameraStatusChanged(cameraStatusInfo); });
     }
     return CAMERA_OK;
@@ -200,7 +200,7 @@ int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string
     CHECK_ERROR_RETURN_RET_LOG(
         cameraManager == nullptr, CAMERA_OK, "OnFlashlightStatusChanged CameraManager is nullptr");
     auto listenerManager = cameraManager->GetCameraStatusListenerManager();
-    MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}d", listenerManager->GetListenerCount());
+    MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFlashlightStatusChanged(cameraId, status); });
     return CAMERA_OK;
 }
@@ -1835,7 +1835,7 @@ int32_t FoldStatusListenerManager::OnFoldStatusChanged(const FoldStatus status)
     foldStatusInfo.foldStatus = status;
     foldStatusInfo.supportedCameras = cameraManager->GetSupportedCameras();
     auto listenerManager = cameraManager->GetFoldStatusListenerManager();
-    MEDIA_DEBUG_LOG("FoldListeners size %{public}d", listenerManager->GetListenerCount());
+    MEDIA_DEBUG_LOG("FoldListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFoldStatusChanged(foldStatusInfo); });
     return CAMERA_OK;
 }
@@ -1934,7 +1934,7 @@ int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)
     auto cameraManager = GetCameraManager();
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraMute CameraManager is nullptr");
     auto listenerManager = cameraManager->GetCameraMuteListenerManager();
-    MEDIA_DEBUG_LOG("CameraMuteListeners size %{public}d", listenerManager->GetListenerCount());
+    MEDIA_DEBUG_LOG("CameraMuteListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnCameraMute(muteMode); });
     return CAMERA_OK;
 }
