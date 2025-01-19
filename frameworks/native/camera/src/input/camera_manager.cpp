@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <ostream>
@@ -189,6 +190,7 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         auto listenerManager = cameraManager->GetCameraStatusListenerManager();
         MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
         listenerManager->TriggerListener([&](auto listener) { listener->OnCameraStatusChanged(cameraStatusInfo); });
+        listenerManager->CacheCameraStatus(cameraId, std::make_shared<CameraStatusInfo>(cameraStatusInfo));
     }
     return CAMERA_OK;
 }
@@ -202,6 +204,7 @@ int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string
     auto listenerManager = cameraManager->GetCameraStatusListenerManager();
     MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFlashlightStatusChanged(cameraId, status); });
+    listenerManager->CacheFlashStatus(cameraId, status);
     return CAMERA_OK;
 }
 
@@ -920,17 +923,31 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
 void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraStatusListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = cameraStatusListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
     if (cameraStatusListenerManager_->GetListenerCount() == 1) {
         sptr<ICameraServiceCallback> callback = cameraStatusListenerManager_;
         int32_t errCode = SetCameraServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
+    } else {
+        auto cachedStatus = cameraStatusListenerManager_->GetCachedCameraStatus();
+        for (auto& status : cachedStatus) {
+            if (status == nullptr) {
+                continue;
+            }
+            listener->OnCameraStatusChanged(*status);
+        }
+        auto cachedFlashStatus = cameraStatusListenerManager_->GetCachedFlashStatus();
+        for (auto& status : cachedFlashStatus) {
+            listener->OnFlashlightStatusChanged(status.first, status.second);
+        }
     }
 }
 
 void CameraManager::UnregisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     cameraStatusListenerManager_->RemoveListener(listener);
     if (cameraStatusListenerManager_->GetListenerCount() == 0) {
         UnSetCameraServiceCallback();
@@ -944,17 +961,21 @@ sptr<CameraStatusListenerManager> CameraManager::GetCameraStatusListenerManager(
 
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = cameraMuteListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
     if (cameraMuteListenerManager_->GetListenerCount() == 1) {
         sptr<ICameraMuteServiceCallback> callback = cameraMuteListenerManager_;
         int32_t errCode = SetCameraMuteServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
+    } else {
+        listener->OnCameraMute(cameraMuteListenerManager_->GetCachedMuteMode());
     }
 }
 
 void CameraManager::UnregisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     cameraMuteListenerManager_->RemoveListener(listener);
     if (cameraMuteListenerManager_->GetListenerCount() == 0) {
         UnSetCameraMuteServiceCallback();
@@ -968,17 +989,21 @@ sptr<CameraMuteListenerManager> CameraManager::GetCameraMuteListenerManager()
 
 void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = torchServiceListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
     if (torchServiceListenerManager_->GetListenerCount() == 1) {
         sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
         int32_t errCode = SetTorchServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
+    } else {
+        listener->OnTorchStatusChange(torchServiceListenerManager_->GetCachedTorchStatus());
     }
 }
 
 void CameraManager::UnregisterTorchListener(std::shared_ptr<TorchListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     torchServiceListenerManager_->RemoveListener(listener);
     if (torchServiceListenerManager_->GetListenerCount() == 0) {
         UnSetTorchServiceCallback();
@@ -992,17 +1017,21 @@ sptr<TorchServiceListenerManager> CameraManager::GetTorchServiceListenerManager(
 
 void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = foldStatusListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
     if (foldStatusListenerManager_->GetListenerCount() == 1) {
         sptr<IFoldServiceCallback> callback = foldStatusListenerManager_;
         int32_t errCode = SetFoldServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
+    } else {
+        listener->OnFoldStatusChanged(foldStatusListenerManager_->GetCachedFoldStatus());
     }
 }
 
 void CameraManager::UnregisterFoldListener(shared_ptr<FoldListener> listener)
 {
+    CHECK_ERROR_RETURN(listener == nullptr);
     foldStatusListenerManager_->RemoveListener(listener);
     if (foldStatusListenerManager_->GetListenerCount() == 0) {
         UnSetFoldServiceCallback();
@@ -1820,8 +1849,9 @@ int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus statu
         torchStatusInfo.torchLevel = 0;
         cameraManager->UpdateTorchMode(TORCH_MODE_OFF);
     }
-    cameraManager->GetTorchServiceListenerManager()->TriggerListener(
-        [&](auto listener) { listener->OnTorchStatusChange(torchStatusInfo); });
+    auto listener = cameraManager->GetTorchServiceListenerManager();
+    listener->TriggerListener([&](auto listener) { listener->OnTorchStatusChange(torchStatusInfo); });
+    listener->cachedTorchStatus_ = torchStatusInfo;
     return CAMERA_OK;
 }
 
@@ -1837,6 +1867,7 @@ int32_t FoldStatusListenerManager::OnFoldStatusChanged(const FoldStatus status)
     auto listenerManager = cameraManager->GetFoldStatusListenerManager();
     MEDIA_DEBUG_LOG("FoldListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFoldStatusChanged(foldStatusInfo); });
+    listenerManager->cachedStatus_ = foldStatusInfo;
     return CAMERA_OK;
 }
 
@@ -1936,6 +1967,7 @@ int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)
     auto listenerManager = cameraManager->GetCameraMuteListenerManager();
     MEDIA_DEBUG_LOG("CameraMuteListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnCameraMute(muteMode); });
+    listenerManager->cachedMuteMode_ = muteMode;
     return CAMERA_OK;
 }
 

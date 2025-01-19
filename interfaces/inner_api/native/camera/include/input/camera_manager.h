@@ -18,10 +18,12 @@
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <refbase.h>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "camera_stream_info_parse.h"
@@ -31,6 +33,7 @@
 #include "hcamera_service_callback_stub.h"
 #include "hcamera_service_proxy.h"
 #include "icamera_device_service.h"
+#include "icamera_service_callback.h"
 #include "input/camera_death_recipient.h"
 #include "input/camera_device.h"
 #include "input/camera_info.h"
@@ -69,11 +72,6 @@ struct CameraStatusInfo {
     sptr<CameraDevice> cameraDevice;
     CameraStatus cameraStatus;
     std::string bundleName;
-    ~CameraStatusInfo()
-    {
-        cameraInfo = nullptr;
-        cameraDevice = nullptr;
-    }
 };
 
 struct TorchStatusInfo {
@@ -914,6 +912,45 @@ public:
     int32_t OnCameraStatusChanged(
         const std::string& cameraId, const CameraStatus status, const std::string& bundleName) override;
     int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
+
+    inline std::vector<std::shared_ptr<CameraStatusInfo>> GetCachedCameraStatus()
+    {
+        std::lock_guard<std::mutex> lock(cachedCameraStatusMutex_);
+        std::vector<std::shared_ptr<CameraStatusInfo>> infoList = {};
+        for (auto& it : cachedCameraStatus_) {
+            if (it.second != nullptr) {
+                infoList.emplace_back(it.second);
+            }
+        }
+        return infoList;
+    }
+    inline std::vector<std::pair<std::string, FlashStatus>> GetCachedFlashStatus()
+    {
+        std::lock_guard<std::mutex> lock(cachedFlashStatusMutex_);
+        std::vector<std::pair<std::string, FlashStatus>> statusList = {};
+        for (auto& it : cachedFlashStatus_) {
+            statusList.emplace_back(it);
+        }
+        return statusList;
+    }
+
+private:
+    inline void CacheCameraStatus(const std::string& cameraId, std::shared_ptr<CameraStatusInfo> statusInfo)
+    {
+        std::lock_guard<std::mutex> lock(cachedCameraStatusMutex_);
+        cachedCameraStatus_[cameraId] = statusInfo;
+    }
+
+    inline void CacheFlashStatus(const std::string& cameraId, const FlashStatus status)
+    {
+        std::lock_guard<std::mutex> lock(cachedFlashStatusMutex_);
+        cachedFlashStatus_[cameraId] = status;
+    }
+
+    std::mutex cachedCameraStatusMutex_;
+    unordered_map<string, std::shared_ptr<CameraStatusInfo>> cachedCameraStatus_;
+    std::mutex cachedFlashStatusMutex_;
+    unordered_map<string, FlashStatus> cachedFlashStatus_;
 };
 
 class TorchServiceListenerManager : public CameraManagerGetter,
@@ -921,6 +958,14 @@ class TorchServiceListenerManager : public CameraManagerGetter,
                                     public CameraListenerManager<TorchListener> {
 public:
     int32_t OnTorchStatusChange(const TorchStatus status) override;
+
+    inline TorchStatusInfo GetCachedTorchStatus()
+    {
+        return cachedTorchStatus_;
+    }
+
+private:
+    TorchStatusInfo cachedTorchStatus_ = {};
 };
 
 class CameraMuteListenerManager : public CameraManagerGetter,
@@ -928,6 +973,14 @@ class CameraMuteListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<CameraMuteListener> {
 public:
     int32_t OnCameraMute(bool muteMode) override;
+
+    inline bool GetCachedMuteMode()
+    {
+        return cachedMuteMode_;
+    }
+
+private:
+    bool cachedMuteMode_ = true;
 };
 
 class FoldStatusListenerManager : public CameraManagerGetter,
@@ -935,6 +988,14 @@ class FoldStatusListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<FoldListener> {
 public:
     int32_t OnFoldStatusChanged(const FoldStatus status) override;
+
+    inline FoldStatusInfo GetCachedFoldStatus()
+    {
+        return cachedStatus_;
+    }
+
+private:
+    FoldStatusInfo cachedStatus_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS
