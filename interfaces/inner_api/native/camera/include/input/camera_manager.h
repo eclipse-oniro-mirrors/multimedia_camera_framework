@@ -239,7 +239,7 @@ public:
      * @param pCaptureSession pointer to capture session.
      * @return Returns error code.
      */
-    int32_t CreateCaptureSession(sptr<CaptureSession>& pCaptureSession);
+    int32_t CreateCaptureSession(sptr<CaptureSession>* pCaptureSession);
 
     /**
      * @brief Create photo output instance using surface.

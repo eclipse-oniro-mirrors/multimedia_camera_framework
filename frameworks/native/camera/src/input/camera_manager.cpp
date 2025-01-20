@@ -294,9 +294,9 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSession)
+int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>* pCaptureSession)
 {
-    return CreateCaptureSession(pCaptureSession, SceneMode::NORMAL);
+    return CreateCaptureSession(*pCaptureSession, SceneMode::NORMAL);
 }
 
 sptr<DeferredPhotoProcSession> CameraManager::CreateDeferredPhotoProcessingSession(int userId,
