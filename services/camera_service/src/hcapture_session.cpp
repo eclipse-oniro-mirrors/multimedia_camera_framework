@@ -110,16 +110,16 @@ CamServiceError HCaptureSession::NewInstance(
 {
     CamServiceError errCode = CAMERA_OK;
     sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, opMode);
-    if(session == nullptr) {
+    if (session == nullptr) {
         return CAMERA_ALLOC_ERROR;
     }
 
     auto& sessionManager = HCameraSessionManager::GetInstance();
     MEDIA_DEBUG_LOG("HCaptureSession::NewInstance start, total session:(%{public}zu), current pid(%{public}d).",
         sessionManager.GetTotalSessionSize(), session->pid_);
-    auto previousSession = sessionManager.GetGroupDefaultSession(session->pid_);
     errCode = sessionManager.AddSession(session); // Do not move this AddSession after RemoveSession
-    if (previousSession != nullptr && system::GetParameter("const.camera.multicamera.enable", "false") != "true") {
+    if (errCode == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED) {
+        auto previousSession = sessionManager.GetGroupDefaultSession(session->pid_);
         auto disconnectDevice = previousSession->GetCameraDevice();
         CHECK_EXECUTE(disconnectDevice != nullptr,
             disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
@@ -127,10 +127,9 @@ CamServiceError HCaptureSession::NewInstance(
         MEDIA_ERR_LOG("HCaptureSession::HCaptureSession not support multicamera, release last one.");
         previousSession->Release();
         sessionManager.RemoveSession(previousSession);
+        errCode = CAMERA_OK; // If there is no error to throw, return CAMERA_OK.
     }
-    if (errCode == CAMERA_OK) {
-        outSession = session;
-    }
+    outSession = session;
     MEDIA_INFO_LOG("HCaptureSession::NewInstance end, total session:(%{public}zu). current opMode_= %{public}d "
                    "errorCode:%{public}d",
         sessionManager.GetTotalSessionSize(), opMode, errCode);
