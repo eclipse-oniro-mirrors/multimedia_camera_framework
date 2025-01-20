@@ -349,7 +349,7 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        auto audioDeferredProcess = new AudioDeferredProcess();
+        auto audioDeferredProcess = std::make_shared<AudioDeferredProcess>();
         audioDeferredProcess->StoreOptions(audioCapturerSession_->deferredInputOptions_,
             audioCapturerSession_->deferredOutputOptions_);
         if (!audioDeferredProcess || audioDeferredProcess->GetOfflineEffectChain() != 0) {
