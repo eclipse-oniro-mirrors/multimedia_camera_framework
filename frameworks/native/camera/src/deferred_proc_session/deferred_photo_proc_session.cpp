@@ -28,9 +28,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, bool isCloudImageEnhanceSupported)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
-    if (ipcFileDescriptor == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET(ipcFileDescriptor == nullptr, CAMERA_INVALID_ARG);
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
@@ -205,10 +203,7 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
 
     deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
-    if (!result) {
-        MEDIA_ERR_LOG("failed to add deathRecipient");
-        return -1;  // return error
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!result, -1, "failed to add deathRecipient");
     return 0;
 }
 
@@ -258,9 +253,7 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
     CHECK_ERROR_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
-    if (session) {
-        SetDeferredPhotoSession(session);
-    }
+    CHECK_EXECUTE(session, SetDeferredPhotoSession(session));
     return;
 }
 

@@ -34,16 +34,12 @@ ListenerBase::~ListenerBase()
 
 void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(callback == nullptr,
+        "SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env_, callback, &valueType);
-    if (valueType != napi_function) {
-        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(valueType != napi_function,
+        "SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);
     for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {

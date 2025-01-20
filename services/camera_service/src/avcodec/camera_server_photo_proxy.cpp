@@ -201,9 +201,7 @@ int32_t CameraServerPhotoProxy::GetHeight()
 PhotoFormat CameraServerPhotoProxy::GetFormat()
 {
     auto iter = formatMap.find(imageFormat_);
-    if (iter != formatMap.end()) {
-        return iter->second;
-    }
+    CHECK_ERROR_RETURN_RET(iter != formatMap.end(), iter->second);
     return Media::PhotoFormat::RGBA;
 }
 
@@ -242,9 +240,7 @@ double CameraServerPhotoProxy::GetLongitude()
 int32_t CameraServerPhotoProxy::GetShootingMode()
 {
     auto iter = modeMap.find(mode_);
-    if (iter != modeMap.end()) {
-        return iter->second;
-    }
+    CHECK_ERROR_RETURN_RET(iter != modeMap.end(), iter->second);
     return 0;
 }
 void CameraServerPhotoProxy::SetShootingMode(int32_t mode)

@@ -168,14 +168,10 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
     CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(encoderMutex_);
-        if (encoder_ == nullptr) {
-            return false;
-        }
+        CHECK_ERROR_RETURN_RET(encoder_ == nullptr, false);
     }
     audioRecord->SetStatusReadyConvertStatus();
-    if (!EnqueueBuffer(audioRecord)) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(!EnqueueBuffer(audioRecord), false);
     int retryCount = 3;
     while (retryCount > 0) {
         retryCount--;
@@ -211,9 +207,7 @@ bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(serialMutex_);
     MEDIA_INFO_LOG("EncodeAudioBuffer enter");
-    if (!isStarted_.load()) {
-        RestartAudioCodec();
-    }
+    CHECK_EXECUTE(!isStarted_.load(), RestartAudioCodec());
     bool isSuccess = true;
     isEncoding_.store(true);
     for (sptr<AudioRecord> audioRecord : audioRecords) {

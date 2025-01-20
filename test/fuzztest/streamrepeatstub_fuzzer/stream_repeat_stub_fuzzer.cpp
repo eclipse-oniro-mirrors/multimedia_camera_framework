@@ -117,9 +117,7 @@ void TestHandleSetCallback(uint8_t *rawData, size_t size)
 
 void Test(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
-        return;
-    }
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
     CheckPermission();
     Test_OnRemoteRequest(rawData, size);
     TestHandleSetCallback(rawData, size);
@@ -132,9 +130,7 @@ void RunCase(MessageParcel &data, uint32_t code)
     MessageParcel reply;
     MessageOption option;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
         PHOTO_HEIGHT, REPEAT_STREAM_TYPE);

@@ -89,9 +89,7 @@ float MoonCaptureBoostFeature::GetSketchReferenceFovRatio(float inputZoomRatio)
             return inputZoomRatio - range.zoomMin >= -std::numeric_limits<float>::epsilon() &&
                    inputZoomRatio - range.zoomMax < -std::numeric_limits<float>::epsilon();
         });
-    if (itRange != sketchFovRangeList_.end()) {
-        return itRange->referenceValue;
-    }
+    CHECK_ERROR_RETURN_RET(itRange != sketchFovRangeList_.end(), itRange->referenceValue);
     MEDIA_WARNING_LOG("MoonCaptureBoostFeature::GetSketchReferenceFovRatio fail input:%{public}f, "
                       "zoomRange:%{public}f-%{public}f ,return default value.",
         inputZoomRatio, sketchZoomRatioRange_.zoomMin, sketchZoomRatioRange_.zoomMax);

@@ -84,15 +84,11 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
 {
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto encodeManager = GetEncoderManager();
-    if (!encodeManager) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!encodeManager);
     encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
         CAMERA_SYNC_TRACE;
         bool isEncodeSuccess = false;
-        if (!thisPtr->videoEncoder_ && !frameRecord) {
-            return;
-        }
+        CHECK_ERROR_RETURN(!thisPtr->videoEncoder_ && !frameRecord);
         isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
@@ -108,18 +104,14 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
         } else {
             MEDIA_ERR_LOG("encode image fail %{public}s", frameRecord->GetFrameId().c_str());
         }
-        if (cacheCallback) {
-            cacheCallback(frameRecord, isEncodeSuccess);
-        }
+        CHECK_EXECUTE(cacheCallback, cacheCallback(frameRecord, isEncodeSuccess));
     });
 }
 
 void AvcodecTaskManager::SubmitTask(function<void()> task)
 {
     auto taskManager = GetTaskManager();
-    if (taskManager) {
-        taskManager->SubmitTask(task);
-    }
+    CHECK_EXECUTE(taskManager, taskManager->SubmitTask(task));
 }
 
 void AvcodecTaskManager::SetVideoFd(
@@ -152,9 +144,8 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId);
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
-    if (!choosedBuffer.empty()) {
-        muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp()));
-    }
+    CHECK_EXECUTE(!choosedBuffer.empty(),
+        muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp())));
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
@@ -194,9 +185,7 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
         muxer->Release();
         std::shared_ptr<PhotoAssetIntf> proxy = muxer->GetPhotoAssetProxy();
         MEDIA_INFO_LOG("PhotoAssetProxy notify enter");
-        if (proxy) {
-            proxy->NotifyVideoSaveFinished();
-        }
+        CHECK_EXECUTE(proxy, proxy->NotifyVideoSaveFinished());
     }
 }
 
@@ -331,9 +320,9 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
             ++frameCount;
         }
     }
-    if (choosedBuffer.empty() || !frameRecords[idrIndex]->IsIDRFrame()) {
-        IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
-    }
+
+    CHECK_EXECUTE(choosedBuffer.empty() || !frameRecords[idrIndex]->IsIDRFrame(),
+        IgnoreDeblur(frameRecords, choosedBuffer, shutterTime));
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
 }
 
@@ -400,12 +389,8 @@ void AvcodecTaskManager::Release()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager release start");
-    if (videoEncoder_ != nullptr) {
-        videoEncoder_->Release();
-    }
-    if (audioEncoder_ != nullptr) {
-        audioEncoder_->Release();
-    }
+    CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->Release());
+    CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("videoFdMap_ size is %{public}zu", videoFdMap_.size());
     videoFdMap_.clear();
@@ -416,12 +401,8 @@ void AvcodecTaskManager::Stop()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager Stop start");
-    if (videoEncoder_ != nullptr) {
-        videoEncoder_->Release();
-    }
-    if (audioEncoder_ != nullptr) {
-        audioEncoder_->Release();
-    }
+    CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->Release());
+    CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
     MEDIA_INFO_LOG("AvcodecTaskManager Stop end");
 }
 

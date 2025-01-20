@@ -32,9 +32,7 @@ int32_t HCaptureSessionProxy::BeginConfig()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy BeginConfig failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy BeginConfig failed, error: %{public}d", error);
 
     return error;
 }
@@ -45,10 +43,8 @@ int32_t HCaptureSessionProxy::CanAddInput(sptr<ICameraDeviceService> cameraDevic
     MessageParcel reply;
     MessageOption option;
 
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CanAddInput cameraDevice is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy CanAddInput cameraDevice is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(cameraDevice->AsObject());
@@ -56,10 +52,8 @@ int32_t HCaptureSessionProxy::CanAddInput(sptr<ICameraDeviceService> cameraDevic
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CAN_ADD_INPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CanAddInput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCaptureSessionProxy CanAddInput failed, error: %{public}d", error);
     result = reply.ReadBool();
     MEDIA_DEBUG_LOG("CanAddInput result is %{public}d", result);
     return error;
@@ -71,19 +65,15 @@ int32_t HCaptureSessionProxy::AddInput(sptr<ICameraDeviceService> cameraDevice)
     MessageParcel reply;
     MessageOption option;
 
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddInput cameraDevice is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy AddInput cameraDevice is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(cameraDevice->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_INPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddInput failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy AddInput failed, error: %{public}d", error);
 
     return error;
 }
@@ -94,10 +84,7 @@ int32_t HCaptureSessionProxy::AddOutput(StreamType streamType, sptr<IStreamCommo
     MessageParcel reply;
     MessageOption option;
 
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddOutput stream is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, IPC_PROXY_ERR, "HCaptureSessionProxy AddOutput stream is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteUint32(static_cast<uint32_t>(streamType));
@@ -105,9 +92,7 @@ int32_t HCaptureSessionProxy::AddOutput(StreamType streamType, sptr<IStreamCommo
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddOutput failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy AddOutput failed, error: %{public}d", error);
 
     return error;
 }
@@ -118,19 +103,15 @@ int32_t HCaptureSessionProxy::RemoveInput(sptr<ICameraDeviceService> cameraDevic
     MessageParcel reply;
     MessageOption option;
 
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveInput cameraDevice is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy RemoveInput cameraDevice is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(cameraDevice->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_INPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveInput failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy RemoveInput failed, error: %{public}d", error);
 
     return error;
 }
@@ -141,10 +122,7 @@ int32_t HCaptureSessionProxy::RemoveOutput(StreamType streamType, sptr<IStreamCo
     MessageParcel reply;
     MessageOption option;
 
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveOutput stream is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, IPC_PROXY_ERR, "HCaptureSessionProxy RemoveOutput stream is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteUint32(static_cast<uint32_t>(streamType));
@@ -152,9 +130,7 @@ int32_t HCaptureSessionProxy::RemoveOutput(StreamType streamType, sptr<IStreamCo
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveOutput failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy RemoveOutput failed, error: %{public}d", error);
 
     return error;
 }
@@ -168,9 +144,7 @@ int32_t HCaptureSessionProxy::CommitConfig()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_COMMIT_CONFIG), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CommitConfig failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy CommitConfig failed, error: %{public}d", error);
 
     return error;
 }
@@ -184,9 +158,7 @@ int32_t HCaptureSessionProxy::Start()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Start failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy Start failed, error: %{public}d", error);
 
     return error;
 }
@@ -200,9 +172,7 @@ int32_t HCaptureSessionProxy::Stop()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_STOP), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Stop failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy Stop failed, error: %{public}d", error);
 
     return error;
 }
@@ -216,9 +186,7 @@ int32_t HCaptureSessionProxy::Release()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Release failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy Release failed, error: %{public}d", error);
 
     return error;
 }
@@ -237,9 +205,7 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -253,10 +219,8 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
     data.WriteInterfaceToken(GetDescriptor());
     int32_t res = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE), data, reply, option);
-    if (res != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState failed, error: %{public}d", res);
-        return res;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(res != ERR_NONE, res,
+        "HCaptureSessionProxy GetSessionState failed, error: %{public}d", res);
     sessionState = static_cast<CaptureSessionState>(reply.ReadUint32());
     return res;
 }
@@ -289,9 +253,7 @@ int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, ColorSpace ca
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SET_COLOR_SPACE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
     return error;
 }
 
@@ -403,9 +365,8 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture>
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
     uri = reply.ReadString();
     cameraShotType = reply.ReadInt32();
     burstKey = reply.ReadString();

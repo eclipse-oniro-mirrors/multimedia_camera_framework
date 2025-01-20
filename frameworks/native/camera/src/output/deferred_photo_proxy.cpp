@@ -94,9 +94,7 @@ DeferredPhotoProxy::~DeferredPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~DeferredPhotoProxy");
-    if (isMmaped_) {
-        munmap(fileDataAddr_, fileSize_);
-    }
+    CHECK_EXECUTE(isMmaped_, munmap(fileDataAddr_, fileSize_));
     CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
     fileSize_ = 0;

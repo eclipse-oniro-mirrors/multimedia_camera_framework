@@ -27,9 +27,7 @@ PanoramaSessionNapi::PanoramaSessionNapi() : env_(nullptr), wrapper_(nullptr)
 PanoramaSessionNapi::~PanoramaSessionNapi()
 {
     MEDIA_DEBUG_LOG("~PanoramaSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
     if (panoramaSession_) {
         panoramaSession_ = nullptr;
     }
@@ -64,9 +62,7 @@ napi_value PanoramaSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PANORAMA_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -115,16 +111,10 @@ napi_value PanoramaSessionNapi::PanoramaSessionNapiConstructor(napi_env env, nap
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PanoramaSessionNapi> obj = std::make_unique<PanoramaSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->panoramaSession_ = static_cast<PanoramaSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->panoramaSession_;
-        if (obj->panoramaSession_ == nullptr) {
-            MEDIA_ERR_LOG("panoramaSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->panoramaSession_ == nullptr, result, "panoramaSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             PanoramaSessionNapi::PanoramaSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

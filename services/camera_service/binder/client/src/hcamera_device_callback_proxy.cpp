@@ -36,9 +36,7 @@ int32_t HCameraDeviceCallbackProxy::OnError(const int32_t errorType, const int32
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_ERROR), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceCallbackProxy OnError failed, error: %{public}d", error);
     return error;
 }
 
@@ -53,15 +51,11 @@ int32_t HCameraDeviceCallbackProxy::OnResult(const uint64_t timestamp,
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteUint64(timestamp);
 
-    if (!(Camera::MetadataUtils::EncodeCameraMetadata(result, data))) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult EncodeCameraMetadata failed");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(Camera::MetadataUtils::EncodeCameraMetadata(result, data)), IPC_PROXY_ERR,
+        "HCameraDeviceCallbackProxy OnResult EncodeCameraMetadata failed");
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_RESULT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceCallbackProxy OnResult failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

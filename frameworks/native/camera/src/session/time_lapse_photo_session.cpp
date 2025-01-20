@@ -110,9 +110,7 @@ void TimeLapsePhotoSession::ProcessIsoInfoChange(const shared_ptr<OHOS::Camera::
         };
         std::lock_guard<std::mutex> lock(cbMtx_);
         if (isoInfoCallback_ != nullptr && item.data.ui32[0] != iso_) {
-            if (iso_ != 0) {
-                isoInfoCallback_->OnIsoInfoChanged(info);
-            }
+            CHECK_EXECUTE(iso_ != 0, isoInfoCallback_->OnIsoInfoChanged(info));
             iso_ = item.data.ui32[0];
         }
     }
@@ -136,9 +134,7 @@ void TimeLapsePhotoSession::ProcessExposureChange(const shared_ptr<OHOS::Camera:
         };
         std::lock_guard<std::mutex> lock(cbMtx_);
         if (exposureInfoCallback_ != nullptr && (value != exposureDurationValue_)) {
-            if (exposureDurationValue_ != 0) {
-                exposureInfoCallback_->OnExposureInfoChanged(info);
-            }
+            CHECK_EXECUTE(exposureDurationValue_ != 0, exposureInfoCallback_->OnExposureInfoChanged(info));
             exposureDurationValue_ = value;
         }
     }
@@ -194,9 +190,7 @@ void TimeLapsePhotoSession::ProcessSetTryAEChange(const shared_ptr<OHOS::Camera:
     if (changed) {
         lock_guard<mutex> lg(cbMtx_);
         info_ = info;
-        if (tryAEInfoCallback_ != nullptr) {
-            tryAEInfoCallback_->OnTryAEInfoChanged(info);
-        }
+        CHECK_EXECUTE(tryAEInfoCallback_ != nullptr, tryAEInfoCallback_->OnTryAEInfoChanged(info));
     }
 }
 
@@ -529,9 +523,7 @@ int32_t TimeLapsePhotoSession::GetSupportedMeteringModes(vector<MeteringMode>& r
         "TimeLapsePhotoSession::GetSupportedMeteringModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[i]));
-        if (itr != metaMeteringModeMap_.end()) {
-            result.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaMeteringModeMap_.end(), result.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -745,9 +737,7 @@ int32_t TimeLapsePhotoSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBa
         "TimeLapsePhotoSession::GetSupportedWhiteBalanceModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[i]));
-        if (itr != metaWhiteBalanceModeMap_.end()) {
-            result.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaWhiteBalanceModeMap_.end(), result.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -827,9 +817,7 @@ int32_t TimeLapsePhotoSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     }
     MEDIA_DEBUG_LOG("%{public}s: WhiteBalance mode: %{public}d", __FUNCTION__, whiteBalanceMode);
     // no manual wb mode need set maunual value to 0
-    if (mode != AWB_MODE_OFF) {
-        SetWhiteBalance(0);
-    }
+    CHECK_EXECUTE(mode != AWB_MODE_OFF, SetWhiteBalance(0));
     bool ret = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1);
     CHECK_ERROR_PRINT_LOG(!ret, "%{public}s: Failed to set WhiteBalance mode", __FUNCTION__);
     return CameraErrorCode::SUCCESS;

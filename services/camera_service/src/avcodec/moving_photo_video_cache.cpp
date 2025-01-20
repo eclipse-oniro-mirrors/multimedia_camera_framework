@@ -100,9 +100,8 @@ void MovingPhotoVideoCache::GetFrameCachedResult(std::vector<sptr<FrameRecord>> 
     cachedFrameCallbackHandles_.push_back(cacheFrameHandler);
     callbackVecLock_.unlock();
     for (auto frameRecord : frameRecords) {
-        if (frameRecord->IsFinishCache()) {
-            cacheFrameHandler->OnCacheFrameFinish(frameRecord, frameRecord->IsEncoded());
-        }
+        CHECK_EXECUTE(frameRecord->IsFinishCache(),
+            cacheFrameHandler->OnCacheFrameFinish(frameRecord, frameRecord->IsEncoded()));
     }
 }
 
@@ -160,10 +159,8 @@ void CachedFrameCallbackHandle::OnCacheFrameFinish(sptr<FrameRecord> frameRecord
         } else {
             errorCacheRecords_.push_back(frameRecord);
         }
-        if (!cacheRecords_.empty()) {
-            // Still waiting for more cache encoded buffer
-            return;
-        }
+        // Still waiting for more cache encoded buffer
+        CHECK_ERROR_RETURN(!cacheRecords_.empty());
         MEDIA_INFO_LOG("encodedEndCbFunc_ is called success count: %{public}zu", successCacheRecords_.size());
         // All buffer have been encoded
         if (encodedEndCbFunc_ != nullptr) {

@@ -56,9 +56,7 @@ void GetPermission()
 
 void Test(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
-        return;
-    }
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
     GetPermission();
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");

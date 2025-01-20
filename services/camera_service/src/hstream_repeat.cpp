@@ -60,9 +60,7 @@ int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
         "HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
-    if (repeatStreamType_ != RepeatStreamType::VIDEO) {
-        SetStreamTransform();
-    }
+    CHECK_EXECUTE(repeatStreamType_ != RepeatStreamType::VIDEO, SetStreamTransform());
     return CAMERA_OK;
 }
 
@@ -139,13 +137,9 @@ void HStreamRepeat::SetMovingPhotoStartCallback(std::function<void()> callback)
 
 void HStreamRepeat::UpdateSketchStatus(SketchStatus status)
 {
-    if (repeatStreamType_ != RepeatStreamType::SKETCH) {
-        return;
-    }
+    CHECK_ERROR_RETURN(repeatStreamType_ != RepeatStreamType::SKETCH);
     auto parent = parentStreamRepeat_.promote();
-    if (parent == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(parent == nullptr);
     if (sketchStatus_ != status) {
         sketchStatus_ = status;
         parent->OnSketchStatusChanged(sketchStatus_);
@@ -269,9 +263,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
             repeatStreamStatus_ = RepeatStreamStatus::STARTED;
         }
     }
-    if (settings != nullptr) {
-        StartSketchStream(settings);
-    }
+    CHECK_EXECUTE(settings != nullptr, StartSketchStream(settings));
     return ret;
 }
 
@@ -306,9 +298,7 @@ int32_t HStreamRepeat::Stop()
     }
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
-        if (sketchStreamRepeat_ != nullptr) {
-            sketchStreamRepeat_->Stop();
-        }
+        CHECK_EXECUTE(sketchStreamRepeat_ != nullptr, sketchStreamRepeat_->Stop());
     }
     return ret;
 }
@@ -327,9 +317,7 @@ int32_t HStreamRepeat::ReleaseStream(bool isDelay)
 
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
-        if (sketchStreamRepeat_ != nullptr) {
-            sketchStreamRepeat_->Release();
-        }
+        CHECK_EXECUTE(sketchStreamRepeat_ != nullptr, sketchStreamRepeat_->Release());
     }
     return HStreamCommon::ReleaseStream(isDelay);
 }
@@ -347,9 +335,7 @@ int32_t HStreamRepeat::OnFrameStarted()
     CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(callbackLock_);
-        if (streamRepeatCallback_ != nullptr) {
-            streamRepeatCallback_->OnFrameStarted();
-        }
+        CHECK_EXECUTE(streamRepeatCallback_ != nullptr, streamRepeatCallback_->OnFrameStarted());
     }
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {
         // report video start dfx
@@ -368,14 +354,10 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
     CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(callbackLock_);
-        if (streamRepeatCallback_ != nullptr) {
-            streamRepeatCallback_->OnFrameEnded(frameCount);
-        }
+        CHECK_EXECUTE(streamRepeatCallback_ != nullptr, streamRepeatCallback_->OnFrameEnded(frameCount));
     }
-    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
-        // report video end dfx
-        CameraReportUtils::GetInstance().SetVideoEndInfo(1);
-    }
+    // report video end dfx
+    CHECK_EXECUTE(repeatStreamType_ == RepeatStreamType::VIDEO, CameraReportUtils::GetInstance().SetVideoEndInfo(1));
     UpdateSketchStatus(SketchStatus::STOPED);
     return CAMERA_OK;
 }
@@ -388,9 +370,8 @@ int32_t HStreamRepeat::OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captur
         // report video end dfx
         CameraReportUtils::GetInstance().SetVideoEndInfo(1);
         std::lock_guard<std::mutex> lock(callbackLock_);
-        if (streamRepeatCallback_ != nullptr) {
-            streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo);
-        }
+        CHECK_EXECUTE(streamRepeatCallback_ != nullptr,
+            streamRepeatCallback_->OnDeferredVideoEnhancementInfo(captureEndedInfo));
     }
     return CAMERA_OK;
 }
@@ -399,9 +380,7 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
     MEDIA_DEBUG_LOG("HStreamRepeat::OnFrameError %{public}d  %{public}d", errorType, streamRepeatCallback_ == nullptr);
-    if (errorType == HDI::Camera::V1_3::HIGH_TEMPERATURE_ERROR) {
-        UpdateSketchStatus(SketchStatus::STOPED);
-    }
+    CHECK_EXECUTE(errorType == HDI::Camera::V1_3::HIGH_TEMPERATURE_ERROR, UpdateSketchStatus(SketchStatus::STOPED));
     if (streamRepeatCallback_ != nullptr) {
         int32_t repeatErrorCode;
         if (errorType == BUFFER_LOST) {
@@ -419,9 +398,7 @@ int32_t HStreamRepeat::OnSketchStatusChanged(SketchStatus status)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
     MEDIA_DEBUG_LOG("HStreamRepeat::OnSketchStatusChanged %{public}d", status);
-    if (streamRepeatCallback_ != nullptr) {
-        streamRepeatCallback_->OnSketchStatusChanged(status);
-    }
+    CHECK_EXECUTE(streamRepeatCallback_ != nullptr, streamRepeatCallback_->OnSketchStatusChanged(status));
     return CAMERA_OK;
 }
 
@@ -478,9 +455,7 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
     CHECK_ERROR_RETURN_RET_LOG(width <= 0 || height <= 0, CAMERA_INVALID_ARG,
         "HCameraService::ForkSketchStreamRepeat args is illegal");
-    if (sketchStreamRepeat_ != nullptr) {
-        sketchStreamRepeat_->Release();
-    }
+    CHECK_EXECUTE(sketchStreamRepeat_ != nullptr, sketchStreamRepeat_->Release());
 
     auto streamRepeat = new (std::nothrow) HStreamRepeat(nullptr, format_, width, height, RepeatStreamType::SKETCH);
     CHECK_ERROR_RETURN_RET_LOG(streamRepeat == nullptr, CAMERA_ALLOC_ERROR,
@@ -499,9 +474,7 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if (sketchStreamRepeat_ == nullptr) {
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(sketchStreamRepeat_ == nullptr, CAMERA_OK);
     sketchStreamRepeat_->Release();
     sketchStreamRepeat_->parentStreamRepeat_ = nullptr;
     sketchStreamRepeat_ = nullptr;
@@ -634,10 +607,8 @@ int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
 {
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if (sketchStreamRepeat_ == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::UpdateSketchRatio sketch stream not create!");
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(sketchStreamRepeat_ == nullptr, CAMERA_INVALID_STATE,
+        "HCameraService::UpdateSketchRatio sketch stream not create!");
     sketchStreamRepeat_->sketchRatio_ = sketchRatio;
     return CAMERA_OK;
 }
@@ -685,9 +656,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         "HStreamRepeat::SetStreamTransform GetDefaultDisplay failed");
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        if (cameraAbility_ == nullptr) {
-            return;
-        }
+        CHECK_ERROR_RETURN(cameraAbility_ == nullptr);
         int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
         CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
             "HStreamRepeat::SetStreamTransform get sensor orientation failed");
@@ -701,10 +670,8 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
         MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform camera position: %{public}d", cameraPosition);
     }
     std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(producer_ == nullptr,
+        "HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
     if (cameraUsedAsPosition_ != OHOS_CAMERA_POSITION_OTHER) {
         cameraPosition = cameraUsedAsPosition_;
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform used camera position: %{public}d", cameraPosition);
@@ -764,9 +731,8 @@ void HStreamRepeat::ProcessFixedDiffDeviceTransform(camera_position_enum_t& came
         ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
         MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
     }
-    if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
-    }
+    CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
+        "HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
 }
 
 void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
@@ -896,12 +862,9 @@ int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
         case CAMERA_START_VIDEO_RECORDING:
         case CAMERA_FORK_SKETCH_STREAM_REPEAT: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
-            if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamRepeat::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
-                return CAMERA_OPERATION_NOT_ALLOWED;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
+                "HStreamRepeat::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
+                "is %{public}d", callerToken_, callerToken);
             break;
         }
         default:
@@ -977,9 +940,7 @@ void HStreamRepeat::UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::Camera
     bool status = false;
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        return;
-    }
+    CHECK_ERROR_RETURN(ret == CAM_META_ITEM_NOT_FOUND);
     auto mode = item.data.u8[0];
     int32_t count = 1;
     CHECK_ERROR_RETURN_LOG(dynamicSetting == nullptr, "dynamicSetting is nullptr");

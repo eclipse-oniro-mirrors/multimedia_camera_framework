@@ -145,9 +145,7 @@ void CameraDynamicLoader::FreeDynamiclib(const string& libName)
     CAMERA_SYNC_TRACE;
     lock_guard<mutex> lock(g_libMutex);
     auto loadedIterator = g_dynamiclibMap.find(libName);
-    if (loadedIterator == g_dynamiclibMap.end()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(loadedIterator == g_dynamiclibMap.end());
     MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}d", libName.c_str(),
         static_cast<int32_t>(loadedIterator->second.use_count()));
 

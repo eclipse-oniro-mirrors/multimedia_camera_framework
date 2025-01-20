@@ -35,9 +35,7 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
 FrameRecord::~FrameRecord()
 {
     MEDIA_DEBUG_LOG("FrameRecord::~FrameRecord");
-    if (encodedBuffer) {
-        OH_AVBuffer_Destroy(encodedBuffer);
-    }
+    CHECK_EXECUTE(encodedBuffer, OH_AVBuffer_Destroy(encodedBuffer));
     encodedBuffer = nullptr;
 }
 
@@ -52,9 +50,7 @@ void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWr
         MEDIA_DEBUG_LOG("FrameRecord::ReleaseSurfaceBuffer wait end");
     }
     if (videoBuffer_) {
-        if (surfaceWrapper != nullptr) {
-            surfaceWrapper->RecycleBuffer(videoBuffer_);
-        }
+        CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
         videoBuffer_ = nullptr;
         MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
     }
@@ -71,15 +67,11 @@ void FrameRecord::ReleaseMetaBuffer(sptr<Surface> surface, bool reuse)
     if (metaBuffer_) {
         if (reuse) {
             SurfaceError surfaceRet = surface->AttachBufferToQueue(metaBuffer_);
-            if (surfaceRet != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("Failed to attach meta buffer %{public}d", surfaceRet);
-                return;
-            }
+            CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK,
+                "Failed to attach meta buffer %{public}d", surfaceRet);
             surfaceRet = surface->ReleaseBuffer(metaBuffer_, -1);
-            if (surfaceRet != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("Failed to Release meta Buffer %{public}d", surfaceRet);
-                return;
-            }
+            CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK,
+                "Failed to Release meta Buffer %{public}d", surfaceRet);
         }
         metaBuffer_ = buffer;
         MEDIA_DEBUG_LOG("release meta buffer end %{public}s", frameId_.c_str());
@@ -106,14 +98,9 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
         .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    if (allocErrorCode != GSERROR_OK) {
-        MEDIA_ERR_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
-        return;
-    }
-    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
-        MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
-    }
+    CHECK_ERROR_RETURN_LOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
+    CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "SurfaceBuffer memcpy_s failed");
 }
 } // namespace CameraStandard
 } // namespace OHOS

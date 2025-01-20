@@ -92,10 +92,6 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
     CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("NightSession::GetExposure Failed with return code %{public}d", ret);
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
         "NightSession::GetExposure Failed with return code %{public}d", ret);
     exposureValue = item.data.ui32[0];

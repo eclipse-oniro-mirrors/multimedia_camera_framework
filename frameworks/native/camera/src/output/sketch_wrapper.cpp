@@ -313,11 +313,8 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
     std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
 {
     camera_metadata_item_t item;
-    if (!GetMoonCaptureBoostAbilityItem(deviceMetadata, item)) {
-        MEDIA_ERR_LOG(
-            "SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig get GetMoonCaptureBoostAbilityItem failed");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!GetMoonCaptureBoostAbilityItem(deviceMetadata, item),
+        "SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig get GetMoonCaptureBoostAbilityItem failed");
     uint32_t currentMode = INVALID_MODE;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
@@ -368,25 +365,20 @@ float SketchWrapper::GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFe
     std::lock_guard<std::mutex> lock(g_sketchReferenceFovRatioMutex_);
     auto it = g_sketchReferenceFovRatioMap_.find(filteredFeaturesMode);
     if (it != g_sketchReferenceFovRatioMap_.end()) {
-        if (it->second.size() == 1) { // only 1 element, just return result;
-            return it->second[0].referenceValue;
-        }
+        // only 1 element, just return result;
+        CHECK_ERROR_RETURN_RET(it->second.size() == 1, it->second[0].referenceValue);
         // If zoom ratio out of range, try return min or max range value.
         const auto& minRange = it->second.front();
-        if (currentZoomRatio - minRange.zoomMin <= std::numeric_limits<float>::epsilon()) {
-            return minRange.referenceValue;
-        }
+        CHECK_ERROR_RETURN_RET(currentZoomRatio - minRange.zoomMin <= std::numeric_limits<float>::epsilon(),
+            minRange.referenceValue);
         const auto& maxRange = it->second.back();
-        if (currentZoomRatio - maxRange.zoomMax >= -std::numeric_limits<float>::epsilon()) {
-            return maxRange.referenceValue;
-        }
+        CHECK_ERROR_RETURN_RET(currentZoomRatio - maxRange.zoomMax >= -std::numeric_limits<float>::epsilon(),
+            maxRange.referenceValue);
         auto itRange = std::find_if(it->second.begin(), it->second.end(), [currentZoomRatio](const auto& range) {
             return currentZoomRatio - range.zoomMin >= -std::numeric_limits<float>::epsilon() &&
                    currentZoomRatio - range.zoomMax < -std::numeric_limits<float>::epsilon();
         });
-        if (itRange != it->second.end()) {
-            return itRange->referenceValue;
-        }
+        CHECK_ERROR_RETURN_RET(itRange != it->second.end(), itRange->referenceValue);
     }
     return INVALID_ZOOM_RATIO;
 }
@@ -402,9 +394,7 @@ float SketchWrapper::GetSketchEnableRatio(const SceneFeaturesMode& sceneFeatures
     }
     std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
     auto it = g_sketchEnableRatioMap_.find(filteredFeaturesMode);
-    if (it != g_sketchEnableRatioMap_.end()) {
-        return it->second;
-    }
+    CHECK_ERROR_RETURN_RET(it != g_sketchEnableRatioMap_.end(), it->second);
     return INVALID_ZOOM_RATIO;
 }
 

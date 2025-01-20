@@ -219,35 +219,23 @@ std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
 {
     napi_valuetype valueNapiType = napi_undefined;
     napi_typeof(env, value, &valueNapiType);
-    if (valueNapiType != napi_string) {
-        return "";
-    }
+    CHECK_ERROR_RETURN_RET(valueNapiType != napi_string, "");
     size_t stringSize = 0;
     napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &stringSize);
-    if (status != napi_ok || stringSize == 0) {
-        return "";
-    }
+    CHECK_ERROR_RETURN_RET(status != napi_ok || stringSize == 0, "");
     std::string strValue = std::string(stringSize, '\0');
     status = napi_get_value_string_utf8(env, value, strValue.data(), stringSize + 1, &stringSize);
-    if (status != napi_ok || stringSize == 0) {
-        return "";
-    }
+    CHECK_ERROR_RETURN_RET(status != napi_ok || stringSize == 0, "");
     return strValue;
 }
 
 bool CameraNapiUtils::IsSameNapiValue(napi_env env, napi_value valueSrc, napi_value valueDst)
 {
-    if (valueSrc == nullptr && valueDst == nullptr) {
-        return true;
-    }
-    if (valueSrc == nullptr || valueDst == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(valueSrc == nullptr && valueDst == nullptr, true);
+    CHECK_ERROR_RETURN_RET(valueSrc == nullptr || valueDst == nullptr, false);
     bool isEquals = false;
-    if (napi_strict_equals(env, valueSrc, valueDst, &isEquals) != napi_ok) {
-        MEDIA_ERR_LOG("get napi_strict_equals failed");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(napi_strict_equals(env, valueSrc, valueDst, &isEquals) != napi_ok, false,
+        "get napi_strict_equals failed");
     return isEquals;
 }
 
@@ -257,37 +245,22 @@ napi_status CameraNapiUtils::CallPromiseFun(
     MEDIA_DEBUG_LOG("CallPromiseFun Start");
     bool isPromise = false;
     napi_is_promise(env, promiseValue, &isPromise);
-    if (!isPromise) {
-        MEDIA_ERR_LOG("CallPromiseFun promiseValue is not promise");
-        return napi_invalid_arg;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!isPromise, napi_invalid_arg, "CallPromiseFun promiseValue is not promise");
     // Create promiseThen
     napi_value promiseThen = nullptr;
     napi_get_named_property(env, promiseValue, "then", &promiseThen);
-    if (promiseThen == nullptr) {
-        MEDIA_ERR_LOG("CallPromiseFun get promiseThen failed");
-        return napi_invalid_arg;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(promiseThen == nullptr, napi_invalid_arg, "CallPromiseFun get promiseThen failed");
     napi_value thenValue;
     napi_status ret = napi_create_function(env, "thenCallback", NAPI_AUTO_LENGTH, thenCallback, data, &thenValue);
-    if (ret != napi_ok) {
-        MEDIA_ERR_LOG("CallPromiseFun thenCallback got exception");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != napi_ok, ret, "CallPromiseFun thenCallback got exception");
     napi_value catchValue;
     ret = napi_create_function(env, "catchCallback", NAPI_AUTO_LENGTH, catchCallback, data, &catchValue);
-    if (ret != napi_ok) {
-        MEDIA_ERR_LOG("CallPromiseFun  catchCallback got exception");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != napi_ok, ret, "CallPromiseFun catchCallback got exception");
     napi_value thenReturnValue;
     constexpr uint32_t THEN_ARGC = 2;
     napi_value thenArgv[THEN_ARGC] = { thenValue, catchValue };
     ret = napi_call_function(env, promiseValue, promiseThen, THEN_ARGC, thenArgv, &thenReturnValue);
-    if (ret != napi_ok) {
-        MEDIA_ERR_LOG("CallPromiseFun PromiseThen got exception");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != napi_ok, ret, "CallPromiseFun PromiseThen got exception");
     MEDIA_DEBUG_LOG("CallPromiseFun End");
     return napi_ok;
 }
@@ -334,9 +307,7 @@ size_t CameraNapiUtils::GetNapiArgs(napi_env env, napi_callback_info callbackInf
 void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result)
 {
     MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
-    if (frameRateRange.empty()) {
-        MEDIA_ERR_LOG("frameRateRange is empty");
-    }
+    CHECK_ERROR_PRINT_LOG(frameRateRange.empty(), "frameRateRange is empty");
 
     napi_status status = napi_create_object(env, &result);
     if (status == napi_ok) {
@@ -344,10 +315,9 @@ void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> 
         status = napi_create_int32(env, frameRateRange[0], &minRate);
         napi_value maxRate;
         status = napi_create_int32(env, frameRateRange[1], &maxRate);
-        if (status != napi_ok || napi_set_named_property(env, result, "min", minRate) != napi_ok ||
-            napi_set_named_property(env, result, "max", maxRate) != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create frameRateArray with napi wrapper object.");
-        }
+        CHECK_ERROR_PRINT_LOG(status != napi_ok || napi_set_named_property(env, result, "min", minRate) != napi_ok ||
+            napi_set_named_property(env, result, "max", maxRate) != napi_ok,
+            "Failed to create frameRateArray with napi wrapper object.");
     }
 }
 
@@ -356,19 +326,15 @@ napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
 {
     MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
     napi_value supportedFrameRateArray = nullptr;
-    if (supportedFrameRatesRange.empty()) {
-        MEDIA_ERR_LOG("frameRateRange is empty");
-    }
+    CHECK_ERROR_PRINT_LOG(supportedFrameRatesRange.empty(), "frameRateRange is empty");
 
     napi_status status = napi_create_array(env, &supportedFrameRateArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < supportedFrameRatesRange.size(); i++) {
             napi_value supportedFrameRateItem;
             CreateFrameRateJSArray(env, supportedFrameRatesRange[i], supportedFrameRateItem);
-            if (napi_set_element(env, supportedFrameRateArray, i, supportedFrameRateItem) != napi_ok) {
-                MEDIA_ERR_LOG("Failed to create supportedFrameRateArray with napi wrapper object.");
-                return nullptr;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, supportedFrameRateArray, i, supportedFrameRateItem) !=
+                napi_ok, nullptr, "Failed to create supportedFrameRateArray with napi wrapper object.");
         }
     }
     return supportedFrameRateArray;
@@ -420,18 +386,14 @@ napi_value CameraNapiUtils::CreateJSArray(napi_env env, napi_status &status,
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
 
-    if (nativeArray.empty()) {
-        MEDIA_ERR_LOG("nativeArray is empty");
-    }
+    CHECK_ERROR_PRINT_LOG(nativeArray.empty(), "nativeArray is empty");
 
     status = napi_create_array(env, &jsArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
-            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
-                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
-                return nullptr;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
+                "Failed to create profile napi wrapper object");
         }
     }
     return jsArray;
@@ -451,9 +413,7 @@ napi_value CameraNapiUtils::ParseMetadataObjectTypes(napi_env env, napi_value ar
     for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, arrayParam, i, &value);
         napi_typeof(env, value, &type);
-        if (type != napi_number) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(type != napi_number, nullptr);
         if (metadataType < static_cast<int32_t>(MetadataObjectType::INVALID) &&
             metadataType > static_cast<int32_t>(MetadataObjectType::BAR_CODE_DETECTION)) {
             metadataType = invalidType;

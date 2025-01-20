@@ -64,9 +64,7 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PORTRAIT_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -115,16 +113,10 @@ napi_value PortraitSessionNapi::PortraitSessionNapiConstructor(napi_env env, nap
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PortraitSessionNapi> obj = std::make_unique<PortraitSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->portraitSession_ = static_cast<PortraitSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->portraitSession_;
-        if (obj->portraitSession_ == nullptr) {
-            MEDIA_ERR_LOG("portraitSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->portraitSession_ == nullptr, result, "portraitSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             PortraitSessionNapi::PortraitSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -152,10 +144,7 @@ napi_value PortraitSessionNapi::GetSupportedPortraitEffects(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     PortraitSessionNapi* portraitSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
     if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {

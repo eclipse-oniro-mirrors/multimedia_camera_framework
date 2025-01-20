@@ -62,9 +62,8 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                         "is called!, cameraId: %{public}s, timestamp: %{public}"
                         PRIu64, cameraObject->GetID().c_str(), timestamp);
     }
-    if (camInputSptr->GetResultCallback() != nullptr) {
-        camInputSptr->GetResultCallback()->OnResult(timestamp, result);
-    }
+    CHECK_EXECUTE(camInputSptr->GetResultCallback() != nullptr,
+        camInputSptr->GetResultCallback()->OnResult(timestamp, result));
 
     auto pfnOcclusionDetectCallback = camInputSptr->GetOcclusionDetectCallback();
     if (pfnOcclusionDetectCallback != nullptr) {
@@ -117,9 +116,7 @@ void CameraInput::InitCameraInput()
     auto thisPtr = wptr<CameraInput>(this);
     deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
         auto ptr = thisPtr.promote();
-        if (ptr != nullptr) {
-            ptr->CameraServerDied(pid);
-        }
+        CHECK_EXECUTE(ptr != nullptr, ptr->CameraServerDied(pid));
     });
     bool result = object->AddDeathRecipient(deathRecipient_);
     CHECK_ERROR_RETURN_LOG(!result, "CameraInput::CameraInput failed to add deathRecipient");

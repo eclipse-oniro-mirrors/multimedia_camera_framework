@@ -54,9 +54,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, supportedPortraitEffects);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[i]));
-        if (itr != g_metaToFwPortraitEffect_.end()) {
-            supportedPortraitEffects.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != g_metaToFwPortraitEffect_.end(), supportedPortraitEffects.emplace_back(itr->second));
     }
     return supportedPortraitEffects;
 }
@@ -78,9 +76,7 @@ PortraitEffect PortraitSession::GetPortraitEffect()
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, PortraitEffect::OFF_EFFECT,
         "CaptureSession::GetPortraitEffect Failed with return code %{public}d", ret);
     auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[0]));
-    if (itr != g_metaToFwPortraitEffect_.end()) {
-        return itr->second;
-    }
+    CHECK_ERROR_RETURN_RET(itr != g_metaToFwPortraitEffect_.end(), itr->second);
     return PortraitEffect::OFF_EFFECT;
 }
 

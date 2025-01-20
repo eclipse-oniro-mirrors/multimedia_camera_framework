@@ -547,10 +547,8 @@ int HCameraServiceStub::HandleCreateDepthDataOutput(MessageParcel& data, Message
     CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateDepthDataOutput producer is null");
     int errCode = CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
-    if (errCode != ERR_NONE) {
-        MEDIA_ERR_LOG("HandleCreateDepthDataOutput CreateDepthDataOutput failed : %{public}d", errCode);
-        return errCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(errCode != ERR_NONE, errCode,
+        "HandleCreateDepthDataOutput CreateDepthDataOutput failed : %{public}d", errCode);
     CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteRemoteObject(depthDataOutput->AsObject())), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateDepthDataOutput Write previewOutput obj failed");
     return errCode;
@@ -643,9 +641,8 @@ void HCameraServiceStub::ClearCameraListenerByPid(pid_t pid)
 {
     sptr<IStandardCameraListener> cameraListenerTmp = nullptr;
     if (cameraListenerMap_.Find(pid, cameraListenerTmp)) {
-        if (cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr) {
-            cameraListenerTmp->RemoveCameraDeathRecipient();
-        }
+        CHECK_EXECUTE(cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr,
+            cameraListenerTmp->RemoveCameraDeathRecipient());
         cameraListenerMap_.Erase(pid);
     }
 }
@@ -666,9 +663,7 @@ int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
     auto thisPtr = wptr<HCameraServiceStub>(this);
     deathRecipient->SetNotifyCb([thisPtr](pid_t pid) {
         auto serviceStubPtr = thisPtr.promote();
-        if (serviceStubPtr != nullptr) {
-            serviceStubPtr->ClientDied(pid);
-        }
+        CHECK_EXECUTE(serviceStubPtr != nullptr, serviceStubPtr->ClientDied(pid));
     });
     cameraListener->AddCameraDeathRecipient(deathRecipient);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);

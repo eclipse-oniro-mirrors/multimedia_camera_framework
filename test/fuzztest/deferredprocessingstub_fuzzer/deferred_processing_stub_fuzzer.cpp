@@ -50,9 +50,7 @@ void DeferredProcessingFuzzTestGetPermission()
 
 void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
-        return;
-    }
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
     DeferredProcessingFuzzTestGetPermission();
 
     MessageParcel data;
@@ -75,9 +73,7 @@ void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size)
 
 void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
-        return;
-    }
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
     DeferredProcessingFuzzTestGetPermission();
 
     MessageParcel data;

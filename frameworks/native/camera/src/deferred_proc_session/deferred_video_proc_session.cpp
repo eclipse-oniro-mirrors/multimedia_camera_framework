@@ -141,10 +141,7 @@ int32_t DeferredVideoProcSession::SetDeferredVideoSession(
 
     deathRecipient_->SetNotifyCb(std::bind(&DeferredVideoProcSession::CameraServerDied, this, std::placeholders::_1));
     bool result = object->AddDeathRecipient(deathRecipient_);
-    if (!result) {
-        MEDIA_ERR_LOG("failed to add deathRecipient");
-        return -1;  // return error
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!result, -1, "failed to add deathRecipient");
     return ERR_OK;
 }
 
@@ -192,9 +189,7 @@ void DeferredVideoProcSession::ConnectDeferredProcessingSession()
     remoteCallback = new(std::nothrow) DeferredVideoProcessingSessionCallback(deferredVideoProcSession);
     CHECK_ERROR_RETURN(remoteCallback == nullptr);
     serviceProxy_->CreateDeferredVideoProcessingSession(userId_, remoteCallback, session);
-    if (session) {
-        SetDeferredVideoSession(session);
-    }
+    CHECK_EXECUTE(session, SetDeferredVideoSession(session));
 }
 
 std::shared_ptr<IDeferredVideoProcSessionCallback> DeferredVideoProcSession::GetCallback()

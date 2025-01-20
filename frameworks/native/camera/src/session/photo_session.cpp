@@ -220,9 +220,7 @@ bool PhotoSession::IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& phot
         "PhotoSession::CanPreconfig check photo profile fail, empty photo profiles");
     auto photoProfiles = photoProfilesIt->second;
     return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&photoProfile](auto& profile) {
-        if (!photoProfile.sizeFollowSensorMax_) {
-            return profile == photoProfile;
-        }
+        CHECK_ERROR_RETURN_RET(!photoProfile.sizeFollowSensorMax_, profile == photoProfile);
         return IsProfileSameRatio(profile, photoProfile.sizeRatio_, RATIO_VALUE_4_3);
     });
 }

@@ -107,10 +107,8 @@ void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
 int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    if (streamOperator == nullptr || cameraAbility == nullptr) {
-        MEDIA_ERR_LOG("HStreamCommon::LinkInput streamOperator is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,
+        "HStreamCommon::LinkInput streamOperator is null");
     SetStreamOperator(streamOperator);
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
@@ -140,9 +138,8 @@ int32_t HStreamCommon::StopStream()
 
     if (curCaptureID_ != CAPTURE_ID_UNSET) {
         CamRetCode rc = (CamRetCode)(streamOperator->CancelCapture(curCaptureID_));
-        if (rc != CamRetCode::NO_ERROR) {
-            MEDIA_ERR_LOG("HStreamCommon::StopStream streamOperator->CancelCapture get error code:%{public}d", rc);
-        }
+        CHECK_ERROR_PRINT_LOG(rc != CamRetCode::NO_ERROR,
+            "HStreamCommon::StopStream streamOperator->CancelCapture get error code:%{public}d", rc);
         ResetCaptureId();
         return HdiToServiceError(rc);
     }
@@ -237,9 +234,7 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
     }
     streamInfo.append("    stream Id:[" + std::to_string(curStreamInfo.v1_0.streamId_) + "]");
     std::map<int, std::string>::const_iterator iter = g_cameraFormat.find(format_);
-    if (iter != g_cameraFormat.end()) {
-        streamInfo.append("    format:[" + iter->second + "]");
-    }
+    CHECK_EXECUTE(iter != g_cameraFormat.end(), streamInfo.append("    format:[" + iter->second + "]"));
     streamInfo.append("  width:[" + std::to_string(curStreamInfo.v1_0.width_) + "]");
     streamInfo.append("  height:[" + std::to_string(curStreamInfo.v1_0.height_) + "]");
     streamInfo.append("  dataspace:[" + std::to_string(curStreamInfo.v1_0.dataspace_) + "]");

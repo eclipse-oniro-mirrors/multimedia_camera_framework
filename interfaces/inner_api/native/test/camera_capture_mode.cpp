@@ -326,9 +326,7 @@ int main(int argc, char **argv)
     MEDIA_INFO_LOG("Setting callback to listen camera status and flash status");
     camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-    if (cameraObjList.size() == 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(cameraObjList.size() == 0, 0);
     sptr<CameraDevice> device = cameraObjList[0];
     MEDIA_INFO_LOG("Camera ID count: %{public}zu", cameraObjList.size());
     for (auto& it : cameraObjList) {
@@ -354,14 +352,10 @@ int main(int argc, char **argv)
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(SceneMode::PORTRAIT);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
-    if (portraitSession == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(portraitSession == nullptr, 0);
     portraitSession->BeginConfig();
     sptr<CaptureInput> captureInput = camManagerObj->CreateCameraInput(device);
-    if (captureInput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(captureInput == nullptr, 0);
 
     sptr<CameraInput> cameraInput = (sptr<CameraInput> &)captureInput;
     cameraInput->Open();
@@ -409,14 +403,10 @@ int main(int argc, char **argv)
 
     cameraInput->SetErrorCallback(std::make_shared<TestDeviceCallback>(testName));
     ret = portraitSession->AddInput(captureInput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(photoSurface == nullptr, 0);
     photosize.width = photoWidth;
     photosize.height = photoHeight;
     Profile photoprofile;
@@ -438,36 +428,26 @@ int main(int argc, char **argv)
 
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
-    if (captureListener == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(captureListener == nullptr, 0);
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
     sptr<IBufferProducer> bp = photoSurface->GetProducer();
     sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, bp);
-    if (photoOutput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, 0);
 
     MEDIA_INFO_LOG("Setting photo callback");
     ((sptr<PhotoOutput> &)photoOutput)->SetCallback(std::make_shared<TestPhotoOutputCallback>(testName));
     ret = portraitSession->AddOutput(photoOutput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     sptr<CaptureOutput> metaOutput = camManagerObj->CreateMetadataOutput();
     MEDIA_INFO_LOG("Setting Meta callback");
     ((sptr<MetadataOutput> &)metaOutput)->SetCallback(std::make_shared<TestMetadataOutputObjectCallback>(testName));
 
     ret = portraitSession->AddOutput(metaOutput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    if (previewSurface == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(previewSurface == nullptr, 0);
     previewsize.width = previewWidth;
     previewsize.height = previewHeight;
     Profile previewprofile;
@@ -491,34 +471,24 @@ int main(int argc, char **argv)
     cout << "------------------------------------------------------------------------------------------------"<<endl;
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
-    if (listener == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(listener == nullptr, 0);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
     sptr<Surface> previewProducerSurface = Surface::CreateSurfaceAsProducer(previewProducer);
     sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewProducerSurface);
-    if (previewOutput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(previewOutput == nullptr, 0);
 
     MEDIA_INFO_LOG("Setting preview callback");
     ((sptr<PreviewOutput> &)previewOutput)->SetCallback(std::make_shared<TestPreviewOutputCallback>(testName));
     ret = portraitSession->AddOutput(previewOutput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     ret = portraitSession->CommitConfig();
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     MEDIA_INFO_LOG("Preview started");
     ret = portraitSession->Start();
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     std::vector<float> vecZoomRatioList;
     portraitSession->GetZoomRatioRange(vecZoomRatioList);
@@ -565,9 +535,7 @@ int main(int argc, char **argv)
         portraitSession->UnlockForControl();
         sleep(gapAfterCapture);
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         MEDIA_INFO_LOG("Photo capture cnt [%{public}d] filter : %{public}s",
                        photoCnt++, g_filterTypeStr_[filter].c_str());
         sleep(gapAfterCapture);
@@ -582,9 +550,7 @@ int main(int argc, char **argv)
         portraitSession->SetBeauty(BeautyType::SKIN_TONE, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::SKIN_TONE Capture end" <<endl;
@@ -597,9 +563,7 @@ int main(int argc, char **argv)
         portraitSession->SetBeauty(BeautyType::FACE_SLENDER, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::FACE_SLENDER Capture end" <<endl;
@@ -612,9 +576,7 @@ int main(int argc, char **argv)
         portraitSession->SetBeauty(BeautyType::SKIN_SMOOTH, beautyVal);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         sleep(gapAfterCapture);
     }
     cout<< "BeautyType::SKIN_SMOOTH Capture end" <<endl;
@@ -626,9 +588,7 @@ int main(int argc, char **argv)
         portraitSession->SetPortraitEffect(effect);
         portraitSession->UnlockForControl();
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         MEDIA_INFO_LOG("Photo capture [%{public}d] filter : %{public}s",
                        photoCnt++, g_portraitEffectStr_[effect].c_str());
         sleep(gapAfterCapture);

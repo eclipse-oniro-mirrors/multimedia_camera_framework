@@ -47,9 +47,7 @@ PhotoCaptureSetting::QualityLevel PhotoCaptureSetting::GetQuality()
     camera_metadata_item_t item;
 
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    if (ret != CAM_META_SUCCESS) {
-        return QUALITY_LEVEL_MEDIUM;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS, QUALITY_LEVEL_MEDIUM);
     if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_HIGH) {
         quality = QUALITY_LEVEL_HIGH;
     } else if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_MIDDLE) {
@@ -197,9 +195,7 @@ void PhotoCaptureSetting::SetBurstCaptureState(uint8_t burstState)
     } else if (ret == CAM_META_SUCCESS) {
         status = captureMetadataSetting_->updateEntry(OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("PhotoCaptureSetting::SetBurstCaptureState Failed");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetBurstCaptureState Failed");
     return;
 }
 
@@ -363,9 +359,7 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 
 bool PhotoOutput::IsYuvOrHeifPhoto()
 {
-    if (!GetPhotoProfile()) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(!GetPhotoProfile(), false);
     bool ret = GetPhotoProfile()->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP;
     MEDIA_INFO_LOG("IsYuvOrHeifPhoto res = %{public}d", ret);
     return ret;
@@ -820,9 +814,7 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
 {
     MEDIA_INFO_LOG("IsDeferredImageDeliverySupported type:%{public}d!", type);
     int32_t isSupported = -1;
-    if (type == DELIVERY_NONE) {
-        return isSupported;
-    }
+    CHECK_ERROR_RETURN_RET(type == DELIVERY_NONE, isSupported);
     sptr<CameraDevice> cameraObj;
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,

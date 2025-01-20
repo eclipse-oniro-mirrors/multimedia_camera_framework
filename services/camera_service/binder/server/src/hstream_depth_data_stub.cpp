@@ -73,9 +73,7 @@ int32_t HStreamDepthDataStub::HandleSetDataAccuracy(MessageParcel& data)
     int32_t dataAccuracy = data.ReadInt32();
 
     int error = SetDataAccuracy(dataAccuracy);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataStub::HandleSetDataAccuracy failed : %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataStub::HandleSetDataAccuracy failed : %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

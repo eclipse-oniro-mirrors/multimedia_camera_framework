@@ -53,10 +53,8 @@ HStreamMetadata::~HStreamMetadata()
 int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    if (streamOperator == nullptr || cameraAbility == nullptr) {
-        MEDIA_ERR_LOG("HStreamMetadata::LinkInput streamOperator is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,
+        "HStreamMetadata::LinkInput streamOperator is null");
     SetStreamOperator(streamOperator);
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
@@ -107,12 +105,9 @@ int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
     switch (static_cast<StreamMetadataInterfaceCode>(interfaceCode)) {
         case StreamMetadataInterfaceCode::CAMERA_STREAM_META_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
-            if (callerToken_ != callerToken) {
-                MEDIA_ERR_LOG("HStreamMetadata::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
-                              "is %{public}d",
-                    callerToken_, callerToken);
-                return CAMERA_OPERATION_NOT_ALLOWED;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
+                "HStreamMetadata::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
+                "is %{public}d", callerToken_, callerToken);
             break;
         }
         default:
@@ -149,9 +144,8 @@ int32_t HStreamMetadata::OnMetaResult(int32_t streamId, const std::vector<uint8_
     if (cameraResult == nullptr) {
         cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     }
-    if (streamMetadataCallback_ != nullptr) {
-        streamMetadataCallback_->OnMetadataResult(streamId, cameraResult);
-    }
+    CHECK_EXECUTE(streamMetadataCallback_ != nullptr,
+        streamMetadataCallback_->OnMetadataResult(streamId, cameraResult));
     return CAMERA_OK;
 }
 

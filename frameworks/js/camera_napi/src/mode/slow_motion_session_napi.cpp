@@ -29,15 +29,9 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
     MEDIA_DEBUG_LOG("OnSlowMotionStateCbAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<SlowMotionStateListenerInfo> callbackInfo =
         std::make_unique<SlowMotionStateListenerInfo>(state, shared_from_this());
     work->data = callbackInfo.get();
@@ -45,9 +39,7 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
         SlowMotionStateListenerInfo* callbackInfo = reinterpret_cast<SlowMotionStateListenerInfo *>(work->data);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnSlowMotionStateCb(callbackInfo->state_);
-            }
+            CHECK_EXECUTE(listener != nullptr, listener->OnSlowMotionStateCb(callbackInfo->state_));
             delete callbackInfo;
         }
         delete work;
@@ -116,9 +108,7 @@ napi_value SlowMotionSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, SLOW_MOTION_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         } else {
             MEDIA_ERR_LOG("napi_create_reference Failed!");
         }
@@ -169,16 +159,10 @@ napi_value SlowMotionSessionNapi::SlowMotionSessionNapiConstructor(napi_env env,
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<SlowMotionSessionNapi> obj = std::make_unique<SlowMotionSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession is null");
         obj->slowMotionSession_ = static_cast<SlowMotionSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->slowMotionSession_;
-        if (obj->slowMotionSession_ == nullptr) {
-            MEDIA_ERR_LOG("slowMotionSession is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->slowMotionSession_ == nullptr, result, "slowMotionSession is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             SlowMotionSessionNapi::SlowMotionSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -196,16 +180,12 @@ napi_value SlowMotionSessionNapi::IsSlowMotionDetectionSupported(napi_env env, n
 {
     MEDIA_INFO_LOG("IsSlowMotionDetectionSupported is called");
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsSlowMotionDetectionSupported is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi IsSlowMotionDetectionSupported is called!");
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, slowMotionSessionNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported parse parameter occur error");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        result, "IsSlowMotionDetectionSupported parse parameter occur error");
     if (slowMotionSessionNapi != nullptr && slowMotionSessionNapi->slowMotionSession_ != nullptr) {
         bool isSupported = slowMotionSessionNapi->slowMotionSession_->IsSlowMotionDetectionSupported();
         napi_get_boolean(env, isSupported, &result);
@@ -221,13 +201,9 @@ napi_value SlowMotionSessionNapi::GetDoubleProperty(napi_env env, napi_value par
     napi_status status;
     napi_value property;
     status = napi_get_named_property(env, param, propertyName.c_str(), &property);
-    if (status != napi_ok) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(status != napi_ok, nullptr);
     status = napi_get_value_double(env, property, &propertyValue);
-    if (status != napi_ok) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(status != napi_ok, nullptr);
     return property;
 }
 
@@ -235,10 +211,8 @@ napi_value SlowMotionSessionNapi::SetSlowMotionDetectionArea(napi_env env, napi_
 {
     MEDIA_INFO_LOG("SetSlowMotionDetectionArea is called");
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi SetSlowMotionDetectionArea is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi SetSlowMotionDetectionArea is called!");
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
     napi_status status;
     size_t argc = ARGS_ONE;

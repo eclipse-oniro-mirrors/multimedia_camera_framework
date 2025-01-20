@@ -83,9 +83,7 @@ std::vector<BeautyType> CameraAbility::GetSupportedBeautyTypes()
 std::vector<int32_t> CameraAbility::GetSupportedBeautyRange(BeautyType beautyType)
 {
     auto it = supportedBeautyRangeMap_.find(beautyType);
-    if (it != supportedBeautyRangeMap_.end()) {
-        return it->second;
-    }
+    CHECK_ERROR_RETURN_RET(it != supportedBeautyRangeMap_.end(), it->second);
     return {};
 }
 
@@ -270,9 +268,7 @@ void CameraAbilityContainer::FilterByZoomRatio(float zoomRatio)
         bool oldValue = lastIsMacroSupported_.value();
         bool newValue = IsMacroSupported();
         MEDIA_INFO_LOG("CameraAbilityContainer macroValue %{public}d", static_cast<int32_t>(newValue));
-        if (oldValue != newValue) {
-            OnAbilityChange();
-        }
+        CHECK_EXECUTE(oldValue != newValue, OnAbilityChange());
     }
 }
 
@@ -283,9 +279,7 @@ void CameraAbilityContainer::FilterByMacro(bool enableMacro)
         std::vector<float> oldValue = lastGetZoomRatioRange_.value();
         std::vector<float> newValue = GetZoomRatioRange();
         MEDIA_INFO_LOG("CameraAbilityContainer zoomValue %{public}f %{public}f", newValue[0], newValue[1]);
-        if (oldValue[0] != newValue[0] || oldValue[1] != newValue[1]) {
-            OnAbilityChange();
-        }
+        CHECK_EXECUTE(oldValue[0] != newValue[0] || oldValue[1] != newValue[1], OnAbilityChange());
     }
 }
 

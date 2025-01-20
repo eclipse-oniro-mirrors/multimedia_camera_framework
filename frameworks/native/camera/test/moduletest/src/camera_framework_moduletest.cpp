@@ -479,10 +479,7 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    if (videoSurfaceListener == nullptr) {
-        MEDIA_ERR_LOG("Failed to create new SurfaceListener");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(videoSurfaceListener == nullptr, nullptr, "Failed to create new SurfaceListener");
     surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
@@ -497,10 +494,7 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(VideoProfile& v
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    if (videoSurfaceListener == nullptr) {
-        MEDIA_ERR_LOG("Failed to create new SurfaceListener");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(videoSurfaceListener == nullptr, nullptr, "Failed to create new SurfaceListener");
     surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
@@ -904,15 +898,11 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession>& sessio
     session->LockForControl();
 
     std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        session->SetZoomRatio(zoomRatioRange[0]);
-    }
+    CHECK_EXECUTE(!zoomRatioRange.empty(), session->SetZoomRatio(zoomRatioRange[0]));
 
     // GetExposureBiasRange
     std::vector<float> exposureBiasRange = session->GetExposureBiasRange();
-    if (!exposureBiasRange.empty()) {
-        session->SetExposureBias(exposureBiasRange[0]);
-    }
+    CHECK_EXECUTE(!exposureBiasRange.empty(), session->SetExposureBias(exposureBiasRange[0]));
 
     // Get/Set Exposurepoint
     Point exposurePoint = { 1, 2 };
@@ -1083,10 +1073,7 @@ bool CameraFrameworkModuleTest::IsSupportNow()
 bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
 {
     std::vector<SceneMode> modes = manager_->GetSupportedModes(cameras_[0]);
-    if (modes.size() == 0) {
-        MEDIA_ERR_LOG("IsSupportMode: modes.size is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(modes.size() == 0, false, "IsSupportMode: modes.size is null");
     bool supportMode = false;
     for (auto &it : modes) {
         if (it == mode) {
@@ -1192,12 +1179,8 @@ void CameraFrameworkModuleTest::SetUp()
 void CameraFrameworkModuleTest::TearDown()
 {
     MEDIA_INFO_LOG("TearDown start");
-    if (session_) {
-        session_->Release();
-    }
-    if (scanSession_) {
-        scanSession_->Release();
-    }
+    CHECK_EXECUTE(session_, session_->Release());
+    CHECK_EXECUTE(scanSession_, scanSession_->Release());
     if (input_) {
         sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
         camInput->Close();
@@ -1325,9 +1308,7 @@ void CameraFrameworkModuleTest::ProcessPortraitSession(sptr<PortraitSession>& po
     portraitSession->LockForControl();
 
     std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
-    if (!effects.empty()) {
-        portraitSession->SetPortraitEffect(effects[0]);
-    }
+    CHECK_EXECUTE(!effects.empty(), portraitSession->SetPortraitEffect(effects[0]));
 
     portraitSession->UnlockForControl();
 
@@ -1843,9 +1824,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_023, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_024, TestSize.Level0)
 {
-    if (!IsSupportNow()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!IsSupportNow());
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -1947,9 +1926,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_025, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_026, TestSize.Level0)
 {
-    if (!IsSupportNow()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!IsSupportNow());
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -2121,9 +2098,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_028, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_029, TestSize.Level0)
 {
-    if (!IsSupportNow()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!IsSupportNow());
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -2228,9 +2203,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_030, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_031, TestSize.Level0)
 {
-    if (!IsSupportNow()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!IsSupportNow());
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -2666,9 +2639,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    if (cameras_.size() < 2) {
-        return;
-    }
+    CHECK_ERROR_RETURN(cameras_.size() < 2);
 
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[1]);
     ASSERT_NE(input, nullptr);
@@ -2687,9 +2658,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     intResult = session_->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    if (!(((sptr<PhotoOutput>&)photoOutput)->IsMirrorSupported())) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!(((sptr<PhotoOutput>&)photoOutput)->IsMirrorSupported()));
     
     SelectProfiles wanted;
     wanted.preview.size_ = {PRVIEW_WIDTH_640, PRVIEW_HEIGHT_480};
@@ -2759,9 +2728,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     std::vector<ColorEffect> colorEffects = session_->GetSupportedColorEffects();
-    if (colorEffects.empty()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(colorEffects.empty());
     ASSERT_EQ(colorEffects.empty(), false);
 
     ColorEffect colorEffect = colorEffects.back();
@@ -2810,9 +2777,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
 
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
-    if (metadataObjectTypes.size() == 0) {
-        return;
-    }
+    CHECK_ERROR_RETURN(metadataObjectTypes.size() == 0);
 
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
@@ -2843,9 +2808,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Level0)
 {
     SceneMode portraitMode = SceneMode::PORTRAIT;
-    if (!IsSupportMode(portraitMode)) {
-        return;
-    }
+    CHECK_ERROR_RETURN(!IsSupportMode(portraitMode));
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
 

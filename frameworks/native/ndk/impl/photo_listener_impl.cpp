@@ -232,10 +232,8 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
     MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
-    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
-        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
-    }
+    CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,

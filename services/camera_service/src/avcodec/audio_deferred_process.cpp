@@ -73,10 +73,8 @@ int32_t AudioDeferredProcess::ConfigOfflineAudioEffectChain()
 int32_t AudioDeferredProcess::PrepareOfflineAudioEffectChain()
 {
     MEDIA_INFO_LOG("AudioDeferredProcess::PrepareOfflineAudioEffectChain Enter");
-    if (offlineEffectChain_->Prepare() != 0) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::PrepareOfflineAudioEffectChain Err");
-        return -1;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(offlineEffectChain_->Prepare() != 0, -1,
+        "AudioDeferredProcess::PrepareOfflineAudioEffectChain Err");
     return CAMERA_OK;
 }
 
@@ -84,19 +82,15 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
     const AudioStreamInfo& outputOptions)
 {
     MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize Enter");
-    if (offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_, maxProcessedBufferSize_) != 0) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::GetMaxBufferSize Err");
-        return -1;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_,
+        maxProcessedBufferSize_) != 0, -1, "AudioDeferredProcess::GetMaxBufferSize Err");
     oneUnprocessedSize_ = inputOptions.samplingRate / ONE_THOUSAND *
         inputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
     oneProcessedSize_ = outputOptions.samplingRate / ONE_THOUSAND *
         outputOptions.channels * DURATION_EACH_AUDIO_FRAME * sizeof(short);
-    if (oneUnprocessedSize_ * PROCESS_BATCH_SIZE > maxUnprocessedBufferSize_ ||
-        oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_) {
-        MEDIA_ERR_LOG("AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
-        return -1;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(oneUnprocessedSize_ * PROCESS_BATCH_SIZE > maxUnprocessedBufferSize_ ||
+        oneProcessedSize_ * PROCESS_BATCH_SIZE > maxProcessedBufferSize_, -1,
+        "AudioDeferredProcess::GetMaxBufferSize MaxBufferSize Not Enough");
     return CAMERA_OK;
 }
 
@@ -150,9 +144,7 @@ void AudioDeferredProcess::Release()
 {
     lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("AudioDeferredProcess::Release Enter");
-    if (offlineEffectChain_) {
-        offlineEffectChain_->Release();
-    }
+    CHECK_EXECUTE(offlineEffectChain_, offlineEffectChain_->Release());
     offlineEffectChain_ = nullptr;
     offlineAudioEffectManager_ = nullptr;
 }

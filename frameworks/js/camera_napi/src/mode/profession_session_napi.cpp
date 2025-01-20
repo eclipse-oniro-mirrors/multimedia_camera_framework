@@ -107,9 +107,7 @@ napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PROFESSIONAL_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -158,16 +156,10 @@ napi_value ProfessionSessionNapi::ProfessionSessionNapiConstructor(napi_env env,
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<ProfessionSessionNapi> obj = std::make_unique<ProfessionSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->professionSession_ = static_cast<ProfessionSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->professionSession_;
-        if (obj->professionSession_ == nullptr) {
-            MEDIA_ERR_LOG("professionSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->professionSession_ == nullptr, result, "professionSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             ProfessionSessionNapi::ProfessionSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -194,18 +186,13 @@ napi_value ProfessionSessionNapi::GetSupportedMeteringModes(napi_env env, napi_c
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     ProfessionSessionNapi* professionSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         std::vector<MeteringMode> meteringModes;
         int32_t retCode = professionSessionNapi->professionSession_->GetSupportedMeteringModes(meteringModes);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedMeteringModes len = %{public}zu",
             meteringModes.size());
         if (!meteringModes.empty()) {
@@ -242,9 +229,7 @@ napi_value ProfessionSessionNapi::IsMeteringModeSupported(napi_env env, napi_cal
         MeteringMode mode = (MeteringMode)value;
         bool isSupported;
         int32_t retCode = professionSessionNapi->professionSession_->IsMeteringModeSupported(mode, isSupported);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsMeteringModeSupported call Failed!");
@@ -269,9 +254,7 @@ napi_value ProfessionSessionNapi::GetMeteringMode(napi_env env, napi_callback_in
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         MeteringMode mode;
         int32_t retCode = professionSessionNapi->professionSession_->GetMeteringMode(mode);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, mode, &result);
     } else {
         MEDIA_ERR_LOG("GetMeteringMode call Failed!");
@@ -326,12 +309,8 @@ napi_value ProfessionSessionNapi::GetExposureDurationRange(napi_env env, napi_ca
     if (status == napi_ok && professionSessionNapi != nullptr) {
         std::vector<uint32_t> vecExposureList;
         int32_t retCode = professionSessionNapi->professionSession_->GetSensorExposureTimeRange(vecExposureList);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        if (vecExposureList.empty() || napi_create_array(env, &result) != napi_ok) {
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_ERROR_RETURN_RET(vecExposureList.empty() || napi_create_array(env, &result) != napi_ok, result);
         for (size_t i = 0; i < vecExposureList.size(); i++) {
             uint32_t exposure = vecExposureList[i];
             MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposureDuration = %{public}d", vecExposureList[i]);
@@ -363,9 +342,7 @@ napi_value ProfessionSessionNapi::GetExposureDuration(napi_env env, napi_callbac
     if (status == napi_ok && professionSessionNapi!= nullptr) {
         uint32_t exposureDurationValue;
         int32_t retCode = professionSessionNapi->professionSession_->GetSensorExposureTime(exposureDurationValue);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_DEBUG_LOG("GetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
         napi_create_uint32(env, exposureDurationValue, &result);
     } else {
@@ -396,9 +373,7 @@ napi_value ProfessionSessionNapi::SetExposureDuration(napi_env env, napi_callbac
         professionSessionNapi->professionSession_->LockForControl();
         int32_t retCode = professionSessionNapi->professionSession_->SetSensorExposureTime(exposureDurationValue);
         professionSessionNapi->professionSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     } else {
         MEDIA_ERR_LOG("SetExposureDuration call Failed!");
     }
@@ -419,19 +394,14 @@ napi_value ProfessionSessionNapi::GetSupportedFocusAssistFlashModes(napi_env env
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     ProfessionSessionNapi* professionSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         std::vector<FocusAssistFlashMode> focusAssistFlashs;
         int32_t retCode =
             professionSessionNapi->professionSession_->GetSupportedFocusAssistFlashModes(focusAssistFlashs);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedFocusAssistFlashModes len = %{public}zu",
             focusAssistFlashs.size());
         if (!focusAssistFlashs.empty()) {
@@ -468,9 +438,7 @@ napi_value ProfessionSessionNapi::IsFocusAssistFlashModeSupported(napi_env env, 
         FocusAssistFlashMode mode = static_cast<FocusAssistFlashMode>(value);
         bool isSupported;
         int32_t retCode = professionSessionNapi->professionSession_->IsFocusAssistFlashModeSupported(mode, isSupported);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsFocusAssistFlashModeSupported call Failed!");
@@ -495,9 +463,7 @@ napi_value ProfessionSessionNapi::GetFocusAssistFlashMode(napi_env env, napi_cal
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         FocusAssistFlashMode mode;
         int32_t retCode = professionSessionNapi->professionSession_->GetFocusAssistFlashMode(mode);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, mode, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusAssistFlashMode call Failed!");
@@ -556,9 +522,7 @@ napi_value ProfessionSessionNapi::GetIsoRange(napi_env env, napi_callback_info i
     if (status == napi_ok && professionSessionNapi != nullptr) {
         std::vector<int32_t> vecIsoList;
         int32_t retCode = professionSessionNapi->professionSession_->GetIsoRange(vecIsoList);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("ProfessionSessionNapi::GetIsoRange len = %{public}zu", vecIsoList.size());
 
         if (!vecIsoList.empty() && napi_create_array(env, &result) == napi_ok) {
@@ -579,10 +543,8 @@ napi_value ProfessionSessionNapi::GetIsoRange(napi_env env, napi_callback_info i
 
 napi_value ProfessionSessionNapi::IsManualIsoSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsManualIsoSupported is called!");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi IsManualIsoSupported is called!");
     MEDIA_DEBUG_LOG("IsManualIsoSupported is called");
     napi_status status;
     napi_value result = nullptr;
@@ -621,9 +583,7 @@ napi_value ProfessionSessionNapi::GetISO(napi_env env, napi_callback_info info)
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         int32_t iso;
         int32_t retCode = professionSessionNapi->professionSession_->GetISO(iso);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, iso, &result);
     } else {
         MEDIA_ERR_LOG("GetISO call Failed!");
@@ -673,19 +633,14 @@ napi_value ProfessionSessionNapi::GetSupportedExposureHintModes(napi_env env, na
 
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     ProfessionSessionNapi* professionSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         std::vector<ExposureHintMode> exposureHints;
         int32_t retCode =
             professionSessionNapi->professionSession_->GetSupportedExposureHintModes(exposureHints);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedExposureHintModes len = %{public}zu",
             exposureHints.size());
         if (!exposureHints.empty()) {
@@ -719,9 +674,7 @@ napi_value ProfessionSessionNapi::GetExposureHintMode(napi_env env, napi_callbac
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         ExposureHintMode mode = EXPOSURE_HINT_UNSUPPORTED;
         int32_t retCode = professionSessionNapi->professionSession_->GetExposureHintMode(mode);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, mode, &result);
     } else {
         MEDIA_ERR_LOG("GetExposureHintMode call Failed!");
@@ -874,15 +827,9 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
     MEDIA_DEBUG_LOG("OnExposureInfoChangedCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ExposureInfoChangedCallback> callback =
         std::make_unique<ExposureInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
@@ -890,9 +837,7 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
         ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(work->data);
         if (callback) {
             auto listener = callback->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnExposureInfoChangedCallback(callback->info_);
-            }
+            CHECK_EXECUTE(listener != nullptr, listener->OnExposureInfoChangedCallback(callback->info_));
             delete callback;
         }
         delete work;
@@ -932,15 +877,9 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<IsoInfoChangedCallback> callback =
         std::make_unique<IsoInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
@@ -948,9 +887,7 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
         IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(work->data);
         if (callback) {
             auto listener = callback->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnIsoInfoChangedCallback(callback->info_);
-            }
+            CHECK_EXECUTE(listener != nullptr, listener->OnIsoInfoChangedCallback(callback->info_));
             delete callback;
         }
         delete work;
@@ -989,15 +926,9 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ApertureInfoChangedCallback> callback =
         std::make_unique<ApertureInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
@@ -1005,9 +936,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
         ApertureInfoChangedCallback* callback = reinterpret_cast<ApertureInfoChangedCallback *>(work->data);
         if (callback) {
             auto listener = callback->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnApertureInfoChangedCallback(callback->info_);
-            }
+            CHECK_EXECUTE(listener != nullptr, listener->OnApertureInfoChangedCallback(callback->info_));
             delete callback;
         }
         delete work;
@@ -1046,15 +975,9 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
     MEDIA_DEBUG_LOG("OnLuminationInfoChangedCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<LuminationInfoChangedCallback> callback =
         std::make_unique<LuminationInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
@@ -1062,9 +985,7 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
         LuminationInfoChangedCallback* callback = reinterpret_cast<LuminationInfoChangedCallback *>(work->data);
         if (callback) {
             auto listener = callback->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnLuminationInfoChangedCallback(callback->info_);
-            }
+            CHECK_EXECUTE(listener != nullptr, listener->OnLuminationInfoChangedCallback(callback->info_));
             delete callback;
         }
         delete work;

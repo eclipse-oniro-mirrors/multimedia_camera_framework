@@ -91,15 +91,11 @@ int32_t ProfessionSession::GetSupportedMeteringModes(std::vector<MeteringMode> &
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_METER_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedMeteringModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedMeteringModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaMeteringModeMap_.find(static_cast<camera_meter_mode_t>(item.data.u8[i]));
-        if (itr != metaMeteringModeMap_.end()) {
-            supportedMeteringModes.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaMeteringModeMap_.end(), supportedMeteringModes.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -237,9 +233,8 @@ int32_t ProfessionSession::SetISO(int32_t iso)
         CameraErrorCode::OPERATION_NOT_ALLOWED, "ProfessionSession::SetISO range is empty");
 
     const int32_t autoIsoValue = 0;
-    if (iso != autoIsoValue && std::find(isoRange.begin(), isoRange.end(), iso) == isoRange.end()) {
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET(iso != autoIsoValue && std::find(isoRange.begin(), isoRange.end(), iso) == isoRange.end(),
+        CameraErrorCode::INVALID_ARGUMENT);
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ISO_VALUE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
@@ -314,9 +309,7 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         "ProfessionSession::GetSupportedFocusModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
-        if (itr != g_metaFocusModeMap_.end()) {
-            supportedFocusModes.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != g_metaFocusModeMap_.end(), supportedFocusModes.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -412,9 +405,7 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
         "ProfessionSession::GetSupportedExposureHintModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaExposureHintModeMap_.find(static_cast<camera_exposure_hint_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaExposureHintModeMap_.end()) {
-            supportedExposureHintModes.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaExposureHintModeMap_.end(), supportedExposureHintModes.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -493,9 +484,8 @@ int32_t ProfessionSession::GetSupportedFocusAssistFlashModes(
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaFocusAssistFlashModeMap_.find(
             static_cast<camera_focus_assist_flash_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaFocusAssistFlashModeMap_.end()) {
-            supportedFocusAssistFlashModes.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaFocusAssistFlashModeMap_.end(),
+            supportedFocusAssistFlashModes.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -685,9 +675,7 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
         "ProfessionSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
-        if (itr != g_metaColorEffectMap_.end()) {
-            supportedColorEffects.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != g_metaColorEffectMap_.end(), supportedColorEffects.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -798,9 +786,7 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
         };
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (exposureInfoCallback_ != nullptr && (value != exposureDurationValue_)) {
-            if (exposureDurationValue_ != 0) {
-                exposureInfoCallback_->OnExposureInfoChanged(info);
-            }
+            CHECK_EXECUTE(exposureDurationValue_ != 0, exposureInfoCallback_->OnExposureInfoChanged(info));
             exposureDurationValue_ = value;
         }
     }
@@ -818,9 +804,7 @@ void ProfessionSession::ProcessIsoChange(const std::shared_ptr<OHOS::Camera::Cam
         };
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (isoInfoCallback_ != nullptr && item.data.ui32[0] != isoValue_) {
-            if (isoValue_ != 0) {
-                isoInfoCallback_->OnIsoInfoChanged(info);
-            }
+            CHECK_EXECUTE(isoValue_ != 0, isoInfoCallback_->OnIsoInfoChanged(info));
             isoValue_ = item.data.ui32[0];
         }
     }

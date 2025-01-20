@@ -29,9 +29,7 @@ using OHOS::Security::AccessToken::AccessTokenKit;
 
 sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 {
-    if (streamOpCb == nullptr) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(streamOpCb == nullptr, nullptr);
     return static_cast<HCaptureSession*>(streamOpCb.GetRefPtr());
 }
 

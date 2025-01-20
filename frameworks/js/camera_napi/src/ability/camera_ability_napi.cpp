@@ -128,17 +128,11 @@ napi_value CameraFunctionsNapi::Init(napi_env env, napi_value exports, Functions
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors;
     auto nameIt = functionsNameMap_.find(type);
-    if  (nameIt == functionsNameMap_.end()) {
-        MEDIA_ERR_LOG("Init call Failed, className not find");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(nameIt == functionsNameMap_.end(), nullptr, "Init call Failed, className not find");
     auto className = nameIt->second;
 
     auto descIt = functionsDescMap_.find(type);
-    if  (descIt == functionsDescMap_.end()) {
-        MEDIA_ERR_LOG("Init call Failed, descriptors not find");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(descIt == functionsDescMap_.end(), nullptr, "Init call Failed, descriptors not find");
     std::vector<napi_property_descriptor> camera_ability_props = CameraNapiUtils::GetPropertyDescriptor(descIt->second);
 
     status = napi_define_class(env, className, NAPI_AUTO_LENGTH,
@@ -164,9 +158,7 @@ napi_value CameraFunctionsNapi::Init(napi_env env, napi_value exports, Functions
 
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, className, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed");
@@ -217,9 +209,7 @@ CameraFunctionsNapi::CameraFunctionsNapi() : env_(nullptr), wrapper_(nullptr) {}
 CameraFunctionsNapi::~CameraFunctionsNapi()
 {
     MEDIA_DEBUG_LOG("~CameraFunctionsNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
     if (cameraAbility_) {
         cameraAbility_ = nullptr;
     }
@@ -479,17 +469,13 @@ napi_value CameraFunctionsNapi::IsMacroSupported(napi_env env, napi_callback_inf
 
 napi_value CameraFunctionsNapi::IsDepthFusionSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsDepthFusionSupported is called!");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        nullptr, "SystemApi IsDepthFusionSupported is called!");
     napi_value thisVar = nullptr;
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        nullptr, "CameraSessionNapi::IsDepthFusionSupported parse parameter occur error");
     thisVar = jsParamParser.GetThisVar();
 
     return HandleQuery(env, info, thisVar, [](auto ability) {
@@ -499,17 +485,13 @@ napi_value CameraFunctionsNapi::IsDepthFusionSupported(napi_env env, napi_callba
 
 napi_value CameraFunctionsNapi::GetDepthFusionThreshold(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi GetDepthFusionThreshold is called!");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        nullptr, "SystemApi GetDepthFusionThreshold is called!");
     napi_value thisVar = nullptr;
     CameraFunctionsNapi* cameraFunctionsNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraFunctionsNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::GetDepthFusionThreshold parse parameter occur error");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        nullptr, "CameraSessionNapi::GetDepthFusionThreshold parse parameter occur error");
     thisVar = jsParamParser.GetThisVar();
 
     return HandleQuery(env, info, thisVar, [](auto ability) {
@@ -553,10 +535,7 @@ napi_value CameraFunctionsNapi::GetSupportedPhysicalApertures(napi_env env, napi
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraFunctionsNapi*  cameraAbilityNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraAbilityNapi));
     if (status == napi_ok && cameraAbilityNapi != nullptr && cameraAbilityNapi->GetNativeObj() !=nullptr) {

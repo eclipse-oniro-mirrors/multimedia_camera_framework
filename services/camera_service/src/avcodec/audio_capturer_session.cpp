@@ -124,10 +124,7 @@ bool AudioCapturerSession::StartAudioCapture()
     }
     startAudioCapture_ = true;
     audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
-    if (audioThread_ == nullptr) {
-        MEDIA_ERR_LOG("Create auido thread failed");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(audioThread_ == nullptr, false, "Create auido thread failed");
     return true;
 }
 
@@ -135,9 +132,8 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 {
     vector<sptr<AudioRecord>> allRecords = audioBufferQueue_.GetAllElements();
     for (const auto& record : allRecords) {
-        if (record->GetTimeStamp() >= startTime && record->GetTimeStamp() < endTime) {
-            audioRecords.push_back(record);
-        }
+        CHECK_EXECUTE(record->GetTimeStamp() >= startTime && record->GetTimeStamp() < endTime,
+            audioRecords.push_back(record));
     }
 }
 

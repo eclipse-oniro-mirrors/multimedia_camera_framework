@@ -31,16 +31,12 @@ int32_t HStreamCaptureProxy::Capture(const std::shared_ptr<Camera::CameraMetadat
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    if (!(Camera::MetadataUtils::EncodeCameraMetadata(captureSettings, data))) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy Capture EncodeCameraMetadata failed");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(Camera::MetadataUtils::EncodeCameraMetadata(captureSettings, data)), IPC_PROXY_ERR,
+        "HStreamCaptureProxy Capture EncodeCameraMetadata failed");
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy Capture failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy Capture failed, error: %{public}d", error);
 
     return error;
 }
@@ -54,9 +50,7 @@ int32_t HStreamCaptureProxy::CancelCapture()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CANCEL), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
 
     return error;
 }
@@ -70,9 +64,7 @@ int32_t HStreamCaptureProxy::ConfirmCapture()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CONFIRM), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy ConfirmCapture failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy ConfirmCapture failed, error: %{public}d", error);
 
     return error;
 }
@@ -86,9 +78,7 @@ int32_t HStreamCaptureProxy::Release()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_RELEASE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy Release failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy Release failed, error: %{public}d", error);
 
     return error;
 }
@@ -99,19 +89,14 @@ int32_t HStreamCaptureProxy::SetCallback(sptr<IStreamCaptureCallback> &callback)
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR, "HStreamCaptureProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_SET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -122,10 +107,8 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CreatePhotoOutput producer is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HStreamCaptureProxy CreatePhotoOutput producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -133,9 +116,7 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy SetThumbnail failed, error: %{public}d", error);
     return error;
 }
 
@@ -150,9 +131,7 @@ int32_t HStreamCaptureProxy::EnableRawDelivery(bool enabled)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_RAW_DELIVERY), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy EnableRawDelivery failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy EnableRawDelivery failed, error: %{public}d", error);
     return error;
 }
 
@@ -251,9 +230,8 @@ int32_t HStreamCaptureProxy::SetMovingPhotoVideoCodecType(int32_t videoCodecType
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_VIDEO_CODEC_TYPE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureProxy IsDeferredVideoEnabled failed, error: %{public}d", error);
     return error;
 }
 

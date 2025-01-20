@@ -100,9 +100,7 @@ napi_value DepthDataNapi::Init(napi_env env, napi_value exports)
     if (status == napi_ok) {
         if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, DEPTH_DATA_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call failed!");
