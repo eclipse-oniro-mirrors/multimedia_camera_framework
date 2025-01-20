@@ -123,6 +123,8 @@ public:
 
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 
+    virtual int32_t GetTorchStatus(int32_t &status) = 0;
+
     virtual int32_t SetTorchLevel(float level) = 0;
 
     virtual int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) = 0;
