@@ -17,6 +17,7 @@
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
+#include "camera_rotation_api_utils.h"
 #include "input/camera_device.h"
 #include "metadata_common_utils.h"
 #include "capture_scene_const.h"
@@ -175,8 +176,9 @@ const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbili
 
 CameraPosition CameraDevice::GetPosition()
 {
-    // Compatible with adaptive applications
-    if (cameraPosition_ == CAMERA_POSITION_FRONT && foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && cameraPosition_ == CAMERA_POSITION_FRONT &&
+        foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
         cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
     }
     return cameraPosition_;
