@@ -117,6 +117,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             cameraXCollie.CancelCameraXCollie();
             errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_TORCH_STATUS):
+            errCode = HCameraServiceStub::HandleGetTorchStatus(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_LAUNCH_CAMERA):
             errCode = HCameraServiceStub::HandlePrelaunchCamera(data, reply);
             break;
@@ -332,6 +335,16 @@ int HCameraServiceStub::HandleIsCameraMuted(MessageParcel& data, MessageParcel& 
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isMuted), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleIsCameraMuted Write isMuted failed");
 
+    return ret;
+}
+
+int HCameraServiceStub::HandleGetTorchStatus(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t status = 0;
+    int32_t ret = GetTorchStatus(status);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleGetTorchStatus result: %{public}d, status: %{public}d", ret, status);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteInt32(status), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetTorchStatus Write status failed");
     return ret;
 }
 

@@ -682,6 +682,26 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
     return error;
 }
 
+int32_t HCameraServiceProxy::GetTorchStatus(int32_t &status)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_TORCH_STATUS), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::GetTorchStatus failed, error: %{public}d", error);
+        return error;
+    }
+
+    status = reply.ReadInt32();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy::GetTorchStatus Read status is %{public}d", status);
+
+    return error;
+}
+
 int32_t HCameraServiceProxy::SetTorchLevel(float level)
 {
     MessageParcel data;
