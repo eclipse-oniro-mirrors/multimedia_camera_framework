@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class CJCameraManagerCallback : public CameraStatusListener, public ListenerBase<const CameraStatusInfo &> {
+class CJCameraManagerCallback : public CameraManagerCallback, public ListenerBase<const CameraStatusInfo &> {
 public:
     CJCameraManagerCallback() = default;
     ~CJCameraManagerCallback() = default;

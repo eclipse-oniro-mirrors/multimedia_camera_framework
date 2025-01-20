@@ -294,6 +294,11 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     return CameraErrorCode::SUCCESS;
 }
 
+int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSession)
+{
+    return CreateCaptureSession(pCaptureSession, SceneMode::NORMAL);
+}
+
 sptr<DeferredPhotoProcSession> CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     std::shared_ptr<IDeferredPhotoProcSessionCallback> callback)
 {
@@ -921,7 +926,12 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     return CameraErrorCode::SUCCESS;
 }
 
-void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraStatusListener> listener)
+void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> listener)
+{
+    RegisterCameraStatusCallback(listener);
+}
+
+void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallback> listener)
 {
     CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = cameraStatusListenerManager_->AddListener(listener);
@@ -945,7 +955,7 @@ void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraStatusListener
     }
 }
 
-void CameraManager::UnregisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener)
+void CameraManager::UnregisterCameraStatusCallback(std::shared_ptr<CameraManagerCallback> listener)
 {
     CHECK_ERROR_RETURN(listener == nullptr);
     cameraStatusListenerManager_->RemoveListener(listener);

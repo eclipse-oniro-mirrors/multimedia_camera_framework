@@ -171,7 +171,7 @@ extern bool g_sessionclosed;
 extern bool g_brightnessStatusChanged;
 extern bool g_slowMotionStatusChanged;
 
-class AppCallback : public CameraStatusListener,
+class AppCallback : public CameraManagerCallback,
                     public TorchListener,
                     public ErrorCallback,
                     public PhotoStateCallback,

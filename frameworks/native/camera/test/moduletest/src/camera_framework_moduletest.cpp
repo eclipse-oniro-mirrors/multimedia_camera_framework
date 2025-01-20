@@ -7292,7 +7292,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_063, TestSize.L
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
-    std::shared_ptr<CameraStatusListener> camMnagerCallback = std::make_shared<AppCallback>();
+    std::shared_ptr<CameraManagerCallback> camMnagerCallback = std::make_shared<AppCallback>();
     camMnagerCallback = nullptr;
     manager_->RegisterCameraStatusCallback(camMnagerCallback);
 

@@ -56,7 +56,7 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
 };
 
 namespace OHOS::CameraStandard {
-class InnerCameraManagerCameraStatusCallback : public CameraStatusListener {
+class InnerCameraManagerCameraStatusCallback : public CameraManagerCallback {
 public:
     InnerCameraManagerCameraStatusCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
         : cameraManager_(cameraManager), callback_(*callback)

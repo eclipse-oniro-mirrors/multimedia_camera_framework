@@ -95,10 +95,10 @@ typedef enum OutputCapStreamType {
     DEPTH = 6
 } OutputCapStreamType;
 
-class CameraStatusListener {
+class CameraManagerCallback {
 public:
-    CameraStatusListener() = default;
-    virtual ~CameraStatusListener() = default;
+    CameraManagerCallback() = default;
+    virtual ~CameraManagerCallback() = default;
     virtual void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const = 0;
     virtual void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const = 0;
 };
@@ -232,6 +232,14 @@ public:
      * @return Returns error code.
      */
     int32_t CreateCaptureSession(sptr<CaptureSession>& pCaptureSession, SceneMode mode);
+
+    /**
+     * @brief Create capture session.
+     *
+     * @param pCaptureSession pointer to capture session.
+     * @return Returns error code.
+     */
+    int32_t CreateCaptureSession(sptr<CaptureSession>& pCaptureSession);
 
     /**
      * @brief Create photo output instance using surface.
@@ -488,16 +496,23 @@ public:
     /**
      * @brief Register camera status listener.
      *
-     * @param listener CameraStatusListener pointer.
+     * @param listener CameraManagerCallback pointer.
      */
-    void RegisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener);
+    void SetCallback(std::shared_ptr<CameraManagerCallback> listener);
+
+    /**
+     * @brief Register camera status listener.
+     *
+     * @param listener CameraManagerCallback pointer.
+     */
+    void RegisterCameraStatusCallback(std::shared_ptr<CameraManagerCallback> listener);
 
     /**
      * @brief Unregister camera status listener.
      *
-     * @param listener CameraStatusListener pointer.
+     * @param listener CameraManagerCallback pointer.
      */
-    void UnregisterCameraStatusCallback(std::shared_ptr<CameraStatusListener> listener);
+    void UnregisterCameraStatusCallback(std::shared_ptr<CameraManagerCallback> listener);
 
     /**
      * @brief Get the camera status listener manager.
@@ -907,7 +922,7 @@ private:
 
 class CameraStatusListenerManager : public CameraManagerGetter,
                                     public HCameraServiceCallbackStub,
-                                    public CameraListenerManager<CameraStatusListener> {
+                                    public CameraListenerManager<CameraManagerCallback> {
 public:
     int32_t OnCameraStatusChanged(
         const std::string& cameraId, const CameraStatus status, const std::string& bundleName) override;

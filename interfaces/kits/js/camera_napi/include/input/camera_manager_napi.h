@@ -37,7 +37,7 @@ enum CameraManagerAsyncCallbackModes {
     CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
 };
 
-class CameraManagerCallbackNapi : public CameraStatusListener, public ListenerBase,
+class CameraManagerCallbackNapi : public CameraManagerCallback, public ListenerBase,
     public std::enable_shared_from_this<CameraManagerCallbackNapi> {
 public:
     explicit CameraManagerCallbackNapi(napi_env env);
