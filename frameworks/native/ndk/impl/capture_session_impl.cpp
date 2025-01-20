@@ -82,17 +82,15 @@ public:
     void OnFocusState(FocusState state) override
     {
         MEDIA_DEBUG_LOG("OnFrameStarted is called!");
-        if (captureSession_ != nullptr && callback_.onFocusStateChange != nullptr) {
-            callback_.onFocusStateChange(captureSession_, static_cast<Camera_FocusState>(state));
-        }
+        CHECK_EXECUTE(captureSession_ != nullptr && callback_.onFocusStateChange != nullptr,
+            callback_.onFocusStateChange(captureSession_, static_cast<Camera_FocusState>(state)));
     }
 
     void OnError(const int32_t errorCode) override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        if (captureSession_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(captureSession_, FrameworkToNdkCameraError(errorCode));
-        }
+        CHECK_EXECUTE(captureSession_ != nullptr && callback_.onError != nullptr,
+            callback_.onError(captureSession_, FrameworkToNdkCameraError(errorCode)));
     }
 
 private:
@@ -165,23 +163,15 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callback
         make_shared<InnerCaptureSessionCallback>(this, callback);
     CHECK_ERROR_RETURN_RET_LOG(innerCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "create innerCallback failed!");
-    if (callback->onError != nullptr) {
-        innerCaptureSession_->SetCallback(innerCallback);
-    }
-    if (callback->onFocusStateChange != nullptr) {
-        innerCaptureSession_->SetFocusCallback(innerCallback);
-    }
+    CHECK_EXECUTE(callback->onError != nullptr, innerCaptureSession_->SetCallback(innerCallback));
+    CHECK_EXECUTE(callback->onFocusStateChange != nullptr, innerCaptureSession_->SetFocusCallback(innerCallback));
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callbacks* callback)
 {
-    if (callback->onError != nullptr) {
-        innerCaptureSession_->SetCallback(nullptr);
-    }
-    if (callback->onFocusStateChange != nullptr) {
-        innerCaptureSession_->SetFocusCallback(nullptr);
-    }
+    CHECK_EXECUTE(callback->onError != nullptr, innerCaptureSession_->SetCallback(nullptr));
+    CHECK_EXECUTE(callback->onFocusStateChange != nullptr, innerCaptureSession_->SetFocusCallback(nullptr));
     return CAMERA_OK;
 }
 
@@ -304,9 +294,7 @@ Camera_ErrorCode Camera_CaptureSession::RemoveMetaDataOutput(Camera_MetadataOutp
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::RemoveMetaDataOutput is called");
     sptr<CaptureOutput> innerMetaDataOutput = metadataOutput->GetInnerMetadataOutput();
-    if (innerCaptureSession_ == nullptr) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_SERVICE_FATAL_ERROR);
     int32_t ret = innerCaptureSession_->AddOutput(innerMetaDataOutput);
     return FrameworkToNdkCameraError(ret);
 }
@@ -365,9 +353,7 @@ Camera_ErrorCode Camera_CaptureSession::SetZoomRatio(float zoom)
     int32_t ret = innerCaptureSession_->SetZoomRatio(zoom);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -376,9 +362,7 @@ Camera_ErrorCode Camera_CaptureSession::IsFocusModeSupported(Camera_FocusMode fo
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsFocusModeSupported is called");
     FocusMode innerFocusMode = static_cast<FocusMode>(focusMode);
     int32_t ret = innerCaptureSession_->IsFocusModeSupported(innerFocusMode, *isSupported);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -399,9 +383,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusMode(Camera_FocusMode focusMode)
     int32_t ret = innerCaptureSession_->SetFocusMode(innerFocusMode);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -417,9 +399,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusPoint(Camera_Point focusPoint)
     int32_t ret = innerCaptureSession_->SetFocusPoint(innerFocusPoint);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -469,9 +449,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFlashMode(Camera_FlashMode flashMode)
     int32_t ret = innerCaptureSession_->SetFlashMode(innerFlashMode);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -480,9 +458,7 @@ Camera_ErrorCode Camera_CaptureSession::IsExposureModeSupported(Camera_ExposureM
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsExposureModeSupported is called");
     ExposureMode innerExposureMode = static_cast<ExposureMode>(exposureMode);
     int32_t ret = innerCaptureSession_->IsExposureModeSupported(innerExposureMode, *isSupported);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -503,9 +479,7 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureMode(Camera_ExposureMode expo
     int32_t ret = innerCaptureSession_->SetExposureMode(innerExposureMode);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -530,9 +504,7 @@ Camera_ErrorCode Camera_CaptureSession::SetMeteringPoint(Camera_Point point)
     int32_t ret = innerCaptureSession_->SetMeteringPoint(innerExposurePoint);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -559,9 +531,7 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureBias(float exposureBias)
     int32_t ret = innerCaptureSession_->SetExposureBias(exposureBias);
     innerCaptureSession_->UnlockForControl();
 
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -726,9 +696,7 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedColorSpaces(OH_NativeBuffer_
     std::vector<OH_NativeBuffer_ColorSpace> cameraColorSpace;
     for (size_t i = 0; i < colorSpaces.size(); ++i) {
         auto itr = g_fwToNdkColorSpace_.find(colorSpaces[i]);
-        if (itr != g_fwToNdkColorSpace_.end()) {
-            cameraColorSpace.push_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != g_fwToNdkColorSpace_.end(), cameraColorSpace.push_back(itr->second));
     }
 
     if (cameraColorSpace.size() == 0) {
@@ -765,9 +733,7 @@ Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_Colo
 
     ColorSpace innerColorSpace;
     int32_t ret = innerCaptureSession_->GetActiveColorSpace(innerColorSpace);
-    if (ret != SUCCESS) {
-        return FrameworkToNdkCameraError(ret);
-    }
+    CHECK_ERROR_RETURN_RET(ret != SUCCESS, FrameworkToNdkCameraError(ret));
     auto itr = g_fwToNdkColorSpace_.find(innerColorSpace);
     if (itr != g_fwToNdkColorSpace_.end()) {
         *colorSpace = itr->second;
@@ -783,10 +749,8 @@ Camera_ErrorCode Camera_CaptureSession::SetActiveColorSpace(OH_NativeBuffer_Colo
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetActiveColorSpace is called");
 
     auto itr = g_ndkToFwColorSpace_.find(colorSpace);
-    if (itr == g_ndkToFwColorSpace_.end()) {
-        MEDIA_ERR_LOG("colorSpace[%{public}d] is invalid", colorSpace);
-        return CAMERA_INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(itr == g_ndkToFwColorSpace_.end(), CAMERA_INVALID_ARGUMENT,
+        "colorSpace[%{public}d] is invalid", colorSpace);
     int32_t ret = innerCaptureSession_->SetColorSpace(itr->second);
     return FrameworkToNdkCameraError(ret);
 }

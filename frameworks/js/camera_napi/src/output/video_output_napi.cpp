@@ -50,9 +50,8 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
         CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
         jsContext->funcName = context->funcName;
     }
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
-    }
+    CHECK_EXECUTE(context->work != nullptr,
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext));
     context->FreeHeldNapiValue(env);
     delete context;
 }
@@ -69,15 +68,9 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
     uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
         std::make_unique<VideoOutputCallbackInfo>(eventType, info, shared_from_this());
     work->data = callbackInfo.get();
@@ -85,9 +78,7 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
         VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
-            if (listener) {
-                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
-            }
+            CHECK_EXECUTE(listener, listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_));
             delete callbackInfo;
         }
         delete work;
@@ -249,9 +240,7 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -316,14 +305,10 @@ napi_value VideoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     MEDIA_DEBUG_LOG("VideoOutputNapi::GetActiveProfile is called");
     VideoOutputNapi* videoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::GetActiveProfile parse parameter occur error");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"),
+        nullptr, "VideoOutputNapi::GetActiveProfile parse parameter occur error");
     auto profile = videoOutputNapi->videoOutput_->GetVideoProfile();
-    if (profile == nullptr) {
-        return CameraNapiUtils::GetUndefinedValue(env);
-    }
+    CHECK_ERROR_RETURN_RET(profile == nullptr, CameraNapiUtils::GetUndefinedValue(env));
     return CameraNapiObjVideoProfile(*profile).GenerateNapiValue(env);
 }
 
@@ -333,18 +318,14 @@ static napi_value CreateJSArray(napi_env env, napi_status &status, std::vector<V
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
  
-    if (nativeArray.empty()) {
-        MEDIA_ERR_LOG("nativeArray is empty");
-    }
+    CHECK_ERROR_PRINT_LOG(nativeArray.empty(), "nativeArray is empty");
  
     status = napi_create_array(env, &jsArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
-            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
-                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
-                return nullptr;
-            }
+            CHECK_ERROR_RETURN_RET_LOG(napi_set_element(env, jsArray, i, item) != napi_ok, nullptr,
+                "Failed to create profile napi wrapper object");
         }
     }
     return jsArray;
@@ -399,9 +380,7 @@ napi_value VideoOutputNapi::AttachMetaSurface(napi_env env, napi_callback_info i
         std::istringstream iss((std::string(buffer)));
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-        if (surface == nullptr) {
-            MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
-        }
+        CHECK_ERROR_PRINT_LOG(surface == nullptr, "failed to get surface from SurfaceUtils");
         videoOutputNapi->videoOutput_->AttachMetaSurface(surface, static_cast<VideoMetaType>(videoMetaType));
     } else {
         MEDIA_ERR_LOG("VideoOutputNapi::AttachMetaSurface failed!");
@@ -423,19 +402,11 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
         std::istringstream iss(surfaceId);
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-        if (surface == nullptr) {
-            MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result, "failed to get surface from SurfaceUtils");
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         int retCode = CameraManager::GetInstance()->CreateVideoOutput(profile, surface, &sVideoOutput_);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        if (sVideoOutput_ == nullptr) {
-            MEDIA_ERR_LOG("failed to create VideoOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_ERROR_RETURN_RET_LOG(sVideoOutput_ == nullptr, result, "failed to create VideoOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sVideoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
@@ -463,18 +434,10 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, std::string surfaceI
         std::istringstream iss(surfaceId);
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
-        if (surface == nullptr) {
-            MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(surface == nullptr, result, "failed to get surface from SurfaceUtils");
         int retCode = CameraManager::GetInstance()->CreateVideoOutputWithoutProfile(surface, &sVideoOutput_);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        if (sVideoOutput_ == nullptr) {
-            MEDIA_ERR_LOG("failed to create VideoOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_ERROR_RETURN_RET_LOG(sVideoOutput_ == nullptr, result, "failed to create VideoOutput");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sVideoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
@@ -496,10 +459,8 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Start", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::Start invalid argument");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+        "VideoOutputNapi::Start invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
@@ -524,9 +485,8 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
-        return asyncFunction->GetPromise();
-    }
+    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+        asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
@@ -538,10 +498,8 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Stop", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::Stop invalid argument");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+        "VideoOutputNapi::Stop invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
@@ -566,9 +524,8 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
-        return asyncFunction->GetPromise();
-    }
+    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+        asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
@@ -594,10 +551,8 @@ napi_value VideoOutputNapi::SetFrameRate(napi_env env, napi_callback_info info)
         int32_t maxFrameRate;
         napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
         int32_t retCode = videoOutputNapi->videoOutput_->SetFrameRate(minFrameRate, maxFrameRate);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            MEDIA_ERR_LOG("VideoOutputNapi::SetFrameRate! %{public}d", retCode);
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode), result,
+            "VideoOutputNapi::SetFrameRate! %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("SetFrameRate call Failed!");
     }
@@ -735,9 +690,8 @@ napi_value VideoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
     }
  
     int32_t retCode = videoOutputNapi->videoOutput_->enableMirror(isEnable);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
-    }
+    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode),
+        "PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
     return result;
 }
 
@@ -749,10 +703,8 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Release", asyncContext->callbackRef, asyncContext->deferred);
     CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::Release invalid argument");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"), nullptr,
+        "VideoOutputNapi::Release invalid argument");
     asyncContext->HoldNapiValue(env, jsParamParser.GetThisVar());
     napi_status status = napi_create_async_work(
         env, nullptr, asyncFunction->GetResourceName(),
@@ -776,9 +728,8 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
-    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
-        return asyncFunction->GetPromise();
-    }
+    CHECK_ERROR_RETURN_RET(asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE,
+        asyncFunction->GetPromise());
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
@@ -795,10 +746,7 @@ void VideoOutputNapi::RegisterFrameStartCallbackListener(
 void VideoOutputNapi::UnregisterFrameStartCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (videoCallback_ == nullptr) {
-        MEDIA_ERR_LOG("videoCallback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(videoCallback_ == nullptr, "videoCallback is null");
     videoCallback_->RemoveCallbackRef(CONST_VIDEO_FRAME_START, callback);
 }
 
@@ -814,10 +762,7 @@ void VideoOutputNapi::RegisterFrameEndCallbackListener(
 void VideoOutputNapi::UnregisterFrameEndCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (videoCallback_ == nullptr) {
-        MEDIA_ERR_LOG("videoCallback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(videoCallback_ == nullptr, "videoCallback is null");
     videoCallback_->RemoveCallbackRef(CONST_VIDEO_FRAME_END, callback);
 }
 
@@ -834,10 +779,7 @@ void VideoOutputNapi::RegisterErrorCallbackListener(
 void VideoOutputNapi::UnregisterErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (videoCallback_ == nullptr) {
-        MEDIA_ERR_LOG("videoCallback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(videoCallback_ == nullptr, "videoCallback is null");
     videoCallback_->RemoveCallbackRef(CONST_VIDEO_FRAME_ERROR, callback);
 }
 
@@ -854,10 +796,7 @@ void VideoOutputNapi::RegisterDeferredVideoCallbackListener(
 void VideoOutputNapi::UnregisterDeferredVideoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (videoCallback_ == nullptr) {
-        MEDIA_ERR_LOG("videoCallback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(videoCallback_ == nullptr, "videoCallback is null");
     videoCallback_->RemoveCallbackRef(CONST_VIDEO_DEFERRED_ENHANCEMENT, callback);
 }
 
@@ -897,18 +836,14 @@ napi_value VideoOutputNapi::Off(napi_env env, napi_callback_info info)
 napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported(napi_env env, napi_callback_info info)
 {
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsAutoDeferredVideoEnhancementSupported is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi IsAutoDeferredVideoEnhancementSupported is called!");
     MEDIA_DEBUG_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported is called");
  
     VideoOutputNapi* videoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported parse parameter occur error");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error"), result,
+        "VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported parse parameter occur error");
     if (videoOutputNapi->videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported get native object fail");
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
@@ -926,18 +861,14 @@ napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementSupported(napi_env env
 napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled(napi_env env, napi_callback_info info)
 {
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsAutoDeferredVideoEnhancementEnabled is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi IsAutoDeferredVideoEnhancementEnabled is called!");
     MEDIA_DEBUG_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled is called");
  
     VideoOutputNapi* videoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled parse parameter occur error");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error"), result,
+        "VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled parse parameter occur error");
     if (videoOutputNapi->videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled get native object fail");
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
@@ -955,10 +886,8 @@ napi_value VideoOutputNapi::IsAutoDeferredVideoEnhancementEnabled(napi_env env, 
 napi_value VideoOutputNapi::EnableAutoDeferredVideoEnhancement(napi_env env, napi_callback_info info)
 {
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi EnableAutoDeferredVideoEnhancement is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi EnableAutoDeferredVideoEnhancement is called!");
     napi_status status;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
@@ -977,27 +906,21 @@ napi_value VideoOutputNapi::EnableAutoDeferredVideoEnhancement(napi_env env, nap
         napi_get_value_bool(env, argv[PARAM0], &isEnable);
         res = videoOutputNapi->videoOutput_->EnableAutoDeferredVideoEnhancement(isEnable);
     }
-    if (res > 0) {
-        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail");
-    }
+    CHECK_EXECUTE(res > 0, CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "inner fail"));
     return result;
 }
 
 napi_value VideoOutputNapi::GetSupportedRotations(napi_env env, napi_callback_info info)
 {
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi GetSupportedRotations is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi GetSupportedRotations is called!");
     MEDIA_DEBUG_LOG("VideoOutputNapi::GetSupportedRotations is called");
  
     VideoOutputNapi* videoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::GetSupportedRotations parse parameter occur error");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error"), result,
+        "VideoOutputNapi::GetSupportedRotations parse parameter occur error");
     if (videoOutputNapi->videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputNapi::GetSupportedRotations get native object fail");
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
@@ -1005,9 +928,7 @@ napi_value VideoOutputNapi::GetSupportedRotations(napi_env env, napi_callback_in
     }
     std::vector<int32_t> supportedRotations;
     int32_t retCode = videoOutputNapi->videoOutput_->GetSupportedRotations(supportedRotations);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     napi_status status = napi_create_array(env, &result);
     CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     for (size_t i = 0; i < supportedRotations.size(); i++) {
@@ -1022,18 +943,14 @@ napi_value VideoOutputNapi::GetSupportedRotations(napi_env env, napi_callback_in
 napi_value VideoOutputNapi::IsRotationSupported(napi_env env, napi_callback_info info)
 {
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsRotationSupported is called!");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), result,
+        "SystemApi IsRotationSupported is called!");
     MEDIA_DEBUG_LOG("VideoOutputNapi::IsRotationSupported is called");
  
     VideoOutputNapi* videoOutputNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
-    if (!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported parse parameter occur error");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(SERVICE_FATL_ERROR, "parse parameter occur error"), result,
+        "VideoOutputNapi::IsRotationSupported parse parameter occur error");
     if (videoOutputNapi->videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported get native object fail");
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
@@ -1041,9 +958,8 @@ napi_value VideoOutputNapi::IsRotationSupported(napi_env env, napi_callback_info
     }
     bool isSupported = false;
     int32_t retCode = videoOutputNapi->videoOutput_->IsRotationSupported(isSupported);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
-        MEDIA_ERR_LOG("VideoOutputNapi::IsRotationSupported fail %{public}d", retCode);
-    }
+    CHECK_ERROR_PRINT_LOG(!CameraNapiUtils::CheckError(env, retCode),
+        "VideoOutputNapi::IsRotationSupported fail %{public}d", retCode);
     napi_get_boolean(env, isSupported, &result);
     return result;
 }

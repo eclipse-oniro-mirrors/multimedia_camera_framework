@@ -37,25 +37,22 @@ public:
     void OnFrameStarted() const override
     {
         MEDIA_DEBUG_LOG("OnFrameStarted is called!");
-        if (videoOutput_ != nullptr && callback_.onFrameStart != nullptr) {
-            callback_.onFrameStart(videoOutput_);
-        }
+        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onFrameStart != nullptr,
+            callback_.onFrameStart(videoOutput_));
     }
 
     void OnFrameEnded(const int32_t frameCount) const override
     {
         MEDIA_DEBUG_LOG("OnFrameEnded is called! frame count: %{public}d", frameCount);
-        if (videoOutput_ != nullptr && callback_.onFrameEnd != nullptr) {
-            callback_.onFrameEnd(videoOutput_, frameCount);
-        }
+        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onFrameEnd != nullptr,
+            callback_.onFrameEnd(videoOutput_, frameCount));
     }
 
     void OnError(const int32_t errorCode) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        if (videoOutput_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(videoOutput_, FrameworkToNdkCameraError(errorCode));
-        }
+        CHECK_EXECUTE(videoOutput_ != nullptr && callback_.onError != nullptr,
+            callback_.onError(videoOutput_, FrameworkToNdkCameraError(errorCode)));
     }
 
     void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override

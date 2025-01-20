@@ -62,9 +62,7 @@ napi_value NightSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, NIGHT_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -117,12 +115,8 @@ napi_value NightSessionNapi::GetSupportedExposureRange(napi_env env, napi_callba
     if (status == napi_ok && nightSessionNapi != nullptr) {
         std::vector<uint32_t> vecExposureList;
         int32_t retCode = nightSessionNapi->nightSession_->GetExposureRange(vecExposureList);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        if (vecExposureList.empty() || napi_create_array(env, &result) != napi_ok) {
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_ERROR_RETURN_RET(vecExposureList.empty() || napi_create_array(env, &result) != napi_ok, result);
         for (size_t i = 0; i < vecExposureList.size(); i++) {
             uint32_t exposure = vecExposureList[i];
             MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposure = %{public}d", vecExposureList[i]);
@@ -154,9 +148,7 @@ napi_value NightSessionNapi::GetExposure(napi_env env, napi_callback_info info)
     if (status == napi_ok && nightSessionNapi!= nullptr) {
         uint32_t exposureValue;
         int32_t retCode = nightSessionNapi->nightSession_->GetExposure(exposureValue);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         MEDIA_DEBUG_LOG("GetExposure : exposure = %{public}d", exposureValue);
         napi_create_uint32(env, exposureValue, &result);
     } else {
@@ -187,9 +179,7 @@ napi_value NightSessionNapi::SetExposure(napi_env env, napi_callback_info info)
         nightSessionNapi->nightSession_->LockForControl();
         int32_t retCode = nightSessionNapi->nightSession_->SetExposure(exposureValue);
         nightSessionNapi->nightSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), result);
     } else {
         MEDIA_ERR_LOG("SetExposure call Failed!");
     }
@@ -209,16 +199,10 @@ napi_value NightSessionNapi::NightSessionNapiConstructor(napi_env env, napi_call
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<NightSessionNapi> obj = std::make_unique<NightSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->nightSession_ = static_cast<NightSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->nightSession_;
-        if (obj->nightSession_ == nullptr) {
-            MEDIA_ERR_LOG("nightSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->nightSession_ == nullptr, result, "nightSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             NightSessionNapi::NightSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

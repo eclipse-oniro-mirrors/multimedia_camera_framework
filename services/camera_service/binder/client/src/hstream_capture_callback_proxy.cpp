@@ -34,9 +34,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
 
     return error;
 }
@@ -54,9 +53,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId, uint32_
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
 
     return error;
 }
@@ -74,9 +72,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureEnded(int32_t captureId, int32_t f
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnCaptureEnded failed, error: %{public}d", error);
 
     return error;
 }
@@ -95,9 +92,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureError(int32_t captureId, int32_t e
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureError failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnCaptureError failed, error: %{public}d", error);
 
     return error;
 }
@@ -116,9 +112,8 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutter(int32_t captureId, uint64_t 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutter failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnFrameShutter failed, error: %{public}d", error);
 
     return error;
 }
@@ -137,9 +132,8 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutterEnd(int32_t captureId, uint64
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutterEnd failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnFrameShutterEnd failed, error: %{public}d", error);
     return error;
 }
     
@@ -157,9 +151,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureReady(int32_t captureId, uint64_t 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

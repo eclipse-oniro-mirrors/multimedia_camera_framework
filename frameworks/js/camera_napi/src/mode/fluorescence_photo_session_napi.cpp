@@ -58,9 +58,7 @@ napi_value FluorescencePhotoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, FLUORESCENCE_PHOTO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -111,16 +109,11 @@ napi_value FluorescencePhotoSessionNapi::FluorescencePhotoSessionNapiConstructor
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<FluorescencePhotoSessionNapi> obj = std::make_unique<FluorescencePhotoSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->fluorescencePhotoSession_ = static_cast<FluorescencePhotoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->fluorescencePhotoSession_;
-        if (obj->fluorescencePhotoSession_ == nullptr) {
-            MEDIA_ERR_LOG("fluorescencePhotoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->fluorescencePhotoSession_ == nullptr,
+            result, "fluorescencePhotoSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             FluorescencePhotoSessionNapi::FluorescencePhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

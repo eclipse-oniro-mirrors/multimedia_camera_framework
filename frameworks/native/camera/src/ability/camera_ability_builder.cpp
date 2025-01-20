@@ -38,9 +38,7 @@ std::vector<sptr<CameraAbility>> CameraAbilityBuilder::GetAbility(int32_t modeNa
         for (const auto& tagId : configInfo.tagIds) {
             SetModeSpecTagField(ability, modeName, metadata, tagId, configInfo.specId);
         }
-        if (isForApp) {
-            SetOtherTag(ability, modeName, session);
-        }
+        CHECK_EXECUTE(isForApp, SetOtherTag(ability, modeName, session));
         ability->DumpCameraAbilityInfo();
         abilities.push_back(ability);
     }
@@ -80,14 +78,10 @@ std::vector<int32_t> CameraAbilityBuilder::GetData(
     }
 
     auto itc = cacheTagDataMap_.find(tagId);
-    if (itc == cacheTagDataMap_.end()) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(itc == cacheTagDataMap_.end(), {});
     auto& dataMap = itc->second;
     auto itd = dataMap.find(specId);
-    if (itd == dataMap.end()) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(itd == dataMap.end(), {});
     return itd->second;
 }
 
@@ -95,9 +89,7 @@ std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vecto
 {
     constexpr float factor = 100.0;
     size_t validSize = 2;
-    if (data.size() != validSize) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(data.size() != validSize, {});
     float minZoom = data[0] / factor;
     float maxZoom = data[1] / factor;
     return { minZoom, maxZoom };
@@ -105,9 +97,7 @@ std::vector<float> CameraAbilityBuilder::GetValidZoomRatioRange(const std::vecto
 
 bool CameraAbilityBuilder::IsSupportMacro(const std::vector<int32_t>& data)
 {
-    if (data.size() != 1) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(data.size() != 1, false);
     return static_cast<camera_macro_supported_type_t>(data[0]) == OHOS_CAMERA_MACRO_SUPPORTED;
 }
 
@@ -135,9 +125,8 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
     auto metadata = session->GetMetadata();
     CHECK_ERROR_RETURN(metadata == nullptr);
     camera_metadata_item_t item;
-    if (Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item) == CAM_META_SUCCESS) {
-        g_transformValidData(item, g_metaFlashModeMap_, ability->supportedFlashModes_);
-    }
+    CHECK_EXECUTE(Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item) == CAM_META_SUCCESS,
+        g_transformValidData(item, g_metaFlashModeMap_, ability->supportedFlashModes_));
     ability->isLcdFlashSupported_ = session->IsLcdFlashSupported();
     ability->supportedExposureModes_ = session->GetSupportedExposureModes();
     ability->supportedFocusModes_ = session->GetSupportedFocusModes();
@@ -151,9 +140,7 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
 
     SceneFeature feature = SceneFeature::FEATURE_MOON_CAPTURE_BOOST;
     while (feature < SceneFeature::FEATURE_ENUM_MAX) {
-        if (session->IsFeatureSupported(feature)) {
-            ability->supportedSceneFeature_.emplace_back(feature);
-        }
+        CHECK_EXECUTE(session->IsFeatureSupported(feature), ability->supportedSceneFeature_.emplace_back(feature));
         feature = static_cast<SceneFeature>(static_cast<int32_t>(feature) + 1);
     }
 

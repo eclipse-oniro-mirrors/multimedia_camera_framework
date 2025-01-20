@@ -472,9 +472,7 @@ void TestMetadataResultProcessor()
 
 void Test(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
-        return;
-    }
+    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
     GetPermission();
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);

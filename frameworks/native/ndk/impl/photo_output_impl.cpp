@@ -267,9 +267,7 @@ Camera_ErrorCode Camera_PhotoOutput::UnregisterPhotoAvailableCallback(OH_PhotoOu
             photoListener_->SetCallbackFlag(callbackFlag_);
             photoListener_->UnregisterPhotoAvailableCallback(callback);
         }
-        if (rawPhotoListener_ != nullptr) {
-            rawPhotoListener_->UnregisterCallback(callback);
-        }
+        CHECK_EXECUTE(rawPhotoListener_ != nullptr, rawPhotoListener_->UnregisterCallback(callback));
     }
     return CAMERA_OK;
 }

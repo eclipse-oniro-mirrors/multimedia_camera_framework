@@ -171,9 +171,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraStatusChanged CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMngrCallbackMap();
     MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
-    if (listenerMap.IsEmpty()) {
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
 
     CameraStatusInfo cameraStatusInfo;
     if (status == CAMERA_STATUS_APPEAR) {
@@ -181,9 +179,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
     cameraStatusInfo.cameraDevice = cameraManager->GetCameraDeviceFromId(cameraId);
-    if (status == CAMERA_STATUS_DISAPPEAR) {
-        cameraManager->RemoveCameraDeviceFromCache(cameraId);
-    }
+    CHECK_EXECUTE(status == CAMERA_STATUS_DISAPPEAR, cameraManager->RemoveCameraDeviceFromCache(cameraId));
     cameraStatusInfo.cameraStatus = status;
     cameraStatusInfo.bundleName = bundleName;
 
@@ -212,9 +208,7 @@ int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string
         "OnFlashlightStatusChanged CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMngrCallbackMap();
     MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
-    if (listenerMap.IsEmpty()) {
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
 
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
         if (cameraManagerCallback != nullptr) {
@@ -688,9 +682,7 @@ int CameraManager::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBuffe
         surface, metaFormat, depthProfile.GetSize().width, depthProfile.GetSize().height, streamDepthData);
     if (retCode == CAMERA_OK) {
         depthDataOutput = new(std::nothrow) DepthDataOutput(surface);
-        if (depthDataOutput == nullptr) {
-            return CameraErrorCode::SERVICE_FATL_ERROR;
-        }
+        CHECK_ERROR_RETURN_RET(depthDataOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
         depthDataOutput->SetStream(streamDepthData);
     } else {
         MEDIA_ERR_LOG("Failed to get stream depth data object from hcamera service!, %{public}d", retCode);
@@ -918,9 +910,8 @@ void CameraManager::CameraServerDied(pid_t pid)
         listenerMap.Iterate([&](std::thread::id threadId,
             std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
             MEDIA_INFO_LOG("Callback cameraStatus");
-            if (cameraManagerCallback != nullptr) {
-                cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
-            }
+            CHECK_EXECUTE(cameraManagerCallback != nullptr,
+                cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo));
         });
     }
 }
@@ -935,9 +926,7 @@ int32_t CameraManager::AddServiceProxyDeathRecipient()
     auto thisPtr = wptr<CameraManager>(this);
     deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
         auto cameraManagerPtr = thisPtr.promote();
-        if (cameraManagerPtr != nullptr) {
-            cameraManagerPtr->CameraServerDied(pid);
-        }
+        CHECK_EXECUTE(cameraManagerPtr != nullptr, cameraManagerPtr->CameraServerDied(pid));
     });
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -952,9 +941,7 @@ void CameraManager::RemoveServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     auto serviceProxy = GetServiceProxy();
-    if (serviceProxy != nullptr) {
-        (void)serviceProxy->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
+    CHECK_EXECUTE(serviceProxy != nullptr, (void)serviceProxy->AsObject()->RemoveDeathRecipient(deathRecipient_));
     deathRecipient_ = nullptr;
 }
 
@@ -1055,9 +1042,7 @@ sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
     auto cameraDeviceList = GetCameraDeviceList();
     for (auto& deviceInfo : cameraDeviceList) {
-        if (deviceInfo->GetID() == cameraId) {
-            return deviceInfo;
-        }
+        CHECK_ERROR_RETURN_RET(deviceInfo->GetID() == cameraId, deviceInfo);
     }
     return nullptr;
 }
@@ -1094,9 +1079,7 @@ std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
 
     int size = static_cast<int>(deviceInfos.size());
     MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo size=%{public}d", size);
-    if (size < 0) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(size < 0, {});
 
     std::vector<dmDeviceInfo> distributedCamInfo(size);
     for (int i = 0; i < size; i++) {
@@ -1243,9 +1226,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
-        if (it->second == curFoldStatus) {
-            supportedCameraDeviceList.emplace_back(deviceInfo);
-        }
+        CHECK_EXECUTE(it->second == curFoldStatus, supportedCameraDeviceList.emplace_back(deviceInfo));
     }
     return supportedCameraDeviceList;
 }
@@ -1276,11 +1257,9 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
     }
     const uint32_t minIndex = 0;
     const uint32_t maxIndex = 1;
-    if (!(frontVideoProfiles.size() && backVideoProfiles.size())) {
-        MEDIA_ERR_LOG("CameraManager::AlignVideoFpsProfile failed! frontVideoSize = %{public}zu, "
-                      "frontVideoSize = %{public}zu", frontVideoProfiles.size(), backVideoProfiles.size());
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!(frontVideoProfiles.size() && backVideoProfiles.size()),
+        "CameraManager::AlignVideoFpsProfile failed! frontVideoSize = %{public}zu, "
+        "frontVideoSize = %{public}zu", frontVideoProfiles.size(), backVideoProfiles.size());
     std::vector<VideoProfile> alignFrontVideoProfiles = frontVideoProfiles;
     for (auto &backProfile : backVideoProfiles) {
         for (auto &frontProfile : frontVideoProfiles) {
@@ -1371,9 +1350,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateCameraInput Camera object is null");
-    if (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER) {
-        ReportEvent(camera->GetID());
-    }
+    CHECK_EXECUTE(camera->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER, ReportEvent(camera->GetID()));
 
     // Check for API compatibility
     FoldStatus curFoldStatus = GetFoldStatus();
@@ -1504,9 +1481,8 @@ void CameraManager::ParseExtendCapability(ProfilesWrapper& profilesWrapper, cons
     if (modeName == SceneMode::VIDEO) {
         for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
             SceneMode scMode = SceneMode::NORMAL;
-            if (!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode)) {
-                MEDIA_ERR_LOG("ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
-            }
+            CHECK_ERROR_PRINT_LOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName),
+                scMode), "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
             if (SceneMode::HIGH_FRAME_RATE != scMode) {
                 continue;
             }
@@ -1519,9 +1495,8 @@ void CameraManager::ParseExtendCapability(ProfilesWrapper& profilesWrapper, cons
     }
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
         SceneMode scMode = SceneMode::NORMAL;
-        if (!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode)) {
-            MEDIA_ERR_LOG("ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
-        }
+        CHECK_ERROR_PRINT_LOG(!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName),
+            scMode), "ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
         if (modeName == scMode) {
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
@@ -1743,18 +1718,14 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
 vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName,
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    if (metadata == nullptr) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, {});
     vector<CameraFormat> photoFormats = {};
     camera_metadata_item_t item;
     int32_t metadataTag = OHOS_STREAM_AVAILABLE_FORMATS;
     int32_t retCode = OHOS::Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
-    if (retCode != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
-            metadataTag, retCode, item.count);
-        return photoFormats;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS || item.count == 0, photoFormats,
+        "Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
+        metadataTag, retCode, item.count);
     vector<int32_t> formats = {};
     std::map<int32_t, vector<int32_t> > modePhotoFormats = {};
     for (uint32_t i = 0; i < item.count; i++) {
@@ -1766,15 +1737,12 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
             formats.clear();
         }
     }
-    if (!modePhotoFormats.count(modeName)) {
-        MEDIA_ERR_LOG("GetSupportPhotoFormat not support mode = %{public}d", modeName);
-        return photoFormats;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!modePhotoFormats.count(modeName), photoFormats,
+        "GetSupportPhotoFormat not support mode = %{public}d", modeName);
     for (auto &val : modePhotoFormats[modeName]) {
         camera_format_t hdiFomart = static_cast<camera_format_t>(val);
-        if (metaToFwCameraFormat_.count(hdiFomart)) {
-            photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart));
-        }
+        CHECK_EXECUTE(metaToFwCameraFormat_.count(hdiFomart),
+            photoFormats.push_back(metaToFwCameraFormat_.at(hdiFomart)));
     }
     MEDIA_DEBUG_LOG("GetSupportPhotoFormat, mode = %{public}d, formats = %{public}s", modeName,
         Container2String(photoFormats.begin(), photoFormats.end()).c_str());
@@ -1896,9 +1864,7 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
 
     auto listenerMap = cameraManager->GetTorchListenerMap();
     MEDIA_DEBUG_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
-    if (listenerMap.IsEmpty()) {
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
 
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<TorchListener> torchListener) {
         if (torchListener != nullptr) {
@@ -1999,9 +1965,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraMute CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMuteListenerMap();
     MEDIA_DEBUG_LOG("CameraMuteListenerMap size %{public}d", listenerMap.Size());
-    if (listenerMap.IsEmpty()) {
-        return CAMERA_OK;
-    }
+    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<CameraMuteListener> cameraMuteListener) {
         if (cameraMuteListener != nullptr) {
             cameraMuteListener->OnCameraMute(muteMode);
@@ -2156,17 +2120,13 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
         default:
             MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
     }
-    if (retCode == CAMERA_OK) {
-        UpdateTorchMode(mode);
-    }
+    CHECK_EXECUTE(retCode == CAMERA_OK, UpdateTorchMode(mode));
     return ServiceToCameraError(retCode);
 }
 
 void CameraManager::UpdateTorchMode(TorchMode mode)
 {
-    if (torchMode_ == mode) {
-        return;
-    }
+    CHECK_ERROR_RETURN(torchMode_ == mode);
     torchMode_ = mode;
     MEDIA_INFO_LOG("CameraManager::UpdateTorchMode() mode is %{public}d", mode);
 }
@@ -2199,9 +2159,7 @@ void CameraManager::SetCameraManagerNull()
 
 void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
 {
-    if (photoFormats_.size() == 0 || photoProfiles.size() == 0) {
-        return;
-    }
+    CHECK_ERROR_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
     std::vector<Profile> extendProfiles = {};
     // if photo stream support jpeg, it must support yuv.
     for (const auto& profile : photoProfiles) {

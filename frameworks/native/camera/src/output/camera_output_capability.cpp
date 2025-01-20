@@ -106,15 +106,9 @@ bool VideoProfile::IsContains(const VideoProfile& videoProfile)
 {
     bool isFormatSizeEqual = format_ == videoProfile.format_ && size_.width == videoProfile.size_.width &&
                              size_.height == videoProfile.size_.height;
-    if (!isFormatSizeEqual) {
-        return false;
-    }
-    if (framerates_.empty()) {
-        return false;
-    }
-    if (videoProfile.framerates_.empty()) {
-        return true;
-    }
+    CHECK_ERROR_RETURN_RET(!isFormatSizeEqual, false);
+    CHECK_ERROR_RETURN_RET(framerates_.empty(), false);
+    CHECK_ERROR_RETURN_RET(videoProfile.framerates_.empty(), true);
     return *framerates_.begin() <= *videoProfile.framerates_.begin() &&
            *(framerates_.end() - 1) >= *(videoProfile.framerates_.end() - 1);
 }
@@ -210,9 +204,8 @@ void CameraOutputCapability::RemoveDuplicatesProfile(std::vector<T>& profiles)
 {
     std::vector<T> uniqueProfiles;
     for (const auto& profile : profiles) {
-        if (std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end()) {
-            uniqueProfiles.push_back(profile);
-        }
+        CHECK_EXECUTE(std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end(),
+            uniqueProfiles.push_back(profile));
     }
     profiles = uniqueProfiles;
 }

@@ -27,9 +27,7 @@ ApertureVideoSessionNapi::ApertureVideoSessionNapi() : env_(nullptr), wrapper_(n
 ApertureVideoSessionNapi::~ApertureVideoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~ApertureVideoSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
 }
 
 void ApertureVideoSessionNapi::ApertureVideoSessionNapiDestructor(
@@ -57,9 +55,7 @@ napi_value ApertureVideoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, APERTURE_VIDEO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -108,16 +104,10 @@ napi_value ApertureVideoSessionNapi::ApertureVideoSessionNapiConstructor(napi_en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<ApertureVideoSessionNapi> obj = std::make_unique<ApertureVideoSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->apertureVideoSession_ = static_cast<ApertureVideoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->apertureVideoSession_;
-        if (obj->apertureVideoSession_ == nullptr) {
-            MEDIA_ERR_LOG("apertureVideoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->apertureVideoSession_ == nullptr, result, "apertureVideoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), ApertureVideoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

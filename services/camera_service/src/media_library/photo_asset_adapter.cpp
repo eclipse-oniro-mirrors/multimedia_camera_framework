@@ -48,24 +48,18 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
 
 void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
-    if (photoAssetProxy_) {
-        photoAssetProxy_->AddPhotoProxy(photoProxy);
-    }
+    CHECK_EXECUTE(photoAssetProxy_, photoAssetProxy_->AddPhotoProxy(photoProxy));
 }
 
 std::string PhotoAssetAdapter::GetPhotoAssetUri()
 {
-    if (photoAssetProxy_) {
-        return photoAssetProxy_->GetPhotoAssetUri();
-    }
+    CHECK_ERROR_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetPhotoAssetUri());
     return "";
 }
 
 int32_t PhotoAssetAdapter::GetVideoFd()
 {
-    if (photoAssetProxy_) {
-        return photoAssetProxy_->GetVideoFd();
-    }
+    CHECK_ERROR_RETURN_RET(photoAssetProxy_, photoAssetProxy_->GetVideoFd());
     return -1;
 }
 
@@ -76,9 +70,7 @@ int32_t PhotoAssetAdapter::GetUserId()
 
 void PhotoAssetAdapter::NotifyVideoSaveFinished()
 {
-    if (photoAssetProxy_) {
-        photoAssetProxy_->NotifyVideoSaveFinished();
-    }
+    CHECK_EXECUTE(photoAssetProxy_, photoAssetProxy_->NotifyVideoSaveFinished());
 }
 
 extern "C" PhotoAssetIntf *createPhotoAssetIntf(int32_t cameraShotType, int32_t uid)

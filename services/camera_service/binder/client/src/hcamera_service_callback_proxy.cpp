@@ -38,9 +38,8 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_STATUS_CHANGED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceCallbackProxy OnCameraStatusChanged failed, error: %{public}d", error);
     return error;
 }
 
@@ -58,9 +57,8 @@ int32_t HCameraServiceCallbackProxy::OnFlashlightStatusChanged(const std::string
     error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceCallbackProxy OnFlashlightStatus failed, error: %{public}d", error);
     return error;
 }
 
@@ -80,9 +78,8 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraMute failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceCallbackProxy OnCameraMute failed, error: %{public}d", error);
     return error;
 }
 
@@ -102,9 +99,8 @@ int32_t HTorchServiceCallbackProxy::OnTorchStatusChange(const TorchStatus status
     error = Remote()->SendRequest(
         static_cast<uint32_t>(TorchServiceCallbackInterfaceCode::TORCH_CALLBACK_TORCH_STATUS_CHANGE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnTorchStatusChange failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceCallbackProxy OnTorchStatusChange failed, error: %{public}d", error);
     return error;
 }
 
@@ -124,9 +120,8 @@ int32_t HFoldServiceCallbackProxy::OnFoldStatusChanged(const FoldStatus status)
     error = Remote()->SendRequest(
         static_cast<uint32_t>(FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFoldStatusChanged failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceCallbackProxy OnFoldStatusChanged failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

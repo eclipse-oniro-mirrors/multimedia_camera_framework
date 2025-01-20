@@ -57,9 +57,7 @@ CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraM
     : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
       cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
 {
-    if (metadata != nullptr) {
-        init(metadata->get());
-    }
+    CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
 }
 
 CameraDevice::CameraDevice(
@@ -86,9 +84,7 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.networkId = deviceInfo.networkId;
     MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str());
-    if (metadata != nullptr) {
-        init(metadata->get());
-    }
+    CHECK_EXECUTE(metadata != nullptr, init(metadata->get()));
 }
 
 bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
@@ -311,9 +307,7 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     int32_t maxIndex = 1;
     std::vector<float> range;
 
-    if (!zoomRatioRange_.empty()) {
-        return zoomRatioRange_;
-    }
+    CHECK_ERROR_RETURN_RET(!zoomRatioRange_.empty(), zoomRatioRange_);
 
     int ret;
     uint32_t zoomRangeCount = 2;
@@ -338,9 +332,7 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
 
 void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
 {
-    if (capability == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(capability == nullptr);
     modePreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
     modePhotoProfiles_[NORMAL] = capability->GetPhotoProfiles();
     modeVideoProfiles_[NORMAL] = capability->GetVideoProfiles();
@@ -356,9 +348,7 @@ void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
 
 void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability, int32_t modeName)
 {
-    if (capability == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(capability == nullptr);
     modePreviewProfiles_[modeName] = capability->GetPreviewProfiles();
     modePhotoProfiles_[modeName] = capability->GetPhotoProfiles();
     modeVideoProfiles_[modeName] = capability->GetVideoProfiles();
@@ -371,27 +361,19 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     int32_t maxIndex = 1;
     uint32_t biasRangeCount = 2;
 
-    if (!exposureBiasRange_.empty()) {
-        return exposureBiasRange_;
-    }
+    CHECK_ERROR_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
 
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(GetMetadata()->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != biasRangeCount) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range count: %{public}d", item.count);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get exposure compensation range with return code %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(item.count != biasRangeCount, {},
+        "Invalid exposure compensation range count: %{public}d", item.count);
     int32_t minRange = item.data.i32[minIndex];
     int32_t maxRange = item.data.i32[maxIndex];
 
-    if (minRange > maxRange) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range. min: %{public}d, max: %{public}d", minRange, maxRange);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(minRange > maxRange, {},
+        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", minRange, maxRange);
 
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", minRange, maxRange);
     exposureBiasRange_ = { static_cast<float>(minRange), static_cast<float>(maxRange) };

@@ -29,9 +29,7 @@ void BmsSaListener::OnAddSystemAbility(int32_t systemAbilityId, const std::strin
 void BmsSaListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     MEDIA_INFO_LOG("OnRemoveSystemAbility,id: %{public}d", systemAbilityId);
-    if (systemAbilityId == BUNDLE_MGR_SERVICE_SYS_ABILITY_ID) {
-        callback_();
-    }
+    CHECK_EXECUTE(systemAbilityId == BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, callback_());
 }
 
 BmsAdapter::BmsAdapter()
@@ -58,9 +56,7 @@ sptr<BmsAdapter> BmsAdapter::GetInstance()
 sptr<OHOS::AppExecFwk::IBundleMgr> BmsAdapter::GetBms()
 {
     std::lock_guard<std::mutex> lock(bmslock_);
-    if (bms_) {
-        return bms_;
-    }
+    CHECK_ERROR_RETURN_RET(bms_, bms_);
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, nullptr, "GetBms failed, samgr is null");
     sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
@@ -106,9 +102,7 @@ bool BmsAdapter::RegisterListener()
     auto bmsAdapterWptr = wptr<BmsAdapter>(this);
     auto removeCallback = [bmsAdapterWptr]() {
         auto adapter = bmsAdapterWptr.promote();
-        if (adapter) {
-            adapter->SetBms(nullptr);
-        }
+        CHECK_EXECUTE(adapter, adapter->SetBms(nullptr));
     };
     bmsSaListener_ = new BmsSaListener(removeCallback);
     CHECK_ERROR_RETURN_RET_LOG(bmsSaListener_ == nullptr, false, "bmsSaListener_ alloc failed");

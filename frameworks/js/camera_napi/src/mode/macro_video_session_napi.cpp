@@ -58,9 +58,7 @@ napi_value MacroVideoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, MACRO_VIDEO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -109,16 +107,10 @@ napi_value MacroVideoSessionNapi::MacroVideoSessionNapiConstructor(napi_env env,
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<MacroVideoSessionNapi> obj = std::make_unique<MacroVideoSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->macroVideoSession_ = static_cast<MacroVideoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->macroVideoSession_;
-        if (obj->macroVideoSession_ == nullptr) {
-            MEDIA_ERR_LOG("macroVideoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->macroVideoSession_ == nullptr, result, "macroVideoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), MacroVideoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

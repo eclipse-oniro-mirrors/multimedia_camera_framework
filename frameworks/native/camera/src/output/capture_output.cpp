@@ -43,10 +43,7 @@ void CaptureOutput::RegisterStreamBinderDied()
     }
 
     bool result = object->AddDeathRecipient(deathRecipient_);
-    if (!result) {
-        MEDIA_ERR_LOG("failed to add deathRecipient");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!result, "failed to add deathRecipient");
 }
 
 sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
@@ -58,9 +55,7 @@ sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
 void CaptureOutput::UnregisterStreamBinderDied()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
-    if (deathRecipient_ == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(deathRecipient_ == nullptr);
     auto stream = GetStream();
     if (stream != nullptr) {
         stream->AsObject()->RemoveDeathRecipient(deathRecipient_);

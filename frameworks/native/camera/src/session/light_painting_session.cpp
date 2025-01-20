@@ -45,9 +45,7 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     lightPaintings.clear();
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaLightPaintingTypeMap_.find(static_cast<CameraLightPaintingType>(item.data.u8[i]));
-        if (itr != metaLightPaintingTypeMap_.end()) {
-            lightPaintings.emplace_back(itr->second);
-        }
+        CHECK_EXECUTE(itr != metaLightPaintingTypeMap_.end(), lightPaintings.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
 }

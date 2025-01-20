@@ -38,25 +38,22 @@ public:
     void OnFrameStarted() const override
     {
         MEDIA_DEBUG_LOG("OnFrameStarted is called!");
-        if (previewOutput_ != nullptr && callback_.onFrameStart != nullptr) {
-            callback_.onFrameStart(previewOutput_);
-        }
+        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onFrameStart != nullptr,
+            callback_.onFrameStart(previewOutput_));
     }
 
     void OnFrameEnded(const int32_t frameCount) const override
     {
         MEDIA_DEBUG_LOG("OnFrameEnded is called! frame count: %{public}d", frameCount);
-        if (previewOutput_ != nullptr && callback_.onFrameEnd != nullptr) {
-            callback_.onFrameEnd(previewOutput_, frameCount);
-        }
+        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onFrameEnd != nullptr,
+            callback_.onFrameEnd(previewOutput_, frameCount));
     }
 
     void OnError(const int32_t errorCode) const override
     {
         MEDIA_DEBUG_LOG("OnError is called!, errorCode: %{public}d", errorCode);
-        if (previewOutput_ != nullptr && callback_.onError != nullptr) {
-            callback_.onError(previewOutput_, FrameworkToNdkCameraError(errorCode));
-        }
+        CHECK_EXECUTE(previewOutput_ != nullptr && callback_.onError != nullptr,
+            callback_.onError(previewOutput_, FrameworkToNdkCameraError(errorCode)));
     }
 
     void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override {}

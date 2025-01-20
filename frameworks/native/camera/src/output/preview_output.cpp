@@ -236,9 +236,7 @@ bool PreviewOutput::IsSketchSupported()
     MEDIA_INFO_LOG(
         "IsSketchSupported FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
     auto sketchRatio = GetSketchRatio();
-    if (sketchRatio > 0) {
-        return true;
-    }
+    CHECK_ERROR_RETURN_RET(sketchRatio > 0, true);
     MEDIA_DEBUG_LOG("IsSketchSupported GetSketchRatio failed, %{public}f ", sketchRatio);
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET(session == nullptr, false);
@@ -389,10 +387,7 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     CHECK_EXECUTE(session != nullptr, session->AddFunctionToMap("preview" + std::to_string(OHOS_CONTROL_FPS_RANGES),
         [weakThis, minFrameRate, maxFrameRate]() {
             auto sharedThis = weakThis.promote();
-            if (!sharedThis) {
-                MEDIA_ERR_LOG("SetFrameRate previewOutput is nullptr.");
-                return;
-            }
+            CHECK_ERROR_RETURN_LOG(!sharedThis, "SetFrameRate previewOutput is nullptr.");
             sharedThis->SetFrameRate(minFrameRate, maxFrameRate);
         }));
     return CameraErrorCode::SUCCESS;
@@ -612,9 +607,7 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
 {
     if (eventString == CONST_SKETCH_STATUS_CHANGED) {
         std::lock_guard<std::mutex> lock(asyncOpMutex_);
-        if (sketchWrapper_ == nullptr) {
-            return;
-        }
+        CHECK_ERROR_RETURN(sketchWrapper_ == nullptr);
         sketchWrapper_->StopSketchStream();
     }
 }
@@ -642,9 +635,8 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
-        if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
-            return CameraErrorCode::SUCCESS;
-        }
+        CHECK_ERROR_RETURN_RET(item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate,
+            CameraErrorCode::SUCCESS);
     }
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;

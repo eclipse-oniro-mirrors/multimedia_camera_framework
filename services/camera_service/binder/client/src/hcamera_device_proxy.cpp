@@ -54,9 +54,7 @@ int32_t HCameraDeviceProxy::Open()
     data.WriteBool(false);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy Open failed, error: %{public}d", error);
     return error;
 }
 
@@ -70,9 +68,7 @@ int32_t HCameraDeviceProxy::OpenSecureCamera(uint64_t* secureSeqId)
     data.WriteBool(true);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy Open failed, error: %{public}d", error);
     *secureSeqId = reply.ReadInt64();
     return error;
 }
@@ -86,9 +82,7 @@ int32_t HCameraDeviceProxy::Close()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy Close failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy Close failed, error: %{public}d", error);
 
     return error;
 }
@@ -102,9 +96,7 @@ int32_t HCameraDeviceProxy::Release()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy Release failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy Release failed, error: %{public}d", error);
 
     return error;
 }
@@ -115,19 +107,14 @@ int32_t HCameraDeviceProxy::SetCallback(sptr<ICameraDeviceServiceCallback>& call
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR, "HCameraDeviceProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -139,16 +126,12 @@ int32_t HCameraDeviceProxy::UpdateSetting(const std::shared_ptr<Camera::CameraMe
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    if (!(Camera::MetadataUtils::EncodeCameraMetadata(settings, data))) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy UpdateSetting EncodeCameraMetadata failed");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(Camera::MetadataUtils::EncodeCameraMetadata(settings, data)), IPC_PROXY_ERR,
+        "HCameraDeviceProxy UpdateSetting EncodeCameraMetadata failed");
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy UpdateSetting failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy UpdateSetting failed, error: %{public}d", error);
 
     return error;
 }
@@ -160,16 +143,12 @@ int32_t HCameraDeviceProxy::SetUsedAsPosition(uint8_t value)
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    if (!data.WriteUint8(value)) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy SetUsedAsPosition Encode failed");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!data.WriteUint8(value), IPC_PROXY_ERR,
+        "HCameraDeviceProxy SetUsedAsPosition Encode failed");
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy SetUsedAsPosition failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy SetUsedAsPosition failed, error: %{public}d", error);
 
     return error;
 }
@@ -182,10 +161,8 @@ int32_t HCameraDeviceProxy::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetada
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    if (!(Camera::MetadataUtils::EncodeCameraMetadata(metaIn, data))) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy UpdateSetting EncodeCameraMetadata failed");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(Camera::MetadataUtils::EncodeCameraMetadata(metaIn, data)), IPC_PROXY_ERR,
+        "HCameraDeviceProxy UpdateSetting EncodeCameraMetadata failed");
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_STATUS), data, reply, option);
@@ -207,10 +184,8 @@ int32_t HCameraDeviceProxy::GetEnabledResults(std::vector<int32_t> &results)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy GetEnabledResults failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, IPC_PROXY_ERR,
+        "HCameraDeviceProxy GetEnabledResults failed, error: %{public}d", error);
 
     reply.ReadInt32Vector(&results);
 
@@ -228,9 +203,7 @@ int32_t HCameraDeviceProxy::EnableResult(std::vector<int32_t> &results)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy EnableResult failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy EnableResult failed, error: %{public}d", error);
 
     return error;
 }
@@ -246,9 +219,7 @@ int32_t HCameraDeviceProxy::DisableResult(std::vector<int32_t> &results)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
 
     return error;
 }

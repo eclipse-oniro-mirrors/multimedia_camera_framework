@@ -102,10 +102,7 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
                 return;
             }
         }
-        if (GetStream() == nullptr) {
-            MEDIA_ERR_LOG("VideoOutput Failed to SetCallback!, GetStream is nullptr");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(GetStream() == nullptr, "VideoOutput Failed to SetCallback!, GetStream is nullptr");
         int32_t errorCode = CAMERA_OK;
         auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
         if (itemStream) {
@@ -374,9 +371,8 @@ bool VideoOutput::IsMirrorSupported()
 std::vector<VideoMetaType> VideoOutput::GetSupportedVideoMetaTypes()
 {
     std::vector<VideoMetaType> vecto = {};
-    if (IsTagSupported(OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES)) {
-        vecto.push_back(VideoMetaType::VIDEO_META_MAKER_INFO);
-    }
+    CHECK_EXECUTE(IsTagSupported(OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES),
+        vecto.push_back(VideoMetaType::VIDEO_META_MAKER_INFO));
     return vecto;
 }
 
@@ -407,9 +403,8 @@ void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMe
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->AttachMetaSurface(surface->GetProducer(), videoMetaType);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput Failed to Attach Meta Surface!, errCode: %{public}d", errCode);
-        }
+        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK,
+            "VideoOutput Failed to Attach Meta Surface!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("VideoOutput::AttachMetaSurface() itemStream is nullptr");
     }
@@ -438,9 +433,8 @@ int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrame
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
-        if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
-            return CameraErrorCode::SUCCESS;
-        }
+        CHECK_ERROR_RETURN_RET(item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate,
+            CameraErrorCode::SUCCESS);
     }
     MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
     return CameraErrorCode::INVALID_ARGUMENT;

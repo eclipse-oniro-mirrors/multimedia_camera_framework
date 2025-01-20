@@ -35,9 +35,8 @@ int32_t HStreamDepthDataCallbackProxy::OnDepthDataError(int32_t errorCode)
 
     int error = Remote()->SendRequest(static_cast<uint32_t>(
         StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataCallbackProxy OnDepthDataError failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamDepthDataCallbackProxy OnDepthDataError failed, error: %{public}d", error);
 
     return error;
 }

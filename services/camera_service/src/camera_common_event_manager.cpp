@@ -29,13 +29,9 @@ CameraCommonEventManager::~CameraCommonEventManager()
 
 sptr<CameraCommonEventManager> CameraCommonEventManager::GetInstance()
 {
-    if (instance_ != nullptr) {
-        return instance_;
-    }
+    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
     std::lock_guard<std::mutex> lock(instanceMutex_);
-    if (instance_ != nullptr) {
-        return instance_;
-    }
+    CHECK_ERROR_RETURN_RET(instance_ != nullptr, instance_);
     instance_ = new (std::nothrow) CameraCommonEventManager();
     return instance_;
 }
@@ -70,9 +66,8 @@ void CameraCommonEventManager::UnSubscribeCommonEvent(const std::string &eventNa
         return;
     }
     auto commonEventSubscriber = subscriber->second;
-    if (commonEventSubscriber != nullptr) {
-        EventFwk::CommonEventManager::UnSubscribeCommonEvent(commonEventSubscriber);
-    }
+    CHECK_EXECUTE(commonEventSubscriber != nullptr,
+        EventFwk::CommonEventManager::UnSubscribeCommonEvent(commonEventSubscriber));
     commonEventSubscriberMap_.erase(subscriber);
 }
 

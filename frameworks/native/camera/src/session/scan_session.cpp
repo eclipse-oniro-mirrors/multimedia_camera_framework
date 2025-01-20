@@ -79,9 +79,7 @@ bool ScanSession::IsBrightnessStatusSupported()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_SUGGESTION_SUPPORTED, &item);
     if (ret == CAM_META_SUCCESS) {
         camera_supported_enum_t status = static_cast<camera_supported_enum_t>(item.data.ui32[0]);
-        if (status == camera_supported_enum_t::OHOS_CAMERA_SUPPORTED) {
-            return true;
-        }
+        CHECK_ERROR_RETURN_RET(status == camera_supported_enum_t::OHOS_CAMERA_SUPPORTED, true);
     }
     return false;
 }

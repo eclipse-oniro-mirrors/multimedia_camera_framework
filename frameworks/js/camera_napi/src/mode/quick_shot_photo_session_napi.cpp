@@ -26,9 +26,7 @@ QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapi() : env_(nullptr), wrapper_
 QuickShotPhotoSessionNapi::~QuickShotPhotoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~QuickShotPhotoSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    CHECK_EXECUTE(wrapper_ != nullptr, napi_delete_reference(env_, wrapper_));
 }
 
 void QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapiDestructor(
@@ -60,9 +58,7 @@ napi_value QuickShotPhotoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, QUICK_SHOT_PHOTO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -111,16 +107,10 @@ napi_value QuickShotPhotoSessionNapi::QuickShotPhotoSessionNapiConstructor(napi_
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<QuickShotPhotoSessionNapi> obj = std::make_unique<QuickShotPhotoSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->quickShotPhotoSession_ = static_cast<QuickShotPhotoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->quickShotPhotoSession_;
-        if (obj->quickShotPhotoSession_ == nullptr) {
-            MEDIA_ERR_LOG("quickShotPhotoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->quickShotPhotoSession_ == nullptr, result, "quickShotPhotoSession_ is null");
         status = napi_wrap(
             env, thisVar, reinterpret_cast<void*>(obj.get()), QuickShotPhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

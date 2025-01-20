@@ -141,9 +141,8 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
     CHECK_ERROR_RETURN_RET(ret, {});
     std::vector<MetadataObjectType> objectTypes;
     for (size_t index = 0; index < item.count; index++) {
-        if (item.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE) {
-            objectTypes.emplace_back(MetadataObjectType::FACE);
-        }
+        CHECK_EXECUTE(item.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE,
+            objectTypes.emplace_back(MetadataObjectType::FACE));
     }
     return objectTypes;
 }
@@ -154,13 +153,9 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
     CHECK_ERROR_RETURN((session == nullptr) || (session->GetInputDevice() == nullptr));
     std::set<camera_face_detect_mode_t> objectTypes;
     for (const auto& type : metadataObjectTypes) {
-        if (type == MetadataObjectType::FACE) {
-            objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
-        }
+        CHECK_EXECUTE(type == MetadataObjectType::FACE, objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE));
     }
-    if (objectTypes.empty()) {
-        objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_OFF);
-    }
+    CHECK_EXECUTE(objectTypes.empty(), objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_OFF));
 
     session->SetCaptureMetadataObjectTypes(objectTypes);
 }
@@ -612,9 +607,7 @@ void MetadataObjectListener::OnBufferAvailable()
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
         std::shared_ptr<MetadataStateCallback> appStateCallback = metadataOutput->GetAppStateCallback();
-        if (appStateCallback) {
-            appStateCallback->OnError(ret);
-        }
+        CHECK_EXECUTE(appStateCallback, appStateCallback->OnError(ret));
     }
     surface->ReleaseBuffer(buffer, -1);
 }
@@ -641,9 +634,8 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
     CHECK_ERROR_RETURN_RET(objectCallback == nullptr, INVALID_ARGUMENT);
-    if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback) {
-        objectCallback->OnMetadataObjectsAvailable(metaObjects);
-    }
+    CHECK_EXECUTE((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback,
+        objectCallback->OnMetadataObjectsAvailable(metaObjects));
     return SUCCESS;
 }
 

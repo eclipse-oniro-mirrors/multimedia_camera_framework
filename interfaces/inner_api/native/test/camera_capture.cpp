@@ -116,9 +116,7 @@ int main(int argc, char **argv)
     MEDIA_DEBUG_LOG("Setting callback to listen camera status and flash status");
     camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-    if (cameraObjList.size() == 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(cameraObjList.size() == 0, 0);
 
     MEDIA_DEBUG_LOG("Camera ID count: %{public}zu", cameraObjList.size());
     for (auto& it : cameraObjList) {
@@ -126,15 +124,11 @@ int main(int argc, char **argv)
     }
 
     sptr<CaptureSession> captureSession = camManagerObj->CreateCaptureSession();
-    if (captureSession == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(captureSession == nullptr, 0);
 
     captureSession->BeginConfig();
     sptr<CaptureInput> captureInput = camManagerObj->CreateCameraInput(cameraObjList[0]);
-    if (captureInput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(captureInput == nullptr, 0);
 
     sptr<CameraInput> cameraInput = (sptr<CameraInput> &)captureInput;
     cameraInput->Open();
@@ -199,81 +193,57 @@ int main(int argc, char **argv)
 
     cameraInput->SetErrorCallback(std::make_shared<TestDeviceCallback>(testName));
     ret = captureSession->AddInput(captureInput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(photoSurface == nullptr, 0);
     photosize.width = photoWidth;
     photosize.height = photoHeight;
     Profile photoprofile = Profile(static_cast<CameraFormat>(photoFormat), photosize);
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
-    if (captureListener == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(captureListener == nullptr, 0);
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
     sptr<IBufferProducer> bp = photoSurface->GetProducer();
     sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, bp);
-    if (photoOutput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, 0);
 
     MEDIA_DEBUG_LOG("Setting photo callback");
     ((sptr<PhotoOutput> &)photoOutput)->SetCallback(std::make_shared<TestPhotoOutputCallback>(testName));
     ret = captureSession->AddOutput(photoOutput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    if (previewSurface == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(previewSurface == nullptr, 0);
     previewsize.width = previewWidth;
     previewsize.height = previewHeight;
     Profile previewprofile = Profile(static_cast<CameraFormat>(previewFormat), previewsize);
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
-    if (listener == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(listener == nullptr, 0);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
     sptr<Surface> previewProducerSurface = Surface::CreateSurfaceAsProducer(previewProducer);
     sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewProducerSurface);
-    if (previewOutput == nullptr) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(previewOutput == nullptr, 0);
 
     MEDIA_DEBUG_LOG("Setting preview callback");
     ((sptr<PreviewOutput> &)previewOutput)->SetCallback(std::make_shared<TestPreviewOutputCallback>(testName));
     ret = captureSession->AddOutput(previewOutput);
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     ret = captureSession->CommitConfig();
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     ret = captureSession->Start();
-    if (ret != 0) {
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET(ret != 0, 0);
 
     MEDIA_DEBUG_LOG("Preview started");
     sleep(previewCaptureGap);
     for (int i = 1; i <= photoCaptureCount; i++) {
         MEDIA_DEBUG_LOG("Photo capture %{public}d started", i);
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
-        if (ret != 0) {
-            return 0;
-        }
+        CHECK_ERROR_RETURN_RET(ret != 0, 0);
         sleep(gapAfterCapture);
     }
 

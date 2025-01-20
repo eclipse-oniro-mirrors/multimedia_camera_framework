@@ -41,26 +41,17 @@ sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::appManagerInstance_ = nul
 sptr<OHOS::AppExecFwk::IAppMgr> CameraAppManagerUtils::GetAppManagerInstance()
 {
     std::lock_guard<std::mutex> lock(g_cameraAppManagerInstanceMutex);
-    if (appManagerInstance_) {
-        return appManagerInstance_;
-    }
+    CHECK_ERROR_RETURN_RET(appManagerInstance_, appManagerInstance_);
 
     sptr<OHOS::ISystemAbilityManager> abilityMgr =
         OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (abilityMgr == nullptr) {
-        MEDIA_ERR_LOG("Failed to get ISystemAbilityManager");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(abilityMgr == nullptr, nullptr, "Failed to get ISystemAbilityManager");
     sptr<IRemoteObject> remoteObject = abilityMgr->GetSystemAbility(APP_MGR_SERVICE_ID);
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("Failed to get app manager service, id=%{public}u", APP_MGR_SERVICE_ID);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, nullptr,
+        "Failed to get app manager service, id=%{public}u", APP_MGR_SERVICE_ID);
     sptr<OHOS::AppExecFwk::IAppMgr> appMgrProxy = iface_cast<OHOS::AppExecFwk::IAppMgr>(remoteObject);
-    if (appMgrProxy == nullptr || !appMgrProxy->AsObject()) {
-        MEDIA_ERR_LOG("Failed to get app manager proxy");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(appMgrProxy == nullptr || !appMgrProxy->AsObject(), nullptr,
+        "Failed to get app manager proxy");
     sptr<CameraAppManagerUtilsDeathRecipient> CameraAppManagerUtilsDeathRecipient_ =
         new CameraAppManagerUtilsDeathRecipient();
     remoteObject->AddDeathRecipient(CameraAppManagerUtilsDeathRecipient_);

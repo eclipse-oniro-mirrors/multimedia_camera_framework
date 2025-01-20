@@ -44,9 +44,7 @@ static void PhotoModeUsage(FILE* fp)
         "v      Switch to video mode\n"
         "d      Double preview mode\n"
         "q      Quit this app\n");
-    if (result < 0) {
-        MEDIA_ERR_LOG("Failed to display menu, %{public}d", result);
-    }
+    CHECK_ERROR_PRINT_LOG(result < 0, "Failed to display menu, %{public}d", result);
 }
 
 static void VideoModeUsage(FILE* fp)
@@ -63,9 +61,7 @@ static void VideoModeUsage(FILE* fp)
         "p      Switch to Photo mode\n"
         "d      Switch to Double preview mode\n"
         "q      Quit this app\n");
-    if (result < 0) {
-        MEDIA_ERR_LOG("Failed to display menu, %{public}d", result);
-    }
+    CHECK_ERROR_PRINT_LOG(result < 0, "Failed to display menu, %{public}d", result);
 }
 
 static void DoublePreviewModeUsage(FILE* fp)
@@ -81,9 +77,7 @@ static void DoublePreviewModeUsage(FILE* fp)
         "p      Switch to Photo mode\n"
         "v      Switch to Video mode\n"
         "q      Quit this app\n");
-    if (result < 0) {
-        MEDIA_ERR_LOG("Failed to display menu, %{public}d", result);
-    }
+    CHECK_ERROR_PRINT_LOG(result < 0, "Failed to display menu, %{public}d", result);
 }
 
 static void Usage(std::shared_ptr<CameraCaptureVideo> testObj)
@@ -105,9 +99,7 @@ static char PutMenuAndGetChr(std::shared_ptr<CameraCaptureVideo> &testObj)
 
     Usage(testObj);
     result = scanf_s(" %c", &userInput, 1);
-    if (result == 0) {
-        return 'h';
-    }
+    CHECK_ERROR_RETURN_RET(result == 0, 'h');
     return userInput[0];
 }
 
@@ -220,16 +212,10 @@ int32_t CameraCaptureVideo::TakePhoto()
 {
     int32_t result = -1;
 
-    if (photoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("photoOutput_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput_ == nullptr, result, "photoOutput_ is null");
 
     result = ((sptr<PhotoOutput> &)photoOutput_)->Capture();
-    if (result != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to capture, result: %{public}d", result);
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(result != CAMERA_OK, result, "Failed to capture, result: %{public}d", result);
     sleep(GAP_AFTER_CAPTURE);
     return result;
 }
@@ -238,22 +224,13 @@ int32_t CameraCaptureVideo::RecordVideo()
 {
     int32_t result = -1;
 
-    if (videoOutput_ == nullptr) {
-        MEDIA_ERR_LOG("videoOutput_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, result, "videoOutput_ is null");
 
     result = ((sptr<VideoOutput> &)videoOutput_)->Start();
-    if (result != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to start recording, result: %{public}d", result);
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(result != CAMERA_OK, result, "Failed to start recording, result: %{public}d", result);
     sleep(VIDEO_CAPTURE_DURATION);
     result = ((sptr<VideoOutput> &)videoOutput_)->Stop();
-    if (result != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to stop recording, result: %{public}d", result);
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(result != CAMERA_OK, result, "Failed to stop recording, result: %{public}d", result);
     sleep(GAP_AFTER_CAPTURE);
     result = TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, fd_);
     fd_ = -1;
@@ -297,10 +274,7 @@ int32_t CameraCaptureVideo::InitCameraManager()
 
     if (cameraManager_ == nullptr) {
         cameraManager_ = CameraManager::GetInstance();
-        if (cameraManager_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to get camera manager!");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "Failed to get camera manager!");
         cameraMngrCallback_ = std::make_shared<TestCameraMngerCallback>(testName_);
         cameraManager_->SetCallback(cameraMngrCallback_);
     }
@@ -317,9 +291,7 @@ int32_t CameraCaptureVideo::InitCameraFormatAndResolution(sptr<CameraInput> &cam
     std::vector<Size> photoSizes;
     std::vector<Size> videoSizes;
     std::vector<sptr<CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
-    if (cameraObjList.size() <= 0) {
-        MEDIA_ERR_LOG("No cameras are available!!!");
-    }
+    CHECK_ERROR_PRINT_LOG(cameraObjList.size() <= 0, "No cameras are available!!!");
     sptr<CameraOutputCapability> outputcapability =  cameraManager_->GetSupportedOutputCapability(cameraObjList[0]);
     std::vector<Profile> previewProfiles = outputcapability->GetPreviewProfiles();
     for (auto i : previewProfiles) {
@@ -412,30 +384,19 @@ int32_t CameraCaptureVideo::InitCameraInput()
 {
     int32_t result = -1;
 
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "cameraManager_ is null");
 
     if (cameraInput_ == nullptr) {
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
-        if (cameraObjList.size() <= 0) {
-            MEDIA_ERR_LOG("No cameras are available!!!");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(cameraObjList.size() <= 0, result, "No cameras are available!!!");
         cameraInput_ = cameraManager_->CreateCameraInput(cameraObjList[0]);
-        if (cameraInput_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create CameraInput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(cameraInput_ == nullptr, result, "Failed to create CameraInput");
         cameraInput_->Open();
         cameraInputCallback_ = std::make_shared<TestDeviceCallback>(testName_);
         ((sptr<CameraInput> &)cameraInput_)->SetErrorCallback(cameraInputCallback_);
         result = InitCameraFormatAndResolution((sptr<CameraInput> &)cameraInput_);
-        if (result != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to initialize format and resolution for preview, photo and video");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(result != CAMERA_OK, result,
+            "Failed to initialize format and resolution for preview, photo and video");
     }
     result = CAMERA_OK;
     return result;
@@ -446,17 +407,11 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
     int32_t result = -1;
     Size previewsize_;
 
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "cameraManager_ is null");
 
     if (previewOutput_ == nullptr) {
         previewSurface_ = IConsumerSurface::Create();
-        if (previewSurface_ ==  nullptr) {
-            MEDIA_ERR_LOG("previewSurface_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(previewSurface_ ==  nullptr, result, "previewSurface_ is null");
         previewsize_.width = previewWidth_;
         previewsize_.height = previewHeight_;
         previewSurface_->SetDefaultWidthAndHeight(previewWidth_, previewHeight_);
@@ -464,18 +419,12 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
         Profile previewprofile_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize_);
         previewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PREVIEW,
                                                                     fd_, previewSurface_);
-        if (previewSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("fail to create new SurfaceListener");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(previewSurfaceListener_ == nullptr, result, "fail to create new SurfaceListener");
         previewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)previewSurfaceListener_);
         sptr<IBufferProducer> bp = previewSurface_->GetProducer();
         sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
         previewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile_, pSurface);
-        if (previewOutput_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create previewOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(previewOutput_ == nullptr, result, "Failed to create previewOutput");
         previewOutputCallback_ = std::make_shared<TestPreviewOutputCallback>(testName_);
         ((sptr<PreviewOutput> &)previewOutput_)->SetCallback(previewOutputCallback_);
     }
@@ -488,39 +437,26 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
     int32_t result = -1;
     Size previewsize2_;
 
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "cameraManager_ is null");
 
     if (secondPreviewOutput_ == nullptr) {
         secondPreviewSurface_ = IConsumerSurface::Create();
-        if (secondPreviewSurface_ == nullptr) {
-            MEDIA_ERR_LOG("secondPreviewSurface_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(secondPreviewSurface_ == nullptr, result, "secondPreviewSurface_ is null");
         previewsize2_.width = previewWidth2_;
         previewsize2_.height = previewHeight2_;
         Profile previewprofile2_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize2_);
         secondPreviewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_,
             SurfaceType::SECOND_PREVIEW, fd_, secondPreviewSurface_);
-        if (secondPreviewSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("failed to create new SurfaceListener!");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(secondPreviewSurfaceListener_ == nullptr, result,
+            "failed to create new SurfaceListener!");
         secondPreviewSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)secondPreviewSurfaceListener_);
         sptr<IBufferProducer> bp = secondPreviewSurface_->GetProducer();
         sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
         secondPreviewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile2_, pSurface);
-        if (secondPreviewSurfaceListener_ ==  nullptr) {
-            MEDIA_ERR_LOG("Failed to create new SurfaceListener");
-            return result;
-        }
-        if (secondPreviewOutput_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create second previewOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(secondPreviewSurfaceListener_ ==  nullptr, result,
+            "Failed to create new SurfaceListener");
+        CHECK_ERROR_RETURN_RET_LOG(secondPreviewOutput_ == nullptr, result, "Failed to create second previewOutput");
         secondPreviewOutputCallback_ = std::make_shared<TestPreviewOutputCallback>(testName_);
         ((sptr<PreviewOutput> &)secondPreviewOutput_)->SetCallback(secondPreviewOutputCallback_);
     }
@@ -532,32 +468,20 @@ int32_t CameraCaptureVideo::InitPhotoOutput()
 {
     int32_t result = -1;
     Size photosize_;
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "cameraManager_ is null");
 
     if (photoOutput_ == nullptr) {
         photoSurface_ = IConsumerSurface::Create();
-        if (photoSurface_ == nullptr) {
-            MEDIA_ERR_LOG("photoSurface_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(photoSurface_ == nullptr, result, "photoSurface_ is null");
         photosize_.width = photoWidth_;
         photosize_.height = photoHeight_;
         Profile photoprofile_ = Profile(static_cast<CameraFormat>(photoFormat_), photosize_);
         photoSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PHOTO, fd_, photoSurface_);
-        if (photoSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create new SurfaceListener");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(photoSurfaceListener_ == nullptr, result, "Failed to create new SurfaceListener");
         photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoSurfaceListener_);
         sptr<IBufferProducer> bp = photoSurface_->GetProducer();
         photoOutput_ = cameraManager_->CreatePhotoOutput(photoprofile_, bp);
-        if (photoOutput_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create PhotoOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(photoOutput_ == nullptr, result, "Failed to create PhotoOutput");
         photoOutputCallback_ = std::make_shared<TestPhotoOutputCallback>(testName_);
         ((sptr<PhotoOutput> &)photoOutput_)->SetCallback(photoOutputCallback_);
     }
@@ -570,34 +494,22 @@ int32_t CameraCaptureVideo::InitVideoOutput()
     int32_t result = -1;
     Size videosize_;
 
-    if (cameraManager_ == nullptr) {
-        MEDIA_ERR_LOG("cameraManager_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "cameraManager_ is null");
 
     if (videoOutput_ == nullptr) {
         videoSurface_ = IConsumerSurface::Create();
-        if (videoSurface_ == nullptr) {
-            MEDIA_ERR_LOG("videoSurface_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(videoSurface_ == nullptr, result, "videoSurface_ is null");
         videosize_.width = videoWidth_;
         videosize_.height = videoHeight_;
         VideoProfile videoprofile_ =
             VideoProfile(static_cast<CameraFormat>(videoFormat_), videosize_, videoframerates_);
         videoSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::VIDEO, fd_, videoSurface_);
-        if (videoSurfaceListener_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create new SurfaceListener");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(videoSurfaceListener_ == nullptr, result, "Failed to create new SurfaceListener");
         videoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoSurfaceListener_);
         sptr<IBufferProducer> bp = videoSurface_->GetProducer();
         sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
         videoOutput_ = cameraManager_->CreateVideoOutput(videoprofile_, pSurface);
-        if (videoOutput_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create VideoOutput");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(videoOutput_ == nullptr, result, "Failed to create VideoOutput");
         videoOutputCallback_ = std::make_shared<TestVideoOutputCallback>(testName_);
         ((sptr<VideoOutput> &)videoOutput_)->SetCallback(videoOutputCallback_);
     }
@@ -609,10 +521,7 @@ int32_t CameraCaptureVideo::AddOutputbyState()
 {
     int32_t result = -1;
 
-    if (captureSession_ == nullptr) {
-        MEDIA_ERR_LOG("captureSession_ is null");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession_ == nullptr, result, "captureSession_ is null");
     switch (currentState_) {
         case State::PHOTO_CAPTURE:
             result = InitPhotoOutput();
@@ -643,39 +552,22 @@ int32_t CameraCaptureVideo::StartPreview()
     int32_t result = -1;
 
     result = InitCameraManager();
-    if (result != CAMERA_OK) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(result != CAMERA_OK, result);
     result = InitCameraInput();
-    if (result != CAMERA_OK) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(result != CAMERA_OK, result);
     captureSession_ = cameraManager_->CreateCaptureSession();
-    if (captureSession_ == nullptr) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(captureSession_ == nullptr, result);
     captureSession_->BeginConfig();
     result = captureSession_->AddInput(cameraInput_);
-    if (CAMERA_OK != result) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(CAMERA_OK != result, result);
     result = AddOutputbyState();
-    if (result != CAMERA_OK) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(result != CAMERA_OK, result);
     result = InitPreviewOutput();
-    if (result != CAMERA_OK) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(result != CAMERA_OK, result);
     result = captureSession_->AddOutput(previewOutput_);
-    if (CAMERA_OK != result) {
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET(CAMERA_OK != result, result);
     result = captureSession_->CommitConfig();
-    if (CAMERA_OK != result) {
-        MEDIA_ERR_LOG("Failed to Commit config");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(CAMERA_OK != result, result, "Failed to Commit config");
     result = captureSession_->Start();
     MEDIA_DEBUG_LOG("Session started, result: %{public}d", result);
     if (CAMERA_OK != result) {

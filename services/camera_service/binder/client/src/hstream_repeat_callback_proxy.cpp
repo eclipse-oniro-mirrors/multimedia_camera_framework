@@ -34,9 +34,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameStarted()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_STARTED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameStarted failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamRepeatCallbackProxy OnFrameStarted failed, error: %{public}d", error);
 
     return error;
 }
@@ -54,9 +53,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameEnded(int32_t frameCount)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_ENDED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameEnded failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamRepeatCallbackProxy OnFrameEnded failed, error: %{public}d", error);
 
     return error;
 }
@@ -73,9 +71,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameError(int32_t errorCode)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_ERROR), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameError failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamRepeatCallbackProxy OnFrameError failed, error: %{public}d", error);
 
     return error;
 }
@@ -92,9 +89,8 @@ int32_t HStreamRepeatCallbackProxy::OnSketchStatusChanged(SketchStatus status)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_SKETCH_STATUS_ON_CHANGED), data, reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnSketchStatusChanged failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamRepeatCallbackProxy OnSketchStatusChanged failed, error: %{public}d", error);
     return error;
 }
 
@@ -112,9 +108,8 @@ int32_t HStreamRepeatCallbackProxy::OnDeferredVideoEnhancementInfo(CaptureEndedI
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_VIDEO_DEFERRED_INFO), data, reply,
         option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnDeferredVideoEnhancementInfo failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamRepeatCallbackProxy OnDeferredVideoEnhancementInfo failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

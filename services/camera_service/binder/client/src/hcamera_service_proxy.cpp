@@ -137,10 +137,8 @@ int32_t HCameraServiceProxy::CreateCameraDevice(std::string cameraId, sptr<ICame
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCameraDevice failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateCameraDevice failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
@@ -156,19 +154,15 @@ int32_t HCameraServiceProxy::SetCameraCallback(sptr<ICameraServiceCallback>& cal
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCameraCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy SetCameraCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CAMERA_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCameraCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy SetCameraCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -179,19 +173,15 @@ int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& c
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy SetMuteCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy SetMuteCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -201,19 +191,15 @@ int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callb
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetTorchCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy SetTorchCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetTorchCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy SetTorchCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -223,19 +209,16 @@ int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& c
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetFoldStatusCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy SetFoldStatusCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
     data.WriteBool(isInnerCallback);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetFoldStatusCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy SetFoldStatusCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -250,10 +233,8 @@ int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session
     MEDIA_INFO_LOG("HCameraServiceProxy::CreateCaptureSession opMode_= %{public}d", operationMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCaptureSession failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateCaptureSession failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
@@ -328,10 +309,8 @@ int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePhotoOutput producer is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreatePhotoOutput producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -341,10 +320,8 @@ int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePhotoOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreatePhotoOutput failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
@@ -362,10 +339,8 @@ int32_t HCameraServiceProxy::CreatePreviewOutput(const sptr<OHOS::IBufferProduce
     MessageParcel reply;
     MessageOption option;
 
-    if ((producer == nullptr) || (width == 0) || (height == 0)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput producer is null or invalid size is set");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((producer == nullptr) || (width == 0) || (height == 0), IPC_PROXY_ERR,
+        "HCameraServiceProxy CreatePreviewOutput producer is null or invalid size is set");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -375,10 +350,8 @@ int32_t HCameraServiceProxy::CreatePreviewOutput(const sptr<OHOS::IBufferProduce
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreatePreviewOutput failed, error: %{public}d", error);
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
         "HCameraServiceProxy CreatePreviewOutput previewOutput is null");
@@ -394,10 +367,8 @@ int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t
     MessageParcel reply;
     MessageOption option;
 
-    if ((width == 0) || (height == 0)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput producer is null or invalid size is set");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((width == 0) || (height == 0), IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDeferredPreviewOutput producer is null or invalid size is set");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(format);
@@ -407,10 +378,8 @@ int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateDeferredPreviewOutput failed, error: %{public}d", error);
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
         "HCameraServiceProxy CreateDeferredPreviewOutput previewOutput is null");
@@ -427,10 +396,8 @@ int32_t HCameraServiceProxy::CreateDepthDataOutput(const sptr<OHOS::IBufferProdu
     MessageParcel reply;
     MessageOption option;
 
-    if ((producer == nullptr) || (width == 0) || (height == 0)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput producer is null or invalid size is set");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((producer == nullptr) || (width == 0) || (height == 0), IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateDepthDataOutput producer is null or invalid size is set");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -440,10 +407,8 @@ int32_t HCameraServiceProxy::CreateDepthDataOutput(const sptr<OHOS::IBufferProdu
 
     int error = Remote()->SendRequest(static_cast<uint32_t>(
         CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEPTH_DATA_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateDepthDataOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateDepthDataOutput failed, error: %{public}d", error);
     auto remoteObject = reply.ReadRemoteObject();
     if (remoteObject != nullptr) {
         depthDataOutput = iface_cast<IStreamDepthData>(remoteObject);
@@ -462,10 +427,8 @@ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProduc
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateMetadataOutput producer is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateMetadataOutput producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -474,10 +437,8 @@ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProduc
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_METADATA_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateMetadataOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy CreateMetadataOutput failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
@@ -495,10 +456,8 @@ int32_t HCameraServiceProxy::CreateVideoOutput(const sptr<OHOS::IBufferProducer>
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateVideoOutput producer is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HCameraServiceProxy CreateVideoOutput producer is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(producer->AsObject());
@@ -508,10 +467,8 @@ int32_t HCameraServiceProxy::CreateVideoOutput(const sptr<OHOS::IBufferProducer>
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_VIDEO_OUTPUT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::CreateVideoOutput failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy::CreateVideoOutput failed, error: %{public}d", error);
 
     auto remoteObject = reply.ReadRemoteObject();
     CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, IPC_PROXY_ERR,
@@ -531,10 +488,8 @@ int32_t HCameraServiceProxy::SetListenerObject(const sptr<IRemoteObject> &object
     (void)data.WriteRemoteObject(object);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_LISTENER_OBJ), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Set listener obj failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, IPC_PROXY_ERR,
+        "HCameraServiceProxy::SetListenerObject Set listener obj failed, error: %{public}d", error);
 
     return reply.ReadInt32();
 }
@@ -549,9 +504,7 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     (void)data.WriteBool(muteMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::MuteCamera failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::MuteCamera failed, error: %{public}d", error);
     return error;
 }
 
@@ -581,9 +534,7 @@ int32_t HCameraServiceProxy::PrelaunchCamera()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_LAUNCH_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
     return error;
 }
 
@@ -603,9 +554,8 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId, RestorePar
     data.WriteUint32(effectParam.skinTone);
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetPrelaunchConfig failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCameraServiceProxy::SetPrelaunchConfig failed, error: %{public}d", error);
     return error;
 }
 
@@ -672,10 +622,8 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
     (void)data.WriteBool(muteMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuted Set listener obj failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy::IsCameraMuted Set listener obj failed, error: %{public}d", error);
 
     muteMode = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuted Read muteMode is %{public}d", muteMode);
@@ -693,9 +641,7 @@ int32_t HCameraServiceProxy::SetTorchLevel(float level)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy::SetTorchLevel failed, error: %{public}d", error);
     return error;
 }
 

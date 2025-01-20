@@ -193,9 +193,8 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
 
 bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval)
 {
-    if (!isStarted_ || encoder_ == nullptr || size_ == nullptr) {
-        RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
-    }
+    CHECK_EXECUTE(!isStarted_ || encoder_ == nullptr || size_ == nullptr,
+        RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation()));
     if (keyFrameInterval == KEY_FRAME_INTERVAL) {
         std::lock_guard<std::mutex> lock(encoderMutex_);
         MediaAVCodec::Format format = MediaAVCodec::Format();
@@ -203,10 +202,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         encoder_->SetParameter(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
-    if (buffer == nullptr) {
-        MEDIA_ERR_LOG("Enqueue video buffer is empty");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(buffer == nullptr, false, "Enqueue video buffer is empty");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
     CHECK_ERROR_RETURN_RET_LOG(codecSurface_ == nullptr, false, "codecSurface_ is null");
     SurfaceError surfaceRet = codecSurface_->AttachBufferToQueue(buffer);
@@ -238,9 +234,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         keyFrameInterval_ = (keyFrameInterval_ == 0 ? KEY_FRAME_INTERVAL : keyFrameInterval_);
     }
     preFrameTimestamp_ = frameRecord->GetTimeStamp();
-    if (!EnqueueBuffer(frameRecord, keyFrameInterval_)) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(!EnqueueBuffer(frameRecord, keyFrameInterval_), false);
     keyFrameInterval_--;
     int32_t retryCount = 5;
     while (retryCount > 0) {

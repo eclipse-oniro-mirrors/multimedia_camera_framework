@@ -30,9 +30,7 @@ int32_t HStreamMetadataProxy::Start()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::Start failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamMetadataProxy::Start failed, error: %{public}d", error);
 
     return error;
 }
@@ -46,9 +44,7 @@ int32_t HStreamMetadataProxy::Stop()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::Stop failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamMetadataProxy::Stop failed, error: %{public}d", error);
 
     return error;
 }
@@ -62,9 +58,7 @@ int32_t HStreamMetadataProxy::Release()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::Release failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamMetadataProxy::Release failed, error: %{public}d", error);
 
     return error;
 }
@@ -75,19 +69,14 @@ int32_t HStreamMetadataProxy::SetCallback(sptr<IStreamMetadataCallback> &callbac
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR, "HStreamMetadataProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_SET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamMetadataProxy SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -102,9 +91,8 @@ int32_t HStreamMetadataProxy::EnableMetadataType(std::vector<int32_t> metadataTy
     data.WriteInt32Vector(metadataTypes);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_ENABLE_RESULTS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::EnableMetadataType Start failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamMetadataProxy::EnableMetadataType Start failed, error: %{public}d", error);
     return error;
 }
 
@@ -118,9 +106,8 @@ int32_t HStreamMetadataProxy::DisableMetadataType(std::vector<int32_t> metadataT
     data.WriteInt32Vector(metadataTypes);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_DISABLE_RESULTS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy::DisableMetadataType Start failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HStreamMetadataProxy::DisableMetadataType Start failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

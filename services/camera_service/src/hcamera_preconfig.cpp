@@ -161,17 +161,13 @@ struct PreconfigProfile {
 
     std::string toString(std::vector<CameraInfo>& cameraInfos, HDI::Camera::V1_3::OperationMode modeName)
     {
-        if (!followSensorMax) {
-            return toString();
-        }
+        CHECK_ERROR_RETURN_RET(!followSensorMax, toString());
         std::string maxSizeInfo = "";
         for (auto& cameraInfo : cameraInfos) {
             camera_metadata_item_t item;
             int ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(
                 cameraInfo.ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
-            if (ret != CAM_META_SUCCESS || item.count == 0) {
-                return "device camera type info error";
-            }
+            CHECK_ERROR_RETURN_RET(ret != CAM_META_SUCCESS || item.count == 0, "device camera type info error");
             camera_type_enum_t cameraType = static_cast<camera_type_enum_t>(item.data.u8[0]);
             if (cameraType != OHOS_CAMERA_TYPE_UNSPECIFIED) {
                 continue;

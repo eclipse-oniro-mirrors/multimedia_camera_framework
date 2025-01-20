@@ -54,9 +54,7 @@ napi_value HighResPhotoSessionNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, HIGH_RES_PHOTO_SESSION_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -107,16 +105,10 @@ napi_value HighResPhotoSessionNapi::HighResPhotoSessionNapiConstructor(napi_env 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<HighResPhotoSessionNapi> obj = std::make_unique<HighResPhotoSessionNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->highResPhotoSession_ = static_cast<HighResPhotoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->highResPhotoSession_;
-        if (obj->highResPhotoSession_ == nullptr) {
-            MEDIA_ERR_LOG("highResPhotoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->highResPhotoSession_ == nullptr, result, "highResPhotoSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             HighResPhotoSessionNapi::HighResPhotoSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

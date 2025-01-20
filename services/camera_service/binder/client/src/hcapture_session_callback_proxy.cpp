@@ -34,9 +34,7 @@ int32_t HCaptureSessionCallbackProxy::OnError(int32_t errorCode)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionCallbackProxy OnError failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCaptureSessionCallbackProxy OnError failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

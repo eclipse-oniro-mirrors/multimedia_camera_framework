@@ -252,9 +252,7 @@ napi_value CameraNapi::CreateObjectWithMap(napi_env env,
     }
     if (status == napi_ok) {
         status = napi_create_reference(env, result, 1, &outputRef);
-        if (status == napi_ok) {
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET(status == napi_ok, result);
     }
     MEDIA_ERR_LOG("Create %{public}s call Failed!", objectName.c_str());
     napi_get_undefined(env, &result);

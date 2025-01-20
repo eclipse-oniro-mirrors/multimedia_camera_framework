@@ -58,9 +58,7 @@ napi_value VideoSessionForSysNapi::Init(napi_env env, napi_value exports)
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, VIDEO_SESSION_FOR_SYS_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
-                return exports;
-            }
+            CHECK_ERROR_RETURN_RET(status == napi_ok, exports);
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
@@ -109,16 +107,10 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<VideoSessionForSysNapi> obj = std::make_unique<VideoSessionForSysNapi>();
         obj->env_ = env;
-        if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("sCameraSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(sCameraSession_ == nullptr, result, "sCameraSession_ is null");
         obj->videoSession_ = static_cast<VideoSession*>(sCameraSession_.GetRefPtr());
         obj->cameraSession_ = obj->videoSession_;
-        if (obj->videoSession_ == nullptr) {
-            MEDIA_ERR_LOG("videoSession_ is null");
-            return result;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(obj->videoSession_ == nullptr, result, "videoSession_ is null");
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
             VideoSessionForSysNapi::VideoSessionForSysNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {

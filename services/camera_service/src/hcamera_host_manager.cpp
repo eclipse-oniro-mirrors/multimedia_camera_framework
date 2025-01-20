@@ -60,9 +60,7 @@ public:
         {
             MEDIA_ERR_LOG("Remote died, do clean works.");
             auto cameraHostInfo = cameraHostInfo_.promote();
-            if (cameraHostInfo == nullptr) {
-                return;
-            }
+            CHECK_ERROR_RETURN(cameraHostInfo == nullptr);
             cameraHostInfo->NotifyCameraHostDied();
             cameraHostInfo->CameraHostDied();
         }
@@ -195,9 +193,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
     }
     cameraHostDeathRecipient_ = new CameraHostDeathRecipient(this);
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
-    if (!remote->AddDeathRecipient(cameraHostDeathRecipient_)) {
-        MEDIA_ERR_LOG("AddDeathRecipient for CameraHost failed.");
-    }
+    CHECK_ERROR_PRINT_LOG(!remote->AddDeathRecipient(cameraHostDeathRecipient_),
+        "AddDeathRecipient for CameraHost failed.");
     std::lock_guard<std::mutex> lock(mutex_);
     CamRetCode ret = (CamRetCode)(cameraHostProxy_->GetCameraIds(cameraIds_));
     if (ret != HDI::Camera::V1_0::NO_ERROR) {
@@ -389,9 +386,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     prelaunchConfig.cameraId = cameraRestoreParam->GetCameraId();
     prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
     DumpMetadata(cameraRestoreParam->GetSetting());
-    if (muteMode) {
-        UpdateMuteSetting(cameraRestoreParam->GetSetting());
-    }
+    CHECK_EXECUTE(muteMode, UpdateMuteSetting(cameraRestoreParam->GetSetting()));
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraRestoreParam->GetSetting(), settings);
     prelaunchConfig.setting = settings;
     int32_t opMode = cameraRestoreParam->GetCameraOpMode();
@@ -411,19 +406,15 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     } else {
         rc = HDI::Camera::V1_0::NO_ERROR;
     }
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("CameraHostInfo::Prelaunch failed with error Code:%{public}d", rc);
-        return HdiToServiceError(rc);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
+        "CameraHostInfo::Prelaunch failed with error Code:%{public}d", rc);
     return CAMERA_OK;
 }
 
 bool HCameraHostManager::CameraHostInfo::IsNeedRestore(int32_t opMode,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId)
 {
-    if (cameraSettings == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET(cameraSettings == nullptr, false);
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     int32_t ret = GetCameraAbility(cameraId, cameraAbility);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || cameraAbility == nullptr, false,
@@ -464,10 +455,8 @@ int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& c
     if (cameraHostProxyV1_2_ != nullptr) {
         MEDIA_DEBUG_LOG("CameraHostInfo::PreCameraSwitch ICameraHost V1_2");
         CamRetCode rc = (CamRetCode)(cameraHostProxyV1_2_->PreCameraSwitch(cameraId));
-        if (rc != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("CameraHostInfo::PreCameraSwitch failed with error Code:%{public}d", rc);
-            return HdiToServiceError(rc);
-        }
+        CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
+            "CameraHostInfo::PreCameraSwitch failed with error Code:%{public}d", rc);
     }
     return CAMERA_OK;
 }
@@ -777,9 +766,8 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
     }
     cameraDevices_[cameraId] = cameraDevice;
     auto statusCallback = statusCallback_.lock();
-    if (statusCallback != nullptr) {
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION);
-    }
+    CHECK_EXECUTE(statusCallback != nullptr,
+        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION));
 }
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
@@ -792,9 +780,8 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
     }
     cameraDevices_.erase(cameraId);
     auto statusCallback = statusCallback_.lock();
-    if (statusCallback) {
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
-    }
+    CHECK_EXECUTE(statusCallback,
+        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION));
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice end");
 }
 
@@ -819,9 +806,7 @@ int32_t HCameraHostManager::GetCameras(std::vector<std::string>& cameraIds)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraHostManager::GetCameras");
-    if (!IsCameraHostInfoAdded(LOCAL_SERVICE_NAME)) {
-        AddCameraHost(LOCAL_SERVICE_NAME);
-    }
+    CHECK_EXECUTE(!IsCameraHostInfoAdded(LOCAL_SERVICE_NAME), AddCameraHost(LOCAL_SERVICE_NAME));
     std::lock_guard<std::mutex> lock(mutex_);
     cameraIds.clear();
     for (const auto& cameraHost : cameraHostInfos_) {
@@ -861,9 +846,7 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
 
 int32_t HCameraHostManager::SetTorchLevel(float level)
 {
-    if (!IsCameraHostInfoAdded(LOCAL_SERVICE_NAME)) {
-        AddCameraHost(LOCAL_SERVICE_NAME);
-    }
+    CHECK_EXECUTE(!IsCameraHostInfoAdded(LOCAL_SERVICE_NAME), AddCameraHost(LOCAL_SERVICE_NAME));
     auto cameraHostInfo = FindLocalCameraHostInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::SetTorchLevel failed with not exist support device info");
@@ -897,9 +880,8 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
     // 使用后删除存储的动态数据
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     auto it = transitentParamMap_.find(clientName);
-    if (it != transitentParamMap_.end() && CheckCameraId(it->second, cameraId)) {
-        transitentParamMap_.erase(clientName);
-    }
+    CHECK_EXECUTE(it != transitentParamMap_.end() && CheckCameraId(it->second, cameraId),
+        transitentParamMap_.erase(clientName));
     return 0;
 }
 
@@ -914,10 +896,8 @@ int32_t HCameraHostManager::PreSwitchCamera(const std::string& cameraId)
 void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
 {
     auto cameraHostInfo = FindLocalCameraHostInfo();
-    if (cameraHostInfo == nullptr) {
-        MEDIA_ERR_LOG("HCameraHostManager::NotifyDeviceStateChangeInfo failed with not exist support device info");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(cameraHostInfo == nullptr,
+        "HCameraHostManager::NotifyDeviceStateChangeInfo failed with not exist support device info");
     
     cameraHostInfo->NotifyDeviceStateChangeInfo(notifyType, deviceState);
 }
@@ -933,9 +913,7 @@ void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestor
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save persistent param");
     } else {
         auto itTransitent = transitentParamMap_.find(clientName);
-        if (itTransitent != transitentParamMap_.end()) {
-            transitentParamMap_.erase(clientName);
-        }
+        CHECK_EXECUTE(itTransitent != transitentParamMap_.end(), transitentParamMap_.erase(clientName));
         transitentParamMap_[clientName] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save transist param");
         isHasSavedParam = true;
@@ -1086,9 +1064,7 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
             statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
         }
     }
-    if (statusCallback && svcName == LOCAL_SERVICE_NAME) {
-        statusCallback->OnTorchStatus(TORCH_STATUS_OFF);
-    }
+    CHECK_EXECUTE(statusCallback && svcName == LOCAL_SERVICE_NAME, statusCallback->OnTorchStatus(TORCH_STATUS_OFF));
 }
 
 void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
@@ -1112,18 +1088,15 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
     *it = nullptr;
     cameraHostInfos_.erase(it);
     auto statusCallback = statusCallback_.lock();
-    if (statusCallback && svcName == LOCAL_SERVICE_NAME) {
-        statusCallback->OnTorchStatus(TORCH_STATUS_UNAVAILABLE);
-    }
+    CHECK_EXECUTE(statusCallback && svcName == LOCAL_SERVICE_NAME,
+        statusCallback->OnTorchStatus(TORCH_STATUS_UNAVAILABLE));
 }
 
 sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& cameraHostInfo : cameraHostInfos_) {
-        if (cameraHostInfo->IsCameraSupported(cameraId)) {
-            return cameraHostInfo;
-        }
+        CHECK_ERROR_RETURN_RET(cameraHostInfo->IsCameraSupported(cameraId), cameraHostInfo);
     }
     return nullptr;
 }
@@ -1133,9 +1106,7 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindLocalCameraHost
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<sptr<CameraHostInfo>>::iterator it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
         [](const auto& cameraHostInfo) { return cameraHostInfo->GetName() == LOCAL_SERVICE_NAME; });
-    if (it != cameraHostInfos_.end()) {
-        return (*it);
-    }
+    CHECK_ERROR_RETURN_RET(it != cameraHostInfos_.end(), (*it));
     return nullptr;
 }
 
@@ -1170,10 +1141,8 @@ void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::Servic
     MEDIA_INFO_LOG("HCameraHostManager::OnReceive for camerahost %{public}s, status %{public}d, deviceClass %{public}d",
         status.serviceName.c_str(), status.status, status.deviceClass);
 
-    if (status.deviceClass != DEVICE_CLASS_CAMERA) {
-        MEDIA_ERR_LOG("HCameraHostManager::OnReceive invalid device class %{public}d", status.deviceClass);
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(status.deviceClass != DEVICE_CLASS_CAMERA,
+        "HCameraHostManager::OnReceive invalid device class %{public}d", status.deviceClass);
     callback_(status);
 }
 } // namespace CameraStandard

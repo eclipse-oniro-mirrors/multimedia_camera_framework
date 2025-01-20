@@ -28,10 +28,8 @@ namespace CameraStandard {
 
 BufferHandle *CameraAllocateBufferHandle(uint32_t reserveFds, uint32_t reserveInts)
 {
-    if (reserveFds > BUFFER_HANDLE_RESERVE_MAX_SIZE || reserveInts > BUFFER_HANDLE_RESERVE_MAX_SIZE) {
-        MEDIA_ERR_LOG("CameraAllocateBufferHandle reserveFds or reserveInts too lager");
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(reserveFds > BUFFER_HANDLE_RESERVE_MAX_SIZE || reserveInts >
+        BUFFER_HANDLE_RESERVE_MAX_SIZE, nullptr, "CameraAllocateBufferHandle reserveFds or reserveInts too lager");
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (reserveFds + reserveInts));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
     if (handle != nullptr) {
@@ -50,10 +48,7 @@ BufferHandle *CameraAllocateBufferHandle(uint32_t reserveFds, uint32_t reserveIn
 
 int32_t CameraFreeBufferHandle(BufferHandle *handle)
 {
-    if (handle == nullptr) {
-        MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
-        return 0;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, 0, "CameraFreeBufferHandle with nullptr handle");
     if (handle->fd >= 0) {
         close(handle->fd);
         handle->fd = -1;
@@ -71,15 +66,10 @@ int32_t CameraFreeBufferHandle(BufferHandle *handle)
 
 BufferHandle *CameraCloneBufferHandle(const BufferHandle *handle)
 {
-    if (handle == nullptr) {
-        MEDIA_ERR_LOG("%{public}s handle is nullptr", __func__);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, nullptr, "%{public}s handle is nullptr", __func__);
     BufferHandle *newHandle = CameraAllocateBufferHandle(handle->reserveFds, handle->reserveInts);
-    if (newHandle == nullptr) {
-        MEDIA_ERR_LOG("%{public}s CameraAllocateBufferHandle failed, newHandle is nullptr", __func__);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(newHandle == nullptr, nullptr,
+        "%{public}s CameraAllocateBufferHandle failed, newHandle is nullptr", __func__);
 
     if (handle->fd == -1) {
         newHandle->fd = handle->fd;

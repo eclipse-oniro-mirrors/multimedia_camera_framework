@@ -37,9 +37,7 @@ int32_t HStreamDepthDataProxy::Start()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_START), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy Start failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy Start failed, error: %{public}d", error);
 
     return error;
 }
@@ -53,9 +51,7 @@ int32_t HStreamDepthDataProxy::Stop()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_STOP), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy Stop failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy Stop failed, error: %{public}d", error);
 
     return error;
 }
@@ -69,9 +65,7 @@ int32_t HStreamDepthDataProxy::Release()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_RELEASE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy Stop failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy Stop failed, error: %{public}d", error);
     return error;
 }
 
@@ -81,19 +75,15 @@ int32_t HStreamDepthDataProxy::SetCallback(sptr<IStreamDepthDataCallback>& callb
     MessageParcel reply;
     MessageOption option;
 
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy SetCallback callback is null");
-        return IPC_PROXY_ERR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, IPC_PROXY_ERR,
+        "HStreamDepthDataProxy SetCallback callback is null");
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(static_cast<uint32_t>(
         StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy SetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy SetCallback failed, error: %{public}d", error);
 
     return error;
 }
@@ -109,9 +99,7 @@ int32_t HStreamDepthDataProxy::SetDataAccuracy(int32_t dataAccuracy)
 
     int error = Remote()->SendRequest(static_cast<uint32_t>(
         StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamDepthDataProxy SetDataAccuracy failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamDepthDataProxy SetDataAccuracy failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

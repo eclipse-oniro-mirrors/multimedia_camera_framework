@@ -78,17 +78,12 @@ void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice cameraId=%{public}s start", cameraId.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
-    if (activeCameras_.empty()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(activeCameras_.empty());
     auto it = std::find_if(activeCameras_.begin(), activeCameras_.end(), [&](const sptr<HCameraDeviceHolder> &x) {
         const std::string &curCameraId = x->GetDevice()->GetCameraId();
         return cameraId == curCameraId;
     });
-    if (it == activeCameras_.end()) {
-        MEDIA_ERR_LOG("HCameraDeviceManager::RemoveDevice error");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(it == activeCameras_.end(), "HCameraDeviceManager::RemoveDevice error");
     pidToCameras_.Erase((*it)->GetPid());
     activeCameras_.erase(it);
     MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice end");
@@ -183,13 +178,9 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     } else {
         MEDIA_INFO_LOG("HCameraDeviceManager::GetConflictDevices no rgm camera active");
     }
-    if (pidOfActiveClient == -1) {
-        return true;
-    }
+    CHECK_ERROR_RETURN_RET(pidOfActiveClient == -1, true);
     sptr<HCameraDeviceHolder> activeCameraHolder = GetCameraHolderByPid(pidOfActiveClient);
-    if (activeCameraHolder == nullptr) {
-        return true;
-    }
+    CHECK_ERROR_RETURN_RET(activeCameraHolder == nullptr, true);
     if (pidOfActiveClient == pidOfOpenRequest) {
         MEDIA_INFO_LOG("HCameraDeviceManager::GetConflictDevices is same pid");
         if (!activeCameraHolder->GetDevice()->GetCameraId().compare(cameraRequestOpen->GetCameraId())) {
