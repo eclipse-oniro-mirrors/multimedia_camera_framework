@@ -61,7 +61,7 @@ public:
 
     void RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback);
 
-    void UnregisterBrightnessStatusCallback();
+    void UnRegisterBrightnessStatusCallback();
 
 private:
     void SetBrightnessStatusReport(uint8_t state);
