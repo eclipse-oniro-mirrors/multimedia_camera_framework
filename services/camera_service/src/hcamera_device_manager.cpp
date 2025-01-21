@@ -129,6 +129,7 @@ pid_t HCameraDeviceManager::GetActiveClient()
 
 std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::GetActiveCameraHolders()
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     return activeCameras_;
 }
 
