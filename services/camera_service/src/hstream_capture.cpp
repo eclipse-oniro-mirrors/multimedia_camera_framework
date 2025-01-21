@@ -127,12 +127,8 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
     } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
-        if (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
-            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
-        } else {
-            streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCBCR_420_SP; // NV12
-            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
-        }
+        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
+        FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     }
