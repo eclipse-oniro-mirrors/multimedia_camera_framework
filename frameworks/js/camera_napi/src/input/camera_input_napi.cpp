@@ -30,6 +30,7 @@
 #include "input/camera_napi.h"
 #include "js_native_api.h"
 #include "napi/native_common.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -71,26 +72,20 @@ thread_local uint32_t CameraInputNapi::cameraInputTaskId = CAMERA_INPUT_TASKID;
 void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const int32_t errorMsg) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ErrorCallbackInfo> callbackInfo =
         std::make_unique<ErrorCallbackInfo>(errorType, errorMsg, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        ErrorCallbackInfo* callbackInfo = reinterpret_cast<ErrorCallbackInfo *>(work->data);
+    ErrorCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ErrorCallbackInfo* callbackInfo = reinterpret_cast<ErrorCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
-            CHECK_EXECUTE(listener, listener->OnErrorCallback(callbackInfo->errorType_, callbackInfo->errorMsg_));
+            if (listener) {
+            }
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -136,32 +131,25 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const ui
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("cameraOcclusionDetect", callbackNapiPara);
 }
- 
+
 void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
     const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const
 {
     MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<CameraOcclusionDetectResult> callbackInfo =
         std::make_unique<CameraOcclusionDetectResult>(isCameraOcclusion, isCameraLensDirty, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        CameraOcclusionDetectResult* callbackInfo = reinterpret_cast<CameraOcclusionDetectResult *>(work->data);
+    CameraOcclusionDetectResult *event = callbackInfo.get();
+    auto task = [event]() {
+        CameraOcclusionDetectResult* callbackInfo = reinterpret_cast<CameraOcclusionDetectResult *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
-            CHECK_EXECUTE(listener, listener->OnCameraOcclusionDetectedCallback(callbackInfo->isCameraOccluded_,
-                callbackInfo->isCameraLensDirty_));
+            if (listener) {
+            }
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
