@@ -45,6 +45,8 @@
 #include "common_event_data.h"
 #include "want.h"
 #include "parameters.h"
+#include "res_type.h"
+#include "res_sched_client.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -52,6 +54,7 @@ using namespace OHOS::HDI::Camera::V1_0;
 std::mutex HCameraDevice::g_deviceOpenCloseMutex_;
 static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
+static const int32_t CAMERA_QOS_LEVEL = 7;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
@@ -347,8 +350,28 @@ int32_t HCameraDevice::closeDelayed()
     return result;
 }
 
+void HCameraDevice::ConfigQosParam(const char *bundleName, int32_t qosLevel,
+    std::unordered_map<std::string, std::string> &qosParamMap)
+{
+    std::string strBundleName = bundleName;
+    std::string strPid = std::to_string(getpid());
+    std::string strTid = std::to_string(gettid());
+    std::string strQos = std::to_string(qosLevel);
+
+    qosParamMap["pid"] = strPid;
+    qosParamMap[strTid] = strQos;
+    qosParamMap["bundleName"] = strBundleName;
+    MEDIA_INFO_LOG("camera service qosParam: pid: %{public}s. tid: %{public}s, qos: %{public}s",
+        strPid.c_str(), strTid.c_str(), strQos.c_str());
+}
+
 int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
+    std::unordered_map<std::string, std::string> qosParamMap;
+    ConfigQosParam("camera_service", CAMERA_QOS_LEVEL, qosParamMap);
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
+        OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE, 0, qosParamMap);
+
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CheckPermissionBeforeOpenDevice();

@@ -51,6 +51,8 @@
               "qos_manager",
               "resource_schedule_service",
               "player_framework",
+              "qos_manager",
+              "resource_schedule_service",
               "safwk",
               "samgr",
               "sensor",

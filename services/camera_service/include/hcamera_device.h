@@ -214,6 +214,8 @@ private:
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
+    void ConfigQosParam(const char *bundleName, int32_t qosLevel,
+                        std::unordered_map<std::string, std::string> &qosParamMap);
     void HandleFoldableDevice();
     int32_t CheckPermissionBeforeOpenDevice();
     bool HandlePrivacyBeforeOpenDevice();
