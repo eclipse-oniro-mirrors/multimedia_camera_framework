@@ -191,8 +191,8 @@ private:
     uint8_t usedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
     std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
-    std::atomic<bool> inPrepareZoom_;
-    std::atomic<bool> deviceMuteMode_;
+    std::atomic<bool> inPrepareZoom_ {false};
+    std::atomic<bool> deviceMuteMode_ {false};
     bool isHasOpenSecure = false;
     uint64_t mSecureCameraSeqId = 0L;
 
