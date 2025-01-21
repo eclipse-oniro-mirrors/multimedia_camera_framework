@@ -248,9 +248,10 @@ bool DeferredPhotoProcessor::GetPendingImages(std::vector<std::string>& pendingI
 
 bool DeferredPhotoProcessor::IsFatalError(DpsError errorCode)
 {
-    DP_INFO_LOG("entered, code: %{public}d", errorCode);
+    DP_DEBUG_LOG("entered, code: %{public}d", errorCode);
     if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_FAILED ||
-        errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID) {
+        errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID ||
+        errorCode == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE) {
         return true;
     } else {
         return false;
