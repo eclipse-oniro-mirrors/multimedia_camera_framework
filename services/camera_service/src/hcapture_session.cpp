@@ -68,6 +68,8 @@
 #include "surface_buffer.h"
 #include "v1_0/types.h"
 #include "camera_report_dfx_uitls.h"
+#include "res_type.h"
+#include "res_sched_client.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
