@@ -48,6 +48,8 @@
               "resource_management",
               "napi",
               "os_account",
+              "qos_manager",
+              "resource_schedule_service",
               "player_framework",
               "safwk",
               "samgr",
