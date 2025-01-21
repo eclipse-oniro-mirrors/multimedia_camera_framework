@@ -95,16 +95,27 @@ ohos_shared_library("deferred_processing_service") {
     "-fPIC",
     "-Wall",
     "-Os",
+    "-fstack-protector-strong",
+  ]
+
+  ldflags = [
+    "-Wl,-z,relro,-z,now",
+    "-fPIE",
   ]
 
   if (!use_clang_coverage) {
     cflags += [ "-fvisibility=hidden" ]
   }
 
+  stack_protector_ret = true
+
   sanitize = {
-    cfi = true
-    cfi_cross_dso = true
+    boundary_sanitize = true  # Enable boundary san detection
+    cfi = true  # Enable/disable control flow integrity detection
+    cfi_cross_dso = true  # Cross-SO CFI Checks
     debug = false
+    integer_overflow = true  # Enable integer overflow detection
+    ubsan = true  # Enable some Ubsan options
   }
 
   include_dirs = [

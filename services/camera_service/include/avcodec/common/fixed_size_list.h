@@ -70,7 +70,7 @@ private:
                 data[i] = data[i + 1];
             }
             --currentSize;
-            index = (index - 1 + maxSize) % maxSize;
+            index = (index + maxSize - 1) % maxSize;
         }
     }
 
