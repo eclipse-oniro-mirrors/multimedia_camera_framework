@@ -286,7 +286,9 @@ public:
 
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
-
+    void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
+        std::unordered_map<std::string, std::string> &mapPayload);
+        
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     string lastDisplayName_ = "";

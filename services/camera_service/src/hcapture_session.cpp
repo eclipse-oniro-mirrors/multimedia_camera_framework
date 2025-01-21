@@ -68,6 +68,8 @@
 #include "surface_buffer.h"
 #include "v1_0/types.h"
 #include "camera_report_dfx_uitls.h"
+#include "res_type.h"
+#include "res_sched_client.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -2083,9 +2085,31 @@ std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContain
     return photoAssetProxy;
 }
 
+void HCaptureSession::ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
+    std::unordered_map<std::string, std::string> &mapPayload)
+{
+    std::string strBundleName = bundleName;
+    std::string strPid = std::to_string(pid);
+    std::string strTid = std::to_string(tid);
+    std::string strQos = std::to_string(qosLevel);
+    mapPayload["pid"] = strPid;
+    mapPayload[strTid] = strQos;
+    mapPayload["bundleName"] = strBundleName;
+    MEDIA_INFO_LOG("mapPayload pid: %{public}s. tid: %{public}s. Qos: %{public}s",
+        strPid.c_str(), strTid.c_str(), strQos.c_str());
+}
+
 int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
     std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
+    const int MAX_RETRIES = 7;
+    int32_t tempPid = getpid();
+    int32_t tempTid = gettid();
+    std::unordered_map<std::string, std::string> mapPayload;
+    ConfigPayload(tempPid, tempTid, "camera_service", MAX_RETRIES, mapPayload);
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
+        OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE, 0, mapPayload);
+
     constexpr int32_t movingPhotoShotType = 2;
     constexpr int32_t imageShotType = 0;
     cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
