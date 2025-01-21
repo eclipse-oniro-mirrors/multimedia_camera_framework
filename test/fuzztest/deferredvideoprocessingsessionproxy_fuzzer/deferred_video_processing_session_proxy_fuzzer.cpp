@@ -25,6 +25,7 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,7 +37,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DeferredVideoProcessingSessionProxy *DeferredVideoProcessingSessionProxyFuzzer::fuzz_ = nullptr;
+std::shared_ptr<DeferredVideoProcessingSessionProxy>
+    DeferredVideoProcessingSessionProxyFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -76,7 +78,7 @@ void DeferredVideoProcessingSessionProxyFuzzer::DeferredVideoProcessingSessionPr
 
     if (fuzz_ == nullptr) {
         sptr<IRemoteObject> object;
-        fuzz_ = new DeferredVideoProcessingSessionProxy(object);
+        fuzz_ = std::make_shared<DeferredVideoProcessingSessionProxy>(object);
     }
     fuzz_->BeginSynchronize();
     fuzz_->EndSynchronize();

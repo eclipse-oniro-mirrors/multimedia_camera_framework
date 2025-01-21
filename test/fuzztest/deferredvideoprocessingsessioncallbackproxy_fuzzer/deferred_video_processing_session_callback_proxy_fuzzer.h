@@ -16,6 +16,7 @@
 #ifndef DEFERREDPROCESSING_SESSION_CALLBACK_FUZZER_H
 #define DEFERREDPROCESSING_SESSION_CALLBACK_FUZZER_H
 #include <iostream>
+#include <memory>
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_video_processing_session_callback_proxy.h"
@@ -25,7 +26,7 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class DeferredVideoProcessingSessionCallBackProxyFuzzer {
 public:
-static DeferredVideoProcessingSessionCallbackProxy *fuzz_;
+static std::shared_ptr<DeferredVideoProcessingSessionCallbackProxy> fuzz_;
 static void DeferredVideoProcessingSessionCallBackProxyFuzzTest();
 };
 } //CameraStandard

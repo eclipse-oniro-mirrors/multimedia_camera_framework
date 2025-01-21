@@ -98,12 +98,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1()
     fuzz_->SetUsedAsPosition(value);
     fuzz_->GetUsedAsPosition();
     fuzz_->UpdateSettingOnce(settings);
-    uint8_t randomNum = GetData<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string tagName(testStrings[randomNum % testStrings.size()]);
-    std::string dfxUbStr(testStrings[randomNum % testStrings.size()]);
     uint32_t tag = GetData<uint32_t>();
-    fuzz_->DebugLogTag(settings, tag, tagName, dfxUbStr);
     fuzz_->DebugLogForSmoothZoom(settings, tag);
     fuzz_->DebugLogForAfRegions(settings, tag);
     fuzz_->DebugLogForAeRegions(settings, tag);

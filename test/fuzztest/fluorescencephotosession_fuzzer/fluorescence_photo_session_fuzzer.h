@@ -17,13 +17,14 @@
 #define MPEG_MANAGER_FUZZER_H
 
 #include "fluorescence_photo_session.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class FluorescencePhotoSessionFuzzer {
 public:
-static FluorescencePhotoSession *fuzz_;
+static std::shared_ptr<FluorescencePhotoSession> fuzz_;
 static void FluorescencePhotoSessionFuzzTest();
 };
 } //CameraStandard

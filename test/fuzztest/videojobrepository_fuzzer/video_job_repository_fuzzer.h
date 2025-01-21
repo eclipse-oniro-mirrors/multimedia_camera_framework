@@ -17,13 +17,14 @@
 #define VIDEO_JOB_REPOSITORY_FUZZER_H
 
 #include "video_job_repository.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class VideoJobRepositoryFuzzer {
 public:
-static DeferredProcessing::VideoJobRepository *fuzz_;
+static std::shared_ptr<DeferredProcessing::VideoJobRepository> fuzz_;
 static void VideoJobRepositoryFuzzTest();
 };
 } //CameraStandard

@@ -141,6 +141,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest()
     deferredVideoProcSession->RestoreVideo(videoId);
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     createSession(g_userId, sessionCallback, session);
+    CHECK_ERROR_RETURN_LOG(session == nullptr, "session is null!");
     deferredVideoProcSession->SetDeferredVideoSession(session);
     int32_t pid = GetData<int32_t>();
     deferredVideoProcSession->ReconnectDeferredProcessingSession();

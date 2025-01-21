@@ -305,11 +305,13 @@ void Test3(uint8_t *rawData, size_t size)
     auto profiles2 = capability->GetVideoProfiles();
     camera->GetMaxSizeProfile(profiles2, data.ReadFloat(), format);
     camera->SetProfile(capability);
-    auto modeName = *(reinterpret_cast<const int32_t*>(rawData));
+    auto modeName = data.ReadInt32();
     camera->SetProfile(capability, modeName);
     camera->SetCameraDeviceUsedAsPosition(CameraPosition::CAMERA_POSITION_FRONT);
     camera->GetSupportedFoldStatus();
-    std::string cameraID(reinterpret_cast<const char*>(rawData), size);
+    auto randomNum = data.ReadUint32();
+    std::vector<std::string> testStrings = {"cameraid1", "cameraid2"};
+    std::string cameraID(testStrings[randomNum % testStrings.size()]);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::shared_ptr<CameraDevice> cameraDevice =

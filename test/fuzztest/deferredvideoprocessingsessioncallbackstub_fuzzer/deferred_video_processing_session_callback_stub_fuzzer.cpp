@@ -20,6 +20,7 @@
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,7 +33,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DeferredVideoProcessingSessionCallbackStubFuzz *DeferredVideoProcessingSessionCallbackStubFuzzer::fuzz_ = nullptr;
+std::shared_ptr<DeferredVideoProcessingSessionCallbackStubFuzz>
+    DeferredVideoProcessingSessionCallbackStubFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -70,7 +72,7 @@ void DeferredVideoProcessingSessionCallbackStubFuzzer::OnRemoteRequest(int32_t c
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredVideoProcessingSessionCallbackStubFuzz();
+        fuzz_ = std::make_shared<DeferredVideoProcessingSessionCallbackStubFuzz>();
     }
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(DeferredVideoProcessingSessionCallbackStubFuzz::GetDescriptor());

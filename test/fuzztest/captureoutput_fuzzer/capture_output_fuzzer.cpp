@@ -40,7 +40,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-CaptureOutput *CaptureOutputFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CaptureOutput> CaptureOutputFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -86,8 +86,7 @@ void CaptureOutputFuzzer::CaptureOutputFuzzTest()
         sptr<IStreamCommon> stream;
         CaptureOutputType randomOutputType = static_cast<CaptureOutputType>(
         (randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
-        fuzz_ = new CaptureOutputTest(randomOutputType, StreamType::CAPTURE,
-            bufferProducer, stream);
+        fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
     }
     fuzz_->GetBufferProducer();
     int32_t pid = GetData<int32_t>();

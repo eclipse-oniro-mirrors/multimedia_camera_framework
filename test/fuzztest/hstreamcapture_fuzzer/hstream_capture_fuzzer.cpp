@@ -48,7 +48,7 @@ const int32_t PHOTO_FORMAT = 2000;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;
 
-HStreamCapture *HStreamCaptureFuzzer::fuzz_ = nullptr;
+std::shared_ptr<HStreamCapture> HStreamCaptureFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -89,7 +89,7 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     photoSurface = Surface::CreateSurfaceAsConsumer("hstreamcapture");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     if (fuzz_ == nullptr) {
-        fuzz_ = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+        fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
     StreamInfo_V1_1 streamInfo;
     int32_t format = GetData<int32_t>();

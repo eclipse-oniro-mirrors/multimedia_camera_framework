@@ -17,6 +17,7 @@
 #include "message_parcel.h"
 #include "camera_log.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,7 +29,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-Demuxer *CameraDemuxerFuzzer::fuzz_ = nullptr;
+std::shared_ptr<Demuxer> CameraDemuxerFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -67,7 +68,7 @@ void CameraDemuxerFuzzer::CameraDemuxerFuzzTest()
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new Demuxer();
+        fuzz_ = std::make_shared<Demuxer>();
     }
     std::shared_ptr<AVSourceTest> source = std::make_shared<AVSourceTest>();
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;

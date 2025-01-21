@@ -18,6 +18,7 @@
 #include "message_parcel.h"
 #include "securec.h"
 #include <mutex>
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,7 +29,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-CameraReportDfxUtils *CameraReportDfxUtilsFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CameraReportDfxUtils> CameraReportDfxUtilsFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -66,7 +67,7 @@ void CameraReportDfxUtilsFuzzer::CameraReportDfxUtilsFuzzTest()
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new CameraReportDfxUtils();
+        fuzz_ = std::make_shared<CameraReportDfxUtils>();
     }
     int32_t captureId = GetData<int32_t>();
     fuzz_->SetFirstBufferEndInfo(captureId);

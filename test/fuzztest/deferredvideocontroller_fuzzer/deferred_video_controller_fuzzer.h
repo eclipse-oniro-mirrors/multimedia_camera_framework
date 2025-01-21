@@ -16,6 +16,7 @@
 #ifndef DEFERREDPROCESSING_FUZZER_H
 #define DEFERREDPROCESSING_FUZZER_H
 
+#include <memory>
 #include "deferred_video_controller.h"
 #include "video_job_repository.h"
 #include "video_strategy_center.h"
@@ -34,8 +35,8 @@ public:
 
 class DeferredVideoControllerFuzzer {
 public:
-static DeferredProcessing::DeferredVideoController *fuzz_;
-static DeferredProcessing::VideoStrategyCenter *center_;
+static std::shared_ptr<DeferredProcessing::DeferredVideoController> fuzz_;
+static std::shared_ptr<DeferredProcessing::VideoStrategyCenter> center_;
 static void DeferredVideoControllerFuzzTest();
 };
 } //CameraStandard

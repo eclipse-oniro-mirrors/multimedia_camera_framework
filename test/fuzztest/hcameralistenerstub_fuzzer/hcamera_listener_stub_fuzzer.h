@@ -17,6 +17,7 @@
 #define MPEG_MANAGER_FUZZER_H
 
 #include "hcamera_listener_stub.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,7 +30,7 @@ public:
 
 class CameraListenerStubFuzzer {
 public:
-static CameraListenerStubFuzz *fuzz_;
+static std::shared_ptr<CameraListenerStubFuzz> fuzz_;
 static void CameraListenerStubFuzzTest();
 };
 } //CameraStandard

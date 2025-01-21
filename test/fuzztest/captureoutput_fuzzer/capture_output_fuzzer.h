@@ -16,6 +16,7 @@
 #ifndef CAPTURE_OUTPUT_FUZZER_H
 #define CAPTURE_OUTPUT_FUZZER_H
 
+#include <memory>
 #include "capture_output.h"
 
 namespace OHOS {
@@ -43,7 +44,7 @@ public:
 
 class CaptureOutputFuzzer {
 public:
-static CaptureOutput *fuzz_;
+static std::shared_ptr<CaptureOutput> fuzz_;
 static CaptureOutputTest captureOutputTest;
 static void CaptureOutputFuzzTest();
 };

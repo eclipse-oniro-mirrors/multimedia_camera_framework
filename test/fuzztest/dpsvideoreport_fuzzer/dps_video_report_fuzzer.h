@@ -17,13 +17,14 @@
 #define CAPTURE_SESSION_FUZZER_H
 
 #include "dps_video_report.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 class DfxVideoReportFuzzer {
 public:
-static DfxVideoReport *fuzz_;
+static std::shared_ptr<DfxVideoReport> fuzz_;
 static void DfxVideoReportFuzzTest();
 };
 } //CameraStandard

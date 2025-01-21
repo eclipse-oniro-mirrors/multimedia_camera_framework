@@ -18,6 +18,7 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
+#include <memory>
 
 namespace {
     const int32_t LIMITSIZE = 2;
@@ -27,7 +28,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraListenerStubFuzzer::hasPermission = false;
-CameraListenerStub *CameraListenerStubFuzzer::fuzz_;
+std::shared_ptr<CameraListenerStub> CameraListenerStubFuzzer::fuzz_{nullptr};
 
 void CameraListenerStubFuzzer::CheckPermission()
 {
@@ -54,7 +55,7 @@ void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
     CheckPermission();
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new CameraListenerStub();
+        fuzz_ = std::make_shared<CameraListenerStub>();
     }
 
     MessageParcel data;

@@ -33,7 +33,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-CameraAbilityBuilder *CameraAbilityBuilderFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CameraAbilityBuilder> CameraAbilityBuilderFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -72,7 +72,7 @@ void CameraAbilityBuilderFuzzer::CameraAbilityBuilderFuzzTest()
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new CameraAbilityBuilder();
+        fuzz_ = std::make_shared<CameraAbilityBuilder>();
     }
     sptr<CameraAbility> ability;
     sptr<CaptureSession> session;

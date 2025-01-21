@@ -35,8 +35,8 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-BmsAdapter *BmsAdapterFuzzer::fuzz_ = nullptr;
-BmsSaListener *BmsSaListenerFuzzer::bmsfuzz_ = nullptr;
+std::shared_ptr<BmsAdapter> BmsAdapterFuzzer::fuzz_{nullptr};
+std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -75,7 +75,7 @@ void BmsAdapterFuzzer::Initialize()
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new BmsAdapter();
+        fuzz_ = std::make_shared<BmsAdapter>();
     }
 
     fuzz_->RegisterListener();
@@ -105,7 +105,7 @@ void BmsSaListenerFuzzer::BmsSaListenerFuzzTest()
                 adapter->SetBms(nullptr);
             }
         };
-        bmsfuzz_ = new BmsSaListener(removeCallback);
+        bmsfuzz_ = std::make_shared<BmsSaListener>(removeCallback);
     }
     int32_t systemAbilityId = GetData<int32_t>();
     uint8_t randomNum = GetData<uint8_t>();

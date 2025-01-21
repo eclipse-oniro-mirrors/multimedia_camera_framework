@@ -18,6 +18,7 @@
 #include "ipc_file_descriptor.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,7 +30,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-MpegManager *MpegManagerFuzzer::fuzz_ = nullptr;
+std::shared_ptr<MpegManager> MpegManagerFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -67,7 +68,7 @@ void MpegManagerFuzzer::MpegManagerFuzzTest()
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new MpegManager();
+        fuzz_ = std::make_shared<MpegManager>();
     }
     fuzz_->GetSurface();
     fuzz_->GetResultFd();

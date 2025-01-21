@@ -16,6 +16,7 @@
 #ifndef CAMERA_DEMUXER_FUZZER_H
 #define CAMERA_DEMUXER_FUZZER_H
 
+#include <memory>
 #include "demuxer.h"
 
 namespace OHOS {
@@ -23,7 +24,7 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class CameraDemuxerFuzzer {
 public:
-static Demuxer *fuzz_;
+static std::shared_ptr<Demuxer> fuzz_;
 
 class AVSourceTest : public AVSource {
 public:

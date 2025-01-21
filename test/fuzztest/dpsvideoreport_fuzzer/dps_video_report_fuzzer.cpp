@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "message_parcel.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,7 +29,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-DfxVideoReport *DfxVideoReportFuzzer::fuzz_ = nullptr;
+std::shared_ptr<DfxVideoReport> DfxVideoReportFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -66,7 +67,7 @@ void DfxVideoReportFuzzer::DfxVideoReportFuzzTest()
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new DfxVideoReport();
+        fuzz_ = std::make_shared<DfxVideoReport>();
     }
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2", "test3"};

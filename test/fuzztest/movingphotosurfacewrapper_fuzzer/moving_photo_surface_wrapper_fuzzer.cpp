@@ -41,8 +41,9 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-MovingPhotoSurfaceWrapper *MovingPhotoSurfaceWrapperFuzzer::fuzz_ = nullptr;
-MovingPhotoSurfaceWrapper::BufferConsumerListener *MovingPhotoSurfaceWrapperFuzzer::listener_ = nullptr;
+std::shared_ptr<MovingPhotoSurfaceWrapper> MovingPhotoSurfaceWrapperFuzzer::fuzz_{nullptr};
+std::shared_ptr<MovingPhotoSurfaceWrapper::BufferConsumerListener>
+    MovingPhotoSurfaceWrapperFuzzer::listener_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -80,7 +81,7 @@ void MovingPhotoSurfaceWrapperFuzzer::MovingPhotoSurfaceWrapperFuzzTest()
         return;
     }
     if (fuzz_ == nullptr) {
-        fuzz_ = new MovingPhotoSurfaceWrapper();
+        fuzz_ = std::make_shared<MovingPhotoSurfaceWrapper>();
     }
     fuzz_->GetProducer();
     int32_t width = GetData<int32_t>();
@@ -89,7 +90,7 @@ void MovingPhotoSurfaceWrapperFuzzer::MovingPhotoSurfaceWrapperFuzzTest()
     fuzz_->OnBufferArrival();
     if (listener_ == nullptr) {
         sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = nullptr;
-        listener_ = new MovingPhotoSurfaceWrapper::BufferConsumerListener(surfaceWrapper);
+        listener_ = std::make_shared<MovingPhotoSurfaceWrapper::BufferConsumerListener>(surfaceWrapper);
     }
     listener_->OnBufferAvailable();
 }

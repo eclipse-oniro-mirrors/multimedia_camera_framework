@@ -19,6 +19,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,7 +30,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-FluorescencePhotoSession *FluorescencePhotoSessionFuzzer::fuzz_ = nullptr;
+std::shared_ptr<FluorescencePhotoSession> FluorescencePhotoSessionFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -74,7 +75,7 @@ void FluorescencePhotoSessionFuzzer::FluorescencePhotoSessionFuzzTest()
         }
         object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
         sptr<ICaptureSession> fluorescencePhotoSession = iface_cast<ICaptureSession>(object);
-        fuzz_ = new FluorescencePhotoSession(fluorescencePhotoSession);
+        fuzz_ = std::make_shared<FluorescencePhotoSession>(fluorescencePhotoSession);
     }
     sptr<CaptureOutput> output = nullptr;
     fuzz_->CanAddOutput(output);

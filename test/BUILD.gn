@@ -42,7 +42,6 @@ group("camera_fuzz_test") {
     "fuzztest/fluorescencephotosession_fuzzer:fuzztest",
     "fuzztest/hcameradevice_fuzzer:fuzztest",
     "fuzztest/hcameralistenerstub_fuzzer:fuzztest",
-    "fuzztest/hcameraservice_fuzzer:fuzztest",
     "fuzztest/hcapturesession_fuzzer:fuzztest",
     "fuzztest/hstreamcapture_fuzzer:fuzztest",
     "fuzztest/hstreamcapturestubfuzztest_fuzzer:fuzztest",

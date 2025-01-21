@@ -40,8 +40,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-HCaptureSession *HCaptureSessionFuzzer::fuzz_ = nullptr;
-HCaptureSession *HCaptureSessionFuzzer::manager_ = nullptr;
+std::shared_ptr<HCaptureSession> HCaptureSessionFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -80,7 +79,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest()
     }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     if (fuzz_ == nullptr) {
-        fuzz_ = new (std::nothrow) HCaptureSession();
+        fuzz_ = std::make_shared<HCaptureSession>();
     }
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();

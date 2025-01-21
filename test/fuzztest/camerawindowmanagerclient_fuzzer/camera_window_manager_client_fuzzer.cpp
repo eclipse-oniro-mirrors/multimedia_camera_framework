@@ -16,6 +16,7 @@
 #include "camera_window_manager_client_fuzzer.h"
 #include "camera_log.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,8 +27,9 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-CameraWindowManagerClient *CameraWindowManagerClientFuzzer::fuzz_ = nullptr;
-CameraWindowManagerClient::WMSSaStatusChangeCallback *CameraWindowManagerClientFuzzer::callback_ = nullptr;
+std::shared_ptr<CameraWindowManagerClient> CameraWindowManagerClientFuzzer::fuzz_{nullptr};
+std::shared_ptr<CameraWindowManagerClient::WMSSaStatusChangeCallback>
+    CameraWindowManagerClientFuzzer::callback_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -66,7 +68,7 @@ void CameraWindowManagerClientFuzzer::CameraWindowManagerClientFuzzTest()
     }
 
     if (fuzz_ == nullptr) {
-        fuzz_ = new CameraWindowManagerClient();
+        fuzz_ = std::make_shared<CameraWindowManagerClient>();
     }
     pid_t pid;
     int32_t systemAbilityId = GetData<int32_t>();
@@ -78,7 +80,7 @@ void CameraWindowManagerClientFuzzer::CameraWindowManagerClientFuzzTest()
     fuzz_->GetWindowManagerAgent();
     fuzz_->UnregisterWindowManagerAgent();
     if (callback_ == nullptr) {
-        callback_ = new CameraWindowManagerClient::WMSSaStatusChangeCallback();
+        callback_ = std::make_shared<CameraWindowManagerClient::WMSSaStatusChangeCallback>();
     }
     callback_->OnRemoveSystemAbility(systemAbilityId, deviceId);
 }

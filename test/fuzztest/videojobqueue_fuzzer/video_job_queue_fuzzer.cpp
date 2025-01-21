@@ -18,6 +18,7 @@
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,8 +30,8 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-VideoJobQueue *VideoJobQueueFuzzer::fuzz_ = nullptr;
-DeferredVideoWork *DeferredVideoWorkFuzzer::fuzz_ = nullptr;
+std::shared_ptr<VideoJobQueue> VideoJobQueueFuzzer::fuzz_{nullptr};
+std::shared_ptr<DeferredVideoWork> DeferredVideoWorkFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -77,7 +78,8 @@ void DeferredVideoWorkFuzzer::Initialization()
     DeferredVideoJobPtr jobPtr_ = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
     auto isAutoSuspend = GetData<bool>();
     if (fuzz_ == nullptr) {
-        fuzz_ = new DeferredProcessing::DeferredVideoWork(jobPtr_, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
+        fuzz_ = std::make_shared<DeferredProcessing::
+            DeferredVideoWork>(jobPtr_, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
     }
 }
 
@@ -100,7 +102,7 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
             [](DeferredVideoJobPtr a, DeferredVideoJobPtr b) {
                 return a->GetVideoId() < b->GetVideoId();
             };
-        fuzz_ = new DeferredProcessing::VideoJobQueue(comp);
+        fuzz_ = std::make_shared<DeferredProcessing::VideoJobQueue>(comp);
     }
     fuzz_->Contains(jobPtr);
     fuzz_->Peek();

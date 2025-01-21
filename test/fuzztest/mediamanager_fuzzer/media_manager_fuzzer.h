@@ -17,13 +17,14 @@
 #define MEDIA_MANAGER_FUZZER_H
 
 #include "media_manager.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 class MediaManagerFuzzer {
 public:
-static MediaManager *fuzz_;
+static std::shared_ptr<MediaManager> fuzz_;
 
 class AVSourceFuzz : public AVSource {
 public:

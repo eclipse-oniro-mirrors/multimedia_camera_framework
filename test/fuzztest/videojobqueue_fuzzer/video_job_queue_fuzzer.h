@@ -18,19 +18,20 @@
 
 #include "video_job_repository.h"
 #include "video_job_queue.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class DeferredVideoWorkFuzzer {
 public:
-static DeferredProcessing::DeferredVideoWork *fuzz_;
+static std::shared_ptr<DeferredProcessing::DeferredVideoWork> fuzz_;
 static void Initialization();
 };
 
 class VideoJobQueueFuzzer {
 public:
-static DeferredProcessing::VideoJobQueue *fuzz_;
+static std::shared_ptr<DeferredProcessing::VideoJobQueue> fuzz_;
 static void VideoJobQueueFuzzTest();
 };
 } //CameraStandard

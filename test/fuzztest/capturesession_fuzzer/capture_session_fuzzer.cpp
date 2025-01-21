@@ -436,10 +436,10 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetUserId();
     session->EnableAutoHighQualityPhoto(data.ReadBool());
     session->EnableRawDelivery(data.ReadBool());
-    auto curMinFps = *(reinterpret_cast<const int32_t*>(rawData));
-    auto curMaxFps = *(reinterpret_cast<const int32_t*>(rawData));
-    auto minFps = *(reinterpret_cast<const int32_t*>(rawData));
-    auto maxFps = *(reinterpret_cast<const int32_t*>(rawData));
+    auto curMinFps = data.ReadInt32();
+    auto curMaxFps = data.ReadInt32();
+    auto minFps = data.ReadInt32();
+    auto maxFps = data.ReadInt32();
     session->CheckFrameRateRangeWithCurrentFps(curMinFps, curMaxFps, minFps, maxFps);
     ProfileSizeRatio sizeRatio = RATIO_1_1;
     session->GetMaxSizePhotoProfile(sizeRatio);

@@ -16,6 +16,7 @@
 #ifndef CAMERA_ABILITY_FUZZER_H
 #define CAMERA_ABILITY_FUZZER_H
 
+#include <memory>
 #include "ability/camera_ability.h"
 
 namespace OHOS {
@@ -23,7 +24,7 @@ namespace CameraStandard {
 
 class CameraAbilityFuzzer {
 public:
-static CameraAbility *fuzz_;
+static std::shared_ptr<CameraAbility> fuzz_;
 
 static void CameraAbilityFuzzTest();
 };

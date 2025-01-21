@@ -18,13 +18,14 @@
 
 #include "video_strategy_center.h"
 #include "video_job_repository.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class VideoStrategyCenterFuzzer {
 public:
-static DeferredProcessing::VideoStrategyCenter *fuzz_;
+static std::shared_ptr<DeferredProcessing::VideoStrategyCenter> fuzz_;
 
 static void VideoStrategyCenterFuzzTest();
 };

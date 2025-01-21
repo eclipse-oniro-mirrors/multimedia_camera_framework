@@ -16,6 +16,7 @@
 #ifndef COMMAND_SERVER_FUZZER_H
 #define COMMAND_SERVER_FUZZER_H
 
+#include <memory>
 #include "command_server.h"
 
 namespace OHOS {
@@ -23,7 +24,7 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class CommandServerFuzzer {
 public:
-static CommandServer *fuzz_;
+static std::shared_ptr<CommandServer> fuzz_;
 static void CommandServerFuzzTest();
 };
 } //CameraStandard

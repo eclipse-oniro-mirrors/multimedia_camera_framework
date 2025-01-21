@@ -17,13 +17,14 @@
 #define HSTREAM_METADATA_CALLBACK_PROXY_FUZZER_H
 
 #include "hstream_metadata_callback_proxy.h"
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class HStreamMetadataCallbackProxyFuzzer {
 public:
-static HStreamMetadataCallbackProxy *fuzz_;
+static std::shared_ptr<HStreamMetadataCallbackProxy> fuzz_;
 static void HStreamMetadataCallbackProxyFuzzTest();
 };
 } //CameraStandard
