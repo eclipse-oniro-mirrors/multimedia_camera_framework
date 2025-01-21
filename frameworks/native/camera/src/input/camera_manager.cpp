@@ -280,7 +280,7 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     if (!ConvertFwkToMetaMode(mode, opMode)) {
         MEDIA_ERR_LOG("CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
     }
-    int32_t retCode = serviceProxy->CreateCaptureSession(session,opMode);
+    int32_t retCode = serviceProxy->CreateCaptureSession(session, opMode);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateCaptureSession(pCaptureSession) Failed to get captureSession object from hcamera service! "
         "%{public}d", retCode);
@@ -289,7 +289,7 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     captureSession = CreateCaptureSessionImpl(mode, session);
     CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateCaptureSession(pCaptureSession) failed to new captureSession!");
-
+    captureSession->SetMode(mode);
     pCaptureSession = captureSession;
     return CameraErrorCode::SUCCESS;
 }
