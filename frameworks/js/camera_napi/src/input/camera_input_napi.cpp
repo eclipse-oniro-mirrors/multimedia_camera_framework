@@ -80,6 +80,7 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
+                listener->OnErrorCallback(callbackInfo->errorType_, callbackInfo->errorMsg_);
             }
             delete callbackInfo;
         }
@@ -144,6 +145,8 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
+                listener->OnCameraOcclusionDetectedCallback(callbackInfo->isCameraOccluded_,
+                                                            callbackInfo->isCameraLensDirty_);
             }
             delete callbackInfo;
         }
