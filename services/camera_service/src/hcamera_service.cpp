@@ -1039,7 +1039,6 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     int32_t ret = CAMERA_OK;
     bool currentMuteMode = muteModeStored_;
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    lock_guard<mutex> lock(deviceManager->mapMutex_);
     std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
     if (deviceHolderVector.size() == 0) {
         OnMute(muteMode);
