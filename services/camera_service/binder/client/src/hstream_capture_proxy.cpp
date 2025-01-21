@@ -246,7 +246,7 @@ int32_t HStreamCaptureProxy::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoP
     photoProxy->WriteToParcel(data);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ADD_MEDIA_LIBRARY_PHOTO_PROXY),
-            data, reply, option);
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
     }
