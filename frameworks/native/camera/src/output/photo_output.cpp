@@ -210,24 +210,30 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
         "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
 
     sptr<CaptureSession> session = photoOutput->GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_OK,
+        "HStreamCaptureCallbackImpl::OnCaptureStarted session is nullptr");
     switch (session->GetMode()) {
         case SceneMode::HIGH_RES_PHOTO: {
             auto inputDevice = session->GetInputDevice();
             CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+            CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, CAMERA_OK,
+                "HStreamCaptureCallbackImpl::OnCaptureStarted cameraObj is nullptr");
             std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+            CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CAMERA_OK,
+                "HStreamCaptureCallbackImpl::OnCaptureStarted metadata is nullptr");
             camera_metadata_item_t meta;
             int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
             if (ret == CAM_META_SUCCESS) {
-                photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, meta.data.ui32[1]);
+                callback->OnCaptureStarted(captureId, meta.data.ui32[1]);
             } else {
                 MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, exposureTime is not found");
             }
             break;
         }
         default:
-            photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId);
+            callback->OnCaptureStarted(captureId);
             break;
     }
     return CAMERA_OK;
