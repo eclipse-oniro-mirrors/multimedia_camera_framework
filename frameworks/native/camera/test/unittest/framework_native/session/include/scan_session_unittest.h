@@ -45,6 +45,8 @@ private:
     sptr<CameraManager> cameraManager_ = nullptr;
     std::vector<Profile> previewProfile_;
     std::vector<Profile> photoProfile_;
+    bool preIsSupportedScanmode_ = false;
+    bool phoIsSupportedScanmode_ = false;
 };
 
 }

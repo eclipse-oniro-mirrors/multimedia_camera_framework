@@ -30,8 +30,12 @@
 #include "surface.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "hcamera_service_callback_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
+using ::testing::Return;
+using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -98,6 +102,24 @@ void HCameraServiceUnit::NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
+class MockHCameraServiceCallbackStub : public HCameraServiceCallbackStub {
+public:
+    MOCK_METHOD3(OnCameraStatusChanged, int32_t(const std::string&, const CameraStatus, const std::string&));
+    MOCK_METHOD2(OnFlashlightStatusChanged, int32_t(const std::string&, const FlashStatus));
+    ~MockHCameraServiceCallbackStub() {}
+};
+
+class MockHFoldServiceCallbackStub : public HFoldServiceCallbackStub {
+public:
+    MOCK_METHOD1(OnFoldStatusChanged, int32_t(const FoldStatus status));
+    ~MockHFoldServiceCallbackStub() {}
+};
+
+class MockHCameraMuteServiceCallbackStub : public HCameraMuteServiceCallbackStub {
+public:
+    MOCK_METHOD1(OnCameraMute, int32_t(bool muteMode));
+    ~MockHCameraMuteServiceCallbackStub() {}
+};
 /*
  * Feature: CameraService
  * Function: Test constructor with an argument as sptr<HCameraHostManager> in class HCameraService
@@ -464,8 +486,12 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_013, TestSize.Level0)
 
     cameraHostManager_->Init();
     std::string cameraId = cameras[0]->GetID();
-    shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-    cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    cameraProxy->GetCameraAbility(cameraId, cameraAbility);
+    ASSERT_NE(cameraAbility, nullptr);
+
     common_metadata_header_t* metadataEntry = cameraAbility->get();
     OHOS::Camera::DeleteCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
     CameraInfoDumper infoDumper(0);
@@ -1858,6 +1884,75 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_049, TestSize.Level0)
     EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 1), CAMERA_OK);
     EXPECT_EQ(hCameraService->UpdateSkinToneSetting(nullptr, 1), CAMERA_OK);
     hCameraService = nullptr;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraServiceCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_050, TestSize.Level0)
+{
+    MockHCameraServiceCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED;
+    EXPECT_CALL(stub, OnFlashlightStatusChanged(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HFoldServiceCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of FOLD_CALLBACK_FOLD_STATUS_CHANGE
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_051, TestSize.Level0)
+{
+    MockHFoldServiceCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE;
+    EXPECT_CALL(stub, OnFoldStatusChanged(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MockHCameraMuteServiceCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CALLBACK_MUTE_MODE
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_052, TestSize.Level0)
+{
+    MockHCameraMuteServiceCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE;
+    EXPECT_CALL(stub, OnCameraMute(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
 }
 }
 }

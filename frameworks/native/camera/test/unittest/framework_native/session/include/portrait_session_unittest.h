@@ -48,6 +48,8 @@ private:
     sptr<CameraManager> cameraManager_ = nullptr;
     std::vector<Profile> previewProfile_;
     std::vector<Profile> photoProfile_;
+    bool preIsSupportedPortraitmode_ = false;
+    bool phoIsSupportedPortraitmode_ = false;
 };
 
 }

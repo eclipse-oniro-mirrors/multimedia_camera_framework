@@ -17,12 +17,16 @@
 #define DEFERRED_SESSION_COMMAND_UNITTEST_H
 
 #include "deferred_video_processing_session.h"
+#include "deferred_photo_processing_session.h"
 #include "deferred_video_processor.h"
+#include "deferred_photo_processor.h"
 #include "errors.h"
 #include "gtest/gtest.h"
 #include "ivideo_job_repository_listener.h"
+#include "iphoto_job_repository_listener.h"
 #include "ivideo_process_callbacks.h"
 #include "video_session_info.h"
+#include "photo_session_info.h"
 #include "video_post_processor.h"
 
 namespace OHOS {
@@ -55,7 +59,9 @@ public:
     sptr<IPCFileDescriptor> dstFd_;
     std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>> videoInfoMap_;
     std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
+    std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
     sptr<VideoSessionInfo> sessionInfo_ {nullptr};
+    sptr<PhotoSessionInfo> photoSessionInfo_ {nullptr};
 
     static constexpr int videoSourceFd_ = 1;
     static constexpr int videoDestinationFd_ = 2;

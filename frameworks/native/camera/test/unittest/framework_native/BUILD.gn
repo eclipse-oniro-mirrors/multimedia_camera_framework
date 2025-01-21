@@ -106,6 +106,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
@@ -113,6 +114,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
     "window_manager:libdm_lite",
   ]
 

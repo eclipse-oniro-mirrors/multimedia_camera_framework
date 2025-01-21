@@ -29,8 +29,12 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "picture.h"
+#include "hcapture_session_callback_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
+using ::testing::Return;
+using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -97,6 +101,11 @@ void HCaptureSessionUnitTest::NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
+class MockHCaptureSessionCallbackStub : public HCaptureSessionCallbackStub {
+public:
+    MOCK_METHOD1(OnError, int32_t(int32_t errorCode));
+    ~MockHCaptureSessionCallbackStub() {}
+};
 /*
  * Feature: HCaptureSession
  * Function: Test current stream infos are not empty after config normal streams
@@ -1875,5 +1884,27 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level
     session->Release();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test HCaptureSessionCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CAPTURE_SESSION_ON_ERROR
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level0)
+{
+    MockHCaptureSessionCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR;
+    EXPECT_CALL(stub, OnError(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -24,6 +24,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
 class CameraPreviewOutputUnit : public testing::Test {
 public:
     static const int32_t PREVIEW_DEFAULT_WIDTH = 640;

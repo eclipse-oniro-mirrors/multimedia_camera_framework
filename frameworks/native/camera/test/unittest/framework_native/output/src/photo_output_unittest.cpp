@@ -47,6 +47,7 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 
 const int32_t VALUE_FOUR = 4;
+const int32_t VALUE_ROTATION = 270;
 
 void CameraPhotoOutputUnit::SetUpTestCase(void) {}
 
@@ -794,6 +795,11 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
     int32_t ret = phtOutput->GetPhotoRotation(imageRotation);
     EXPECT_EQ(ret, 180);
 
+    cameraObj->cameraPosition_ = CAMERA_POSITION_FRONT;
+    imageRotation = 180;
+    ret = phtOutput->GetPhotoRotation(imageRotation);
+    EXPECT_EQ(ret, VALUE_ROTATION);
+
     input->Close();
     session->Stop();
     session->Release();
@@ -839,10 +845,24 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
     ret = settings->GetQuality();
     EXPECT_EQ(ret, PhotoCaptureSetting::QUALITY_LEVEL_HIGH);
 
+    OHOS::Camera::DeleteCameraMetadataItem(settings->captureMetadataSetting_->get(), OHOS_JPEG_QUALITY);
+    ret = settings->GetQuality();
+    EXPECT_EQ(ret, PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+    settings->SetQuality(quality);
+
     PhotoCaptureSetting::RotationConfig rotationValue = PhotoCaptureSetting::RotationConfig::Rotation_0;
     settings->SetRotation(rotationValue);
     PhotoCaptureSetting::RotationConfig ret_2 = settings->GetRotation();
     EXPECT_EQ(ret_2, PhotoCaptureSetting::RotationConfig::Rotation_0);
+
+    OHOS::Camera::DeleteCameraMetadataItem(settings->captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION);
+    ret_2 = settings->GetRotation();
+    EXPECT_EQ(ret_2, PhotoCaptureSetting::RotationConfig::Rotation_0);
+
+    rotationValue = PhotoCaptureSetting::RotationConfig::Rotation_90;
+    settings->SetRotation(rotationValue);
+    ret_2 = settings->GetRotation();
+    EXPECT_EQ(ret_2, PhotoCaptureSetting::RotationConfig::Rotation_90);
 
     uint8_t burstState = 1;
     settings->captureMetadataSetting_ = std::make_shared<OHOS::Camera::CameraMetadata>(16, 128);
@@ -898,9 +918,15 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level0)
     ASSERT_NE(callback, nullptr);
     EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
 
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME);
+    phtOutput->AcquireBufferToPrepareProxy(captureId);
+    EXPECT_EQ(callback->OnCaptureStarted(captureId), 0);
+
     phtOutput->appCallback_ = nullptr;
     pid_t pid = 0;
     phtOutput->CameraServerDied(pid);
+
+    metadata->addEntry(OHOS_ABILITY_CAPTURE_EXPECT_TIME, &time, sizeof(int32_t));
 
     if (callback) {
         callback = nullptr;
@@ -982,6 +1008,18 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level0)
 
     int32_t isAutoHighQualityPhotoSupported = 1;
     ret = phtOutput->IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE);
+    ret = phtOutput->IsQuickThumbnailSupported();
+    EXPECT_EQ(ret, -1);
+
+    uint8_t uintValue = 0;
+    metadata->addEntry(OHOS_ABILITY_CAPTURE_EXPECT_TIME, &uintValue, sizeof(uint8_t));
+    ret = phtOutput->IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
 
     input->Close();
     session->Release();
@@ -1023,6 +1061,127 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level0)
     std::shared_ptr<Location> location;
     settings->GetLocation(location);
     EXPECT_EQ(location, settings->location_);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoCaptureSetting with SetMirror and GetMirror
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with SetMirror and GetMirror
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
+    settings->captureMetadataSetting_ = session->GetMetadata();
+    settings->SetMirror(true);
+    settings->SetMirror(false);
+    EXPECT_FALSE(settings->GetMirror());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoCaptureSetting with UpdateMediaLibraryPhotoAssetProxy
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with UpdateMediaLibraryPhotoAssetProxy
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    phtOutput->stream_ = nullptr;
+    sptr<CameraPhotoProxy> proxy =  new (std::nothrow) CameraPhotoProxy(nullptr, 0, 0, 0, false, 0);
+    phtOutput->UpdateMediaLibraryPhotoAssetProxy(proxy);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoCaptureSetting with GetLocation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoCaptureSetting with GetLocation
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_CLOUD_IMAGE_ENHANCE);
+    bool isAutoCloudImageEnhancementSupported;
+    int32_t ret = phtOutput->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhancementSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    int32_t value = 0;
+    metadata->addEntry(OHOS_ABILITY_AUTO_CLOUD_IMAGE_ENHANCE, &value, sizeof(int32_t));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with EnableMovingPhoto when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with EnableMovingPhoto when stream_ is nullptr
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    bool enabled = false;
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->stream_ = nullptr;
+    EXPECT_EQ(phtOutput->EnableMovingPhoto(enabled), SERVICE_FATL_ERROR);
 }
 }
 }

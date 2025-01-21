@@ -169,21 +169,34 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePreviewOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], static_cast<int32_t>(PORTRAIT));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    preIsSupportedPortraitmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::PORTRAIT) != modes.end()) {
+            preIsSupportedPortraitmode_ = true;
+        }
 
-    previewProfile_ = outputCapability->GetPreviewProfiles();
-    if (previewProfile_.empty()) {
-        return nullptr;
-    }
+        if (!preIsSupportedPortraitmode_) {
+            continue;
+        }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice, static_cast<int32_t>(PORTRAIT));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        previewProfile_ = outputCapability->GetPreviewProfiles();
+        if (previewProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+    return nullptr;
 }
 
 sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
@@ -193,22 +206,35 @@ sptr<CaptureOutput> CameraPortraitSessionUnitTest::CreatePhotoOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], static_cast<int32_t>(PORTRAIT));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    phoIsSupportedPortraitmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::PORTRAIT) != modes.end()) {
+            phoIsSupportedPortraitmode_ = true;
+        }
 
-    photoProfile_ = outputCapability->GetPhotoProfiles();
-    if (photoProfile_.empty()) {
-        return nullptr;
-    }
+        if (!phoIsSupportedPortraitmode_) {
+            continue;
+        }
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice, static_cast<int32_t>(PORTRAIT));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        photoProfile_ = outputCapability->GetPhotoProfiles();
+        if (photoProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+        return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
     }
-    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
+    return nullptr;
 }
 
 void CameraPortraitSessionUnitTest::SetUpTestCase(void) {}
@@ -286,9 +312,19 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
     ASSERT_NE(portraitSession, nullptr);
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        portraitSession->Release();
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        portraitSession->Release();
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
 
     int32_t ret = portraitSession->BeginConfig();
@@ -345,9 +381,17 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
 
 
@@ -410,9 +454,17 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
 
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -475,9 +527,17 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -541,9 +601,17 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.
 
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -605,8 +673,16 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
@@ -676,8 +752,16 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
@@ -745,8 +829,16 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedPortraitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);

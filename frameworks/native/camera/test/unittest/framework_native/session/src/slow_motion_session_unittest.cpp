@@ -93,22 +93,35 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0],
-        static_cast<int32_t>(SceneMode::SLOW_MOTION));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    preIsSupportedSlowmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::SLOW_MOTION) != modes.end()) {
+            preIsSupportedSlowmode_ = true;
+        }
 
-    previewProfile_ = outputCapability->GetPreviewProfiles();
-    if (previewProfile_.empty()) {
-        return nullptr;
-    }
+        if (!preIsSupportedSlowmode_) {
+            continue;
+        }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice,
+            static_cast<int32_t>(SceneMode::SLOW_MOTION));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        previewProfile_ = outputCapability->GetPreviewProfiles();
+        if (previewProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+    return nullptr;
 }
 
 sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
@@ -118,22 +131,34 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0],
+    vidIsSupportedSlowmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::SLOW_MOTION) != modes.end()) {
+            vidIsSupportedSlowmode_ = true;
+        }
+
+        if (!vidIsSupportedSlowmode_) {
+            continue;
+        }
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice,
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
-    if (!outputCapability) {
-        return nullptr;
-    }
+        if (!outputCapability) {
+            return nullptr;
+        }
 
-    profile_ = outputCapability->GetVideoProfiles();
-    if (profile_.empty()) {
-        return nullptr;
-    }
+        profile_ = outputCapability->GetVideoProfiles();
+        if (profile_.empty()) {
+            return nullptr;
+        }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        return cameraManager_->CreateVideoOutput(profile_[0], surface);
     }
-    return cameraManager_->CreateVideoOutput(profile_[0], surface);
+    return nullptr;
 }
 
 /**
@@ -168,9 +193,17 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
     ASSERT_NE(session, nullptr);
 
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    if (!vidIsSupportedSlowmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    if (!preIsSupportedSlowmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(previewOutput, nullptr);
 
     int32_t intResult = session->BeginConfig();
@@ -224,9 +257,17 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     ASSERT_NE(session, nullptr);
 
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    if (!vidIsSupportedSlowmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(videoOutput, nullptr);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    if (!preIsSupportedSlowmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(previewOutput, nullptr);
 
     int32_t intResult = session->BeginConfig();

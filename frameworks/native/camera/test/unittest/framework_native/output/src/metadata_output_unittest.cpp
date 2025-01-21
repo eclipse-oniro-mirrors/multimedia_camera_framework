@@ -380,7 +380,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level0
     ASSERT_NE(output, nullptr);
     sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
 
-    metadatOutput->surface_ = IConsumerSurface::Create();;
+    metadatOutput->surface_ = IConsumerSurface::Create();
     metadatOutput->ReleaseSurface();
     EXPECT_NE(metadatOutput, nullptr);
     sptr<IConsumerSurface> ret = metadatOutput->GetSurface();
@@ -454,6 +454,14 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level0
     bool isNeedMirror = true;
     bool isNeedFlip = true;
     metadatOutput->reportFaceResults_ = true;
+    metadatOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
+    EXPECT_NE(metadatOutput, nullptr);
+
+    std::vector<uint8_t> mockHumanFaceTagfromHal = {
+        0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    bool status = result->addEntry(OHOS_STATISTICS_DETECT_HUMAN_FACE_INFOS, mockHumanFaceTagfromHal.data(),
+        mockHumanFaceTagfromHal.size());
+    ASSERT_TRUE(status);
     metadatOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     EXPECT_NE(metadatOutput, nullptr);
 
@@ -595,6 +603,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0
     session->Start();
 
     sptr<MetadataObjectFactory> factoryPtr = MetadataObjectFactory::GetInstance();
+    sptr<MetadataObjectFactory> factoryPtr_2 = MetadataObjectFactory::GetInstance();
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = session->GetMetadata();
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
     result->addEntry(OHOS_ABILITY_CAMERA_MODES, &format, 1);
@@ -613,6 +622,10 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0
     EXPECT_NE(factoryPtr, nullptr);
 
     type = MetadataObjectType::DOG_FACE;
+    metadatOutput->ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
+    EXPECT_NE(factoryPtr, nullptr);
+
+    type = static_cast<MetadataObjectType>(64);
     metadatOutput->ProcessExternInfo(factoryPtr, metadataItem, index, type, isNeedMirror, isNeedFlip);
     EXPECT_NE(factoryPtr, nullptr);
 
@@ -683,7 +696,19 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level0
     sptr<MetadataObject> ret = factory->createMetadataObject(type);
     EXPECT_NE(ret, nullptr);
 
+    type = MetadataObjectType::FACE;
+    ret = factory->createMetadataObject(type);
+    EXPECT_NE(ret, nullptr);
+
+    type = MetadataObjectType::CAT_FACE;
+    ret = factory->createMetadataObject(type);
+    EXPECT_NE(ret, nullptr);
+
     type = MetadataObjectType::CAT_BODY;
+    ret = factory->createMetadataObject(type);
+    EXPECT_NE(ret, nullptr);
+
+    type = MetadataObjectType::DOG_FACE;
     ret = factory->createMetadataObject(type);
     EXPECT_NE(ret, nullptr);
 
@@ -992,6 +1017,163 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level0
     sptr<SurfaceBuffer> buffer = nullptr;
     int32_t ret = listener->ProcessMetadataBuffer(buffer, 0);
     EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataOutput with AddMetadataObjectTypes and RemoveMetadataObjectTypes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataOutput with AddMetadataObjectTypes and RemoveMetadataObjectTypes
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    std::vector<MetadataObjectType> metadataObjectTypes = {
+        MetadataObjectType::BAR_CODE_DETECTION,
+        MetadataObjectType::BASE_FACE_DETECTION,
+        MetadataObjectType::CAT_BODY,
+        MetadataObjectType::CAT_FACE,
+        MetadataObjectType::FACE,
+    };
+    int32_t ret = metadatOutput->AddMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+    ret = metadatOutput->RemoveMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::INVALID_ARGUMENT);
+
+    metadataObjectTypes.resize(0);
+    ret = metadatOutput->AddMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+    ret = metadatOutput->RemoveMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+
+    metadataObjectTypes.resize(0);
+    metadataObjectTypes.push_back(MetadataObjectType::FACE);
+    metadatOutput->session_ = nullptr;
+    ret = metadatOutput->AddMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+    ret = metadatOutput->RemoveMetadataObjectTypes(metadataObjectTypes);
+    EXPECT_EQ(ret, CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataObjectListener with OnBufferAvailable
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObjectListener with OnBufferAvailable
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_028, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    metadatOutput->surface_ = IConsumerSurface::Create();
+    metadatOutput->appStateCallback_ = std::make_shared<MetadataStateCallbackTest>();
+
+    std::shared_ptr<MetadataObjectListener> listener = std::make_shared<MetadataObjectListener>(metadatOutput);
+    listener->OnBufferAvailable();
+    EXPECT_NE(listener, nullptr);
+
+    metadatOutput->appStateCallback_ = nullptr;
+    std::shared_ptr<MetadataObjectListener> listener_2 = std::make_shared<MetadataObjectListener>(metadatOutput);
+    listener_2->OnBufferAvailable();
+    EXPECT_NE(listener_2, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test MetadataObjectFactory with OnMetadataResult when inputDevice is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test MetadataObjectFactory with OnMetadataResult when inputDevice is not nullptr
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_029, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(metadata);
+    session->CommitConfig();
+    session->Start();
+
+    int32_t streamId = 0;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = session->GetMetadata();
+    EXPECT_NE(result, nullptr);
+    std::shared_ptr<MetadataObjectCallback> callback = std::make_shared<MetadataObjectCallbackTest>();
+    metadatOutput->appObjectCallback_ = callback;
+    metadatOutput->reportFaceResults_ = true;
+    std::shared_ptr<HStreamMetadataCallbackImpl> hstreamMetadataCallbackImpl =
+        std::make_shared<HStreamMetadataCallbackImpl>(metadatOutput);
+    int32_t ret = hstreamMetadataCallbackImpl->OnMetadataResult(streamId, result);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    metadatOutput->reportFaceResults_ = false;
+    metadatOutput->reportLastFaceResults_ = false;
+    std::shared_ptr<HStreamMetadataCallbackImpl> hstreamMetadataCallbackImpl_2 =
+        std::make_shared<HStreamMetadataCallbackImpl>(metadatOutput);
+    ret = hstreamMetadataCallbackImpl_2->OnMetadataResult(streamId, result);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadataCallbackImpl with Constructor.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Constructor for just call.
+ */
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_001, TestSize.Level0)
+{
+    std::shared_ptr<HStreamMetadataCallbackImpl> hStreamMetadataCallbackImpl =
+        std::make_shared<HStreamMetadataCallbackImpl>(nullptr);
+    EXPECT_EQ(hStreamMetadataCallbackImpl->innerMetadataOutput, nullptr);
 }
 }
 }

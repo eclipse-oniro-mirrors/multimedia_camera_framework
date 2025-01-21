@@ -75,11 +75,11 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_001, T
     uint64_t taskName = 1;
     int32_t rotation = 1;
     int32_t captureId = 1;
-    cache->taskManager_ = manager;
-    cache->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
-
     cache->taskManager_ = nullptr;
     cache->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
+    cache->taskManager_ = manager;
+    cache->DoMuxerVideo(frameRecords, taskName, rotation, captureId);
+    EXPECT_NE(cache->taskManager_->taskManager_, nullptr);
 }
 
 /*

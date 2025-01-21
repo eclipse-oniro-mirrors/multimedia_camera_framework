@@ -1024,18 +1024,21 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_040, Test
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_041, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
-
+    ASSERT_NE(ability, nullptr);
     SceneMode mode = PORTRAIT;
-    cameraManager_->SetServiceProxy(nullptr);
-    cameraManager_->CreateCaptureSession(mode);
-    cameraManager_->ClearCameraDeviceListCache();
-
     TorchMode mode1 = TorchMode::TORCH_MODE_OFF;
     TorchMode mode2 = TorchMode::TORCH_MODE_ON;
     cameraManager_->torchMode_ = mode1;
     cameraManager_->UpdateTorchMode(mode1);
     cameraManager_->UpdateTorchMode(mode2);
+    cameraManager_->SetServiceProxy(nullptr);
+    EXPECT_EQ(cameraManager_->serviceProxyPrivate_, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
+    EXPECT_EQ(captureSession, nullptr);
+    cameraManager_->ClearCameraDeviceListCache();
+    EXPECT_TRUE(cameraManager_->cameraDeviceList_.empty());
 }
 
 /*
@@ -1049,8 +1052,9 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_041, Test
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
-
+    ASSERT_NE(ability, nullptr);
     auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
     ASSERT_NE(cameraProxy, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
@@ -1061,6 +1065,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, Test
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     CameraManager::ProfilesWrapper wrapper = {};
     cameraManager_->ParseBasicCapability(wrapper, metadata, item);
+    EXPECT_FALSE(wrapper.previewProfiles.empty());
 }
 
 /*
@@ -1531,6 +1536,40 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_063, Test
     OutputCapStreamType type = OutputCapStreamType::PREVIEW;
     cameraManager_->CreateProfile4StreamType(profile, type, 0, 0, info_3);
     EXPECT_TRUE(profile.previewProfiles.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraManager with SetTorchMode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetTorchMode for abnormal branch
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_TRUE(cameras.size() != 0);
+    cameraManager_->ReportEvent(cameras[0]->GetID());
+    CameraStatusInfo info;
+    int32_t ret = cameraManager_->SetTorchMode(static_cast<TorchMode>(-1));
+    EXPECT_EQ(ret, OPERATION_NOT_ALLOWED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TorchServiceCallback and FoldServiceCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TorchServiceCallback and FoldServiceCallback
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, TestSize.Level0)
+{
+    std::shared_ptr<TorchServiceCallback> torchServiceCallback = std::make_shared<TorchServiceCallback>(cameraManager_);
+    ASSERT_NE(torchServiceCallback, nullptr);
+    std::shared_ptr<FoldServiceCallback> foldServiceCallback = std::make_shared<FoldServiceCallback>(cameraManager_);
+    ASSERT_NE(foldServiceCallback, nullptr);
 }
 
 }

@@ -36,6 +36,7 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+struct TestObject {};
 
 void CaptureSessionUnitTest::SessionControlParams(sptr<CaptureSession> session)
 {
@@ -133,6 +134,11 @@ sptr<CaptureOutput> CaptureSessionUnitTest::CreateVideoOutput(VideoProfile video
     }
     return cameraManager_->CreateVideoOutput(videoProfile, surface);
 }
+
+class ConcreteLcdFlashStatusCallback : public LcdFlashStatusCallback {
+public:
+    void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override {}
+};
 
 void CaptureSessionUnitTest::SetUpTestCase(void) {}
 
@@ -3420,11 +3426,11 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test FoldCallback with OnFoldStatusChanged
+ * Function: Test FoldCallback with OnFoldStatusChanged and Constructor
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OnFoldStatusChanged for just call.
+ * CaseDescription: Test OnFoldStatusChanged and Constructor for just call.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize.Level0)
 {
@@ -3434,6 +3440,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_001, TestSize
     FoldStatus status = UNKNOWN_FOLD;
     auto ret = foldCallback->OnFoldStatusChanged(status);
     EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+
+    std::shared_ptr<FoldCallback> foldCallback1 = std::make_shared<FoldCallback>(nullptr);
+    EXPECT_EQ(foldCallback1->captureSession_, nullptr);
 }
 
 /*
@@ -3631,6 +3640,104 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_006, TestSize
     session->CreateAndSetFoldServiceCallback();
     QualityPrioritization qualityPrioritization = HIGH_QUALITY;
     EXPECT_EQ(session->SetQualityPrioritization(qualityPrioritization), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    session->isImageDeferred_ = false;
+    EXPECT_FALSE(session->IsImageDeferred());
+
+    bool isEnable = false;
+    EXPECT_EQ(session->EnableEffectSuggestion(isEnable), CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {};
+    EXPECT_EQ(session->SetEffectSuggestionStatus(effectSuggestionStatusList), CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    EffectSuggestionType effectSuggestionType = EFFECT_SUGGESTION_NONE;
+    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PreconfigProfiles with ToString.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ToString for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_007, TestSize.Level0)
+{
+    ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
+    std::shared_ptr<PreconfigProfiles> profiles = std::make_shared<PreconfigProfiles>(colorSpace);
+    ASSERT_NE(profiles, nullptr);
+    CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size photoSize = {480, 640};
+    Size previewSize = {640, 480};
+    Size videoSize = {640, 360};
+    Profile photoProfile = Profile(photoFormat, photoSize);
+    Profile previewProfile = Profile(photoFormat, previewSize);
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    profiles->previewProfile = previewProfile;
+    profiles->photoProfile = photoProfile;
+    profiles->videoProfile = videoProfile;
+    auto ret = profiles->ToString();
+    EXPECT_FALSE(ret.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RefBaseCompare with operator.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test operator for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_008, TestSize.Level0)
+{
+    wptr<TestObject> wp;
+    RefBaseCompare<TestObject> comparator;
+    EXPECT_FALSE(comparator.operator()(wp, wp));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSessionCallback and CaptureSessionMetadataResultProcessor with Constructor and Destructors.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Constructor and Destructors for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_009, TestSize.Level0)
+{
+    std::shared_ptr<CaptureSessionCallback> captureSessionCallback1 = std::make_shared<CaptureSessionCallback>();
+    EXPECT_EQ(captureSessionCallback1->captureSession_, nullptr);
+    std::shared_ptr<CaptureSessionCallback> captureSessionCallback2 =
+        std::make_shared<CaptureSessionCallback>(nullptr);
+    EXPECT_EQ(captureSessionCallback2->captureSession_, nullptr);
+
+    std::shared_ptr<CaptureSession::CaptureSessionMetadataResultProcessor> processor =
+        std::make_shared<CaptureSession::CaptureSessionMetadataResultProcessor>(nullptr);
+    EXPECT_EQ(processor->session_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LcdFlashStatusCallback with SetLcdFlashStatusInfo and GetLcdFlashStatusInfo.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetLcdFlashStatusInfo and GetLcdFlashStatusInfo for just call.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_010, TestSize.Level0)
+{
+    std::shared_ptr<ConcreteLcdFlashStatusCallback> lcdFlashStatusCallback =
+        std::make_shared<ConcreteLcdFlashStatusCallback>();
+    LcdFlashStatusInfo lcdFlashStatusInfo = {true, 0};
+    lcdFlashStatusCallback->SetLcdFlashStatusInfo(lcdFlashStatusInfo);
+    EXPECT_TRUE(lcdFlashStatusCallback->GetLcdFlashStatusInfo().isLcdFlashNeeded);
 }
 }
 }

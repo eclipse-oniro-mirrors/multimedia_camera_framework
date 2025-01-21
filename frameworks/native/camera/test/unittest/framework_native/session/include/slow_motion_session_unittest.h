@@ -45,6 +45,8 @@ private:
     sptr<CameraManager> cameraManager_ = nullptr;
     std::vector<Profile> previewProfile_;
     std::vector<VideoProfile> profile_;
+    bool preIsSupportedSlowmode_ = false;
+    bool vidIsSupportedSlowmode_ = false;
 };
 
 }

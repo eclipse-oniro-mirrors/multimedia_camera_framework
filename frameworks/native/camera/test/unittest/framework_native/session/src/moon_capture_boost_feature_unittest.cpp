@@ -89,9 +89,14 @@ HWTEST_F(MoonCaptureBoostUnitTest, moon_capture_boost_function_unittest_001, Tes
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
     SceneMode relatedMode = NORMAL;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceAbility = cameras[0]->GetMetadata();
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string cameraId = cameras[0]->GetID();
+    cameraProxy->GetCameraAbility(cameraId, metadata);
+    ASSERT_NE(metadata, nullptr);
     std::shared_ptr<MoonCaptureBoostFeature> moonCapture = std::make_shared<MoonCaptureBoostFeature>(relatedMode,
-        deviceAbility);
+        metadata);
     ASSERT_NE(moonCapture, nullptr);
     float zoomMin = -1.0f;
     moonCapture->GetSketchReferenceFovRatio(zoomMin);

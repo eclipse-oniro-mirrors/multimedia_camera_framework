@@ -20,8 +20,13 @@
 #include "camera_device.h"
 #include "capture_session.h"
 #include "camera_service_ipc_interface_code.h"
+#include "gmock/gmock.h"
+#include "hstream_depth_data_callback_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
+using ::testing::Return;
+using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,6 +37,12 @@ void HStreamDepthDataUnitTest::TearDownTestCase(void) {}
 void HStreamDepthDataUnitTest::TearDown(void) {}
 
 void HStreamDepthDataUnitTest::SetUp(void) {}
+
+class MockHStreamDepthDataCallbackStub : public HStreamDepthDataCallbackStub {
+public:
+    MOCK_METHOD1(OnDepthDataError, int32_t(int32_t errorCode));
+    ~MockHStreamDepthDataCallbackStub() {}
+};
 
 /*
  * Feature: Framework
@@ -215,5 +226,27 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_006, TestSize.Lev
     EXPECT_EQ(ret02, CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for branches of switch
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_007, TestSize.Level0)
+{
+    MockHStreamDepthDataCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamDepthDataCallbackInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ON_ERROR;
+    EXPECT_CALL(stub, OnDepthDataError(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
 } // CameraStandard
 } // OHOS

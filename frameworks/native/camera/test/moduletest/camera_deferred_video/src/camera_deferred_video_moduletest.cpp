@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,7 +31,6 @@ constexpr int32_t DEFERRED_VIDEO_ENABLED = 1;
 void CameraDeferredVideoModuleTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraDeferredVideoModuleTest::SetUpTestCase started!");
-    SetNativeToken();
 }
 
 void CameraDeferredVideoModuleTest::TearDownTestCase(void)
@@ -42,6 +41,8 @@ void CameraDeferredVideoModuleTest::TearDownTestCase(void)
 void CameraDeferredVideoModuleTest::SetUp()
 {
     MEDIA_DEBUG_LOG("CameraDeferredVideoModuleTest::SetUp started!");
+    SetNativeToken();
+
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);
 
