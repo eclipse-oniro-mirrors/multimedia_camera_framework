@@ -1887,7 +1887,7 @@ int32_t FoldServiceCallback::OnFoldStatusChanged(const FoldStatus status)
 
     FoldStatusInfo foldStatusInfo;
     foldStatusInfo.foldStatus = status;
-    foldStatusInfo.supportedCameras = cameraManager->GetSupportedCamerasWithFoldStatus();
+    foldStatusInfo.supportedCameras = cameraManager->GetSupportedCameras();
     auto listenerMap = cameraManager->GetFoldListenerMap();
     MEDIA_DEBUG_LOG("FoldListenerMap size %{public}d", listenerMap.Size());
     CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
