@@ -38,6 +38,7 @@
 #include "napi/native_common.h"
 #include "output/photo_output_napi.h"
 #include "camera_napi_object_types.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -268,26 +269,19 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::auto_switch_props
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ExposureCallbackInfo> callbackInfo =
         std::make_unique<ExposureCallbackInfo>(state, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        ExposureCallbackInfo* callbackInfo = reinterpret_cast<ExposureCallbackInfo *>(work->data);
+    ExposureCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ExposureCallbackInfo* callbackInfo = reinterpret_cast<ExposureCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnExposureStateCallback(callbackInfo->state_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -314,25 +308,18 @@ void ExposureCallbackListener::OnExposureState(const ExposureState state)
 void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 {
     MEDIA_DEBUG_LOG("OnFocusStateCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        FocusCallbackInfo* callbackInfo = reinterpret_cast<FocusCallbackInfo *>(work->data);
+    FocusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        FocusCallbackInfo* callbackInfo = reinterpret_cast<FocusCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnFocusStateCallback(callbackInfo->state_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -358,28 +345,18 @@ void FocusCallbackListener::OnFocusState(FocusState state)
 void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status) const
 {
     MEDIA_DEBUG_LOG("OnMacroStatusCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->OnMacroStatusCallback(callbackInfo->status_));
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    MacroStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnMacroStatusCallback(callbackInfo->status_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -405,28 +382,18 @@ void MacroStatusCallbackListener::OnMacroStatusChanged(MacroStatus status)
 void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusCallbackAsync(MoonCaptureBoostStatus status) const
 {
     MEDIA_DEBUG_LOG("OnMoonCaptureBoostStatusCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callbackInfo = std::make_unique<MoonCaptureBoostStatusCallbackInfo>(status, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            auto callbackInfo = reinterpret_cast<MoonCaptureBoostStatusCallbackInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->OnMoonCaptureBoostStatusCallback(callbackInfo->status_));
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    MoonCaptureBoostStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<MoonCaptureBoostStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnMoonCaptureBoostStatusCallback(callbackInfo->status_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -453,29 +420,19 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     SceneFeature feature, FeatureDetectionStatus status) const
 {
     MEDIA_DEBUG_LOG("OnFeatureDetectionStatusChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callbackInfo = std::make_unique<FeatureDetectionStatusCallbackInfo>(feature, status, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            auto callbackInfo = reinterpret_cast<FeatureDetectionStatusCallbackInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr,
-                    listener->OnFeatureDetectionStatusChangedCallback(callbackInfo->feature_, callbackInfo->status_));
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    FeatureDetectionStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<FeatureDetectionStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr,
+                listener->OnFeatureDetectionStatusChangedCallback(callbackInfo->feature_, callbackInfo->status_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -531,26 +488,19 @@ bool FeatureDetectionStatusCallbackListener::IsFeatureSubscribed(SceneFeature fe
 void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<SessionCallbackInfo> callbackInfo =
         std::make_unique<SessionCallbackInfo>(errorCode, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        SessionCallbackInfo* callbackInfo = reinterpret_cast<SessionCallbackInfo *>(work->data);
+    SessionCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        SessionCallbackInfo* callbackInfo = reinterpret_cast<SessionCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnErrorCallback(callbackInfo->errorCode_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -579,26 +529,19 @@ void SessionCallbackListener::OnError(int32_t errorCode)
 void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) const
 {
     MEDIA_DEBUG_LOG("OnSmoothZoomCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<SmoothZoomCallbackInfo> callbackInfo =
         std::make_unique<SmoothZoomCallbackInfo>(duration, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        SmoothZoomCallbackInfo* callbackInfo = reinterpret_cast<SmoothZoomCallbackInfo *>(work->data);
+    SmoothZoomCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        SmoothZoomCallbackInfo* callbackInfo = reinterpret_cast<SmoothZoomCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnSmoothZoomCallback(callbackInfo->duration_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -629,25 +572,18 @@ void SmoothZoomCallbackListener::OnSmoothZoom(int32_t duration)
 void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
 {
     MEDIA_DEBUG_LOG("OnAbilityChangeCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<AbilityCallbackInfo> callbackInfo = std::make_unique<AbilityCallbackInfo>(shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        AbilityCallbackInfo* callbackInfo = reinterpret_cast<AbilityCallbackInfo *>(work->data);
+    AbilityCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        AbilityCallbackInfo* callbackInfo = reinterpret_cast<AbilityCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnAbilityChangeCallback());
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -674,27 +610,20 @@ void AbilityCallbackListener::OnAbilityChange()
 void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSuggestionType effectSuggestionType) const
 {
     MEDIA_DEBUG_LOG("OnEffectSuggestionCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<EffectSuggestionCallbackInfo> callbackInfo =
         std::make_unique<EffectSuggestionCallbackInfo>(effectSuggestionType, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        EffectSuggestionCallbackInfo* callbackInfo = reinterpret_cast<EffectSuggestionCallbackInfo *>(work->data);
+    EffectSuggestionCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        EffectSuggestionCallbackInfo* callbackInfo = reinterpret_cast<EffectSuggestionCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr,
                 listener->OnEffectSuggestionCallback(callbackInfo->effectSuggestionType_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -720,29 +649,19 @@ void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestion
 void LcdFlashStatusCallbackListener::OnLcdFlashStatusCallbackAsync(LcdFlashStatusInfo lcdFlashStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnLcdFlashStatusCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callbackInfo = std::make_unique<LcdFlashStatusStatusCallbackInfo>(lcdFlashStatusInfo, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr,
-                    listener->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_));
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    LcdFlashStatusStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<LcdFlashStatusStatusCallbackInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr,
+                listener->OnLcdFlashStatusCallback(callbackInfo->lcdFlashStatusInfo_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -775,30 +694,20 @@ void AutoDeviceSwitchCallbackListener::OnAutoDeviceSwitchCallbackAsync(
     bool isDeviceSwitched, bool isDeviceCapabilityChanged) const
 {
     MEDIA_DEBUG_LOG("OnAutoDeviceSwitchCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callbackInfo = std::make_unique<AutoDeviceSwitchCallbackListenerInfo>(
         isDeviceSwitched, isDeviceCapabilityChanged, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            auto callbackInfo = reinterpret_cast<AutoDeviceSwitchCallbackListenerInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->OnAutoDeviceSwitchCallback(callbackInfo->isDeviceSwitched_,
-                    callbackInfo->isDeviceCapabilityChanged_));
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    AutoDeviceSwitchCallbackListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        auto callbackInfo = reinterpret_cast<AutoDeviceSwitchCallbackListenerInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnAutoDeviceSwitchCallback(callbackInfo->isDeviceSwitched_,
+                callbackInfo->isDeviceCapabilityChanged_));
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }

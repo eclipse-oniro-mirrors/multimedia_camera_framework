@@ -38,7 +38,7 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
             CHECK_EXECUTE(listener != nullptr, listener->OnSlowMotionStateCb(callbackInfo->state_));
             delete callbackInfo;
         }
-    });
+    };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

@@ -979,7 +979,7 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) 
             CHECK_EXECUTE(listener != nullptr, listener->OnTryAEInfoChangedCallback(callback->info_));
             delete callback;
         }
-    });
+    };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

@@ -921,7 +921,7 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
             CHECK_EXECUTE(listener != nullptr, listener->OnApertureInfoChangedCallback(callback->info_));
             delete callback;
         }
-    });
+    };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {
@@ -963,7 +963,7 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
             CHECK_EXECUTE(listener != nullptr, listener->OnLuminationInfoChangedCallback(callback->info_));
             delete callback;
         }
-    });
+    };
     if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
     } else {

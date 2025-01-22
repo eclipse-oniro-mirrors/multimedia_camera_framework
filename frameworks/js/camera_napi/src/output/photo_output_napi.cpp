@@ -63,6 +63,7 @@
 #include "camera_dynamic_loader.h"
 #include "metadata_helper.h"
 #include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -648,47 +649,38 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
     const std::string burstKey) const
 {
     MEDIA_INFO_LOG("PhotoListener:UpdatePictureJSCallback called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(loop == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "PhotoListenerInfo:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
     callbackInfo->captureId = captureId;
     callbackInfo->uri = uri;
     callbackInfo->cameraShotType = cameraShotType;
     callbackInfo->burstKey = burstKey;
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            MEDIA_INFO_LOG("UpdatePictureJSCallback enter");
-            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
-            auto listener = callbackInfo->listener_.lock();
-            if (callbackInfo && listener != nullptr) {
-                napi_value result[ARGS_TWO] = { nullptr, nullptr };
-                napi_value retVal;
-                napi_get_undefined(listener->env_, &result[PARAM0]);
-                napi_get_undefined(listener->env_, &result[PARAM1]);
-                result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(listener->env_,
-                    callbackInfo->uri, callbackInfo->cameraShotType, callbackInfo->burstKey);
-                FillNapiObjectWithCaptureId(listener->env_, callbackInfo->captureId, result[PARAM1]);
-                MEDIA_INFO_LOG("UpdatePictureJSCallback result %{public}s, type %{public}d, burstKey %{public}s",
-                    callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
-                ExecuteCallbackNapiPara callbackPara {
-                    .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-                MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE E");
-                listener->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
-                MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
-                MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
-                callbackInfo->listener_.reset();
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    PhotoListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        MEDIA_INFO_LOG("UpdatePictureJSCallback enter");
+        PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(event);
+        auto listener = callbackInfo->listener_.lock();
+        if (callbackInfo && listener != nullptr) {
+            napi_value result[ARGS_TWO] = { nullptr, nullptr };
+            napi_value retVal;
+            napi_get_undefined(listener->env_, &result[PARAM0]);
+            napi_get_undefined(listener->env_, &result[PARAM1]);
+            result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(listener->env_,
+                callbackInfo->uri, callbackInfo->cameraShotType, callbackInfo->burstKey);
+            FillNapiObjectWithCaptureId(listener->env_, callbackInfo->captureId, result[PARAM1]);
+            MEDIA_INFO_LOG("UpdatePictureJSCallback result %{public}s, type %{public}d, burstKey %{public}s",
+                callbackInfo->uri.c_str(), callbackInfo->cameraShotType, callbackInfo->burstKey.c_str());
+            ExecuteCallbackNapiPara callbackPara {
+                .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+            MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE E");
+            listener->ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
+            MEDIA_DEBUG_LOG("ExecuteCallback CONST_CAPTURE_PHOTO_ASSET_AVAILABLE X");
+            MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
+            callbackInfo->listener_.reset();
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -697,34 +689,24 @@ void PhotoListener::UpdatePictureJSCallback(int32_t captureId, const string uri,
 void PhotoListener::UpdateMainPictureStageOneJSCallback(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const
 {
     MEDIA_INFO_LOG("PhotoListener:UpdateMainPictureStageOneJSCallback called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "PhotoListenerInfo:UpdateMainPictureStageOneJSCallback() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "PhotoListenerInfo:UpdateMainPictureStageOneJSCallback() failed to allocate work");
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(nullptr, shared_from_this());
     callbackInfo->surfaceBuffer = surfaceBuffer;
     callbackInfo->timestamp = timestamp;
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
-            if (callbackInfo && !callbackInfo->listener_.expired()) {
-                MEDIA_INFO_LOG("ExecutePhotoAsset picture");
-                sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
-                int64_t timestamp = callbackInfo->timestamp;
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->ExecutePhoto(surfaceBuffer, timestamp));
-                callbackInfo->listener_.reset();
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    PhotoListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(event);
+        if (callbackInfo && !callbackInfo->listener_.expired()) {
+            MEDIA_INFO_LOG("ExecutePhotoAsset picture");
+            sptr<SurfaceBuffer> surfaceBuffer = callbackInfo->surfaceBuffer;
+            int64_t timestamp = callbackInfo->timestamp;
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->ExecutePhoto(surfaceBuffer, timestamp));
+            callbackInfo->listener_.reset();
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -1067,20 +1049,12 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync enter");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    MEDIA_INFO_LOG("PhotoListener UpdateJSCallbackAsync get loop");
-    CHECK_ERROR_RETURN_LOG(!loop, "PhotoListener:UpdateJSCallbackAsync() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "PhotoListener:UpdateJSCallbackAsync() failed to allocate work");
     std::unique_ptr<PhotoListenerInfo> callbackInfo =
         std::make_unique<PhotoListenerInfo>(photoSurface, shared_from_this());
-    work->data = callbackInfo.get();
+    PhotoListenerInfo *event = callbackInfo.get();
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
+    auto task = [event]() {
+        PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(event);
             if (callbackInfo) {
                 auto listener = callbackInfo->listener_.lock();
                 CHECK_EXECUTE(listener != nullptr, listener->UpdateJSCallback(callbackInfo->photoSurface_));
@@ -1089,12 +1063,9 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
                 callbackInfo->listener_.reset();
                 delete callbackInfo;
             }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+        };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -1194,32 +1165,22 @@ void RawPhotoListener::UpdateJSCallback(sptr<Surface> rawPhotoSurface) const
 
 void RawPhotoListener::UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const
 {
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "RawPhotoListener:UpdateJSCallbackAsync() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "RawPhotoListener:UpdateJSCallbackAsync() failed to allocate work");
     std::unique_ptr<RawPhotoListenerInfo> callbackInfo =
         std::make_unique<RawPhotoListenerInfo>(rawPhotoSurface, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            RawPhotoListenerInfo* callbackInfo = reinterpret_cast<RawPhotoListenerInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->UpdateJSCallback(callbackInfo->rawPhotoSurface_));
-                MEDIA_INFO_LOG("RawPhotoListener:UpdateJSCallbackAsync() complete");
-                callbackInfo->rawPhotoSurface_ = nullptr;
-                callbackInfo->listener_.reset();
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+    RawPhotoListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        RawPhotoListenerInfo* callbackInfo = reinterpret_cast<RawPhotoListenerInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->UpdateJSCallback(callbackInfo->rawPhotoSurface_));
+            MEDIA_INFO_LOG("RawPhotoListener:UpdateJSCallbackAsync() complete");
+            callbackInfo->rawPhotoSurface_ = nullptr;
+            callbackInfo->listener_.reset();
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("RawPhotoListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -1244,20 +1205,15 @@ void UpdateJSExecute(uv_work_t* work)
 void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo &info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(loop == nullptr, "failed to get event loop or failed to allocate work");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "UpdateJSCallbackAsync work is null");
     if (!g_isSemInited) {
         uv_sem_init(&g_captureStartSem, 0);
         g_isSemInited = true;
     }
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
         std::make_unique<PhotoOutputCallbackInfo>(eventType, info, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, UpdateJSExecute, [] (uv_work_t* work, int status) {
-        PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
+    PhotoOutputCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
@@ -1274,11 +1230,9 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
             }
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -1617,33 +1571,23 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
 void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,
     unique_ptr<Media::PixelMap> pixelMap)
 {
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(loop == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(work == nullptr, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
         std::make_unique<ThumbnailListenerInfo>(this, captureId, timestamp, std::move(pixelMap));
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.promote();
-                if (listener != nullptr) {
-                    listener->UpdateJSCallback(callbackInfo->captureId_, callbackInfo->timestamp_,
-                        std::move(callbackInfo->pixelMap_));
-                    MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
-                }
-                delete callbackInfo;
+    ThumbnailListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.promote();
+            if (listener != nullptr) {
+                listener->UpdateJSCallback(callbackInfo->captureId_, callbackInfo->timestamp_,
+                    std::move(callbackInfo->pixelMap_));
+                MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
             }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -1745,31 +1689,21 @@ void ThumbnailListener::UpdateJSCallback() const
 
 void ThumbnailListener::UpdateJSCallbackAsync()
 {
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(this, 0, 0, nullptr);
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.promote();
-                if (listener != nullptr) {
-                    listener->UpdateJSCallback();
-                    MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
-                }
-                delete callbackInfo;
+    ThumbnailListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.promote();
+            if (listener != nullptr) {
+                listener->UpdateJSCallback();
+                MEDIA_INFO_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
             }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
+            delete callbackInfo;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
