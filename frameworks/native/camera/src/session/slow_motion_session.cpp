@@ -61,7 +61,7 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
         "IsSlowMotionDetectionSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,

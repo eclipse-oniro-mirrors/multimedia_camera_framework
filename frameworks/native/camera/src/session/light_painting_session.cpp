@@ -36,7 +36,7 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera deviceInfo is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LIGHT_PAINTING_TYPE, &item);

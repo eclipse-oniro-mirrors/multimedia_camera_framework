@@ -19,6 +19,7 @@
 #include "camera_log.h"
 #include "camera_rotation_api_utils.h"
 #include "input/camera_device.h"
+#include "input/camera_manager.h"
 #include "metadata_common_utils.h"
 #include "capture_scene_const.h"
 
@@ -200,6 +201,17 @@ std::string CameraDevice::GetID()
 std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 {
     std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
+    CHECK_ERROR_RETURN_RET(cachedMetadata_ != nullptr, cachedMetadata_);
+    auto cameraProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(cameraProxy == nullptr, nullptr, "GetMetadata Failed to get cameraProxy");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    cameraProxy->GetCameraAbility(cameraID_, metadata);
+    return metadata;
+}
+
+std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetCachedMetadata()
+{
+    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
     return cachedMetadata_;
 }
 
@@ -218,12 +230,18 @@ void CameraDevice::ReleaseMetadata()
 void CameraDevice::ResetMetadata()
 {
     std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
-    cachedMetadata_ = MetadataCommonUtils::CopyMetadata(baseAbility_);
+    CHECK_ERROR_RETURN(cachedMetadata_ == nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetCameraAbility();
+    cachedMetadata_ = MetadataCommonUtils::CopyMetadata(metadata);
 }
 
 const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbility()
 {
-    return baseAbility_;
+    auto cameraProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(cameraProxy == nullptr, nullptr, "GetCameraAbility Failed to get cameraProxy");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    cameraProxy->GetCameraAbility(cameraID_, metadata);
+    return metadata;
 }
 
 CameraPosition CameraDevice::GetPosition()

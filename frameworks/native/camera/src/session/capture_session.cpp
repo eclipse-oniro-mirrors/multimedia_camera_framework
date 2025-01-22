@@ -566,6 +566,7 @@ void CaptureSession::GetMetadataFromService(sptr<CameraDevice> device)
     CHECK_ERROR_RETURN_LOG(metaData == nullptr,
         "GetMetadataFromService GetDeviceMetadata failed");
     device->AddMetadata(metaData);
+    SetChooseDevice(device);
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
@@ -592,8 +593,6 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
         return ServiceToCameraError(errCode);
     }
     SetInputDevice(input);
-    auto inputDeviceInfo = input->GetCameraDeviceInfo();
-    GetMetadataFromService(inputDeviceInfo);
     CheckSpecSearch();
     input->SetMetadataResultProcessor(GetMetadataResultProcessor());
     UpdateDeviceDeferredability();
@@ -1000,7 +999,12 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         errCode = captureSession->RemoveInput(device);
         auto deviceInfo = input->GetCameraDeviceInfo();
         if (deviceInfo != nullptr) {
-            deviceInfo->ReleaseMetadata();
+            deviceInfo->ResetMetadata();
+        }
+        auto chooseDevice = GetChooseDevice();
+        if (chooseDevice != nullptr) {
+            chooseDevice->ReleaseMetadata();
+            SetChooseDevice(nullptr);
         }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
@@ -1108,10 +1112,11 @@ int32_t CaptureSession::Release()
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession is nullptr");
     }
-    auto inputDevice = GetInputDevice();
-    if (inputDevice != nullptr && inputDevice->GetCameraDeviceInfo() != nullptr) {
-        inputDevice->GetCameraDeviceInfo()->ReleaseMetadata();
+    auto chooseDevice = GetChooseDevice();
+    if (chooseDevice != nullptr) {
+        chooseDevice->ReleaseMetadata();
     }
+    SetChooseDevice(nullptr);
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
@@ -1378,7 +1383,7 @@ VideoStabilizationMode CaptureSession::GetActiveVideoStabilizationMode()
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, OFF,
         "CaptureSession::GetActiveVideoStabilizationMode camera deviceInfo is null");
     cameraObj_ = inputDeviceInfo;
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, OFF,
         "GetActiveVideoStabilizationMode camera metadata is null");
     camera_metadata_item_t item;
@@ -1404,7 +1409,7 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode& 
     bool isSupported = false;
     sptr<CameraDevice> cameraObj_;
     cameraObj_ = inputDeviceInfo;
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetActiveVideoStabilizationMode camera metadata is null");
     camera_metadata_item_t item;
@@ -2659,7 +2664,7 @@ int32_t CaptureSession::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointI
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetZoomPointInfos camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetZoomPointInfos camera metadata is null");
     camera_metadata_item_t item;
@@ -3157,7 +3162,7 @@ int32_t CaptureSession::GetSupportedPortraitThemeTypes(std::vector<PortraitTheme
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedPortraitThemeTypes camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetSupportedPortraitThemeTypes camera metadata is null");
     camera_metadata_item_t item;
@@ -3187,7 +3192,7 @@ int32_t CaptureSession::IsPortraitThemeSupported(bool &isSupported)
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::IsPortraitThemeSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "IsPortraitThemeSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -3231,7 +3236,7 @@ int32_t CaptureSession::GetSupportedVideoRotations(std::vector<int32_t>& support
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedVideoRotations camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetSupportedVideoRotations camera metadata is null");
     camera_metadata_item_t item;
@@ -3265,7 +3270,7 @@ int32_t CaptureSession::IsVideoRotationSupported(bool &isSupported)
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::IsVideoRotationSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "IsVideoRotationSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -3299,7 +3304,7 @@ float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi"
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, invalidDistance,
         "CaptureSession::GetMinimumFocusDistance camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, invalidDistance,
         "GetMinimumFocusDistance camera metadata is null");
     camera_metadata_item_t item;
@@ -3835,7 +3840,7 @@ int32_t CaptureSession::GetSensorExposureTime(uint32_t &exposureTime)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::GetSensorExposureTime camera deviceInfo is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "GetSensorExposureTime camera metadata is null");
     camera_metadata_item_t item;
@@ -3873,7 +3878,7 @@ bool CaptureSession::IsMacroSupported()
         }
     }
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsMacroSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -3926,7 +3931,7 @@ bool CaptureSession::IsDepthFusionSupported()
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
         "CaptureSession::IsDepthFusionSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsDepthFusionSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -4010,7 +4015,7 @@ std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeat
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET(deviceInfo == nullptr, nullptr);
-    auto deviceAbility = deviceInfo->GetMetadata();
+    auto deviceAbility = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(deviceAbility == nullptr, nullptr);
 
     auto currentMode = GetMode();
@@ -4069,7 +4074,7 @@ bool CaptureSession::IsLowLightBoostSupported()
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(
         deviceInfo == nullptr, false, "CaptureSession::IsLowLightBoostSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsLowLightBoostSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -4168,7 +4173,7 @@ bool CaptureSession::IsMovingPhotoSupported()
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
         "CaptureSession::IsMovingPhotoSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsMovingPhotoSupported camera metadata is null");
     camera_metadata_item_t metadataItem;
@@ -4635,7 +4640,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
         MEDIA_INFO_LOG("CaptureSession::GetMetadata deviceInfo is null, create default metadata");
         return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     }
-    return deviceInfo->GetMetadata();
+    return deviceInfo->GetCachedMetadata();
 }
 
 int32_t CaptureSession::SetARMode(bool isEnable)
@@ -4673,7 +4678,7 @@ int32_t CaptureSession::GetSensorSensitivityRange(std::vector<int32_t> &sensitiv
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::GetSensorSensitivity fail due to camera deviceInfo is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "GetSensorSensitivity camera metadata is null");
     camera_metadata_item_t item;
@@ -4724,7 +4729,7 @@ int32_t CaptureSession::GetModuleType(uint32_t &moduleType)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::GetModuleType fail due to camera deviceInfo is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "GetModuleType camera metadata is null");
     camera_metadata_item_t item;
@@ -4894,7 +4899,7 @@ int32_t CaptureSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMo
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedWhiteBalanceModes camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetSupportedWhiteBalanceModes camera metadata is null");
     camera_metadata_item_t item;
@@ -5004,7 +5009,7 @@ int32_t CaptureSession::GetManualWhiteBalanceRange(std::vector<int32_t> &whiteBa
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetManualWhiteBalanceRange camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetManualWhiteBalanceRange camera metadata is null");
     camera_metadata_item_t item;
@@ -5077,7 +5082,7 @@ int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetManualWhiteBalance camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetManualWhiteBalance camera metadata is null");
     camera_metadata_item_t item;
@@ -5138,7 +5143,7 @@ int32_t CaptureSession::GetSupportedVirtualApertures(std::vector<float>& apertur
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSession::GetManualWhiteBalance camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::SUCCESS);
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
@@ -5164,7 +5169,7 @@ std::vector<PortraitEffect> CaptureSession::GetSupportedPortraitEffects()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedPortraitEffects,
         "CaptureSession::GetSupportedPortraitEffects abilityId is NULL");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
@@ -5186,7 +5191,7 @@ int32_t CaptureSession::GetVirtualAperture(float& aperture)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "GetVirtualAperture camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetVirtualAperture camera metadata is null");
     CHECK_ERROR_RETURN_RET(metadata == nullptr, CameraErrorCode::SUCCESS);
@@ -5239,7 +5244,7 @@ int32_t CaptureSession::GetPhysicalAperture(float& physicalAperture)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera metadata is null");
     camera_metadata_item_t item;
@@ -5309,7 +5314,7 @@ bool CaptureSession::IsLcdFlashSupported()
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
         "IsLcdFlashSupported camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsLcdFlashSupported camera metadata is null");
     camera_metadata_item_t item;
@@ -5420,7 +5425,7 @@ bool CaptureSession::IsTripodDetectionSupported()
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
         "CaptureSession::IsTripodDetectionSupported camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsTripodDetectionSupported camera metadata is null");
     camera_metadata_item_t item;

@@ -347,7 +347,7 @@ bool VideoOutput::IsMirrorSupported()
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
         "VideoOutput IsMirrorSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
     camera_metadata_item_t item;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
@@ -389,7 +389,7 @@ bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
         "VideoOutput isTagEnabled error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), tag, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false, "Can not find this tag");
@@ -618,7 +618,7 @@ bool VideoOutput::IsAutoVideoFrameRateSupported()
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
         "VideoOutput IsAutoVideoFrameRateSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
     camera_metadata_item_t item;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_VIDEO_FRAME_RATE, &item);

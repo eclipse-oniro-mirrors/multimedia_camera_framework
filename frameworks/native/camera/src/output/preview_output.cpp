@@ -462,7 +462,7 @@ std::shared_ptr<Camera::CameraMetadata> PreviewOutput::GetDeviceMetadata()
     CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, nullptr, "PreviewOutput::GetDeviceMetadata input is null");
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, nullptr, "PreviewOutput::GetDeviceMetadata info is null");
-    auto metaData = deviceInfo->GetMetadata();
+    auto metaData = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metaData == nullptr, nullptr, "PreviewOutput::GetDeviceMetadata metaData is null");
     return metaData;
 }

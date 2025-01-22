@@ -47,7 +47,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedPortraitEffects,
         "PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
@@ -69,7 +69,7 @@ PortraitEffect PortraitSession::GetPortraitEffect()
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, PortraitEffect::OFF_EFFECT,
         "CaptureSession::GetPortraitEffect camera deviceInfo is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, PortraitEffect::OFF_EFFECT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
