@@ -15,7 +15,6 @@
 
 #include "deferred_video_processor.h"
 
-#include "basic_definitions.h"
 #include "dps_video_report.h"
 #include "dp_utils.h"
 
@@ -124,8 +123,12 @@ void DeferredVideoProcessor::PostProcess(const DeferredVideoWorkPtr& work)
 void DeferredVideoProcessor::PauseRequest(const ScheduleType& type)
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
+
     std::vector<std::string> runningList;
     repository_->GetRunningJobList(runningList);
+    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+
     for (const auto& videoId: runningList) {
         postProcessor_->PauseRequest(videoId, type);
         DfxVideoReport::GetInstance().ReportPauseVideoEvent(videoId, type);
@@ -135,23 +138,23 @@ void DeferredVideoProcessor::PauseRequest(const ScheduleType& type)
 void DeferredVideoProcessor::SetDefaultExecutionMode()
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
+
     postProcessor_->SetDefaultExecutionMode();
 }
 
 bool DeferredVideoProcessor::GetPendingVideos(std::vector<std::string>& pendingVideos)
 {
     DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(postProcessor_ == nullptr, false, "VideoPostProcessor is nullptr.");
+
     return postProcessor_->GetPendingVideos(pendingVideos);
 }
 
 bool DeferredVideoProcessor::IsFatalError(DpsError errorCode)
 {
-    DP_INFO_LOG("DPS_VIDEO: error: %{public}d", errorCode);
-    if (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_FAILED ||
-        errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID) {
-        return true;
-    }
-    return false;
+    return (errorCode == DpsError::DPS_ERROR_VIDEO_PROC_FAILED ||
+        errorCode == DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

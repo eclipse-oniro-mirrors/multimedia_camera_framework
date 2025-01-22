@@ -149,4 +149,11 @@
             return ret;                                     \
         }                                                   \
     } else void (0)
+
+#define DP_CHECK_WARNING_PRINT_LOG(cond, fmt, ...)          \
+    do {                                                    \
+        if (cond) {                                         \
+            DP_WARNING_LOG(fmt, ##__VA_ARGS__);             \
+        }                                                   \
+    } while (0)
 #endif // OHOS_CAMERA_DPS_LOG_H

@@ -52,17 +52,16 @@ private:
     int32_t inputFileFd_ {-1};
     int32_t outputFileFd_ {-1};
     int32_t tempFileFd_ {-1};
-    int32_t finalFrameNum_ {0};
     int64_t resumePts_ {-1};
     int64_t pausePts_ {-1};
-    int64_t curProcessSyncPts_ {-1};
+    int64_t curIFramePts_ {-1};
+    int64_t finalPtsToDrop_ {-1};
     bool hasAudio_ {false};
     bool started_ {false};
     std::shared_ptr<Reader> inputReader_ {nullptr};
     std::shared_ptr<Reader> recoverReader_ {nullptr};
     std::shared_ptr<Writer> outputWriter_ {nullptr};
     std::shared_ptr<MediaInfo> mediaInfo_ {nullptr};
-    std::set<int64_t> IFramePts_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

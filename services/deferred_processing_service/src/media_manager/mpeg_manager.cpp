@@ -182,15 +182,15 @@ MediaManagerError MpegManager::InitVideoCodec()
         "Video codec set callback failde, ret:%{public}d.", ret);
 
     Format videoFormat;
-    if (codecInfo.mimeType == MINE_VIDEO_HEVC) {
+    if (codecInfo.mimeType == MIME_VIDEO_HEVC) {
         videoFormat.PutIntValue(Tag::VIDEO_COLOR_RANGE, static_cast<int32_t>(codecInfo.colorRange));
         videoFormat.PutIntValue(Tag::VIDEO_COLOR_PRIMARIES, static_cast<int32_t>(codecInfo.colorPrimary));
         videoFormat.PutIntValue(Tag::VIDEO_COLOR_TRC, static_cast<int32_t>(codecInfo.colorTransferCharacter));
         videoFormat.PutIntValue(Tag::MEDIA_LEVEL, codecInfo.level);
         videoFormat.PutIntValue(Tag::MEDIA_PROFILE, codecInfo.profile);
     }
+    videoFormat.PutIntValue(Tag::VIDEO_PIXEL_FORMAT, static_cast<int32_t>(Media::Plugins::VideoPixelFormat::NV12));
     videoFormat.PutIntValue(Tag::VIDEO_ENCODE_BITRATE_MODE, codecInfo.bitMode);
-    videoFormat.PutIntValue(Tag::VIDEO_PIXEL_FORMAT, static_cast<int32_t>(PixelFormat::PIX_FMT_NV12));
     videoFormat.PutStringValue(Tag::MIME_TYPE, codecInfo.mimeType);
     videoFormat.PutLongValue(Tag::MEDIA_BITRATE, codecInfo.bitRate);
     videoFormat.PutDoubleValue(Tag::VIDEO_FRAME_RATE, codecInfo.fps);
@@ -271,10 +271,12 @@ void MpegManager::OnMakerBufferAvailable()
 
     std::lock_guard<std::mutex> lock(makerMutex_);
     auto makerBuffer = AVBuffer::CreateAVBuffer(buffer);
-    DP_CHECK_ERROR_RETURN_LOG(makerBuffer == nullptr, "CreateAVBuffer is failde.");
+    DP_CHECK_ERROR_RETURN_LOG(makerBuffer == nullptr, "CreateAVBuffer failde.");
 
     makerBuffer->pts_ = timestamp;
-    DP_DEBUG_LOG("MakerBuffer pts %{public}" PRId64, makerBuffer->pts_);
+    makerBuffer->memory_->SetSize(buffer->GetWidth());
+    DP_DEBUG_LOG("MakerBuffer pts %{public}" PRId64 "marke size: %{public}d",
+        makerBuffer->pts_, makerBuffer->memory_->GetSize());
     auto ret = mediaManager_->WriteSample(Media::Plugins::MediaType::TIMEDMETA, makerBuffer);
     DP_CHECK_ERROR_PRINT_LOG(ret != OK, "Video maker data write failde.");
 

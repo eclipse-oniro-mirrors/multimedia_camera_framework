@@ -15,8 +15,6 @@
 
 #include "reader.h"
 
-#include "basic_definitions.h"
-#include "dp_log.h"
 #include "track_factory.h"
 
 namespace OHOS {
@@ -34,7 +32,6 @@ Reader::~Reader()
 {
     source_ = nullptr;
     sourceFormat_ = nullptr;
-    userFormat_ = nullptr;
     inputDemuxer_ = nullptr;
     tracks_.clear();
 }
@@ -66,11 +63,6 @@ MediaManagerError Reader::GetSourceFormat()
     auto ret = source_->GetSourceFormat(sourceFormat);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource format failed.");
     sourceFormat_ = std::make_shared<Format>(sourceFormat);
-
-    Format userMeta;
-    ret = source_->GetUserMeta(userMeta);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource user meta failed.");
-    userFormat_ = std::make_shared<Format>(userMeta);
     return OK;
 }
 
@@ -129,17 +121,10 @@ MediaManagerError Reader::Reset(int64_t resetPts)
 
 void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
 {
-    DP_DEBUG_LOG("entered.");
-    auto ret = sourceFormat_->GetStringValue(Tag::MEDIA_CREATION_TIME, mediaInfo->creationTime);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_CREATION_TIME);
-    ret = sourceFormat_->GetLongValue(Tag::MEDIA_DURATION, mediaInfo->codecInfo.duration);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_DURATION);
-    ret = sourceFormat_->GetStringValue(RECORD_SYSTEM_TIMESTAMP, mediaInfo->recorderTime);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", RECORD_SYSTEM_TIMESTAMP.c_str());
-    ret = sourceFormat_->GetFloatValue(Tag::MEDIA_LATITUDE, mediaInfo->latitude);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_LATITUDE);
-    ret = sourceFormat_->GetFloatValue(Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_LONGITUDE);
+    CheckAndGetValue(sourceFormat_, Tag::MEDIA_CREATION_TIME, mediaInfo->creationTime);
+    CheckAndGetValue(sourceFormat_, Tag::MEDIA_DURATION, mediaInfo->codecInfo.duration);
+    CheckAndGetValue(sourceFormat_, Tag::MEDIA_LATITUDE, mediaInfo->latitude);
+    CheckAndGetValue(sourceFormat_, Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
 }
 
 MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
@@ -147,61 +132,44 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
 {
     DP_DEBUG_LOG("entered.");
     auto& format = trackFormat.format;
-    auto ret = format->GetStringValue(Tag::MIME_TYPE, mediaInfo->codecInfo.mimeType);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MIME_TYPE);
+    CheckAndGetValue(format, Tag::MIME_TYPE, mediaInfo->codecInfo.mimeType);
+    CheckAndGetValue(format, Tag::MEDIA_PROFILE, mediaInfo->codecInfo.profile);
+    CheckAndGetValue(format, Tag::MEDIA_LEVEL, mediaInfo->codecInfo.level);
+    CheckAndGetValue(format, Tag::VIDEO_WIDTH, mediaInfo->codecInfo.width);
+    CheckAndGetValue(format, Tag::VIDEO_HEIGHT, mediaInfo->codecInfo.height);
+    CheckAndGetValue(format, Tag::VIDEO_ROTATION, mediaInfo->codecInfo.rotation);
+    CheckAndGetValue(format, Tag::VIDEO_ENCODE_BITRATE_MODE, mediaInfo->codecInfo.bitMode);
+    CheckAndGetValue(format, Tag::MEDIA_BITRATE, mediaInfo->codecInfo.bitRate);
 
     int32_t intVal {DEFAULT_INT_VAL};
-    ret = format->GetIntValue(Tag::VIDEO_COLOR_RANGE, intVal);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_COLOR_RANGE);
-    if (intVal != DEFAULT_INT_VAL) {
+    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_RANGE, intVal)) {
         mediaInfo->codecInfo.colorRange = static_cast<ColorRange>(intVal);
     }
-    ret = format->GetIntValue(Tag::VIDEO_PIXEL_FORMAT, intVal);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_PIXEL_FORMAT);
-    if (intVal != DEFAULT_INT_VAL) {
-        mediaInfo->codecInfo.pixelFormat = static_cast<PixelFormat>(intVal);
+    if (CheckAndGetValue(format, Tag::VIDEO_PIXEL_FORMAT, intVal)) {
+        mediaInfo->codecInfo.pixelFormat = static_cast<Media::Plugins::VideoPixelFormat>(intVal);
     }
-    ret = format->GetIntValue(Tag::VIDEO_COLOR_PRIMARIES, intVal);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_COLOR_PRIMARIES);
-    if (intVal != DEFAULT_INT_VAL) {
-        mediaInfo->codecInfo.colorPrimary = static_cast<ColorPrimaries>(intVal);
+    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_PRIMARIES, intVal)) {
+        mediaInfo->codecInfo.colorPrimary = static_cast<Media::Plugins::ColorPrimary>(intVal);
     }
-    ret = format->GetIntValue(Tag::VIDEO_COLOR_TRC, intVal);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_COLOR_TRC);
-    if (intVal != DEFAULT_INT_VAL) {
-        mediaInfo->codecInfo.colorTransferCharacter = static_cast<ColorTransferCharacteristic>(intVal);
+    if (CheckAndGetValue(format, Tag::VIDEO_COLOR_TRC, intVal)) {
+        mediaInfo->codecInfo.colorTransferCharacter = static_cast<Media::Plugins::TransferCharacteristic>(intVal);
     }
-    ret = format->GetIntValue(Tag::VIDEO_IS_HDR_VIVID,  mediaInfo->codecInfo.isHdrvivid);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_IS_HDR_VIVID);
-    ret = format->GetIntValue(Tag::MEDIA_PROFILE, mediaInfo->codecInfo.profile);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_PROFILE);
-    ret = format->GetIntValue(Tag::MEDIA_LEVEL, mediaInfo->codecInfo.level);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_LEVEL);
-    ret = format->GetIntValue(Tag::VIDEO_WIDTH, mediaInfo->codecInfo.width);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_WIDTH);
-    ret = format->GetIntValue(Tag::VIDEO_HEIGHT, mediaInfo->codecInfo.height);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_HEIGHT);
-    ret = format->GetIntValue(Tag::VIDEO_ROTATION, mediaInfo->codecInfo.rotation);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_ROTATION);
-    ret = format->GetIntValue(Tag::VIDEO_ENCODE_BITRATE_MODE, mediaInfo->codecInfo.bitMode);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_ENCODE_BITRATE_MODE);
-    ret = format->GetLongValue(Tag::MEDIA_BITRATE, mediaInfo->codecInfo.bitRate);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_BITRATE);
+    if (CheckAndGetValue(format, Tag::VIDEO_IS_HDR_VIVID, intVal)) {
+        mediaInfo->codecInfo.isHdrvivid = static_cast<bool>(intVal);
+    }
 
     double doubleVal {DEFAULT_DOUBLE_VAL};
-    ret = format->GetDoubleValue(Tag::VIDEO_FRAME_RATE, doubleVal);
-    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::VIDEO_FRAME_RATE);
-    if (doubleVal !=DEFAULT_DOUBLE_VAL) {
+    if (CheckAndGetValue(format, Tag::VIDEO_FRAME_RATE, doubleVal)) {
         mediaInfo->codecInfo.fps = FixFPS(doubleVal);
     }
 
-    DP_DEBUG_LOG("colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
+    DP_INFO_LOG("colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
-        "fps: %{public}d, rotation: %{public}d, frame count: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
+        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
         mediaInfo->codecInfo.colorTransferCharacter, mediaInfo->codecInfo.profile, mediaInfo->codecInfo.level,
         mediaInfo->codecInfo.bitRate, mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
-        mediaInfo->codecInfo.numFrames, mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
+        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
     return OK;
 }
 
