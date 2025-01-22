@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,8 +21,9 @@
 #include "input/camera_device.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-
+#include "output/camera_output_capability.h"
 #include "session/aperture_video_session.h"
+#include "session/capture_scene_const.h"
 #include "session/capture_session.h"
 #include "session/fluorescence_photo_session.h"
 #include "session/high_res_photo_session.h"
@@ -41,35 +42,18 @@
 #include "session/time_lapse_photo_session.h"
 #include "session/video_session.h"
 
-#include "hcamera_service_callback_proxy.h"
-#include "hstream_repeat_proxy.h"
-#include "hstream_capture_callback_proxy.h"
-#include "hstream_repeat_callback_proxy.h"
-#include "hcapture_session_callback_proxy.h"
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
-#include "camera_output_capability.h"
 #include "camera_util.h"
-#include "capture_scene_const.h"
-#include "capture_session.h"
-#include "gtest/gtest.h"
 #include "hap_token_info.h"
-#include "hcamera_device.h"
-#include "hcamera_device_callback_proxy.h"
-#include "hcamera_device_proxy.h"
-#include "hcamera_service.h"
-#include "hcamera_service_stub.h"
-#include "ipc_skeleton.h"
-#include "iservice_registry.h"
 #include "nativetoken_kit.h"
 #include "parameter.h"
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_setproc.h"
-#include "video_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -332,6 +316,10 @@ public:
     std::shared_ptr<Profile> GetSketchPreviewProfile();
     Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
                                           camera_rational_t ratio, CameraFormat format);
+    std::optional<Profile> GetPreviewProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
+        uint32_t width, uint32_t height, CameraFormat previewFormat);
+    std::optional<VideoProfile> GetVideoProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
+        uint32_t width, uint32_t height, CameraFormat videoFormat, uint32_t maxFps);
     void GetSupportedOutputCapability();
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ConfigSlowMotionSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
@@ -353,11 +341,9 @@ public:
     int32_t videoWidth_;
     int32_t videoHeight_;
     sptr<CameraManager> manager_;
-    sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
     sptr<SlowMotionSession> slowMotionSession_;
-    sptr<CaptureSession> highResSession_;
     sptr<CaptureSession> videoSession_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;

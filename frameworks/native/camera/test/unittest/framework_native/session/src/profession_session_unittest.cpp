@@ -65,8 +65,6 @@ void ProfessionSessionUnitTest::TearDownTestCase(void)
 
 void ProfessionSessionUnitTest::SetUp()
 {
-    MEDIA_DEBUG_LOG("SetUp testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
     NativeAuthorization();
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);

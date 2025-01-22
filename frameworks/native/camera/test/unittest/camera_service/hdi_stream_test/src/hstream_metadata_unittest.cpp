@@ -17,8 +17,13 @@
 #include "hstream_metadata_unittest.h"
 #include "camera_service_ipc_interface_code.h"
 #include "test_common.h"
+#include "gmock/gmock.h"
+#include "hstream_metadata_callback_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
+using ::testing::Return;
+using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,6 +36,13 @@ void HStreamMetadataUnit::TearDownTestCase(void) {}
 void HStreamMetadataUnit::TearDown(void) {}
 
 void HStreamMetadataUnit::SetUp(void) {}
+
+class MockHStreamMetadataCallbackStub : public HStreamMetadataCallbackStub {
+public:
+    MOCK_METHOD2(OnMetadataResult, int32_t(const int32_t streamId,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result));
+    ~MockHStreamMetadataCallbackStub() {}
+};
 
 /*
  * Feature: Framework
@@ -111,6 +123,29 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level0)
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
     streamMetadata->LinkInput(streamOperator, metadata);
     streamMetadata->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
+ */
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level0)
+{
+    MockHStreamMetadataCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamMetadataCallbackInterfaceCode::CAMERA_META_OPERATOR_ON_RESULT;
+    EXPECT_CALL(stub, OnMetadataResult(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
 }
 }
 }

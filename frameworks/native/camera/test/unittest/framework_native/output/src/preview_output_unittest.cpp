@@ -30,10 +30,12 @@
 #include "input/camera_input.h"
 #include "ipc_skeleton.h"
 #include "nativetoken_kit.h"
+#include "parameters.h"
 #include "surface.h"
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "camera_rotation_api_utils.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -181,10 +183,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_002, TestSize.Level0)
     EXPECT_EQ(session->Start(), 0);
 
     sptr<CameraDevice> cameraObj = previewOutput->session_->GetInputDevice()->GetCameraDeviceInfo();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION);
-    int32_t value = 90;
-    metadata->addEntry(OHOS_SENSOR_ORIENTATION, &value, sizeof(int32_t));
+    cameraObj->cameraOrientation_ = 90;
     int32_t imageRotation = 90;
     bool isDisplayLocked = false;
     int32_t ret = previewOutput->SetPreviewRotation(imageRotation, isDisplayLocked);
@@ -325,6 +324,10 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_005, TestSize.Level0)
     ret = previewOutput->EnableSketch(isEnable);
     EXPECT_EQ(ret, CameraErrorCode::OPERATION_NOT_ALLOWED);
 
+    isEnable = false;
+    ret = previewOutput->EnableSketch(isEnable);
+    EXPECT_EQ(ret, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
     ret = previewOutput->StopSketch();
     EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
 
@@ -418,10 +421,16 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level0)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
 
     previewOutput->appCallback_ = nullptr;
+    sptr<PreviewOutputCallbackImpl> callback_test = new (std::nothrow) PreviewOutputCallbackImpl();
+    ASSERT_NE(callback_test, nullptr);
     sptr<PreviewOutputCallbackImpl> callback = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput);
     ASSERT_NE(callback, nullptr);
     EXPECT_EQ(callback->OnFrameStarted(), CAMERA_OK);
     EXPECT_EQ(callback->OnFrameError(0), CAMERA_OK);
+
+    if (callback_test) {
+        callback_test = nullptr;
+    }
 
     if (callback) {
         callback = nullptr;
@@ -543,6 +552,12 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level0)
     std::shared_ptr<PreviewStateCallback> getCallback = previewOutput->GetApplicationCallback();
     ASSERT_EQ(setCallback, getCallback);
 
+    std::shared_ptr<PreviewStateCallback> appCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    previewOutput->svcCallback_ = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput);
+    ASSERT_NE(previewOutput->svcCallback_, nullptr);
+    previewOutput->SetCallback(appCallback);
+
     pid_t pid = 0;
     previewOutput->CameraServerDied(pid);
 }
@@ -599,6 +614,15 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level0)
     eventString = "sketchStatusChanged";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
+
+    Size previewSize;
+    previewSize.width = 640;
+    previewSize.height = 480;
+    auto wrapper = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
+    previewOutput->sketchWrapper_ = wrapper;
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+    EXPECT_NE(previewOutput->sketchWrapper_, nullptr);
 
     preview->Release();
     input->Release();
@@ -694,11 +718,23 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level0)
 HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_015, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
 
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
 
-    auto previewOutput = (sptr<PreviewOutput>&)preview;
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_SENSOR_ORIENTATION);
@@ -731,6 +767,16 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level0)
     int32_t imageRotation = 640;
     int32_t ret = previewOutput->JudegRotationFunc(imageRotation);
     EXPECT_EQ(ret, INVALID_ARGUMENT);
+
+    imageRotation = 180;
+    ret = previewOutput->JudegRotationFunc(imageRotation);
+    bool isTableFlag = OHOS::system::GetBoolParameter("const.multimedia.enable_camera_rotation_compensation", 0);
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (isTableFlag && apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+        EXPECT_EQ(ret, 90);
+    } else {
+        EXPECT_EQ(ret, 180);
+    }
 }
 }
 }

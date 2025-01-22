@@ -21,7 +21,9 @@ ohos_unittest("camera_deferred_unittest") {
   include_dirs = [
     "./camera_deferred_base_test/include",
     "./camera_deferred_dfx_test/include",
+    "./camera_deferred_manager_test/include",
     "./camera_deferred_proc_test/include",
+    "./camera_deferred_post_processor_test/include",
     "./camera_deferred_schedule_test/include",
     "./camera_deferred_session_test/include",
     "./camera_deferred_utils_test/include",
@@ -82,6 +84,8 @@ ohos_unittest("camera_deferred_unittest") {
       "camera_deferred_base_test/src/camera_deferred_base_unittest.cpp",
       "camera_deferred_dfx_test/src/dps_event_report_unittest.cpp",
       "camera_deferred_dfx_test/src/dps_video_report_unittest.cpp",
+      "camera_deferred_manager_test/src/camera_deferred_manager_unittest.cpp",
+      "camera_deferred_post_processor_test/src/camera_deferred_post_processor_unittest.cpp",
       "camera_deferred_schedule_test/src/deferred_photo_job_unittest.cpp",
       "camera_deferred_schedule_test/src/deferred_photo_processor_stratety_unittest.cpp",
       "camera_deferred_schedule_test/src/deferred_photo_processor_unittest.cpp",
@@ -94,6 +98,7 @@ ohos_unittest("camera_deferred_unittest") {
   }
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",

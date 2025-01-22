@@ -17,8 +17,15 @@
 #include "camera_util.h"
 #include "hstream_capture_unittest.h"
 #include "ipc_skeleton.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
+#include "gmock/gmock.h"
+#include "hstream_capture_callback_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
+using ::testing::Return;
+using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -111,6 +118,18 @@ public:
     {
         return metaDescriptor_;
     }
+};
+
+class MockHStreamCaptureCallbackStub : public HStreamCaptureCallbackStub {
+public:
+    MOCK_METHOD1(OnCaptureStarted, int32_t(int32_t captureId));
+    MOCK_METHOD2(OnCaptureStarted, int32_t(int32_t captureId, uint32_t exposureTime));
+    MOCK_METHOD2(OnCaptureEnded, int32_t(int32_t captureId, int32_t frameCount));
+    MOCK_METHOD2(OnCaptureError, int32_t(int32_t captureId, int32_t errorType));
+    MOCK_METHOD2(OnFrameShutter, int32_t(int32_t captureId, uint64_t timestamp));
+    MOCK_METHOD2(OnFrameShutterEnd, int32_t(int32_t captureId, uint64_t timestamp));
+    MOCK_METHOD2(OnCaptureReady, int32_t(int32_t captureId, uint64_t timestamp));
+    ~MockHStreamCaptureCallbackStub() {}
 };
 
 void HStreamCaptureUnitTest::SetUpTestCase(void)
@@ -1449,6 +1468,113 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_029, TestSize.Level0
     streamCapture->DumpStreamInfo(infoDumper);
 
     EXPECT_EQ(streamCapture->Release(),  0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_030, TestSize.Level0)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2;
+    EXPECT_CALL(stub, OnCaptureStarted(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_031, TestSize.Level0)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED;
+    EXPECT_CALL(stub, OnCaptureEnded(_, _))
+        .WillOnce(Return(1));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level0)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR;
+    EXPECT_CALL(stub, OnCaptureError(_, _))
+        .WillOnce(Return(2));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture with abnormal branches
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_hstream_capture_001, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+
+    sptr<IStreamCaptureCallback> captureCallback = iface_cast<IStreamCaptureCallback>(object);
+    ASSERT_NE(captureCallback, nullptr);
+
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t captureId = 0;
+    int32_t frameCount = 0;
+    uint64_t timestamp = 0;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
+    EXPECT_EQ(streamCapture->SetCallback(captureCallback), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
 }
 }
 }

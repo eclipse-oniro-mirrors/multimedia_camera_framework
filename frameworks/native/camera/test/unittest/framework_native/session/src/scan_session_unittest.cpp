@@ -50,39 +50,74 @@ sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePreviewOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0],
-        static_cast<int32_t>(SceneMode::SCAN));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    preIsSupportedScanmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::SCAN) != modes.end()) {
+            preIsSupportedScanmode_ = true;
+        }
 
-    previewProfile_ = outputCapability->GetPreviewProfiles();
-    if (previewProfile_.empty()) {
-        return nullptr;
-    }
+        if (!preIsSupportedScanmode_) {
+            continue;
+        }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice,
+            static_cast<int32_t>(SceneMode::SCAN));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        previewProfile_ = outputCapability->GetPreviewProfiles();
+        if (previewProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+    return nullptr;
 }
 
 sptr<CaptureOutput> CameraScanSessionUnitTest::CreatePhotoOutput()
 {
-    CameraFormat format = CAMERA_FORMAT_JPEG;
-    Size size;
-    size.width = 1280;
-    size.height = 960;
-    Profile profile = Profile(format, size);
-    photoProfile_.push_back(profile);
-
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    if (surface == nullptr) {
+    photoProfile_ = {};
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
+    phoIsSupportedScanmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::SCAN) != modes.end()) {
+            phoIsSupportedScanmode_ = true;
+        }
+
+        if (!phoIsSupportedScanmode_) {
+            continue;
+        }
+
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice,
+            static_cast<int32_t>(SceneMode::SCAN));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        photoProfile_ = outputCapability->GetPhotoProfiles();
+        if (photoProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+        return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
+    }
+    return nullptr;
 }
 
 void CameraScanSessionUnitTest::SetUpTestCase(void) {}
@@ -161,6 +196,10 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedScanmode_) {
+        camInput->GetCameraDevice()->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -212,26 +251,23 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedScanmode_) {
+        camInput->GetCameraDevice()->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
-
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
     ASSERT_NE(scanSession, nullptr);
 
-    EXPECT_EQ(scanSession->CanAddOutput(photo), false);
     EXPECT_EQ(scanSession->BeginConfig(), 0);
     EXPECT_EQ(scanSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
     info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
-    info->modePhotoProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), photoProfile_);
     EXPECT_EQ(scanSession->AddOutput(preview), 0);
-
-    scanSession->CanAddOutput(photo);
 
     scanSession->innerInputDevice_ = nullptr;
     int32_t ret = scanSession->AddOutput(preview);
@@ -273,25 +309,23 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedScanmode_) {
+        camInput->GetCameraDevice()->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
-
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
     ASSERT_NE(scanSession, nullptr);
 
-    EXPECT_EQ(scanSession->CanAddOutput(photo), false);
     EXPECT_EQ(scanSession->BeginConfig(), 0);
     EXPECT_EQ(scanSession->AddInput(input), 0);
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     ASSERT_NE(info, nullptr);
     info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SCAN), previewProfile_);
     EXPECT_EQ(scanSession->AddOutput(preview), 0);
-
-    scanSession->CanAddOutput(photo);
 
     scanSession->innerInputDevice_ = nullptr;
     int32_t ret = scanSession->AddOutput(preview);

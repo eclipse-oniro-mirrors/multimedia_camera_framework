@@ -40,6 +40,7 @@ using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
 
 const uint32_t EXPIREATION_TIME_MILLI_SECONDS = 12 * 60 * 1000;
+const uint32_t ADD_TIME_MILLI_SECONDS = 10000;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -318,6 +319,122 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level
     DeferredProcessing::DPS_GetSchedulerManager();
     EXPECT_EQ(DeferredProcessing::DPS_Initialize(), 0);
     EXPECT_EQ(DeferredProcessing::DPS_Initialize(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test different branches of GetElapsedTimeMs
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test different branches of GetElapsedTimeMs
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level0)
+{
+    uint64_t startMs = 1;
+    uint64_t diff = DeferredProcessing::SteadyClock::GetElapsedTimeMs(startMs);
+    EXPECT_NE(diff, 0);
+    uint64_t curtime = DeferredProcessing::SteadyClock::GetTimestampMilli();
+    diff = DeferredProcessing::SteadyClock::GetElapsedTimeMs((curtime + ADD_TIME_MILLI_SECONDS));
+    EXPECT_EQ(diff, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the abnormal branch of DeregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the abnormal branch of DeregisterCallback
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level0)
+{
+    std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
+    ASSERT_NE(timeBroker, nullptr);
+    timeBroker->Initialize();
+    EXPECT_NE(timeBroker->timer_, nullptr);
+    uint32_t delayTimeMs = 1;
+    uint32_t handle = timeBroker->GenerateHandle();
+    std::function<void(uint32_t handle)> timerCallback = timeBroker->GetExpiredFunc(handle);
+    timeBroker->RegisterCallback(delayTimeMs, timerCallback, handle);
+    handle = 0;
+    timeBroker->DeregisterCallback(handle);
+    EXPECT_NE(timeBroker->timerInfos_.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TimerExpired when timeline is empty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TimerExpired when timeline is empty
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level0)
+{
+    std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
+    ASSERT_NE(timeBroker, nullptr);
+    timeBroker->Initialize();
+    timeBroker->timeline_ = std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>>();
+    EXPECT_TRUE((timeBroker->timeline_.empty()));
+    timeBroker->TimerExpired();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the branch when the active of timer is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the branch when the active of timer is true
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level0)
+{
+    uint64_t timestampMs = 0;
+    std::function<void()> timerCallback;
+    const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::ONCE, 0, timerCallback);
+    ASSERT_NE(timer, nullptr);
+    timer->active_ = true;
+    timer->StartAtUnlocked(timestampMs);
+    EXPECT_EQ(timer->expiredTimeMs_, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test TimerExpired
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test TimerExpired
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level0)
+{
+    std::function<void()> timerCallback;
+    const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::ONCE, 0, timerCallback);
+    ASSERT_NE(timer, nullptr);
+    timer->active_ = false;
+    timer->TimerExpired();
+    timer->active_ = true;
+    timer->TimerExpired();
+    EXPECT_FALSE(timer->active_);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the different branches of TimerExpired
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the different branches of TimerExpired
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level0)
+{
+    std::function<void()> timerCallback;
+    const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::PERIODIC, 0, timerCallback);
+    ASSERT_NE(timer, nullptr);
+    timer->active_ = true;
+    timer->TimerExpired();
+    EXPECT_TRUE(timer->active_);
 }
 
 } // CameraStandard

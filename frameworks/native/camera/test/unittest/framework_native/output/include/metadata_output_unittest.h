@@ -24,6 +24,21 @@
 namespace OHOS {
 namespace CameraStandard {
 
+class MetadataStateCallbackTest : public MetadataStateCallback {
+public:
+    MetadataStateCallbackTest() = default;
+    virtual ~MetadataStateCallbackTest() = default;
+    virtual void OnError(int32_t errorCode) const {};
+};
+
+class MetadataObjectCallbackTest : public MetadataObjectCallback {
+public:
+    MetadataObjectCallbackTest() = default;
+    virtual ~MetadataObjectCallbackTest() = default;
+    virtual void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const {};
+    virtual void OnError(int32_t errorCode) const {};
+};
+
 class CameraMetadataOutputUnit : public testing::Test {
 public:
     uint64_t tokenId_ = 0;

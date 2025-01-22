@@ -20,6 +20,9 @@
 #include "camera_service_ipc_interface_code.h"
 #include "surface_type.h"
 #include "gmock/gmock.h"
+#include "hstream_repeat_callback_stub.h"
+#include "hstream_repeat_stub.h"
+#include "camera_service_ipc_interface_code.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -86,6 +89,39 @@ public:
     MOCK_METHOD4(IsStreamsSupported_V1_1, int32_t(OHOS::HDI::Camera::V1_1::OperationMode_V1_1 mode,
         const std::vector<uint8_t>& modeSetting,
         const std::vector<StreamInfo_V1_1>& infos, StreamSupportType& type));
+};
+
+class MockHStreamRepeatStub : public HStreamRepeatStub {
+public:
+    MOCK_METHOD0(Start, int32_t());
+    MOCK_METHOD0(Stop, int32_t());
+    MOCK_METHOD1(SetCallback, int32_t(sptr<IStreamRepeatCallback>& callback));
+    MOCK_METHOD0(Release, int32_t());
+    MOCK_METHOD1(AddDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
+    MOCK_METHOD4(ForkSketchStreamRepeat, int32_t(
+        int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio));
+    MOCK_METHOD1(UpdateSketchRatio, int32_t(float sketchRatio));
+    MOCK_METHOD0(RemoveSketchStreamRepeat, int32_t());
+    MOCK_METHOD2(SetFrameRate, int32_t(int32_t minFrameRate, int32_t maxFrameRate));
+    MOCK_METHOD1(EnableSecure, int32_t(bool isEnable));
+    MOCK_METHOD1(SetMirror, int32_t(bool isEnable));
+    MOCK_METHOD2(AttachMetaSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType));
+    MOCK_METHOD2(SetCameraRotation, int32_t(bool isEnable, int32_t rotation));
+    MOCK_METHOD1(ToggleAutoVideoFrameRate, int32_t(bool isEnable));
+    MOCK_METHOD1(OperatePermissionCheck, int32_t(uint32_t interfaceCode));
+    MOCK_METHOD1(GetMirror, int32_t(bool& isEnable));
+    MOCK_METHOD1(SetCameraApi, int32_t(uint32_t apiCompatibleVersion));
+    ~MockHStreamRepeatStub() {}
+};
+
+class MockHStreamRepeatCallbackStub : public HStreamRepeatCallbackStub {
+public:
+    MOCK_METHOD0(OnFrameStarted, int32_t());
+    MOCK_METHOD1(OnFrameEnded, int32_t(int32_t frameCount));
+    MOCK_METHOD1(OnFrameError, int32_t(int32_t errorCode));
+    MOCK_METHOD1(OnSketchStatusChanged, int32_t(SketchStatus status));
+    MOCK_METHOD1(OnDeferredVideoEnhancementInfo, int32_t(CaptureEndedInfoExt captureEndedInfo));
+    ~MockHStreamRepeatCallbackStub() {}
 };
 
 void HStreamRepeatUnit::SetUpTestCase(void) {}
@@ -1015,6 +1051,98 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level0)
     StreamInfo_V1_1 streamInfo;
     streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
     streamRepeat->SetStreamInfo(streamInfo);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_REPEAT_ON_ERROR
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level0)
+{
+    MockHStreamRepeatCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_ERROR;
+    EXPECT_CALL(stub, OnFrameError(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_STREAM_MIRROR
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level0)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR;
+    EXPECT_CALL(stub, SetMirror(_))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_SECURE_STREAM
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level0)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM;
+    EXPECT_CALL(stub, EnableSecure(_))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_FRAME_RANGE_SET
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level0)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET;
+    EXPECT_CALL(stub, SetFrameRate(_, _))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
 }
 }
 }

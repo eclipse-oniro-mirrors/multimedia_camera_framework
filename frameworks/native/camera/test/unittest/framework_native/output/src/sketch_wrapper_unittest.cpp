@@ -510,6 +510,8 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Le
     EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag1, item), 0);
     const camera_device_metadata_tag_t tag2 = OHOS_CONTROL_CAMERA_MACRO;
     EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag2, item), CAM_META_SUCCESS);
+    const camera_device_metadata_tag_t tag3 = OHOS_CONTROL_MOON_CAPTURE_BOOST;
+    EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag3, item), CAM_META_SUCCESS);
 }
 }
 }

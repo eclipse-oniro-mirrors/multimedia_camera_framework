@@ -38,6 +38,7 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
 using namespace OHOS::HDI::Camera::V1_1;
 
 void CameraPhotoProxyUnit::SetUpTestCase(void) {}
@@ -96,6 +97,105 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_001, TestSize.Level0)
     double longitude = 1;
     proxy_1->SetLocation(latitude, longitude);
     EXPECT_EQ(proxy_1->longitude_, longitude);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test CameraPhotoProxy with CameraFreeBufferHandle of abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraPhotoProxy with CameraFreeBufferHandle of abnormal branches
+ */
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_002, TestSize.Level0)
+{
+    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
+
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = -1;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = -1;
+    }
+    proxy->bufferHandle_ = handle;
+    int32_t ret = proxy->CameraFreeBufferHandle();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraPhotoProxy with CameraFreeBufferHandle of normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraPhotoProxy with CameraFreeBufferHandle of normal branches
+ */
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_003, TestSize.Level0)
+{
+    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
+
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = 0;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = 0;
+    }
+    proxy->bufferHandle_ = handle;
+    int32_t ret = proxy->CameraFreeBufferHandle();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraPhotoProxy with WriteToParcel when bufferHandle is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraPhotoProxy with WriteToParcel when bufferHandle is nullptr
+ */
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_005, TestSize.Level0)
+{
+    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
+
+    proxy->bufferHandle_ = nullptr;
+    proxy->format_ = 0;
+    MessageParcel parcel;
+    proxy->WriteToParcel(parcel);
+    proxy->ReadFromParcel(parcel);
+    EXPECT_NE(proxy->format_, 16);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraPhotoProxy with WriteToParcel when bufferHandle is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraPhotoProxy with WriteToParcel when bufferHandle is not nullptr
+ */
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_006, TestSize.Level0)
+{
+    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
+
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = 0;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = 0;
+    }
+    proxy->bufferHandle_ = handle;
+    proxy->format_ = 0;
+    MessageParcel parcel;
+    proxy->WriteToParcel(parcel);
+    proxy->ReadFromParcel(parcel);
+    EXPECT_NE(proxy->format_, 16);
 }
 
 }

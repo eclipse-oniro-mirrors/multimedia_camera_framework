@@ -43,21 +43,34 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePreviewOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], static_cast<int32_t>(NIGHT));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    preIsSupportedNighitmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
+            preIsSupportedNighitmode_ = true;
+        }
 
-    previewProfile_ = outputCapability->GetPreviewProfiles();
-    if (previewProfile_.empty()) {
-        return nullptr;
-    }
+        if (!preIsSupportedNighitmode_) {
+            continue;
+        }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice, static_cast<int32_t>(NIGHT));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        previewProfile_ = outputCapability->GetPreviewProfiles();
+        if (previewProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
     }
-    return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+    return nullptr;
 }
 
 sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
@@ -67,22 +80,35 @@ sptr<CaptureOutput> CameraNightSessionUnit::CreatePhotoOutput()
     if (!cameraManager_ || cameras.empty()) {
         return nullptr;
     }
-    auto outputCapability = cameraManager_->GetSupportedOutputCapability(cameras[0], static_cast<int32_t>(NIGHT));
-    if (!outputCapability) {
-        return nullptr;
-    }
+    phoIsSupportedNighitmode_ = false;
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager_->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::NIGHT) != modes.end()) {
+            phoIsSupportedNighitmode_ = true;
+        }
 
-    photoProfile_ = outputCapability->GetPhotoProfiles();
-    if (photoProfile_.empty()) {
-        return nullptr;
-    }
+        if (!phoIsSupportedNighitmode_) {
+            continue;
+        }
 
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    if (surface == nullptr) {
-        return nullptr;
+        auto outputCapability = cameraManager_->GetSupportedOutputCapability(camDevice, static_cast<int32_t>(NIGHT));
+        if (!outputCapability) {
+            return nullptr;
+        }
+
+        photoProfile_ = outputCapability->GetPhotoProfiles();
+        if (photoProfile_.empty()) {
+            return nullptr;
+        }
+
+        sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+        if (surface == nullptr) {
+            return nullptr;
+        }
+        sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+        return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
     }
-    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    return cameraManager_->CreatePhotoOutput(photoProfile_[0], surfaceProducer);
+    return nullptr;
 }
 
 void CameraNightSessionUnit::SetUpTestCase(void) {}
@@ -151,8 +177,16 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
@@ -207,8 +241,16 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
@@ -262,8 +304,16 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level0)
     camInput->GetCameraDevice()->Open();
 
     sptr<CaptureOutput> preview = CreatePreviewOutput();
+    if (!preIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
+    if (!phoIsSupportedNighitmode_) {
+        input->Close();
+        return;
+    }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);

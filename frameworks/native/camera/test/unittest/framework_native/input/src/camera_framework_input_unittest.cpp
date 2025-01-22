@@ -29,11 +29,24 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "input/camera_service_system_ability_listener.h"
+#include "utils/camera_rotation_api_utils.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+
+class CameraOcclusionDetectCallbackTest : public CameraOcclusionDetectCallback {
+public:
+    CameraOcclusionDetectCallbackTest() = default;
+    ~CameraOcclusionDetectCallbackTest() = default;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const
+    {
+        MEDIA_INFO_LOG("CameraOcclusionDetectCallbackTest::OnCameraOcclusionDetected called %{public}d %{public}d",
+            isCameraOcclusion, isCameraLensDirty);
+    }
+};
 
 void CameraFrameworkInputUnit::SetUpTestCase(void) {}
 
@@ -430,6 +443,298 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_012, TestSize
     ASSERT_EQ(retCode, CameraErrorCode::SUCCESS);
     camInput->SwitchCameraDevice(deviceObj, cameras[0]);
     EXPECT_EQ(camInput->cameraObj_, cameras[0]);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMetaSetting with existing metaTag.
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_013, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+
+    sptr<CameraDevice> cameraObject = camInput->GetCameraDeviceInfo();
+    cameraObject->cachedMetadata_ = std::make_shared<OHOS::Camera::CameraMetadata>(10, 100);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
+    std::vector<int32_t> testStreamInfo = { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0 };
+    baseMetadata->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS,
+        testStreamInfo.data(), testStreamInfo.size());
+
+    std::shared_ptr<camera_metadata_item_t> metadataItem = nullptr;
+    metadataItem = camInput->GetMetaSetting(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
+    ASSERT_NE(metadataItem, nullptr);
+
+    std::vector<vendorTag_t> infos = {};
+    camInput->GetCameraAllVendorTags(infos);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CameraDevice> camdeviceObj = nullptr;
+    sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj, camdeviceObj);
+    ASSERT_NE(camInput_1, nullptr);
+    metadataItem = camInput_1->GetMetaSetting(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
+    EXPECT_EQ(metadataItem, nullptr);
+    metadataItem = camInput->GetMetaSetting(-1);
+    EXPECT_EQ(metadataItem, nullptr);
+
+    if (cameras.size() > 1) {
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[1]->GetMetadata();
+        std::string cameraId = cameras[1]->GetID();
+        sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, metadata);
+        ASSERT_NE(camdeviceObj_2, nullptr);
+    }
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test camera service system ability
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camera service system ability
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_014, TestSize.Level0)
+{
+    auto cameraListener =
+        new(std::nothrow) CameraServiceSystemAbilityListener();
+    ASSERT_NE(cameraListener, nullptr);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    std::string deviceId = "";
+    cameraListener->OnAddSystemAbility(0, deviceId);
+    EXPECT_EQ(deviceId, "");
+
+    cameraListener->OnRemoveSystemAbility(0, deviceId);
+    EXPECT_EQ(deviceId, "");
+    cameraListener = nullptr;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraDevice structure with metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraDevice structure with metadata
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_015, TestSize.Level0)
+{
+    std::string cameraID = "cam01";
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
+    dmDeviceInfo deviceInfo;
+
+    CameraDevice device1(cameraID, metadata);
+    EXPECT_EQ(device1.GetMetadata(), nullptr);
+    CameraDevice device2(cameraID, metadata, deviceInfo);
+    EXPECT_EQ(device2.GetMetadata(), nullptr);
+
+    int32_t itemCount = 1;
+    int32_t dataSize = 1024;
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    CameraDevice device3(cameraID, metadata);
+    EXPECT_NE(device3.GetMetadata(), nullptr);
+    CameraDevice device4(cameraID, metadata, deviceInfo);
+    EXPECT_NE(device4.GetMetadata(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraDevice structure with GetPosition
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraDevice structure with GetPosition
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraDevice> camera = cameras[0];
+    ASSERT_NE(camera, nullptr);
+
+    camera->cameraPosition_ = CAMERA_POSITION_FRONT;
+    camera->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
+    CameraPosition cameraPosition = camera->GetPosition();
+
+    uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
+        EXPECT_EQ(cameraPosition, CAMERA_POSITION_FOLD_INNER);
+    } else {
+        EXPECT_EQ(cameraPosition, CAMERA_POSITION_FRONT);
+    }
+
+    camera->SetCameraDeviceUsedAsPosition(cameraPosition);
+    EXPECT_EQ(camera->GetUsedAsPosition(), cameraPosition);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput Open and Close with camera device is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput Open and Close with camera device is nullptr
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_017, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    input->SetCameraDevice(deviceObj);
+    EXPECT_EQ(input->GetCameraDevice(), deviceObj);
+
+    bool isEnableSecureCamera = false;
+    uint64_t secureSeqId = 0;
+    EXPECT_EQ(input->Open(isEnableSecureCamera, &secureSeqId), SERVICE_FATL_ERROR);
+    EXPECT_EQ(input->Close(), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput with camera device service on result when set occlusion detect call back
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput with camera device service on result when set occlusion detect call back
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_018, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback = nullptr;
+    input->SetOcclusionDetectCallback(cameraOcclusionDetectCallback);
+    EXPECT_EQ(input->GetOcclusionDetectCallback(), nullptr);
+
+    cameraOcclusionDetectCallback = std::make_shared<CameraOcclusionDetectCallbackTest>();
+    input->SetOcclusionDetectCallback(cameraOcclusionDetectCallback);
+    EXPECT_NE(input->GetOcclusionDetectCallback(), nullptr);
+
+    std::shared_ptr<CameraDeviceServiceCallback> cameraDeviceServiceCallback_test =
+        std::make_shared<CameraDeviceServiceCallback>();
+    EXPECT_NE(cameraDeviceServiceCallback_test, nullptr);
+
+    std::shared_ptr<CameraDeviceServiceCallback> cameraDeviceServiceCallback =
+        std::make_shared<CameraDeviceServiceCallback>(input);
+    EXPECT_NE(cameraDeviceServiceCallback, nullptr);
+    uint64_t timestamp = 10;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
+    EXPECT_EQ(cameraDeviceServiceCallback->OnResult(timestamp, metadata), CAMERA_INVALID_ARG);
+
+    const int32_t DEFAULT_ITEMS = 10;
+    const int32_t DEFAULT_DATA_LENGTH = 100;
+    int32_t count = 1;
+    int32_t isOcclusionDetected = 1;
+    int32_t isLensDirtyDetected = 1;
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    ASSERT_TRUE(metadata->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count));
+    EXPECT_EQ(cameraDeviceServiceCallback->OnResult(timestamp, metadata), CAMERA_OK);
+
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    ASSERT_TRUE(metadata->addEntry(OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &isLensDirtyDetected, count));
+    EXPECT_EQ(cameraDeviceServiceCallback->OnResult(timestamp, metadata), CAMERA_OK);
+
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    ASSERT_TRUE(metadata->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count));
+    ASSERT_TRUE(metadata->addEntry(OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &isLensDirtyDetected, count));
+    EXPECT_EQ(cameraDeviceServiceCallback->OnResult(timestamp, metadata), CAMERA_OK);
+
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    input->SetCameraDevice(deviceObj);
+    EXPECT_EQ(input->GetCameraDevice(), nullptr);
+    EXPECT_EQ(cameraDeviceServiceCallback->OnResult(timestamp, metadata), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with set profile when cameraDevice or supported mode is null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager with set profile when cameraDevice or supported mode is null
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_019, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CameraDevice> device1 = cameras[0];
+    ASSERT_NE(device1, nullptr);
+
+    std::string cameraID = "cam01";
+    int32_t itemCount = 1;
+    int32_t dataSize = 1024;
+    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    sptr<CameraDevice> device2 = new CameraDevice(cameraID, metadata);
+    ASSERT_NE(device2, nullptr);
+
+    sptr<CameraDevice> device3 = nullptr;
+
+    std::vector<sptr<CameraDevice>> cameraDevices;
+    cameraDevices.push_back(device1);
+    cameraDevices.push_back(device2);
+    cameraDevices.push_back(device3);
+
+    cameraManager_->SetProfile(cameraDevices[0], metadata);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager with GetSupportedCamerasWithFoldStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager with GetSupportedCamerasWithFoldStatus
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    cameraManager_->foldScreenType_ = "1";
+    ASSERT_TRUE(cameraManager_->GetIsFoldable());
+
+    ASSERT_FALSE(cameraManager_->GetSupportedCamerasWithFoldStatus().empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraDevice with GetCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraDevice with GetCameraOrientation for invoke
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    cameras[0]->cameraOrientation_ = 1;
+    EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
 }
 }
 }

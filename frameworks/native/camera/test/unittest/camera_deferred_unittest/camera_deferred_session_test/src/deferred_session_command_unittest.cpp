@@ -15,12 +15,15 @@
 
 #include "deferred_session_command_unittest.h"
 #include "deferred_video_processing_session_callback_proxy.h"
+#include "deferred_photo_processing_session_callback_proxy.h"
 #include "dps.h"
 #include "iremote_object.h"
 #include "session_command.h"
 #include "sync_command.h"
 #include "video_command.h"
+#include "photo_command.h"
 #include "video_session_info.h"
+#include "dp_log.h"
 
 using namespace testing::ext;
 
@@ -46,6 +49,7 @@ void DeferredSessionCommandUnitTest::TearDown(void)
     videoInfoMap_.clear();
     processor_ = nullptr;
     sessionInfo_ = nullptr;
+    photoSessionInfo_ = nullptr;
 }
 
 void DeferredSessionCommandUnitTest::PrepareFd()
@@ -88,6 +92,11 @@ void DeferredSessionCommandUnitTest::InitSessionInfo(int32_t userId)
     ASSERT_NE(cb, nullptr);
     sessionInfo_ = sptr<VideoSessionInfo>::MakeSptr(userId, cb);
     ASSERT_NE(sessionInfo_, nullptr);
+    sptr<DeferredPhotoProcessingSessionCallbackProxy> photoCb =
+        sptr<DeferredPhotoProcessingSessionCallbackProxy>::MakeSptr(remoteObj);
+    ASSERT_NE(photoCb, nullptr);
+    photoSessionInfo_ = sptr<PhotoSessionInfo>::MakeSptr(userId, photoCb);
+    ASSERT_NE(photoSessionInfo_, nullptr);
 }
 
 /*
@@ -307,6 +316,138 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_009, 
     InitProcessor(USER_ID);
     schedulerManager->videoProcessors_[USER_ID] = processor_;
     EXPECT_EQ(restoreVideoCmd->Executing(), DP_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Tests the execution of the sessionCommand when the dps is not initialized
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Tests the execution of the sessionCommand when the dps is not initialized
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_010, TestSize.Level0)
+{
+    InitSessionInfo(USER_ID);
+    AddVideoSessionCommand addVideoSessionCommand(sessionInfo_);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    int32_t ret = addVideoSessionCommand.Initialize();
+    EXPECT_EQ(ret, DP_NULL_POINTER);
+    ret = addVideoSessionCommand.Executing();
+    EXPECT_EQ(ret, 1);
+    DeleteVideoSessionCommand deletePhotoSessionCommand(sessionInfo_);
+    ret = deletePhotoSessionCommand.Executing();
+    EXPECT_EQ(ret, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Tests the execution of the syncCommand when the dps is not initialized
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Tests the execution of the syncCommand when the dps is not initialized
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, TestSize.Level0)
+{
+    std::string videoId = "testVideoId";
+    PrepareVideoInfo(videoId);
+
+    std::shared_ptr<VideoSyncCommand> syncCommand =
+        std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
+    ASSERT_NE(syncCommand, nullptr);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    int32_t ret = syncCommand->Initialize();
+    EXPECT_EQ(ret, DP_NULL_POINTER);
+    ret = syncCommand->Executing();
+    EXPECT_EQ(ret, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Tests the execution of the videoCommand when the dps is not initialized
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Tests the execution of the videoCommand when the dps is not initialized
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level0)
+{
+    std::string videoId = "testVideoId";
+    PrepareFd();
+
+    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, srcFd_, dstFd_);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    EXPECT_EQ(addVideoCmd->Initialize(), DP_NULL_POINTER);
+    EXPECT_EQ(addVideoCmd->Executing(), 1);
+    std::shared_ptr<RestoreVideoCommand> restoreVideoCmd = std::make_shared<RestoreVideoCommand>(USER_ID, videoId);
+    EXPECT_EQ(restoreVideoCmd->Executing(), 1);
+    std::shared_ptr<RemoveVideoCommand> removeVideoCmd = std::make_shared<RemoveVideoCommand>(USER_ID, videoId, true);
+    EXPECT_EQ(removeVideoCmd->Executing(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal functions in class RestorePhotoCommand and RemovePhotoCommand
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal functions in class RestorePhotoCommand and RemovePhotoCommand
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, TestSize.Level0)
+{
+    std::string photoId = "testPhotoId";
+    DpsMetadata metadata;
+    std::shared_ptr<AddPhotoCommand> addPhotoCmd = std::make_shared<AddPhotoCommand>(USER_ID, photoId, metadata, true);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    EXPECT_EQ(addPhotoCmd->Executing(), 1);
+    std::shared_ptr<RestorePhotoCommand> restorePhotoCmd = std::make_shared<RestorePhotoCommand>(USER_ID, photoId);
+    EXPECT_EQ(restorePhotoCmd->Executing(), 1);
+    std::shared_ptr<RemovePhotoCommand> removePhotoCmd = std::make_shared<RemovePhotoCommand>(USER_ID, photoId, true);
+    EXPECT_EQ(removePhotoCmd->Executing(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal functions in class ProcessPhotoCommand and CancelProcessPhotoCommand
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal functions in class ProcessPhotoCommand and CancelProcessPhotoCommand
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_014, TestSize.Level0)
+{
+    std::string photoId = "testPhotoId";
+    std::string appName = "com.cameraFwk.ut";
+    std::shared_ptr<ProcessPhotoCommand> processPhotoCommand =
+        std::make_shared<ProcessPhotoCommand>(USER_ID, photoId, appName);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    EXPECT_EQ(processPhotoCommand->Executing(), 1);
+    std::shared_ptr<CancelProcessPhotoCommand> cancelPhotoCmd =
+        std::make_shared<CancelProcessPhotoCommand>(USER_ID, photoId);
+    EXPECT_EQ(cancelPhotoCmd->Executing(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test abnormal functions in class addPhotoSessionCommand and deletePhotoSessionCommand
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal functions in class addPhotoSessionCommand and deletePhotoSessionCommand
+ */
+HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_015, TestSize.Level0)
+{
+    InitSessionInfo(USER_ID);
+    AddPhotoSessionCommand addPhotoSessionCommand(photoSessionInfo_);
+    OHOS::CameraStandard::DeferredProcessing::DPS_Destroy();
+    int32_t ret = addPhotoSessionCommand.Initialize();
+    EXPECT_EQ(ret, DP_NULL_POINTER);
+    ret = addPhotoSessionCommand.Executing();
+    EXPECT_EQ(ret, 1);
+    DeletePhotoSessionCommand deletePhotoSessionCommand(photoSessionInfo_);
+    ret = deletePhotoSessionCommand.Executing();
+    EXPECT_EQ(ret, 1);
 }
 
 } // namespace DeferredProcessing

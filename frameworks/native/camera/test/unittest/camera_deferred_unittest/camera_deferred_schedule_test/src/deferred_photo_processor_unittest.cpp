@@ -23,6 +23,8 @@
 #include "deferred_photo_controller.h"
 #include "deferred_photo_processor.h"
 #include "deferred_photo_processor_unittest.h"
+#include "dps_metadata_info.h"
+#include "basic_definitions.h"
 
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -197,7 +199,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, 
     ASSERT_NE(postProcessor, nullptr);
     auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
     ASSERT_NE(processor, nullptr);
-    ASSERT_NE(processor, nullptr);
     auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
     ASSERT_NE(controller, nullptr);
     controller->Initialize();
@@ -248,7 +249,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, 
     ASSERT_NE(postProcessor, nullptr);
     auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
     ASSERT_NE(processor, nullptr);
-    ASSERT_NE(processor, nullptr);
     auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
     ASSERT_NE(controller, nullptr);
     controller->Initialize();
@@ -283,7 +283,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, 
     ASSERT_NE(postProcessor, nullptr);
     auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
     ASSERT_NE(processor, nullptr);
-    ASSERT_NE(processor, nullptr);
     auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
     ASSERT_NE(controller, nullptr);
     controller->Initialize();
@@ -301,5 +300,89 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, 
     controller->photoJobRepository_->runningNum_ = 1;
     controller->TryDoSchedule();
 }
+
+/*
+ * Feature: Deferred
+ * Function: Test DeferredPhotoProcessor IsFatalError
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFatalError for different errorCode
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, TestSize.Level0)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    DpsError errorCode = DpsError::DPS_ERROR_IMAGE_PROC_FAILED;
+    EXPECT_TRUE(processor->IsFatalError(errorCode));
+    errorCode = DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID;
+    EXPECT_TRUE(processor->IsFatalError(errorCode));
+    errorCode = DpsError::DPS_ERROR_SESSION_SYNC_NEEDED;
+    EXPECT_FALSE(processor->IsFatalError(errorCode));
+}
+
+/*
+ * Feature: Deferred
+ * Function: Test NotifyMediaLibStatusChanged
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyMediaLibStatusChanged
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, TestSize.Level0)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
+    ASSERT_NE(controller, nullptr);
+    controller->Initialize();
+
+    controller->NotifyMediaLibStatusChanged(MediaLibraryStatus::MEDIA_LIBRARY_DISCONNECTED);
+    controller->NotifyMediaLibStatusChanged(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
+    EXPECT_EQ(controller->userInitiatedStrategy_->mediaLibraryStatus_, MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
+    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
+}
+
+/*
+ * Feature: Deferred
+ * Function: Test process image and cancel process image
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test process image and cancel process image
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, TestSize.Level0)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    processor->Initialize();
+    std::string imageId = "test1";
+    DpsMetadata metadata;
+    bool discardable = true;
+    processor->AddImage(imageId, discardable, metadata);
+    std::string appName = "com.cameraFwk.ut";
+    processor->ProcessImage(appName, imageId);
+    processor->CancelProcessImage(imageId);
+    EXPECT_TRUE(processor->requestedImages_.empty());
+}
+
 } // CameraStandard
 } // OHOS

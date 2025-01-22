@@ -79,6 +79,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize
     manager = taskManager->GetEncoderManager();
     ASSERT_NE(manager, nullptr);
     taskManager->SubmitTask(MyFunction);
+    taskManager->videoEncoder_ = nullptr;
+    taskManager->audioEncoder_ = make_unique<AudioEncoder>();
 }
 
 /*
@@ -101,15 +103,17 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize
     int32_t captureId = 1;
     taskManager->DoMuxerVideo(frameRecords, taskName, captureRotation, captureId);
     EXPECT_TRUE(frameRecords.empty());
+    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type);
+    taskManager->audioEncoder_ = nullptr;
 }
 
 /*
  * Feature: Framework
- * Function: Test CollectAudioBuffer normal branches.
+ * Function: Test CollectAudioBuffer abnormal branches.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test CollectAudioBuffer normal branches.
+ * CaseDescription: Test CollectAudioBuffer abnormal branches.
  */
 HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize.Level0)
 {
@@ -122,45 +126,11 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
     int64_t shutterTime = 1;
     int32_t captureId = 1;
     taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
+    EXPECT_EQ(choosedBuffer.size(), 0);
     vector<sptr<AudioRecord>> audioRecordVec;
     sptr<AudioVideoMuxer> muxer;
     taskManager->CollectAudioBuffer(audioRecordVec, muxer);
-}
-
-/*
- * Feature: Framework
- * Function: Test Release abnormal branches while videoEncoder_ is nullptr.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Release abnormal branches while videoEncoder_ is nullptr.
- */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level0)
-{
-    sptr<AudioCapturerSession> session = new AudioCapturerSession();
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
-
-    taskManager->videoEncoder_ = nullptr;
-    taskManager->audioEncoder_ = make_unique<AudioEncoder>();
-}
-
-/*
- * Feature: Framework
- * Function: Test Release abnormal branches while audioEncoder_ is nullptr.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Release abnormal branches while audioEncoder_ is nullptr.
- */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level0)
-{
-    sptr<AudioCapturerSession> session = new AudioCapturerSession();
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
-
-    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type);
-    taskManager->audioEncoder_ = nullptr;
+    EXPECT_EQ(audioRecordVec.size(), 0);
 }
 
 /*
@@ -171,7 +141,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while videoEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_006, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -191,7 +161,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_006, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while audioEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_007, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;

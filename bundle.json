@@ -91,29 +91,22 @@
 
           "inner_kits": [
             {
-              "type": "none",
+              "type": "so",
               "name": "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
               "header": {
-                "header_base": [
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/deferred_proc_session",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils"
-                ],
+                "header_base": "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
                 "header_files": [
-                  "camera_info.h",
-                  "camera_input.h",
-                  "camera_manager.h",
-                  "capture_input.h",
-                  "capture_output.h",
-                  "metadata_output.h",
-                  "photo_output.h",
-                  "preview_output.h",
-                  "video_output.h",
-                  "capture_session.h",
-                  "deferred_photo_proc_session.h",
-                  "dps_metadata_info.h"
+                  "input/camera_input.h",
+                  "input/camera_manager.h",
+                  "input/capture_input.h",
+                  "output/capture_output.h",
+                  "output/metadata_output.h",
+                  "output/photo_output.h",
+                  "output/preview_output.h",
+                  "output/video_output.h",
+                  "session/capture_session.h",
+                  "deferred_proc_session/deferred_photo_proc_session.h",
+                  "utils/dps_metadata_info.h"
                 ]
               }
             },
@@ -161,7 +154,6 @@
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_deferred_video_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_format_YUV_moduletest",
-            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_moving_photo_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_session_moduletest",
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest/camera_deferred_unittest:camera_deferred_unittest",

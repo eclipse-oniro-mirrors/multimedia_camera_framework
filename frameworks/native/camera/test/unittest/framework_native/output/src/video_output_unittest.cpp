@@ -566,5 +566,54 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level0)
     ret = video->SetRotation(rotation);
     EXPECT_EQ(ret, SERVICE_FATL_ERROR);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test VideoOutput with IsAutoVideoFrameRateSupported, EnableAutoVideoFrameRate.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsAutoVideoFrameRateSupported, EnableAutoVideoFrameRate for just call.
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_001, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager_->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+    video->session_ = nullptr;
+    EXPECT_FALSE(video->IsAutoVideoFrameRateSupported());
+    bool enable = false;
+    EXPECT_EQ(video->EnableAutoVideoFrameRate(enable), CameraErrorCode::SESSION_NOT_CONFIG);
+    int32_t minFrameRate = 0;
+    int32_t maxFrameRate = 1;
+    EXPECT_EQ(video->SetFrameRate(minFrameRate, maxFrameRate), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoOutputCallbackImpl with Constructor and Destructors.
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Constructor and Destructors for just call.
+ */
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_002, TestSize.Level0)
+{
+    std::shared_ptr<VideoOutputCallbackImpl> videoOutputCallbackImpl1 = std::make_shared<VideoOutputCallbackImpl>();
+    EXPECT_EQ(videoOutputCallbackImpl1->videoOutput_, nullptr);
+    std::shared_ptr<VideoOutputCallbackImpl> videoOutputCallbackImpl2 =
+        std::make_shared<VideoOutputCallbackImpl>(nullptr);
+    EXPECT_EQ(videoOutputCallbackImpl2->videoOutput_, nullptr);
+}
 }
 }

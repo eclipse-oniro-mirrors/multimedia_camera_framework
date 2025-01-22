@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,7 +39,6 @@ constexpr int32_t WAIT_FOR_PHOTO_CB = 2;
 void CameraDeferredPhotoModuleTest::SetUpTestCase(void)
 {
     MEDIA_INFO_LOG("CameraDeferredPhotoModuleTest::SetUpTestCase is called");
-    SetNativeToken();
 }
 
 
@@ -52,6 +51,7 @@ void CameraDeferredPhotoModuleTest::SetUp()
 {
     g_num++;
     MEDIA_INFO_LOG("CameraDeferredPhotoModuleTest::SetUp is called, g_num = %{public}d", g_num);
+    SetNativeToken();
 
     cameraManager_ = CameraManager::GetInstance();
     ASSERT_NE(cameraManager_, nullptr);

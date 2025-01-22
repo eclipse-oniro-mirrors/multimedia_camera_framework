@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,50 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_FRAMEWORK_MODULETEST_H
-#define CAMERA_FRAMEWORK_MODULETEST_H
-
+#ifndef CAMEA_SERVICE_CLIENT_UNITTEST_H
+#define CAMEA_SERVICE_CLIENT_UNITTEST_H
 #include "gtest/gtest.h"
-#include "input/camera_device.h"
+#include "input/camera_manager.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-#include "session/capture_session.h"
-#include "session/portrait_session.h"
-#include "session/slow_motion_session.h"
-#include "hcamera_service_callback_proxy.h"
-#include "hstream_repeat_proxy.h"
 #include "hstream_capture_callback_proxy.h"
 #include "hstream_repeat_callback_proxy.h"
 #include "hcapture_session_callback_proxy.h"
-
-#include "accesstoken_kit.h"
-#include "aperture_video_session.h"
-#include "camera_error_code.h"
-#include "camera_log.h"
-#include "camera_metadata_operator.h"
-#include "camera_output_capability.h"
-#include "camera_util.h"
-#include "capture_scene_const.h"
-#include "capture_session.h"
-#include "gtest/gtest.h"
-#include "hap_token_info.h"
-#include "hcamera_device.h"
+#include "hcamera_service_callback_proxy.h"
 #include "hcamera_device_callback_proxy.h"
-#include "hcamera_device_proxy.h"
-#include "hcamera_service.h"
-#include "hcamera_service_stub.h"
-#include "input/camera_input.h"
-#include "input/camera_manager.h"
-#include "ipc_skeleton.h"
-#include "iservice_registry.h"
-#include "light_painting_session.h"
-#include "nativetoken_kit.h"
-#include "night_session.h"
-#include "parameter.h"
-#include "quick_shot_photo_session.h"
+#include "hstream_repeat_proxy.h"
 #include "scan_session.h"
+#include "session/capture_session.h"
 #include "session/panorama_session.h"
-#include "session/photo_session.h"
 #include "session/profession_session.h"
 #include "session/photo_session.h"
 #include "session/video_session.h"
@@ -69,6 +40,9 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "video_session.h"
+#include "parameter.h"
+#include "ipc_skeleton.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -223,27 +197,7 @@ public:
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
 };
 
-class AppVideoCallback : public VideoStateCallback {
-public:
-    void OnFrameStarted() const override;
-    void OnFrameEnded(const int32_t frameCount) const override;
-    void OnError(const int32_t errorCode) const override;
-    void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override;
-};
-
-class AppMetadataCallback : public MetadataObjectCallback, public MetadataStateCallback {
-public:
-    void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const;
-
-    void OnError(int32_t errorCode) const;
-};
-
-class AppSessionCallback : public SessionCallback {
-public:
-    void OnError(int32_t errorCode);
-};
-
-class CameraFrameworkModuleTest : public testing::Test {
+class CameraServiceClientUnit : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
     static const int32_t PHOTO_DEFAULT_HEIGHT = 960;
@@ -251,6 +205,25 @@ public:
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 720;
     static const int32_t VIDEO_DEFAULT_WIDTH = 1280;
     static const int32_t VIDEO_DEFAULT_HEIGHT = 720;
+    static void SetUpTestCase(void);
+    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
+    static void TearDownTestCase(void);
+    /* SetUp:Execute before each test case */
+    void SetUpInit();
+    void SetUp(void);
+    /* TearDown:Execute after each test case */
+    void TearDown(void);
+
+    void NativeAuthorization(void);
+
+    sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
+    sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
+    void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
+    sptr<CaptureOutput> CreatePreviewOutput();
+    sptr<CaptureOutput> CreatePhotoOutput();
+    bool IsSupportNow();
+    void ProcessSize();
+private:
     CameraFormat previewFormat_;
     CameraFormat photoFormat_;
     CameraFormat videoFormat_;
@@ -260,15 +233,11 @@ public:
     int32_t photoHeight_;
     int32_t videoWidth_;
     int32_t videoHeight_;
-    sptr<CameraManager> manager_;
-    sptr<PortraitSession> portraitSession_;
-    sptr<CaptureSession> session_;
-    sptr<CaptureSession> scanSession_;
-    sptr<SlowMotionSession> slowMotionSession_;
-    sptr<CaptureSession> highResSession_;
-    sptr<CaptureSession> videoSession_;
-    sptr<CaptureInput> input_;
-    std::vector<sptr<CameraDevice>> cameras_;
+    sptr<CameraManager> manager_ = nullptr;
+    sptr<CaptureInput> input_ = nullptr;
+    sptr<CaptureSession> session_ = nullptr;
+    std::vector<sptr<CameraDevice>> cameras_ = {};
+    std::vector<Profile> previewProfiles = {};
     std::vector<CameraFormat> previewFormats_;
     std::vector<CameraFormat> photoFormats_;
     std::vector<CameraFormat> videoFormats_;
@@ -276,71 +245,10 @@ public:
     std::vector<Size> photoSizes_;
     std::vector<Size> videoSizes_;
     std::vector<int32_t> videoFrameRates_;
-
-    std::vector<Profile> previewProfiles;
     std::vector<Profile> photoProfiles;
     std::vector<VideoProfile> videoProfiles;
-    /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
-    static void SetUpTestCase(void);
-
-    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
-    static void TearDownTestCase(void);
-
-    /* SetUp:Execute before each test case */
-    void SetUpInit();
-    void SetUp();
-
-    /* TearDown:Execute after each test case */
-    void TearDown();
-
-    sptr<CaptureOutput> CreatePreviewOutput(Profile& profile);
-    sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
-    sptr<CaptureOutput> CreatePreviewOutput();
-    sptr<Surface> CreateSketchSurface(CameraFormat cameraFormat);
-    sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
-    sptr<CaptureOutput> CreatePhotoOutput();
-    sptr<CaptureOutput> CreateVideoOutput(int32_t width, int32_t height);
-    sptr<CaptureOutput> CreateVideoOutput();
-    sptr<CaptureOutput> CreateVideoOutput(VideoProfile& profile);
-    sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
-    void GetSupportedOutputCapability();
-    Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
-                                          camera_rational_t ratio, CameraFormat format);
-    std::optional<Profile> GetPreviewProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
-        uint32_t width, uint32_t height, CameraFormat previewFormat);
-    std::optional<VideoProfile> GetVideoProfileByFormat(sptr<CameraOutputCapability>& modeAbility,
-        uint32_t width, uint32_t height, CameraFormat videoFormat, uint32_t maxFps);
-    SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
-    void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
-    void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
-    void ConfigSlowMotionSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
-    void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
-                                  Profile previewProfile, Profile photoProfile);
-    void ConfigVideoSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
-    void ReleaseInput();
-
-    void SetCameraParameters(sptr<CaptureSession> &session, bool video);
-    void TestCallbacksSession(sptr<CaptureOutput> photoOutput,
-		    sptr<CaptureOutput> videoOutput);
-    void TestCallbacks(sptr<CameraDevice> &cameraInfo, bool video);
-    void TestSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
-                                 int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
-    void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
-                                   int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
-    bool IsSupportNow();
-    bool IsSupportMode(SceneMode mode);
-
-    std::shared_ptr<Profile> GetSketchPreviewProfile();
-
-private:
-    void RegisterErrorCallback();
     static void SetNativeToken();
-    void SetHapToken();
-    void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
-    void ProcessSize();
-    void ProcessPortraitSession(sptr<PortraitSession>& portraitSession, sptr<CaptureOutput>& previewOutput);
-    sptr<CameraDevice> ChooseCamerasByPositionAndType(CameraPosition, CameraType);
 };
-} // CameraStandard
-} // OHOS
-#endif // CAMERA_FRAMEWORK_MODULETEST_H
+}
+}
+#endif

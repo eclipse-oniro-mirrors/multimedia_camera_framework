@@ -54,8 +54,6 @@ void DeferredProcUnitTest::TearDownTestCase(void)
 
 void DeferredProcUnitTest::SetUp()
 {
-    MEDIA_DEBUG_LOG("SetUp testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
     const uint32_t color[BUFFER_LENGTH] = { 0x80, 0x02, 0x04, 0x08, 0x40, 0x02, 0x04, 0x08 };
     Media::InitializationOptions options;
     options.size.width = SIZE_WIDTH;
@@ -551,6 +549,27 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_012, TestSize.Level
     int32_t status = 0;
     ret = remoteCallback->OnStateChanged(status);
     EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredPhotoProcessingSessionCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredPhotoProcessingSessionCallback
+ */
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_013, TestSize.Level0)
+{
+    std::shared_ptr<DeferredPhotoProcessingSessionCallback> deferredPhotoSessionCb1 =
+        std::make_shared<DeferredPhotoProcessingSessionCallback>();
+    ASSERT_NE(deferredPhotoSessionCb1, nullptr);
+    sptr<DeferredPhotoProcSession> deferredProcSession =
+        new(std::nothrow) DeferredPhotoProcSession(userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
+    ASSERT_NE(deferredProcSession, nullptr);
+    std::shared_ptr<DeferredPhotoProcessingSessionCallback> deferredPhotoSessionCb2 =
+        std::make_shared<DeferredPhotoProcessingSessionCallback>(deferredProcSession);
+    ASSERT_NE(deferredPhotoSessionCb2, nullptr);
 }
 } // CameraStandard
 } // OHOS
