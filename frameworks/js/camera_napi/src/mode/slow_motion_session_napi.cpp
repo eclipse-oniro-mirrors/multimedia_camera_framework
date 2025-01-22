@@ -17,6 +17,7 @@
 #include "camera_napi_param_parser.h"
 #include "uv.h"
 #include "mode/slow_motion_session_napi.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,26 +28,19 @@ thread_local napi_ref SlowMotionSessionNapi::sConstructor_ = nullptr;
 void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState state) const
 {
     MEDIA_DEBUG_LOG("OnSlowMotionStateCbAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<SlowMotionStateListenerInfo> callbackInfo =
         std::make_unique<SlowMotionStateListenerInfo>(state, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        SlowMotionStateListenerInfo* callbackInfo = reinterpret_cast<SlowMotionStateListenerInfo *>(work->data);
+    SlowMotionStateListenerInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        SlowMotionStateListenerInfo* callbackInfo = reinterpret_cast<SlowMotionStateListenerInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnSlowMotionStateCb(callbackInfo->state_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    });
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
