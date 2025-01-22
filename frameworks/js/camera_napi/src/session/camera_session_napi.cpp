@@ -141,7 +141,19 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("setFocusMode", CameraSessionNapi::SetFocusMode),
     DECLARE_NAPI_FUNCTION("getFocusPoint", CameraSessionNapi::GetFocusPoint),
     DECLARE_NAPI_FUNCTION("setFocusPoint", CameraSessionNapi::SetFocusPoint),
-    DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength)
+    DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength),
+    DECLARE_NAPI_FUNCTION("isFocusRangeTypeSupported", CameraSessionNapi::IsFocusRangeTypeSupported),
+    DECLARE_NAPI_FUNCTION("getFocusRange", CameraSessionNapi::GetFocusRange),
+    DECLARE_NAPI_FUNCTION("setFocusRange", CameraSessionNapi::SetFocusRange),
+    DECLARE_NAPI_FUNCTION("isFocusDrivenTypeSupported", CameraSessionNapi::IsFocusDrivenTypeSupported),
+    DECLARE_NAPI_FUNCTION("getFocusDriven", CameraSessionNapi::GetFocusDriven),
+    DECLARE_NAPI_FUNCTION("setFocusDriven", CameraSessionNapi::SetFocusDriven)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::color_reservation_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedColorReservationTypes", CameraSessionNapi::GetSupportedColorReservationTypes),
+    DECLARE_NAPI_FUNCTION("getColorReservation", CameraSessionNapi::GetColorReservation),
+    DECLARE_NAPI_FUNCTION("setColorReservation", CameraSessionNapi::SetColorReservation)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::quality_prioritization_props = {
@@ -2062,6 +2074,276 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     return result;
 }
 
+napi_value CameraSessionNapi::IsFocusRangeTypeSupported(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi IsFocusRangeTypeSupported is called!");
+    MEDIA_DEBUG_LOG("IsFocusRangeTypeSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusRangeType focusRangeType = static_cast<FocusRangeType>(value);
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusRangeTypeSupported(focusRangeType, isSupported);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsFocusRangeTypeSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetFocusRange(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi GetFocusRange is called!");
+    MEDIA_DEBUG_LOG("GetFocusRange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        FocusRangeType focusRangeType = FocusRangeType::FOCUS_RANGE_TYPE_AUTO;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusRange(focusRangeType);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_create_int32(env, focusRangeType, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocusRange call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetFocusRange(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi SetFocusRange is called!");
+    MEDIA_DEBUG_LOG("SetFocusRange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusRangeType focusRangeType = static_cast<FocusRangeType>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetFocusRange(focusRangeType);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("SetFocusRange call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsFocusDrivenTypeSupported(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi IsFocusDrivenTypeSupported is called!");
+    MEDIA_DEBUG_LOG("IsFocusDrivenTypeSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusDrivenType focusDrivenType = static_cast<FocusDrivenType>(value);
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDrivenTypeSupported(focusDrivenType, isSupported);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsFocusDrivenTypeSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetFocusDriven(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi GetFocusDriven is called!");
+    MEDIA_DEBUG_LOG("GetFocusDriven is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        FocusDrivenType focusDrivenType = FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDriven(focusDrivenType);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_create_int32(env, focusDrivenType, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocusDriven call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetFocusDriven(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi SetFocusDriven is called!");
+    MEDIA_DEBUG_LOG("SetFocusDriven is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusDrivenType focusDrivenType = static_cast<FocusDrivenType>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetFocusDriven(focusDrivenType);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("SetFocusDriven call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedColorReservationTypes(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi GetSupportedColorReservationTypes is called!");
+    MEDIA_DEBUG_LOG("GetSupportedColorReservationTypes is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<ColorReservationType> colorReservationTypes;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedColorReservationTypes(colorReservationTypes);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+
+        MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedColorReservationTypes len = %{public}zu",
+            colorReservationTypes.size());
+        if (!colorReservationTypes.empty()) {
+            for (size_t i = 0; i < colorReservationTypes.size(); i++) {
+                ColorReservationType colorReservationType = colorReservationTypes[i];
+                napi_value value;
+                napi_create_int32(env, colorReservationType, &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedColorReservationTypes call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetColorReservation(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi GetColorReservation is called!");
+    MEDIA_DEBUG_LOG("GetColorReservation is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        ColorReservationType colorReservationType = ColorReservationType::COLOR_RESERVATION_TYPE_NONE;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetColorReservation(colorReservationType);
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_create_int32(env, colorReservationType, &result);
+    } else {
+        MEDIA_ERR_LOG("GetColorReservation call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetColorReservation(napi_env env, napi_callback_info info)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
+        "SystemApi SetColorReservation is called!");
+    MEDIA_DEBUG_LOG("SetColorReservation is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        ColorReservationType colorReservationType = static_cast<ColorReservationType>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetColorReservation(colorReservationType);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("SetColorReservation call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::SetQualityPrioritization(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetQualityPrioritization is called");
@@ -3829,9 +4111,10 @@ napi_value CameraSessionNapi::SetVirtualAperture(napi_env env, napi_callback_inf
         "CameraSessionNapi::SetVirtualAperture parse parameter occur error");
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
-        cameraSessionNapi->cameraSession_->SetVirtualAperture((float)virtualAperture);
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetVirtualAperture((float)virtualAperture);
         MEDIA_INFO_LOG("SetVirtualAperture set virtualAperture %{public}f!", virtualAperture);
         cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
         MEDIA_ERR_LOG("SetVirtualAperture call Failed!");
     }
@@ -4229,6 +4512,24 @@ void CameraSessionNapi::UnregisterTryAEInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
+void CameraSessionNapi::RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "SystemApi on focusTrackingInfoAvailable is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "SystemApi off focusTrackingInfoAvailable is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
 const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "exposureStateChange", {
         &CameraSessionNapi::RegisterExposureCallbackListener,
@@ -4284,6 +4585,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "autoDeviceSwitchStatusChange", {
         &CameraSessionNapi::RegisterAutoDeviceSwitchCallbackListener,
         &CameraSessionNapi::UnregisterAutoDeviceSwitchCallbackListener } },
+    { "focusTrackingInfoAvailable", {
+        &CameraSessionNapi::RegisterFocusTrackingInfoCallbackListener,
+        &CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()

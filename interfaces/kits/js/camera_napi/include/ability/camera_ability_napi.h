@@ -61,6 +61,8 @@ public:
     static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
     // FocusQuery
     static napi_value IsFocusModeSupported(napi_env env, napi_callback_info info);
+    static napi_value IsFocusRangeTypeSupported(napi_env env, napi_callback_info info);
+    static napi_value IsFocusDrivenTypeSupported(napi_env env, napi_callback_info info);
     // ZoomQuery
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
     // BeautyQuery

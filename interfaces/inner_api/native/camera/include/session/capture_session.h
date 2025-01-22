@@ -829,6 +829,85 @@ public:
     int32_t GetFocalLength(float& focalLength);
 
     /**
+     * @brief Get the vector of focus range types.
+     * @param types vector of focus range types.
+     * @return Returns errCode.
+     */
+    int32_t GetSupportedFocusRangeTypes(std::vector<FocusRangeType>& types);
+
+    /**
+     * @brief Query whether given focus range type supported.
+     * @param focusRangeType focus range type to query.
+     * @param isSupported True is supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsFocusRangeTypeSupported(FocusRangeType focusRangeType, bool& isSupported);
+
+    /**
+     * @brief Get focus range type.
+     * @param focusRangeType focus range type.
+     * @return Returns errCode.
+     */
+    int32_t GetFocusRange(FocusRangeType& focusRangeType);
+
+    /**
+     * @brief Set focus range type.
+     * @param focusRangeType focus range type to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetFocusRange(FocusRangeType focusRangeType);
+
+    /**
+     * @brief Get the vector of focus driven types.
+     * @param types vector of focus driven types.
+     * @return Returns errCode.
+     */
+    int32_t GetSupportedFocusDrivenTypes(std::vector<FocusDrivenType>& types);
+
+    /**
+     * @brief Query whether given focus driven type supported.
+     * @param focusDrivenType focus driven type to query.
+     * @param isSupported True is supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType, bool& isSupported);
+
+    /**
+     * @brief Get focus driven type.
+     * @param focusDrivenType focus driven type.
+     * @return Returns errCode.
+     */
+    int32_t GetFocusDriven(FocusDrivenType& focusDrivenType);
+
+    /**
+     * @brief Set focus driven type.
+     * @param focusDrivenType focus driven type to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetFocusDriven(FocusDrivenType focusDrivenType);
+
+    /**
+     * @brief Get the vector of color reservation types.
+     * @param types vector of color reservation types.
+     * @return Returns errCode.
+     */
+    int32_t GetSupportedColorReservationTypes(std::vector<ColorReservationType>& types);
+
+    /**
+     * @brief Get color reservation type.
+     * @param colorReservationType color reservation type.
+     * @return Returns errCode.
+     */
+    int32_t GetColorReservation(ColorReservationType& colorReservationType);
+
+    /**
+     * @brief Set color reservation type.
+     * @param colorReservationType color reservation type to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetColorReservation(ColorReservationType colorReservationType);
+
+    /**
     * @brief Set the smooth zoom callback.
     * which will be called when there is smooth zoom change.
     *
@@ -2015,6 +2094,7 @@ private:
     void StartVideoOutput();
     bool StopVideoOutput();
     void CreateAndSetFoldServiceCallback();
+    int32_t IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported);
 };
 } // namespace CameraStandard
 } // namespace OHOS

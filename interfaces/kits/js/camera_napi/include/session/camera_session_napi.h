@@ -297,6 +297,15 @@ public:
     static napi_value SetFocusPoint(napi_env env, napi_callback_info info);
     static napi_value GetFocusPoint(napi_env env, napi_callback_info info);
     static napi_value GetFocalLength(napi_env env, napi_callback_info info);
+    static napi_value IsFocusRangeTypeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetFocusRange(napi_env env, napi_callback_info info);
+    static napi_value SetFocusRange(napi_env env, napi_callback_info info);
+    static napi_value IsFocusDrivenTypeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetFocusDriven(napi_env env, napi_callback_info info);
+    static napi_value SetFocusDriven(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedColorReservationTypes(napi_env env, napi_callback_info info);
+    static napi_value GetColorReservation(napi_env env, napi_callback_info info);
+    static napi_value SetColorReservation(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
@@ -439,6 +448,7 @@ public:
     static const std::vector<napi_property_descriptor> manual_wb_props;
     static const std::vector<napi_property_descriptor> auto_switch_props;
     static const std::vector<napi_property_descriptor> quality_prioritization_props;
+    static const std::vector<napi_property_descriptor> color_reservation_props;
 
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
@@ -519,6 +529,10 @@ protected:
     virtual void RegisterAutoDeviceSwitchCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterAutoDeviceSwitchCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 

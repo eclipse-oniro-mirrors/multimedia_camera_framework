@@ -13,9 +13,12 @@
  * limitations under the License.
  */
 
+#include <uv.h>
+
 #include "mode/video_session_for_sys_napi.h"
 #include "ability/camera_ability_napi.h"
 #include "napi/native_common.h"
+#include "camera_napi_object_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -47,7 +50,7 @@ napi_value VideoSessionForSysNapi::Init(napi_env env, napi_value exports)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, flash_props,
         auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props, macro_props,
         color_management_props, stabilization_props, preconfig_props, camera_output_capability_props,
-        camera_ability_props };
+        camera_ability_props, aperture_props, color_reservation_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_FOR_SYS_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionForSysNapiConstructor, nullptr,
@@ -122,6 +125,81 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
     }
     MEDIA_ERR_LOG("VideoSessionForSysNapi call Failed!");
     return result;
+}
+
+void VideoSessionForSysNapi::RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+    CHECK_ERROR_RETURN_LOG(videoSession_ == nullptr, "%{public}s videoSession is nullptr!", __FUNCTION__);
+    if (focusTrackingInfoCallback_ == nullptr) {
+        focusTrackingInfoCallback_ = std::make_shared<FocusTrackingCallbackListener>(env);
+        videoSession_->SetFocusTrackingInfoCallback(focusTrackingInfoCallback_);
+    }
+    focusTrackingInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionForSysNapi::UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+    CHECK_ERROR_RETURN_LOG(focusTrackingInfoCallback_ == nullptr,
+        "%{public}s focusTrackingInfoCallback_ is nullptr", __FUNCTION__);
+    focusTrackingInfoCallback_->RemoveCallbackRef(eventName, callback);
+}
+
+void FocusTrackingCallbackListener::OnFocusTrackingInfoAvailable(FocusTrackingInfo &focusTrackingInfo) const
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+    OnFocusTrackingInfoCallbackAsync(focusTrackingInfo);
+}
+
+void FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync(FocusTrackingInfo &focusTrackingInfo) const
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    CHECK_ERROR_RETURN_LOG(!loop, "%{public}s: failed to get event loop", __FUNCTION__);
+
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    CHECK_ERROR_RETURN_LOG(!work, "%{public}s: failed to allocate work", __FUNCTION__);
+
+    std::unique_ptr<FocusTrackingCallbackInfo> callback =
+        std::make_unique<FocusTrackingCallbackInfo>(focusTrackingInfo, shared_from_this());
+    work->data = callback.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [] (uv_work_t* work) {},
+        [] (uv_work_t* work, int status) {
+        FocusTrackingCallbackInfo* callback = reinterpret_cast<FocusTrackingCallbackInfo *>(work->data);
+        if (callback) {
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnFocusTrackingInfoCallback(callback->focusTrackingInfo_);
+            }
+            delete callback;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("%{public}s: failed to execute work", __FUNCTION__);
+        delete work;
+    } else {
+        callback.release();
+    }
+}
+
+void FocusTrackingCallbackListener::OnFocusTrackingInfoCallback(FocusTrackingInfo &focusTrackingInfo) const
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+
+    napi_value result[ARGS_ONE] = { nullptr };
+    napi_value retVal = nullptr;
+
+    result[PARAM0] = CameraNapiFocusTrackingInfo(focusTrackingInfo).GenerateNapiValue(env_);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+    ExecuteCallback("focusTrackingInfoAvailable", callbackNapiPara);
 }
 } // namespace CameraStandard
 } // namespace OHOS

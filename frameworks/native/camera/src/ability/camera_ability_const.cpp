@@ -235,5 +235,37 @@ const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCam
     {StatisticsDetectType::OHOS_CAMERA_BAR_CODE_DETECT, MetadataObjectType::BAR_CODE_DETECTION},
     {StatisticsDetectType::OHOS_CAMERA_BASE_FACE_DETECT, MetadataObjectType::BASE_FACE_DETECTION}
 };
+
+const std::unordered_map<camera_focus_range_type_t, FocusRangeType> g_metaFocusRangeTypeMap_ = {
+    {OHOS_CAMERA_FOCUS_RANGE_AUTO, FocusRangeType::FOCUS_RANGE_TYPE_AUTO},
+    {OHOS_CAMERA_FOCUS_RANGE_NEAR, FocusRangeType::FOCUS_RANGE_TYPE_NEAR}
+};
+
+const std::unordered_map<FocusRangeType, camera_focus_range_type_t> g_fwkocusRangeTypeMap_ = {
+    {FocusRangeType::FOCUS_RANGE_TYPE_AUTO, OHOS_CAMERA_FOCUS_RANGE_AUTO},
+    {FocusRangeType::FOCUS_RANGE_TYPE_NEAR, OHOS_CAMERA_FOCUS_RANGE_NEAR}
+};
+
+const std::unordered_map<camera_focus_driven_type_t, FocusDrivenType> g_metaFocusDrivenTypeMap_ = {
+    {OHOS_CAMERA_FOCUS_DRIVEN_AUTO, FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO},
+    {OHOS_CAMERA_FOCUS_DRIVEN_FACE, FocusDrivenType::FOCUS_DRIVEN_TYPE_FACE}
+};
+
+const std::unordered_map<FocusDrivenType, camera_focus_driven_type_t> g_fwkFocusDrivenTypeMap_ = {
+    {FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO, OHOS_CAMERA_FOCUS_DRIVEN_AUTO},
+    {FocusDrivenType::FOCUS_DRIVEN_TYPE_FACE, OHOS_CAMERA_FOCUS_DRIVEN_FACE}
+};
+
+const std::unordered_map<camera_color_reservation_type_t, ColorReservationType>
+    g_metaColorReservationTypeMap_ = {
+    {OHOS_CAMERA_COLOR_RESERVATION_NONE, ColorReservationType::COLOR_RESERVATION_TYPE_NONE},
+    {OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT, ColorReservationType::COLOR_RESERVATION_TYPE_PORTRAIT}
+};
+
+const std::unordered_map<ColorReservationType, camera_color_reservation_type_t>
+    g_fwkColorReservationTypeMap_ = {
+    {ColorReservationType::COLOR_RESERVATION_TYPE_NONE, OHOS_CAMERA_COLOR_RESERVATION_NONE},
+    {ColorReservationType::COLOR_RESERVATION_TYPE_PORTRAIT, OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT}
+};
 } // namespace CameraStandard
 } // namespace OHOS

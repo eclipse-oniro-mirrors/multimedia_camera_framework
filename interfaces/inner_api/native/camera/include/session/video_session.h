@@ -17,15 +17,78 @@
 #define OHOS_CAMERA_VIDEO_SESSION_H
  
 #include "camera_output_capability.h"
+#include "capture_input.h"
 #include "capture_session.h"
 #include "icapture_session.h"
+#include "metadata_output.h"
+#include "refbase.h"
 
 namespace OHOS {
 namespace CameraStandard {
+
+enum FocusTrackingMode : int32_t {
+    FOCUS_TRACKING_MODE_AUTO = 0,
+};
+
+struct FocusTrackingInfoParms {
+    FocusTrackingMode trackingMode = FOCUS_TRACKING_MODE_AUTO;
+    Rect trackingRegion = {0.0, 0.0, 0.0, 0.0};
+};
+
+class FocusTrackingInfo : public RefBase {
+public:
+    FocusTrackingInfo(const FocusTrackingMode mode, const Rect rect);
+    FocusTrackingInfo(const FocusTrackingInfoParms& parms);
+    virtual ~FocusTrackingInfo() = default;
+
+    inline FocusTrackingMode GetMode()
+    {
+        return mode_;
+    }
+
+    inline Rect GetRegion()
+    {
+        return region_;
+    }
+
+    inline void SetRegion(Rect& region)
+    {
+        region_ = region;
+    }
+
+    inline void SetMode(FocusTrackingMode mode)
+    {
+        mode_ = mode;
+    }
+private:
+    FocusTrackingMode mode_;
+    Rect region_;
+};
+
+class FocusTrackingCallback {
+public:
+    FocusTrackingCallback() = default;
+    virtual ~FocusTrackingCallback() = default;
+    virtual void OnFocusTrackingInfoAvailable(FocusTrackingInfo &focusTrackingInfo) const = 0;
+};
+
 class VideoSession : public CaptureSession {
 public:
-    explicit VideoSession(sptr<ICaptureSession> &videoSession): CaptureSession(videoSession) {}
-    ~VideoSession() = default;
+    class VideoSessionMetadataResultProcessor : public MetadataResultProcessor {
+    public:
+        explicit VideoSessionMetadataResultProcessor(wptr<VideoSession> session) : session_(session) {}
+        void ProcessCallbacks(const uint64_t timestamp,
+            const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+
+    private:
+        wptr<VideoSession> session_;
+    };
+
+    explicit VideoSession(sptr<ICaptureSession> &videoSession): CaptureSession(videoSession)
+    {
+        metadataResultProcessor_ = std::make_shared<VideoSessionMetadataResultProcessor>(this);
+    }
+    ~VideoSession();
 
     /**
      * @brief Determine if the given Ouput can be added to session.
@@ -62,6 +125,27 @@ public:
      */
     int32_t Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
 
+    /**
+     * @brief Set focus tracking info callback for the video session.
+     *
+     * @param focusTrackingInfoCallback callback to be set.
+     */
+    void SetFocusTrackingInfoCallback(std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback);
+
+    /**
+     * @brief Get focus tracking info callback pointer.
+     *
+     * @return Focus tracking info callback pointer.
+     */
+    std::shared_ptr<FocusTrackingCallback> GetFocusTrackingCallback();
+
+    /**
+     * @brief Process focus tracking info.
+     *
+     * @param result Metadata result reported by HDI.
+     */
+    void ProcessFocusTrackingInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
 protected:
     std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
@@ -71,6 +155,13 @@ private:
     bool IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile);
     bool IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile);
     bool IsVideoProfileLegal(sptr<CameraDevice>& device, VideoProfile& videoProfile);
+    bool ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+        FocusTrackingMode& mode);
+    bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata, Rect& rect);
+
+    std::mutex videoSessionCallbackMutex_;
+    std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback_ = nullptr;
+    static const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> metaToFwFocusTrackingMode_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
