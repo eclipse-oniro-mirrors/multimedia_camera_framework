@@ -241,9 +241,6 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
         return nullptr;
     }
-    Ace::ModalUIExtensionAllowedUpdateConfig updateConfig;
-    updateConfig.prohibitedRemoveByNavigation = false;
-    uiContent->UpdateModalUIExtensionConfig(sessionId, updateConfig);
     uiExtCallback->SetSessionId(sessionId);
     return uiExtCallback;
 }
@@ -501,7 +498,23 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& 
 
 void UIExtensionCallback::OnReceive(const OHOS::AAFwk::WantParams& request)
 {
-    MEDIA_INFO_LOG("UIExtensionComponent OnReceive()");
+    int32_t code = request.GetIntParam("code", 0);
+    MEDIA_INFO_LOG("UIExtensionCallback::OnReceive get code %{public}d", code);
+    if (code == 1) { // 1 is page appear.
+        if (contextProxy_ == nullptr || sessionId_ == 0) {
+            MEDIA_ERR_LOG("UIExtensionCallback::OnReceive contextProxy_ or sessionId_ illegal");
+            return;
+        }
+        auto uiContnet = contextProxy_->GetUIContent();
+        if (uiContnet == nullptr) {
+            MEDIA_ERR_LOG("UIExtensionCallback::OnReceive uiContnet is null");
+            return;
+        }
+        Ace::ModalUIExtensionAllowedUpdateConfig updateConfig;
+        updateConfig.prohibitedRemoveByNavigation = false;
+        uiContnet->UpdateModalUIExtensionConfig(sessionId_, updateConfig);
+        MEDIA_INFO_LOG("UIExtensionComponent OnReceive() UpdateModalUIExtensionConfig done");
+    }
 }
 
 void UIExtensionCallback::OnError(int32_t errorCode, const std::string& name, const std::string& message)
