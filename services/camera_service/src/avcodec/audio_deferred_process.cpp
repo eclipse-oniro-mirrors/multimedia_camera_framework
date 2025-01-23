@@ -35,6 +35,7 @@ AudioDeferredProcess::~AudioDeferredProcess()
 
 int32_t AudioDeferredProcess::GetOfflineEffectChain()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::GetOfflineEffectChain Enter");
     if (!offlineAudioEffectManager_) {
         offlineAudioEffectManager_ = std::make_unique<OfflineAudioEffectManager>();
@@ -55,6 +56,7 @@ int32_t AudioDeferredProcess::GetOfflineEffectChain()
 void AudioDeferredProcess::StoreOptions(const AudioStreamInfo& inputOptions,
     const AudioStreamInfo& outputOptions)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::StoreConfig Enter");
     inputOptions_ = inputOptions;
     outputOptions_ = outputOptions;
@@ -62,6 +64,7 @@ void AudioDeferredProcess::StoreOptions(const AudioStreamInfo& inputOptions,
 
 int32_t AudioDeferredProcess::ConfigOfflineAudioEffectChain()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::ConfigOfflineAudioEffectChain Enter");
     if (offlineEffectChain_->Configure(inputOptions_, outputOptions_) != 0) {
         MEDIA_ERR_LOG("AudioDeferredProcess::ConfigOfflineAudioEffectChain Err");
@@ -72,6 +75,7 @@ int32_t AudioDeferredProcess::ConfigOfflineAudioEffectChain()
 
 int32_t AudioDeferredProcess::PrepareOfflineAudioEffectChain()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::PrepareOfflineAudioEffectChain Enter");
     CHECK_ERROR_RETURN_RET_LOG(offlineEffectChain_->Prepare() != 0, -1,
         "AudioDeferredProcess::PrepareOfflineAudioEffectChain Err");
@@ -81,6 +85,7 @@ int32_t AudioDeferredProcess::PrepareOfflineAudioEffectChain()
 int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptions,
     const AudioStreamInfo& outputOptions)
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize Enter");
     CHECK_ERROR_RETURN_RET_LOG(offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_,
         maxProcessedBufferSize_) != 0, -1, "AudioDeferredProcess::GetMaxBufferSize Err");
@@ -102,6 +107,7 @@ uint32_t AudioDeferredProcess::GetOneUnprocessedSize()
 int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     vector<sptr<AudioRecord>>& processedRecords)
 {
+    CAMERA_SYNC_TRACE;
     if (offlineEffectChain_ == nullptr) {
         MEDIA_WARNING_LOG("AudioDeferredProcess::Process offlineEffectChain_ is nullptr.");
         return -1;
@@ -142,6 +148,7 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
 
 void AudioDeferredProcess::Release()
 {
+    CAMERA_SYNC_TRACE;
     lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("AudioDeferredProcess::Release Enter");
     CHECK_EXECUTE(offlineEffectChain_, offlineEffectChain_->Release());
