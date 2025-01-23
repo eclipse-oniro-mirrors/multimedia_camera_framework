@@ -21,6 +21,7 @@
 #include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "icamera_util.h"
 #include "metadata_utils.h"
@@ -97,12 +98,25 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     InitCameraInput();
 }
 
+void CameraInput::GetMetadataFromService(sptr<CameraDevice> &device)
+{
+    CHECK_ERROR_RETURN_LOG(device == nullptr, "GetMetadataFromService device is nullptr");
+    auto cameraId = device->GetID();
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "GetMetadataFromService serviceProxy is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+    serviceProxy->GetCameraAbility(cameraId, metaData);
+    CHECK_ERROR_RETURN_LOG(metaData == nullptr,
+        "GetMetadataFromService GetDeviceMetadata failed");
+    device->AddMetadata(metaData);
+}
 void CameraInput::InitCameraInput()
 {
     auto cameraObj = GetCameraDeviceInfo();
     auto deviceObj = GetCameraDevice();
     if (cameraObj) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj->GetID().c_str());
+        GetMetadataFromService(cameraObj);
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     CHECK_ERROR_RETURN_LOG(CameraDeviceSvcCallback_ == nullptr, "Failed to new CameraDeviceSvcCallback_!");
@@ -157,6 +171,7 @@ CameraInput::~CameraInput()
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+        cameraObj_->ReleaseMetadata();
     }
     InputRemoveDeathRecipient();
 }
@@ -269,6 +284,9 @@ int CameraInput::Release()
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj is nullptr");
+    }
+    if (GetCameraDeviceInfo() != nullptr) {
+        GetCameraDeviceInfo()->ReleaseMetadata();
     }
     SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
@@ -414,7 +432,7 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
     CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, CAMERA_INVALID_ARG,
         "CameraInput::UpdateSetting cameraObject is null");
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetCachedMetadata();
     bool mergeResult = MergeMetadata(changedMetadata, baseMetadata);
     CHECK_ERROR_RETURN_RET_LOG(!mergeResult, CAMERA_INVALID_ARG,
         "CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
@@ -453,7 +471,7 @@ std::string CameraInput::GetCameraSettings()
 {
     auto cameraObject = GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "GetCameraSettings cameraObject is null");
-    return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetMetadata());
+    return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetCachedMetadata());
 }
 
 int32_t CameraInput::SetCameraSettings(std::string setting)
@@ -469,7 +487,7 @@ std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t met
     auto cameraObject = GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr,
         "CameraInput::GetMetaSetting cameraObj has release!");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(baseMetadata == nullptr, nullptr,
         "CameraInput::GetMetaSetting Failed to find baseMetadata");
     std::shared_ptr<camera_metadata_item_t> item = MetadataCommonUtils::GetCapabilityEntry(baseMetadata, metaTag);
@@ -492,6 +510,8 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
 
 void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj)
 {
+    auto cameraDevice = GetCameraDeviceInfo();
+    CHECK_EXECUTE(cameraDevice != nullptr, cameraDevice->ReleaseMetadata());
     SetCameraDeviceInfo(cameraObj);
     SetCameraDevice(deviceObj);
     InitCameraInput();

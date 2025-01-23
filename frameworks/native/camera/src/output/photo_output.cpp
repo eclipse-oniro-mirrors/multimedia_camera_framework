@@ -220,7 +220,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
             sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
             CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted cameraObj is nullptr");
-            std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+            std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
             CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CAMERA_OK,
                 "HStreamCaptureCallbackImpl::OnCaptureStarted metadata is nullptr");
             camera_metadata_item_t meta;
@@ -712,7 +712,7 @@ bool PhotoOutput::IsMirrorSupported()
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
         "PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
 
     camera_metadata_item_t item;
@@ -768,7 +768,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsQuickThumbnailSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
@@ -873,7 +873,7 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SESSION_NOT_RUNNING,
         "PhotoOutput IsAutoHighQualityPhotoSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SESSION_NOT_RUNNING);
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_HIGH_QUALITY_SUPPORT, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -985,7 +985,7 @@ int32_t PhotoOutput::IsAutoCloudImageEnhancementSupported(bool &isAutoCloudImage
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoCloudImageEnhancementSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, SERVICE_FATL_ERROR);
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_CLOUD_IMAGE_ENHANCE, &item);
@@ -1096,7 +1096,7 @@ int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
     CHECK_ERROR_RETURN_RET_LOG(
         cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, cameraObj is nullptr");
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(
         metadata == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, metadata is nullptr");
 

@@ -134,7 +134,7 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, {});
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET(cameraObj == nullptr, {});
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, {});
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &item);

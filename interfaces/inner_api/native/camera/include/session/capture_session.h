@@ -440,7 +440,7 @@ public:
      *
      * @param CaptureInput to be removed from session.
      */
-    virtual int32_t RemoveInput(sptr<CaptureInput>& input);
+    int32_t RemoveInput(sptr<CaptureInput>& input);
 
     /**
      * @brief Remove CaptureOutput for the capture session.
@@ -533,7 +533,7 @@ public:
      * @brief Releases CaptureSession instance.
      * @return Returns errCode.
      */
-    virtual int32_t Release();
+    int32_t Release();
 
     /**
      * @brief create new device control setting.
@@ -1645,6 +1645,12 @@ public:
         return innerInputDevice_;
     }
 
+    inline sptr<CameraDevice> GetChooseDevice()
+    {
+        std::lock_guard<std::mutex> lock(chooseDeviceMutex_);
+        return chooseDevice_;
+    }
+
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
@@ -1882,6 +1888,12 @@ protected:
         innerInputDevice_ = inputDevice;
     }
 
+    inline void SetChooseDevice(sptr<CameraDevice> cameraDevice)
+    {
+        std::lock_guard<std::mutex> lock(chooseDeviceMutex_);
+        chooseDevice_ = cameraDevice;
+    }
+
     inline sptr<CameraAbilityContainer> GetCameraAbilityContainer()
     {
         std::lock_guard<std::mutex> lock(abilityContainerMutex_);
@@ -1924,6 +1936,7 @@ private:
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
 
     std::mutex inputDeviceMutex_;
+    std::mutex chooseDeviceMutex_;
     sptr<CaptureInput> innerInputDevice_ = nullptr;
     volatile bool isSetMacroEnable_ = false;
     volatile bool isDepthFusionEnable_ = false;
@@ -1940,6 +1953,7 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
+    sptr<CameraDevice> chooseDevice_ = nullptr;
     sptr<CaptureOutput> metaOutput_ = nullptr;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;

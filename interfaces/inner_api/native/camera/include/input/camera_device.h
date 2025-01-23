@@ -90,11 +90,18 @@ public:
     std::string GetID();
 
     /**
+    * @brief Get the cachedMetadata corresponding to current camera object.
+    *
+    * @return Returns the cachedMetadata corresponding to current object.
+    */
+    std::shared_ptr<OHOS::Camera::CameraMetadata> GetCachedMetadata();
+
+    /**
     * @brief Get the metadata corresponding to current camera object.
     *
     * @return Returns the metadata corresponding to current object.
     */
-    std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
+    [[deprecated]] std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
 
     /**
     * @brief Release cachedMetadata.
@@ -111,14 +118,14 @@ public:
     /**
     * @brief Reset cachedMetadata_ to default status
     */
-    [[deprecated]] void ResetMetadata();
+    void ResetMetadata();
 
     /**
     * @brief Get the current camera static abilities.
     *
     * @return Returns the current camera static abilities.
     */
-    [[deprecated]] const std::shared_ptr<OHOS::Camera::CameraMetadata> GetCameraAbility();
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> GetCameraAbility();
 
     /**
     * @brief Get the position of the camera.

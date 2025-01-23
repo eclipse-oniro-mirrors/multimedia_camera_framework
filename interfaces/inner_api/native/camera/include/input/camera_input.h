@@ -380,6 +380,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
     void InitCameraInput();
+    void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;

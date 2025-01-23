@@ -74,7 +74,7 @@ bool ScanSession::IsBrightnessStatusSupported()
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
         "ScanSession::IsBrightnessStatusSupported camera deviceInfo is null");
     sptr<CameraDevice> device = inputDeviceInfo;
-    std::shared_ptr<Camera::CameraMetadata> metadata = device->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = device->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_SUGGESTION_SUPPORTED, &item);
     if (ret == CAM_META_SUCCESS) {
