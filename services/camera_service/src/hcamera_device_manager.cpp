@@ -86,7 +86,7 @@ void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
     CHECK_ERROR_RETURN_LOG(it == activeCameras_.end(), "HCameraDeviceManager::RemoveDevice error");
     pidToCameras_.Erase((*it)->GetPid());
     activeCameras_.erase(it);
-    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice end");
+    MEDIA_DEBUG_LOG("HCameraDeviceManager::RemoveDevice end");
 }
 
 sptr<HCameraDeviceHolder> HCameraDeviceManager::GetCameraHolderByPid(pid_t pidRequest)

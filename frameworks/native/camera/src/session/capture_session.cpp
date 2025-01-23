@@ -3866,7 +3866,7 @@ bool CaptureSession::IsMacroSupported()
         "CaptureSession::IsMacroSupported camera deviceInfo is null");
 
     if (supportSpecSearch_) {
-        MEDIA_INFO_LOG("spec search enter");
+        MEDIA_DEBUG_LOG("spec search enter");
         auto abilityContainer = GetCameraAbilityContainer();
         if (abilityContainer) {
             bool isSupport = abilityContainer->IsMacroSupported();
@@ -4419,17 +4419,14 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
     switch (outputType) {
         case CAPTURE_OUTPUT_TYPE_PREVIEW: {
             auto profiles = inputDeviceInfo->modePreviewProfiles_[modeName];
-            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Preview");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_PHOTO: {
             auto profiles = inputDeviceInfo->modePhotoProfiles_[modeName];
-            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Photo");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_VIDEO: {
             auto profiles = inputDeviceInfo->modeVideoProfiles_[modeName];
-            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType Video");
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         default:
