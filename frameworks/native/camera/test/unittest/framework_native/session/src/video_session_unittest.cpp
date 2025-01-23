@@ -79,6 +79,26 @@ void CameraVideoSessionUnitTest::NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
+void CameraVideoSessionUnitTest::TestVideoSessionCallback()
+{
+    std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback = std::make_shared<TestFocusTrackingCallback>();
+    ASSERT_NE(focusTrackingInfoCallback, nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    videoSession->SetFocusTrackingInfoCallback(focusTrackingInfoCallback);
+    ASSERT_NE(videoSession->focusTrackingInfoCallback_, nullptr);
+    EXPECT_EQ(videoSession->GetFocusTrackingCallback(), focusTrackingInfoCallback);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    uint64_t timestamp = 1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = cameras[0]->GetMetadata();
+    videoSession->metadataResultProcessor_->ProcessCallbacks(timestamp, result);
+}
+
 void CameraVideoSessionUnitTest::TestVideoSessionPreconfig(
     sptr<CaptureInput>& input, PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio)
 {
@@ -183,6 +203,109 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level0
             TestVideoSessionPreconfig(input, preconfigType, profileSizeRatio);
         }
     }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    TestVideoSessionCallback();
+    
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback while metadata is nullptr
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    FocusTrackingMode mode = FOCUS_TRACKING_MODE_AUTO;
+    Rect region = {0.0, 0.0, 0.0, 0.0};
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    bool ret = videoSession->ProcessFocusTrackingModeInfo(nullptr, mode);
+    EXPECT_FALSE(ret);
+    ret = videoSession->ProcessRectInfo(nullptr, region);
+    EXPECT_FALSE(ret);
+    videoSession->ProcessFocusTrackingInfo(nullptr);
+    
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE);
+    uint8_t testMode = OHOS_CAMERA_FOCUS_TRACKING_AUTO;
+    FocusTrackingMode mode = FOCUS_TRACKING_MODE_AUTO;
+    metadata->addEntry(OHOS_CONTROL_FOCUS_TRACKING_MODE, &testMode, 1);
+    bool ret = videoSession->ProcessFocusTrackingModeInfo(metadata, mode);
+    EXPECT_TRUE(ret);
+
+    int32_t data[4] = {0, 1, 2, 3};
+    Rect region = {0.0, 0.0, 0.0, 0.0};
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION);
+    metadata->addEntry(OHOS_ABILITY_FOCUS_TRACKING_REGION, &data, sizeof(data) / sizeof(data[0]));
+    ret = videoSession->ProcessRectInfo(metadata, region);
+    EXPECT_TRUE(ret);
+
+    std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback = std::make_shared<TestFocusTrackingCallback>();
+    ASSERT_NE(focusTrackingInfoCallback, nullptr);
+    videoSession->SetFocusTrackingInfoCallback(focusTrackingInfoCallback);
+    ASSERT_NE(videoSession->focusTrackingInfoCallback_, nullptr);
+    videoSession->ProcessFocusTrackingInfo(metadata);
+
     input->Close();
 }
 

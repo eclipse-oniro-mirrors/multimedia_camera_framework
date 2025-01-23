@@ -3426,6 +3426,399 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_033, TestSize.Level0)
 
 /*
  * Feature: Framework
+ * Function: Test captureSession with SetFocusRange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusRange normal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_034, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    std::vector<FocusRangeType> types;
+    EXPECT_EQ(session->GetSupportedFocusRangeTypes(types), 0);
+    if (!types.empty()) {
+        bool isSupported = false;
+        EXPECT_EQ(session->IsFocusRangeTypeSupported(types[0], isSupported), 0);
+        if (isSupported) {
+            session->LockForControl();
+            EXPECT_EQ(session->SetFocusRange(types[0]), 0);
+            session->UnlockForControl();
+            FocusRangeType type = FOCUS_RANGE_TYPE_NEAR;
+            EXPECT_EQ(session->GetFocusRange(type), types[0]);
+        }
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession with SetFocusDriven
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusDriven normal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_035, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    std::vector<FocusDrivenType> types;
+    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(types), 0);
+    if (!types.empty()) {
+        bool isSupported = false;
+        EXPECT_EQ(session->IsFocusDrivenTypeSupported(types[0], isSupported), 0);
+        if (isSupported) {
+            session->LockForControl();
+            EXPECT_EQ(session->SetFocusDriven(types[0]), 0);
+            session->UnlockForControl();
+            FocusDrivenType type = FOCUS_DRIVEN_TYPE_FACE;
+            EXPECT_EQ(session->GetFocusDriven(type), types[0]);
+        }
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession with SetColorReservation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetColorReservation normal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_036, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    std::vector<ColorReservationType> types;
+    EXPECT_EQ(session->GetSupportedColorReservationTypes(types), 0);
+    if (!types.empty()) {
+        bool isSupported = false;
+        EXPECT_EQ(session->IsColorReservationTypeSupported(types[0], isSupported), 0);
+        if (isSupported) {
+            session->LockForControl();
+            EXPECT_EQ(session->SetColorReservation(types[0]), 0);
+            session->UnlockForControl();
+            ColorReservationType type = COLOR_RESERVATION_TYPE_PORTRAIT;
+            EXPECT_EQ(session->GetColorReservation(type), types[0]);
+        }
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession abnormal branches before commit config
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureSession abnormal branches before commit config
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_037, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
+    bool isSupported = true;
+    EXPECT_EQ(session->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetFocusRange(testType_1), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
+    EXPECT_EQ(session->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetFocusDriven(testType_2), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    std::vector<ColorReservationType> testTypes_3;
+    EXPECT_EQ(session->GetSupportedColorReservationTypes(testTypes_3), CameraErrorCode::SESSION_NOT_CONFIG);
+    ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
+    EXPECT_EQ(session->GetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetColorReservation(testType_3), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession with abnormal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureSession abnormal branches with abnormal parameter
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_038, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    int32_t num = -1;
+    FocusRangeType testType_1 = static_cast<FocusRangeType>(num);
+    bool isSupported = true;
+    EXPECT_EQ(session->IsFocusRangeTypeSupported(testType_1, isSupported), CameraErrorCode::PARAMETER_ERROR);
+    FocusDrivenType testType_2 = static_cast<FocusDrivenType>(num);
+    EXPECT_EQ(session->IsFocusDrivenTypeSupported(testType_2, isSupported), CameraErrorCode::PARAMETER_ERROR);
+    ColorReservationType testType_3 = static_cast<ColorReservationType>(num);
+    EXPECT_EQ(session->IsColorReservationTypeSupported(testType_3, isSupported), CameraErrorCode::PARAMETER_ERROR);
+
+    session->LockForControl();
+    EXPECT_EQ(session->SetFocusRange(testType_1), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(session->SetFocusDriven(testType_2), CameraErrorCode::PARAMETER_ERROR);
+    EXPECT_EQ(session->SetColorReservation(testType_3), CameraErrorCode::PARAMETER_ERROR);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession abnormal branches without LockForControl
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureSession abnormal branches without LockForControl
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_039, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
+    EXPECT_EQ(session->SetFocusRange(testType_1), 0);
+    FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
+    EXPECT_EQ(session->SetFocusDriven(testType_2), 0);
+    ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
+    EXPECT_EQ(session->SetColorReservation(testType_3), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession abnormal branches while camera device is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureSession abnormal branches while camera device is nulltptr
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->innerInputDevice_ = nullptr;
+    std::vector<FocusRangeType> testTypes_1;
+    EXPECT_EQ(session->GetSupportedFocusRangeTypes(testTypes_1), 0);
+    FocusRangeType testType_1 = FOCUS_RANGE_TYPE_NEAR;
+    EXPECT_EQ(session->GetFocusRange(testType_1), 0);
+
+    std::vector<FocusDrivenType> testTypes_2;
+    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(testTypes_2), 0);
+    FocusDrivenType testType_2 = FOCUS_DRIVEN_TYPE_FACE;
+    EXPECT_EQ(session->GetFocusDriven(testType_2), 0);
+
+    std::vector<ColorReservationType> testTypes_3;
+    EXPECT_EQ(session->GetSupportedColorReservationTypes(testTypes_3), 0);
+    ColorReservationType testType_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
+    EXPECT_EQ(session->GetColorReservation(testType_3), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test captureSession founction while metadata have ability
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureSession founction while metadata have ability
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    std::vector<uint8_t> testTypes_1 = {OHOS_CAMERA_FOCUS_RANGE_AUTO, OHOS_CAMERA_FOCUS_RANGE_NEAR};
+    ASSERT_NE(session->GetMetadata(), nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_FOCUS_RANGE_TYPES);
+    session->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_RANGE_TYPES, testTypes_1.data(), testTypes_1.size());
+    std::vector<FocusRangeType> types_1;
+    EXPECT_EQ(session->GetSupportedFocusRangeTypes(types_1), 0);
+
+    uint8_t testType_1 = OHOS_CAMERA_FOCUS_RANGE_AUTO;
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
+    session->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
+    FocusRangeType type_1 = FOCUS_RANGE_TYPE_NEAR;
+    EXPECT_EQ(session->GetFocusRange(type_1), 0);
+
+    std::vector<uint8_t> testTypes_2 = {OHOS_CAMERA_FOCUS_DRIVEN_AUTO, OHOS_CAMERA_FOCUS_DRIVEN_FACE};
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_FOCUS_DRIVEN_TYPES);
+    session->GetMetadata()->addEntry(OHOS_ABILITY_FOCUS_DRIVEN_TYPES, testTypes_2.data(), testTypes_2.size());
+    std::vector<FocusDrivenType> types_2;
+    EXPECT_EQ(session->GetSupportedFocusDrivenTypes(types_2), 0);
+
+    uint8_t testType_2 = OHOS_CAMERA_FOCUS_DRIVEN_AUTO;
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
+    session->GetMetadata()->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
+    FocusDrivenType type_2 = FOCUS_DRIVEN_TYPE_FACE;
+    EXPECT_EQ(session->GetFocusDriven(type_2), 0);
+
+    std::vector<uint8_t> testTypes_3 = {OHOS_CAMERA_COLOR_RESERVATION_NONE, OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT};
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES);
+    session->GetMetadata()->addEntry(OHOS_ABILITY_COLOR_RESERVATION_TYPES, testTypes_3.data(), testTypes_3.size());
+    std::vector<ColorReservationType> types_3;
+    EXPECT_EQ(session->GetSupportedColorReservationTypes(types_3), 0);
+
+    uint8_t testType_3 = OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT;
+    OHOS::Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
+    session->GetMetadata()->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
+    ColorReservationType type_3 = COLOR_RESERVATION_TYPE_PORTRAIT;
+    EXPECT_EQ(session->GetColorReservation(type_3), 0);
+
+    session->LockForControl();
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE);
+    EXPECT_EQ(session->SetFocusRange(type_1), 0);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &testType_1, 1);
+    EXPECT_EQ(session->SetFocusRange(type_1), 0);
+
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE);
+    EXPECT_EQ(session->SetFocusDriven(type_2), 0);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &testType_2, 1);
+    EXPECT_EQ(session->SetFocusDriven(type_2), 0);
+
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE);
+    EXPECT_EQ(session->SetColorReservation(type_3), 0);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &testType_3, 1);
+    EXPECT_EQ(session->SetColorReservation(type_3), 0);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
  * Function: Test FoldCallback with OnFoldStatusChanged and Constructor
  * SubFunction: NA
  * FunctionPoints: NA

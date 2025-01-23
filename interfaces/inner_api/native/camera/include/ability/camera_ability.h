@@ -40,6 +40,8 @@ public:
     std::vector<float> GetExposureBiasRange();
     std::vector<FocusMode> GetSupportedFocusModes();
     bool IsFocusModeSupported(FocusMode focusMode);
+    bool IsFocusRangeTypeSupported(FocusRangeType focusRangeType);
+    bool IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType);
     std::vector<float> GetZoomRatioRange();
     std::vector<BeautyType> GetSupportedBeautyTypes();
     std::vector<int32_t> GetSupportedBeautyRange(BeautyType type);
@@ -61,6 +63,8 @@ public:
     std::vector<ExposureMode> supportedExposureModes_;
     std::vector<float> exposureBiasRange_;
     std::vector<FocusMode> supportedFocusModes_;
+    std::vector<FocusRangeType> supportedFocusRangeTypes_ = {};
+    std::vector<FocusDrivenType> supportedFocusDrivenTypes_ = {};
     std::vector<BeautyType> supportedBeautyTypes_;
     std::map<BeautyType, std::vector<int32_t>> supportedBeautyRangeMap_;
     std::vector<ColorEffect> supportedColorEffects_;

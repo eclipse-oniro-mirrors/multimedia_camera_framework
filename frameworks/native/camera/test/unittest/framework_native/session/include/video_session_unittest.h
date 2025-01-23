@@ -23,6 +23,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
+class TestFocusTrackingCallback : public FocusTrackingCallback {
+    public:
+        void OnFocusTrackingInfoAvailable(FocusTrackingInfo &focusTrackingInfo) const override {}
+};
+
 class CameraVideoSessionUnitTest : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
@@ -35,6 +41,8 @@ public:
     void TearDown(void);
 
     void NativeAuthorization(void);
+
+    void TestVideoSessionCallback();
 
     void TestVideoSessionPreconfig(sptr<CaptureInput>& input,
                PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);

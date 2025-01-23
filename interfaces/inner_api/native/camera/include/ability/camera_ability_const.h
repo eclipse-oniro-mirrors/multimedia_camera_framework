@@ -130,6 +130,21 @@ enum class VideoRotation {
     ROTATION_270 = 270
 };
 
+enum FocusRangeType {
+    FOCUS_RANGE_TYPE_AUTO = 0,
+    FOCUS_RANGE_TYPE_NEAR
+};
+
+enum FocusDrivenType {
+    FOCUS_DRIVEN_TYPE_AUTO = 0,
+    FOCUS_DRIVEN_TYPE_FACE
+};
+
+enum ColorReservationType {
+    COLOR_RESERVATION_TYPE_NONE = 0,
+    COLOR_RESERVATION_TYPE_PORTRAIT
+};
+
 extern const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap_;
 extern const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> g_metaExposureModeMap_;
 extern const std::unordered_map<camera_focus_mode_enum_t, FocusMode> g_metaFocusModeMap_;
@@ -154,6 +169,12 @@ extern const std::unordered_map<QualityPrioritization, CameraQualityPrioritizati
 extern const std::unordered_map<OHOS::HDI::Camera::V1_3::OperationMode, SceneMode> g_metaToFwSupportedMode_;
 extern const std::unordered_map<SceneMode, OHOS::HDI::Camera::V1_3::OperationMode> g_fwToMetaSupportedMode_;
 extern const std::unordered_map<StatisticsDetectType, MetadataObjectType> g_metaToFwCameraMetaDetect_;
+extern const std::unordered_map<camera_focus_range_type_t, FocusRangeType> g_metaFocusRangeTypeMap_;
+extern const std::unordered_map<FocusRangeType, camera_focus_range_type_t> g_fwkocusRangeTypeMap_;
+extern const std::unordered_map<camera_focus_driven_type_t, FocusDrivenType> g_metaFocusDrivenTypeMap_;
+extern const std::unordered_map<FocusDrivenType, camera_focus_driven_type_t> g_fwkFocusDrivenTypeMap_;
+extern const std::unordered_map<camera_color_reservation_type_t, ColorReservationType> g_metaColorReservationTypeMap_;
+extern const std::unordered_map<ColorReservationType, camera_color_reservation_type_t> g_fwkColorReservationTypeMap_;
 
 template <typename S, typename T>
 void g_transformValidData(

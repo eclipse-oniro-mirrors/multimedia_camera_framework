@@ -165,6 +165,14 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("UsageType", CreateObjectWithMap(env, "UsageType", mapUsageType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PortraitThemeType",
             CreateObjectWithMap(env, "PortraitThemeType", mapPortraitThemeType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FocusRangeType",
+            CreateObjectWithMap(env, "FocusRangeType", mapFocusRangeType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FocusDrivenType",
+            CreateObjectWithMap(env, "FocusDrivenType", mapFocusDrivenType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ColorReservationType",
+            CreateObjectWithMap(env, "ColorReservationType", mapColorReservationType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FocusTrackingMode",
+            CreateObjectWithMap(env, "FocusTrackingMode", mapFocusTrackingMode, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
