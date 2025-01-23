@@ -114,7 +114,7 @@ private:
     void UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     void UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     int GetTotalTime (uint64_t beginTime, uint64_t endTime);
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo
     ExecutionMode executionMode_;
     int temperatureLevel_;
