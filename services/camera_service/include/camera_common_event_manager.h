@@ -31,7 +31,6 @@ namespace OHOS {
 namespace CameraStandard {
 
 using EventReceiver = std::function<void(const EventFwk::CommonEventData&)>;
-static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
 class CameraCommonEventManager : public RefBase {
 public:
     CameraCommonEventManager();

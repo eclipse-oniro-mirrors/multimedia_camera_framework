@@ -53,6 +53,7 @@ ohos_shared_library("camera_service") {
     "src/avcodec/sample_callback.cpp",
     "src/avcodec/video_encoder.cpp",
     "src/camera_common_event_manager.cpp",
+    "src/camera_datashare_helper.cpp",
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
@@ -170,6 +171,7 @@ ohos_shared_library("camera_service") {
   ]
 
   external_deps = [
+    "ability_base:base",
     "ability_base:want",
     "ability_base:zuri",
     "ability_runtime:app_manager",
@@ -205,6 +207,7 @@ ohos_shared_library("camera_service") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "i18n:intl_util",
     "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",
@@ -249,6 +252,13 @@ ohos_shared_library("camera_service") {
   if (hicollie_enable) {
     external_deps += [ "hicollie:libhicollie" ]
     defines += [ "HICOLLIE_ENABLE" ]
+  }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.notification_distributed_notification_service)) {
+    external_deps += [ "distributed_notification_service:ans_innerkits" ]
+    defines += [ "NOTIFICATION_ENABLE" ]
+    sources += [ "src/camera_beauty_notification.cpp" ]
   }
 
   defines += [ "MOVING_PHOTO_ADD_AUDIO" ]

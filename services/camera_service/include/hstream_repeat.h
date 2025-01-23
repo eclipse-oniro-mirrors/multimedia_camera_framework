@@ -103,6 +103,11 @@ private:
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
     void SyncTransformToSketch();
     void UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+#ifdef NOTIFICATION_ENABLE
+    void UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void CancelNotification();
+    bool IsNeedBeautyNotification();
+#endif
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
