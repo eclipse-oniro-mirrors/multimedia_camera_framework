@@ -338,23 +338,38 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        auto audioDeferredProcess = std::make_shared<AudioDeferredProcess>();
-        audioDeferredProcess->StoreOptions(audioCapturerSession_->deferredInputOptions_,
-            audioCapturerSession_->deferredOutputOptions_);
-        if (!audioDeferredProcess || audioDeferredProcess->GetOfflineEffectChain() != 0) {
-            return;
+        lock_guard<mutex> lock(deferredProcessMutex_);
+        if (audioDeferredProcess_ == nullptr) {
+            audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
+            audioDeferredProcess_->StoreOptions(audioCapturerSession_->deferredInputOptions_,
+                audioCapturerSession_->deferredOutputOptions_);
+            if (!audioDeferredProcess_ || audioDeferredProcess_->GetOfflineEffectChain() != 0) {
+                return;
+            }
+            if (audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0) {
+                return;
+            }
+            if (audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0) {
+                return;
+            }
+            if (audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+                audioCapturerSession_->deferredOutputOptions_) != 0) {
+                return;
+            }
         }
-        if (audioDeferredProcess->ConfigOfflineAudioEffectChain() != 0) {
-            return;
+        audioDeferredProcess_->Process(audioRecords, processedAudioRecords);
+        auto thisPtr = wptr<AvcodecTaskManager>(this);
+        if (timerId_) {
+            MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
+            CameraTimer::GetInstance().Unregister(timerId_);
         }
-        if (audioDeferredProcess->PrepareOfflineAudioEffectChain() != 0) {
-            return;
-        }
-        if (audioDeferredProcess->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
-            audioCapturerSession_->deferredOutputOptions_) != 0) {
-            return;
-        }
-        audioDeferredProcess->Process(audioRecords, processedAudioRecords);
+        timerId_ = CameraTimer::GetInstance().Register([thisPtr]()-> void {
+            if (thisPtr == nullptr) {
+                return;
+            }
+            thisPtr->audioDeferredProcess_ = nullptr;
+            thisPtr->timerId_ = 0;
+        }, RELEASE_WAIT_TIME, true);
     }
 }
 
@@ -391,6 +406,8 @@ void AvcodecTaskManager::Release()
     MEDIA_INFO_LOG("AvcodecTaskManager release start");
     CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->Release());
     CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
+    CHECK_EXECUTE(timerId_ != 0, CameraTimer::GetInstance().Unregister(timerId_));
+    audioDeferredProcess_ = nullptr;
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("videoFdMap_ size is %{public}zu", videoFdMap_.size());
     videoFdMap_.clear();
