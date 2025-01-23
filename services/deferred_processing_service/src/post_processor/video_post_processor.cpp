@@ -194,6 +194,7 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     bool result = StartMpeg(videoId, inFd) && PrepareStreams(videoId, inFd->GetFd());
     if (!result) {
         DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
+        return;
     }
 
     StartTimer(videoId, work);

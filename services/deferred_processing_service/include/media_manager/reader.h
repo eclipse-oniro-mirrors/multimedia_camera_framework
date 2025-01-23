@@ -17,6 +17,7 @@
 
 #include "basic_definitions.h"
 #include "demuxer.h"
+#include "dp_log.h"
 #include "track.h"
 #include "media_format.h"
 
@@ -46,10 +47,27 @@ private:
     MediaManagerError InitTracksAndDemuxer();
     static int32_t FixFPS(const double fps);
 
+    template <typename T>
+    bool CheckAndGetValue(const std::shared_ptr<Format>& format, const std::string_view& key, T& value) const
+    {
+        bool ret = false;
+        if constexpr (std::is_same_v<T, int32_t>) {
+            ret = format->GetIntValue(key, value);
+        } else if constexpr (std::is_same_v<T, double>) {
+            ret = format->GetDoubleValue(key, value);
+        } else if constexpr (std::is_same_v<T, int64_t>) {
+            ret = format->GetLongValue(key, value);
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            ret = format->GetStringValue(key, value);
+        }
+
+        DP_CHECK_WARNING_PRINT_LOG(!ret, "Cannot get %{public}s tag.", key.data());
+        return ret;
+    }
+
 private:
     std::shared_ptr<AVSource> source_ {nullptr};
     std::shared_ptr<Format> sourceFormat_ {nullptr};
-    std::shared_ptr<Format> userFormat_ {nullptr};
     std::shared_ptr<Demuxer> inputDemuxer_ {nullptr};
     int32_t trackCount_ {0};
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks_ {};

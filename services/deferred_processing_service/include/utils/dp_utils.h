@@ -28,6 +28,7 @@ using Nano = std::chrono::nanoseconds;
 using Micro = std::chrono::microseconds;
 using Milli = std::chrono::milliseconds;
 using Seconds = std::chrono::seconds;
+constexpr int32_t DEC_RADIX = 10;
 
 inline SteadyTimePoint GetSteadyNow()
 {
@@ -115,6 +116,42 @@ inline int32_t GetVersionId(uint32_t major, uint32_t minor)
 {
     const uint32_t offset = 8;
     return static_cast<int32_t>((major << offset) | minor);
+}
+
+inline bool StrToLL(const std::string &str, long long &value, int32_t base)
+{
+    auto add = str.c_str();
+    char *end = nullptr;
+    errno = 0;
+    value = strtoll(add, &end, base);
+    DP_CHECK_ERROR_RETURN_RET_LOG(
+        (errno == ERANGE && (value == LLONG_MAX || value == LLONG_MIN)) || (errno != 0 && value == 0),
+        false, "strtoll converse error,str=%{public}s", str.c_str());
+    DP_CHECK_ERROR_RETURN_RET_LOG(end == add, false, "strtoll no digit find");
+    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoll no all find");
+    return true;
+}
+
+inline bool StrToULL(const std::string &str, unsigned long long &value)
+{
+    auto add = str.c_str();
+    char *end = nullptr;
+    errno = 0;
+    value = strtoull(add, &end, DEC_RADIX);
+    DP_CHECK_ERROR_RETURN_RET_LOG(
+        (errno == ERANGE && value == ULLONG_MAX) || (errno != 0 && value == 0),
+        false, "strtoull converse error,str=%{public}s", str.c_str());
+    DP_CHECK_ERROR_RETURN_RET_LOG(end == add, false, "strtoull no digit find");
+    DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoull no all find");
+    return true;
+}
+
+inline bool StrToI64(const std::string &str, int64_t &value)
+{
+    long long tmp = 0;
+    bool isOK = StrToLL(str, tmp, DEC_RADIX);
+    value = tmp;
+    return isOK && (tmp >= INT64_MIN && tmp <= INT64_MAX);
 }
 
 Watchdog& GetGlobalWatchdog();

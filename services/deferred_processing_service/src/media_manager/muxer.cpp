@@ -41,18 +41,40 @@ MediaManagerError Muxer::AddTracks(const std::map<Media::Plugins::MediaType, std
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(trackMap.empty(), ERROR_FAIL, "Invalid track map: trackMap is empty.");
-
+    
     for (auto& trackInfo : trackIds_) {
-        auto it = trackMap.find(trackInfo.first);
-        DP_CHECK_ERROR_RETURN_RET_LOG(it == trackMap.end(), ERROR_FAIL,
-            "Not find trackType: %{public}d.", static_cast<int>(trackInfo.first));
+        auto trackType = trackInfo.first;
+        auto it = trackMap.find(trackType);
+        if (it == trackMap.end()) {
+            if (trackType == Media::Plugins::MediaType::TIMEDMETA) {
+                continue;
+            }
+            DP_ERR_LOG("Not find trackType: %{public}d.", trackType);
+            return ERROR_FAIL;
+        }
 
         auto track = it->second;
         auto ret = muxer_->AddTrack(trackInfo.second, track->GetFormat().format->GetMeta());
         DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
-            "Failed to add track: %{public}d, ret: %{public}d.", static_cast<int>(trackInfo.first), ret);
+            "Failed to add track: %{public}d, ret: %{public}d.", trackType, ret);
     }
 
+    return CheckAndAddMetaTrack();
+}
+
+MediaManagerError Muxer::CheckAndAddMetaTrack()
+{
+    auto it = trackIds_.find(Media::Plugins::MediaType::TIMEDMETA);
+    if (it != trackIds_.end() && it->second == INVALID_TRACK_ID) {
+        DP_INFO_LOG("Creat meta track.");
+        auto metaFormat = std::make_shared<Format>();
+        metaFormat->PutStringValue(Tag::MIME_TYPE, MIME_TIMED_META);
+        metaFormat->PutStringValue(Tag::TIMED_METADATA_KEY, TIMED_METADATA_KEY);
+        metaFormat->PutIntValue(Tag::TIMED_METADATA_SRC_TRACK, trackIds_[Media::Plugins::MediaType::VIDEO]);
+        auto ret = muxer_->AddTrack(it->second, metaFormat->GetMeta());
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
+            "Failed to add track: %{public}d, ret: %{public}d.", it->second, ret);
+    }
     return OK;
 }
 
@@ -103,16 +125,10 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
     param->Set<Tag::MEDIA_CREATION_TIME>(mediaInfo->creationTime);
     param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
     param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
+    param->Set<Tag::VIDEO_IS_HDR_VIVID>(mediaInfo->codecInfo.isHdrvivid);
     auto ret = muxer_->SetParameter(param);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "Add param failed, ret: %{public}d", ret);
-
-    auto userMeta = std::make_shared<Meta>();
-    userMeta->SetData(VIDEO_FRAME_COUNT, mediaInfo->codecInfo.numFrames);
-    userMeta->SetData(RECORD_SYSTEM_TIMESTAMP, mediaInfo->recorderTime);
-    ret = muxer_->SetUserMeta(userMeta);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
-        "Add userMeta failed, ret: %{public}d", ret);
 
     return OK;
 }

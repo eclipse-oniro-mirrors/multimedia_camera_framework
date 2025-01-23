@@ -33,8 +33,7 @@ MediaManagerError Writer::Create(int32_t outputFd,
 
     outputFileFd_ = outputFd;
     outputMuxer_ = std::make_shared<Muxer>();
-    DP_DEBUG_LOG("outputFd: %{public}d, track size: %{public}d",
-        outputFileFd_, static_cast<int32_t>(trackMap.size()));
+    DP_DEBUG_LOG("outputFd: %{public}d, track size: %{public}d", outputFileFd_, static_cast<int32_t>(trackMap.size()));
     auto ret = outputMuxer_->Create(outputFileFd_, Plugins::OutputFormat::MPEG_4);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Create muxer failed.");
 
