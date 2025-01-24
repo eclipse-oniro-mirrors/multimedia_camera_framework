@@ -26,12 +26,14 @@
 #include <vector>
 
 #include "access_token.h"
+#ifdef NOTIFICATION_ENABLE
+#include "camera_beauty_notification.h"
+#endif
 #include "camera_info_dumper.h"
 #include "camera_log.h"
 #include "camera_report_uitls.h"
 #include "camera_util.h"
 #include "camera_common_event_manager.h"
-#include "datashare_helper.h"
 #include "datashare_predicates.h"
 #include "deferred_processing_service.h"
 #include "hcamera_preconfig.h"
@@ -62,12 +64,6 @@ static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 
-static const std::string SETTINGS_DATA_BASE_URI =
-    "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
-static const std::string SETTINGS_DATA_EXT_URI = "datashare:///com.ohos.settingsdata.DataAbility";
-static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
-static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
-static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
     OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY,
@@ -135,6 +131,9 @@ void HCameraService::OnStart()
 #endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
+#ifdef NOTIFICATION_ENABLE
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+#endif
     if (Publish(this)) {
         MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
     } else {
@@ -198,7 +197,65 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         MEDIA_INFO_LOG("on receive datashare ready.");
         SetMuteModeFromDataShareHelper();
     }
+#ifdef NOTIFICATION_ENABLE
+    if (action == EVENT_CAMERA_BEAUTY_NOTIFICATION) {
+        MEDIA_INFO_LOG("on receive camera beauty.");
+        OHOS::AAFwk::WantParams wantParams = data.GetWant().GetParams();
+        int32_t currentFlag = wantParams.GetIntParam(BEAUTY_NOTIFICATION_ACTION_PARAM, -1);
+        MEDIA_INFO_LOG("currentFlag: %{public}d", currentFlag);
+        int32_t beautyStatus = currentFlag == BEAUTY_STATUS_OFF ? BEAUTY_STATUS_ON : BEAUTY_STATUS_OFF;
+        CameraBeautyNotification::GetInstance()->SetBeautyStatusFromDataShareHelper(beautyStatus);
+        SetBeauty(beautyStatus);
+        CameraBeautyNotification::GetInstance()->SetBeautyStatus(beautyStatus);
+        CameraBeautyNotification::GetInstance()->PublishNotification(false);
+    }
+#endif
 }
+
+#ifdef NOTIFICATION_ENABLE
+int32_t HCameraService::SetBeauty(int32_t beautyStatus)
+{
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    int32_t ret;
+    int32_t count = 1;
+    uint8_t beautyLevel = 0;
+    uint8_t beautyType = OHOS_CAMERA_BEAUTY_TYPE_OFF;
+    if (beautyStatus == BEAUTY_STATUS_ON) {
+        beautyLevel = BEAUTY_LEVEL;
+        beautyType = OHOS_CAMERA_BEAUTY_TYPE_AUTO;
+    }
+    MEDIA_INFO_LOG("HCameraService::SetBeauty beautyType: %{public}d, beautyLevel: %{public}d",
+        beautyType, beautyLevel);
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beautyType, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_AUTO_VALUE, &beautyLevel, count);
+    }
+
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
+    for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
+        sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
+        if (activeDevice != nullptr && activeDevice->IsOpenedCameraDevice()) {
+            activeDevice->UpdateSetting(changedMetadata);
+            MEDIA_INFO_LOG("HCameraService::SetBeauty UpdateSetting");
+        }
+    }
+    return CAMERA_OK;
+}
+#endif
 
 int32_t HCameraService::SetMuteModeByDataShareHelper(bool muteMode)
 {
@@ -224,6 +281,13 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CHECK_EXECUTE(cameraDataShareHelper_->IsDataShareReady(), SetMuteModeFromDataShareHelper());
             break;
+#ifdef NOTIFICATION_ENABLE
+        case COMMON_EVENT_SERVICE_ID:
+            MEDIA_INFO_LOG("OnAddSystemAbility COMMON_EVENT_SERVICE");
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(EVENT_CAMERA_BEAUTY_NOTIFICATION,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            break;
+#endif
         default:
             MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
             break;
@@ -1939,96 +2003,6 @@ int32_t HCameraService::GetCameraOutputStatus(int32_t pid, int32_t &status)
         status = 0;
     }
     return CAMERA_OK;
-}
-
-std::shared_ptr<DataShare::DataShareHelper> HCameraService::CameraDataShareHelper::CreateCameraDataShareHelper()
-{
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, nullptr, "CameraDataShareHelper GetSystemAbilityManager failed.");
-    sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, nullptr, "CameraDataShareHelper GetSystemAbility Service Failed.");
-    return DataShare::DataShareHelper::Creator(remoteObj, SETTINGS_DATA_BASE_URI, SETTINGS_DATA_EXT_URI);
-}
-
-int32_t HCameraService::CameraDataShareHelper::QueryOnce(const std::string key, std::string &value)
-{
-    auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_ERROR_RETURN_RET_LOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
-    Uri uri(SETTINGS_DATA_BASE_URI);
-    DataShare::DataSharePredicates predicates;
-    predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
-    std::vector<std::string> columns;
-    columns.emplace_back(SETTINGS_DATA_FIELD_VALUE);
-
-    auto resultSet = dataShareHelper->Query(uri, predicates, columns);
-    CHECK_ERROR_RETURN_RET_LOG(resultSet == nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
-
-    int32_t numRows = 0;
-    resultSet->GetRowCount(numRows);
-    CHECK_ERROR_RETURN_RET_LOG(numRows <= 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
-
-    if (resultSet->GoToFirstRow() != DataShare::E_OK) {
-        MEDIA_INFO_LOG("CameraDataShareHelper Query failed,go to first row error");
-        resultSet->Close();
-        return CAMERA_INVALID_ARG;
-    }
-
-    int columnIndex;
-    resultSet->GetColumnIndex(SETTINGS_DATA_FIELD_VALUE, columnIndex);
-    resultSet->GetString(columnIndex, value);
-    resultSet->Close();
-    dataShareHelper->Release();
-    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{public}s", value.c_str());
-    return CAMERA_OK;
-}
-
-int32_t HCameraService::CameraDataShareHelper::UpdateOnce(const std::string key, std::string value)
-{
-    auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_ERROR_RETURN_RET_LOG(dataShareHelper == nullptr, CAMERA_INVALID_ARG, "dataShareHelper_ is nullptr");
-    Uri uri(SETTINGS_DATA_BASE_URI);
-    DataShare::DataSharePredicates predicates;
-    predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
-
-    DataShare::DataShareValuesBucket bucket;
-    DataShare::DataShareValueObject keywordObj(key);
-    DataShare::DataShareValueObject valueObj(value);
-    bucket.Put(SETTINGS_DATA_FIELD_KEYWORD, keywordObj);
-    bucket.Put(SETTINGS_DATA_FIELD_VALUE, valueObj);
-
-    if (dataShareHelper->Update(uri, predicates, bucket) <= 0) {
-        dataShareHelper->Insert(uri, bucket);
-        MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());
-        return CAMERA_INVALID_ARG;
-    }
-    MEDIA_INFO_LOG("CameraDataShareHelper Update:%{public}s success", key.c_str());
-    dataShareHelper->Release();
-    return CAMERA_OK;
-}
-
-bool HCameraService::CameraDataShareHelper::IsDataShareReady()
-{
-    CHECK_ERROR_RETURN_RET(isDataShareReady_, true);
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, false, "CameraDataShareHelper GetSystemAbilityManager failed.");
-    sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_ERROR_RETURN_RET_LOG(remoteObj == nullptr, false, "CameraDataShareHelper GetSystemAbility Service Failed.");
-    std::pair<int, std::shared_ptr<DataShare::DataShareHelper>> ret =
-        DataShare::DataShareHelper::Create(remoteObj, SETTINGS_DATA_BASE_URI, SETTINGS_DATA_EXT_URI);
-    MEDIA_INFO_LOG("create dataShareHelper ret=%{public}d", ret.first);
-    if (ret.first == DataShare::E_OK) {
-        auto dataShareHelper = ret.second;
-        if (dataShareHelper != nullptr) {
-            bool releaseRet = dataShareHelper->Release();
-            MEDIA_INFO_LOG("release dataShareHelper, ret=%{public}d", releaseRet);
-        }
-        isDataShareReady_ = true;
-        return true;
-    } else if (ret.first == DataShare::E_DATA_SHARE_NOT_READY) {
-        isDataShareReady_ = false;
-        return false;
-    }
-    return true;
 }
 
 int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
