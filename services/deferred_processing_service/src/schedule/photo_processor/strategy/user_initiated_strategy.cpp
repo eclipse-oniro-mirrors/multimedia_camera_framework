@@ -53,7 +53,6 @@ DeferredPhotoJobPtr UserInitiatedStrategy::GetJob()
 ExecutionMode UserInitiatedStrategy::GetExecutionMode()
 {
     if (cameraSessionStatus_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN
-        || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
         || !(hdiStatus_ == HdiStatus::HDI_READY || hdiStatus_ == HdiStatus::HDI_READY_SPACE_LIMIT_REACHED)
         || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
         DP_INFO_LOG("cameraSessionStatus_: %{public}d, hdiStatus_: %{public}d, mediaLibraryStatus_: %{public}d, ",
