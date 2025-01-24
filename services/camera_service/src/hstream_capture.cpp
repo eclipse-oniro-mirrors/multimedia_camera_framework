@@ -625,7 +625,7 @@ int32_t HStreamCapture::CancelCapture()
 void HStreamCapture::SetMode(int32_t modeName)
 {
     modeName_ = modeName;
-    MEDIA_INFO_LOG("HStreamCapture SetMode modeName = %{public}d", modeName);
+    MEDIA_DEBUG_LOG("HStreamCapture SetMode modeName = %{public}d", modeName);
 }
 
 int32_t HStreamCapture::GetMode()

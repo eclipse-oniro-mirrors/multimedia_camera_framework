@@ -1224,23 +1224,23 @@ napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc
 
         if (i == PARAM0 && valueType == napi_object) {
             if (PreviewOutputNapi::IsPreviewOutput(env, argv[i])) {
-                MEDIA_INFO_LOG("preview output adding..");
+                MEDIA_DEBUG_LOG("preview output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&previewOutputNapiObj));
                 cameraOutput = previewOutputNapiObj->GetPreviewOutput();
             } else if (PhotoOutputNapi::IsPhotoOutput(env, argv[i])) {
-                MEDIA_INFO_LOG("photo output adding..");
+                MEDIA_DEBUG_LOG("photo output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&photoOutputNapiObj));
                 cameraOutput = photoOutputNapiObj->GetPhotoOutput();
             } else if (VideoOutputNapi::IsVideoOutput(env, argv[i])) {
-                MEDIA_INFO_LOG("video output adding..");
+                MEDIA_DEBUG_LOG("video output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&videoOutputNapiObj));
                 cameraOutput = videoOutputNapiObj->GetVideoOutput();
             } else if (MetadataOutputNapi::IsMetadataOutput(env, argv[i])) {
-                MEDIA_INFO_LOG("metadata output adding..");
+                MEDIA_DEBUG_LOG("metadata output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
                 cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
             } else if (DepthDataOutputNapi::IsDepthDataOutput(env, argv[i])) {
-                MEDIA_INFO_LOG("depth data output adding..");
+                MEDIA_DEBUG_LOG("depth data output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&depthDataOutputNapiObj));
                 cameraOutput = depthDataOutputNapiObj->GetDepthDataOutput();
             } else {
@@ -4365,7 +4365,10 @@ void CameraSessionNapi::RegisterSessionErrorCallbackListener(
 void CameraSessionNapi::UnregisterSessionErrorCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_ERROR_RETURN_LOG(sessionCallback_ == nullptr, "sessionCallback is null");
+    if (sessionCallback_ == nullptr) {
+        MEDIA_DEBUG_LOG("sessionCallback is null");
+        return;
+    }
     sessionCallback_->RemoveCallbackRef(eventName, callback);
 }
 

@@ -102,7 +102,7 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
 void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_INFO_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks");
+    MEDIA_DEBUG_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
     CHECK_ERROR_RETURN_LOG(session == nullptr,
         "CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");

@@ -22,9 +22,9 @@ namespace CameraStandard {
  */
 static napi_value Export(napi_env env, napi_value exports)
 {
-    MEDIA_INFO_LOG("Export called()");
+    MEDIA_DEBUG_LOG("Export called()");
     CameraPickerNapi::Init(env, exports);
-    MEDIA_INFO_LOG("Export is end");
+    MEDIA_DEBUG_LOG("Export is end");
     return exports;
 }
 

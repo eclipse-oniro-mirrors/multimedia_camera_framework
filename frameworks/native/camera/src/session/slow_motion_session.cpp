@@ -31,7 +31,7 @@ const std::unordered_map<camera_slow_motion_status_type_t, SlowMotionState> Slow
 void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_INFO_LOG("SlowMotionSessionMetadataResultProcessor::ProcessCallbacks is called");
+    MEDIA_DEBUG_LOG("SlowMotionSessionMetadataResultProcessor::ProcessCallbacks is called");
     auto session = session_.promote();
     CHECK_ERROR_RETURN_LOG(session == nullptr,
         "SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
