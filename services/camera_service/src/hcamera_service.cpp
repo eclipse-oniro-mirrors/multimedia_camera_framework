@@ -1956,7 +1956,8 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
 
 int32_t HCameraService::ResetAllFreezeStatus()
 {
-    CHECK_ERROR_RETURN_RET(IPCSkeleton::GetCallingUid() != 0, CAMERA_OPERATION_NOT_ALLOWED);
+    constexpr int32_t maxSaUid = 10000;
+    CHECK_ERROR_RETURN_RET_LOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
     std::lock_guard<std::mutex> lock(freezedPidListMutex_);
     freezedPidList_.clear();
     MEDIA_INFO_LOG("freezedPidList_ has been clear");
