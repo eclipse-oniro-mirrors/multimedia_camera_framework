@@ -415,15 +415,9 @@ std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t ca
     return proxy;
 }
 
-void HStreamCapture::EnableAddPhotoProxy(bool enabled)
-{
-    std::lock_guard<mutex> lock(enableAddPhotoProxyLock_);
-    enableAddPhotoProxy_ = enabled;
-}
-
 bool HStreamCapture::GetAddPhotoProxyEnabled()
 {
-    return enableAddPhotoProxy_;
+    return thumbnailSwitch_;
 }
 
 int32_t HStreamCapture::AcquireBufferToPrepareProxy(int32_t captureId)
@@ -884,7 +878,6 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
 int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
 {
     if (isBursting_) {
-        EnableAddPhotoProxy(false);
         return CAMERA_UNSUPPORTED;
     }
     std::lock_guard<std::mutex> lock(photoAssetLock_);
@@ -910,7 +903,6 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy>
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
     photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
-    EnableAddPhotoProxy(true);
     MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", photoProxy->captureId_);
     return CAMERA_OK;
 }
