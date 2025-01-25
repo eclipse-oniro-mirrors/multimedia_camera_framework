@@ -63,6 +63,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
     deferredPhotoSwitch_ = 0;
     deferredVideoSwitch_ = 0;
     burstNum_ = 0;
+    movingPhotoSwitch_ = 0;
 }
 
 HStreamCapture::~HStreamCapture()
