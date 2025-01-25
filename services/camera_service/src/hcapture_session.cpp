@@ -2064,14 +2064,12 @@ std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContain
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
         taskThread = std::thread(RotatePicture, picturePtr);
     }
-    if (captureStream->GetAddPhotoProxyEnabled() == false) {
+    if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
         string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
         CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
         photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
-    } else {
-        captureStream->EnableAddPhotoProxy(false);
     }
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && taskThread.joinable()) {

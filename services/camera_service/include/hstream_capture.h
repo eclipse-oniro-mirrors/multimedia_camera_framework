@@ -83,7 +83,6 @@ public:
     int32_t CreateMediaLibraryPhotoAssetProxy(int32_t captureId);
     int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) override;
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
-    void EnableAddPhotoProxy(bool enabled);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
 
@@ -112,8 +111,6 @@ private:
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
     bool enableCameraPhotoRotation_ = false;
-    bool enableAddPhotoProxy_ = false;
-    std::mutex enableAddPhotoProxyLock_;
     std::atomic<bool> isCaptureReady_ = true;
     std::string curBurstKey_ = BURST_UUID_UNSET;
     bool isBursting_ = false;
