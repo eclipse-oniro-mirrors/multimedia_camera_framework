@@ -1724,12 +1724,6 @@ public:
         return innerInputDevice_;
     }
 
-    inline sptr<CameraDevice> GetChooseDevice()
-    {
-        std::lock_guard<std::mutex> lock(chooseDeviceMutex_);
-        return chooseDevice_;
-    }
-
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
@@ -1967,12 +1961,6 @@ protected:
         innerInputDevice_ = inputDevice;
     }
 
-    inline void SetChooseDevice(sptr<CameraDevice> cameraDevice)
-    {
-        std::lock_guard<std::mutex> lock(chooseDeviceMutex_);
-        chooseDevice_ = cameraDevice;
-    }
-
     inline sptr<CameraAbilityContainer> GetCameraAbilityContainer()
     {
         std::lock_guard<std::mutex> lock(abilityContainerMutex_);
@@ -2032,7 +2020,6 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
-    sptr<CameraDevice> chooseDevice_ = nullptr;
     sptr<CaptureOutput> metaOutput_ = nullptr;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;

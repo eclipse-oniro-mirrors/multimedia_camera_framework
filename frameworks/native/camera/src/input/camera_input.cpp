@@ -171,7 +171,6 @@ CameraInput::~CameraInput()
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
-        cameraObj_->ReleaseMetadata();
     }
     InputRemoveDeathRecipient();
 }
@@ -284,9 +283,6 @@ int CameraInput::Release()
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj is nullptr");
-    }
-    if (GetCameraDeviceInfo() != nullptr) {
-        GetCameraDeviceInfo()->ReleaseMetadata();
     }
     SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
@@ -510,8 +506,6 @@ int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos) __a
 
 void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj)
 {
-    auto cameraDevice = GetCameraDeviceInfo();
-    CHECK_EXECUTE(cameraDevice != nullptr, cameraDevice->ReleaseMetadata());
     SetCameraDeviceInfo(cameraObj);
     SetCameraDevice(deviceObj);
     InitCameraInput();

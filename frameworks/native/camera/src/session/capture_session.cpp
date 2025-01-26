@@ -566,7 +566,6 @@ void CaptureSession::GetMetadataFromService(sptr<CameraDevice> device)
     CHECK_ERROR_RETURN_LOG(metaData == nullptr,
         "GetMetadataFromService GetDeviceMetadata failed");
     device->AddMetadata(metaData);
-    SetChooseDevice(device);
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
@@ -1001,11 +1000,6 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         if (deviceInfo != nullptr) {
             deviceInfo->ResetMetadata();
         }
-        auto chooseDevice = GetChooseDevice();
-        if (chooseDevice != nullptr) {
-            chooseDevice->ReleaseMetadata();
-            SetChooseDevice(nullptr);
-        }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
         }
@@ -1112,11 +1106,6 @@ int32_t CaptureSession::Release()
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession is nullptr");
     }
-    auto chooseDevice = GetChooseDevice();
-    if (chooseDevice != nullptr) {
-        chooseDevice->ReleaseMetadata();
-    }
-    SetChooseDevice(nullptr);
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);

@@ -104,11 +104,6 @@ public:
     [[deprecated]] std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
 
     /**
-    * @brief Release cachedMetadata.
-    */
-    void ReleaseMetadata();
-
-    /**
      * @brief Add metadata to the camera device.
      *
      * @param srcMetadata metadata got from proxy from service.
