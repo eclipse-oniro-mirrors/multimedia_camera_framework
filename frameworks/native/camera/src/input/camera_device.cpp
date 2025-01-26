@@ -221,12 +221,6 @@ void CameraDevice::AddMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> src
     cachedMetadata_ = MetadataCommonUtils::CopyMetadata(srcMetadata);
 }
 
-void CameraDevice::ReleaseMetadata()
-{
-    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
-    cachedMetadata_ = nullptr;
-}
-
 void CameraDevice::ResetMetadata()
 {
     std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
