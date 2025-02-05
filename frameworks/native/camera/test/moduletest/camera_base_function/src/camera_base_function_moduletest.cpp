@@ -18,6 +18,7 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "camera_base_function_moduletest.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "surface.h"
@@ -886,12 +887,12 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test the CameraMnager camera status callback function, register CameraMnagerCallback,
  * and print CameraStatus information correctly when the camera is turned on or off.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, TestSize.Level0)
 {
     std::shared_ptr<TestCameraMngerCallback> callback = std::make_shared<TestCameraMngerCallback>("");
     ASSERT_NE(callback, nullptr);
     cameraManager_->SetCallback(callback);
-    ASSERT_NE(cameraManager_->GetApplicationCallback(), nullptr);
+    ASSERT_GT(cameraManager_->GetCameraStatusListenerManager()->GetListenerCount(), 0);
 }
 
 /*
@@ -912,7 +913,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
         std::shared_ptr<TestCameraMuteListener> listener = std::make_shared<TestCameraMuteListener>();
         ASSERT_NE(listener, nullptr);
         cameraManager_->RegisterCameraMuteListener(listener);
-        ASSERT_NE(cameraManager_->GetCameraMuteListener(), nullptr);
+        ASSERT_GT(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
 
         cameraManager_->MuteCamera(!(cameraManager_->IsCameraMuted()));
     } else {
@@ -976,7 +977,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
         std::shared_ptr<TestTorchListener> listener = std::make_shared<TestTorchListener>();
         ASSERT_NE(listener, nullptr);
         cameraManager_->RegisterTorchListener(listener);
-        ASSERT_NE(cameraManager_->GetTorchListener(), nullptr);
+        ASSERT_GT(cameraManager_->GetTorchServiceListenerManager()->GetListenerCount(), 0);
 
         ASSERT_TRUE(cameraManager_->IsTorchModeSupported(TorchMode::TORCH_MODE_OFF));
         ASSERT_TRUE(cameraManager_->IsTorchModeSupported(TorchMode::TORCH_MODE_ON));
@@ -1025,8 +1026,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     std::shared_ptr<TestFoldListener> listener = std::make_shared<TestFoldListener>();
     ASSERT_NE(listener, nullptr);
     cameraManager_->RegisterFoldListener(listener);
-    ASSERT_NE(cameraManager_->GetFoldListener(), nullptr);
-    EXPECT_EQ((cameraManager_->GetFoldListenerMap()).Size(), 1);
+    ASSERT_GT(cameraManager_->GetFoldStatusListenerManager()->GetListenerCount(), 0);
 }
 
 /* *****captureSession***** */
@@ -2112,7 +2112,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     std::shared_ptr<TestPreviewOutputCallback> callback = std::make_shared<TestPreviewOutputCallback>("");
     EXPECT_NE(callback, nullptr);
     previewOutput->SetCallback(callback);
-    EXPECT_NE(previewOutput->GetApplicationCallback(), nullptr);
+    EXPECT_GT(previewOutput->GetPreviewOutputListenerManager()->GetListenerCount(), 0);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -4187,9 +4187,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, Test
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
 
-    sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback(nullptr);
-    ASSERT_NE(camServiceCallback, nullptr);
-    EXPECT_EQ(camServiceCallback->OnFlashlightStatusChanged(cameraIdtest, status), CAMERA_OK);
+    auto statusListenerManager = cameraManager_->GetCameraStatusListenerManager();
+    ASSERT_NE(statusListenerManager, nullptr);
+    EXPECT_EQ(statusListenerManager->OnFlashlightStatusChanged(cameraIdtest, status), CAMERA_OK);
 
     sptr<CameraDeviceServiceCallback> camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback();
     ASSERT_NE(camDeviceSvcCallback, nullptr);
@@ -4275,12 +4275,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, Test
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
     EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
 
-    auto previewOutputCallbackImpl = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput.GetRefPtr());
-    ASSERT_NE(previewOutputCallbackImpl, nullptr);
-    EXPECT_EQ(previewOutputCallbackImpl->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
-    auto previewOutputCallbackImpl1 = new (std::nothrow) PreviewOutputCallbackImpl();
-    ASSERT_NE(previewOutputCallbackImpl1, nullptr);
-    EXPECT_EQ(previewOutputCallbackImpl1->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
+    auto previewOutputListenerManager = previewOutput->GetPreviewOutputListenerManager();
+    ASSERT_NE(previewOutputListenerManager, nullptr);
+    EXPECT_EQ(previewOutputListenerManager->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
 
     EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
 }

@@ -54,12 +54,6 @@ public:
         return listener;
     }
 
-    // std::shared_ptr<T> GetEventListener(napi_env env)
-    // {
-    //     std::lock_guard<std::mutex> lock(eventListenerMapMutex_);
-    //     return GetEventListenerNoLock(env);
-    // }
-
 private:
     std::shared_ptr<T> GetEventListenerNoLock(napi_env env)
     {

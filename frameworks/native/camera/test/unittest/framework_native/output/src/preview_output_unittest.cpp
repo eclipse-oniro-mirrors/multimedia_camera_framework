@@ -425,10 +425,6 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level0)
     EXPECT_EQ(callback->OnFrameStarted(), CAMERA_OK);
     EXPECT_EQ(callback->OnFrameError(0), CAMERA_OK);
 
-    if (callback_test) {
-        callback_test = nullptr;
-    }
-
     if (callback) {
         callback = nullptr;
     }

@@ -219,15 +219,14 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
     Camera_Device* outCameras = new Camera_Device[cameraSize];
     for (size_t index = 0; index < cameraSize; index++) {
         const string cameraGetID = cameraObjList[index]->GetID();
-        const char* src = cameraGetID.c_str();
-        size_t dstSize = strlen(src) + 1;
+        size_t dstSize = cameraGetID.size() + 1;
         char* dst = new char[dstSize];
         if (!dst) {
             MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
             delete[] outCameras;
             return CAMERA_SERVICE_FATAL_ERROR;
         }
-        strlcpy(dst, src, dstSize);
+        strlcpy(dst, cameraGetID.c_str(), dstSize);
         outCameras[index].cameraId = dst;
         outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());

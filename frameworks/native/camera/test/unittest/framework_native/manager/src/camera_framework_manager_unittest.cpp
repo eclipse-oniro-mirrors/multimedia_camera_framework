@@ -1541,9 +1541,9 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, TestSize.Level0)
 {
-    std::shared_ptr<TorchServiceCallback> torchServiceCallback = std::make_shared<TorchServiceCallback>(cameraManager_);
+    sptr<ITorchServiceCallback> torchServiceCallback = cameraManager_->GetTorchServiceListenerManager();
     ASSERT_NE(torchServiceCallback, nullptr);
-    std::shared_ptr<FoldServiceCallback> foldServiceCallback = std::make_shared<FoldServiceCallback>(cameraManager_);
+    sptr<IFoldServiceCallback> foldServiceCallback = cameraManager_->GetFoldStatusListenerManager();
     ASSERT_NE(foldServiceCallback, nullptr);
 }
 
