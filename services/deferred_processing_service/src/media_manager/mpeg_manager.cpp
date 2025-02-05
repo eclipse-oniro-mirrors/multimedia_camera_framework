@@ -180,7 +180,7 @@ MediaManagerError MpegManager::InitVideoCodec()
     CodecInfo codecInfo;
     {
         std::lock_guard<std::mutex> lock(mediaInfoMutex_);
-        DP_CHECK_RETURN_RET_LOG(mediaInfo_ == nullptr, , "mediaInfo_ is nullptr");
+        DP_CHECK_RETURN_RET_LOG(mediaInfo_ == nullptr, OK, "mediaInfo_ is nullptr");
         codecInfo = mediaInfo_->codecInfo;
     }
     encoder_ = VideoEncoderFactory::CreateByMime(codecInfo.mimeType);
