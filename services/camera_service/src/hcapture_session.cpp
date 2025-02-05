@@ -1040,9 +1040,10 @@ int32_t HCaptureSession::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
         curStream->SetStreamInfo(curStreamInfo);
         MEDIA_INFO_LOG("HCaptureSession::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
             static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStreamInfo.v1_0.format_);
-        CHECK_ERROR_RETURN_RET_LOG (!(curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_P010 ||
-                curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_P010), CAMERA_OPERATION_NOT_ALLOWED,
-            "HCaptureSession::CheckFormat, stream format not match");
+        CHECK_ERROR_RETURN_RET_LOG(
+            !(curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_P010 ||
+                curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_P010),
+            CAMERA_OPERATION_NOT_ALLOWED, "HCaptureSession::CheckFormat, stream format not match");
     }
     return CAMERA_OK;
 }
@@ -2008,9 +2009,9 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
     }
 }
 
-std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer& streamContainer, int32_t captureId,
-    std::shared_ptr<Media::Picture> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
-    std::string& uri)
+std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContainer, int32_t captureId,
+    std::shared_ptr<Media::Picture> picturePtr, bool isBursting,
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri)
 {
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");

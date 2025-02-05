@@ -1289,7 +1289,7 @@ void CameraManagerNapi::UnregisterCameraStatusCallbackListener(
 void CameraManagerNapi::RegisterCameraMuteCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-     CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On cameraMute is called!");
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi On cameraMute is called!");
     auto listener = CameraNapiEventListener<CameraMuteListenerNapi>::RegisterCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_ERROR_RETURN_LOG(
