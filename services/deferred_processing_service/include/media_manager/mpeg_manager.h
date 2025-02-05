@@ -55,6 +55,7 @@ private:
     void OnMakerBufferAvailable();
     sptr<IPCFileDescriptor> GetFileFd(const std::string& requestId, int flags, const std::string& tag);
 
+    std::mutex mediaInfoMutex_;
     std::mutex makerMutex_;
     std::unique_ptr<MediaManager> mediaManager_ {nullptr};
     sptr<Surface> codecSurface_ {nullptr};

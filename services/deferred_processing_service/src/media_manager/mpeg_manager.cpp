@@ -116,7 +116,10 @@ MediaManagerError MpegManager::Init(const std::string& requestId, const sptr<IPC
     auto ret = mediaManager_->Create(inputFd->GetFd(), outputFd_->GetFd(), tempFd_->GetFd());
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Media manager create failde.");
 
-    mediaManager_->GetMediaInfo(mediaInfo_);
+    {
+        std::lock_guard<std::mutex> lock(mediaInfoMutex_);
+        mediaManager_->GetMediaInfo(mediaInfo_);
+    }
     DP_CHECK_ERROR_RETURN_RET_LOG(InitVideoCodec() != OK, ERROR_FAIL, "Init video codec failde.");
 
     DP_CHECK_ERROR_RETURN_RET_LOG(InitVideoMakerSurface() != OK, ERROR_FAIL, "Init video maker surface failde.");
@@ -153,6 +156,8 @@ sptr<Surface> MpegManager::GetMakerSurface()
 
 uint64_t MpegManager::GetProcessTimeStamp()
 {
+    std::lock_guard<std::mutex> lock(mediaInfoMutex_);
+    DP_CHECK_RETURN_RET_LOG(mediaInfo_ == nullptr, DEFAULT_TIME_TAMP, "mediaInfo_ is nullptr");
     DP_CHECK_RETURN_RET(mediaInfo_->recoverTime < DEFAULT_TIME_TAMP, DEFAULT_TIME_TAMP);
     return static_cast<uint64_t>(mediaInfo_->recoverTime);
 }
@@ -172,7 +177,12 @@ sptr<IPCFileDescriptor> MpegManager::GetResultFd()
 MediaManagerError MpegManager::InitVideoCodec()
 {
     DP_INFO_LOG("DPS_VIDEO: Create video codec.");
-    auto codecInfo = mediaInfo_->codecInfo;
+    CodecInfo codecInfo;
+    {
+        std::lock_guard<std::mutex> lock(mediaInfoMutex_);
+        DP_CHECK_RETURN_RET_LOG(mediaInfo_ == nullptr, OK, "mediaInfo_ is nullptr");
+        codecInfo = mediaInfo_->codecInfo;
+    }
     encoder_ = VideoEncoderFactory::CreateByMime(codecInfo.mimeType);
     DP_CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, ERROR_FAIL, "Video codec create failde.");
 
