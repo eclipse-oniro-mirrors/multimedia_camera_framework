@@ -67,6 +67,7 @@ public:
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
+    int32_t UnSetCallback() override;
     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
@@ -205,7 +206,7 @@ private:
     int32_t InitStreamOperator();
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
-    void UnRegisterFoldStatusListener();
+    void UnregisterFoldStatusListener();
     void CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
     int32_t CommitStreams(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);

@@ -23,6 +23,7 @@
 
 #include "camera_napi_auto_ref.h"
 #include "camera_napi_utils.h"
+#include "js_native_api_types.h"
 namespace OHOS {
 namespace CameraStandard {
 class ListenerBase {
@@ -36,8 +37,23 @@ public:
         const napi_value* argv;
         napi_value* result;
     };
+
+    class ExecuteCallbackData {
+    public:
+        explicit ExecuteCallbackData(napi_env env, napi_value errCode, napi_value returnData);
+
+    private:
+        napi_env env_ = nullptr;
+        napi_value errCode_ = nullptr;
+        napi_value returnData_ = nullptr;
+
+        friend ListenerBase;
+    };
+
     virtual void SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce) final;
     virtual void ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const final;
+    virtual void ExecuteCallbackScopeSafe(
+        const std::string eventName, const std::function<ExecuteCallbackData()> fun) const final;
     virtual void RemoveCallbackRef(const std::string eventName, napi_value callback) final;
     virtual void RemoveAllCallbacks(const std::string eventName) final;
     virtual bool IsEmpty(const std::string eventName) const final;

@@ -50,6 +50,8 @@ public:
 
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
+    int32_t UnSetCallback() override;
+
     int32_t GetSessionState(CaptureSessionState &sessionState) override;
 
     int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode,

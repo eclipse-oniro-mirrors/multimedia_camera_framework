@@ -53,14 +53,26 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CAMERA_CALLBACK):
             errCode = HCameraServiceStub::HandleSetCameraCallback(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_CAMERA_CALLBACK):
+            errCode = UnSetCameraCallback();
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK):
             errCode = HCameraServiceStub::HandleSetMuteCallback(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_MUTE_CALLBACK):
+            errCode = UnSetMuteCallback();
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK):
             errCode = HCameraServiceStub::HandleSetTorchCallback(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_TORCH_CALLBACK):
+            errCode = UnSetTorchCallback();
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK):
             errCode = HCameraServiceStub::HandleSetFoldStatusCallback(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_FOLD_CALLBACK):
+            errCode = UnSetFoldStatusCallback();
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS):
             errCode = HCameraServiceStub::HandleGetCameras(data, reply);

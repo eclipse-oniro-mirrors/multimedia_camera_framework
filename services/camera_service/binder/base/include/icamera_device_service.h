@@ -36,6 +36,8 @@ public:
 
     virtual int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) = 0;
 
+    virtual int32_t UnSetCallback() = 0;
+
     virtual int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) = 0;
 
     virtual int32_t SetUsedAsPosition(uint8_t value) = 0;

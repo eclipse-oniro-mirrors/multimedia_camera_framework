@@ -337,18 +337,18 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_006, TestSize.Level0)
 
 /*
  * Feature: CameraService
- * Function: Test RegisterFoldStatusListener & UnRegisterFoldStatusListener in class HCameraService
+ * Function: Test RegisterFoldStatusListener & UnregisterFoldStatusListener in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: After executing RegisterFoldStatusListener,isFoldRegister will be changed to true,
- *                  after executing UnRegisterFoldStatusListener,isFoldRegister will be changed to false
+ *                  after executing UnregisterFoldStatusListener,isFoldRegister will be changed to false
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_007, TestSize.Level0)
 {
     cameraService_->RegisterFoldStatusListener();
     EXPECT_TRUE(cameraService_->isFoldRegister);
-    cameraService_->UnRegisterFoldStatusListener();
+    cameraService_->UnregisterFoldStatusListener();
     EXPECT_FALSE(cameraService_->isFoldRegister);
 }
 
@@ -1383,11 +1383,11 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level0)
 
 /*
  * Feature: CameraService
- * Function: Test RegisterSensorCallback and UnRegisterSensorCallback in class HCameraService
+ * Function: Test RegisterSensorCallback and UnregisterSensorCallback in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test RegisterSensorCallback and UnRegisterSensorCallback in a various order
+ * CaseDescription: Test RegisterSensorCallback and UnregisterSensorCallback in a various order
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0)
 {
@@ -1401,8 +1401,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0)
     device->Open();
 
     cameraService_->RegisterSensorCallback();
-    cameraService_->UnRegisterSensorCallback();
-    cameraService_->UnRegisterSensorCallback();
+    cameraService_->UnregisterSensorCallback();
+    cameraService_->UnregisterSensorCallback();
     cameraService_->RegisterSensorCallback();
     EXPECT_NE(cameraService_->user.callback, nullptr);
     device->Release();

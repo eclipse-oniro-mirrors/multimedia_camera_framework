@@ -514,7 +514,7 @@ int32_t HCameraDevice::CloseDevice()
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
             "HCameraDevice::CloseDevice device has benn closed");
         bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-        CHECK_EXECUTE(isFoldable, UnRegisterFoldStatusListener());
+        CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
@@ -877,12 +877,12 @@ void HCameraDevice::RegisterFoldStatusListener()
     }
 }
 
-void HCameraDevice::UnRegisterFoldStatusListener()
+void HCameraDevice::UnregisterFoldStatusListener()
 {
     CHECK_ERROR_RETURN_LOG(listener == nullptr, "HCameraDevice::unRegisterFoldStatusListener  listener is null");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
-        MEDIA_DEBUG_LOG("HCameraDevice::UnRegisterFoldStatusListener failed");
+        MEDIA_DEBUG_LOG("HCameraDevice::UnregisterFoldStatusListener failed");
     }
 }
 
@@ -919,6 +919,13 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback>& callback)
     }
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = callback;
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
+    deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
 }
 
@@ -1374,6 +1381,7 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK:
+        case CameraDeviceInterfaceCode::CAMERA_DEVICE_UNSET_CALLBACK:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_USED_POS:
         case CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT:
@@ -1461,7 +1469,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
     CAMERA_SYNC_TRACE;
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-    CHECK_EXECUTE(isFoldable, UnRegisterFoldStatusListener());
+    CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);

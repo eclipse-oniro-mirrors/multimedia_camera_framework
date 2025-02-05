@@ -17,13 +17,17 @@
 #define OHOS_CAMERA_PREVIEW_OUTPUT_H
 
 #include <cstdint>
+#include <memory>
+#include <mutex>
+
+#include "camera_listener_manager.h"
 #include "camera_output_capability.h"
 #include "capture_output.h"
 #include "hstream_repeat_callback_stub.h"
 #include "icamera_service.h"
+#include "input/camera_device.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
-#include "input/camera_device.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -64,6 +68,7 @@ public:
     virtual void OnSketchStatusDataChanged(const SketchStatusData& statusData) const = 0;
 };
 
+class PreviewOutputListenerManager;
 class PreviewOutput : public CaptureOutput {
 public:
     explicit PreviewOutput(sptr<IBufferProducer> bufferProducer);
@@ -77,7 +82,16 @@ public:
      */
     void SetCallback(std::shared_ptr<PreviewStateCallback> callback);
 
+    /**
+     * @brief Remove the preview callback for the preview output.
+     *
+     * @param PreviewStateCallback to be triggered.
+     */
+    void RemoveCallback(std::shared_ptr<PreviewStateCallback> callback);
+
     int32_t CreateStream() override;
+
+    void SetStream(sptr<IStreamCommon> stream) override;
 
     /**
      * @brief Releases a instance of the preview output.
@@ -188,11 +202,11 @@ public:
     std::vector<std::vector<int32_t>> GetSupportedFrameRates();
 
     /**
-     * @brief Get the application callback information.
+     * @brief Get the preview-output listener.
      *
-     * @return Returns the pointer application callback.
+     * @return Returns the pointer preview-output listener.
      */
-    std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
+    sptr<PreviewOutputListenerManager> GetPreviewOutputListenerManager();
 
     /**
      * @brief Get Observed matadata tags
@@ -223,8 +237,8 @@ public:
 private:
     int32_t PreviewFormat_;
     Size PreviewSize_;
-    std::shared_ptr<PreviewStateCallback> appCallback_;
-    sptr<IStreamRepeatCallback> svcCallback_;
+    sptr<PreviewOutputListenerManager> previewOutputListenerManager_ = sptr<PreviewOutputListenerManager>::MakeSptr();
+
     std::shared_ptr<SketchWrapper> sketchWrapper_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
     std::shared_ptr<Size> FindSketchSize();
@@ -237,13 +251,9 @@ private:
     int32_t JudegRotationFunc(int32_t imageRotation);
 };
 
-class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
+class PreviewOutputListenerManager : public HStreamRepeatCallbackStub,
+                                     public CameraListenerManager<PreviewStateCallback> {
 public:
-    wptr<PreviewOutput> previewOutput_ = nullptr;
-    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {}
-
-    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {}
-
     /**
      * @brief Called when preview frame is started rendering.
      */
@@ -271,6 +281,12 @@ public:
     int32_t OnSketchStatusChanged(SketchStatus status) override;
 
     int32_t OnDeferredVideoEnhancementInfo(CaptureEndedInfoExt captureEndedInfo) override;
+
+    void SetPreviewOutput(wptr<PreviewOutput> previewOutput);
+    sptr<PreviewOutput> GetPreviewOutput();
+
+private:
+    wptr<PreviewOutput> previewOutput_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS

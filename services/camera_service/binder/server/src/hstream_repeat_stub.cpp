@@ -40,6 +40,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK):
             errCode = HStreamRepeatStub::HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE):
             errCode = Release();
             break;

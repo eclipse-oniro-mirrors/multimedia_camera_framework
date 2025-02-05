@@ -37,6 +37,8 @@
 #include "datashare_predicates.h"
 #include "deferred_processing_service.h"
 #include "hcamera_preconfig.h"
+#include "hcamera_session_manager.h"
+#include "icamera_service_callback.h"
 #ifdef DEVICE_MANAGER
 #include "device_manager.h"
 #endif
@@ -151,9 +153,9 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
-    UnRegisterFoldStatusListener();
+    UnregisterFoldStatusListener();
 #ifdef CAMERA_USE_SENSOR
-    UnRegisterSensorCallback();
+    UnregisterSensorCallback();
 #endif
     DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
@@ -519,9 +521,9 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> captureSession = HCaptureSession::NewInstance(callerToken, opMode);
-    if (captureSession == nullptr) {
-        rc = CAMERA_ALLOC_ERROR;
+    sptr<HCaptureSession> captureSession = nullptr;
+    rc = HCaptureSession::NewInstance(callerToken, opMode, captureSession);
+    if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::CreateCaptureSession allocation failed");
         CameraReportUtils::ReportCameraError(
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
@@ -734,8 +736,8 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
         bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
     }
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
-        "status = %{public}d, pid = %{public}d, bundleName = %{public}s", cameraServiceCallbacks_.size(),
-        cameraId.c_str(), status, IPCSkeleton::GetCallingPid(), bundleName.c_str());
+                   "status = %{public}d, pid = %{public}d, bundleName = %{public}s",
+        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid(), bundleName.c_str());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
@@ -746,9 +748,10 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
             continue;
         }
         it.second->OnCameraStatusChanged(cameraId, status, bundleName);
-        cameraStatusCallbacks_[cameraId] = CameraStatusCallbacksInfo{status, bundleName};
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-            cameraId.c_str(), status));
+        CacheCameraStatus(
+            cameraId, std::make_shared<CameraStatusCallbacksInfo>(CameraStatusCallbacksInfo { status, bundleName }));
+        CAMERA_SYSEVENT_BEHAVIOR(
+            CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
     }
 }
 
@@ -756,8 +759,8 @@ void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus stat
 {
     lock_guard<mutex> lock(cameraCbMutex_);
     MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
-        "status = %{public}d, pid = %{public}d", cameraServiceCallbacks_.size(), cameraId.c_str(), status,
-        IPCSkeleton::GetCallingPid());
+                   "status = %{public}d, pid = %{public}d",
+        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
@@ -768,6 +771,7 @@ void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus stat
             continue;
         }
         it.second->OnFlashlightStatusChanged(cameraId, status);
+        CacheFlashStatus(cameraId, status);
     }
 }
 
@@ -788,9 +792,13 @@ void HCameraService::OnMute(bool muteMode)
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
-    if (peerCallback_ != nullptr) {
-        MEDIA_INFO_LOG("HCameraService::NotifyMuteCamera peerCallback current camera muteMode:%{public}d", muteMode);
-        peerCallback_->NotifyMuteCamera(muteMode);
+    {
+        std::lock_guard<std::mutex> peerLock(peerCallbackMutex_);
+        if (peerCallback_ != nullptr) {
+            MEDIA_INFO_LOG(
+                "HCameraService::NotifyMuteCamera peerCallback current camera muteMode:%{public}d", muteMode);
+            peerCallback_->NotifyMuteCamera(muteMode);
+        }
     }
 }
 
@@ -834,6 +842,7 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         curFoldStatus = FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
+    cachedFoldStatus_ = curFoldStatus;
     CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged(curFoldStatus));
     CHECK_ERROR_RETURN_LOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
@@ -859,17 +868,21 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
-void HCameraService::ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string> &cameraIds)
+void HCameraService::ExecutePidSetCallback(sptr<ICameraServiceCallback>& callback, std::vector<std::string>& cameraIds)
 {
     for (const auto& cameraId : cameraIds) {
-        auto it = cameraStatusCallbacks_.find(cameraId);
-        if (it != cameraStatusCallbacks_.end()) {
-            MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = %{public}d, bundleName = %{public}s",
-                cameraId.c_str(), it->second.status, it->second.bundleName.c_str());
-            callback->OnCameraStatusChanged(cameraId, it->second.status, it->second.bundleName);
+        auto info = GetCachedCameraStatus(cameraId);
+        auto flashStatus = GetCachedFlashStatus(cameraId);
+        if (info != nullptr) {
+            MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = %{public}d, bundleName = %{public}s, "
+                           "flash status = %{public}d",
+                cameraId.c_str(), info->status, info->bundleName.c_str(), flashStatus);
+            callback->OnCameraStatusChanged(cameraId, info->status, info->bundleName);
+            callback->OnFlashlightStatusChanged(cameraId, flashStatus);
         } else {
             MEDIA_INFO_LOG("ExecutePidSetCallback cameraId = %{public}s, status = 2", cameraId.c_str());
             callback->OnCameraStatusChanged(cameraId, CameraStatus::CAMERA_STATUS_AVAILABLE);
+            callback->OnFlashlightStatusChanged(cameraId, FlashStatus::FLASH_STATUS_UNAVAILABLE);
         }
     }
 }
@@ -893,6 +906,12 @@ int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetCameraCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetCameraCallback(pid);
+}
+
 int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
 {
     lock_guard<mutex> lock(muteCbMutex_);
@@ -910,6 +929,12 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetMuteCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetMuteCallback(pid);
+}
+
 int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
@@ -924,6 +949,12 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetTorchCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetTorchCallback(pid);
+}
+
 int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback)
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
@@ -934,11 +965,18 @@ int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callba
     } else {
         pid_t pid = IPCSkeleton::GetCallingPid();
         MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
-        CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
-            "HCameraService::SetFoldStatusCallback callback is null");
+        CHECK_ERROR_RETURN_RET_LOG(
+            callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetFoldStatusCallback callback is null");
         foldServiceCallbacks_.insert(make_pair(pid, callback));
     }
+    callback->OnFoldStatusChanged(cachedFoldStatus_);
     return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetFoldStatusCallback()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetFoldStatusCallback(pid);
 }
 
 int32_t HCameraService::UnSetCameraCallback(pid_t pid)
@@ -1025,12 +1063,12 @@ void HCameraService::RegisterFoldStatusListener()
     isFoldRegister = true;
 }
 
-void HCameraService::UnRegisterFoldStatusListener()
+void HCameraService::UnregisterFoldStatusListener()
 {
-    MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
+    MEDIA_INFO_LOG("UnregisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
     preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
-    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
+    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnregisterFoldStatusListener failed");
     isFoldRegister = false;
 }
 
@@ -1137,6 +1175,38 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
         muteModeStored_ = muteMode;
     }
     return ret;
+}
+
+void HCameraService::CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info)
+{
+    std::lock_guard<std::mutex> lock(cameraStatusCallbacksMutex_);
+    cameraStatusCallbacks_[cameraId] = info;
+}
+
+std::shared_ptr<CameraStatusCallbacksInfo> HCameraService::GetCachedCameraStatus(const string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(cameraStatusCallbacksMutex_);
+    auto it = cameraStatusCallbacks_.find(cameraId);
+    if (it == cameraStatusCallbacks_.end()) {
+        return nullptr;
+    }
+    return it->second;
+}
+
+void HCameraService::CacheFlashStatus(const string& cameraId, FlashStatus flashStatus)
+{
+    std::lock_guard<std::mutex> lock(flashStatusCallbacksMutex_);
+    flashStatusCallbacks_[cameraId] = flashStatus;
+}
+
+FlashStatus HCameraService::GetCachedFlashStatus(const string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(flashStatusCallbacksMutex_);
+    auto it = flashStatusCallbacks_.find(cameraId);
+    if (it == flashStatusCallbacks_.end()) {
+        return FlashStatus::FLASH_STATUS_UNAVAILABLE;
+    }
+    return it->second;
 }
 
 static std::map<PolicyType, Security::AccessToken::PolicyType> g_policyTypeMap_ = {
@@ -1282,7 +1352,10 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 {
     MEDIA_INFO_LOG("SetPeerCallback get callback");
     CHECK_ERROR_RETURN_RET(callback == nullptr, CAMERA_INVALID_ARG);
-    peerCallback_ = callback;
+    {
+        std::lock_guard<std::mutex> lock(peerCallbackMutex_);
+        peerCallback_ = callback;
+    }
     MEDIA_INFO_LOG("HCameraService::SetPeerCallback current muteMode:%{public}d", muteModeStored_);
     callback->NotifyMuteCamera(muteModeStored_);
     HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
@@ -1292,7 +1365,10 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 int32_t HCameraService::UnsetPeerCallback()
 {
     MEDIA_INFO_LOG("UnsetPeerCallback callback");
-    peerCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(peerCallbackMutex_);
+        peerCallback_ = nullptr;
+    }
     HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
     return CAMERA_OK;
 }
@@ -1694,12 +1770,12 @@ void HCameraService::RegisterSensorCallback()
     }
 }
 
-void HCameraService::UnRegisterSensorCallback()
+void HCameraService::UnregisterSensorCallback()
 {
     int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     if (deactivateRet == SENSOR_SUCCESS && unsubscribeRet == SENSOR_SUCCESS) {
-        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
+        MEDIA_INFO_LOG("HCameraService.UnregisterSensorCallback success.");
     }
 }
 

@@ -43,6 +43,9 @@ int HStreamMetadataStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_SET_CALLBACK):
             errCode = HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_ENABLE_RESULTS):
             errCode = HandleEnableMetadataType(data);
             break;

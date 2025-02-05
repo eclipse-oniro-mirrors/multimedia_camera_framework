@@ -41,6 +41,9 @@ int HStreamDepthDataStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Me
         case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_SET_CALLBACK):
             errCode = HStreamDepthDataStub::HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_ACCURACY_SET):
             errCode = HStreamDepthDataStub::HandleSetDataAccuracy(data);
             break;
@@ -77,4 +80,4 @@ int32_t HStreamDepthDataStub::HandleSetDataAccuracy(MessageParcel& data)
     return error;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

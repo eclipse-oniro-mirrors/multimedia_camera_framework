@@ -420,17 +420,10 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level0)
 
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
 
-    previewOutput->appCallback_ = nullptr;
-    sptr<PreviewOutputCallbackImpl> callback_test = new (std::nothrow) PreviewOutputCallbackImpl();
-    ASSERT_NE(callback_test, nullptr);
-    sptr<PreviewOutputCallbackImpl> callback = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput);
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
     ASSERT_NE(callback, nullptr);
     EXPECT_EQ(callback->OnFrameStarted(), CAMERA_OK);
     EXPECT_EQ(callback->OnFrameError(0), CAMERA_OK);
-
-    if (callback_test) {
-        callback_test = nullptr;
-    }
 
     if (callback) {
         callback = nullptr;
@@ -530,11 +523,11 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_009, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test previewoutput with CameraServerDied when appCallback_ is not nullptr
+ * Function: Test previewoutput with CameraServerDied when previewStateCallback is not nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test previewoutput with CameraServerDied when appCallback_ is not nullptr
+ * CaseDescription: Test previewoutput with CameraServerDied when previewStateCallback is not nullptr
  */
 HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level0)
 {
@@ -549,15 +542,9 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level0)
     std::shared_ptr<PreviewStateCallback> setCallback =
         std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
     previewOutput->SetCallback(setCallback);
-    std::shared_ptr<PreviewStateCallback> getCallback = previewOutput->GetApplicationCallback();
-    ASSERT_EQ(setCallback, getCallback);
-
-    std::shared_ptr<PreviewStateCallback> appCallback =
-        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
-    previewOutput->svcCallback_ = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput);
-    ASSERT_NE(previewOutput->svcCallback_, nullptr);
-    previewOutput->SetCallback(appCallback);
-
+    auto getCallback = previewOutput->GetPreviewOutputListenerManager();
+    bool listenerFind = getCallback->IsListenerExist(setCallback);
+    ASSERT_TRUE(listenerFind);
     pid_t pid = 0;
     previewOutput->CameraServerDied(pid);
 }
@@ -700,7 +687,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level0)
 
     auto previewOutput = (sptr<PreviewOutput>&)preview;
 
-    std::shared_ptr<PreviewOutputCallbackImpl> callback = std::make_shared<PreviewOutputCallbackImpl>(previewOutput);
+    auto callback = previewOutput->GetPreviewOutputListenerManager();
 
     CaptureEndedInfoExt info = {0, 0, true, "1"};
     int32_t ret = callback->OnDeferredVideoEnhancementInfo(info);

@@ -103,7 +103,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1()
     fuzz_->DebugLogForAfRegions(settings, tag);
     fuzz_->DebugLogForAeRegions(settings, tag);
     fuzz_->RegisterFoldStatusListener();
-    fuzz_->UnRegisterFoldStatusListener();
+    fuzz_->UnregisterFoldStatusListener();
     fuzz_->EnableResult(results);
     fuzz_->DisableResult(results);
     fuzz_->UpdateDeviceOpenLifeCycleSettings(settings);

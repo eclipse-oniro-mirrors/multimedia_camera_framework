@@ -37,6 +37,8 @@ public:
 
     int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;
 
+    int32_t UnSetCallback() override;
+
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
 
     int32_t EnableRawDelivery(bool enabled) override;

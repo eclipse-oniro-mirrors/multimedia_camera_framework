@@ -88,6 +88,21 @@ int32_t HStreamDepthDataProxy::SetCallback(sptr<IStreamDepthDataCallback>& callb
     return error;
 }
 
+int32_t HStreamDepthDataProxy::UnSetCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamDepthDataInterfaceCode::CAMERA_STREAM_DEPTH_DATA_UNSET_CALLBACK), data, reply,
+        option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamDepthDataProxy UnSetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamDepthDataProxy::SetDataAccuracy(int32_t dataAccuracy)
 {
     MessageParcel data;
@@ -103,4 +118,4 @@ int32_t HStreamDepthDataProxy::SetDataAccuracy(int32_t dataAccuracy)
     return error;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

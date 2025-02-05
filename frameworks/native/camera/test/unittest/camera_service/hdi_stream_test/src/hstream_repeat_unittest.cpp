@@ -96,6 +96,7 @@ public:
     MOCK_METHOD0(Start, int32_t());
     MOCK_METHOD0(Stop, int32_t());
     MOCK_METHOD1(SetCallback, int32_t(sptr<IStreamRepeatCallback>& callback));
+    MOCK_METHOD0(UnSetCallback, int32_t());
     MOCK_METHOD0(Release, int32_t());
     MOCK_METHOD1(AddDeferredSurface, int32_t(const sptr<OHOS::IBufferProducer>& producer));
     MOCK_METHOD4(ForkSketchStreamRepeat, int32_t(

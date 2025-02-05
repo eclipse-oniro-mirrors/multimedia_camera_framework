@@ -40,6 +40,7 @@ public:
     int32_t Start() override;
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override;
+    int32_t UnSetCallback() override;
     int32_t EnableMetadataType(std::vector<int32_t> metadataTypes) override;
     int32_t DisableMetadataType(std::vector<int32_t> metadataTypes) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;

@@ -16,13 +16,21 @@
 #ifndef OHOS_PREVIEW_OUTPUT_IMPL_H
 #define OHOS_PREVIEW_OUTPUT_IMPL_H
 
+#include <mutex>
+#include <unordered_map>
+
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/preview_output.h"
+#include "ndk_callback_map.h"
 #include "output/preview_output.h"
+
+namespace OHOS::CameraStandard {
+class InnerPreviewOutputCallback;
+}
 
 struct Camera_PreviewOutput {
 public:
-    explicit Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput> &innerPreviewOutput);
+    explicit Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput>& innerPreviewOutput);
     ~Camera_PreviewOutput();
 
     Camera_ErrorCode RegisterCallback(PreviewOutput_Callbacks* callback);
@@ -53,5 +61,7 @@ public:
 
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
+
+    NDKCallbackMap<PreviewOutput_Callbacks*, OHOS::CameraStandard::InnerPreviewOutputCallback> callbackMap_;
 };
 #endif // OHOS_PREVIEW_OUTPUT_IMPL_H

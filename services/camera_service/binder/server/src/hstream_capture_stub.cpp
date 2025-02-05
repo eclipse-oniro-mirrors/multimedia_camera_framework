@@ -44,6 +44,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_SET_CALLBACK):
             errCode = HStreamCaptureStub::HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_RELEASE):
             errCode = Release();
             break;

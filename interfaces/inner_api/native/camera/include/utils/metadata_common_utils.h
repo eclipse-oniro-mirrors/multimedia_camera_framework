@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_METADATA_COMMON_UTILS_H
 #define OHOS_CAMERA_METADATA_COMMON_UTILS_H
 
-#include <stdint.h>
+#include <cstdint>
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_stream_info_parse.h"

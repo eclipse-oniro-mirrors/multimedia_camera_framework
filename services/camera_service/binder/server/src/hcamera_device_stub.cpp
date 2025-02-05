@@ -48,6 +48,9 @@ int HCameraDeviceStub::OnRemoteRequest(
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK):
             errCode = HCameraDeviceStub::HandleSetCallback(data);
             break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UNSET_CALLBACK):
+            errCode = UnSetCallback();
+            break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS):
             errCode = HCameraDeviceStub::HandleUpdateSetting(data);
             break;

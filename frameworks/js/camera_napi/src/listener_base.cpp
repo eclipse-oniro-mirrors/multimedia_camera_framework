@@ -14,6 +14,7 @@
  */
 #include "listener_base.h"
 
+#include <memory>
 #include <uv.h>
 
 #include "camera_log.h"
@@ -31,6 +32,9 @@ ListenerBase::~ListenerBase()
 {
     MEDIA_DEBUG_LOG("~ListenerBase is called.");
 }
+
+ListenerBase::ExecuteCallbackData::ExecuteCallbackData(napi_env env, napi_value errCode, napi_value returnData)
+    : env_(env), errCode_(errCode), returnData_(returnData) {};
 
 void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce)
 {
@@ -87,6 +91,41 @@ void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCal
     }
     MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback, %s callback list size [%{public}zu]", eventName.c_str(),
         callbackList.refList.size());
+}
+
+void ListenerBase::ExecuteCallbackScopeSafe(
+    const std::string eventName, const std::function<ExecuteCallbackData()> fun) const
+{
+    napi_handle_scope scope_ = nullptr;
+    napi_open_handle_scope(env_, &scope_);
+
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback %{public}s is called", eventName.c_str());
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    for (auto it = callbackList.refList.begin(); it != callbackList.refList.end();) {
+        // Do not move this call out of loop.
+        ExecuteCallbackData callbackData = fun();
+        if (callbackData.env_ == nullptr) {
+            MEDIA_ERR_LOG("ExecuteCallback %{public}s env is null ", eventName.c_str());
+            continue;
+        }
+
+        napi_value result[ARGS_TWO] = { nullptr, nullptr };
+        napi_value retVal;
+        result[0] = callbackData.errCode_;
+        result[1] = callbackData.returnData_;
+
+        napi_call_function(callbackData.env_, nullptr, it->GetCallbackFunction(), ARGS_TWO, result, &retVal);
+        if (it->isOnce_) {
+            callbackList.refList.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback, %s callback list size [%{public}zu]", eventName.c_str(),
+        callbackList.refList.size());
+
+    napi_close_handle_scope(env_, scope_);
 }
 
 void ListenerBase::RemoveAllCallbacks(const std::string eventName)

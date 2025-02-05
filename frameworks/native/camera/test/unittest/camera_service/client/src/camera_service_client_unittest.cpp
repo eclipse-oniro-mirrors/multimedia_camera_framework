@@ -626,12 +626,12 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     ASSERT_NE(serviceProxy, nullptr);
 
-    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(manager_);
+    sptr<ICameraServiceCallback> callback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
     EXPECT_EQ(intResult, -1);
 
-    sptr<ICameraMuteServiceCallback> callback_2 = new (std::nothrow) CameraMuteServiceCallback(manager_);
+    sptr<ICameraMuteServiceCallback> callback_2 = manager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     serviceProxy->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, -1);
@@ -969,7 +969,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
     ASSERT_NE(previewOutput, nullptr);
 
     sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
-    callback = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
+    callback = previewOutput_1->GetPreviewOutputListenerManager();
     ASSERT_NE(callback, nullptr);
 
     intResult = repeat->SetCallback(callback);
@@ -1173,7 +1173,8 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
     bool canOpenCamera = true;
     EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), -1);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    torchSvcCallback =  camManagerObj->GetTorchServiceListenerManager();
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
@@ -1376,7 +1377,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
     hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
+    torchSvcCallback = manager_->GetTorchServiceListenerManager();
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);

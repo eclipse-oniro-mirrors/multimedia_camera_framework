@@ -1408,7 +1408,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->Open();
 
-    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
@@ -1637,7 +1636,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
     ASSERT_NE(device, nullptr);
     device->Open();
 
-    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
@@ -1854,7 +1852,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = PORTRAIT;
-    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    sptr<HCaptureSession> session = nullptr;
+    HCaptureSession::NewInstance(callerToken, opMode, session);
     ASSERT_NE(session, nullptr);
     session->Release();
 }
@@ -1871,7 +1870,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = CAPTURE;
-    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    sptr<HCaptureSession> session = nullptr;
+    HCaptureSession::NewInstance(callerToken, opMode, session);
     std::string displayName = session->CreateBurstDisplayName(1, 1);
     cout << "displayName: " << displayName <<endl;
     ASSERT_NE(displayName, "");

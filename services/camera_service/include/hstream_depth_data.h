@@ -49,6 +49,7 @@ public:
     int32_t Start() override;
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamDepthDataCallback>& callback) override;
+    int32_t UnSetCallback() override;
     int32_t OnDepthDataError(int32_t errorType);
     int32_t SetDataAccuracy(int32_t accuracy) override;
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
@@ -65,4 +66,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_H_STREAM_DEPTH_DATA_H
+#endif // OHOS_CAMERA_H_STREAM_DEPTH_DATA_H

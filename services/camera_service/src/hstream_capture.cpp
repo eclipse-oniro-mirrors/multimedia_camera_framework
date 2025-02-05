@@ -708,6 +708,13 @@ int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
     return CAMERA_OK;
 }
 
+int32_t HStreamCapture::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamCaptureCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
 int32_t HStreamCapture::OnCaptureStarted(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;

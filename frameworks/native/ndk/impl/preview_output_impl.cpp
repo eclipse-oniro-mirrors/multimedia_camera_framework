@@ -14,6 +14,7 @@
  */
 
 #include "preview_output_impl.h"
+#include <mutex>
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
@@ -28,11 +29,12 @@ const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
     {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
     {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
 };
-
+namespace OHOS::CameraStandard {
 class InnerPreviewOutputCallback : public PreviewStateCallback {
 public:
     InnerPreviewOutputCallback(Camera_PreviewOutput* previewOutput, PreviewOutput_Callbacks* callback)
-        : previewOutput_(previewOutput), callback_(*callback) {}
+        : previewOutput_(previewOutput), callback_(*callback)
+    {}
     ~InnerPreviewOutputCallback() = default;
 
     void OnFrameStarted() const override
@@ -62,6 +64,7 @@ private:
     Camera_PreviewOutput* previewOutput_;
     PreviewOutput_Callbacks callback_;
 };
+} // namespace OHOS::CameraStandard
 
 Camera_PreviewOutput::Camera_PreviewOutput(sptr<PreviewOutput> &innerPreviewOutput)
     : innerPreviewOutput_(innerPreviewOutput)
@@ -79,15 +82,18 @@ Camera_PreviewOutput::~Camera_PreviewOutput()
 
 Camera_ErrorCode Camera_PreviewOutput::RegisterCallback(PreviewOutput_Callbacks* callback)
 {
-    shared_ptr<InnerPreviewOutputCallback> innerCallback =
-                make_shared<InnerPreviewOutputCallback>(this, callback);
+    shared_ptr<InnerPreviewOutputCallback> innerCallback = make_shared<InnerPreviewOutputCallback>(this, callback);
     innerPreviewOutput_->SetCallback(innerCallback);
+    callbackMap_.SetMapValue(callback, innerCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_PreviewOutput::UnregisterCallback(PreviewOutput_Callbacks* callback)
 {
-    innerPreviewOutput_->SetCallback(nullptr);
+    auto innerCallback = callbackMap_.RemoveValue(callback);
+    if (innerCallback != nullptr) {
+        innerPreviewOutput_->RemoveCallback(innerCallback);
+    }
     return CAMERA_OK;
 }
 

@@ -16,24 +16,33 @@
 #ifndef OHOS_CAMERA_MANAGER_IMPL_H
 #define OHOS_CAMERA_MANAGER_IMPL_H
 
+#include <mutex>
+#include <unordered_map>
+
+#include "camera_input_impl.h"
+#include "capture_session_impl.h"
+#include "input/camera_manager.h"
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/camera_manager.h"
-#include "input/camera_manager.h"
-#include "capture_session_impl.h"
-#include "camera_input_impl.h"
+#include "metadata_output_impl.h"
+#include "ndk_callback_map.h"
+#include "photo_output_impl.h"
 #include "preview_output_impl.h"
 #include "video_output_impl.h"
-#include "photo_output_impl.h"
-#include "metadata_output_impl.h"
 
+namespace OHOS::CameraStandard {
+class InnerCameraManagerTorchStatusCallback;
+class InnerCameraManagerCameraStatusCallback;
+class InnerCameraManagerFoldStatusCallback;
+}
 struct Camera_Manager {
 public:
     Camera_Manager();
     ~Camera_Manager();
 
-    Camera_ErrorCode RegisterCallback(CameraManager_Callbacks* callback);
+    Camera_ErrorCode RegisterCallback(CameraManager_Callbacks* cameraStatusCallback);
 
-    Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* callback);
+    Camera_ErrorCode UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback);
 
     Camera_ErrorCode RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback);
 
@@ -116,6 +125,16 @@ private:
         std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
+
+    NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
+        cameraStatusCallbackMap_;
+
+    NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange, OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
+        cameraFoldStatusCallbackMap_;
+
+    NDKCallbackMap<OH_CameraManager_TorchStatusCallback, OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
+        torchStatusCallbackMap_;
+
     static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;
 };
 #endif // OHOS_CAMERA_CAPTURE_INPUT_H

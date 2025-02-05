@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+#include <mutex>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <iostream>
@@ -118,9 +119,13 @@ public:
     int32_t UnSetAllCallback(pid_t pid) override;
     int32_t CloseCameraForDestory(pid_t pid) override;
     int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
+    int32_t UnSetCameraCallback() override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
+    int32_t UnSetMuteCallback() override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+    int32_t UnSetTorchCallback() override;
     int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback, bool isInnerCallback = false) override;
+    int32_t UnSetFoldStatusCallback() override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
@@ -158,7 +163,7 @@ public:
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
-    void UnRegisterFoldStatusListener();
+    void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
@@ -247,11 +252,12 @@ private:
     int32_t UnSetTorchCallback(pid_t pid);
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
-    void UnRegisterSensorCallback();
+    void UnregisterSensorCallback();
     static void DropDetectionDataCallbackImpl(SensorEvent *event);
 #endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
+
     mutex mutex_;
     mutex cameraCbMutex_;
     mutex muteCbMutex_;
@@ -260,13 +266,24 @@ private:
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
+    FoldStatus cachedFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    map<string, CameraStatusCallbacksInfo> cameraStatusCallbacks_;
+
+    void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);
+    std::shared_ptr<CameraStatusCallbacksInfo> GetCachedCameraStatus(const string& cameraId);
+    std::mutex cameraStatusCallbacksMutex_;
+    map<string, std::shared_ptr<CameraStatusCallbacksInfo>> cameraStatusCallbacks_;
+
+    void CacheFlashStatus(const string& cameraId, FlashStatus flashStatus);
+    FlashStatus GetCachedFlashStatus(const string& cameraId);
+    std::mutex flashStatusCallbacksMutex_;
+    map<string, FlashStatus> flashStatusCallbacks_;
+
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
@@ -275,7 +292,10 @@ private:
     bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_;
+
+    std::mutex peerCallbackMutex_;
     sptr<ICameraBroker> peerCallback_;
+
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
 #ifdef CAMERA_USE_SENSOR

@@ -49,7 +49,7 @@ public:
 private:
     BmsAdapter();
     bool RegisterListener();
-    bool UnRegisterListener();
+    bool UnregisterListener();
     static sptr<BmsAdapter> bmsAdapter_;
     static std::mutex instanceMutex_;
     std::mutex bmslock_;

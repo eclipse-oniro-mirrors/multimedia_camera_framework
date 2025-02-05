@@ -209,6 +209,13 @@ int32_t HStreamDepthData::SetCallback(sptr<IStreamDepthDataCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HStreamDepthData::UnSetCallback()
+{
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    streamDepthDataCallback_ = nullptr;
+    return CAMERA_OK;
+}
+
 int32_t HStreamDepthData::OnDepthDataError(int32_t errorType)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);

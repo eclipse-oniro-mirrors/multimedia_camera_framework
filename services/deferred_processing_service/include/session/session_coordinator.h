@@ -16,16 +16,17 @@
 #ifndef OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 #define OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 
+#include <cstdint>
 #include <memory>
-#include <stdint.h>
-#include "iimage_process_callbacks.h"
-#include "ivideo_process_callbacks.h"
-#include "ipc_file_descriptor.h"
+
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_video_processing_session_callback.h"
+#include "iimage_process_callbacks.h"
+#include "ipc_file_descriptor.h"
+#include "ivideo_process_callbacks.h"
 #include "photo_session_info.h"
-#include "video_session_info.h"
 #include "task_manager.h"
+#include "video_session_info.h"
 
 namespace OHOS::Media {
     class Picture;

@@ -276,7 +276,7 @@ int32_t CameraCaptureVideo::InitCameraManager()
         cameraManager_ = CameraManager::GetInstance();
         CHECK_ERROR_RETURN_RET_LOG(cameraManager_ == nullptr, result, "Failed to get camera manager!");
         cameraMngrCallback_ = std::make_shared<TestCameraMngerCallback>(testName_);
-        cameraManager_->SetCallback(cameraMngrCallback_);
+        cameraManager_->RegisterCameraStatusCallback(cameraMngrCallback_);
     }
     result = CAMERA_OK;
     return result;
