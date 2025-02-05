@@ -338,37 +338,33 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        lock_guard<mutex> lock(deferredProcessMutex_);
+        std::lock_guard<mutex> lock(deferredProcessMutex_);
         if (audioDeferredProcess_ == nullptr) {
             audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
+            CHECK_ERROR_RETURN(!audioDeferredProcess_);
             audioDeferredProcess_->StoreOptions(audioCapturerSession_->deferredInputOptions_,
                 audioCapturerSession_->deferredOutputOptions_);
-            if (!audioDeferredProcess_ || audioDeferredProcess_->GetOfflineEffectChain() != 0) {
-                return;
-            }
-            if (audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0) {
-                return;
-            }
-            if (audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0) {
-                return;
-            }
-            if (audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
-                audioCapturerSession_->deferredOutputOptions_) != 0) {
-                return;
-            }
+            CHECK_ERROR_RETURN(audioDeferredProcess_->GetOfflineEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+                audioCapturerSession_->deferredOutputOptions_) != 0);
         }
         audioDeferredProcess_->Process(audioRecords, processedAudioRecords);
-        auto thisPtr = wptr<AvcodecTaskManager>(this);
+        auto weakThis = wptr<AvcodecTaskManager>(this);
         if (timerId_) {
             MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
             CameraTimer::GetInstance().Unregister(timerId_);
         }
-        timerId_ = CameraTimer::GetInstance().Register([thisPtr]()-> void {
-            if (thisPtr == nullptr) {
-                return;
-            }
-            thisPtr->audioDeferredProcess_ = nullptr;
-            thisPtr->timerId_ = 0;
+        auto curObject = audioDeferredProcess_;
+        timerId_ = CameraTimer::GetInstance().Register([weakThis, curObject]()-> void {
+            auto sharedThis = weakThis.promote();
+            CHECK_ERROR_RETURN(sharedThis == nullptr);
+            std::unique_lock<mutex> lock(sharedThis->deferredProcessMutex_, std::try_to_lock);
+            CHECK_ERROR_RETURN(curObject != sharedThis->audioDeferredProcess_);
+            CHECK_ERROR_RETURN(!lock.owns_lock());
+            sharedThis->audioDeferredProcess_ = nullptr;
+            sharedThis->timerId_ = 0;
         }, RELEASE_WAIT_TIME, true);
     }
 }
