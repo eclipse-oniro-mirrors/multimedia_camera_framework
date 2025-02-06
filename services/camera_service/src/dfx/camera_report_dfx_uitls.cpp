@@ -137,6 +137,12 @@ void CameraReportDfxUtils::SetAddProxyEndInfo(int32_t captureId)
 void CameraReportDfxUtils::ReportPerformanceDeferredPhoto(CaptureDfxInfo captureInfo)
 {
     MEDIA_DEBUG_LOG("CameraReportDfxUtils::ReportPerformanceDeferredPhoto start");
+    if (captureInfo.firstBufferEndTime < captureInfo.firstBufferStartTime ||
+        captureInfo.prepareProxyEndTime < captureInfo.prepareProxyStartTime ||
+        captureInfo.addProxyEndTime < captureInfo.addProxyStartTime) {
+        MEDIA_ERR_LOG("CameraReportDfxUtils::ReportPerformanceDeferredPhoto overflow detected");
+        return;
+    }
     uint64_t firstBufferCostTime = captureInfo.firstBufferEndTime - captureInfo.firstBufferStartTime;
     uint64_t prepareProxyCostTime = captureInfo.prepareProxyEndTime - captureInfo.prepareProxyStartTime;
     uint64_t addProxyCostTime = captureInfo.addProxyEndTime - captureInfo.addProxyStartTime;
