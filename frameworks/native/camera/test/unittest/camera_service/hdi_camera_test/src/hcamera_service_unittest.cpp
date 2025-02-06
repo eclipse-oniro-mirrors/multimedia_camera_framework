@@ -1550,7 +1550,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level0)
     cameraService_->captureSessionsManager_.EnsureInsert(pid, captureSession);
     EXPECT_EQ(cameraService_->GetCameraOutputStatus(pid, status), 0);
 
-    captureSession = new HCaptureSession();
+    uint32_t callerToken = IPCSkeleton::GetCallingPid();
+    captureSession = new HCaptureSession(callerToken, SceneMode::NORMAL);
     cameraService_->captureSessionsManager_.Clear();
     cameraService_->captureSessionsManager_.EnsureInsert(pid, captureSession);
     EXPECT_EQ(cameraService_->GetCameraOutputStatus(pid, status), 0);
@@ -1774,7 +1775,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level0)
     sptr<ICameraServiceCallback> callback = nullptr;
     int32_t intResult = cameraService_->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 2);
-    callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager_);
+    callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     intResult = cameraService_->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
@@ -1783,7 +1784,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level0)
     intResult = cameraService_->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 2);
 
-    callback_2 = new(std::nothrow) CameraMuteServiceCallback(cameraManager_);
+    callback_2 = cameraManager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     intResult = cameraService_->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 0);
