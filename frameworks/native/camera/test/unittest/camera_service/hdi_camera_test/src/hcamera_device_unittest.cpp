@@ -769,7 +769,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 2);
 
-    callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager_);
+    callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
     intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
@@ -781,7 +781,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
     intResult = cameraService->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 2);
 
-    callback_2 = new (std::nothrow) CameraMuteServiceCallback(cameraManager_);
+    callback_2 = cameraManager_->GetCameraMuteListenerManager();
     ASSERT_NE(callback_2, nullptr);
     intResult = cameraService->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 0);
