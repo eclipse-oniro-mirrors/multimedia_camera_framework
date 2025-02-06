@@ -124,13 +124,6 @@ public:
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 
     virtual int32_t GetTorchStatus(int32_t &status) = 0;
-<<<<<<< HEAD
-=======
-
-    virtual int32_t IsTorchSupported(bool &isTorchSupported) = 0;
-
-    virtual int32_t IsCameraMuteSupported(bool &isCameraMuteSupported) = 0;
->>>>>>> 81fc380f (!2711 fix getTorchModes by ipc)
 
     virtual int32_t SetTorchLevel(float level) = 0;
 
