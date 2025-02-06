@@ -823,7 +823,7 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
     MEDIA_INFO_LOG("IsDeferredImageDeliverySupported curMode:%{public}d, modeSupportType:%{public}d",
         curMode, modeSupportType);
     if (modeSupportType == type) {
-        isSupported = 0;
+        isSupported = 0; // -1:not support 0:support
     }
     return isSupported;
 }
