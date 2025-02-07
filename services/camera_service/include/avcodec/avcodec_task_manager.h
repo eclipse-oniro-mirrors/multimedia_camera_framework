@@ -35,6 +35,7 @@
 #include "blocking_queue.h"
 #include "task_manager.h"
 #include "camera_util.h"
+#include "camera_timer.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -46,6 +47,7 @@ constexpr uint32_t DEFAULT_ENCODER_THREAD_NUMBER = 1;
 constexpr uint32_t GET_FD_EXPIREATION_TIME = 2000;
 constexpr int64_t ONE_BILLION = 1000000000LL;
 constexpr uint32_t MAX_FRAME_COUNT = 90;
+constexpr uint32_t RELEASE_WAIT_TIME = 10000;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
@@ -87,11 +89,14 @@ private:
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
+    mutex deferredProcessMutex_;
     std::atomic<bool> isActive_ { true };
     map<int32_t, std::pair<int64_t, PhotoAssetIntf*>> videoFdMap_;
     VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     int64_t preBufferDuration_ = NANOSEC_RANGE;
     int64_t postBufferDuration_ = NANOSEC_RANGE;
+    uint32_t timerId_ = 0;
+    shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
 };
 } // CameraStandard
 } // OHOS
