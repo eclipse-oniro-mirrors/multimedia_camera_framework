@@ -1572,12 +1572,11 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         }
 
         // Clear current session
-        HCameraSessionManager::GetInstance().RemoveSession(this);
-        MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
-            HCameraSessionManager::GetInstance().GetTotalSessionSize());
-
-        sptr<ICaptureSessionCallback> emptyCallback = nullptr;
-        SetCallback(emptyCallback);
+        if (type != CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED) {
+            HCameraSessionManager::GetInstance().RemoveSession(this);
+            MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
+                HCameraSessionManager::GetInstance().GetTotalSessionSize());
+        }
 #ifdef CAMERA_USE_SENSOR
         CHECK_EXECUTE(isSetMotionPhoto_, UnregisterSensorCallback());
 #endif
