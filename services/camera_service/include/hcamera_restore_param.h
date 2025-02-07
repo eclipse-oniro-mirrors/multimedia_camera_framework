@@ -61,7 +61,7 @@ private:
     std::string mCameraId;
     std::vector<StreamInfo_V1_1> mStreamInfos;
     std::shared_ptr<OHOS::Camera::CameraMetadata> mSettings;
-    timeval mCloseCameraTime;
+    timeval mCloseCameraTime = {0, 0};
     RestoreParamTypeOhos mRestoreParamType;
     int mStartActiveTime = 0;
     int32_t mOpMode = 0;

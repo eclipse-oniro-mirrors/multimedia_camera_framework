@@ -1001,20 +1001,14 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
         if (closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId)) {
             timeval openTime;
             gettimeofday(&openTime, nullptr);
-            long timeSecDiff = openTime.tv_sec - closeTime.tv_sec;
-            long timeUsecDiff = openTime.tv_usec - closeTime.tv_usec;
-            long defaultTimeInterval = static_cast<long>(restoreParam->GetStartActiveTime() * 60 * MILLISEC_TIME);
-            long timeInterval = defaultTimeInterval;
-            cameraRestoreParam = restoreParam;
-            if (timeSecDiff > (LONG_MAX / MILLISEC_TIME) ||
-                (timeSecDiff * MILLISEC_TIME > (LONG_MAX - timeUsecDiff / MILLISEC_TIME))) {
-                MEDIA_ERR_LOG("HCameraHostManager::UpdateRestoreParam overflow detected");
+            long timeInterval = (openTime.tv_sec - closeTime.tv_sec) * MILLISEC_TIME +
+                (openTime.tv_usec - closeTime.tv_usec) / MILLISEC_TIME;
+            if ((long)(restoreParam->GetStartActiveTime() * 60 * MILLISEC_TIME) < timeInterval) { // 60 is 60 Seconds
+                MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get persistent");
+                cameraRestoreParam = restoreParam;
             } else {
-                timeInterval = timeSecDiff * MILLISEC_TIME + timeUsecDiff / MILLISEC_TIME;
-                if (timeInterval < defaultTimeInterval) {
-                    MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get transistent");
-                    cameraRestoreParam = GetTransitentParam(clientName, cameraId);
-                }
+                MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get transistent ");
+                cameraRestoreParam = GetTransitentParam(clientName, cameraId);
             }
             cameraRestoreParam->UpdateExposureSetting(timeInterval);
             break;
