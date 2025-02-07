@@ -721,6 +721,12 @@ void HCameraService::OnMute(bool muteMode)
     }
 }
 
+int32_t HCameraService::GetTorchStatus(int32_t &status)
+{
+    status = static_cast<int32_t>(torchStatus_);
+    return CAMERA_OK;
+}
+
 void HCameraService::OnTorchStatus(TorchStatus status)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
