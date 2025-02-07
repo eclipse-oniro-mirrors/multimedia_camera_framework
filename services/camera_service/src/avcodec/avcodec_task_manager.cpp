@@ -30,6 +30,7 @@
 #include "audio_capturer_session.h"
 #include "audio_record.h"
 #include "audio_video_muxer.h"
+#include "audio_deferred_process.h"
 #include "camera_log.h"
 #include "datetime_ex.h"
 #include "external_window.h"
@@ -169,6 +170,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, SAMPLERATE_32000);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
+    formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_PROFILE, DEFAULT_PROFILE);
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
     #endif
     int metaTrackId = -1;
@@ -339,6 +341,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
 void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
+    CAMERA_SYNC_TRACE;
     int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
     if (audioCapturerSession_) {
         int64_t startTime = NanosecToMillisec(videoStartTime);
@@ -347,7 +350,34 @@ void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
         for (auto ptr: audioRecords) {
             processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
-        audioCapturerSession_->GetAudioDeferredProcess()->Process(audioRecords, processedAudioRecords);
+        std::lock_guard<mutex> lock(deferredProcessMutex_);
+        if (audioDeferredProcess_ == nullptr) {
+            audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
+            CHECK_ERROR_RETURN(!audioDeferredProcess_);
+            audioDeferredProcess_->StoreOptions(audioCapturerSession_->deferredInputOptions_,
+                audioCapturerSession_->deferredOutputOptions_);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->GetOfflineEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->ConfigOfflineAudioEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0);
+            CHECK_ERROR_RETURN(audioDeferredProcess_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
+                audioCapturerSession_->deferredOutputOptions_) != 0);
+        }
+        audioDeferredProcess_->Process(audioRecords, processedAudioRecords);
+        auto weakThis = wptr<AvcodecTaskManager>(this);
+        if (timerId_) {
+            MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
+            CameraTimer::GetInstance().Unregister(timerId_);
+        }
+        auto curObject = audioDeferredProcess_;
+        timerId_ = CameraTimer::GetInstance().Register([weakThis, curObject]()-> void {
+            auto sharedThis = weakThis.promote();
+            CHECK_ERROR_RETURN(sharedThis == nullptr);
+            std::unique_lock<mutex> lock(sharedThis->deferredProcessMutex_, std::try_to_lock);
+            CHECK_ERROR_RETURN(curObject != sharedThis->audioDeferredProcess_);
+            CHECK_ERROR_RETURN(!lock.owns_lock());
+            sharedThis->audioDeferredProcess_ = nullptr;
+            sharedThis->timerId_ = 0;
+        }, RELEASE_WAIT_TIME, true);
     }
 }
 
@@ -382,12 +412,10 @@ void AvcodecTaskManager::Release()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager release start");
-    if (videoEncoder_ != nullptr) {
-        videoEncoder_->Release();
-    }
-    if (audioEncoder_ != nullptr) {
-        audioEncoder_->Release();
-    }
+    CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->Release());
+    CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
+    CHECK_EXECUTE(timerId_ != 0, CameraTimer::GetInstance().Unregister(timerId_));
+    audioDeferredProcess_ = nullptr;
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("AvcodecTaskManager::Release videoFdMap_ size is %{public}zu", videoFdMap_.size());
     for (auto videoFdPair : videoFdMap_) {

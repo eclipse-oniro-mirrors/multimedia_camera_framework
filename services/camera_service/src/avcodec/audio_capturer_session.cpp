@@ -86,24 +86,13 @@ bool AudioCapturerSession::CreateAudioCapturer()
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
-    audioDeferredProcess_ = new AudioDeferredProcess();
-    if (!audioDeferredProcess_ || audioDeferredProcess_->GetOfflineEffectChain() != 0) {
-        return false;
-    }
     AudioStreamInfo outputOptions;
     outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
     outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
     outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
     outputOptions.channels = AudioChannel::MONO;
-    if (audioDeferredProcess_->ConfigOfflineAudioEffectChain(capturerOptions.streamInfo, outputOptions) != 0) {
-        return false;
-    }
-    if (audioDeferredProcess_->PrepareOfflineAudioEffectChain() != 0) {
-        return false;
-    }
-    if (audioDeferredProcess_->GetMaxBufferSize(capturerOptions.streamInfo, outputOptions) != 0) {
-        return false;
-    }
+    deferredInputOptions_ = capturerOptions.streamInfo;
+    deferredOutputOptions_ = outputOptions;
     return true;
 }
 
@@ -157,7 +146,8 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
 void AudioCapturerSession::ProcessAudioBuffer()
 {
     CHECK_ERROR_RETURN_LOG(audioCapturer_ == nullptr, "AudioCapturer_ is not init");
-    size_t bufferLen = audioDeferredProcess_->GetOneUnprocessedSize();
+    size_t bufferLen = static_cast<size_t>(deferredInputOptions_.samplingRate / AudioDeferredProcess::ONE_THOUSAND *
+        deferredInputOptions_.channels * AudioDeferredProcess::DURATION_EACH_AUDIO_FRAME * sizeof(short));
     while (true) {
         CHECK_AND_BREAK_LOG(startAudioCapture_, "Audio capture work done, thread out");
         auto buffer = std::make_unique<uint8_t[]>(bufferLen);
@@ -219,9 +209,5 @@ void AudioCapturerSession::Release()
     MEDIA_INFO_LOG("Audio capture released");
 }
 
-sptr<AudioDeferredProcess> AudioCapturerSession::GetAudioDeferredProcess()
-{
-    return audioDeferredProcess_;
-}
 } // namespace CameraStandard
 } // namespace OHOS

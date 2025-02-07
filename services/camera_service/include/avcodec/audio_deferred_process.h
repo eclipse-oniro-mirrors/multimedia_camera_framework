@@ -32,12 +32,11 @@ public:
     explicit AudioDeferredProcess();
     ~AudioDeferredProcess();
 
-    int32_t ConfigOfflineAudioEffectChain(const AudioStreamInfo& inputOptions, const AudioStreamInfo& outputOptions);
+    void StoreOptions(const AudioStreamInfo& inputOptions, const AudioStreamInfo& outputOptions);
+    int32_t ConfigOfflineAudioEffectChain();
     int32_t PrepareOfflineAudioEffectChain();
     int32_t GetMaxBufferSize(const AudioStreamInfo& inputOption, const AudioStreamInfo& outputOption);
     int32_t GetOfflineEffectChain();
-    AudioSamplingRate GetOutputSampleRate();
-    AudioChannel GetOutputChannelCount();
     uint32_t GetOneUnprocessedSize();
     int32_t Process(vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedRecords);
     void Release();
