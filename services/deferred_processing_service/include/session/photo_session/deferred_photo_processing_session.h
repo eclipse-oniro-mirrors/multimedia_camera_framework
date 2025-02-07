@@ -51,7 +51,7 @@ private:
 
     std::mutex mutex_;
     const int32_t userId_;
-    std::atomic<bool> inSync_;
+    std::atomic<bool> inSync_ {false};
     std::unordered_map<std::string, std::shared_ptr<PhotoInfo>> imageIds_ {};
 };
 } // namespace DeferredProcessing
