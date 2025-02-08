@@ -184,6 +184,7 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
 {
     auto session = GetVideoSession();
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
+    StartTimer(videoId, work);
     if (session == nullptr) {
         DP_ERR_LOG("Process videoId: %{public}s failed, video session is nullptr", videoId.c_str());
         DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_SESSION_NOT_READY_TEMPORARILY));
@@ -197,7 +198,6 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
         return;
     }
 
-    StartTimer(videoId, work);
     auto startTime = mpegManager_->GetProcessTimeStamp();
     auto ret = session->ProcessVideo(videoId, startTime);
     DP_INFO_LOG("DPS_VIDEO: ProcessVideo to ive, videoId: %{public}s, startTime: %{public}" PRIu64 ", ret: %{public}d",
