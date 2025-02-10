@@ -1059,7 +1059,7 @@ int32_t PhotoOutput::GetPhotoRotation(int32_t imageRotation)
     cameraPosition = cameraObj->GetPosition();
     CHECK_ERROR_RETURN_RET_LOG(cameraPosition == CAMERA_POSITION_UNSPECIFIED, SERVICE_FATL_ERROR,
         "PhotoOutput GetPhotoRotation error!, cameraPosition is unspecified");
-    sensorOrientation = cameraObj->GetCameraOrientation();
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
         result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);

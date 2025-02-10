@@ -662,7 +662,7 @@ int32_t PreviewOutput::GetPreviewRotation(int32_t imageRotation)
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
         imageRotation = JudegRotationFunc(imageRotation);
     }
-    sensorOrientation = cameraObj->GetCameraOrientation();
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     result = (ImageRotation)((imageRotation + sensorOrientation) % CAPTURE_ROTATION_BASE);
     MEDIA_INFO_LOG("PreviewOutput GetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
@@ -700,7 +700,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     cameraObj = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, cameraObj is nullptr");
-    sensorOrientation = cameraObj->GetCameraOrientation();
+    sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     result = isDisplayLocked ? ImageRotation(sensorOrientation) : ImageRotation(imageRotation);
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
