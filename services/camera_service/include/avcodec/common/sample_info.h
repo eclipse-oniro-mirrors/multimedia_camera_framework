@@ -25,6 +25,7 @@
 #include "native_avbuffer.h"
 #include "native_audio_channel_layout.h"
 #include <refbase.h>
+#include "avcodec_common.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -159,6 +160,96 @@ public:
     std::mutex outputMutex_;
     std::condition_variable outputCond_;
     std::queue<sptr<CodecAVBufferInfo>> outputBufferInfoQueue_;
+};
+
+class VideoCodecAVBufferInfo : public RefBase {
+public:
+    explicit VideoCodecAVBufferInfo(uint32_t argBufferIndex, std::shared_ptr<OHOS::Media::AVBuffer> argBuffer)
+        : bufferIndex(argBufferIndex), buffer(argBuffer)
+    {
+    }
+    ~VideoCodecAVBufferInfo() = default;
+    uint32_t bufferIndex = 0;
+    std::shared_ptr<OHOS::Media::AVBuffer> buffer = nullptr;
+
+    std::shared_ptr<OHOS::Media::AVBuffer> GetCopyAVBuffer()
+    {
+        MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", buffer->memory_->GetSize());
+        auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
+        CHECK_ERROR_RETURN_RET_LOG(allocator == nullptr, nullptr, "create allocator failed");
+        std::shared_ptr<Media::AVBuffer> destBuffer = Media::AVBuffer::CreateAVBuffer(allocator,
+            buffer->memory_->GetCapacity());
+        CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+        auto sourceAddr = buffer->memory_->GetAddr();
+        auto destAddr = destBuffer->memory_->GetAddr();
+        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), buffer->memory_->GetSize(),
+                                  reinterpret_cast<void *>(sourceAddr), buffer->memory_->GetSize());
+        if (cpyRet != 0) {
+            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+        }
+        destBuffer->pts_ = buffer->pts_;
+        destBuffer->flag_ = buffer->flag_;
+        destBuffer->memory_->SetSize(buffer->memory_->GetSize());
+        return destBuffer;
+    }
+
+    std::shared_ptr<OHOS::Media::AVBuffer> AddCopyAVBuffer(std::shared_ptr<OHOS::Media::AVBuffer> IDRBuffer)
+    {
+        if (IDRBuffer == nullptr) {
+            MEDIA_WARNING_LOG("AddCopyAVBuffer without IDRBuffer!");
+            return IDRBuffer;
+        }
+        int32_t destBufferSize = IDRBuffer->memory_->GetSize() + buffer->memory_->GetSize();
+        auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
+        CHECK_ERROR_RETURN_RET_LOG(allocator == nullptr, nullptr, "create allocator failed");
+        std::shared_ptr<Media::AVBuffer> destBuffer = Media::AVBuffer::CreateAVBuffer(allocator, destBufferSize);
+        CHECK_ERROR_RETURN_RET_LOG(destBuffer == nullptr, nullptr, "destBuffer is null");
+        auto destAddr = destBuffer->memory_->GetAddr();
+        auto sourceIDRAddr = IDRBuffer->memory_->GetAddr();
+        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), destBufferSize,
+                                  reinterpret_cast<void *>(sourceIDRAddr), IDRBuffer->memory_->GetSize());
+        if (cpyRet != 0) {
+            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
+        }
+        destAddr = destAddr + IDRBuffer->memory_->GetSize();
+        auto sourceAddr = buffer->memory_->GetAddr();
+        cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), buffer->memory_->GetSize(),
+                          reinterpret_cast<void *>(sourceAddr), buffer->memory_->GetSize());
+        if (cpyRet != 0) {
+            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
+        }
+        destBuffer->memory_->SetSize(destBufferSize);
+        destBuffer->flag_ = IDRBuffer->flag_ | buffer->flag_;
+        MEDIA_INFO_LOG("CodecBufferInfo copy with size: %{public}d, %{public}d", destBufferSize, destBuffer->flag_);
+        return destBuffer;
+    }
+};
+
+class VideoCodecUserData : public RefBase {
+public:
+    VideoCodecUserData() = default;
+    ~VideoCodecUserData()
+    {
+        inputMutex_.lock();
+        while (!inputBufferInfoQueue_.empty()) {
+            inputBufferInfoQueue_.pop();
+        }
+        inputMutex_.unlock();
+        outputMutex_.lock();
+        while (!outputBufferInfoQueue_.empty()) {
+            outputBufferInfoQueue_.pop();
+        }
+        outputMutex_.unlock();
+    };
+    uint32_t inputFrameCount_ = 0;
+    std::mutex inputMutex_;
+    std::condition_variable inputCond_;
+    std::queue<sptr<VideoCodecAVBufferInfo>> inputBufferInfoQueue_;
+
+    uint32_t outputFrameCount_ = 0;
+    std::mutex outputMutex_;
+    std::condition_variable outputCond_;
+    std::queue<sptr<VideoCodecAVBufferInfo>> outputBufferInfoQueue_;
 };
 } // CameraStandard
 } // OHOS

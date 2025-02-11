@@ -59,7 +59,7 @@ int32_t VideoEncoder::Config()
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_ERROR_RETURN_RET_LOG(encoder_ == nullptr, 1, "Encoder is null");
     std::unique_lock<std::mutex> contextLock(contextMutex_);
-    context_ = new CodecUserData;
+    context_ = new VideoCodecUserData;
     // Configure video encoder
     int32_t ret = Configure();
     CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Configure failed");
@@ -246,37 +246,37 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
             [this]() { return !isStarted_ || !context_->outputBufferInfoQueue_.empty(); });
         CHECK_WARNING_CONTINUE_LOG(context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
-        sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
+        sptr<VideoCodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
-            "timestamp:%{public}" PRIu64, context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags,
-            bufferInfo->attr.pts, frameRecord->GetTimeStamp());
+            "timestamp:%{public}" PRIu64, context_->outputFrameCount_, bufferInfo->buffer->memory_->GetSize(),
+            bufferInfo->buffer->flag_, bufferInfo->buffer->pts_, frameRecord->GetTimeStamp());
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        std::lock_guard<std::mutex> encoderLock(encoderMutex_);
-        CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "Encode when encoder is stop");
-        if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        std::lock_guard<std::mutex> encodeLock(encoderMutex_);
+        CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "EncodeSurfaceBuffer when encoder stop!");
+        if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
-            OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
+            std::shared_ptr<Media::AVBuffer> IDRBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(IDRBuffer);
             frameRecord->SetIDRProperty(true);
             successFrame_ = false;
-        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
+        } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
-            OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
+            std::shared_ptr<Media::AVBuffer> tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
             if (tempBuffer != nullptr) {
                 frameRecord->encodedBuffer = tempBuffer;
             }
             successFrame_ = true;
-        } else if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_NONE) {
+        } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_NONE) {
             // return P frame
-            OH_AVBuffer *PBuffer = bufferInfo->GetCopyAVBuffer();
+            std::shared_ptr<Media::AVBuffer> PBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheBuffer(PBuffer);
             frameRecord->SetIDRProperty(false);
             successFrame_ = true;
         } else {
-            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->attr.flags);
+            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->buffer->flag_);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
             CHECK_WARNING_BREAK_LOG(ret != 0, "FreeOutputData failed");
             continue;
@@ -329,8 +329,7 @@ void VideoEncoder::CallBack::OnOutputBufferAvailable(uint32_t index, std::shared
     CHECK_ERROR_RETURN_LOG(encoder == nullptr, "encoder is nullptr");
     CHECK_ERROR_RETURN_LOG(encoder->context_ == nullptr, "encoder context is nullptr");
     std::unique_lock<std::mutex> lock(encoder->context_->outputMutex_);
-    OH_AVBuffer* avBuffer = new (std::nothrow) OH_AVBuffer(buffer);
-    encoder->context_->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, avBuffer));
+    encoder->context_->outputBufferInfoQueue_.emplace(new VideoCodecAVBufferInfo(index, buffer));
     encoder->context_->outputCond_.notify_all();
 }
 
