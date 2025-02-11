@@ -916,15 +916,13 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
 {
     lock_guard<mutex> lock(muteCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("HCameraService::SetMuteCallback pid = %{public}d", pid);
+    MEDIA_INFO_LOG("HCameraService::SetMuteCallback pid = %{public}d, muteMode:%{public}d", pid, muteModeStored_);
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::SetMuteCallback callback is null");
     // If the callback set by the SA caller is later than the camera service is started,
     // the callback cannot be triggered to obtain the mute state. Therefore,
     // when the SA sets the callback, the callback is triggered immediately to return the mute state.
-    constexpr int32_t maxSaUid = 10000;
-    CHECK_EXECUTE(IPCSkeleton::GetCallingUid() > 0 && IPCSkeleton::GetCallingUid() < maxSaUid,
-        callback->OnCameraMute(muteModeStored_));
+    callback->OnCameraMute(muteModeStored_);
     cameraMuteServiceCallbacks_.insert(make_pair(pid, callback));
     return CAMERA_OK;
 }
