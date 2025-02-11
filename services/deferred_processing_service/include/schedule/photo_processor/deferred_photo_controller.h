@@ -48,8 +48,10 @@ private:
     void OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr);
     void StartWaitForUser();
     void StopWaitForUser();
+    void NotifyScheduleState(bool workAvailable);
 
     const int32_t userId_;
+    DpsStatus scheduleState_;
     uint32_t timeId_ {INVALID_TIMEID};
     std::unique_ptr<UserInitiatedStrategy> userInitiatedStrategy_ {nullptr};
     std::unique_ptr<BackgroundStrategy> backgroundStrategy_ {nullptr};

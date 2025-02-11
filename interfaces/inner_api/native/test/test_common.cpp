@@ -290,13 +290,13 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
                                                               const uint8_t* addr,
-                                                              const long bytes, bool isCloudImageEnhanceSupported)
+                                                              const long bytes, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
 }
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
 }

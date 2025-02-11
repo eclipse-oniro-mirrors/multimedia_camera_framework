@@ -114,6 +114,7 @@ private:
 DeferredPhotoController::DeferredPhotoController(const int32_t userId,
     const std::shared_ptr<PhotoJobRepository>& repository, const std::shared_ptr<DeferredPhotoProcessor>& processor)
     : userId_(userId),
+      scheduleState_(DpsStatus::DPS_SESSION_STATE_IDLE),
       photoJobRepository_(repository),
       photoProcessor_(processor)
 {
@@ -158,6 +159,8 @@ void DeferredPhotoController::TryDoSchedule()
         DP_INFO_LOG("DPS_PHOTO: Background get work: %{public}d", work != nullptr);
     }
 
+    DP_INFO_LOG("all strategy get work: %{public}d", work != nullptr);
+    NotifyScheduleState(work != nullptr);
     if (work == nullptr) {
         if (photoJobRepository_->GetRunningJobCounts() == 0) {
             // 重置底层性能模式，避免功耗增加
@@ -211,6 +214,8 @@ void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus stat
     backgroundStrategy_->NotifyCameraStatusChanged(status);
     if (status == CameraSessionStatus::SYSTEM_CAMERA_OPEN || status == CameraSessionStatus::NORMAL_CAMERA_OPEN) {
         photoProcessor_->Interrupt();
+        scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+        photoProcessor_->NotifyScheduleState(scheduleState_);
     }
     if (status == CameraSessionStatus::SYSTEM_CAMERA_CLOSED || status == CameraSessionStatus::NORMAL_CAMERA_CLOSED) {
         TryDoSchedule();
@@ -244,6 +249,30 @@ void DeferredPhotoController::StopWaitForUser()
 {
     DP_INFO_LOG("DPS_TIMER: StopWaitForUser timeId: %{public}u", timeId_);
     DpsTimer::GetInstance().StopTimer(timeId_);
+}
+
+void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
+{
+    DP_INFO_LOG("entered, workAvailable: %{public}d", workAvailable);
+    DpsStatus scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
+    if (workAvailable || photoJobRepository_->GetRunningJobCounts() > 0) {
+        scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNING;
+    } else {
+        if (photoJobRepository_->GetOfflineIdleJobSize() == 0) {
+            scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
+        } else {
+            if (backgroundStrategy_->GetHdiStatus() != HdiStatus::HDI_READY) {
+                scheduleState = DpsStatus::DPS_SESSION_STATE_SUSPENDED;
+            } else {
+                scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNALBE;
+            }
+        }
+    }
+    DP_INFO_LOG("entered, scheduleState_: %{public}d, scheduleState: %{public}d", scheduleState_, scheduleState);
+    if (scheduleState != scheduleState_) {
+        scheduleState_ = scheduleState;
+        photoProcessor_->NotifyScheduleState(scheduleState_);
+    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

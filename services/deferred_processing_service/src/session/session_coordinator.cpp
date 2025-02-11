@@ -86,6 +86,9 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
         case DpsStatus::DPS_SESSION_STATE_SUSPENDED:
             code = StatusCode::SESSION_STATE_SUSPENDED;
             break;
+        case DpsStatus::DPS_SESSION_STATE_PREEMPTED:
+            code = StatusCode::SESSION_STATE_PREEMPTED;
+            break;
         default:
             DP_WARNING_LOG("unexpected error code: %{public}d", statusCode);
             break;
@@ -108,9 +111,9 @@ public:
         DP_CHECK_ERROR_RETURN_LOG(bufferInfo == nullptr, "bufferInfo is nullptr.");
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
-        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
         if (auto coordinator = coordinator_.lock()) {
-            coordinator->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
+            coordinator->OnProcessDone(userId, imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
         }
     }
 
@@ -118,10 +121,10 @@ public:
         const std::shared_ptr<BufferInfoExt>& bufferInfo) override
     {
         DP_CHECK_ERROR_RETURN_LOG(bufferInfo == nullptr, "bufferInfo is nullptr.");
-        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
         if (auto coordinator = coordinator_.lock()) {
             coordinator->OnProcessDoneExt(userId, imageId,
-                bufferInfo->GetPicture(), isCloudImageEnhanceSupported);
+                bufferInfo->GetPicture(), cloudImageEnhanceFlag);
         }
     }
 
@@ -236,29 +239,31 @@ void SessionCoordinator::DeletePhotoSession(const int32_t userId)
 }
 
 void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
-    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported)
+    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag)
 {
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d.",
-        userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()));
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d,"
+        "cloudImageEnhanceFlag: %{public}u.", userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()),
+        cloudImageEnhanceFlag);
     auto callback = GetRemoteImageCallback(userId);
     if (callback != nullptr) {
-        callback->OnProcessImageDone(imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
+        callback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
     } else {
         DP_INFO_LOG("callback is null, cache request imageId: %{public}s.", imageId.c_str());
         pendingImageResults_.push_back({ CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
-            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, isCloudImageEnhanceSupported });
+            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, cloudImageEnhanceFlag });
     }
 }
 
 void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
-    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
 {
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d.",
-        userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()));
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d,"
+        "cloudImageEnhanceFlag: %{public}u.", userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()),
+        cloudImageEnhanceFlag);
     auto callback = GetRemoteImageCallback(userId);
     if (callback != nullptr) {
         DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
-        callback->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
+        callback->OnProcessImageDone(imageId, picture, cloudImageEnhanceFlag);
     } else {
         DP_INFO_LOG("callback is null, cache request imageId: %{public}s.", imageId.c_str());
     }
@@ -280,8 +285,8 @@ void SessionCoordinator::OnError(const int userId, const std::string& imageId, D
 
 void SessionCoordinator::OnStateChanged(const int32_t userId, DpsStatus statusCode)
 {
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, map size: %{public}d.",
-        userId, static_cast<int32_t>(photoCallbackMap_.size()));
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, map size: %{public}d, statusCode: %{public}d.",
+        userId, static_cast<int32_t>(photoCallbackMap_.size()), statusCode);
     sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
     if (spCallback != nullptr) {
         spCallback->OnStateChanged(MapDpsStatus(statusCode));
@@ -299,7 +304,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
         auto result = pendingImageResults_.front();
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
             callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize,
-                result.isCloudImageEnhanceSupported);
+                result.cloudImageEnhanceFlag);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
             DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
         }

@@ -44,9 +44,9 @@ public:
     void AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo);
     void DeletePhotoSession(const int32_t userId);
     void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported);
+        const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag);
     void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<Media::Picture> picture,
-        bool isCloudImageEnhanceSupported);
+        uint32_t cloudImageEnhanceFlag);
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode);
     void OnStateChanged(const int32_t userId, DpsStatus statusCode);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
@@ -79,7 +79,7 @@ private:
         long dataSize;
         DpsError errorCode;
         DpsStatus statusCode;
-        bool isCloudImageEnhanceSupported;
+        uint32_t cloudImageEnhanceFlag;
     };
 
     struct ImageResultExt {
