@@ -65,7 +65,7 @@ private:
     std::mutex encoderMutex_;
     shared_ptr<AVCodecVideoEncoder> encoder_ = nullptr;
     std::mutex contextMutex_;
-    sptr<CodecUserData> context_ = nullptr;
+    sptr<VideoCodecUserData> context_ = nullptr;
     shared_ptr<Size> size_;
     int32_t rotation_ = 0;
     std::mutex surfaceMutex_; // guard codecSurface_

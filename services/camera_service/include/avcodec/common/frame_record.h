@@ -92,12 +92,12 @@ public:
         videoBuffer_ = buffer;
     }
 
-    inline OH_AVBuffer* GetEncodeBuffer()
+    inline std::shared_ptr<Media::AVBuffer> GetEncodeBuffer()
     {
         return encodedBuffer;
     }
 
-    inline void CacheBuffer(OH_AVBuffer* buffer)
+    inline void CacheBuffer(std::shared_ptr<Media::AVBuffer> buffer)
     {
         MEDIA_DEBUG_LOG("cacheBuffer start");
         encodedBuffer = buffer;
@@ -202,7 +202,7 @@ public:
         { GRAPHIC_ROTATE_270, 90 },
     };
 
-    OH_AVBuffer* encodedBuffer = nullptr;
+    std::shared_ptr<Media::AVBuffer> encodedBuffer = nullptr;
     std::string frameId_;
     std::mutex bufferMutex_;
 
