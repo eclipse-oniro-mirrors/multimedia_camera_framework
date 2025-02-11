@@ -27,9 +27,10 @@ namespace OHOS {
 namespace CameraStandard {
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, bool isCloudImageEnhanceSupported)
+    const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes, uint32_t cloudImageEnhanceFlag)
 {
-    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!"
+        "cloudImageEnhanceFlag: %{public}u", cloudImageEnhanceFlag);
     if (ipcFileDescriptor == nullptr) {
         return CAMERA_INVALID_ARG;
     }
@@ -42,7 +43,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
             return 0;
         } else {
             deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
-                isCloudImageEnhanceSupported);
+                cloudImageEnhanceFlag);
         }
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
@@ -75,15 +76,15 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
-        "called, status:%{public}s", imageId.c_str());
+        "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
     if (picture != nullptr) {
         MEDIA_INFO_LOG("picture is not null");
     }
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
-        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, cloudImageEnhanceFlag);
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }

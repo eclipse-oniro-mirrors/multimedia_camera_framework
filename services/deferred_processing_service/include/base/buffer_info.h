@@ -28,7 +28,7 @@ namespace DeferredProcessing {
 class BufferInfo {
 public:
     BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
-        bool isCloudImageEnhanceSupported);
+        uint32_t cloudImageEnhanceFlag);
     ~BufferInfo();
     
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
@@ -43,32 +43,32 @@ public:
         return isHighQuality_;
     }
 
-    inline bool IsCloudImageEnhanceSupported()
+    inline uint32_t GetCloudImageEnhanceFlag()
     {
-        return isCloudImageEnhanceSupported_;
+        return cloudImageEnhanceFlag_;
     }
 
 private:
     std::shared_ptr<SharedBuffer> sharedBuffer_;
     const int32_t dataSize_;
     const bool isHighQuality_;
-    bool isCloudImageEnhanceSupported_;
+    uint32_t cloudImageEnhanceFlag_;
 };
 class BufferInfoExt {
 public:
     explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
-        bool isCloudImageEnhanceSupported);
+        uint32_t cloudImageEnhanceFlag);
     ~BufferInfoExt();
     std::shared_ptr<Media::Picture> GetPicture();
     long GetDataSize();
     bool IsHighQuality();
-    bool IsCloudImageEnhanceSupported();
+    uint32_t GetCloudImageEnhanceFlag();
 
 private:
     std::shared_ptr<Media::Picture> picture_;
     long dataSize_;
     bool isHighQuality_;
-    bool isCloudImageEnhanceSupported_;
+    uint32_t cloudImageEnhanceFlag_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

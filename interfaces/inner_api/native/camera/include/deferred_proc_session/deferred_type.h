@@ -42,6 +42,7 @@ enum DpsStatusCode {
     SESSION_STATE_RUNNALBE,
     SESSION_STATE_RUNNING,
     SESSION_STATE_SUSPENDED,
+    SESSION_STATE_PREEMPTED,
 };
 } // namespace CameraStandard
 } // namespace OHOS

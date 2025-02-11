@@ -120,8 +120,8 @@ void TestBufferInfo(uint8_t *rawData, size_t size)
     sharedBuffer->GetFd();
     sharedBuffer->Reset();
     bool isHighQuality = data.ReadBool();
-    bool isCloudImageEnhanceSupported = false;
-    BufferInfo info(sharedBuffer, dataSize, isHighQuality, isCloudImageEnhanceSupported);
+    uint32_t cloudImageEnhanceFlag = 0;
+    BufferInfo info(sharedBuffer, dataSize, isHighQuality, cloudImageEnhanceFlag);
     info.GetDataSize();
     info.IsHighQuality();
     info.GetIPCFileDescriptor();

@@ -25,7 +25,7 @@ DeferredPhotoProcessingSessionCallbackProxy::DeferredPhotoProcessingSessionCallb
     : IRemoteProxy<IDeferredPhotoProcessingSessionCallback>(impl) { }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const std::string &imageId,
-    sptr<IPCFileDescriptor> ipcFd, long bytes, bool isCloudEnhancementAvailable)
+    sptr<IPCFileDescriptor> ipcFd, long bytes, uint32_t cloudImageEnhanceFlag)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -35,7 +35,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
     data.WriteString(imageId);
     data.WriteObject<IPCFileDescriptor>(ipcFd);
     data.WriteInt64(bytes);
-    data.WriteBool(isCloudEnhancementAvailable);
+    data.WriteUint32(cloudImageEnhanceFlag);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(DeferredProcessingServiceCallbackInterfaceCode::DPS_PHOTO_CALLBACK_PROCESS_IMAGE_DONE),
@@ -46,7 +46,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, bool isCloudEnhancementAvailable)
+    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -54,7 +54,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(imageId);
-    data.WriteBool(isCloudEnhancementAvailable);
+    data.WriteUint32(cloudImageEnhanceFlag);
 
     if (picture && !picture->Marshalling(data)) {
         DP_ERR_LOG("OnProcessImageDone Marshalling failed");
