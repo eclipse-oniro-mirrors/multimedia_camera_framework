@@ -105,7 +105,7 @@ public:
     explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, const std::string cameraId)
         : cameraHostManager_(cameraHostManager), cameraId_(cameraId)
     {
-        MEDIA_DEBUG_LOG("FoldScreenListener enter");
+        MEDIA_DEBUG_LOG("FoldScreenListener enter, cameraID: %{public}s", cameraId_.c_str());
     }
 
     virtual ~FoldScreenListener() = default;

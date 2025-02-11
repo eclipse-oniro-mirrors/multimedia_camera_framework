@@ -283,6 +283,8 @@ public:
 
     void UnsetPeerCallback();
 
+    size_t GetActiveCamerasCount();
+
     SafeMap<std::string, int32_t> &GetCameraStateOfASide();
 
     /**
