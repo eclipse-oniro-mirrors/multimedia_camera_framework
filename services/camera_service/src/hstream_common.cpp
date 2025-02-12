@@ -175,7 +175,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     } else {
         MEDIA_ERR_LOG("HStreamCommon::SetStreamInfo find format error, pixelFormat use default format");
     }
-    MEDIA_INFO_LOG("HStreamCommon::SetStreamInfo pixelFormat is %{public}d", pixelFormat);
+    MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo pixelFormat is %{public}d", pixelFormat);
     streamInfo.v1_0.streamId_ = hdiStreamId_;
     streamInfo.v1_0.width_ = width_;
     streamInfo.v1_0.height_ = height_;
@@ -185,7 +185,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         if (producer_ != nullptr) {
-            MEDIA_INFO_LOG("HStreamCommon:producer is not null");
+            MEDIA_DEBUG_LOG("HStreamCommon:producer is not null");
             streamInfo.v1_0.bufferQueue_ = new BufferProducerSequenceable(producer_);
         } else {
             streamInfo.v1_0.bufferQueue_ = nullptr;
