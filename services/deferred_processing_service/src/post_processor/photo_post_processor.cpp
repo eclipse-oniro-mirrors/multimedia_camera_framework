@@ -628,7 +628,6 @@ void PhotoPostProcessor::RemoveImage(const std::string& imageId)
 
     int32_t ret = session->RemoveImage(imageId);
     DP_INFO_LOG("DPS_PHOTO: Remove photo to ive, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
-    std::lock_guard<std::mutex> lock(runningWorkMutex_);
     imageId2CrashCount_.erase(imageId);
     DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
 }
@@ -705,8 +704,8 @@ void PhotoPostProcessor::OnSessionDied()
     SetPhotoSession(nullptr);
     consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
-    std::lock_guard<std::mutex> lock(runningWorkMutex_);
     for (const auto& item : runningWork_) {
+        std::string imageId = item.first;
         DP_INFO_LOG("Failed to process imageId: %{public}s due to connect service failed", item.first.c_str());
         if (imageId2CrashCount_.count(item.first) == 0) {
             imageId2CrashCount_.emplace(item.first, 1);
@@ -717,7 +716,7 @@ void PhotoPostProcessor::OnSessionDied()
         if (imageId2CrashCount_[item.first] >= MAX_CONSECUTIVE_CRASH_COUNT) {
             code = DPS_ERROR_IMAGE_PROC_FAILED;
         }
-        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(item.first, code));
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(imageId, code));
     }
 }
 
@@ -808,13 +807,11 @@ void PhotoPostProcessor::StartTimer(const std::string& imageId)
 {
     uint32_t timeId = DpsTimer::GetInstance().StartTimer([&, imageId]() {OnTimerOut(imageId);}, MAX_PROC_TIME_MS);
     DP_INFO_LOG("DPS_TIMER: Start imageId: %{public}s, timeId: %{public}u", imageId.c_str(), timeId);
-    std::lock_guard<std::mutex> lock(runningWorkMutex_);
     runningWork_.emplace(imageId, timeId);
 }
 
 void PhotoPostProcessor::StopTimer(const std::string& imageId)
 {
-    std::lock_guard<std::mutex> lock(runningWorkMutex_);
     auto it = runningWork_.find(imageId);
     DP_CHECK_ERROR_RETURN_LOG(it == runningWork_.end(),
         "Stoptimer failed not find imageId: %{public}s", imageId.c_str());
