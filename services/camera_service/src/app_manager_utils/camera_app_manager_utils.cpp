@@ -75,12 +75,11 @@ void CameraAppManagerUtils::GetForegroundApplications(std::vector<OHOS::AppExecF
         return;
     }
     int32_t ret = appMgr->GetForegroundApplications(appsData);
-    MEDIA_INFO_LOG("GetForegroundApplications, ret: %{public}u, num of apps: %{public}zu", ret, appsData.size());
+    MEDIA_DEBUG_LOG("GetForegroundApplications, ret: %{public}u, num of apps: %{public}zu", ret, appsData.size());
 }
 
 bool CameraAppManagerUtils::IsForegroundApplication(const uint32_t tokenId)
 {
-    MEDIA_INFO_LOG("check IsForegroundApplication");
     bool IsForeground = false;
     std::vector<OHOS::AppExecFwk::AppStateData> appsData;
     GetForegroundApplications(appsData);
@@ -90,7 +89,7 @@ bool CameraAppManagerUtils::IsForegroundApplication(const uint32_t tokenId)
             break;
         }
     }
-    MEDIA_INFO_LOG("IsForegroundApplication, ret: %{public}u", static_cast<uint32_t>(IsForeground));
+    MEDIA_DEBUG_LOG("IsForegroundApplication, ret: %{public}u", static_cast<uint32_t>(IsForeground));
     return IsForeground;
 }
 

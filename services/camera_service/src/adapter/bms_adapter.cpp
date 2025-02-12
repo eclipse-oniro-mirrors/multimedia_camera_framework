@@ -87,8 +87,12 @@ std::string BmsAdapter::GetBundleName(int uid)
     auto bms = GetBms();
     CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, "", "bms is null");
     auto result = bms->GetNameForUid(uid, bundleName);
-    CHECK_ERROR_RETURN_RET_LOG(result != ERR_OK, "", "GetNameForUid fail, ret: %{public}d", result);
-    MEDIA_INFO_LOG("GetBundleName by GetNameForUid, uid: %{public}d bundleName is %{public}s", uid, bundleName.c_str());
+    if (result != ERR_OK) {
+        MEDIA_DEBUG_LOG("GetNameForUid fail, ret: %{public}d", result);
+        return "";
+    }
+    MEDIA_DEBUG_LOG("GetBundleName by GetNameForUid, uid: %{public}d bundleName is %{public}s",
+        uid, bundleName.c_str());
     cacheMap.Put(uid, bundleName);
     return bundleName;
 }
