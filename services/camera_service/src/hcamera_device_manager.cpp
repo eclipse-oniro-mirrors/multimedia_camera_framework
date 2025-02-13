@@ -70,15 +70,28 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
         pidOfRequestProcess, uidOfRequestProcess, FOREGROUND_STATE_OF_PROCESS,
         FOCUSED_STATE_OF_PROCESS, device, accessTokenIdOfRequestProc);
     pidToCameras_.EnsureInsert(pid, cameraHolder);
+    activeCameras_.push_back(cameraHolder);
     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end");
 }
 
-void HCameraDeviceManager::RemoveDevice()
+void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
 {
-    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice cameraId=%{public}s start", cameraId.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
-    pidToCameras_.Clear();
-    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice end");
+    if (activeCameras_.empty()) {
+        return;
+    }
+    auto it = std::find_if(activeCameras_.begin(), activeCameras_.end(), [&](const sptr<HCameraDeviceHolder> &x) {
+        const std::string &curCameraId = x->GetDevice()->GetCameraId();
+        return cameraId == curCameraId;
+    });
+    if (it == activeCameras_.end()) {
+        MEDIA_ERR_LOG("HCameraDeviceManager::RemoveDevice error");
+        return;
+    }
+    pidToCameras_.Erase((*it)->GetPid());
+    activeCameras_.erase(it);
+    MEDIA_DEBUG_LOG("HCameraDeviceManager::RemoveDevice end");
 }
 
 sptr<HCameraDeviceHolder> HCameraDeviceManager::GetCameraHolderByPid(pid_t pidRequest)
@@ -117,6 +130,12 @@ pid_t HCameraDeviceManager::GetActiveClient()
     }
     MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient end");
     return activeClientPid;
+}
+
+std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::GetActiveCameraHolders()
+{
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    return activeCameras_;
 }
 
 void HCameraDeviceManager::SetStateOfACamera(std::string cameraId, int32_t state)
