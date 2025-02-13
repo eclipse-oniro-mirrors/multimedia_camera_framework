@@ -87,7 +87,6 @@ private:
         session_ = session;
     }
 
-    std::mutex runningWorkMutex_;
     std::mutex sessionMutex_;
     std::mutex removeMutex_;
     const int32_t userId_;
