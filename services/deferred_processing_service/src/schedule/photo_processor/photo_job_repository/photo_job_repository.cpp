@@ -381,6 +381,19 @@ int PhotoJobRepository::GetOfflineJobSize()
     return size;
 }
 
+int PhotoJobRepository::GetOfflineIdleJobSize()
+{
+    int size = static_cast<int>(offlineJobList_.size());
+    for (auto& jobPtr : offlineJobList_) {
+        if ((jobPtr->GetCurStatus() == PhotoJobStatus::COMPLETED) ||
+            (jobPtr->GetCurStatus() == PhotoJobStatus::DELETED)) {
+            size--;
+        }
+    }
+    DP_DEBUG_LOG("offline idle job size: %{public}d", size);
+    return size;
+}
+
 bool PhotoJobRepository::IsOfflineJob(std::string imageId)
 {
     return offlineJobMap_.find(imageId) != offlineJobMap_.end();

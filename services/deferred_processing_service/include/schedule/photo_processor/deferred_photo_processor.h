@@ -41,6 +41,7 @@ public:
         const std::shared_ptr<BufferInfoExt>& bufferInfo) override;
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override;
     void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
+    void NotifyScheduleState(DpsStatus status);
     void PostProcess(const DeferredPhotoWorkPtr& work);
     void SetDefaultExecutionMode();
     void Interrupt();

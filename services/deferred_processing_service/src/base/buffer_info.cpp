@@ -23,11 +23,11 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 BufferInfo::BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
-    bool isCloudImageEnhanceSupported)
+    uint32_t cloudImageEnhanceFlag)
     : sharedBuffer_(sharedBuffer),
       dataSize_(dataSize),
       isHighQuality_(isHighQuality),
-      isCloudImageEnhanceSupported_(isCloudImageEnhanceSupported)
+      cloudImageEnhanceFlag_(cloudImageEnhanceFlag)
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -46,11 +46,11 @@ sptr<IPCFileDescriptor> BufferInfo::GetIPCFileDescriptor()
 }
 
 BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
-    bool isCloudImageEnhanceSupported)
+    uint32_t cloudImageEnhanceFlag)
     : picture_(picture),
       dataSize_(dataSize),
       isHighQuality_(isHighQuality),
-      isCloudImageEnhanceSupported_(isCloudImageEnhanceSupported)
+      cloudImageEnhanceFlag_(cloudImageEnhanceFlag)
 {
 }
 
@@ -74,9 +74,9 @@ bool BufferInfoExt::IsHighQuality()
     return isHighQuality_;
 }
 
-bool BufferInfoExt::IsCloudImageEnhanceSupported()
+uint32_t BufferInfoExt::GetCloudImageEnhanceFlag()
 {
-    return isCloudImageEnhanceSupported_;
+    return cloudImageEnhanceFlag_;
 }
 } //namespace DeferredProcessing
 } // namespace CameraStandard

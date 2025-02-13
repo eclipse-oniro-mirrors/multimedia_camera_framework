@@ -65,9 +65,10 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessImageDone(Message
     std::string imageId = data.ReadString();
     sptr<IPCFileDescriptor> ipcFd = data.ReadObject<IPCFileDescriptor>();
     long bytes = data.ReadInt64();
-    bool isCloudImageEnhanceSupported = data.ReadBool();
-    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes, isCloudImageEnhanceSupported);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone result: %{public}d", ret);
+    uint32_t cloudImageEnhanceFlag = data.ReadUint32();
+    int32_t ret = OnProcessImageDone(imageId, ipcFd, bytes, cloudImageEnhanceFlag);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone result: %{public}d,"
+        "cloudImageEnhanceFlag: %{public}u", ret, cloudImageEnhanceFlag);
     return ret;
 }
 
@@ -88,7 +89,8 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(MessageParc
     int32_t status = data.ReadInt32();
 
     int32_t ret = OnStateChanged((StatusCode)status);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged result: %{public}d", ret);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged result: %{public}d,"
+        "status: %{public}d", ret, status);
     return ret;
 }
 
@@ -106,10 +108,11 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(Messa
 {
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone enter");
     std::string imageId = data.ReadString();
-    bool isCloudImageEnhanceSupported = data.ReadBool();
+    uint32_t cloudImageEnhanceFlag = data.ReadUint32();
     std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
-    int32_t ret = OnProcessImageDone(imageId, picturePtr, isCloudImageEnhanceSupported);
-    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone result: %{public}d", ret);
+    int32_t ret = OnProcessImageDone(imageId, picturePtr, cloudImageEnhanceFlag);
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone result: %{public}d,"
+        "cloudImageEnhanceFlag: %{public}u", ret, cloudImageEnhanceFlag);
     return ret;
 }
 } // namespace DeferredProcessing

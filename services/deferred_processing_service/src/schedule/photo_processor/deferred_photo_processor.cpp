@@ -184,6 +184,13 @@ void DeferredPhotoProcessor::OnStateChanged(const int32_t userId, DpsStatus stat
     DP_DEBUG_LOG("DPS_PHOTO: userId: %{public}d, statusCode: %{public}d.", userId, statusCode);
 }
 
+void DeferredPhotoProcessor::NotifyScheduleState(DpsStatus status)
+{
+    if (auto callback = callback_.lock()) {
+        callback->OnStateChanged(userId_, status);
+    }
+}
+
 void DeferredPhotoProcessor::PostProcess(const DeferredPhotoWorkPtr& work)
 {
     auto executionMode = work->GetExecutionMode();

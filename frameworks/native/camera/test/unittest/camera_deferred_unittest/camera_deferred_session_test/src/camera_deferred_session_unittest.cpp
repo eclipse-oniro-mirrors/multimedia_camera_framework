@@ -360,7 +360,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_007, Te
         1,
         DPS_ERROR_UNKNOW,
         DPS_SESSION_STATE_IDLE,
-        false
+        0
     };
     sessionCoordinator->pendingImageResults_.clear();
     sessionCoordinator->pendingImageResults_.push_back(testImageResult);
