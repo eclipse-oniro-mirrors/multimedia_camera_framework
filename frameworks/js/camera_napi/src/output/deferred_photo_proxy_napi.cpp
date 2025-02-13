@@ -184,6 +184,7 @@ void DeferredPhotoProxyNapi::DeferredPhotoAsyncTaskComplete(napi_env env, napi_s
     napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
     napi_resolve_deferred(env, context->deferred, thumbnail);
     napi_delete_async_work(env, context->work);
+    delete context;
 }
 
 napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info)
