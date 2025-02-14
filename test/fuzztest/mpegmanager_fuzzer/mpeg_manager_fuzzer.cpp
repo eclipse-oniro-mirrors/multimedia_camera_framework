@@ -70,8 +70,29 @@ void MpegManagerFuzzer::MpegManagerFuzzTest()
     if (fuzz_ == nullptr) {
         fuzz_ = std::make_shared<MpegManager>();
     }
+    MediaResult result1 = MediaResult::FAIL;
+    MediaResult result2 = MediaResult::PAUSE;
+    fuzz_->UnInit(result1);
+    fuzz_->UnInit(result2);
     fuzz_->GetSurface();
+    fuzz_->GetMakerSurface();
+    fuzz_->GetProcessTimeStamp();
     fuzz_->GetResultFd();
+    fuzz_->InitVideoCodec();
+    fuzz_->UnInitVideoCodec();
+    fuzz_->InitVideoMakerSurface();
+    fuzz_->UnInitVideoMaker();
+    std::vector<uint8_t> memoryFlags = {
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
+    };
+    uint8_t randomIndex = GetData<uint8_t>() % memoryFlags.size();
+    MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
+    std::shared_ptr<AVAllocator> avAllocator = AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
+    fuzz_->OnMakerBufferAvailable();
+    int64_t timestamp = GetData<int64_t>();
+    fuzz_->AcquireMakerBuffer(timestamp);
     int flags = 1;
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};

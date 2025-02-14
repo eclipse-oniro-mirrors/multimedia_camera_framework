@@ -40,7 +40,10 @@ public:
 };
 
 void Test(uint8_t *rawData, size_t size);
-void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
+void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
+void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
+void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, uint8_t *rawData, size_t size);
+void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData, size_t size);
 
 }
 } //CameraStandard

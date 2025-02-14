@@ -27,6 +27,7 @@
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
 #include <memory>
+#include "hstream_capture_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,11 +37,8 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-const int32_t PHOTO_WIDTH = 1280;
-const int32_t PHOTO_HEIGHT = 960;
-const int32_t PHOTO_FORMAT = 2000;
-
-std::shared_ptr<HStreamCaptureStub> HStreamCaptureStubFuzzer::fuzz_{nullptr};
+static constexpr int32_t MAX_CODE_NUM = 17;
+std::shared_ptr<HStreamCaptureStubFuzz> HStreamCaptureStubFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -72,21 +70,49 @@ uint32_t GetArrLength(T& arr)
     return sizeof(arr) / sizeof(arr[0]);
 }
 
-void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest()
+void HStreamCaptureStubFuzzer::OnRemoteRequest(int32_t code)
 {
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
     if (fuzz_ == nullptr) {
-        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_ERROR_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
-        sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+        fuzz_ = std::make_shared<HStreamCaptureStubFuzz>();
     }
     MessageParcel data;
-    data.WriteRawData(RAW_DATA, g_dataSize);
-    fuzz_->HandleEnableRawDelivery(data);
-    fuzz_->HandleSetMovingPhotoVideoCodecType(data);
+    MessageOption option;
+    MessageParcel reply;
+    data.WriteInterfaceToken(HStreamCaptureStubFuzz::GetDescriptor());
+    data.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
+    data.RewindRead(0);
+    fuzz_->OnRemoteRequest(code, data, reply, option);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1()
+{
+    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+        return;
+    }
+    auto fuzz = std::make_shared<HStreamCaptureStubFuzz>();
+    MessageParcel data;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    data.WriteBool(1);
+    data.WriteRemoteObject(producer->AsObject());
+    fuzz->HandleSetBufferProducerInfo(data);
+    fuzz->HandleSetThumbnail(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2()
+{
+    auto fuzz = std::make_shared<HStreamCaptureStubFuzz>();
+    MessageParcel data;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    static const int32_t audioPolicyServiceId = 3009;
+    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
+    auto proxy = std::make_shared<HStreamCaptureCallbackProxy>(object);
+    data.WriteRemoteObject(proxy->AsObject());
+    fuzz->HandleSetCallback(data);
 }
 
 void Test()
@@ -96,7 +122,11 @@ void Test()
         MEDIA_INFO_LOG("hstreamCaptureStub is null");
         return;
     }
-    hstreamCaptureStub->HStreamCaptureStubFuzzTest();
+    for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
+        hstreamCaptureStub->OnRemoteRequest(i);
+    }
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest1();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest2();
 }
 
 typedef void (*TestFuncs[1])();

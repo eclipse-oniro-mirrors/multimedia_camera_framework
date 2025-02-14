@@ -90,7 +90,7 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest()
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
     fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDtescriptor>::MakeSptr(GetData<int>());
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     std::shared_ptr<DeferredVideoJob> jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
