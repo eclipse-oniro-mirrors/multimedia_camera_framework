@@ -2008,14 +2008,14 @@ void RotatePicture(std::shared_ptr<Media::Picture> picture)
     }
 }
 
-std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContainer, int32_t captureId,
+std::shared_ptr<PhotoAssetIntf> HCaptureSession::ProcessPhotoProxy(int32_t captureId,
     std::shared_ptr<Media::Picture> picturePtr, bool isBursting,
     sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri)
 {
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");
     sptr<HStreamCapture> captureStream = nullptr;
-    for (auto& stream : streamContainer.GetStreams(StreamType::CAPTURE)) {
+    for (auto& stream : streamContainer_.GetStreams(StreamType::CAPTURE)) {
         captureStream = CastStream<HStreamCapture>(stream);
         if (captureStream != nullptr) {
             break;
@@ -2035,7 +2035,8 @@ std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(StreamContainer &streamContain
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
         taskThread = std::thread(RotatePicture, picturePtr);
     }
-    if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false) {
+    bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
+    if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
         string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
         CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
@@ -2095,7 +2096,7 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<Media::Picture> picturePtr(picture.release());
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
-        ProcessPhotoProxy(streamContainer_, captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
+        HCaptureSession::ProcessPhotoProxy(captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);

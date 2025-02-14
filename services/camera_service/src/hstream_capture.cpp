@@ -495,8 +495,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         }
     }
 
-    int32_t NightMode = 4;
-    CHECK_ERROR_RETURN_RET(GetMode() == NightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK, ret);
+    bool isNightMode = (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::NIGHT));
+    CHECK_ERROR_RETURN_RET(isNightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK, ret);
     ResetCaptureId();
 
     uint32_t major;
@@ -884,7 +884,7 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
 
 int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
 {
-    if (isBursting_) {
+    if (isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO))) {
         return CAMERA_UNSUPPORTED;
     }
     std::lock_guard<std::mutex> lock(photoAssetLock_);
