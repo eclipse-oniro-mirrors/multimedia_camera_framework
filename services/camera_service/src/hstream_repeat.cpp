@@ -569,6 +569,12 @@ int32_t HStreamRepeat::SetCameraApi(uint32_t apiCompatibleVersion)
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::GetMirror(bool& isEnable)
+{
+    isEnable = enableMirror_;
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
 {
     enableStreamRotate_ = true;

@@ -64,6 +64,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR):
             errCode = HandleSetMirror(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_GET_STREAM_MIRROR):
+            errCode = HandleGetMirror(data, reply);
+            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE):
             errCode = HandleAttachMetaSurface(data);
             break;
@@ -177,6 +180,16 @@ int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
     int ret = SetMirror(isEnable);
     CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamRepeatStub::HandleSetMirror failed : %{public}d", ret);
     return ret;
+}
+
+int32_t HStreamRepeatStub::HandleGetMirror(MessageParcel& data, MessageParcel& reply)
+{
+    bool isEnable = false;
+    int ret = GetMirror(isEnable);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleGetMirror result: %{public}d, isMuted: %{public}d", ret, isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isEnable), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetMirror Write isEnable failed");
+     return ret;
 }
 
 int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)

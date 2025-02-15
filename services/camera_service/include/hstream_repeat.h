@@ -79,6 +79,7 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
+    int32_t GetMirror(bool& isEnable) override;
     int32_t SetPreviewRotation(std::string &deviceClass);
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
     void SetStreamTransform(int disPlayRotation = -1);

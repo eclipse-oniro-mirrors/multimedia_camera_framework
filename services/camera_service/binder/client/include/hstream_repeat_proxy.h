@@ -53,6 +53,8 @@ public:
 
     int32_t SetMirror(bool isEnable) override;
 
+    int32_t GetMirror(bool& isEnable) override;
+
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
 
 private:

@@ -29,14 +29,14 @@ extern "C" {
 Camera_ErrorCode OH_MetadataOutput_RegisterCallback(Camera_MetadataOutput* metadataOutput,
     MetadataOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, metadataOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onMetadataObjectAvailable!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onMetadataObjectAvailable is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onError is null!");
+    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, metadataOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onMetadataObjectAvailable == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback onMetadataObjectAvailable is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback onError is null!");
 
     metadataOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -49,14 +49,14 @@ Camera_ErrorCode OH_MetadataOutput_RegisterCallback(Camera_MetadataOutput* metad
 Camera_ErrorCode OH_MetadataOutput_UnregisterCallback(Camera_MetadataOutput* metadataOutput,
     MetadataOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, previewOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onMetadataObjectAvailable!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onMetadataObjectAvailable is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onError is null!");
+    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, previewOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onMetadataObjectAvailable == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback onMetadataObjectAvailable is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback onError is null!");
 
     metadataOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -68,8 +68,8 @@ Camera_ErrorCode OH_MetadataOutput_UnregisterCallback(Camera_MetadataOutput* met
  */
 Camera_ErrorCode OH_MetadataOutput_Start(Camera_MetadataOutput* metadataOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, metadataOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, metadataOutput is null!");
 
     return metadataOutput->Start();
 }
@@ -80,8 +80,8 @@ Camera_ErrorCode OH_MetadataOutput_Start(Camera_MetadataOutput* metadataOutput)
  */
 Camera_ErrorCode OH_MetadataOutput_Stop(Camera_MetadataOutput* metadataOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, metadataOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, metadataOutput is null!");
 
     return metadataOutput->Stop();
 }
@@ -92,8 +92,8 @@ Camera_ErrorCode OH_MetadataOutput_Stop(Camera_MetadataOutput* metadataOutput)
  */
 Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, metadataOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, metadataOutput is null!");
 
     Camera_ErrorCode retCode = metadataOutput->Release();
     if (metadataOutput != nullptr) {

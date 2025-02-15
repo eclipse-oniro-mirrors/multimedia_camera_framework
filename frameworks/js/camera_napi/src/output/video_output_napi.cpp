@@ -692,10 +692,6 @@ napi_value VideoOutputNapi::GetVideoRotation(napi_env env, napi_callback_info in
 napi_value VideoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMirrorSupported is called!");
-        return result;
-    }
     MEDIA_DEBUG_LOG("VideoOutputNapi::IsMirrorSupported is called");
  
     VideoOutputNapi* videoOutputNapi = nullptr;
@@ -722,10 +718,6 @@ napi_value VideoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
 napi_value VideoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
 {
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi EnableMirror is called!");
-        return result;
-    }
     MEDIA_DEBUG_LOG("VideoOutputNapi::EnableMirror is called");
     VideoOutputNapi* videoOutputNapi = nullptr;
     bool isEnable;
