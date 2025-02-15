@@ -194,7 +194,16 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
 }
 
 /**
- * @since 16
+    "Invalid argument, frameRateRange is null!");
+
+    return videoOutput->GetActiveFrameRate(frameRateRange);
+}
+
+/**
+ * @since 15
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported)
  * @version 1.0
  */
 Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported)
@@ -207,7 +216,7 @@ Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutpu
 }
 
 /**
- * @since 16
+ * @since 15
  * @version 1.0
  */
 Camera_ErrorCode OH_VideoOutput_EnableMirror(Camera_VideoOutput* videoOutput, bool mirrorMode)
