@@ -130,11 +130,11 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     CAMERA_SYNC_TRACE;
     unique_lock<mutex> lock(videoFdMutex_);
     auto thisPtr = sptr<AvcodecTaskManager>(this);
-    if (videoFdMap_.empty()) {
+    if (videoFdMap_.find(captureId) == videoFdMap_.end()) {
         bool waitResult = false;
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
-            [thisPtr] { return !thisPtr->videoFdMap_.empty(); });
-        CHECK_ERROR_RETURN_RET(!waitResult || videoFdMap_.empty(), nullptr);
+            [thisPtr, captureId] { return thisPtr->videoFdMap_.find(captureId) != thisPtr->videoFdMap_.end(); });
+        CHECK_ERROR_RETURN_RET(!waitResult || videoFdMap_.find(captureId) == videoFdMap_.end(), nullptr);
     }
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
