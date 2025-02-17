@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("HCameraServiceCallbackStubfuzzTest") {
+ohos_fuzztest("HCameraServiceCallbackStubFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
   fuzz_config_file = "../hcameraservicecallbackstubfuzztest_fuzzer"
 
@@ -119,5 +119,5 @@ ohos_fuzztest("HCameraServiceCallbackStubfuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HCameraServiceCallbackStubfuzzTest" ]
+  deps = [ ":HCameraServiceCallbackStubFuzzTest" ]
 }

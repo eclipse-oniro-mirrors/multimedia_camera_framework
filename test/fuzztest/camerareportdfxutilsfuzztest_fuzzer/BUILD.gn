@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("CameraReportDfxUtilsfuzzTest") {
+ohos_fuzztest("CameraReportDfxUtilsFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
   fuzz_config_file = "../camerareportdfxutilsfuzztest_fuzzer"
 
@@ -76,5 +76,5 @@ ohos_fuzztest("CameraReportDfxUtilsfuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":CameraReportDfxUtilsfuzzTest" ]
+  deps = [ ":CameraReportDfxUtilsFuzzTest" ]
 }
