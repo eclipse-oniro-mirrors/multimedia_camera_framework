@@ -36,6 +36,10 @@ public:
     {
         return 0;
     }
+    int32_t UnSetCallback() override
+    {
+        return 0;
+    }
     int32_t SetDataAccuracy(int32_t dataAccuracy) override
     {
         return 0;

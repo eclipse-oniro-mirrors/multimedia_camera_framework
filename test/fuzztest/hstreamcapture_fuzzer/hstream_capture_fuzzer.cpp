@@ -91,26 +91,27 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     if (fuzz_ == nullptr) {
         fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
-    StreamInfo_V1_1 streamInfo;
-    int32_t format = GetData<int32_t>();
-    fuzz_->SetStreamInfo(streamInfo);
-    fuzz_->FullfillPictureExtendStreamInfos(streamInfo, format);
+    int32_t captureId = GetData<int32_t>();
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<bool> testBools = {true, false};
     bool isEnabled = (testBools[randomNum % testBools.size()]);
     bool enabled = (testBools[randomNum % testBools.size()]);
+    fuzz_->CreateMediaLibraryPhotoAssetProxy(captureId);
+    fuzz_->GetPhotoAssetInstance(captureId);
+    fuzz_->GetAddPhotoProxyEnabled();
+    fuzz_->AcquireBufferToPrepareProxy(captureId);
+    StreamInfo_V1_1 streamInfo;
+    fuzz_->SetStreamInfo(streamInfo);
+    fuzz_->FullfillPictureExtendStreamInfos(streamInfo, GetData<int32_t>());
     fuzz_->SetThumbnail(isEnabled, producer);
     fuzz_->EnableRawDelivery(enabled);
-
     std::vector<std::string> bufferNames = {"rawImage",
         "gainmapImage", "deepImage", "exifImage", "debugImage"};
     for (const auto& bufName : bufferNames) {
         fuzz_->SetBufferProducerInfo(bufName, producer);
     }
-
     int32_t type = GetData<int32_t>();
     fuzz_->DeferImageDeliveryFor(type);
-    int32_t captureId = GetData<int32_t>();
     fuzz_->PrepareBurst(captureId);
     fuzz_->ResetBurst();
     fuzz_->ResetBurstKey(captureId);
@@ -118,6 +119,16 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     fuzz_->IsBurstCapture(captureId);
     fuzz_->IsBurstCover(captureId);
     fuzz_->GetCurBurstSeq(captureId);
+    fuzz_->IsDeferredPhotoEnabled();
+    fuzz_->IsDeferredVideoEnabled();
+    auto videoCodecType = GetData<int32_t>();
+    fuzz_->SetMovingPhotoVideoCodecType(videoCodecType);
+    fuzz_->GetMovingPhotoVideoCodecType();
+    fuzz_->SetCameraPhotoRotation(GetData<bool>());
+    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+    fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy);
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    fuzz_->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
 }
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
@@ -126,12 +137,7 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
         return;
     }
     auto captureId = GetData<int32_t>();
-    auto modeName = GetData<int32_t>();
-    auto frameCount = GetData<int32_t>();
-    auto preparedCaptureId = GetData<int32_t>();
-    auto exposureTime = GetData<int32_t>();
     auto interfaceCode = GetData<int32_t>();
-    auto videoCodecType = GetData<int32_t>();
     auto timestamp = GetData<uint64_t>();
     auto isDelay = GetData<bool>();
     uint8_t randomNum = GetData<uint8_t>();
@@ -141,31 +147,38 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
     fuzz_->CheckResetBurstKey(captureId);
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
     captureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
-    fuzz_->CheckBurstCapture(captureSettings, preparedCaptureId);
+    fuzz_->CheckBurstCapture(captureSettings, GetData<int32_t>());
+    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
+    std::string cameraId;
+    uint32_t callingTokenId = GetData<uint32_t>();
+    sptr<HCameraDevice> camDevice = new (std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callingTokenId);
+    camDevice->OpenDevice(true);
+    camDevice->InitStreamOperator();
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
+    fuzz_->SetStreamOperator(streamOperator);
+    fuzz_->OnCaptureReady(captureId, timestamp);
     fuzz_->Capture(captureSettings);
-    fuzz_->SetRotation(captureSettings, captureId);
     fuzz_->CancelCapture();
-    fuzz_->SetMode(modeName);
+    fuzz_->SetMode(GetData<int32_t>());
     fuzz_->GetMode();
     fuzz_->ConfirmCapture();
     fuzz_->EndBurstCapture(captureSettings);
     fuzz_->Release();
     fuzz_->ReleaseStream(isDelay);
     fuzz_->OnCaptureStarted(captureId);
-    fuzz_->OnCaptureStarted(captureId, exposureTime);
-    fuzz_->OnCaptureEnded(captureId, frameCount);
+    fuzz_->OnCaptureStarted(captureId, GetData<int32_t>());
+    fuzz_->OnCaptureEnded(captureId, GetData<int32_t>());
     auto errorCode = GetData<int32_t>();
     fuzz_->OnCaptureError(captureId, errorCode);
     fuzz_->OnFrameShutter(captureId, timestamp);
     fuzz_->OnFrameShutterEnd(captureId, timestamp);
-    fuzz_->OnCaptureReady(captureId, timestamp);
     CameraInfoDumper infoDumper(0);
     fuzz_->DumpStreamInfo(infoDumper);
     fuzz_->OperatePermissionCheck(interfaceCode);
-    fuzz_->IsDeferredPhotoEnabled();
-    fuzz_->IsDeferredVideoEnabled();
-    fuzz_->GetMovingPhotoVideoCodecType();
-    fuzz_->SetMovingPhotoVideoCodecType(videoCodecType);
+    CaptureInfo captureInfoPhoto;
+    fuzz_->ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, captureId);
+    fuzz_->SetRotation(captureSettings, captureId);
 }
 
 void Test()

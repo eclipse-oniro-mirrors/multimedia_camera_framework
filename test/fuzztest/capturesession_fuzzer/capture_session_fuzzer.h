@@ -17,6 +17,7 @@
 #define CAPTURE_SESSION_FUZZER_H
 
 #include "session/capture_session.h"
+#include "iremote_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,6 +38,7 @@ void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
+void TestOther3(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size);
 
 class SessionCallbackMock : public SessionCallback {

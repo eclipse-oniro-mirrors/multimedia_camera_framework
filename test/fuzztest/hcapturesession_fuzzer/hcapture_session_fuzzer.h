@@ -25,7 +25,10 @@ namespace CameraStandard {
 class HCaptureSessionFuzzer {
 public:
 static std::shared_ptr<HCaptureSession> fuzz_;
-static void HCaptureSessionFuzzTest();
+static void HCaptureSessionFuzzTest1();
+static void HCaptureSessionFuzzTest2();
+static void HCaptureSessionFuzzTest3();
+static void HCaptureSessionFuzzTest4();
 };
 
 } //CameraStandard

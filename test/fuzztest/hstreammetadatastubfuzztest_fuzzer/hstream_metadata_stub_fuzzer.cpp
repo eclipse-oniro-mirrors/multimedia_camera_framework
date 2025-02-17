@@ -25,6 +25,7 @@
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
 #include <memory>
+#include "hstream_metadata_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,7 +35,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-static constexpr int32_t MAX_CODE_NUM = 6;
+static constexpr int32_t MAX_CODE_NUM = 7;
 
 std::shared_ptr<HStreamMetadataStubFuzz> HStreamMetadataStubFuzzer::fuzz_{nullptr};
 
@@ -96,6 +97,13 @@ void Test()
     for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
         hstreamMetadataStub->OnRemoteRequest(i);
     }
+    MessageParcel dataMessageParcel;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    static const int32_t audioPolicyServiceId = 3009;
+    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
+    auto proxy = std::make_shared<HStreamMetadataCallbackProxy>(object);
+    dataMessageParcel.WriteRemoteObject(proxy->AsObject());
+    HStreamMetadataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
 }
 
 typedef void (*TestFuncs[1])();

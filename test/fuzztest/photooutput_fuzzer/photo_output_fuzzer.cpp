@@ -78,10 +78,15 @@ void Test(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_LOG(!producer, "PhotoOutputFuzzer: GetProducer Error");
     auto output = manager->CreatePhotoOutput(profile, producer);
     CHECK_ERROR_RETURN_LOG(!output, "PhotoOutputFuzzer: CreatePhotoOutput Error");
-    TestOutput(output, rawData, size);
+    std::shared_ptr<PhotoCaptureSetting> setting = std::make_shared<PhotoCaptureSetting>();
+    sptr<HStreamCaptureCallbackImpl> callback = new (std::nothrow) HStreamCaptureCallbackImpl(output);
+    TestOutput1(output, rawData, size);
+    TestOutput2(output, rawData, size);
+    CaptureSetting(setting, rawData, size);
+    CaptureCallback(callback, rawData, size);
 }
 
-void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
+void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
     MessageParcel data;
@@ -127,6 +132,88 @@ void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     data.RewindRead(0);
     output->EnableAutoHighQualityPhoto(data.ReadBool());
     output->Release();
+}
+
+void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
+{
+    MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    output->SetCallback(make_shared<PhotoStateCallbackMock>());
+    data.RewindRead(0);
+    output->IsYuvOrHeifPhoto();
+    output->SetAuxiliaryPhotoHandle(data.ReadInt32());
+    output->GetAuxiliaryPhotoHandle();
+    data.RewindRead(0);
+    output->SetMovingPhotoVideoCodecType(data.ReadInt32());
+    output->IsDepthDataDeliverySupported();
+    data.RewindRead(0);
+    output->EnableMovingPhoto(data.ReadBool());
+    data.RewindRead(0);
+    output->EnableDepthDataDelivery(data.ReadBool());
+    output->CreateMultiChannel();
+    data.RewindRead(0);
+    output->AcquireBufferToPrepareProxy(data.ReadInt32());
+    data.RewindRead(0);
+    output->EnableRawDelivery(data.ReadBool());
+    data.RewindRead(0);
+    output->EnableMirror(data.ReadBool());
+    bool isEnable = static_cast<bool>(rawData);
+    output->IsRawDeliverySupported(isEnable);
+    bool isAutoCloudImageEnhancementSupported = static_cast<bool>(rawData);
+    output->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhancementSupported);
+    bool isAutoAigcPhotoSupported = static_cast<bool>(rawData);
+    output->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    data.RewindRead(0);
+    output->EnableAutoCloudImageEnhancement(data.ReadBool());
+    data.RewindRead(0);
+    output->GetPhotoRotation(data.ReadInt32());
+    data.RewindRead(0);
+    output->EnableAutoAigcPhoto(data.ReadBool());
+    pid_t pid = *reinterpret_cast<const pid_t*>(rawData);
+    output->CameraServerDied(pid);
+    output->Release();
+}
+
+void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, uint8_t *rawData, size_t size)
+{
+    MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
+    setting->SetQuality(quality);
+    setting->GetQuality();
+    data.RewindRead(0);
+    setting->SetBurstCaptureState(data.ReadInt8());
+    PhotoCaptureSetting::RotationConfig rotationValue = PhotoCaptureSetting::RotationConfig::Rotation_0;
+    setting->SetRotation(rotationValue);
+    setting->GetRotation();
+    data.RewindRead(0);
+    setting->SetGpsLocation(data.ReadDouble(), data.ReadDouble());
+    data.RewindRead(0);
+    setting->SetMirror(data.ReadBool());
+    setting->GetMirror();
+}
+
+void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData, size_t size)
+{
+    MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    data.RewindRead(0);
+    callback->OnCaptureStarted(data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnCaptureStarted(data.ReadInt32(), data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnCaptureEnded(data.ReadInt32(), data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnCaptureError(data.ReadInt32(), data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnFrameShutter(data.ReadInt32(), data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnFrameShutterEnd(data.ReadInt32(), data.ReadInt32());
+    data.RewindRead(0);
+    callback->OnCaptureReady(data.ReadInt32(), data.ReadInt32());
 }
 
 } // namespace StreamRepeatStubFuzzer

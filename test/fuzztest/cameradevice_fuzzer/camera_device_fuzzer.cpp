@@ -293,7 +293,6 @@ void Test3(uint8_t *rawData, size_t size)
     camera->GetDeviceType();
     camera->GetNetWorkId();
     camera->GetCameraOrientation();
-    camera->GetZoomRatioRange();
     camera->GetExposureBiasRange();
     camera->GetModuleType();
     camera->GetUsedAsPosition();

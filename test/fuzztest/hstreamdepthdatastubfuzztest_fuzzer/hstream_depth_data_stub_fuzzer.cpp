@@ -25,6 +25,7 @@
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
 #include <memory>
+#include "hstream_depth_data_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -83,8 +84,6 @@ void HStreamDepthDataStubFuzzer::OnRemoteRequest(int32_t code)
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
     dataMessageParcel.RewindRead(0);
     fuzz_->OnRemoteRequest(code, dataMessageParcel, reply, option);
-    fuzz_->HandleSetCallback(dataMessageParcel);
-    fuzz_->HandleSetDataAccuracy(dataMessageParcel);
 }
 
 void Test()
@@ -97,6 +96,15 @@ void Test()
     for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
         hstreamDepthDataStub->OnRemoteRequest(i);
     }
+    MessageParcel dataMessageParcel;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    static const int32_t audioPolicyServiceId = 3009;
+    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
+    auto proxy = std::make_shared<HStreamDepthDataCallbackProxy>(object);
+    dataMessageParcel.WriteRemoteObject(proxy->AsObject());
+    HStreamDepthDataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
+    dataMessageParcel.WriteInt32(GetData<int32_t>());
+    HStreamDepthDataStubFuzzer::fuzz_->HandleSetDataAccuracy(dataMessageParcel);
 }
 
 typedef void (*TestFuncs[1])();

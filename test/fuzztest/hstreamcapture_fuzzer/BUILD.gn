@@ -50,6 +50,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/camera_service/src",
     "${multimedia_camera_framework_path}/services/camera_service/binder",
+    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
   ]
 
   cflags = [
@@ -62,6 +63,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
 
   sources = [
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
     "hstream_capture_fuzzer.cpp",
   ]
 
@@ -96,12 +98,17 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",
+    "media_foundation:media_foundation",
+    "media_foundation:native_media_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 }
 

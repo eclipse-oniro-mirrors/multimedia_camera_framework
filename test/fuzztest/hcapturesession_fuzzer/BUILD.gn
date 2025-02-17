@@ -59,6 +59,7 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/camera_service/src",
     "${multimedia_camera_framework_path}/services/camera_service/binder",
+    "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include",
   ]
 
   cflags = [
@@ -66,15 +67,24 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-fno-access-control",
   ]
 
   sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcapture_session_stub.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/camera_util.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_report_uitls.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/hcapture_session.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/hstream_common.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/moving_photo/moving_photo_surface_wrapper.cpp",
     "hcapture_session_fuzzer.cpp",
   ]
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
     "../../../frameworks/native/camera:camera_framework",
   ]
 
@@ -83,7 +93,8 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "access_token:libaccesstoken_sdk",
     "access_token:libnativetoken",
     "access_token:libprivacy_sdk",
-    "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
     "audio_framework:offline_audio_effect",
@@ -130,6 +141,7 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "samgr:samgr_proxy",
     "sensor:sensor_interface_native",
     "window_manager:libdm",
+    "window_manager:libdm_lite",
   ]
 
   defines = []

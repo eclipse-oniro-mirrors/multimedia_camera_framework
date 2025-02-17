@@ -21,11 +21,87 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+class HStreamCaptureStubFuzz : public HStreamCaptureStub {
+public:
+    int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override
+    {
+        return 0;
+    }
+    int32_t CancelCapture() override
+    {
+        return 0;
+    }
+    int32_t ConfirmCapture() override
+    {
+        return 0;
+    }
+    int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override
+    {
+        return 0;
+    }
+    int32_t UnSetCallback() override
+    {
+        return 0;
+    }
+    int32_t Release() override
+    {
+        return 0;
+    }
+    int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override
+    {
+        return 0;
+    }
+    int32_t EnableRawDelivery(bool enabled) override
+    {
+        return 0;
+    }
+    int32_t EnableMovingPhoto(bool enabled) override
+    {
+        return 0;
+    }
+    int32_t SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer) override
+    {
+        return 0;
+    }
+    int32_t DeferImageDeliveryFor(int32_t type) override
+    {
+        return 0;
+    }
+    int32_t IsDeferredPhotoEnabled() override
+    {
+        return 0;
+    }
+    int32_t IsDeferredVideoEnabled() override
+    {
+        return 0;
+    }
+    int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override
+    {
+        return 0;
+    }
+    int32_t SetCameraPhotoRotation(bool isEnable) override
+    {
+        return 0;
+    }
+    int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) override
+    {
+        return 0;
+    }
+    int32_t AcquireBufferToPrepareProxy(int32_t captureId) override
+    {
+        return 0;
+    }
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override
+    {
+        return 0;
+    }
+};
 class HStreamCaptureStubFuzzer {
 public:
-static std::shared_ptr<HStreamCaptureStub> fuzz_;
-static void HStreamCaptureStubFuzzTest();
+static std::shared_ptr<HStreamCaptureStubFuzz> fuzz_;
+static void HStreamCaptureStubFuzzTest1();
+static void HStreamCaptureStubFuzzTest2();
+static void OnRemoteRequest(int32_t code);
 };
 } //CameraStandard
 } //OHOS
