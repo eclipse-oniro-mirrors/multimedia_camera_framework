@@ -240,6 +240,44 @@ Camera_ErrorCode OH_VideoOutput_SetFrameRate(Camera_VideoOutput* videoOutput,
 Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutput,
     Camera_FrameRateRange* frameRateRange);
 
+/**
+ * @brief Check whether mirror mode is supported for videoOutput
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance
+ * @param isSupported the result of whether mirror mode supported.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 15
+ */
+Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported);
+
+/**
+ * @brief Enable or disable mirror mode for videoOutput
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance
+ * @param mirrorMode enable mirror mode if mirrorMode is TRUE, otherwise disable
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 15
+ */
+Camera_ErrorCode OH_VideoOutput_EnableMirror(Camera_VideoOutput* videoOutput, bool mirrorMode);
+
+/**
+ * @brief Gets the video rotation angle.
+ *
+ * @param videoOutput the {@link Camera_VideoOutput} instance which used to get the video rotation angle.
+ * @param deviceDegree the current device rotation degree.
+ * @param imageRotation the {@link Camera_ImageRotation} result of video rotation angle.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode  OH_VideoOutput_GetVideoRotation(Camera_VideoOutput* videoOutput, int deviceDegree,
+    Camera_ImageRotation* imageRotation);
+
 #ifdef __cplusplus
 }
 #endif

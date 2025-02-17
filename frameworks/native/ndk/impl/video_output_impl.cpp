@@ -203,6 +203,25 @@ Camera_ErrorCode Camera_VideoOutput::GetActiveFrameRate(Camera_FrameRateRange* f
 
     return CAMERA_OK;
 }
+
+Camera_ErrorCode Camera_VideoOutput::IsMirrorSupported(bool* isSupported)
+{
+    CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "innerVideoOutput_ is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(isSupported == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "isSupported is nullptr");
+    *isSupported = innerVideoOutput_->IsMirrorSupported();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_VideoOutput::EnableMirror(bool mirrorMode)
+{
+    CHECK_ERROR_RETURN_RET_LOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "innerVideoOutput_ is nullptr");
+    int32_t ret = innerVideoOutput_->enableMirror(mirrorMode);
+    return FrameworkToNdkCameraError(ret);
+}
+
 Camera_ErrorCode Camera_VideoOutput::GetVideoRotation(int32_t imageRotation, Camera_ImageRotation* cameraImageRotation)
 {
     CHECK_AND_RETURN_RET_LOG(cameraImageRotation != nullptr, CAMERA_SERVICE_FATAL_ERROR,

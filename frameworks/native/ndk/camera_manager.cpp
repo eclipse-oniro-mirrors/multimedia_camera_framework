@@ -21,10 +21,10 @@
 Camera_ErrorCode OH_CameraManager_RegisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
     OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
 {
-    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
-    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_ERROR_RETURN_RET_LOG(foldStatusInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     cameraManager->RegisterFoldStatusCallback(foldStatusInfoCallback);
     return CAMERA_OK;
 }
@@ -32,10 +32,10 @@ Camera_ErrorCode OH_CameraManager_RegisterFoldStatusInfoCallback(Camera_Manager*
 Camera_ErrorCode OH_CameraManager_UnregisterFoldStatusInfoCallback(Camera_Manager* cameraManager,
     OH_CameraManager_OnFoldStatusInfoChange foldStatusInfoCallback)
 {
-    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraManager is null!");
-    CHECK_AND_RETURN_RET_LOG(foldStatusInfoCallback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_ERROR_RETURN_RET_LOG(foldStatusInfoCallback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     cameraManager->UnregisterFoldStatusCallback(foldStatusInfoCallback);
     return CAMERA_OK;
 }

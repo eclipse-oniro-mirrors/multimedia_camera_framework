@@ -28,15 +28,15 @@ extern "C" {
  */
 Camera_ErrorCode OH_PhotoOutput_RegisterCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameStart != nullptr ||
-        callback->onFrameEnd != nullptr ||
-        callback->onFrameShutter != nullptr ||
-        callback->onError != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, invalid callback!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameStart == nullptr &&
+        callback->onFrameEnd == nullptr &&
+        callback->onFrameShutter == nullptr &&
+        callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, invalid callback!");
 
     photoOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -48,15 +48,15 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCallback(Camera_PhotoOutput* photoOutput
  */
 Camera_ErrorCode OH_PhotoOutput_UnregisterCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFrameStart != nullptr ||
-        callback->onFrameEnd != nullptr ||
-        callback->onFrameShutter != nullptr ||
-        callback->onError != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, invalid callback!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback->onFrameStart == nullptr &&
+        callback->onFrameEnd == nullptr &&
+        callback->onFrameShutter == nullptr &&
+        callback->onError == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, invalid callback!");
 
     photoOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -69,10 +69,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterCallback(Camera_PhotoOutput* photoOutp
 Camera_ErrorCode OH_PhotoOutput_RegisterCaptureStartWithInfoCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureStartWithInfo callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->RegisterCaptureStartWithInfoCallback(callback);
     return CAMERA_OK;
 }
@@ -84,10 +84,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCaptureStartWithInfoCallback(Camera_Phot
 Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureStartWithInfoCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureStartWithInfo callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->UnregisterCaptureStartWithInfoCallback(callback);
     return CAMERA_OK;
 }
@@ -99,10 +99,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureStartWithInfoCallback(Camera_Ph
 Camera_ErrorCode OH_PhotoOutput_RegisterCaptureEndCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureEnd callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->RegisterCaptureEndCallback(callback);
     return CAMERA_OK;
 }
@@ -114,10 +114,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCaptureEndCallback(Camera_PhotoOutput* p
 Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureEndCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureEnd callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->UnregisterCaptureEndCallback(callback);
     return CAMERA_OK;
 }
@@ -129,10 +129,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureEndCallback(Camera_PhotoOutput*
 Camera_ErrorCode OH_PhotoOutput_RegisterFrameShutterEndCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_OnFrameShutterEnd callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->RegisterFrameShutterEndCallback(callback);
     return CAMERA_OK;
 }
@@ -144,10 +144,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterFrameShutterEndCallback(Camera_PhotoOutp
 Camera_ErrorCode OH_PhotoOutput_UnregisterFrameShutterEndCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_OnFrameShutterEnd callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->UnregisterFrameShutterEndCallback(callback);
     return CAMERA_OK;
 }
@@ -159,10 +159,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterFrameShutterEndCallback(Camera_PhotoOu
 Camera_ErrorCode OH_PhotoOutput_RegisterCaptureReadyCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureReady callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->RegisterCaptureReadyCallback(callback);
     return CAMERA_OK;
 }
@@ -174,10 +174,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCaptureReadyCallback(Camera_PhotoOutput*
 Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureReadyCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_CaptureReady callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->UnregisterCaptureReadyCallback(callback);
     return CAMERA_OK;
 }
@@ -189,10 +189,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureReadyCallback(Camera_PhotoOutpu
 Camera_ErrorCode OH_PhotoOutput_RegisterEstimatedCaptureDurationCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_EstimatedCaptureDuration callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->RegisterEstimatedCaptureDurationCallback(callback);
     return CAMERA_OK;
 }
@@ -204,10 +204,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterEstimatedCaptureDurationCallback(Camera_
 Camera_ErrorCode OH_PhotoOutput_UnregisterEstimatedCaptureDurationCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_EstimatedCaptureDuration callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
     photoOutput->UnregisterEstimatedCaptureDurationCallback(callback);
     return CAMERA_OK;
 }
@@ -219,10 +219,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterEstimatedCaptureDurationCallback(Camer
 Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAvailableCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_PhotoAvailable callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
 
     return photoOutput->RegisterPhotoAvailableCallback(callback);
 }
@@ -234,10 +234,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAvailableCallback(Camera_PhotoOutpu
 Camera_ErrorCode OH_PhotoOutput_UnregisterPhotoAvailableCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_PhotoAvailable callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
 
     return photoOutput->UnregisterPhotoAvailableCallback(callback);
 }
@@ -249,10 +249,10 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterPhotoAvailableCallback(Camera_PhotoOut
 Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_PhotoAssetAvailable callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
 
     return photoOutput->RegisterPhotoAssetAvailableCallback(callback);
 }
@@ -264,10 +264,10 @@ Camera_ErrorCode OH_PhotoOutput_RegisterPhotoAssetAvailableCallback(Camera_Photo
 Camera_ErrorCode OH_PhotoOutput_UnregisterPhotoAssetAvailableCallback(Camera_PhotoOutput* photoOutput,
     OH_PhotoOutput_PhotoAssetAvailable callback)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, callback is null!");
 
     return photoOutput->UnregisterPhotoAssetAvailableCallback(callback);
 }
@@ -278,8 +278,8 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterPhotoAssetAvailableCallback(Camera_Pho
  */
 Camera_ErrorCode OH_PhotoOutput_Capture(Camera_PhotoOutput* photoOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
 
     return photoOutput->Capture();
 }
@@ -291,8 +291,8 @@ Camera_ErrorCode OH_PhotoOutput_Capture(Camera_PhotoOutput* photoOutput)
 Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* photoOutput,
     Camera_PhotoCaptureSetting setting)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
 
     return photoOutput->Capture_WithCaptureSetting(setting);
 }
@@ -303,8 +303,8 @@ Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* p
  */
 Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
 
     Camera_ErrorCode retCode = photoOutput->Release();
     if (photoOutput != nullptr) {
@@ -319,10 +319,10 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput)
  */
 Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutput, bool* isSupported)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSupported is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, isSupported is null!");
 
     return photoOutput->IsMirrorSupported(isSupported);
 }
@@ -333,8 +333,8 @@ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutpu
  */
 Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bool enableMirror)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
 
     return photoOutput->EnableMirror(enableMirror);
 }
@@ -346,10 +346,10 @@ Camera_ErrorCode OH_PhotoOutput_EnableMirror(Camera_PhotoOutput* photoOutput, bo
 Camera_ErrorCode OH_PhotoOutput_GetActiveProfile(Camera_PhotoOutput* photoOutput, Camera_Profile** profile)
 {
     MEDIA_DEBUG_LOG("OH_PhotoOutput_GetActiveProfile is called.");
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, profile is null!");
 
     return photoOutput->GetActiveProfile(profile);
 }
@@ -361,8 +361,8 @@ Camera_ErrorCode OH_PhotoOutput_GetActiveProfile(Camera_PhotoOutput* photoOutput
 Camera_ErrorCode OH_PhotoOutput_DeleteProfile(Camera_Profile* profile)
 {
     MEDIA_DEBUG_LOG("OH_PhotoOutput_DeleteProfile is called.");
-    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, profile is null!");
+    CHECK_ERROR_RETURN_RET_LOG(profile == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, profile is null!");
 
     delete profile;
     profile = nullptr;
@@ -375,8 +375,8 @@ Camera_ErrorCode OH_PhotoOutput_DeleteProfile(Camera_Profile* profile)
  */
 Camera_ErrorCode OH_PhotoOutput_EnableMovingPhoto(Camera_PhotoOutput* photoOutput, bool enableMovingPhoto)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
 
     return photoOutput->EnableMovingPhoto(enableMovingPhoto);
 }
@@ -387,10 +387,10 @@ Camera_ErrorCode OH_PhotoOutput_EnableMovingPhoto(Camera_PhotoOutput* photoOutpu
  */
 Camera_ErrorCode OH_PhotoOutput_IsMovingPhotoSupported(Camera_PhotoOutput* photoOutput, bool* isSupported)
 {
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSupported is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, isSupported is null!");
 
     return photoOutput->IsMovingPhotoSupported(isSupported);
 }
@@ -399,10 +399,10 @@ Camera_ErrorCode OH_PhotoOutput_GetPhotoRotation(Camera_PhotoOutput* photoOutput
     Camera_ImageRotation* imageRotation)
 {
     MEDIA_DEBUG_LOG("OH_PhotoOutput_GetPhotoRotation is called.");
-    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, photoOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(imageRotation != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, cameraImageRotation is null!");
+    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_ERROR_RETURN_RET_LOG(imageRotation == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraImageRotation is null!");
     return photoOutput->GetPhotoRotation(deviceDegree, imageRotation);
 }
 #ifdef __cplusplus
