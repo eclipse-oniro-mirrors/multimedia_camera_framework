@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("HStreamDepthDataProxyfuzzTest") {
+ohos_fuzztest("HStreamDepthDataProxyFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
   fuzz_config_file = "../hstreamdepthdataproxyfuzztest_fuzzer"
 
@@ -107,5 +107,5 @@ ohos_fuzztest("HStreamDepthDataProxyfuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HStreamDepthDataProxyfuzzTest" ]
+  deps = [ ":HStreamDepthDataProxyFuzzTest" ]
 }

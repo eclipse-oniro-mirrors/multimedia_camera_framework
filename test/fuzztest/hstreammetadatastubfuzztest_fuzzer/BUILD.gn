@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("HStreamMetadataStubfuzzTest") {
+ohos_fuzztest("HStreamMetadataStubFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
   fuzz_config_file = "../hstreammetadatastubfuzztest_fuzzer"
 
@@ -107,5 +107,5 @@ ohos_fuzztest("HStreamMetadataStubfuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HStreamMetadataStubfuzzTest" ]
+  deps = [ ":HStreamMetadataStubFuzzTest" ]
 }
