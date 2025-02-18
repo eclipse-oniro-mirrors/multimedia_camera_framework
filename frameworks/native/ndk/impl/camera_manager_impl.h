@@ -89,6 +89,10 @@ public:
 
     static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
 
+    static Camera_ErrorCode GetHostDeviceName(Camera_Device* camera, char** hostDeviceName);
+
+    static Camera_ErrorCode GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType);
+
     static Camera_ErrorCode GetSupportedSceneModes(Camera_Device* camera,
         Camera_SceneMode** sceneModes, uint32_t* size);
 

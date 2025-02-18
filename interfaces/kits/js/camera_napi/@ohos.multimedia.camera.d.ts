@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2024 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 /**
- * @file
- * @kit CameraKit
- */
+* @file
+* @kit CameraKit
+*/
 
 import { ErrorCallback, AsyncCallback } from './@ohos.base';
 import type Context from './application/BaseContext';
@@ -25,28 +25,28 @@ import type colorSpaceManager from './@ohos.graphics.colorSpaceManager';
 import photoAccessHelper from './@ohos.file.photoAccessHelper';
 
 /**
- * @namespace camera
- * @syscap SystemCapability.Multimedia.Camera.Core
- * @since 10
- */
+* @namespace camera
+* @syscap SystemCapability.Multimedia.Camera.Core
+* @since 10
+*/
 /**
- * @namespace camera
- * @syscap SystemCapability.Multimedia.Camera.Core
- * @atomicservice
- * @since 12
- */
+* @namespace camera
+* @syscap SystemCapability.Multimedia.Camera.Core
+* @atomicservice
+* @since 12
+*/
 declare namespace camera {
-  /**
-   * Creates a CameraManager instance.
-   *
-   * @param { Context } context - Current application context.
-   * @returns { CameraManager } CameraManager instance.
-   * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
-   * @throws { BusinessError } 7400201 - Camera service fatal error.
-   * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 10
-   */
-  function getCameraManager(context: Context): CameraManager;
+/**
+* Creates a CameraManager instance.
+*
+* @param { Context } context - Current application context.
+* @returns { CameraManager } CameraManager instance.
+* @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+* @throws { BusinessError } 7400201 - Camera service fatal error.
+* @syscap SystemCapability.Multimedia.Camera.Core
+* @since 10
+*/
+function getCameraManager(context: Context): CameraManager;
 
   /**
    * Enum for camera status.
@@ -236,6 +236,17 @@ declare namespace camera {
      * @since 10
      */
     readonly videoProfiles: Array<VideoProfile>;
+
+    /**
+     * Depth profiles.
+     *
+     * @type { Array<DepthProfile> }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly depthProfiles: Array<DepthProfile>;
 
     /**
      * All the supported metadata Object Types.
@@ -546,7 +557,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Permission verification failed. A non-system application calls a system API.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     isCameraMuteSupported(): boolean;
 
@@ -568,9 +579,9 @@ declare namespace camera {
      * @permission ohos.camera.CAMERA_CONTROL
      * @param { boolean } mute - Mute camera if TRUE, otherwise unmute camera.
      * @param { PolicyType } type - Type for indicating the calling role.
-     * @throws { BusinessError } 201 - Permission denied. 
+     * @throws { BusinessError } 201 - Permission denied.
      * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect. 
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
@@ -764,6 +775,19 @@ declare namespace camera {
     createMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
 
     /**
+     * Creates a DepthDataOutput instance.
+     *
+     * @param { DepthProfile } profile - Depth data profile.
+     * @returns { DepthDataOutput } The DepthDataOutput instance.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    createDepthDataOutput(profile: DepthProfile): DepthDataOutput;
+
+    /**
      * Gets a CaptureSession instance.
      *
      * @returns { CaptureSession } The CaptureSession instance.
@@ -780,6 +804,9 @@ declare namespace camera {
      *
      * @param { SceneMode } mode - Scene mode.
      * @returns { T } The specific Session instance by specific scene mode.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes:
+     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
+     * 3. Parameter verification failed.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
@@ -843,7 +870,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Permission verification failed. A non-system application calls a system API.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     on(type: 'cameraMute', callback: AsyncCallback<boolean>): void;
 
@@ -864,7 +891,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Permission verification failed. A non-system application calls a system API.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     off(type: 'cameraMute', callback?: AsyncCallback<boolean>): void;
 
@@ -936,7 +963,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     prelaunch(): void;
 
@@ -1354,6 +1381,13 @@ declare namespace camera {
    * @systemapi
    * @since 10
    */
+    /**
+   * Enum for remote camera device type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 16
+   */
   enum HostDeviceType {
     /**
      * Indicates an unknown device camera.
@@ -1361,6 +1395,12 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 10
+     */
+        /**
+     * Indicates an unknown device camera.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 16
      */
     UNKNOWN_TYPE = 0,
 
@@ -1371,6 +1411,12 @@ declare namespace camera {
      * @systemapi
      * @since 10
      */
+     /**
+     * Indicates a smartphone camera.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 16
+     */
     PHONE = 0x0E,
 
     /**
@@ -1379,6 +1425,12 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 10
+     */
+    /**
+     * Indicates a tablet camera.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 16
      */
     TABLET = 0x11
   }
@@ -1440,6 +1492,14 @@ declare namespace camera {
      * @systemapi
      * @since 10
      */
+    /**
+     * Camera remote camera device name attribute.
+     *
+     * @type { string }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 16
+     */
     readonly hostDeviceName: string;
 
     /**
@@ -1450,6 +1510,14 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 10
+     */
+    /**
+     * Camera remote camera device type attribute.
+     *
+     * @type { HostDeviceType }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 16
      */
     readonly hostDeviceType: HostDeviceType;
 
@@ -1542,6 +1610,7 @@ declare namespace camera {
      * Open camera.
      *
      * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400107 - Can not use camera cause of conflict.
      * @throws { BusinessError } 7400108 - Camera disabled cause of security reason.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
@@ -1616,7 +1685,7 @@ declare namespace camera {
      * @since 12
      */
     on(type: 'cameraOcclusionDetection', callback: AsyncCallback<CameraOcclusionDetectionResult>): void;
-    
+
     /**
      * Unsubscribes from camera occlusion detection results.
      *
@@ -1771,11 +1840,20 @@ declare namespace camera {
     PANORAMA_PHOTO = 15,
 
     /**
-     * Fluorescence photo mode.
+     * Timelapse photo camera mode.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
+     */
+    TIME_LAPSE_PHOTO = 16,
+
+    /**
+     * Fluorescence photo mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
      */
     FLUORESCENCE_PHOTO = 17
   }
@@ -1835,7 +1913,33 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    CAMERA_FORMAT_YCRCB_P010
+    CAMERA_FORMAT_YCRCB_P010,
+
+    /**
+     * HEIC Format.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    CAMERA_FORMAT_HEIC = 2003,
+
+    /**
+     * Depth Data Format: float 16.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    CAMERA_FORMAT_DEPTH_16 = 3000,
+
+    /**
+     * Depth Data Format: float 32.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    CAMERA_FORMAT_DEPTH_32 = 3001
   }
 
   /**
@@ -1997,6 +2101,18 @@ declare namespace camera {
      * @since 11
      */
     setFlashMode(flashMode: FlashMode): void;
+
+    /**
+     * Enable lcd flash.
+     *
+     * @param { boolean } enabled - Target lcd flash status.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    enableLcdFlash(enabled: boolean): void;
   }
 
   /**
@@ -3213,7 +3329,7 @@ declare namespace camera {
      * @since 12
      */
     setEffectSuggestionStatus(status: Array<EffectSuggestionStatus>): void;
-  
+
     /**
      * Update the enable status of the effect suggestion type.
      *
@@ -3413,6 +3529,79 @@ declare namespace camera {
   }
 
   /**
+   * Auto Device Switch Query object.
+   *
+   * @interface AutoDeviceSwitchQuery
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 13
+   */
+  interface AutoDeviceSwitchQuery {
+    /**
+     * Check whether auto device switch is supported.
+     *
+     * @returns { boolean } Is auto device switch supported.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    isAutoDeviceSwitchSupported(): boolean;
+  }
+
+  /**
+   * Auto Device Switch object.
+   *
+   * @interface AutoDeviceSwitch
+   * @extends AutoDeviceSwitchQuery
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 13
+   */
+  interface AutoDeviceSwitch extends AutoDeviceSwitchQuery {
+    /**
+     * Enable auto device switch for session.
+     *
+     * @param { boolean } enabled - enable auto device switch if TRUE.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes:
+     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
+     * 3. Parameters verification failed.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    enableAutoDeviceSwitch(enabled: boolean): void;
+  }
+
+  /**
+   * Auto Device Switch Status.
+   *
+   * @typedef AutoDeviceSwitchStatus
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 13
+   */
+  interface AutoDeviceSwitchStatus {
+    /**
+     * Notify whether device is switched.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    readonly isDeviceSwitched: boolean;
+
+    /**
+     * Notify whether device capability is changed.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    readonly isDeviceCapabilityChanged: boolean;
+  }
+
+  /**
    * Macro Query object.
    *
    * @interface MacroQuery
@@ -3482,7 +3671,7 @@ declare namespace camera {
    * @enum { number }
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   enum UsageType {
     /**
@@ -3490,7 +3679,7 @@ declare namespace camera {
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     BOKEH = 0
   }
@@ -3758,7 +3947,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     setUsage(usage: UsageType, enabled: boolean): void;
 
@@ -3772,7 +3961,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     getCameraOutputCapabilities(camera: CameraDevice): Array<CameraOutputCapability>;
   }
@@ -4362,7 +4551,7 @@ declare namespace camera {
      * @since 12
      */
     PRECONFIG_720P = 0,
-  
+
     /**
      * 1080P output for preconfig.
      *
@@ -4370,7 +4559,7 @@ declare namespace camera {
      * @since 12
      */
     PRECONFIG_1080P = 1,
-  
+
     /**
      * 4K output for preconfig.
      *
@@ -4378,7 +4567,7 @@ declare namespace camera {
      * @since 12
      */
     PRECONFIG_4K = 2,
-  
+
     /**
      * high quality output for preconfig.
      *
@@ -4403,7 +4592,7 @@ declare namespace camera {
      * @since 12
      */
     PRECONFIG_RATIO_1_1 = 0,
-  
+
     /**
      * Aspect ratio 4:3 for preconfig.
      *
@@ -4411,7 +4600,7 @@ declare namespace camera {
      * @since 12
      */
     PRECONFIG_RATIO_4_3 = 1,
-  
+
     /**
      * Aspect ratio 16:9 for preconfig.
      *
@@ -4437,7 +4626,25 @@ declare namespace camera {
      * @systemapi
      * @since 12
      */
-    MOON_CAPTURE_BOOST = 0
+    MOON_CAPTURE_BOOST = 0,
+
+    /**
+     * Feature for tripod detection.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    TRIPOD_DETECTION = 1,
+
+    /**
+     * Feature for low light boost.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    LOW_LIGHT_BOOST = 2
   }
 
   /**
@@ -4470,6 +4677,74 @@ declare namespace camera {
      * @since 12
      */
     readonly detected: boolean;
+  }
+
+  /**
+   * Enum for tripod status.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  enum TripodStatus {
+    /**
+     * Invalid tripod status.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    INVALID = 0,
+
+    /**
+     * Tripod is active.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    ACTIVE = 1,
+
+    /**
+     * Enter tripod stabilization state.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    ENTERING = 2,
+
+    /**
+     * Exit tripod stabilization state.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    EXITING = 3,
+  }
+
+   /**
+   * Tripod detection result.
+   *
+   * @interface TripodDetectionResult
+   * @extends SceneFeatureDetectionResult
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface TripodDetectionResult extends SceneFeatureDetectionResult {
+    /**
+     * tripod status.
+     *
+     * @type { TripodStatus }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly tripodStatus: TripodStatus;
   }
 
   /**
@@ -4522,27 +4797,46 @@ declare namespace camera {
    * Photo session object for system hap.
    *
    * @interface PhotoSessionForSys
+   * @extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 11
    */
-  interface PhotoSessionForSys extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion {
+  /**
+   * Photo session object for system hap.
+   *
+   * @interface PhotoSessionForSys
+   * @extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion, DepthFusion
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 14
+   */
+  interface PhotoSessionForSys extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion, DepthFusion {
   }
 
   /**
    * Photo session object.
    *
    * @interface PhotoSession
+   * @extends Session, Flash, AutoExposure, Focus, Zoom, ColorManagement
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @since 11
    */
-  interface PhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, ColorManagement {
+  /**
+   * Photo session object.
+   *
+   * @interface PhotoSession
+   * @extends AutoDeviceSwitch
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 13
+   */
+  interface PhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, ColorManagement, AutoDeviceSwitch {
     /**
      * Gets whether the choosed preconfig type can be used to configure photo session.
      * Must choose preconfig type from {@link PreconfigType}.
      *
      * @param { PreconfigType } preconfigType - preconfig type.
-     * @param { PreconfigRatio } preconfigRatio - the aspect ratio of surface for preconfig, 
+     * @param { PreconfigRatio } preconfigRatio - the aspect ratio of surface for preconfig,
      *                                            default value {@link PreconfigRatio#PRECONFIG_RATIO_4_3}.
      * @returns { boolean } Whether the choosed preconfig type can be used.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
@@ -4697,15 +4991,59 @@ declare namespace camera {
     off(type: 'effectSuggestionChange', callback?: AsyncCallback<EffectSuggestionType>): void;
 
     /**
-     * Gets session functions.
+     * Subscribes to auto device switch status event callback.
      *
-     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
-     * @returns { Array<PhotoFunctions> } List of session functions.
+     * @param { 'autoDeviceSwitchStatusChange' } type - Event type.
+     * @param { AsyncCallback<AutoDeviceSwitchStatus> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    on(type: 'autoDeviceSwitchStatusChange', callback: AsyncCallback<AutoDeviceSwitchStatus>): void;
+
+    /**
+     * Unsubscribes to auto device switch status event callback.
+     *
+     * @param { 'autoDeviceSwitchStatusChange' } type - Event type.
+     * @param { AsyncCallback<AutoDeviceSwitchStatus> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    off(type: 'autoDeviceSwitchStatusChange', callback?: AsyncCallback<AutoDeviceSwitchStatus>): void;
+
+    /**
+     * Subscribes to lcd flash status.
+     *
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
      * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
+     */
+    on(type: 'lcdFlashStatus', callback: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Unsubscribes from lcd flash status.
+     *
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'lcdFlashStatus', callback?: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Gets session functions.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { Array<PhotoFunctions> } List of session functions.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1.Mandatory parameters are left unspecified. 2.Incorrect parameter types.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
      */
     getSessionFunctions(outputCapability: CameraOutputCapability): Array<PhotoFunctions>;
 
@@ -4716,7 +5054,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     getSessionConflictFunctions(): Array<PhotoConflictFunctions>;
   }
@@ -4733,38 +5071,22 @@ declare namespace camera {
   }
 
   /**
-   * Enum for quality prioritization.
+   * Video session object.
    *
-   * @enum { number }
+   * @interface VideoSession
+   * @extends Session, Flash, AutoExposure, Focus, Zoom, Stabilization, ColorManagement
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 14
+   * @since 11
    */
-  enum QualityPrioritization {
-    /**
-     * High quality priority.
-     *
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 14
-     */
-    HIGH_QUALITY = 0,
-
-    /**
-     * Power balance priority.
-     *
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 14
-     */
-    POWER_BALANCE = 1
-  }
-
   /**
    * Video session object.
    *
    * @interface VideoSession
+   * @extends AutoDeviceSwitch
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 11
+   * @since 13
    */
-  interface VideoSession extends Session, Flash, AutoExposure, Focus, Zoom, Stabilization, ColorManagement {
+  interface VideoSession extends Session, Flash, AutoExposure, Focus, Zoom, Stabilization, ColorManagement, AutoDeviceSwitch {
     /**
      * Gets whether the choosed preconfig type can be used to configure video session.
      * Must choose preconfig type from {@link PreconfigType}.
@@ -4877,15 +5199,59 @@ declare namespace camera {
     off(type: 'macroStatusChanged', callback?: AsyncCallback<boolean>): void;
 
     /**
-     * Gets session functions.
+     * Subscribes to lcd flash status.
      *
-     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
-     * @returns { Array<VideoFunctions> } List of session functions.
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
      * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
+     */
+    on(type: 'lcdFlashStatus', callback: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Unsubscribes from lcd flash status.
+     *
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'lcdFlashStatus', callback?: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Subscribes to auto device switch status event callback.
+     *
+     * @param { 'autoDeviceSwitchStatusChange' } type - Event type.
+     * @param { AsyncCallback<AutoDeviceSwitchStatus> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    on(type: 'autoDeviceSwitchStatusChange', callback: AsyncCallback<AutoDeviceSwitchStatus>): void;
+
+    /**
+     * Unsubscribes to auto device switch status event callback.
+     *
+     * @param { 'autoDeviceSwitchStatusChange' } type - Event type.
+     * @param { AsyncCallback<AutoDeviceSwitchStatus> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    off(type: 'autoDeviceSwitchStatusChange', callback?: AsyncCallback<AutoDeviceSwitchStatus>): void;
+
+    /**
+     * Gets session functions.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { Array<VideoFunctions> } List of session functions.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1.Mandatory parameters are left unspecified. 2.Incorrect parameter types.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
      */
     getSessionFunctions(outputCapability: CameraOutputCapability): Array<VideoFunctions>;
 
@@ -4896,24 +5262,9 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     getSessionConflictFunctions(): Array<VideoConflictFunctions>;
-
-    /**
-     * Sets quality prioritization.
-     *
-     * @param { QualityPrioritization } quality - Target quality prioritization.
-     * @throws { BusinessError } 401 - Parameter error. Possible causes:
-     * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
-     * 3. Parameter verification failed.     
-     * @throws { BusinessError } 7400103 - Session not config.
-
-
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 14
-     */
-    setQualityPrioritization(quality: QualityPrioritization): void;
   }
 
   /**
@@ -5329,15 +5680,39 @@ declare namespace camera {
     off(type: 'smoothZoomInfoAvailable', callback?: AsyncCallback<SmoothZoomInfo>): void;
 
     /**
-     * Gets session functions.
+     * Subscribes to lcd flash status.
      *
-     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability.
-     * @returns { Array<PortraitPhotoFunctions> } List of session functions.
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
      * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
+     */
+    on(type: 'lcdFlashStatus', callback: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Unsubscribes from lcd flash status.
+     *
+     * @param { 'lcdFlashStatus' } type - Event type.
+     * @param { AsyncCallback<LcdFlashStatus> } callback - Callback used to get the lcd flash status.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'lcdFlashStatus', callback?: AsyncCallback<LcdFlashStatus>): void;
+
+    /**
+     * Gets session functions.
+     *
+     * @param { CameraOutputCapability } outputCapability - CameraOutputCapability to set.
+     * @returns { Array<PortraitPhotoFunctions> } List of session functions.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1.Mandatory parameters are left unspecified. 2.Incorrect parameter types.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
      */
     getSessionFunctions(outputCapability: CameraOutputCapability): Array<PortraitPhotoFunctions>;
 
@@ -5348,7 +5723,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     getSessionConflictFunctions(): Array<PortraitPhotoConflictFunctions>;
   }
@@ -5794,98 +6169,98 @@ declare namespace camera {
     /**
      * Subscribes ISO info event callback.
      *
-     * @param { 'isoInfo' } type - Event type.
+     * @param { 'isoInfoChange' } type - Event type.
      * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'isoInfo', callback: AsyncCallback<IsoInfo>): void;
+    on(type: 'isoInfoChange', callback: AsyncCallback<IsoInfo>): void;
 
     /**
      * Unsubscribes from ISO info event callback.
      *
-     * @param { 'isoInfo' } type - Event type.
+     * @param { 'isoInfoChange' } type - Event type.
      * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'isoInfo', callback?: AsyncCallback<IsoInfo>): void;
+    off(type: 'isoInfoChange', callback?: AsyncCallback<IsoInfo>): void;
 
     /**
      * Subscribes exposure info event callback.
      *
-     * @param { 'exposureInfo' } type - Event type.
+     * @param { 'exposureInfoChange' } type - Event type.
      * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'exposureInfo', callback: AsyncCallback<ExposureInfo>): void;
+    on(type: 'exposureInfoChange', callback: AsyncCallback<ExposureInfo>): void;
 
     /**
      * Unsubscribes from exposure info event callback.
      *
-     * @param { 'exposureInfo' } type - Event type.
+     * @param { 'exposureInfoChange' } type - Event type.
      * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'exposureInfo', callback?: AsyncCallback<ExposureInfo>): void;
+    off(type: 'exposureInfoChange', callback?: AsyncCallback<ExposureInfo>): void;
 
     /**
      * Subscribes aperture info event callback.
      *
-     * @param { 'apertureInfo' } type - Event type.
+     * @param { 'apertureInfoChange' } type - Event type.
      * @param { AsyncCallback<ApertureInfo> } callback - Callback used to get the aperture info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'apertureInfo', callback: AsyncCallback<ApertureInfo>): void;
+    on(type: 'apertureInfoChange', callback: AsyncCallback<ApertureInfo>): void;
 
     /**
      * Unsubscribes from aperture info event callback.
      *
-     * @param { 'apertureInfo' } type - Event type.
+     * @param { 'apertureInfoChange' } type - Event type.
      * @param { AsyncCallback<ApertureInfo> } callback - Callback used to get the aperture info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'apertureInfo', callback?: AsyncCallback<ApertureInfo>): void;
+    off(type: 'apertureInfoChange', callback?: AsyncCallback<ApertureInfo>): void;
 
     /**
      * Subscribes lumination info event callback.
      *
-     * @param { 'luminationInfo' } type - Event type.
+     * @param { 'luminationInfoChange' } type - Event type.
      * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'luminationInfo', callback: AsyncCallback<LuminationInfo>): void;
+    on(type: 'luminationInfoChange', callback: AsyncCallback<LuminationInfo>): void;
 
     /**
      * Unsubscribes from lumination info event callback.
      *
-     * @param { 'luminationInfo' } type - Event type.
+     * @param { 'luminationInfoChange' } type - Event type.
      * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'luminationInfo', callback?: AsyncCallback<LuminationInfo>): void;
+    off(type: 'luminationInfoChange', callback?: AsyncCallback<LuminationInfo>): void;
   }
 
   /**
@@ -5972,98 +6347,98 @@ declare namespace camera {
     /**
      * Subscribes ISO info event callback.
      *
-     * @param { 'isoInfo' } type - Event type.
+     * @param { 'isoInfoChange' } type - Event type.
      * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'isoInfo', callback: AsyncCallback<IsoInfo>): void;
+    on(type: 'isoInfoChange', callback: AsyncCallback<IsoInfo>): void;
 
     /**
      * Unsubscribes from ISO info event callback.
      *
-     * @param { 'isoInfo' } type - Event type.
+     * @param { 'isoInfoChange' } type - Event type.
      * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'isoInfo', callback?: AsyncCallback<IsoInfo>): void;
+    off(type: 'isoInfoChange', callback?: AsyncCallback<IsoInfo>): void;
 
     /**
      * Subscribes exposure info event callback.
      *
-     * @param { 'exposureInfo' } type - Event type.
+     * @param { 'exposureInfoChange' } type - Event type.
      * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'exposureInfo', callback: AsyncCallback<ExposureInfo>): void;
+    on(type: 'exposureInfoChange', callback: AsyncCallback<ExposureInfo>): void;
 
     /**
      * Unsubscribes from exposure info event callback.
      *
-     * @param { 'exposureInfo' } type - Event type.
+     * @param { 'exposureInfoChange' } type - Event type.
      * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'exposureInfo', callback?: AsyncCallback<ExposureInfo>): void;
+    off(type: 'exposureInfoChange', callback?: AsyncCallback<ExposureInfo>): void;
 
     /**
      * Subscribes aperture info event callback.
      *
-     * @param { 'apertureInfo' } type - Event type.
+     * @param { 'apertureInfoChange' } type - Event type.
      * @param { AsyncCallback<ApertureInfo> } callback - Callback used to get the aperture info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'apertureInfo', callback: AsyncCallback<ApertureInfo>): void;
+    on(type: 'apertureInfoChange', callback: AsyncCallback<ApertureInfo>): void;
 
     /**
      * Unsubscribes from aperture info event callback.
      *
-     * @param { 'apertureInfo' } type - Event type.
+     * @param { 'apertureInfoChange' } type - Event type.
      * @param { AsyncCallback<ApertureInfo> } callback - Callback used to get the aperture info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'apertureInfo', callback?: AsyncCallback<ApertureInfo>): void;
+    off(type: 'apertureInfoChange', callback?: AsyncCallback<ApertureInfo>): void;
 
     /**
      * Subscribes lumination info event callback.
      *
-     * @param { 'luminationInfo' } type - Event type.
+     * @param { 'luminationInfoChange' } type - Event type.
      * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    on(type: 'luminationInfo', callback: AsyncCallback<LuminationInfo>): void;
+    on(type: 'luminationInfoChange', callback: AsyncCallback<LuminationInfo>): void;
 
     /**
      * Unsubscribes from lumination info event callback.
      *
-     * @param { 'luminationInfo' } type - Event type.
+     * @param { 'luminationInfoChange' } type - Event type.
      * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
-    off(type: 'luminationInfo', callback?: AsyncCallback<LuminationInfo>): void;
+    off(type: 'luminationInfoChange', callback?: AsyncCallback<LuminationInfo>): void;
   }
 
   /**
@@ -6255,7 +6630,7 @@ declare namespace camera {
   /**
    * High resolution session object.
    *
-   * @interface HighResolutionPhotoSession 
+   * @interface HighResolutionPhotoSession
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 12
@@ -6314,11 +6689,21 @@ declare namespace camera {
    * Macro photo session object.
    *
    * @interface MacroPhotoSession
+   * @extends Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 12
    */
-  interface MacroPhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus {
+  /**
+   * Macro photo session object.
+   *
+   * @interface MacroPhotoSession
+   * @extends Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus, DepthFusion
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 14
+   */
+  interface MacroPhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus, DepthFusion {
     /**
      * Subscribes to error events.
      *
@@ -6634,7 +7019,7 @@ declare namespace camera {
      *
      * @param { LightPaintingType } type - Light painting type to set.
      * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect. 
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @throws { BusinessError } 7400103 - Session not config.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
@@ -6827,7 +7212,7 @@ declare namespace camera {
    * @interface FluorescencePhotoSession
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface FluorescencePhotoSession extends Session, AutoExposure, Focus, Zoom {
     /**
@@ -6838,7 +7223,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     on(type: 'error', callback: ErrorCallback): void;
 
@@ -6850,7 +7235,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     off(type: 'error', callback?: ErrorCallback): void;
 
@@ -6862,7 +7247,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     on(type: 'focusStateChange', callback: AsyncCallback<FocusState>): void;
 
@@ -6874,7 +7259,7 @@ declare namespace camera {
      * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     off(type: 'focusStateChange', callback?: AsyncCallback<FocusState>): void;
   }
@@ -6886,7 +7271,7 @@ declare namespace camera {
    * @extends FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface PhotoFunctions extends FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
   }
@@ -6898,7 +7283,7 @@ declare namespace camera {
    * @extends FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface VideoFunctions extends FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
   }
@@ -6910,7 +7295,7 @@ declare namespace camera {
    * @extends FlashQuery, AutoExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, PortraitQuery, ApertureQuery, SceneDetectionQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface PortraitPhotoFunctions extends FlashQuery, AutoExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, PortraitQuery, ApertureQuery, SceneDetectionQuery {
   }
@@ -6922,7 +7307,7 @@ declare namespace camera {
    * @extends ZoomQuery, MacroQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface PhotoConflictFunctions extends ZoomQuery, MacroQuery {
   }
@@ -6934,7 +7319,7 @@ declare namespace camera {
    * @extends ZoomQuery, MacroQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface VideoConflictFunctions extends ZoomQuery, MacroQuery {
   }
@@ -6946,7 +7331,7 @@ declare namespace camera {
    * @extends ZoomQuery, PortraitQuery, ApertureQuery
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
-   * @since 12
+   * @since 13
    */
   interface PortraitPhotoConflictFunctions extends ZoomQuery, PortraitQuery, ApertureQuery {
   }
@@ -7156,6 +7541,30 @@ declare namespace camera {
     getActiveFrameRate(): FrameRateRange;
 
     /**
+     * Gets the preview rotation angle.
+     *
+     * @param { number } displayRotation - The current display rotation angle.
+     * @returns { ImageRotation } The preview rotation angle.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    getPreviewRotation(displayRotation: number): ImageRotation;
+
+     /**
+      * Sets the preview rotation angle.
+      *
+      * @param { ImageRotation } previewRotation - Preview display rotation angle.
+      * @param { boolean } isDisplayLocked - TRUE means the display is locked, if not set, the default is FALSE.
+      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+      * @throws { BusinessError } 7400201 - Camera service fatal error.
+      * @syscap SystemCapability.Multimedia.Camera.Core
+      * @since 12
+      */
+    setPreviewRotation(previewRotation: ImageRotation, isDisplayLocked?: boolean): void;
+
+    /**
      * Gets the current preconfig type if you had already call preconfig interface.
      *
      * @returns { Profile } The current preconfig type.
@@ -7182,7 +7591,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     addDeferredSurface(surfaceId: string): void;
 
@@ -7315,7 +7724,7 @@ declare namespace camera {
      * @since 12
      */
     EFFECT_SUGGESTION_FOOD = 2,
-  
+
     /**
      * Sky.
      *
@@ -7583,6 +7992,16 @@ declare namespace camera {
     raw?: image.Image;
 
     /**
+     * Depth data.
+     *
+     * @type { DepthData }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    depthData?: DepthData;
+
+    /**
      * Release Photo object.
      *
      * @returns { Promise<void> } Promise used to return the result.
@@ -7624,6 +8043,30 @@ declare namespace camera {
     release(): Promise<void>;
   }
 
+  /**
+   * Enumerates the camera video codec type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 13
+   */
+  enum VideoCodecType {
+    /**
+     * Codec type AVC.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    AVC = 0,
+
+    /**
+     * Codec type HEVC.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    HEVC = 1
+  }
 
   /**
    * Photo output object.
@@ -7721,6 +8164,33 @@ declare namespace camera {
     confirmCapture();
 
     /**
+     * Confirm if the raw image delivery is supported
+     *
+     * @returns { boolean } TRUE if the type of delivery image is support.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400104 - Session not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    isRawDeliverySupported(): boolean;
+
+    /**
+     * Enable raw image image delivery.
+     *
+     * @param { boolean } enabled - Target state for raw image delivery.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400104 - Session not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    enableRawDelivery(enabled: boolean): void;
+
+    /**
      * Confirm if the deferred image delivery supported in the specific device.
      *
      * @param { DeferredDeliveryImageType } type - Type of delivery image.
@@ -7763,6 +8233,53 @@ declare namespace camera {
      * @since 11
      */
     deferImageDelivery(type: DeferredDeliveryImageType): void;
+
+    /**
+     * Check if the depth data delivery is supported.
+     *
+     * @returns { boolean } TRUE if the type of delivery image is enabled.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400104 - Session not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    isDepthDataDeliverySupported(): boolean;
+
+    /**
+     * Enable depth data delivery.
+     *
+     * @param { boolean } enabled - Target state for depth data delivery.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400104 - Session not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    enableDepthDataDelivery(enabled: boolean): void;
+
+    /**
+     * Get supported moving photo video codec types.
+     *
+     * @returns { Array<VideoCodecType> } An array of supported video codec types for moving photo.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    getSupportedMovingPhotoVideoCodecTypes(): Array<VideoCodecType>;
+
+    /**
+     * Sets codec type for moving photo, default to AVC.
+     *
+     * @param { VideoCodecType } codecType - Codec type for moving photo.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    setMovingPhotoVideoCodecType(codecType: VideoCodecType): void;
 
     /**
      * Subscribes photo available event callback.
@@ -7836,6 +8353,18 @@ declare namespace camera {
      * @since 10
      */
     isMirrorSupported(): boolean;
+
+    /**
+     * Enable mirror for photo capture.
+     *
+     * @param { boolean } enabled - enable photo mirror if TRUE.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 13
+     */
+    enableMirror(enabled: boolean): void;
 
     /**
      * Subscribes capture start event callback.
@@ -8039,7 +8568,7 @@ declare namespace camera {
      * The method must be called after Session.addInput() and Session.addOutput(photoOutput) are called.
      * To avoid stream reconfiguration and performance loss,
      * you are advised to call the method before Session.commitConfig().
-     * 
+     *
      * @param { boolean } enabled - The value TRUE means to enable quick thumbnail, and FALSE means the opposite.
      * @throws { BusinessError } 7400104 - session is not running.
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -8051,7 +8580,7 @@ declare namespace camera {
      * The method must be called after Session.addInput() and Session.addOutput(photoOutput) are called.
      * To avoid stream reconfiguration and performance loss,
      * you are advised to call the method before Session.commitConfig().
-     * 
+     *
      * @param { boolean } enabled - The value TRUE means to enable quick thumbnail, and FALSE means the opposite.
      * @throws { BusinessError } 202 - Not System Application.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
@@ -8096,7 +8625,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     isAutoHighQualityPhotoSupported(): boolean;
 
@@ -8110,7 +8639,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
     enableAutoHighQualityPhoto(enabled: boolean): void;
 
@@ -8122,7 +8651,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
      isAutoCloudImageEnhancementSupported(): boolean;
 
@@ -8135,7 +8664,7 @@ declare namespace camera {
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 13
      */
      enableAutoCloudImageEnhancement(enabled: boolean): void;
 
@@ -8161,6 +8690,18 @@ declare namespace camera {
      * @since 12
      */
     enableMovingPhoto(enabled: boolean): void;
+
+    /**
+     * Gets the photo rotation angle.
+     *
+     * @param { number } deviceDegree - The current device rotation degree.
+     * @returns { ImageRotation } The photo rotation angle.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    getPhotoRotation(deviceDegree: number): ImageRotation;
   }
 
   /**
@@ -8257,6 +8798,37 @@ declare namespace camera {
      * @since 10
      */
     frameCount: number;
+  }
+
+  /**
+   * Deferred video enhancement info.
+   *
+   * @typedef DeferredVideoEnhancementInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface DeferredVideoEnhancementInfo {
+    /**
+     * Check whether deferred video enhancement available.
+     *
+     * @type { boolean }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     * @readonly
+     */
+    readonly isDeferredVideoEnhancementAvailable: boolean;
+    /**
+     * Video identifier.
+     *
+     * @type { ?string }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     * @readonly
+     */
+    readonly videoId?: string;
   }
 
   /**
@@ -8360,6 +8932,79 @@ declare namespace camera {
      * @since 12
      */
     getActiveFrameRate(): FrameRateRange;
+
+    /**
+     * Gets the video rotation angle.
+     *
+     * @param { number } deviceDegree - The current device rotation degree.
+     * @returns { ImageRotation } The video rotation angle.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    getVideoRotation(deviceDegree: number): ImageRotation;
+
+    /**
+     * Confirm if auto deferred video enhancement is supported in the specific device.
+     *
+     * @returns { boolean } TRUE if auto deferred video enhancement is supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    isAutoDeferredVideoEnhancementSupported(): boolean;
+
+    /**
+     * Confirm if auto deferred video enhancement is enabled.
+     *
+     * @returns { boolean } TRUE if auto deferred video enhancement is enabled.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    isAutoDeferredVideoEnhancementEnabled(): boolean;
+
+    /**
+     * Enable auto deferred video enhancement if needed.
+     *
+     * @param { boolean } enabled - Status of auto deferred video enhancement.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    enableAutoDeferredVideoEnhancement(enabled: boolean): void;
+
+    /**
+     * Subscribes deferred video enhancement info callback.
+     *
+     * @param { 'deferredVideoEnhancementInfo' } type - Event type.
+     * @param { AsyncCallback<DeferredVideoEnhanceInfo> } callback - Callback used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    on(type: 'deferredVideoEnhancementInfo', callback: AsyncCallback<DeferredVideoEnhancementInfo>): void;
+
+    /**
+     * Unsubscribes from deferred video enhancement info callback.
+     *
+     * @param { 'deferredVideoEnhancementInfo' } type - Event type.
+     * @param { AsyncCallback<DeferredVideoEnhancementInfo> } callback - Callback used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'deferredVideoEnhancementInfo', callback?: AsyncCallback<DeferredVideoEnhancementInfo>): void;
 
     /**
      * Subscribes frame start event callback.
@@ -8488,7 +9133,70 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    FACE_DETECTION = 0
+    FACE_DETECTION = 0,
+
+    /**
+     * Human body detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    HUMAN_BODY = 1,
+
+    /**
+     * Cat face detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    CAT_FACE = 2,
+
+    /**
+     * Cat body detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    CAT_BODY = 3,
+
+    /**
+     * Dog face detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DOG_FACE = 4,
+
+    /**
+     * Dog body detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DOG_BODY = 5,
+
+    /**
+     * Salient detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    SALIENT_DETECTION = 6,
+
+    /**
+     * Barcode detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    BAR_CODE_DETECTION = 7
   }
 
   /**
@@ -8580,6 +9288,52 @@ declare namespace camera {
   }
 
   /**
+   * Enum for emotion type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  enum Emotion {
+    /**
+     * Emotion type: Neutral.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    NEUTRAL = 0,
+
+    /**
+     * Emotion type: Sadness.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    SADNESS = 1,
+
+    /**
+     * Emotion type: Smile.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    SMILE = 2,
+
+    /**
+     * Emotion type: Surprise.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    SURPRISE = 3
+  }
+
+  /**
    * Metadata object basis.
    *
    * @typedef MetadataObject
@@ -8614,6 +9368,228 @@ declare namespace camera {
      * @since 10
      */
     readonly boundingBox: Rect;
+    /**
+     * Metadata object id.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly objectId: number;
+    /**
+     * Confidence for the detected type.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly confidence: number;
+  }
+
+  /**
+   * Metadata object for face.
+   *
+   * @typedef MetadataFaceObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataFaceObject extends MetadataObject {
+    /**
+     * Bounding box for left eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly leftEyeBoundingBox: Rect;
+
+    /**
+     * Bounding box for right eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly rightEyeBoundingBox: Rect;
+
+    /**
+     * Emotion type for face.
+     *
+     * @type { Emotion }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly emotion: Emotion;
+
+    /**
+     * Emotion confidence.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly emotionConfidence: number;
+
+    /**
+     * Pitch angle for face.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly pitchAngle: number;
+
+    /**
+     * Yaw angle for face.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly yawAngle: number;
+
+    /**
+     * Roll angle for face.
+     *
+     * @type { number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly rollAngle: number;
+  }
+
+  /**
+   * Metadata object for human body.
+   *
+   * @typedef MetadataHumanBodyObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataHumanBodyObject extends MetadataObject {
+  }
+
+  /**
+   * Metadata object for cat face.
+   *
+   * @typedef MetadataCatFaceObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataCatFaceObject extends MetadataObject {
+    /**
+     * Bounding box for left eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly leftEyeBoundingBox: Rect;
+
+    /**
+     * Bounding box for right eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly rightEyeBoundingBox: Rect;
+  }
+
+  /**
+   * Metadata object for cat body.
+   *
+   * @typedef MetadataCatBodyObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataCatBodyObject extends MetadataObject {
+  }
+
+  /**
+   * Metadata object for dog face.
+   *
+   * @typedef MetadataDogFaceObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataDogFaceObject extends MetadataObject {
+    /**
+     * Bounding box for left eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly leftEyeBoundingBox: Rect;
+
+    /**
+     * Bounding box for right eye.
+     *
+     * @type { Rect }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly rightEyeBoundingBox: Rect;
+  }
+
+  /**
+   * Metadata object for dog body.
+   *
+   * @typedef MetadataDogBodyObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataDogBodyObject extends MetadataObject {
+  }
+
+  /**
+   * Metadata object for salient detection.
+   *
+   * @typedef MetadataSalientDetectionObject
+   * @extends MetadataObject
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface MetadataSalientDetectionObject extends MetadataObject {
   }
 
   /**
@@ -8629,11 +9605,23 @@ declare namespace camera {
      * Check whether camera is occluded.
      *
      * @type { boolean }
+     * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 12
      */
     readonly isCameraOccluded: boolean;
+
+    /**
+     * Check whether camera lens is dirty.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly isCameraLensDirty: boolean;
   }
 
   /**
@@ -8685,6 +9673,34 @@ declare namespace camera {
     stop(): Promise<void>;
 
     /**
+     * Add metadata object types.
+     *
+     * @param { Array<MetadataObjectType> } types - Object types to be added.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    addMetadataObjectTypes(types: Array<MetadataObjectType>): void;
+
+    /**
+     * Remove metadata object types.
+     *
+     * @param { Array<MetadataObjectType> } types - Object types to be removed.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    removeMetadataObjectTypes(types: Array<MetadataObjectType>): void;
+
+    /**
      * Subscribes to metadata objects available event callback.
      *
      * @param { 'metadataObjectsAvailable' } type - Event type.
@@ -8723,6 +9739,722 @@ declare namespace camera {
      * @since 10
      */
     off(type: 'error', callback?: ErrorCallback): void;
+  }
+
+  /**
+   * Enumerates the timelapse recording state.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 12
+   */
+  enum TimeLapseRecordState {
+    /**
+     * TimeLapse idle state.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    IDLE = 0,
+
+    /**
+     * TimeLapse recording state.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    RECORDING = 1
+  }
+
+  /**
+   * Enumerates the timelapse preview type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 12
+   */
+  enum TimeLapsePreviewType {
+    /**
+     * TimeLapse dark preview.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    DARK = 1,
+
+    /**
+     * TimeLapse Light preview.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    LIGHT = 2
+  }
+
+  /**
+   * Try AE information.
+   *
+   * @typedef TryAEInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 12
+   */
+  interface TryAEInfo {
+    /**
+     * Determine whether try AE is done.
+     *
+     * @type { boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    readonly isTryAEDone: boolean;
+
+    /**
+     * Determine whether AE hint is needed.
+     *
+     * @type { ?boolean }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    readonly isTryAEHintNeeded?: boolean;
+
+    /**
+     * Timelapse preview type.
+     *
+     * @type { ?TimeLapsePreviewType }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    readonly previewType?: TimeLapsePreviewType;
+
+    /**
+     * Timelapse capture interval.
+     *
+     * @type { ?number }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    readonly captureInterval?: number;
+  }
+
+  /**
+   * Timelapse photo session object.
+   *
+   * @interface TimeLapsePhotoSession
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 12
+   */
+  interface TimeLapsePhotoSession extends Session, Focus, ManualFocus, AutoExposure, ManualExposure, ManualIso, WhiteBalance, Zoom, ColorEffect {
+    /**
+     * Subscribes to error events.
+     *
+     * @param { 'error' } type - Event type.
+     * @param { ErrorCallback } callback - Callback used to get the capture session errors.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'error', callback: ErrorCallback): void;
+
+    /**
+     * Unsubscribes from error events.
+     *
+     * @param { 'error' } type - Event type.
+     * @param { ErrorCallback } callback - Callback used to get the capture session errors.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'error', callback?: ErrorCallback): void;
+
+    /**
+     * Subscribes focus state change event callback.
+     *
+     * @param { 'focusStateChange' } type - Event type.
+     * @param { AsyncCallback<FocusState> } callback - Callback used to get the focus state change.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'focusStateChange', callback: AsyncCallback<FocusState>): void;
+
+    /**
+     * Unsubscribes from focus state change event callback.
+     *
+     * @param { 'focusStateChange' } type - Event type.
+     * @param { AsyncCallback<FocusState> } callback - Callback used to get the focus state change.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'focusStateChange', callback?: AsyncCallback<FocusState>): void;
+
+    /**
+     * Subscribes ISO info event callback.
+     *
+     * @param { 'isoInfoChange' } type - Event type.
+     * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'isoInfoChange', callback: AsyncCallback<IsoInfo>): void;
+
+    /**
+     * Unsubscribes from ISO info event callback.
+     *
+     * @param { 'isoInfoChange' } type - Event type.
+     * @param { AsyncCallback<IsoInfo> } callback - Callback used to get the ISO info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'isoInfoChange', callback?: AsyncCallback<IsoInfo>): void;
+
+    /**
+     * Subscribes exposure info event callback.
+     *
+     * @param { 'exposureInfoChange' } type - Event type.
+     * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'exposureInfoChange', callback: AsyncCallback<ExposureInfo>): void;
+
+    /**
+     * Unsubscribes from exposure info event callback.
+     *
+     * @param { 'exposureInfoChange' } type - Event type.
+     * @param { AsyncCallback<ExposureInfo> } callback - Callback used to get the exposure info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'exposureInfoChange', callback?: AsyncCallback<ExposureInfo>): void;
+
+    /**
+     * Subscribes lumination info event callback.
+     *
+     * @param { 'luminationInfoChange' } type - Event type.
+     * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'luminationInfoChange', callback: AsyncCallback<LuminationInfo>): void;
+
+    /**
+     * Unsubscribes from lumination info event callback.
+     *
+     * @param { 'luminationInfoChange' } type - Event type.
+     * @param { AsyncCallback<LuminationInfo> } callback - Callback used to get the lumination info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'luminationInfoChange', callback?: AsyncCallback<LuminationInfo>): void;
+
+    /**
+     * Check whether try AE is needed.
+     *
+     * @returns { boolean } Is try AE needed.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    isTryAENeeded(): boolean;
+
+    /**
+     * Start try AE.
+     *
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    startTryAE(): void;
+
+    /**
+     * Stop try AE.
+     *
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    stopTryAE(): void;
+
+    /**
+     * Subscribes try AE info event callback.
+     *
+     * @param { 'tryAEInfoChange' } type - Event type.
+     * @param { AsyncCallback<TryAEInfo> } callback - Callback used to get the try AE info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'tryAEInfoChange', callback: AsyncCallback<TryAEInfo>): void;
+
+    /**
+     * Unsubscribes from try AE info event callback.
+     *
+     * @param { 'tryAEInfoChange' } type - Event type.
+     * @param { AsyncCallback<TryAEInfo> } callback - Callback used to get the try AE info.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'tryAEInfoChange', callback?: AsyncCallback<TryAEInfo>): void;
+
+    /**
+     * Gets supported timelapse interval range.
+     *
+     * @returns { Array<number> } Timelapse interval range.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSupportedTimeLapseIntervalRange(): Array<number>;
+
+    /**
+     * Gets the timelapse interval in use.
+     *
+     * @returns { number } the timelapse interval in use.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getTimeLapseInterval(): number;
+
+    /**
+     * Sets a timelapse interval for a camera device.
+     *
+     * @param { number } interval The timelapse interval.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    setTimeLapseInterval(interval: number): void;
+
+    /**
+     * Gets the timelapse recording state in use.
+     *
+     * @returns { TimeLapseRecordState } the timelapse recording state in use.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getTimeLapseRecordState(): TimeLapseRecordState;
+
+    /**
+     * Sets a timelapse recording state.
+     *
+     * @param { TimeLapseRecordState } state The timelapse recording state.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    setTimeLapseRecordState(state: TimeLapseRecordState): void;
+
+    /**
+     * Gets the timelapse preview type in use.
+     *
+     * @returns { TimeLapsePreviewType } the timelapse preview type in use.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getTimeLapsePreviewType(): TimeLapsePreviewType;
+
+    /**
+     * Sets a timelapse preview type.
+     *
+     * @param { TimeLapsePreviewType } type The timelapse preview type.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    setTimeLapsePreviewType(type: TimeLapsePreviewType): void;
+  }
+
+  /**
+   * Enum for Depth Data Accuracy.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  enum DepthDataAccuracy {
+    /**
+     * Relative accuracy depth data.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DEPTH_DATA_ACCURACY_RELATIVE = 0,
+
+    /**
+     * Absolute accuracy depth data.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DEPTH_DATA_ACCURACY_ABSOLUTE = 1
+  }
+
+  /**
+   * Enum for Depth Data Quality Level.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  enum DepthDataQualityLevel {
+    /**
+     * Depth data quality is bad.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DEPTH_DATA_QUALITY_BAD = 0,
+
+    /**
+     * Depth data quality is fair.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DEPTH_DATA_QUALITY_FAIR = 1,
+
+    /**
+     * Depth data quality is good.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    DEPTH_DATA_QUALITY_GOOD = 2
+  }
+
+  /**
+   * Depth Profile.
+   *
+   * @interface DepthProfile
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface DepthProfile {
+    /**
+     * Depth data format.
+     *
+     * @type { CameraFormat }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly format: CameraFormat;
+
+    /**
+     * Depth data accuracy.
+     *
+     * @type { DepthDataAccuracy }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly dataAccuracy: DepthDataAccuracy;
+
+    /**
+     * Depth data resolution.
+     *
+     * @type { Size }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly size: Size;
+  }
+
+  /**
+   * Depth Data.
+   *
+   * @interface DepthData.
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface DepthData {
+    /**
+     * Depth data format.
+     *
+     * @type { CameraFormat }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly format: CameraFormat;
+
+    /**
+     * Depth data map.
+     *
+     * @type { image.PixelMap }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly depthMap: image.PixelMap;
+
+    /**
+     * Depth data quality level.
+     *
+     * @type { DepthDataQualityLevel }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly qualityLevel: DepthDataQualityLevel;
+
+    /**
+     * Depth data accuracy.
+     *
+     * @type { DepthDataAccuracy }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    readonly dataAccuracy: DepthDataAccuracy;
+
+    /**
+     * Release depth data object.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    release(): Promise<void>;
+  }
+
+  /**
+   * Depth Data Output object
+   *
+   * @interface DepthDataOutput
+   * @extends CameraOutput
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 13
+   */
+  interface DepthDataOutput extends CameraOutput {
+    /**
+     * Start depth data output.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    start(): Promise<void>;
+
+    /**
+     * Stop depth data output.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    stop(): Promise<void>;
+
+    /**
+     * Subscribes to depth data objects available event callback.
+     *
+     * @param { 'depthDataAvailable' } type - Event type.
+     * @param { AsyncCallback<DepthData> } callback - Callback used to get the available DepthData objects.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    on(type: 'depthDataAvailable', callback: AsyncCallback<DepthData>): void;
+
+    /**
+     * Unsubscribes from depth data objects available event callback.
+     *
+     * @param { 'depthDataAvailable' } type - Event type.
+     * @param { AsyncCallback<DepthData> } callback - Callback used to get the available DepthData objects.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'depthDataAvailable', callback?: AsyncCallback<DepthData>): void;
+
+    /**
+     * Subscribes to error events.
+     *
+     * @param { 'error' } type - Event type.
+     * @param { ErrorCallback } callback - Callback used to get the video output errors.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    on(type: 'error', callback: ErrorCallback): void;
+
+    /**
+     * Unsubscribes from error events.
+     *
+     * @param { 'error' } type - Event type.
+     * @param { ErrorCallback } callback - Callback used to get the video output errors.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 13
+     */
+    off(type: 'error', callback?: ErrorCallback): void;
+  }
+
+  /**
+   * Depth Fusion Query object.
+   *
+   * @interface DepthFusionQuery
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 14
+   */
+  interface DepthFusionQuery {
+    /**
+     * Checks whether a depth fusion is supported.
+     *
+     * @returns { boolean } Is the depth fusion supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 14
+     */
+    isDepthFusionSupported(): boolean;
+
+    /**
+     * Query the depth fusion threshold.
+     *
+     * @returns { Array<number> } The depth fusion threshold.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 14
+     */
+    getDepthFusionThreshold(): Array<number>;
+  }
+
+  /**
+   * Depth Fusion object.
+   *
+   * @interface DepthFusion
+   * @extends DepthFusionQuery
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 14
+   */
+  interface DepthFusion extends DepthFusionQuery {
+    /**
+     * Confirm if the depth fusion enabled.
+     *
+     * @returns { boolean } TRUE if the depth fusion is enable.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 14
+     */
+    isDepthFusionEnabled(): boolean;
+
+    /**
+     * Enable depth fusion.
+     *
+     * @param { boolean } enabled - Target state for depth fusion.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 14
+     */
+    enableDepthFusion(enabled: boolean): void;
   }
 }
 
