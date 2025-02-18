@@ -56,7 +56,9 @@ const std::vector<napi_property_descriptor> CameraFunctionsNapi::auto_exposure_q
 };
 
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::focus_query_props = {
-    DECLARE_NAPI_FUNCTION("isFocusModeSupported", CameraFunctionsNapi::IsFocusModeSupported)
+    DECLARE_NAPI_FUNCTION("isFocusModeSupported", CameraFunctionsNapi::IsFocusModeSupported),
+    DECLARE_NAPI_FUNCTION("isFocusRangeTypeSupported", CameraFunctionsNapi::IsFocusRangeTypeSupported),
+    DECLARE_NAPI_FUNCTION("isFocusDrivenTypeSupported", CameraFunctionsNapi::IsFocusDrivenTypeSupported)
 };
 
 const std::vector<napi_property_descriptor> CameraFunctionsNapi::zoom_query_props = {
@@ -394,6 +396,38 @@ napi_value CameraFunctionsNapi::IsFocusModeSupported(napi_env env, napi_callback
         napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
         return ability->IsFocusModeSupported(focusMode);
+    });
+}
+
+napi_value CameraFunctionsNapi::IsFocusRangeTypeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsFocusRangeTypeSupported is called");
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [env, argv](auto ability) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusRangeType focusRangeType = static_cast<FocusRangeType>(value);
+        return ability->IsFocusRangeTypeSupported(focusRangeType);
+    });
+}
+
+napi_value CameraFunctionsNapi::IsFocusDrivenTypeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsFocusDrivenTypeSupported is called");
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    return HandleQuery(env, info, thisVar, [env, argv](auto ability) {
+        int32_t value = 0;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusDrivenType focusDrivenType = static_cast<FocusDrivenType>(value);
+        return ability->IsFocusDrivenTypeSupported(focusDrivenType);
     });
 }
 

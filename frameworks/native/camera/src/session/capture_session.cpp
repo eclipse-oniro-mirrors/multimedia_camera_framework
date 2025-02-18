@@ -6220,5 +6220,299 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     return CameraErrorCode::SUCCESS;
 }
 
+int32_t CaptureSession::GetSupportedFocusRangeTypes(std::vector<FocusRangeType>& types)
+{
+    types.clear();
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedFocusRangeTypes Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedFocusRangeTypes camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedFocusRangeTypes camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_RANGE_TYPES, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedFocusRangeTypes Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = g_metaFocusRangeTypeMap_.find(static_cast<camera_focus_range_type_t>(item.data.u8[i]));
+        if (itr != g_metaFocusRangeTypeMap_.end()) {
+            types.emplace_back(itr->second);
+        }
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsFocusRangeTypeSupported(FocusRangeType focusRangeType, bool& isSupported)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsFocusRangeTypeSupported Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
+        CameraErrorCode::PARAMETER_ERROR, "CaptureSession::IsFocusRangeTypeSupported Unknown focus range type");
+    std::vector<FocusRangeType> vecSupportedFocusRangeTypeList = {};
+    this->GetSupportedFocusRangeTypes(vecSupportedFocusRangeTypeList);
+    if (find(vecSupportedFocusRangeTypeList.begin(), vecSupportedFocusRangeTypeList.end(), focusRangeType) !=
+        vecSupportedFocusRangeTypeList.end()) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    isSupported = false;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetFocusRange(FocusRangeType& focusRangeType)
+{
+    focusRangeType = FocusRangeType::FOCUS_RANGE_TYPE_AUTO;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetFocusRange Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetFocusRange camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetFocusRange camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetFocusRange Failed with return code %{public}d", ret);
+    auto itr = g_metaFocusRangeTypeMap_.find(static_cast<camera_focus_range_type_t>(item.data.u8[0]));
+    if (itr != g_metaFocusRangeTypeMap_.end()) {
+        focusRangeType = itr->second;
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetFocusRange(FocusRangeType focusRangeType)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetFocusRange Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetFocusRange Need to call LockForControl() before setting camera properties");
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
+        CameraErrorCode::PARAMETER_ERROR, "CaptureSession::SetFocusRange Unknown focus range type");
+    bool isSupported = false;
+    IsFocusRangeTypeSupported(focusRangeType, isSupported);
+    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    uint8_t metaFocusRangeType = OHOS_CAMERA_FOCUS_RANGE_AUTO;
+    auto itr = g_fwkocusRangeTypeMap_.find(focusRangeType);
+    if (itr != g_fwkocusRangeTypeMap_.end()) {
+        metaFocusRangeType = itr->second;
+    }
+
+    MEDIA_DEBUG_LOG("CaptureSession::SetFocusRange Focus range type: %{public}d", focusRangeType);
+
+    int32_t ret = 0;
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusRange Failed to set focus range type");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedFocusDrivenTypes(std::vector<FocusDrivenType>& types)
+{
+    types.clear();
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedFocusDrivenTypes Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedFocusDrivenTypes camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedFocusDrivenTypes camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_DRIVEN_TYPES, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedFocusDrivenTypes Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = g_metaFocusDrivenTypeMap_.find(static_cast<camera_focus_driven_type_t>(item.data.u8[i]));
+        if (itr != g_metaFocusDrivenTypeMap_.end()) {
+            types.emplace_back(itr->second);
+        }
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType, bool& isSupported)
+{
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsFocusDrivenTypeSupported Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
+        CameraErrorCode::PARAMETER_ERROR, "CaptureSession::IsFocusDrivenTypeSupported Unknown focus driven type");
+    std::vector<FocusDrivenType> vecSupportedFocusDrivenTypeList = {};
+    this->GetSupportedFocusDrivenTypes(vecSupportedFocusDrivenTypeList);
+    if (find(vecSupportedFocusDrivenTypeList.begin(), vecSupportedFocusDrivenTypeList.end(), focusDrivenType) !=
+        vecSupportedFocusDrivenTypeList.end()) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    isSupported = false;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetFocusDriven(FocusDrivenType& focusDrivenType)
+{
+    focusDrivenType = FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetFocusDriven Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetFocusDriven camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetFocusDriven camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetFocusDriven Failed with return code %{public}d", ret);
+    auto itr = g_metaFocusDrivenTypeMap_.find(static_cast<camera_focus_driven_type_t>(item.data.u8[0]));
+    if (itr != g_metaFocusDrivenTypeMap_.end()) {
+        focusDrivenType = itr->second;
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetFocusDriven(FocusDrivenType focusDrivenType)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetFocusDriven Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetFocusDriven Need to call LockForControl() before setting camera properties");
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
+        CameraErrorCode::PARAMETER_ERROR, "CaptureSession::SetFocusDriven Unknown focus driven type");
+    bool isSupported = false;
+    IsFocusDrivenTypeSupported(focusDrivenType, isSupported);
+    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    uint8_t metaFocusDrivenType = OHOS_CAMERA_FOCUS_DRIVEN_AUTO;
+    auto itr = g_fwkFocusDrivenTypeMap_.find(focusDrivenType);
+    if (itr != g_fwkFocusDrivenTypeMap_.end()) {
+        metaFocusDrivenType = itr->second;
+    }
+
+    MEDIA_DEBUG_LOG("CaptureSession::SetFocusDriven focus driven type: %{public}d", focusDrivenType);
+
+    int32_t ret = 0;
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDriven Failed to set focus driven type");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedColorReservationTypes(std::vector<ColorReservationType>& types)
+{
+    types.clear();
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedColorReservationTypes Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedColorReservationTypes camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedColorReservationTypes camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedColorReservationTypes Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = g_metaColorReservationTypeMap_.find(static_cast<camera_color_reservation_type_t>(item.data.u8[i]));
+        if (itr != g_metaColorReservationTypeMap_.end()) {
+            types.emplace_back(itr->second);
+        }
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported)
+{
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
+        g_fwkColorReservationTypeMap_.end(), CameraErrorCode::PARAMETER_ERROR,
+        "CaptureSession::IsColorReservationTypeSupported Unknown color reservation type");
+    std::vector<ColorReservationType> vecSupportedColorReservationTypeList = {};
+    this->GetSupportedColorReservationTypes(vecSupportedColorReservationTypeList);
+    if (find(vecSupportedColorReservationTypeList.begin(), vecSupportedColorReservationTypeList.end(),
+        colorReservationType) != vecSupportedColorReservationTypeList.end()) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    isSupported = false;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetColorReservation(ColorReservationType& colorReservationType)
+{
+    colorReservationType = ColorReservationType::COLOR_RESERVATION_TYPE_NONE;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetColorReservation Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetColorReservation camera device is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetColorReservation camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetColorReservation Failed with return code %{public}d", ret);
+    auto itr = g_metaColorReservationTypeMap_.find(static_cast<camera_color_reservation_type_t>(item.data.u8[0]));
+    if (itr != g_metaColorReservationTypeMap_.end()) {
+        colorReservationType = itr->second;
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservationType)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetColorReservation Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetColorReservation Need to call LockForControl() before setting camera properties");
+    CHECK_ERROR_RETURN_RET_LOG(g_fwkColorReservationTypeMap_.find(colorReservationType) ==
+        g_fwkColorReservationTypeMap_.end(),
+        CameraErrorCode::PARAMETER_ERROR, "CaptureSession::SetColorReservation Unknown color reservation type");
+    bool isSupported = false;
+    IsColorReservationTypeSupported(colorReservationType, isSupported);
+    CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    uint8_t metaColorReservationType = OHOS_CAMERA_COLOR_RESERVATION_NONE;
+    auto itr = g_fwkColorReservationTypeMap_.find(colorReservationType);
+    if (itr != g_fwkColorReservationTypeMap_.end()) {
+        metaColorReservationType = itr->second;
+    }
+
+    MEDIA_DEBUG_LOG("CaptureSession::SetColorReservation color reservation type: %{public}d", colorReservationType);
+
+    int32_t ret = 0;
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, count);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetColorReservation Failed to set color reservation type");
+    return CameraErrorCode::SUCCESS;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

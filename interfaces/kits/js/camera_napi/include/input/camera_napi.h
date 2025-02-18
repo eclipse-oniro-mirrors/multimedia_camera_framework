@@ -33,6 +33,7 @@
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
 #include "session/capture_session.h"
+#include "session/video_session.h"
 #include <unordered_map>
 
 namespace OHOS {
@@ -395,6 +396,25 @@ static const std::unordered_map<std::string, int32_t> mapPortraitThemeType = {
 static const std::unordered_map<std::string, int32_t> mapQualityPrioritization = {
     {"HIGH_QUALITY", 0},
     {"POWER_BALANCE", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapFocusRangeType = {
+    {"AUTO", 0},
+    {"NEAR", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapFocusDrivenType = {
+    {"AUTO", 0},
+    {"FACE", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapColorReservationType = {
+    {"NONE", 0},
+    {"PORTRAIT", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
+    {"AUTO", FOCUS_TRACKING_MODE_AUTO},
 };
 
 enum CreateAsyncCallbackModes {

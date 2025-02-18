@@ -70,6 +70,18 @@ bool CameraAbility::IsFocusModeSupported(FocusMode focusMode)
     return std::find(supportedFocusModes_.begin(), supportedFocusModes_.end(), focusMode) != supportedFocusModes_.end();
 }
 
+bool CameraAbility::IsFocusRangeTypeSupported(FocusRangeType focusRangeType)
+{
+    return std::find(supportedFocusRangeTypes_.begin(), supportedFocusRangeTypes_.end(), focusRangeType) !=
+        supportedFocusRangeTypes_.end();
+}
+
+bool CameraAbility::IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType)
+{
+    return std::find(supportedFocusDrivenTypes_.begin(), supportedFocusDrivenTypes_.end(), focusDrivenType) !=
+        supportedFocusDrivenTypes_.end();
+}
+
 std::vector<float> CameraAbility::GetZoomRatioRange()
 {
     return zoomRatioRange_.value_or(std::vector<float>{1.0f, 1.0f});
