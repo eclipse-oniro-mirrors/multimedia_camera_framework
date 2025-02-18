@@ -18,6 +18,8 @@
 #include "camera_input_impl.h"
 #include "camera_log.h"
 #include "camera_utils.h"
+#include "camera_util.h"
+#include "camera_error_code.h"
 #include "cj_lambda.h"
 
 const int32_t SECURE_CAMERA = 12;
@@ -154,7 +156,10 @@ bool CJCameraManager::IsCameraMuted()
 int64_t CJCameraManager::CreateCameraInputWithCameraDevice(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput)
 {
     int retCode = cameraManager_->CreateCameraInput(camera, pCameraInput);
-    return retCode;
+    if (retCode == CamServiceError::CAMERA_NO_PERMISSION) {
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    return CameraError::NO_ERROR;
 }
 
 int64_t CJCameraManager::CreateCameraInputWithCameraDeviceInfo(CameraPosition position, CameraType cameraType,
