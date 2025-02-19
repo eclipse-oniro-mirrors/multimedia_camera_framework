@@ -162,6 +162,8 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value GetCameraDevice(napi_env env, napi_callback_info info);
+    static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
 
     CameraManagerNapi();
     ~CameraManagerNapi() override;
@@ -181,6 +183,11 @@ private:
     static void RemoveDuplicatesProfile(sptr<CameraOutputCapability>& outputCapability);
     template<typename T>
     static void RemoveDuplicatesProfile(std::vector<T>& profiles);
+    static napi_value CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
+        std::vector<bool> &CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+        std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
+    void ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam,
+        std::vector<string> &cameraIdv);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);

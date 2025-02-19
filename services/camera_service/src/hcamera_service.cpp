@@ -863,8 +863,10 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory enter");
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    sptr<HCameraDevice> deviceNeedClose = deviceManager->GetCameraByPid(pid);
-    CHECK_EXECUTE(deviceNeedClose != nullptr, deviceNeedClose->Close());
+    std::vector<sptr<HCameraDevice>> devicesNeedClose = deviceManager->GetCamerasByPid(pid);
+    for (auto device : devicesNeedClose) {
+        device->Close();
+    }
     return CAMERA_OK;
 }
 
@@ -1319,20 +1321,23 @@ int32_t HCameraService::SetTorchLevel(float level)
 int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, bool& canOpenCamera)
 {
     MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
-    pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
-    if (activePid == -1) {
+    std::vector<pid_t> activePids = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    if (activePids.size() == 0) {
         MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
         NotifyCameraState(cameraId, 0);
         canOpenCamera = true;
         return CAMERA_OK;
     }
-    sptr<HCameraDevice> cameraNeedEvict = HCameraDeviceManager::GetInstance()->GetCameraByPid(activePid);
-    if (cameraNeedEvict != nullptr) {
-        cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
-        cameraNeedEvict->Close();
-        NotifyCameraState(cameraId, 0);
-        canOpenCamera = true;
+    for (auto eachPid : activePids) {
+        std::vector<sptr<HCameraDevice>> camerasNeedEvict =
+            HCameraDeviceManager::GetInstance()->GetCamerasByPid(eachPid);
+        for (auto device : camerasNeedEvict) {
+            device->OnError(DEVICE_PREEMPT, 0);
+            device->Close();
+            NotifyCameraState(cameraId, 0);
+        }
     }
+    canOpenCamera = true;
     MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide end");
     return CAMERA_OK;
 }
@@ -1810,21 +1815,23 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     }
 
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    pid_t activeClient = deviceManager->GetActiveClient();
-    CHECK_ERROR_RETURN_RET_LOG(activeClient == -1, CAMERA_OPERATION_NOT_ALLOWED,
-        "HCaptureSession::SaveCurrentParamForRestore() Failed to save param");
-    sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
-    CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_OK);
+    std::vector<pid_t> pidOfActiveClients = deviceManager->GetActiveClient();
+    CHECK_ERROR_RETURN_RET_LOG(pidOfActiveClients.size() == 0, CAMERA_OPERATION_NOT_ALLOWED,
+        "HCaptureSession::SaveCurrentParamForRestore() Failed to save param cause no device is opening");
+    CHECK_ERROR_RETURN_RET_LOG(pidOfActiveClients.size() > 1, CAMERA_OPERATION_NOT_ALLOWED,
+        "HCaptureSession::SaveCurrentParamForRestore() not supported for Multi-Device is opening");
+    std::vector<sptr<HCameraDevice>> activeDevices = deviceManager->GetCamerasByPid(pidOfActiveClients[0]);
+    CHECK_ERROR_RETURN_RET(activeDevices.empty(), CAMERA_OK);
     std::vector<StreamInfo_V1_1> allStreamInfos;
 
-    if (activeDevice != nullptr) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings = CreateDefaultSettingForRestore(activeDevice);
+    if (activeDevices.size() == 1) {
+        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings
+            = CreateDefaultSettingForRestore(activeDevices[0]);
         UpdateSkinSmoothSetting(defaultSettings, effectParam.skinSmoothLevel);
         UpdateFaceSlenderSetting(defaultSettings, effectParam.faceSlender);
         UpdateSkinToneSetting(defaultSettings, effectParam.skinTone);
         cameraRestoreParam->SetSetting(defaultSettings);
     }
-    CHECK_ERROR_RETURN_RET(activeDevice == nullptr, CAMERA_UNKNOWN_ERROR);
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc,
         "HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
@@ -1842,7 +1849,6 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
-    MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore end");
     return rc;
 }
 
@@ -2092,6 +2098,21 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     CHECK_ERROR_RETURN_RET(ret == 0, CAMERA_OK);
     #endif
     return CAMERA_UNKNOWN_ERROR;
+}
+
+int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId)
+{
+    std::string cameraIdnow;
+    cameraHostManager_->GetPhysicCameraId(cameraPosition, cameraIdnow);
+    cameraId = cameraIdnow;
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
+{
+    MEDIA_DEBUG_LOG("wwc HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
+    return cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
 }
 } // namespace CameraStandard
 } // namespace OHOS

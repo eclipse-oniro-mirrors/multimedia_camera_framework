@@ -323,6 +323,14 @@ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
     taskManager_ = nullptr;
 }
 
+PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
+{
+    defaultCaptureSetting_ = nullptr;
+    taskManager_ = nullptr;
+    photoSurface_ = photoSurface;
+}
+
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
@@ -1138,6 +1146,11 @@ int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
     int32_t res = captureSession->EnableAutoCloudImageEnhancement(enabled);
     MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto result: %{public}d", res);
     return res;
+}
+
+sptr<Surface> PhotoOutput::GetPhotoSurface()
+{
+    return photoSurface_;
 }
 
 } // namespace CameraStandard

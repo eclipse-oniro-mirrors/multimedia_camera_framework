@@ -28,6 +28,7 @@
 #include "output/capture_output.h"
 #include "ability/camera_ability.h"
 #include "ability/camera_ability_parse_util.h"
+#include "color_space_info_parse.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -73,6 +74,47 @@ typedef struct dmDeviceInfo {
      */
     std::string networkId;
 } dmDeviceInfo;
+
+struct flashmode {
+    int count = 0;
+    std::vector<int32_t>mode = {};
+};
+
+struct exposuremode {
+    int count = 0;
+    std::vector<int32_t>mode = {};
+};
+
+struct zoomratiorange {
+    int count = 0;
+    std::vector<int32_t>mode = {};
+    std::unordered_map<int32_t, std::pair<float, float>>range;
+};
+
+struct compensationrange {
+    int count = 0;
+    std::vector<float>range = {};
+};
+
+struct focusmode {
+    int count = 0;
+    std::vector<int32_t>mode = {};
+};
+
+struct stabilizationmode {
+    int count = 0;
+    std::vector<int32_t>mode = {};
+};
+
+struct CameraConcurrentLimtedCapability {
+    flashmode flashmodes;
+    exposuremode exposuremodes;
+    zoomratiorange ratiorange;
+    compensationrange compensation;
+    focusmode focusmodes;
+    stabilizationmode stabilizationmodes;
+    ColorSpaceInfo colorspaces;
+};
 
 class CameraDevice : public RefBase {
 public:
@@ -285,6 +327,8 @@ public:
     std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
     CameraPosition usedAsCameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     std::unordered_map<int32_t, int32_t> modeVideoDeferredType_ = {};
+    CameraConcurrentLimtedCapability limtedCapabilitySave_;
+    int32_t isConcurrentLimted_ = 0;
 private:
     std::string cameraID_;
     const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;

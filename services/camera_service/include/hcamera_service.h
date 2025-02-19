@@ -165,6 +165,9 @@ public:
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
+    int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
+    int32_t GetConcurrentCameraAbility(std::string& cameraId,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;

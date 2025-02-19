@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
+#include "input/camera_manager.h"
 #include "metadata_common_utils.h"
 #include <algorithm>
 #include <cstdint>
@@ -302,6 +303,19 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFocusModes camera deviceInfo is null");
+    sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
+    if (cameraDevNow->isConcurrentLimted_ == 1) {
+        for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count;
+            i++) {
+            camera_focus_mode_enum_t num = static_cast<camera_focus_mode_enum_t>(cameraDevNow->
+                limtedCapabilitySave_.focusmodes.mode[i]);
+            auto itr = g_metaFocusModeMap_.find(num);
+            if (itr != g_metaFocusModeMap_.end()) {
+                supportedFocusModes.emplace_back(itr->second);
+            }
+        }
+        return CameraErrorCode::SUCCESS;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_MODES, &item);
@@ -570,6 +584,19 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes camera device is null");
+    sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
+    if (cameraDevNow->isConcurrentLimted_ == 1) {
+        for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.flashmodes.count;
+            i++) {
+            camera_flash_mode_enum_t num = static_cast<camera_flash_mode_enum_t>(cameraDevNow->
+                limtedCapabilitySave_.flashmodes.mode[i]);
+            auto it = g_metaFlashModeMap_.find(num);
+            if (it != g_metaFlashModeMap_.end()) {
+                supportedFlashModes.emplace_back(it->second);
+            }
+        }
+        return CameraErrorCode::SUCCESS;
+    }
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes camera deviceInfo is null");

@@ -393,7 +393,6 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
-    static thread_local sptr<Surface> sPhotoSurface_;
 
     sptr<PhotoOutput> photoOutput_;
     std::shared_ptr<Profile> profile_;

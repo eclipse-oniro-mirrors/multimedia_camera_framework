@@ -31,6 +31,8 @@ public:
 
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
 
+    int32_t Open(int32_t ConcurrentTypeofcamera) override;
+
     int32_t Close() override;
 
     int32_t Release() override;

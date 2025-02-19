@@ -260,6 +260,7 @@ constexpr int32_t ROTATION_90_DEGREES = 90;
 class PhotoOutput : public CaptureOutput {
 public:
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
+    explicit PhotoOutput(sptr<IBufferProducer> bufferProducer, sptr<Surface> photoSurface);
     virtual ~PhotoOutput();
 
     /**
@@ -476,6 +477,11 @@ public:
      */
     int32_t EnableAutoAigcPhoto(bool enabled);
 
+    /**
+     * @brief Get photo buffer.
+     */
+    sptr<Surface> GetPhotoSurface();
+
     sptr<Surface> thumbnailSurface_;
 
     sptr<Surface> rawPhotoSurface_;
@@ -486,6 +492,7 @@ public:
     sptr<Surface> deepSurface_;
     sptr<Surface> exifSurface_;
     sptr<Surface> debugSurface_;
+    sptr<Surface> photoSurface_;
     sptr<SurfaceBuffer> gainmapSurfaceBuffer_;
     sptr<SurfaceBuffer> deepSurfaceBuffer_;
     sptr<SurfaceBuffer> exifSurfaceBuffer_;

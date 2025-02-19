@@ -416,6 +416,12 @@ static const std::unordered_map<std::string, int32_t> mapColorReservationType = 
 static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
     {"AUTO", FOCUS_TRACKING_MODE_AUTO},
 };
+
+static const std::unordered_map<std::string, int32_t> mapCameraConcurrentType = {
+    {"CAMERA_LIMITED_CAPABILITY", 0},
+    {"CAMERA_FULL_CAPABILITY", 1},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

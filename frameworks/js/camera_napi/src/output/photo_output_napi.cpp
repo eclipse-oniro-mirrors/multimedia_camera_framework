@@ -200,7 +200,6 @@ bool ValidImageRotationFromJs(int32_t jsRotation)
 
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
-thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
 thread_local napi_ref PhotoOutputNapi::rawCallback_ = nullptr;
 static uv_sem_t g_captureStartSem;
@@ -1914,8 +1913,10 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
         sptr<PictureListener> pictureListener = new (std::nothrow) PictureListener();
         pictureListener->InitPictureListeners(env, photoOutput_);
         if (photoListener_ == nullptr) {
-            sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
-            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+            sptr<PhotoListener> photoListener = new (std::nothrow)
+                PhotoListener(env, photoOutput_->GetPhotoSurface(), photoOutput_);
+            SurfaceError ret = photoOutput_->GetPhotoSurface()->RegisterConsumerListener(
+                (sptr<IBufferConsumerListener> &)photoListener);
             CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
             photoListener_ = photoListener;
             pictureListener_ = pictureListener;
@@ -1932,8 +1933,10 @@ void PhotoOutputNapi::CreateSingleChannelPhotoLisenter(napi_env env)
 {
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
-        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        sptr<PhotoListener> photoListener = new (std::nothrow)
+            PhotoListener(env, photoOutput_->GetPhotoSurface(), photoOutput_);
+        SurfaceError ret =
+            photoOutput_->GetPhotoSurface()->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
         CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
         photoListener_ = photoListener;
     }
@@ -1953,7 +1956,6 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
         if (surfaceId == "") {
             MEDIA_INFO_LOG("create surface as consumer");
             photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
-            sPhotoSurface_ = photoSurface;
         } else {
             MEDIA_INFO_LOG("get surface by surfaceId");
             photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
@@ -1965,7 +1967,8 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
                        "surface width: %{public}d, height: %{public}d", profile.GetSize().width,
                        profile.GetSize().height, static_cast<int32_t>(profile.GetCameraFormat()),
                        photoSurface->GetDefaultWidth(), photoSurface->GetDefaultHeight());
-        int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_);
+        int retCode =
+            CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_, photoSurface);
         CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
             result, "failed to create CreatePhotoOutput");
         CHECK_EXECUTE(surfaceId == "", sPhotoOutput_->SetNativeSurface(true));
@@ -1994,7 +1997,6 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
         if (surfaceId == "") {
             MEDIA_INFO_LOG("create surface as consumer");
             photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
-            sPhotoSurface_ = photoSurface;
         } else {
             MEDIA_INFO_LOG("get surface by surfaceId");
             photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
@@ -2003,7 +2005,8 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
         sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
         MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
             photoSurface->GetDefaultHeight());
-        int retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &sPhotoOutput_);
+        int retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(
+            surfaceProducer, &sPhotoOutput_, photoSurface);
         CHECK_ERROR_RETURN_RET_LOG(!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr,
             result, "failed to create CreatePhotoOutput");
         CHECK_EXECUTE(surfaceId == "", sPhotoOutput_->SetNativeSurface(true));
@@ -2621,12 +2624,14 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
 void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(sPhotoSurface_ == nullptr, "sPhotoSurface_ is null!");
+    CHECK_ERROR_RETURN_LOG(photoOutput_->GetPhotoSurface() == nullptr, "PhotoSurface_ is null!");
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        sptr<PhotoListener> photoListener = new (std::nothrow)
+            PhotoListener(env, photoOutput_->GetPhotoSurface(), photoOutput_);
         CHECK_ERROR_RETURN_LOG(photoListener == nullptr, "photoListener is null!");
-        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        SurfaceError ret =
+            photoOutput_->GetPhotoSurface()->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
         CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
         photoListener_ = photoListener;
     }
@@ -2655,9 +2660,11 @@ void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
     CHECK_ERROR_RETURN_LOG(sPhotoSurface_ == nullptr, "sPhotoSurface_ is null!");
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new deferred photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        sptr<PhotoListener> photoListener = new (std::nothrow)
+            PhotoListener(env, photoOutput_->GetPhotoSurface(), photoOutput_);
         CHECK_ERROR_RETURN_LOG(photoListener == nullptr, "failed to new photoListener!");
-        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        SurfaceError ret =
+            photoOutput_->GetPhotoSurface()->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoListener);
         CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
         photoListener_ = photoListener;
     }
@@ -2674,7 +2681,7 @@ void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
 void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(sPhotoSurface_ == nullptr, "sPhotoSurface_ is null!");
+    CHECK_ERROR_RETURN_LOG(photoOutput_->GetPhotoSurface() == nullptr, "PhotoSurface is null!");
     CHECK_ERROR_RETURN_LOG(photoOutput_ == nullptr, "photoOutput_ is null!");
     if (photoOutput_->IsYuvOrHeifPhoto()) {
         CreateMultiChannelPictureLisenter(env);

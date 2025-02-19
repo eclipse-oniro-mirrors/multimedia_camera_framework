@@ -28,6 +28,8 @@ public:
 
     virtual int32_t OpenSecureCamera(uint64_t* secureSeqId) = 0;
 
+    virtual int32_t Open(int32_t ConcurrentTypeofcamera) = 0;
+
     virtual int32_t Close() = 0;
 
     virtual int32_t closeDelayed() = 0;

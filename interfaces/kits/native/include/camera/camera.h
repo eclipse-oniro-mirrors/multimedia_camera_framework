@@ -1101,6 +1101,57 @@ typedef enum Camera_QualityPrioritization {
     POWER_BALANCE = 1
 } Camera_QualityPrioritization;
 
+/**
+ * @brief Enum for camera concurrency type.
+ *
+ * @since 16
+ * @version 1.0
+ */
+typedef enum Camera_ConcurrentType {
+    /**
+     * Hight quality priority.
+     */
+    CONCURRENT_TYPE_LIMITED_CAPABILITY  = 0,
+
+    /**
+     * Power balance priority.
+     */
+    CONCURRENT_TYPE_FULL_CAPABILITY = 1
+} Camera_ConcurrentType;
+
+/**
+ * @brief Concurrency capability infos.
+ *
+ * @since 16
+ * @version 1.0
+ */
+typedef struct Camera_ConcurrentInfo {
+    /**
+    * Device.
+     */
+    Camera_Device camera;
+
+    /**
+     * Concurrent type.
+     */
+    Camera_ConcurrentType type;
+
+    /**
+     * Supported Modes.
+     */
+    Camera_SceneMode* sceneModes;
+
+    /**
+    * Supported profiles set
+    */
+    Camera_OutputCapability* outputCapabilities;
+
+    /**
+    * Supported profiles set
+    */
+    uint32_t modeAndCapabilitySize;
+} Camera_ConcurrentInfo;
+
 #ifdef __cplusplus
 }
 #endif

@@ -94,11 +94,11 @@ public:
         const int32_t modeName, common_metadata_header_t* metadata, ConflictConfig& conflictConfig);
     static void GetAbilityInfo(const int32_t modeName, common_metadata_header_t* metadata, uint32_t tagId,
         std::map<int32_t, std::vector<int32_t>>& infoMap);
+        static void GetSpecInfo(int32_t* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo& modeInfo);
 
 private:
     static void GetInfo(
         int32_t* originInfo, uint32_t start, uint32_t end, std::map<int32_t, std::vector<int32_t>>& infoMap);
-    static void GetSpecInfo(int32_t* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo& modeInfo);
     static void GetStreamInfo(int32_t* originInfo, uint32_t start, uint32_t end, SpecInfo& specInfo);
     static void GetDetailInfo(int32_t* originInfo, uint32_t start, uint32_t end, StreamInfo& streamInfo);
     static void GetAvailableConfigInfo(

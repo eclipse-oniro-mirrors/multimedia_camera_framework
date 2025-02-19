@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "camera_stream_info_parse.h"
 #include "deferred_proc_session/deferred_photo_proc_session.h"
@@ -47,6 +48,7 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "safe_map.h"
+#include "color_space_info_parse.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -296,6 +298,17 @@ public:
     int CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
+     * @brief Create photo output instance.
+     *
+     * @param profile photo profile.
+     * @param surface photo buffer surface.
+     * @param pPhotoOutput pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer, sptr<PhotoOutput> *pPhotoOutput,
+                          sptr<Surface> photoSurface);
+
+    /**
      * @brief Create photo output instance without profile.
      *
      * @param surface photo buffer surface.
@@ -303,6 +316,15 @@ public:
      * @return Returns error code.
      */
     int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput);
+
+    /**
+     * @brief Create photo output instance without profile.
+     *
+     * @param surface photo buffer surface.
+     * @param pPhotoOutput pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface);
 
     /**
      * @brief Create photo output instance using surface.
@@ -758,6 +780,44 @@ public:
     }
     std::vector<dmDeviceInfo> GetDmDeviceInfo();
     std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
+
+    struct ProfilesWrapper {
+        std::vector<Profile> photoProfiles = {};
+        std::vector<Profile> previewProfiles = {};
+        std::vector<VideoProfile> vidProfiles = {};
+    };
+
+    void GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
+        std::vector<bool> CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+        std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
+    void GetMetadataInfos(camera_metadata_item_t item,
+        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    void SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
+        ProfilesWrapper &profilesWrapper, int32_t modeName,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    bool GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
+        std::vector<bool> &CameraConcurrentType);
+    bool CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cameraDeviceArrray);
+    bool CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
+        std::vector<std::string> &cameraIdv);
+    void ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
+        std::vector<SceneMode> &mode, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility, sptr<CameraDevice>cameraDevNow);
+    void GetMetadataInfosfordouble(camera_metadata_item_t &item, double* originInfo, uint32_t i,
+        std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+        shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+    void GetSpecInfofordouble(double* originInfo, uint32_t start, uint32_t end, ProfileLevelInfo &modeInfo);
+    void GetStreamInfofordouble(double* originInfo, uint32_t start, uint32_t end, SpecInfo &specInfo);
+    void GetDetailInfofordouble(double* originInfo, uint32_t start, uint32_t end, StreamInfo &streamInfo);
+    void GetAbilityStructofConcurrentLimted(std::vector<int32_t> &vec, double* originInfo, int length);
+    void GetAbilityStructofConcurrentLimtedfloat(std::vector<float> &vec, double* originInfo, int length);
+         std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    CameraConcurrentLimtedCapability limtedCapabilitySave_;
+    std::unordered_map<std::string, CameraConcurrentLimtedCapability>cameraConLimCapMap_;
+    void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
+    friend int CameraInput::Open(int32_t CameraConcurrentType);
+
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -767,11 +827,6 @@ protected:
     }
 
 private:
-    struct ProfilesWrapper {
-        std::vector<Profile> photoProfiles = {};
-        std::vector<Profile> previewProfiles = {};
-        std::vector<VideoProfile> vidProfiles = {};
-    };
 
     enum CameraAbilitySupportCacheKey { CAMERA_ABILITY_SUPPORT_TORCH, CAMERA_ABILITY_SUPPORT_MUTE };
 

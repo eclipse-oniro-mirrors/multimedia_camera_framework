@@ -84,6 +84,7 @@ public:
 
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds);
     virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
+    virtual int32_t GetCameraIdSortedByCameraType(std::vector<std::string>& cameraIds);
     virtual int32_t OpenCameraDevice(std::string &cameraId,
                                      const sptr<ICameraDeviceCallback> &callback,
                                      sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
@@ -121,6 +122,8 @@ public:
 
     int32_t GetCameraResourceCost(const std::string& cameraId,
         OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
+
+    void GetPhysicCameraId(int32_t position, std::string &cameraid);
 
 private:
     struct CameraDeviceInfo;

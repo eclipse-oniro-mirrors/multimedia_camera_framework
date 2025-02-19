@@ -135,6 +135,7 @@ struct CameraInputAsyncContext : public AsyncContext {
     bool isEnableSecCam = false;
     int32_t delayTime  = 0 ;
     uint64_t secureCameraSeqId = 0L;
+    int32_t CameraConcurrentType = -1;
 };
 } // namespace CameraStandard
 } // namespace OHOS

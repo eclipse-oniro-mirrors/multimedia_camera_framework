@@ -298,8 +298,15 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
         CameraNapiUtils::IsEnableSecureCamera(isEnableSecureCamera);
         MEDIA_DEBUG_LOG("set  EnableSecureCamera CameraInputNapi::Open");
     } else {
-        MEDIA_WARNING_LOG("CameraInputNapi::Open check secure parameter fail, try open without secure flag");
-        jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+        MEDIA_WARNING_LOG("CameraInputNapi::Open check secure parameter fail, try open with CameraConcurrentType");
+        int32_t CameraConcurrentType = 0;
+        jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction, CameraConcurrentType);
+        if (jsParamParser.IsStatusOk()) {
+            asyncContext->CameraConcurrentType = CameraConcurrentType;
+        } else {
+            MEDIA_WARNING_LOG("CameraInputNapi::Open check secure parameter fail, try open without secure flag");
+            jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+        }
     }
     CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument"),
         nullptr, "CameraInputNapi::Open invalid argument");
@@ -317,6 +324,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
                 if (context->isEnableSecCam) {
                     context->errorCode = context->objectInfo->GetCameraInput()->Open(true, &context->secureCameraSeqId);
                     MEDIA_INFO_LOG("CameraInputNapi::Open, SeqId = %{public}" PRIu64 "", context->secureCameraSeqId);
+                } else if (context->CameraConcurrentType != -1) {
+                    context->errorCode = context->objectInfo->GetCameraInput()->Open(context->CameraConcurrentType);
                 } else {
                     context->errorCode = context->objectInfo->GetCameraInput()->Open();
                 }

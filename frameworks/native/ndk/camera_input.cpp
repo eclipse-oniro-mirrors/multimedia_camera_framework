@@ -65,6 +65,15 @@ Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint
     return errorCode;
 }
 
+Camera_ErrorCode OH_CameraInput_OpenConcurrentCameras(Camera_Input* cameraInput, Camera_ConcurrentType type)
+{
+    CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraInput is null!");
+    Camera_ErrorCode errorCode = cameraInput->OpenConcurrentCameras(type);
+    MEDIA_INFO_LOG("Camera_Input::OpenConcurrentCameras concurrentType = %{public}" PRIu32 "", type);
+    return errorCode;
+}
+
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 {
     CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, CAMERA_INVALID_ARGUMENT,

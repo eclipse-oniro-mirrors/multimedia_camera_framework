@@ -18,6 +18,7 @@
 #include <queue>
 #include <vector>
 #include <iostream>
+#include <limits.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -69,6 +70,30 @@ public:
             getColorSpaceStreamInfo(originInfo, transferedInfo.modeInfo[i]);
         }
     }
+
+    void getColorSpaceInfoforConcurrent(double* originInfo, uint32_t count, ColorSpaceInfo& transferedInfo)
+    {
+        modeStartIndex_.push_back(0);
+        // 处理mode层级的信息，记录mode数量及每个mode开始和结束的下标
+        for (uint32_t i = LOOP_ONE_STEP; i < count; i++) {
+            // 连续两个-1代表当前模式的色彩空间信息上报结束
+            if (static_cast<int32_t>(originInfo[i - LOOP_ONE_STEP]) == INT_MAX &&
+                static_cast<int32_t>(originInfo[i]) == INT_MAX) {
+                modeEndIndex_.push_back(i);
+                if (i + LOOP_ONE_STEP < count) {
+                    modeStartIndex_.push_back(i + LOOP_ONE_STEP);
+                }
+                transferedInfo.modeCount++;
+            }
+        }
+        transferedInfo.modeInfo.resize(transferedInfo.modeCount);
+
+        getColorSpaceStreamCountforConcurrent(originInfo, transferedInfo);
+        for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
+            transferedInfo.modeInfo[i].modeType = static_cast<int32_t>(originInfo[modeStartIndex_[i]]);
+            getColorSpaceStreamInfoforConcurrent(originInfo, transferedInfo.modeInfo[i]);
+        }
+    }
 private:
     void getColorSpaceStreamCount(int32_t* originInfo, ColorSpaceInfo& transferedInfo)
     {
@@ -110,6 +135,55 @@ private:
             int j = 0;
             for (uint32_t k = loopStart; k < streamEndIndex_.front(); k++) {
                 modeInfo.streamInfo[i].colorSpaces[j] = originInfo[k];
+                j++;
+            }
+
+            streamStartIndex_.pop();
+            streamEndIndex_.pop();
+        }
+    }
+
+    void getColorSpaceStreamCountforConcurrent(double* originInfo, ColorSpaceInfo& transferedInfo)
+    {
+        for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
+            for (uint32_t j = modeStartIndex_[i]; j < modeEndIndex_[i]; j++) {
+                if (j == modeStartIndex_[i]) {
+                    streamStartIndex_.push(modeStartIndex_[i] + LOOP_ONE_STEP);
+                }
+                if (static_cast<int32_t>(originInfo[j]) == INT_MAX) {
+                    streamEndIndex_.push(j);
+                    transferedInfo.modeInfo[i].streamTypeCount++;
+                }
+                if ((static_cast<int32_t>(originInfo[j]) == INT_MAX) &&
+                    ((j + LOOP_ONE_STEP) < modeEndIndex_[i])) {
+                    streamStartIndex_.push(j + LOOP_ONE_STEP);
+                }
+            }
+        }
+        modeStartIndex_.clear();
+        modeEndIndex_.clear();
+    }
+
+    void getColorSpaceStreamInfoforConcurrent(double* originInfo, ColorSpaceModeInfo& modeInfo)
+    {
+        modeInfo.streamInfo.resize(modeInfo.streamTypeCount);
+        for (uint32_t i = 0; i < modeInfo.streamTypeCount; i++) {
+            uint32_t loopStart;
+            // 第一套色彩空间能力集为common能力，不报streamType
+            if (i == 0) {
+                modeInfo.streamInfo[i].streamType = COMMON_STREAM_WITHOUT_TYPE;
+                loopStart = streamStartIndex_.front();
+            } else {
+                // 除第一套外，其余色彩空间能力集的第一个int值表示streamType
+                modeInfo.streamInfo[i].streamType = static_cast<int32_t>(originInfo[streamStartIndex_.front()]);
+                loopStart = streamStartIndex_.front() + LOOP_ONE_STEP;
+            }
+
+            modeInfo.streamInfo[i].colorSpaceCount = streamEndIndex_.front() - loopStart;
+            modeInfo.streamInfo[i].colorSpaces.resize(modeInfo.streamInfo[i].colorSpaceCount);
+            int j = 0;
+            for (uint32_t k = loopStart; k < streamEndIndex_.front(); k++) {
+                modeInfo.streamInfo[i].colorSpaces[j] = static_cast<int32_t>(originInfo[k]);
                 j++;
             }
 

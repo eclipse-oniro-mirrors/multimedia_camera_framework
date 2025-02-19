@@ -173,6 +173,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "ColorReservationType", mapColorReservationType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FocusTrackingMode",
             CreateObjectWithMap(env, "FocusTrackingMode", mapFocusTrackingMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraConcurrentType",
+            CreateObjectWithMap(env, "CameraConcurrentType", mapCameraConcurrentType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

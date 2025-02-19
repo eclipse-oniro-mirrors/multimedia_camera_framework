@@ -30,31 +30,22 @@ static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 class HCameraDevice;
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
-    explicit PermissionStatusChangeCb(
-        wptr<HCameraDevice> device, const Security::AccessToken::PermStateChangeScope& scopeInfo)
-        : PermStateChangeCallbackCustomize(scopeInfo), cameraDevice_(device)
-    {}
+    explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope& scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo) {}
     virtual ~PermissionStatusChangeCb() = default;
     void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
-
-private:
-    wptr<HCameraDevice> cameraDevice_;
 };
 
 class CameraUseStateChangeCb : public Security::AccessToken::StateCustomizedCbk {
 public:
-    explicit CameraUseStateChangeCb(wptr<HCameraDevice> device) : cameraDevice_(device) {}
+    explicit CameraUseStateChangeCb() {}
     virtual ~CameraUseStateChangeCb() = default;
     void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
-
-private:
-    wptr<HCameraDevice> cameraDevice_;
 };
 
 class CameraPrivacy : public RefBase {
 public:
-    explicit CameraPrivacy(wptr<HCameraDevice> device, uint32_t callingTokenId, int32_t pid)
-        : pid_(pid), callerToken_(callingTokenId), cameraDevice_(device) {}
+    explicit CameraPrivacy(uint32_t callingTokenId, int32_t pid) : pid_(pid), callerToken_(callingTokenId) {}
     ~CameraPrivacy();
     bool RegisterPermissionCallback();
     void UnregisterPermissionCallback();
@@ -78,7 +69,6 @@ public:
 private:
     int32_t pid_;
     uint32_t callerToken_;
-    wptr<HCameraDevice> cameraDevice_;
     std::condition_variable canClose_;
     std::mutex canCloseMutex_;
     std::mutex permissionCbMutex_;

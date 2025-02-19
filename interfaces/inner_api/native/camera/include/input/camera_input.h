@@ -33,6 +33,7 @@
 #include "metadata_common_utils.h"
 #include "output/camera_output_capability.h"
 #include "camera_timer.h"
+#include "color_space_info_parse.h"
 namespace OHOS {
 namespace CameraStandard {
 class ErrorCallback {
@@ -72,6 +73,11 @@ public:
     * @brief open secure camera.
     */
     int Open(bool isEnableSecureCamera, uint64_t* secureSeqId) override;
+
+    /**
+    * @brief open camera with CameraConcurrentType.
+    */
+    int Open(int32_t CameraConcurrentType) override;
 
     /**
     * @brief close camera.
@@ -381,6 +387,8 @@ public:
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
     void InitCameraInput();
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
+    CameraConcurrentLimtedCapability limtedCapabilitySave_;
+    int32_t isConcurrentLimted_ = 0;
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
