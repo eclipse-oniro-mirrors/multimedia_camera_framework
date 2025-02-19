@@ -1518,7 +1518,7 @@ ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photo
 {
     if (taskManager_ == nullptr) {
         constexpr int32_t numThreads = 1;
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("ThumbnailListener",
             numThreads, true);
     }
 }
@@ -2615,7 +2615,14 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
         napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
         return;
     }
-    CHECK_EXECUTE(thumbnailListener_ != nullptr, thumbnailListener_->RemoveCallbackRef(eventName, callback));
+    if (thumbnailListener_ != nullptr) {
+        thumbnailListener_->RemoveCallbackRef(eventName, callback)
+        if (thumbnailListener_->taskManager_) {
+            thumbnailListener_->taskManager_->CancelAllTasks();
+            thumbnailListener_->taskManager_.reset();
+            thumbnailListener_->taskManager_ = nullptr;
+        }
+    }
 }
 
 void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
