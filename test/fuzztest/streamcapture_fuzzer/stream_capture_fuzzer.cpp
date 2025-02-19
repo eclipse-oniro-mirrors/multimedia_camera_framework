@@ -58,8 +58,8 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     StreamCaptureFuzzTestGetPermission();
     FuzzedDataProvider fdp(rawData, size);
     
-    int32_t itemCount = 0;
-    int32_t dataSize = 0;
+    int32_t itemCount = 10;
+    int32_t dataSize = 100;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);

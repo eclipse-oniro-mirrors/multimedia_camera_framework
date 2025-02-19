@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,9 +15,9 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("HStreamMetadataCallbackStubFuzzTest") {
+ohos_fuzztest("HStreamDepthDataCallbackStubFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
-  fuzz_config_file = "../hstreammetadatacallbackstubfuzztest_fuzzer"
+  fuzz_config_file = "../hstreamdepthdatacallbackstub_fuzzer"
 
   include_dirs = [
     "${multimedia_camera_framework_path}/common/utils",
@@ -61,8 +61,8 @@ ohos_fuzztest("HStreamMetadataCallbackStubFuzzTest") {
   ]
 
   sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
-    "hstream_metadata_callback_stub_fuzzer.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
+    "hstream_depth_data_callback_stub_fuzzer.cpp",
   ]
 
   deps = [
@@ -107,5 +107,5 @@ ohos_fuzztest("HStreamMetadataCallbackStubFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HStreamMetadataCallbackStubFuzzTest" ]
+  deps = [ ":HStreamDepthDataCallbackStubFuzzTest" ]
 }

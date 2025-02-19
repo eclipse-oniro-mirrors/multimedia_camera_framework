@@ -40,6 +40,8 @@ namespace CameraStandard {
 namespace CaptureSessionFuzzer {
 const int32_t LIMITSIZE = 4;
 const int32_t NUM_TWO = 2;
+const int32_t NUM_20 = 20;
+const int32_t NUM_40 = 40;
 
 sptr<IBufferProducer> surface;
 sptr<CameraDevice> camera;
@@ -466,6 +468,8 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     auto minFps = data.ReadInt32();
     auto maxFps = data.ReadInt32();
     session->CheckFrameRateRangeWithCurrentFps(curMinFps, curMaxFps, minFps, maxFps);
+    session->CheckFrameRateRangeWithCurrentFps(NUM_20, NUM_20, NUM_40, NUM_40);
+    session->CheckFrameRateRangeWithCurrentFps(NUM_40, NUM_40, NUM_20, NUM_20);
     ProfileSizeRatio sizeRatio = RATIO_1_1;
     session->GetMaxSizePhotoProfile(sizeRatio);
     session->GetPreconfigPreviewProfile();
@@ -492,6 +496,23 @@ void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->EnableMovingPhotoMirror(data.ReadBool(), data.ReadBool());
     session->EnableMoonCaptureBoost(data.ReadBool());
     session->SetSensorSensitivity(data.ReadUint32());
+    int32_t wbValue = data.ReadInt32();
+    session->GetManualWhiteBalance(wbValue);
+    std::vector<std::vector<float>> supportedPhysicalApertures = {};
+    session->GetSupportedPhysicalApertures(supportedPhysicalApertures);
+    std::vector<float> apertures;
+    session->GetSupportedVirtualApertures(apertures);
+    float aperture = data.ReadFloat();
+    session->GetVirtualAperture(aperture);
+    session->SetVirtualAperture(aperture);
+    session->GetPhysicalAperture(aperture);
+    session->SetPhysicalAperture(aperture);
+    bool isSupported = data.ReadBool();
+    session->isColorStyleSupported(isSupported);
+    std::vector<ColorStyleSetting> defaultColorStyles;
+    session->GetDefaultColorStyleSettings(defaultColorStyles);
+    ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
+    session->SetColorStyleSetting(styleSetting);
     session->UnlockForControl();
 }
 
@@ -548,8 +569,13 @@ void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->IsPortraitThemeSupported();
     std::vector<int32_t> supportedRotation = {0, 90, 180, 270};
     session->GetSupportedVideoRotations(supportedRotation);
+    std::vector<float> depthFusionThreshold = {0.0};
+    session->GetDepthFusionThreshold(depthFusionThreshold);
+    session->EnableDepthFusion(data.ReadBool());
+    session->IsDepthFusionEnabled();
     session->IsVideoRotationSupported();
     session->SetVideoRotation(data.ReadInt32());
+    session->SetIsAutoSwitchDeviceStatus(data.ReadBool());
     FoldCallback *fold = new FoldCallback(session);
     fold->OnFoldStatusChanged(FoldStatus::UNKNOWN_FOLD);
     session->ExecuteAllFunctionsInMap();
@@ -564,7 +590,6 @@ void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetUsage(UsageType::BOKEH, data.ReadBool());
     session->IsAutoDeviceSwitchSupported();
     session->EnableAutoDeviceSwitch(data.ReadBool());
-    session->SetIsAutoSwitchDeviceStatus(data.ReadBool());
     pid_t pid = data.ReadInt32();
     session->CameraServerDied(pid);
     session->CreateCameraAbilityContainer();
@@ -578,6 +603,7 @@ void TestOther3(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     data.WriteRawData(rawData, size);
     QualityPrioritization qualityPrioritization = static_cast<QualityPrioritization>(
         data.ReadInt32() % (QualityPrioritization::HIGH_QUALITY + NUM_TWO));
+    session->LockForControl();
     session->SetQualityPrioritization(qualityPrioritization);
     session->EnableAutoAigcPhoto(data.ReadBool());
     session->ProcessProfilesAbilityId(g_sceneMode);
@@ -606,6 +632,18 @@ void TestOther3(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->IsColorReservationTypeSupported(colorReservationType, isSupported);
     session->GetColorReservation(colorReservationType);
     session->SetColorReservation(colorReservationType);
+    WhiteBalanceMode mode = AWB_MODE_LOCKED;
+    session->SetWhiteBalanceMode(mode);
+    std::vector<WhiteBalanceMode> supportedWhiteBalanceModes = {};
+    session->GetSupportedWhiteBalanceModes(supportedWhiteBalanceModes);
+    session->IsWhiteBalanceModeSupported(mode, isSupported);
+    session->GetWhiteBalanceMode(mode);
+    std::vector<int32_t> whiteBalanceRange = {};
+    session->GetManualWhiteBalanceRange(whiteBalanceRange);
+    session->IsManualWhiteBalanceSupported(isSupported);
+    session->SetManualWhiteBalance(data.ReadInt32());
+    session->SetWhiteBalanceMode(WhiteBalanceMode::AWB_MODE_AUTO);
+    session->UnlockForControl();
 }
 
 } // namespace StreamRepeatStubFuzzer

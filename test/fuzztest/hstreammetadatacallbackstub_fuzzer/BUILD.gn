@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,9 +15,9 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-ohos_fuzztest("HStreamCaptureStubFuzzTest") {
+ohos_fuzztest("HStreamMetadataCallbackStubFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
-  fuzz_config_file = "../hstreamcapturestubfuzztest_fuzzer"
+  fuzz_config_file = "../hstreammetadatacallbackstub_fuzzer"
 
   include_dirs = [
     "${multimedia_camera_framework_path}/common/utils",
@@ -60,7 +60,10 @@ ohos_fuzztest("HStreamCaptureStubFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [ "hstream_capture_stub_fuzzer.cpp" ]
+  sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_metadata_callback_stub.cpp",
+    "hstream_metadata_callback_stub_fuzzer.cpp",
+  ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
@@ -104,5 +107,5 @@ ohos_fuzztest("HStreamCaptureStubFuzzTest") {
 
 group("fuzztest") {
   testonly = true
-  deps = [ ":HStreamCaptureStubFuzzTest" ]
+  deps = [ ":HStreamMetadataCallbackStubFuzzTest" ]
 }

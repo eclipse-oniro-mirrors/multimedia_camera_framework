@@ -32,6 +32,7 @@ namespace CameraInputFuzzer {
 const int32_t LIMITSIZE = 4;
 const int32_t CAM_NUM = 2;
 bool g_isCameraDevicePermission = false;
+static pid_t g_pid = 0;
 
 void GetPermission()
 {
@@ -68,6 +69,28 @@ void Test(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_LOG(!camera, "CameraInputFuzzer: Camera is null Error");
     auto input = manager->CreateCameraInput(camera);
     CHECK_ERROR_RETURN_LOG(!input, "CameraInputFuzzer: CreateCameraInput Error");
+    std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback
+        = std::make_shared<CameraOcclusionDetectCallbackTest>();
+    input->SetOcclusionDetectCallback(cameraOcclusionDetectCallback);
+    std::shared_ptr<CameraDeviceServiceCallback> cameraDeviceServiceCallback =
+        std::make_shared<CameraDeviceServiceCallback>(input);
+    uint64_t timestamp = 10;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
+    const int32_t defaultItems = 10;
+    const int32_t defaultDataLength = 100;
+    int32_t count = 1;
+    int32_t isOcclusionDetected = 1;
+    int32_t isLensDirtyDetected = 1;
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    metadata->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count);
+    cameraDeviceServiceCallback->OnResult(timestamp, metadata);
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    metadata->addEntry(OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &isLensDirtyDetected, count);
+    cameraDeviceServiceCallback->OnResult(timestamp, metadata);
+    metadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    metadata->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count);
+    metadata->addEntry(OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &isLensDirtyDetected, count);
+    cameraDeviceServiceCallback->OnResult(timestamp, metadata);
     TestInput(input, rawData, size);
 }
 
@@ -113,6 +136,8 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->GetOcclusionDetectCallback();
     input->UpdateSetting(meta);
     input->MergeMetadata(meta, meta);
+    input->closeDelayed(data.ReadInt32());
+    input->CameraServerDied(g_pid);
 }
 
 } // namespace StreamRepeatStubFuzzer
