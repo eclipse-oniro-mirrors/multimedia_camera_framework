@@ -2616,7 +2616,7 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
         return;
     }
     if (thumbnailListener_ != nullptr) {
-        thumbnailListener_->RemoveCallbackRef(eventName, callback)
+        thumbnailListener_->RemoveCallbackRef(eventName, callback);
         if (thumbnailListener_->taskManager_) {
             thumbnailListener_->taskManager_->CancelAllTasks();
             thumbnailListener_->taskManager_.reset();
