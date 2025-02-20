@@ -488,7 +488,7 @@ int32_t HCameraDevice::CloseDevice()
             hdiCameraDevice_->Close();
             ResetCachedSettings();
             ResetDeviceOpenLifeCycleSettings();
-            HCameraDeviceManager::GetInstance()->RemoveDevice();
+            HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
             HandlePrivacyAfterCloseDevice();
@@ -1406,7 +1406,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }
-    HCameraDeviceManager::GetInstance()->RemoveDevice();
+    HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);

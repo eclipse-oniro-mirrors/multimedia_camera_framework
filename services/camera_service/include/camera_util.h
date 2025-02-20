@@ -18,10 +18,12 @@
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
+#include <iostream>
 #include <iterator>
 #include <limits.h>
 #include <malloc.h>
 #include <sstream>
+#include <vector>
 
 #include "camera_metadata_info.h"
 #include "safe_map.h"
@@ -56,6 +58,15 @@ static const std::string CAMERA_STATE = "cameraState";
 static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
+static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
+#ifdef NOTIFICATION_ENABLE
+// beauty notification
+static const std::string EVENT_CAMERA_BEAUTY_NOTIFICATION = "CAMERA_BEAUTY_NOTIFICATION";
+static const std::string BEAUTY_NOTIFICATION_ACTION_PARAM = "currentFlag";
+static const int32_t BEAUTY_STATUS_OFF = 0;
+static const int32_t BEAUTY_STATUS_ON = 1;
+static const int32_t BEAUTY_LEVEL = 100;
+#endif
 
 enum CamType {
     SYSTEM = 0,
@@ -171,6 +182,8 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
     std::string& deviceClass);
 
 bool CheckSystemApp();
+
+std::vector<std::string> SplitString(const std::string& input, char delimiter);
 
 inline bool IsCameraDebugOn()
 {

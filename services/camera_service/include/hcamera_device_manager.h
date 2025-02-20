@@ -169,7 +169,7 @@ public:
     *
     * @param device Device that have been turned off.
     */
-    void RemoveDevice();
+    void RemoveDevice(const std::string &cameraId);
 
     /**
     * @brief Get cameraHolder by active process pid.
@@ -191,6 +191,8 @@ public:
     * @return Returns pointer to camera device manager instance.
     */
     pid_t GetActiveClient();
+
+    std::vector<sptr<HCameraDeviceHolder>> GetActiveCameraHolders();
 
     void SetStateOfACamera(std::string cameraId, int32_t state);
 
@@ -214,6 +216,7 @@ private:
     SafeMap<pid_t, sptr<HCameraDeviceHolder>> pidToCameras_;
     SafeMap<std::string, int32_t> stateOfACamera_;
     std::mutex mapMutex_;
+    std::vector<sptr<HCameraDeviceHolder>> activeCameras_;
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
     std::string GetACameraId();

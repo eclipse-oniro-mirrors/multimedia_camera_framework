@@ -24,6 +24,7 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "camera_datashare_helper.h"
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
@@ -36,7 +37,6 @@
 #include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
-#include "datashare_helper.h"
 #include "icamera_service_callback.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
@@ -164,8 +164,13 @@ protected:
 
 private:
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
+    bool SetMuteModeFromDataShareHelper();
+    void OnReceiveEvent(const EventFwk::CommonEventData &data);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
+#ifdef NOTIFICATION_ENABLE
+    int32_t SetBeauty(int32_t beautyStatus);
+#endif
 #ifdef DEVICE_MANAGER
     class DeviceInitCallBack;
 #endif
@@ -198,16 +203,6 @@ private:
 
     private:
         wptr<HCameraService> cameraService_;
-    };
-
-    class CameraDataShareHelper {
-    public:
-        CameraDataShareHelper() = default;
-        ~CameraDataShareHelper() = default;
-        int32_t QueryOnce(const std::string key, std::string &value);
-        int32_t UpdateOnce(const std::string key, std::string value);
-    private:
-        std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
     };
 
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,

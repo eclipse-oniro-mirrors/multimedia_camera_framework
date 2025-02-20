@@ -100,6 +100,11 @@ private:
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
+#ifdef NOTIFICATION_ENABLE
+    void UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void CancelNotification();
+    bool IsNeedBeautyNotification();
+#endif
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
