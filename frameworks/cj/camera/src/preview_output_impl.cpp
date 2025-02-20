@@ -148,7 +148,7 @@ CArrFrameRateRange CJPreviewOutput::GetSupportedFrameRates(int32_t *errCode)
             retArrFrameRateRange[i].max = supportedFrameRatesRange[i][1];
         }
         cArrFrameRateRange.head = retArrFrameRateRange;
-        cArrFrameRateRange.size = supportedFrameRatesRange.size();
+        cArrFrameRateRange.size = static_cast<int64_t>(supportedFrameRatesRange.size());
     } else {
         MEDIA_INFO_LOG("supportedFrameRates is empty");
     }

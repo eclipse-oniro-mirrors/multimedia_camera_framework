@@ -165,7 +165,7 @@ CArrFrameRateRange CJVideoOutput::GetSupportedFrameRates(int32_t *errCode)
             retArrFrameRateRange[i].max = supportedFrameRatesRange[i][1];
         }
         cArrFrameRateRange.head = retArrFrameRateRange;
-        cArrFrameRateRange.size = supportedFrameRatesRange.size();
+        cArrFrameRateRange.size = static_cast<int64_t>(supportedFrameRatesRange.size());
     } else {
         MEDIA_ERR_LOG("cArrFrameRateRange is empty!");
     }
