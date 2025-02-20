@@ -524,12 +524,10 @@ bool CameraConcurrentSelector::canOpenCameraconcurrently(std::vector<sptr<HCamer
             "concurrentCameraTable_ current group: %{public}s", ss.str().c_str());
     }
     if (reservedCameras.size() == 0) {
-        MEDIA_DEBUG_LOG("wwc concurrent 11");
         return true;
     }
     std::vector<int32_t> cameraIds;
     for (const auto& camera : reservedCameras) {
-        MEDIA_DEBUG_LOG("wwc concurrent 12");
         cameraIds.push_back(GetCameraIdNumber(camera->GetDevice()->GetCameraId()));
     }
     for (const auto& group : concurrentCameraTable) {
@@ -540,10 +538,8 @@ bool CameraConcurrentSelector::canOpenCameraconcurrently(std::vector<sptr<HCamer
                 break;
             }
         }
-        MEDIA_DEBUG_LOG("wwc concurrent 13");
         if (allCamerasInGroup) return true;
     }
-    MEDIA_DEBUG_LOG("wwc concurrent 14");
     return false;
 }
 
