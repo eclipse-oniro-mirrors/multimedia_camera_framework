@@ -1182,21 +1182,21 @@ void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::Servic
 void HCameraHostManager::GetPhysicCameraId(int32_t position, std::string &cameraid)
 {
     std::vector<std::string> cameraIds;
-    MEDIA_DEBUG_LOG("wwc GetPhysicCameraId target position %{public}d", position);
+    MEDIA_DEBUG_LOG("GetPhysicCameraId target position %{public}d", position);
     GetCameraIdSortedByCameraType(cameraIds);
     for (auto iterOfCameraIds : cameraIds) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
         GetCameraAbility(iterOfCameraIds, ability);
         camera_metadata_item_t itemp;
         int issup = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &itemp);
-        MEDIA_DEBUG_LOG("wwc GetPhysicCameraId cameraid = %{public}s CONCURRENT_TYPE is support limted = %{public}d",
+        MEDIA_DEBUG_LOG("GetPhysicCameraId cameraid = %{public}s CONCURRENT_TYPE is support limted = %{public}d",
             iterOfCameraIds.c_str(), issup);
         issup = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &itemp);
-        MEDIA_DEBUG_LOG("wwc GetPhysicCameraId cameraid = %{public}s CONCURRENT_SUPPORTED_CAMERAS"
+        MEDIA_DEBUG_LOG("GetPhysicCameraId cameraid = %{public}s CONCURRENT_SUPPORTED_CAMERAS"
             "is support limted = %{public}d",
             iterOfCameraIds.c_str(), issup);
         issup = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_LIMITED_CAPABILITIES, &itemp);
-        MEDIA_DEBUG_LOG("wwc GetPhysicCameraId cameraid = %{public}s LIMITED_CAPABILITIES "
+        MEDIA_DEBUG_LOG("GetPhysicCameraId cameraid = %{public}s LIMITED_CAPABILITIES "
             "is support limted = %{public}d",
             iterOfCameraIds.c_str(), issup);
 
@@ -1208,13 +1208,12 @@ void HCameraHostManager::GetPhysicCameraId(int32_t position, std::string &camera
         ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
         cameratypeNow = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
         if (positionNow != position || cameratypeNow == OHOS_CAMERA_TYPE_UNSPECIFIED) {
-            MEDIA_DEBUG_LOG("wwc, iter cameraId : %{public}s continue, position: %{public}d, type: %{public}d",
+            MEDIA_DEBUG_LOG("iter cameraId : %{public}s continue, position: %{public}d, type: %{public}d",
                 iterOfCameraIds.c_str(), positionNow, cameratypeNow);
             continue;
         }
         ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &item);
         if (ret == CAM_META_SUCCESS) {
-            MEDIA_INFO_LOG("wwc get success for OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS");
             cameraid = iterOfCameraIds;
             break;
         }
