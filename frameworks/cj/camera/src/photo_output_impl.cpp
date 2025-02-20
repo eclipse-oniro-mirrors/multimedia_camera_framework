@@ -153,7 +153,6 @@ int32_t CJPhotoOutput::CreatePhotoOutputWithProfile(Profile &profile)
     sptr<Surface> photoSurface;
     MEDIA_INFO_LOG("create surface as consumer");
     photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
-    sPhotoSurface_ = photoSurface;
     if (photoSurface == nullptr) {
         MEDIA_ERR_LOG("failed to get surface");
         return CameraError::CAMERA_SERVICE_ERROR;
