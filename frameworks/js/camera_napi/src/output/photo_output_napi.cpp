@@ -2657,7 +2657,7 @@ void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
 void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CHECK_ERROR_RETURN_LOG(sPhotoSurface_ == nullptr, "sPhotoSurface_ is null!");
+    CHECK_ERROR_RETURN_LOG(photoOutput_->GetPhotoSurface() == nullptr, "PhotoSurface is null!");
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new deferred photoListener and register surface consumer listener");
         sptr<PhotoListener> photoListener = new (std::nothrow)
