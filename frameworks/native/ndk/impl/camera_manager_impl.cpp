@@ -636,7 +636,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
     CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
     int32_t retCode =
-    CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput, surface);
+        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput, surface);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
     CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
