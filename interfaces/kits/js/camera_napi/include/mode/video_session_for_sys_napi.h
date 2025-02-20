@@ -24,6 +24,27 @@
 namespace OHOS {
 namespace CameraStandard {
 static const char VIDEO_SESSION_FOR_SYS_NAPI_CLASS_NAME[] = "VideoSessionForSys";
+
+class FocusTrackingCallbackListener : public FocusTrackingCallback, public ListenerBase,
+    public std::enable_shared_from_this<FocusTrackingCallbackListener> {
+public:
+    explicit FocusTrackingCallbackListener(napi_env env) : ListenerBase(env) {}
+    virtual ~FocusTrackingCallbackListener() = default;
+    void OnFocusTrackingInfoAvailable(FocusTrackingInfo &focusTrackingInfo) const override;
+
+private:
+    void OnFocusTrackingInfoCallback(FocusTrackingInfo &focusTrackingInfo) const;
+    void OnFocusTrackingInfoCallbackAsync(FocusTrackingInfo &focusTrackingInfo) const;
+};
+
+struct FocusTrackingCallbackInfo {
+    FocusTrackingInfo focusTrackingInfo_;
+    weak_ptr<const FocusTrackingCallbackListener> listener_;
+    FocusTrackingCallbackInfo(FocusTrackingInfo focusTrackingInfo,
+        shared_ptr<const FocusTrackingCallbackListener> listener)
+        : focusTrackingInfo_(focusTrackingInfo), listener_(listener) {}
+};
+
 class VideoSessionForSysNapi : public VideoSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -37,7 +58,14 @@ public:
     napi_env env_;
     sptr<VideoSession> videoSession_;
     static thread_local napi_ref sConstructor_;
+    std::shared_ptr<FocusTrackingCallbackListener> focusTrackingInfoCallback_;
+
+protected:
+    void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
-}
-}
+} // namespace CameraStandard
+} // namespace OHOS
 #endif /* VIDEO_SESSION_FOR_SYS_NAPI_H */

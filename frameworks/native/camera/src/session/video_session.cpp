@@ -25,6 +25,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
+constexpr int32_t FOCUS_TRACKING_REGION_DATA_CNT = 4;
+
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
@@ -158,6 +160,24 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType p
 }
 } // namespace
 
+const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> VideoSession::metaToFwFocusTrackingMode_ = {
+    { OHOS_CAMERA_FOCUS_TRACKING_AUTO, FocusTrackingMode::FOCUS_TRACKING_MODE_AUTO }
+};
+
+FocusTrackingInfo::FocusTrackingInfo(const FocusTrackingMode mode, const Rect rect) : mode_(mode), region_(rect)
+{}
+
+FocusTrackingInfo::FocusTrackingInfo(const FocusTrackingInfoParms& parms)
+{
+    mode_ = parms.trackingMode;
+    region_ = parms.trackingRegion;
+}
+
+VideoSession::~VideoSession()
+{
+    focusTrackingInfoCallback_ = nullptr;
+}
+
 bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
@@ -281,6 +301,108 @@ int32_t VideoSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio pr
 bool VideoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
     return CanSetFrameRateRangeForOutput(minFps, maxFps, curOutput) ? true : false;
+}
+
+void VideoSession::SetFocusTrackingInfoCallback(std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback)
+{
+    std::lock_guard<std::mutex> lock(videoSessionCallbackMutex_);
+    focusTrackingInfoCallback_ = focusTrackingInfoCallback;
+}
+
+std::shared_ptr<FocusTrackingCallback> VideoSession::GetFocusTrackingCallback()
+{
+    std::lock_guard<std::mutex> lock(videoSessionCallbackMutex_);
+    return focusTrackingInfoCallback_;
+}
+
+void VideoSession::ProcessFocusTrackingInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+{
+    FocusTrackingMode mode = FOCUS_TRACKING_MODE_AUTO;
+    Rect region = {0.0, 0.0, 0.0, 0.0};
+
+    auto focusTrackingCallback = GetFocusTrackingCallback();
+    if (focusTrackingCallback == nullptr) {
+        MEDIA_DEBUG_LOG("%{public}s focusTrackingCallback is null", __FUNCTION__);
+        return;
+    }
+
+    bool ret = ProcessFocusTrackingModeInfo(result, mode);
+    if (!ret) {
+        MEDIA_DEBUG_LOG("ProcessFocusTrackingModeInfo failed");
+        return;
+    }
+    ret = ProcessRectInfo(result, region);
+    if (!ret) {
+        MEDIA_DEBUG_LOG("ProcessRectInfo failed");
+        return;
+    }
+    FocusTrackingInfo focusTrackingInfo(mode, region);
+    focusTrackingCallback->OnFocusTrackingInfoAvailable(focusTrackingInfo);
+}
+
+bool VideoSession::ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+    FocusTrackingMode& mode)
+{
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_TRACKING_MODE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_DEBUG_LOG("%{public}s FindCameraMetadataItem failed", __FUNCTION__);
+        return false;
+    }
+    auto itr = metaToFwFocusTrackingMode_.find(static_cast<camera_focus_tracking_mode_t>(item.data.u8[0]));
+    CHECK_ERROR_RETURN_RET_LOG(itr == metaToFwFocusTrackingMode_.end(), false,
+        "%{public}s trackingMode data error", __FUNCTION__);
+    mode = itr->second;
+    return true;
+}
+
+bool VideoSession::ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+    Rect& rect)
+{
+    constexpr int32_t scale = 1000000;
+    constexpr int32_t offsetOne = 1;
+    constexpr int32_t offsetTwo = 2;
+    constexpr int32_t offsetThree = 3;
+
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "metadata is nullptr");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_TRACKING_REGION, &item);
+    if (ret != CAM_META_SUCCESS || item.count < FOCUS_TRACKING_REGION_DATA_CNT) {
+        MEDIA_DEBUG_LOG("%{public}s FindCameraMetadataItem failed", __FUNCTION__);
+        return false;
+    }
+    int32_t offsetTopLeftX = item.data.i32[0];
+    int32_t offsetTopLeftY = item.data.i32[offsetOne];
+    int32_t offsetBottomRightX = item.data.i32[offsetTwo];
+    int32_t offsetBottomRightY = item.data.i32[offsetThree];
+
+    double topLeftX = scale - offsetBottomRightY;
+    double topLeftY = offsetTopLeftX;
+    double width = offsetBottomRightY - offsetTopLeftY;
+    double height = offsetBottomRightX - offsetTopLeftX;
+
+    topLeftX = topLeftX < 0 ? 0 : topLeftX;
+    topLeftX = topLeftX > scale ? scale : topLeftX;
+    topLeftY = topLeftY < 0 ? 0 : topLeftY;
+    topLeftY = topLeftY > scale ? scale : topLeftY;
+
+    rect = { topLeftX / scale, topLeftY / scale, width / scale, height / scale};
+    return true;
+}
+
+void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+{
+    MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
+    auto session = session_.promote();
+    CHECK_ERROR_RETURN_LOG(session == nullptr, "%{public}s session is null", __FUNCTION__);
+
+    (void)timestamp;
+    session->ProcessAutoFocusUpdates(result);
+    session->ProcessMacroStatusChange(result);
+    session->ProcessLcdFlashStatusUpdates(result);
+    session->ProcessFocusTrackingInfo(result);
 }
 } // namespace CameraStandard
 } // namespace OHOS

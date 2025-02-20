@@ -141,6 +141,8 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
     ability->isLcdFlashSupported_ = session->IsLcdFlashSupported();
     ability->supportedExposureModes_ = session->GetSupportedExposureModes();
     ability->supportedFocusModes_ = session->GetSupportedFocusModes();
+    session->GetSupportedFocusRangeTypes(ability->supportedFocusRangeTypes_);
+    session->GetSupportedFocusDrivenTypes(ability->supportedFocusDrivenTypes_);
     ability->exposureBiasRange_ = session->GetExposureBiasRange();
     ability->supportedBeautyTypes_ = session->GetSupportedBeautyTypes();
     for (auto it : g_fwkBeautyTypeMap_) {
