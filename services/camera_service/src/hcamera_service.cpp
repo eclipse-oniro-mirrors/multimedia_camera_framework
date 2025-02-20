@@ -2111,7 +2111,7 @@ int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std
 int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
 {
-    MEDIA_DEBUG_LOG("wwc HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
+    MEDIA_DEBUG_LOG("HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
     return cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
 }
 } // namespace CameraStandard
