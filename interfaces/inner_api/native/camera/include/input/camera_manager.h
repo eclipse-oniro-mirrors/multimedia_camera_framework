@@ -778,7 +778,6 @@ public:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         return serviceProxyPrivate_;
     }
-    std::vector<dmDeviceInfo> GetDmDeviceInfo();
     std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
 
     struct ProfilesWrapper {
@@ -812,7 +811,7 @@ public:
     void GetDetailInfofordouble(double* originInfo, uint32_t start, uint32_t end, StreamInfo &streamInfo);
     void GetAbilityStructofConcurrentLimted(std::vector<int32_t> &vec, double* originInfo, int length);
     void GetAbilityStructofConcurrentLimtedfloat(std::vector<float> &vec, double* originInfo, int length);
-         std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    std::vector<dmDeviceInfo> GetDmDeviceInfo();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     std::unordered_map<std::string, CameraConcurrentLimtedCapability>cameraConLimCapMap_;
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
