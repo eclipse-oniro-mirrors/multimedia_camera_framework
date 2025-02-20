@@ -1504,11 +1504,8 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
     for (auto cameraDev : cameraDeviceArrray) {
         CameraPosition cameraPosition = cameraDev->GetPosition();
         string idofthis;
-        MEDIA_INFO_LOG("wwc GetConcurrentType position zhuanhuan before: %{public}d", cameraPosition);
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
-        MEDIA_INFO_LOG("wwc GetConcurrentType position zhuanhuan hou: %{public}d", iter->second);
         serviceProxy->GetIdforCameraConcurrentType(iter->second, idofthis);
-        MEDIA_INFO_LOG("wwc GetConcurrentType get phyId: %{public}s, %{public}d", idofthis.c_str(), iter->second);
 
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
         retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, cameraAbility);
@@ -1536,14 +1533,13 @@ bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int3
         if (cameraIdv[i].empty()) {
             MEDIA_ERR_LOG("CameraManager::CheckCameraConcurrentId get invalid cameraId");
         }
-        MEDIA_DEBUG_LOG("wwc check cmaerId: %{public}s", cameraIdv[i].c_str());
         std::regex regex("\\d+$");
         std::smatch match;
         std::string cameraId;
         if (std::regex_search(cameraIdv[i], match, regex)) {
             cameraId = match[0];
         }
-        MEDIA_DEBUG_LOG("wwc CameraManager::CheckCameraConcurrentId check cameraId: %{public}s", cameraId.c_str());
+        MEDIA_DEBUG_LOG("CameraManager::CheckCameraConcurrentId check cameraId: %{public}s", cameraId.c_str());
         if (!idmap.count(cameraId)) {
             return false;
         }
@@ -1574,9 +1570,9 @@ bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cam
     camera_metadata_item_t item;
     retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &item);
     if (retCode == CAMERA_OK) {
-        MEDIA_DEBUG_LOG("wwc success find OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS");
+        MEDIA_DEBUG_LOG("success find OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS");
         for (uint32_t i = 0; i < item.count; i++) {
-            MEDIA_DEBUG_LOG("wwc concurrent cameras: %{public}d", item.data.i32[i]);
+            MEDIA_DEBUG_LOG("concurrent cameras: %{public}d", item.data.i32[i]);
         }
     }
     int32_t* originInfo = item.data.i32;
