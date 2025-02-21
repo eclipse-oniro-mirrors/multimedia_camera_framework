@@ -2106,7 +2106,8 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     auto it = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     CHECK_EXECUTE(it != g_metaFocusModeMap_.end(), ProcessFocusDistanceUpdates(result));
     // continuous focus mode do not callback focusStateChange
-    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() || it->second != FOCUS_MODE_AUTO);
+    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() ||
+        (it->second != FOCUS_MODE_AUTO && it->second != FOCUS_MODE_CONTINUOUS_AUTO));
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
