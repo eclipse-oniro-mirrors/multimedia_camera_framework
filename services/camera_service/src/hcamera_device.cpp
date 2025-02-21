@@ -1330,7 +1330,7 @@ bool HCameraDevice::CanOpenCamera()
     bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this, cameraConcurrentType_);
     if (cameraNeedEvict.size() != 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
-       for (auto deviceItem : cameraNeedEvict) {
+        for (auto deviceItem : cameraNeedEvict) {
             deviceItem->OnError(DEVICE_PREEMPT, 0);
             deviceItem->CloseDevice();
         }

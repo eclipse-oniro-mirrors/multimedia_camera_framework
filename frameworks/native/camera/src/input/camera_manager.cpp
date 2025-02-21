@@ -433,7 +433,8 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     return CameraErrorCode::SUCCESS;
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
+    sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface)
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
@@ -472,12 +473,13 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     return CameraErrorCode::SUCCESS;
 }
 
-int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer, sptr<PhotoOutput> *pPhotoOutput,
-    sptr<Surface> photoSurface)
+int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer,
+    sptr<PhotoOutput> *pPhotoOutput, sptr<Surface> photoSurface)
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surfaceProducer == nullptr),
+        CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
     CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
         || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
@@ -1530,7 +1532,7 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
 }
 
 bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
-        std::vector<std::string> &cameraIdv)
+    std::vector<std::string> &cameraIdv)
 {
     for (int i = 1; i < cameraIdv.size(); i++) {
         if (cameraIdv[i].empty()) {

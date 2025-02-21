@@ -42,7 +42,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
     for (auto holder : holders) {
         if (holder->GetAccessTokenId() != result.tokenID) {
             MEDIA_INFO_LOG("PermissionStatusChangeCb::PermStateChangeCallback not current tokenId, checking continue");
-            continue;        
+            continue;
         }
         auto device = holder->GetDevice();
         if ((result.permStateChangeType == 0) && (device != nullptr)) {

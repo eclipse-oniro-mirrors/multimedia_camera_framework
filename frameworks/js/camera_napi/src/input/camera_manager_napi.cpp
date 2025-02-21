@@ -1056,7 +1056,6 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
         return nullptr;
     }
 
-
     std::vector<string>cameraIdv = {};
     cameraManagerNapi->ParseGetCameraConcurrentInfos(env, argv[PARAM0], cameraIdv);
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
