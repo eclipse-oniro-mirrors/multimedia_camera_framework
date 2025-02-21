@@ -1042,7 +1042,7 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
         return nullptr;
     }
     uint32_t length = 0;
-    napi_get_array_length(env, arrayParam, &length);
+    napi_get_array_length(env, argv, &length);
     if (length < 1) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
             "CameraManagerNapi::GetCameraConcurrentInfos can not get argv");
