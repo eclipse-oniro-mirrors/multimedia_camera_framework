@@ -204,9 +204,6 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
  * @version 1.0
  */
 Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported)
- * @version 1.0
- */
-Camera_ErrorCode OH_VideoOutput_IsMirrorSupported(Camera_VideoOutput* videoOutput, bool* isSupported)
 {
     CHECK_ERROR_RETURN_RET_LOG(videoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, videoOutput is null!");
