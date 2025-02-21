@@ -89,6 +89,12 @@ int32_t ServiceToCameraError(int32_t ret)
         case IPC_STUB_CREATE_BUS_SERVER_ERR:
             err = CameraErrorCode::SERVICE_FATL_ERROR;
             break;
+        case CAMERA_DEVICE_SWITCH_FREQUENT:
+            err = CameraErrorCode::DEVICE_SWITCH_FREQUENT;
+            break;
+        case CAMERA_DEVICE_LENS_RETRACTED:
+            err = CameraErrorCode::CAMERA_LENS_RETRACTED;
+            break;
         default:
             MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
             break;
