@@ -194,12 +194,6 @@ Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutp
 }
 
 /**
-    "Invalid argument, frameRateRange is null!");
-
-    return videoOutput->GetActiveFrameRate(frameRateRange);
-}
-
-/**
  * @since 15
  * @version 1.0
  */
