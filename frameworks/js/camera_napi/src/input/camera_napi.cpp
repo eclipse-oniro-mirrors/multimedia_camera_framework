@@ -107,6 +107,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY(
             "MetadataObjectType", CreateObjectWithMap(env, "MetadataObjectType", mapMetadataObjectType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("HostNameType", CreateObjectWithMap(env, "HostNameType", mapHostNameType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "HostDeviceType", CreateObjectWithMap(env, "HostDeviceType", mapHostDeviceType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("SceneMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
