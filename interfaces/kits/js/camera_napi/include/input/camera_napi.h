@@ -150,6 +150,12 @@ static const std::unordered_map<std::string, int32_t> mapHostNameType = {
     {"TABLE", 0x11},
 };
 
+static const std::unordered_map<std::string, int32_t> mapHostDeviceType = {
+    {"UNKNOWN_TYPE", 0x00},
+    {"PHONE", 0x0E},
+    {"TABLET", 0x11},
+};
+
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},
