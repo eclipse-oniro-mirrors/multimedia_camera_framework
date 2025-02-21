@@ -184,7 +184,7 @@ private:
     template<typename T>
     static void RemoveDuplicatesProfile(std::vector<T>& profiles);
     static napi_value CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
-        std::vector<bool> &CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+        std::vector<bool> &cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
     void ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam,
         std::vector<string> &cameraIdv);

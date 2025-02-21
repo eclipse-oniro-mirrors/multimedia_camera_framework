@@ -787,7 +787,7 @@ public:
     };
 
     void GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
-        std::vector<bool> CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+        std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
     void GetMetadataInfos(camera_metadata_item_t item,
         std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
@@ -796,7 +796,7 @@ public:
         ProfilesWrapper &profilesWrapper, int32_t modeName,
         shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
     bool GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
-        std::vector<bool> &CameraConcurrentType);
+        std::vector<bool> &cameraConcurrentType);
     bool CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cameraDeviceArrray);
     bool CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
         std::vector<std::string> &cameraIdv);
@@ -813,9 +813,9 @@ public:
     void GetAbilityStructofConcurrentLimtedfloat(std::vector<float> &vec, double* originInfo, int length);
     std::vector<dmDeviceInfo> GetDmDeviceInfo();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
-    std::unordered_map<std::string, CameraConcurrentLimtedCapability>cameraConLimCapMap_;
+    std::unordered_map<std::string, CameraConcurrentLimtedCapability> cameraConLimCapMap_;
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
-    friend int CameraInput::Open(int32_t CameraConcurrentType);
+    friend int CameraInput::Open(int32_t cameraConcurrentType);
 
 protected:
     // Only for UT

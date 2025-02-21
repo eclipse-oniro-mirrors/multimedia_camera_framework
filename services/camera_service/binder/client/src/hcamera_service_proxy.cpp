@@ -898,7 +898,6 @@ int32_t HCameraServiceProxy::GetIdforCameraConcurrentType(int32_t cameraPosition
     data.WriteInt32(cameraPosition);
 
     int error = Remote()->SendRequest(
-//        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_REQUIRE_MEMORY_SIZE),
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GETID_FOR_CONCURRENT),
         data, reply, option);
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "GetIdforCameraConcurrentType, error: %{public}d", error);

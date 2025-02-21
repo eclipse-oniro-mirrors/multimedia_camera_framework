@@ -50,7 +50,7 @@ public:
     /**
      * @brief open camera.
      */
-    virtual int Open(int32_t CameraConcurrentType) = 0;
+    virtual int Open(int32_t cameraConcurrentType) = 0;
 
     /**
      * @brief close camera.

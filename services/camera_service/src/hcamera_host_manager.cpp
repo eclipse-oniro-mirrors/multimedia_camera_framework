@@ -833,9 +833,13 @@ int32_t HCameraHostManager::GetCameraIdSortedByCameraType(std::vector<std::strin
     for (auto id : cameraIds) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
         GetCameraAbility(id, ability);
-        int32_t cameratypenow;
+        int32_t cameratypenow = 0;
         camera_metadata_item_t item;
         int32_t ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_TYPE, &item);
+        if (item.count < 1) {
+            cameraTypes.emplace_back(static_cast<camera_type_enum_t>(cameratypenow));
+            continue;
+        }
         cameratypenow = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
         cameraTypes.emplace_back(static_cast<camera_type_enum_t>(cameratypenow));
     }

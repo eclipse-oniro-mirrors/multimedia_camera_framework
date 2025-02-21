@@ -180,9 +180,9 @@ std::vector<float> CameraInfo::GetExposureBiasRange()
     if (cameraManager_->GetInstance().isConcurrentLimted == 1) {
         for (int i = 0; i < cameraManager_->GetInstance().LimtedCapabilitySave.compensation.count;
             i++) {
-                float num = static_cast<float>(cameraManager_->GetInstance().
-                    LimtedCapabilitySave.compensation.range[i]);
-                exposureBiasRange_.push_back(num);
+            float num = static_cast<float>(cameraManager_->GetInstance().
+                LimtedCapabilitySave.compensation.range[i]);
+            exposureBiasRange_.push_back(num);
         }
         return exposureBiasRange_;
     }

@@ -77,33 +77,33 @@ typedef struct dmDeviceInfo {
 
 struct flashmode {
     int count = 0;
-    std::vector<int32_t>mode = {};
+    std::vector<int32_t> mode = {};
 };
 
 struct exposuremode {
     int count = 0;
-    std::vector<int32_t>mode = {};
+    std::vector<int32_t> mode = {};
 };
 
 struct zoomratiorange {
     int count = 0;
-    std::vector<int32_t>mode = {};
-    std::unordered_map<int32_t, std::pair<float, float>>range;
+    std::vector<int32_t> mode = {};
+    std::unordered_map<int32_t, std::pair<float, float>> range;
 };
 
 struct compensationrange {
     int count = 0;
-    std::vector<float>range = {};
+    std::vector<float> range = {};
 };
 
 struct focusmode {
     int count = 0;
-    std::vector<int32_t>mode = {};
+    std::vector<int32_t> mode = {};
 };
 
 struct stabilizationmode {
     int count = 0;
-    std::vector<int32_t>mode = {};
+    std::vector<int32_t> mode = {};
 };
 
 struct CameraConcurrentLimtedCapability {

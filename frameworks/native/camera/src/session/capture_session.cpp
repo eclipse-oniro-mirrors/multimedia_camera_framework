@@ -1496,7 +1496,7 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedStabilizationMode camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.stabilizationmodes.count; i++) {
             auto num = static_cast<CameraVideoStabilizationMode>(cameraDevNow->limtedCapabilitySave_.
                 stabilizationmodes.mode[i]);
@@ -1560,7 +1560,7 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode>& sup
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedExposureModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.exposuremodes.count; i++) {
             camera_exposure_mode_enum_t num =
                 static_cast<camera_exposure_mode_enum_t>(cameraDevNow->limtedCapabilitySave_.exposuremodes.mode[i]);
@@ -1878,7 +1878,7 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode>& supported
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedFocusModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count; i++) {
             camera_focus_mode_enum_t num = static_cast<camera_focus_mode_enum_t>(cameraDevNow->
                 limtedCapabilitySave_.focusmodes.mode[i]);
@@ -2279,7 +2279,7 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode>& supported
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedFlashModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.flashmodes.count; i++) {
             camera_flash_mode_enum_t num = static_cast<camera_flash_mode_enum_t>
                 (cameraDevNow->limtedCapabilitySave_.flashmodes.mode[i]);
@@ -2454,7 +2454,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
 
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
 
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         auto itr = cameraDevNow->limtedCapabilitySave_.ratiorange.range.find(static_cast<int32_t>(GetMode()));
         if (itr != cameraDevNow->limtedCapabilitySave_.ratiorange.range.end()) {
             zoomRatioRange.push_back(itr->second.first);
@@ -3573,7 +3573,7 @@ ColorSpaceInfo CaptureSession::GetSupportedColorSpaceInfo()
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), colorSpaceInfo,
         "CaptureSession::GetSupportedColorSpaceInfo camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         return cameraDevNow->limtedCapabilitySave_.colorspaces;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();

@@ -255,7 +255,7 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
     // Return Can the cameras that must be left be concurrent.
     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetConflictDevices reservedCameras size: %{public}zu",
         concurrentSelector_->GetCamerasRetainable().size());
-    return concurrentSelector_->canOpenCameraconcurrently(concurrentSelector_->GetCamerasRetainable(),
+    return concurrentSelector_->CanOpenCameraconcurrently(concurrentSelector_->GetCamerasRetainable(),
         concurrentSelector_->GetConcurrentCameraTable());
 }
 
@@ -509,7 +509,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::SortDeviceByPriorit
     return sortedList;
 }
 
-bool CameraConcurrentSelector::canOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
+bool CameraConcurrentSelector::CanOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
                                                          std::vector<std::vector<std::int32_t>> concurrentCameraTable)
 {
     for (const auto& row : concurrentCameraTable) {

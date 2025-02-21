@@ -1221,8 +1221,6 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
             if (streamInfo.extendedStreamInfos.size() > 0) {
                 MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1 type %{public}d",
                     streamInfo.extendedStreamInfos[0].type);
-                MEDIA_DEBUG_LOG("createStreams bufferQueue address: %{public}p, intent: %{public}d",
-                    &*(streamInfo.v1_0.bufferQueue_), streamInfo.v1_0.intent_);
             }
         }
         hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
@@ -1231,8 +1229,6 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         std::vector<StreamInfo> streamInfos_V1_0;
         for (auto streamInfo : streamInfos) {
             streamInfos_V1_0.emplace_back(streamInfo.v1_0);
-            MEDIA_DEBUG_LOG("createStreams bufferQueue address: %{public}p, intent: %{public}d",
-                &*(streamInfo.v1_0.bufferQueue_), streamInfo.v1_0.intent_);
         }
         hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
     }
@@ -1520,7 +1516,7 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
 }
 
-int32_t HCameraDevice::Open(int32_t ConcurrentTypeofcamera)
+int32_t HCameraDevice::Open(int32_t concurrentTypeofcamera)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
@@ -1528,7 +1524,7 @@ int32_t HCameraDevice::Open(int32_t ConcurrentTypeofcamera)
     CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
     MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
-    SetCameraConcurrentType(ConcurrentTypeofcamera);
+    SetCameraConcurrentType(concurrentTypeofcamera);
     int32_t result = OpenDevice();
     return result;
 }

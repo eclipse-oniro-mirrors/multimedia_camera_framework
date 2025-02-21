@@ -304,7 +304,7 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
     CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFocusModes camera deviceInfo is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count;
             i++) {
             camera_focus_mode_enum_t num = static_cast<camera_focus_mode_enum_t>(cameraDevNow->
@@ -585,7 +585,7 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedFlashModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    if (cameraDevNow->isConcurrentLimted_ == 1) {
+    if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.flashmodes.count;
             i++) {
             camera_flash_mode_enum_t num = static_cast<camera_flash_mode_enum_t>(cameraDevNow->

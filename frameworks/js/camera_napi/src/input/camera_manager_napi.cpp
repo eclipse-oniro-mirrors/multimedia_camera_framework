@@ -1036,7 +1036,26 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    CHECK_ERROR_PRINT_LOG(status != napi_ok, "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
+    if (status != napi_ok) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
+        return nullptr;
+    }
+    uint32_t length = 0;
+    napi_get_array_length(env, arrayParam, &length);
+    if (length < 1) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos can not get argv");
+        return nullptr;
+    }
+    napi_valuetype argvType;
+    napi_typeof(env, argv[PARAM0], &argvType);
+    if (argvType != napi_string) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos type of array is error");
+        return nullptr;
+    }
+
 
     std::vector<string>cameraIdv = {};
     cameraManagerNapi->ParseGetCameraConcurrentInfos(env, argv[PARAM0], cameraIdv);
@@ -1052,31 +1071,6 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
 
     cameraManagerNapi->cameraManager_->GetCameraConcurrentInfos(cameraDeviceArrray,
         cameraConcurrentType, modes, outputCapabilities);
-    std::stringstream ss;
-    for (auto it : cameraDeviceArrray) {
-        ss << it->GetID().c_str() << " ";
-    }
-    std::string cameraIds = ss.str();
-    ss.str("");
-    for (bool it : cameraConcurrentType) {
-        ss << it << " ";
-    }
-    std::string cameraConcurrentTypes = ss.str();
-    ss.str("");
-    for (size_t i = 0; i < modes.size(); i++) {
-        for (auto it : modes[i]) {
-            ss << it << " ";
-        }
-        std::string concurrentTypes = ss.str();
-        ss.str("");
-    }
-    for (size_t i = 0; i < outputCapabilities.size(); i++) {
-        for (auto it : outputCapabilities[i]) {
-            ss << it->GetPreviewProfiles().size() << " ";
-        }
-        std::string concurrentTypes = ss.str();
-        ss.str("");
-    }
     return CreateCameraConcurrentResult(env, cameraDeviceArrray, cameraConcurrentType, modes, outputCapabilities);
 }
 
@@ -1101,7 +1095,7 @@ void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value a
 }
 
 napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
-    std::vector<bool> &CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+    std::vector<bool> &cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
     std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
 {
     napi_value resjsArray = nullptr;
@@ -1116,7 +1110,7 @@ napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<
         napi_value cameranow = CameraNapiObjCameraDevice(*cameraDeviceArrray[i]).GenerateNapiValue(env);
         napi_set_named_property(env, obj, "device", cameranow);
         napi_value cameraconcurrent = nullptr;
-        napi_get_boolean(env, CameraConcurrentType[i], &cameraconcurrent);
+        napi_get_boolean(env, cameraConcurrentType[i], &cameraconcurrent);
         napi_set_named_property(env, obj, "type", cameraconcurrent);
         napi_value scenemodearray = nullptr;
         napi_status scenemodearraystatus = napi_create_array(env, &scenemodearray);
@@ -1125,10 +1119,9 @@ napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<
             continue;
         }
         int32_t index = 0;
-        std::unordered_map<SceneMode, JsSceneMode> nativeToNapiMap = g_nativeToNapiSupportedMode_;
         for (auto modenow : modes[i]) {
-            auto itr = nativeToNapiMap.find(modenow);
-            if (itr != nativeToNapiMap.end()) {
+            auto itr = g_nativeToNapiSupportedMode_.find(modenow);
+            if (itr != g_nativeToNapiSupportedMode_.end()) {
                 napi_value modeitem = nullptr;
                 napi_create_int32(env, itr->second, &modeitem);
                 napi_set_element(env, scenemodearray, index, modeitem);

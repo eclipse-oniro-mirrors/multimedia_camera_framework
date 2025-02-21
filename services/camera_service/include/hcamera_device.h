@@ -54,7 +54,7 @@ public:
 
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
-    int32_t Open(int32_t ConcurrentTypeofcamera) override;
+    int32_t Open(int32_t concurrentTypeofcamera) override;
     int32_t Close() override;
     int32_t closeDelayed() override;
     int32_t Release() override;
@@ -156,9 +156,9 @@ public:
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
-    inline void SetCameraConcurrentType(int32_t CameraConcurrentTypenum)
+    inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
-        cameraConcurrentType_ = CameraConcurrentTypenum;
+        cameraConcurrentType_ = cameraConcurrentTypenum;
     }
 
     inline int32_t GetCameraConcurrentType()

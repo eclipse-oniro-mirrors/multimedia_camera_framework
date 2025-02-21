@@ -473,7 +473,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
 }
 
 int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer, sptr<PhotoOutput> *pPhotoOutput,
-                          sptr<Surface> photoSurface) __attribute__((no_sanitize("cfi")))
+    sptr<Surface> photoSurface)
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
@@ -1225,7 +1225,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
 }
 
 void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
-    std::vector<bool> CameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+    std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
     std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
 {
     MEDIA_INFO_LOG("CameraManager::GetCameraConcurrentInfos start");
@@ -1259,7 +1259,7 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
         }
         sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
         camera_metadata_item_t item;
-        if (!CameraConcurrentType[index]) {
+        if (!cameraConcurrentType[index]) {
             retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
                 OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
             if (retCode == CAM_META_SUCCESS) {
@@ -1494,7 +1494,7 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
 }
 
 bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
-    std::vector<bool> &CameraConcurrentType)
+    std::vector<bool> &cameraConcurrentType)
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
@@ -1515,13 +1515,16 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
         camera_metadata_item_t item;
         retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
         if (retCode != CAMERA_OK) {
-            CameraConcurrentType.clear();
+            cameraConcurrentType.clear();
             MEDIA_ERR_LOG("cameraAbility not support OHOS_ABILITY_CAMERA_CONCURRENT_TYPE");
             return false;
         }
-        bool cameratype = static_cast<bool>(item.data.u8[0]);
+        bool cameratype = 0;
+        if (item.count > 0) {
+            cameratype = static_cast<bool>(item.data.u8[0]);
+        }
         MEDIA_INFO_LOG("cameraid is %{public}s, type is %{public}d", idofthis.c_str(), cameratype);
-        CameraConcurrentType.push_back(cameratype);
+        cameraConcurrentType.push_back(cameratype);
     }
     return true;
 }

@@ -914,7 +914,7 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
 {
     MEDIA_DEBUG_LOG("Camera_Manager::GetCameraConcurrentInfos is called");
     std::vector<string>cameraIdv = {};
-    std::vector<bool> CameraConcurrentType = {};
+    std::vector<bool> cameraConcurrentType = {};
     std::vector<std::vector<SceneMode>> modes = {};
     std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
@@ -925,16 +925,16 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
     for (auto cameraidonly : cameraIdv) {
         cameraDeviceArrray.push_back(CameraManager::GetInstance()->GetCameraDeviceFromId(cameraidonly));
     }
-    bool issupported = CameraManager::GetInstance()->GetConcurrentType(cameraDeviceArrray, CameraConcurrentType);
+    bool issupported = CameraManager::GetInstance()->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
     CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::GetConcurrentType() error");
     issupported = CameraManager::GetInstance()->CheckConcurrentExecution(cameraDeviceArrray);
     CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::CheckConcurrentExe error");
     CameraManager::GetInstance()->GetCameraConcurrentInfos(cameraDeviceArrray,
-        CameraConcurrentType, modes, outputCapabilities);
+        cameraConcurrentType, modes, outputCapabilities);
     Camera_ConcurrentInfo *CameraConcurrentInfothis =  new Camera_ConcurrentInfo[deviceSize];
     for (int i = 0; i < deviceSize; i++) {
         CameraConcurrentInfothis[i].camera = camera[i];
-        if (CameraConcurrentType[i] == false) {
+        if (cameraConcurrentType[i] == false) {
             CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_LIMITED_CAPABILITY;
         } else {
             CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_FULL_CAPABILITY;

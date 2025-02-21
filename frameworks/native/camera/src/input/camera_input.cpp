@@ -241,7 +241,7 @@ int CameraInput::Open(int32_t cameraConcurrentType)
             return CAMERA_DEVICE_ERROR;
         }
     }
-    std::lock_guard<std::mutex> lock2(cameraDeviceInfoMutex_);
+    std::lock_guard<std::mutex> lock2(deviceObjMutex_);
     cameraObj_ = cameraObjnow;
     CameraManager::GetInstance()->SetProfile(cameraObj_, cameraAbility);
 

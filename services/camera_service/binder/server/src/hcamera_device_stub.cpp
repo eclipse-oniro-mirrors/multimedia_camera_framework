@@ -192,8 +192,8 @@ int32_t HCameraDeviceStub::HandleOpenConcurrent(MessageParcel &data, MessageParc
 {
     CameraXCollie cameraXCollie("HandleOpenConcurrent");
     int32_t errorCode = ERR_NONE;
-    int32_t ConcurrentTypeofcamera = data.ReadInt32();
-    errorCode = Open(ConcurrentTypeofcamera);
+    int32_t concurrentTypeofcamera = data.ReadInt32();
+    errorCode = Open(concurrentTypeofcamera);
     CHECK_ERROR_RETURN_RET_LOG(errorCode != ERR_NONE, errorCode,
         "HCameraDeviceStub::openSecureCamera failed : %{public}d", errorCode);
     return errorCode;

@@ -18,7 +18,6 @@
 
 #include <refbase.h>
 #include <set>
-#include "foundation/arkui/ace_engine/frameworks/core/interfaces/arkoala/arkoala_api.h"
 #include "hcamera_device.h"
 #include "camera_util.h"
 #include "mem_mgr_client.h"
@@ -205,7 +204,7 @@ public:
         return concurrentCameraTable_;
     }
 
-    bool canOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
+    bool CanOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
                                    std::vector<std::vector<std::int32_t>> concurrentCameraTable);
 
 private:

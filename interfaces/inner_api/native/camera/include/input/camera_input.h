@@ -77,7 +77,7 @@ public:
     /**
     * @brief open camera with CameraConcurrentType.
     */
-    int Open(int32_t CameraConcurrentType) override;
+    int Open(int32_t cameraConcurrentType) override;
 
     /**
     * @brief close camera.
