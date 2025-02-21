@@ -39,12 +39,15 @@ void SlowMotionStateListener::OnSlowMotionStateCbAsync(const SlowMotionState sta
         return;
     }
     std::unique_ptr<SlowMotionStateListenerInfo> callbackInfo =
-        std::make_unique<SlowMotionStateListenerInfo>(state, this);
+        std::make_unique<SlowMotionStateListenerInfo>(state, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         SlowMotionStateListenerInfo* callbackInfo = reinterpret_cast<SlowMotionStateListenerInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnSlowMotionStateCb(callbackInfo->state_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnSlowMotionStateCb(callbackInfo->state_);
+            }
             delete callbackInfo;
         }
         delete work;

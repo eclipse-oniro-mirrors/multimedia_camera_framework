@@ -289,12 +289,15 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
         return;
     }
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
-        std::make_unique<CameraMuteCallbackInfo>(muteMode, this);
+        std::make_unique<CameraMuteCallbackInfo>(muteMode, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->muteMode_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnCameraMuteCallback(callbackInfo->muteMode_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -351,12 +354,15 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
         return;
     }
     std::unique_ptr<TorchStatusChangeCallbackInfo> callbackInfo =
-        std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, this);
+        std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         TorchStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<TorchStatusChangeCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnTorchStatusChangeCallback(callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnTorchStatusChangeCallback(callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -429,12 +435,15 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
         return;
     }
     std::unique_ptr<FoldStatusChangeCallbackInfo> callbackInfo =
-        std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, this);
+        std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         FoldStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<FoldStatusChangeCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnFoldStatusChangedCallback(callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnFoldStatusChangedCallback(callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;

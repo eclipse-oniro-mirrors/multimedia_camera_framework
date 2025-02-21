@@ -883,12 +883,16 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<ExposureInfoChangedCallback> callback = std::make_unique<ExposureInfoChangedCallback>(info, this);
+    std::unique_ptr<ExposureInfoChangedCallback> callback =
+        std::make_unique<ExposureInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(work->data);
         if (callback) {
-            callback->listener_->OnExposureInfoChangedCallback(callback->info_);
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnExposureInfoChangedCallback(callback->info_);
+            }
             delete callback;
         }
         delete work;
@@ -937,12 +941,16 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<IsoInfoChangedCallback> callback = std::make_unique<IsoInfoChangedCallback>(info, this);
+    std::unique_ptr<IsoInfoChangedCallback> callback =
+        std::make_unique<IsoInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(work->data);
         if (callback) {
-            callback->listener_->OnIsoInfoChangedCallback(callback->info_);
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnIsoInfoChangedCallback(callback->info_);
+            }
             delete callback;
         }
         delete work;
@@ -990,12 +998,16 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<ApertureInfoChangedCallback> callback = std::make_unique<ApertureInfoChangedCallback>(info, this);
+    std::unique_ptr<ApertureInfoChangedCallback> callback =
+        std::make_unique<ApertureInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ApertureInfoChangedCallback* callback = reinterpret_cast<ApertureInfoChangedCallback *>(work->data);
         if (callback) {
-            callback->listener_->OnApertureInfoChangedCallback(callback->info_);
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnApertureInfoChangedCallback(callback->info_);
+            }
             delete callback;
         }
         delete work;
@@ -1044,12 +1056,15 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(Lumina
         return;
     }
     std::unique_ptr<LuminationInfoChangedCallback> callback =
-        std::make_unique<LuminationInfoChangedCallback>(info, this);
+        std::make_unique<LuminationInfoChangedCallback>(info, shared_from_this());
     work->data = callback.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         LuminationInfoChangedCallback* callback = reinterpret_cast<LuminationInfoChangedCallback *>(work->data);
         if (callback) {
-            callback->listener_->OnLuminationInfoChangedCallback(callback->info_);
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnLuminationInfoChangedCallback(callback->info_);
+            }
             delete callback;
         }
         delete work;

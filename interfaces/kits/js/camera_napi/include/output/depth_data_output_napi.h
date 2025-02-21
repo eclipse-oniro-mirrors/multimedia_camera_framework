@@ -85,8 +85,8 @@ private:
 
 struct DepthDataListenerInfo {
     sptr<Surface> depthDataSurface_;
-    const DepthDataListener* listener_;
-    DepthDataListenerInfo(sptr<Surface> depthDataSurface, const DepthDataListener* listener)
+    wptr<DepthDataListener> listener_;
+    DepthDataListenerInfo(sptr<Surface> depthDataSurface, wptr<DepthDataListener> listener)
         : depthDataSurface_(depthDataSurface), listener_(listener)
     {}
 };
