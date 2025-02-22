@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 #include "camera_device_ability_items.h"
@@ -27,7 +28,9 @@
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
+#include "device_protection_ability_connection.h"
 #include "display_manager.h"
+#include "extension_manager_client.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "ipc_types.h"
@@ -57,6 +60,10 @@ static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const int32_t CAMERA_QOS_LEVEL = 7;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
+constexpr int32_t DEFAULT_USER_ID = -1;
+static sptr<HCameraDevice> g_openingCameraDevice = nullptr;
+static const uint32_t DEVICE_EJECT_LIMIT = 5;
+static const uint32_t DEVICE_EJECT_INTERVAL = 1000;
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 CallerInfo caller_;
 
@@ -80,6 +87,16 @@ const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> HCameraDevice:
     {OHOS_CONTROL_LIGHT_PAINTING_FLASH, "OHOS_CONTROL_LIGHT_PAINTING_FLASH", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_MANUAL_EXPOSURE_TIME, "OHOS_CONTROL_MANUAL_EXPOSURE_TIME", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_CAMERA_USED_AS_POSITION, "OHOS_CONTROL_CAMERA_USED_AS_POSITION", DFX_UB_NOT_REPORT},
+};
+
+const std::unordered_map<DeviceProtectionStatus, CamServiceError> g_deviceProtectionToServiceError_ = {
+    {OHOS_DEVICE_SWITCH_FREQUENT, CAMERA_DEVICE_SWITCH_FREQUENT},
+    {OHOS_DEVICE_FALL_PROTECTION, CAMERA_DEVICE_LENS_RETRACTED}
+};
+
+const std::unordered_map<DeviceProtectionStatus, DeviceProtectionAbilityCallBack> g_deviceProtectionToCallBack_ = {
+    {OHOS_DEVICE_EXTERNAL_PRESS, HCameraDevice::DeviceFaultCallBack},
+    {OHOS_DEVICE_EJECT_BLOCK, HCameraDevice::DeviceEjectCallBack}
 };
 
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
@@ -393,9 +410,13 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
         HandlePrivacyWhenOpenDeviceFail();
         return CAMERA_UNKNOWN_ERROR;
     } else {
+        g_openingCameraDevice = this;
         ResetHdiStreamId();
         isOpenedCameraDevice_.store(true);
         HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+#ifdef CAMERA_USE_SENSOR
+        RegisterDropDetectionListener();
+#endif
     }
     errorCode = InitStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(errorCode != CAMERA_OK, errorCode,
@@ -515,6 +536,9 @@ int32_t HCameraDevice::CloseDevice()
             "HCameraDevice::CloseDevice device has benn closed");
         bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
         CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
+#ifdef CAMERA_USE_SENSOR
+        UnRegisterDropDetectionListener();
+#endif
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
@@ -1122,6 +1146,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (cameraResult == nullptr) {
         cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
     }
+    ReportDeviceProtectionStatus(cameraResult);
     CHECK_EXECUTE(IsCameraDebugOn(), CameraFwkMetadataUtils::DumpMetadataInfo(cameraResult));
     auto callback = GetDeviceServiceCallback();
     CHECK_EXECUTE(callback != nullptr, callback->OnResult(timestamp, cameraResult));
@@ -1369,6 +1394,170 @@ int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
         return CAMERA_UNKNOWN_ERROR;
     }
     return HdiToServiceError(hdiRc);
+}
+
+#ifdef CAMERA_USE_SENSOR
+void HCameraDevice::RegisterDropDetectionListener()
+{
+    MEDIA_INFO_LOG("HCameraDevice::RegisterDropDetectionListener start");
+    user.callback = DropDetectionCallback;
+    int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    MEDIA_INFO_LOG("RegisterDropDetectionListener, subscribeRet: %{public}d", subscribeRet);
+    int32_t setBatchRet = SetBatch(SENSOR_TYPE_ID_DROP_DETECTION, &user, SAMPLING_INTERVAL, SAMPLING_INTERVAL);
+    MEDIA_INFO_LOG("RegisterDropDetectionListener, setBatchRet: %{public}d", setBatchRet);
+    int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    MEDIA_INFO_LOG("RegisterDropDetectionListener, activateRet: %{public}d", activateRet);
+    CHECK_ERROR_RETURN_LOG((subscribeRet != CAMERA_OK || setBatchRet != CAMERA_OK || activateRet != CAMERA_OK),
+        "HCameraDevice::RegisterDropDetectionListener Failed!");
+}
+
+void HCameraDevice::UnRegisterDropDetectionListener()
+{
+    int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    CHECK_ERROR_RETURN_LOG(deactivateRet != CAMERA_OK || unsubscribeRet == CAMERA_OK,
+        "HCameraDevice::UnRegisterDropDetectionListener Failed!");
+}
+
+void HCameraDevice::DropDetectionCallback(SensorEvent* event)
+{
+    MEDIA_INFO_LOG("HCameraDevice::DropDetectionCallback prepare execute");
+    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
+    CHECK_ERROR_RETURN_LOG(event[0].dataLen < sizeof(DropDetectionData),
+        "less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
+    {
+        std::lock_guard<std::mutex> lock(dropDetectionMutex_);
+        uint8_t value = 1;
+        uint32_t count = 1;
+        constexpr int32_t DEFAULT_ITEMS = 1;
+        constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+            std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+        bool status = changedMetadata->addEntry(OHOS_CONTROL_FALL_PROTECTION, &value, count);
+        CHECK_ERROR_RETURN_LOG(!status, "HCameraDevice::DropDetectionCallback Failed to set fall protection");
+        g_openingCameraDevice->UpdateSetting(changedMetadata);
+    }
+}
+#endif
+
+void HCameraDevice::ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metadata)
+{
+    CHECK_ERROR_RETURN_LOG(metadata == nullptr, "metadata is null");
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_DEVICE_PROTECTION_STATE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        return;
+    }
+    int32_t status = item.data.i32[0];
+    MEDIA_INFO_LOG("HCameraDevice::ReportDeviceProtectionStatus status: %{public}d", status);
+    if (!CanReportDeviceProtectionStatus(status)) {
+        return;
+    }
+    auto callback = GetDeviceServiceCallback();
+    auto itr = g_deviceProtectionToServiceError_.find(static_cast<DeviceProtectionStatus>(status));
+    if (itr != g_deviceProtectionToServiceError_.end()) {
+        callback->OnError(itr->second, 0);
+    }
+    ShowDeviceProtectionDialog(static_cast<DeviceProtectionStatus>(status));
+}
+
+bool HCameraDevice::CanReportDeviceProtectionStatus(int32_t status)
+{
+    std::lock_guard<std::mutex> lock(deviceProtectionStatusMutex_);
+    bool ret = (status != lastDeviceProtectionStatus_);
+    lastDeviceProtectionStatus_ = status;
+    return ret;
+}
+
+void HCameraDevice::DeviceEjectCallBack()
+{
+    MEDIA_INFO_LOG("HCameraDevice::DeviceEjectCallBack enter");
+    g_openingCameraDevice->lastDeviceEjectTime_ = GetTimestamp();
+    if (g_openingCameraDevice == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::DeviceEjectCallBack g_openingCameraDevice is nullptr");
+    }
+    uint8_t value = 1;
+    uint32_t count = 1;
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    bool status = changedMetadata->addEntry(OHOS_CONTROL_EJECT_RETRY, &value, count);
+    CHECK_ERROR_RETURN_LOG(!status, "HCameraDevice::DropDetectionCallback Failed to set fall protection");
+    g_openingCameraDevice->UpdateSetting(changedMetadata);
+}
+
+void HCameraDevice::DeviceFaultCallBack()
+{
+    MEDIA_INFO_LOG("HCameraDevice::DeviceFaultCallBack enter");
+}
+
+bool HCameraDevice::ShowDeviceProtectionDialog(DeviceProtectionStatus status)
+{
+    if (status == OHOS_DEVICE_EJECT_BLOCK) {
+        int64_t timestamp = GetTimestamp();
+        if (timestamp - lastDeviceEjectTime_ < DEVICE_EJECT_INTERVAL) {
+            deviceEjectTimes_.operator++();
+        }
+        if (deviceEjectTimes_ > DEVICE_EJECT_LIMIT) {
+            status = OHOS_DEVICE_EXTERNAL_PRESS;
+            deviceEjectTimes_.store(0);
+        }
+    }
+    
+    AAFwk::Want want;
+    std::string bundleName = "com.ohos.sceneboard";
+    std::string abilityName = "com.ohos.sceneboard.systemdialog";
+    want.SetElementName(bundleName, abilityName);
+
+    const int32_t code = 4;
+    std::string commandStr = BuildDeviceProtectionDialogCommand(status);
+    auto itr = g_deviceProtectionToCallBack_.find(static_cast<DeviceProtectionStatus>(status));
+    if (itr == g_deviceProtectionToCallBack_.end()) {
+        return false;
+    }
+    DeviceProtectionAbilityCallBack callback = itr->second;
+
+    sptr<DeviceProtectionAbilityConnection> connection = sptr<DeviceProtectionAbilityConnection> (new (std::nothrow)
+    DeviceProtectionAbilityConnection(commandStr, code, callback));
+    if (connection == nullptr) {
+        MEDIA_ERR_LOG("connection is nullptr");
+        return false;
+    }
+    std::string identity = IPCSkeleton::ResetCallingIdentity();
+    auto connectResult = AAFwk::ExtensionManagerClient::GetInstance().ConnectServiceExtensionAbility(want,
+        connection, nullptr, DEFAULT_USER_ID);
+    IPCSkeleton::SetCallingIdentity(identity);
+    if (connectResult != 0) {
+        MEDIA_ERR_LOG("ConnectServiceExtensionAbility Failed!");
+        return false;
+    }
+    return true;
+}
+
+std::string HCameraDevice::BuildDeviceProtectionDialogCommand(DeviceProtectionStatus status)
+{
+    nlohmann::json extraInfo;
+    switch (static_cast<int32_t>(status)) {
+        // 按压受阻
+        case OHOS_DEVICE_EJECT_BLOCK:
+            extraInfo["title"] = "camera_device_eject_lab";
+            extraInfo["content"] = "camera_device_eject_desc";
+            extraInfo["button"] = "camera_use_continue";
+            break;
+        // 故障上报弹窗
+        case OHOS_DEVICE_EXTERNAL_PRESS:
+            extraInfo["title"] = "camera_device_block_lab";
+            extraInfo["content"] = "camera_device_block_desc";
+            extraInfo["button"] = "camera_device_block_confirm";
+            break;
+    }
+    nlohmann::json dialogInfo;
+    dialogInfo["extraInfo"] = extraInfo;
+    std::string commandStr = dialogInfo.dump();
+    MEDIA_INFO_LOG("BuildDeviceProtectionDialogCommand, commandStr = %{public}s", commandStr.c_str());
+    return commandStr;
 }
 
 int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)

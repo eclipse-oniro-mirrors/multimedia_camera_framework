@@ -346,6 +346,25 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
 }
 
+void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
+{
+    MEDIA_INFO_LOG("CameraInput::ControlAuxiliary type: %{public}u, status:%{public}u", type, status);
+    if (type == AuxiliaryType::CONTRACTLENS && status == AuxiliaryStatus::AUXILIARY_ON) {
+        uint8_t value = 1;
+        uint32_t count = 1;
+        constexpr int32_t DEFAULT_ITEMS = 1;
+        constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+        auto metadata = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+        if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_EJECT_RETRY, &value, count)) {
+            MEDIA_ERR_LOG("CameraInput::ControlAuxiliary Failed to set metadata");
+            return;
+        }
+        auto deviceObj = GetCameraDevice();
+        CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+        deviceObj->UpdateSetting(metadata);
+    }
+}
+
 void CameraInput::SetOcclusionDetectCallback(
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)
 {

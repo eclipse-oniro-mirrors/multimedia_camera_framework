@@ -381,6 +381,7 @@ public:
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
     void InitCameraInput();
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
+    void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
