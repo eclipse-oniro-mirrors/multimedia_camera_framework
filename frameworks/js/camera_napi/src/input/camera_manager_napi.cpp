@@ -1041,11 +1041,9 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
             "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
         return nullptr;
     }
-    uint32_t length = 0;
-    napi_get_array_length(env, argv[PARAM0], &length);
-    if (length < 1) {
+    if (argc != ARGS_ONE) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
-            "CameraManagerNapi::GetCameraConcurrentInfos can not get argv");
+            "CameraManagerNapi::GetCameraConcurrentInfos argc is not ARGS_ONE");
         return nullptr;
     }
     napi_valuetype argvType;
