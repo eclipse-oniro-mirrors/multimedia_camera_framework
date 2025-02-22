@@ -51,7 +51,7 @@ CArrCJProfile VectorProfileToCArrCJProfile(std::vector<Profile> profile, int32_t
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
         return result;
     }
-    for (int i = 0; i < profile.size(); i++) {
+    for (size_t i = 0; i < profile.size(); i++) {
         result.head[i].format = profile[i].GetCameraFormat();
         Size t = profile[i].GetSize();
         result.head[i].width = t.width;
@@ -72,7 +72,7 @@ CArrCJVideoProfile VectorVideoProfileToCArrCJVideoProfile(std::vector<VideoProfi
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
         return result;
     }
-    for (int i = 0; i < profile.size(); i++) {
+    for (size_t i = 0; i < profile.size(); i++) {
         result.head[i].format = profile[i].GetCameraFormat();
         Size t = profile[i].GetSize();
         result.head[i].width = t.width;
@@ -125,7 +125,7 @@ CJCameraOutputCapability CameraOutputCapabilityToCJCameraOutputCapability(
         free(result.videoProfiles.head);
         return CJCameraOutputCapability{CArrCJProfile{0}, CArrCJProfile{0}, CArrCJVideoProfile{0}, CArrI32{0}};
     }
-    for (int i = 0; i < metadataObjectType_.size(); i++) {
+    for (size_t i = 0; i < metadataObjectType_.size(); i++) {
         result.supportedMetadataObjectTypes.head[i] = static_cast<int32_t>(metadataObjectType_[i]);
     }
     return result;
@@ -150,7 +150,7 @@ CJCameraStatusInfo CameraStatusInfoToCJCameraStatusInfo(const CameraStatusInfo &
 
 CArrCJCameraDevice CameraDeviceVetorToCArrCJCameraDevice(const std::vector<sptr<CameraDevice>> cameras)
 {
-    int64_t size = cameras.size();
+    int64_t size = static_cast<int64_t>(cameras.size());
     if (size <= 0) {
         return CArrCJCameraDevice{0};
     }
@@ -190,7 +190,7 @@ CJMetadataObject MetadataObjectToCJMetadataObject(MetadataObject metaObject)
 
 CArrCJMetadataObject MetadataObjectsToCArrCJMetadataObject(std::vector<sptr<MetadataObject>> metaObjects)
 {
-    int64_t size = metaObjects.size();
+    int64_t size = static_cast<int64_t>(metaObjects.size());
     if (size <= 0) {
         return CArrCJMetadataObject{0};
     }

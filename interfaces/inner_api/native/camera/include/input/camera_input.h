@@ -389,6 +389,7 @@ public:
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
+    void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;

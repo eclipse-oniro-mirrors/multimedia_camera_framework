@@ -24,7 +24,7 @@
 #include "cj_lambda.h"
 #include "ffi_remote_data.h"
 #include "securec.h"
-
+#include "camera_error.h"
 #include "camera_session_impl.h"
 
 using namespace OHOS::FFI;
@@ -128,10 +128,15 @@ int32_t CJSession::GetExposureBiasRange(CArrFloat32 &cArr)
 {
     std::vector<float> exposureBiasRange;
     int32_t ret = session_->GetExposureBiasRange(exposureBiasRange);
-
-    cArr.size = exposureBiasRange.size();
+    cArr.size = static_cast<int64_t>(exposureBiasRange.size());
+    if (cArr.size <= 0) {
+        return ret;
+    }
     cArr.head = static_cast<float *>(malloc(sizeof(float) * cArr.size));
-    for (int i = 0; i < cArr.size; i++) {
+    if (cArr.head == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    for (size_t i = 0; i < cArr.size; i++) {
         cArr.head[i] = exposureBiasRange[i];
     }
 
@@ -183,13 +188,18 @@ int32_t CJSession::GetExposureValue(float &value)
 void CJSession::GetSupportedColorSpaces(CArrI32 &cArr)
 {
     auto colorSpaces = session_->GetSupportedColorSpaces();
-
-    cArr.size = colorSpaces.size();
+    cArr.size = static_cast<int64_t>(colorSpaces.size());
+    if (cArr.size <= 0) {
+        return;
+    }
     cArr.head = static_cast<int32_t *>(malloc(sizeof(int32_t) * cArr.size));
+    if (cArr.head == nullptr) {
+        cArr.size = 0;
+        return;
+    }
     for (int i = 0; i < cArr.size; i++) {
         cArr.head[i] = static_cast<int32_t>(colorSpaces[i]);
     }
-
     return;
 }
 
@@ -285,9 +295,15 @@ int32_t CJSession::GetZoomRatioRange(CArrFloat32 &ranges)
     std::vector<float> zoomRatioRange;
     int32_t ret = session_->GetZoomRatioRange(zoomRatioRange);
 
-    ranges.size = zoomRatioRange.size();
+    ranges.size = static_cast<int64_t>(zoomRatioRange.size());
+    if (ranges.size <= 0) {
+        return ret;
+    }
     ranges.head = static_cast<float *>(malloc(sizeof(float) * ranges.size));
-    for (int i = 0; i < ranges.size; i++) {
+    if (ranges.head == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    for (size_t i = 0; i < ranges.size; i++) {
         ranges.head[i] = zoomRatioRange[i];
     }
 

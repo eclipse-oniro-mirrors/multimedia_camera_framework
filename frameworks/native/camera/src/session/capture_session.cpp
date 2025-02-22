@@ -713,7 +713,10 @@ std::shared_ptr<Profile> CaptureSession::GetMaxSizePhotoProfile(ProfileSizeRatio
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto cameraInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET(cameraInfo == nullptr || cameraInfo->GetCameraType() != CAMERA_TYPE_DEFAULT, nullptr);
+    CHECK_ERROR_RETURN_RET(cameraInfo == nullptr, nullptr);
+    // Non-foldable devices filter out physical lenses.
+    CHECK_ERROR_RETURN_RET(cameraInfo->GetCameraFoldScreenType() == CAMERA_FOLDSCREEN_UNSPECIFIED &&
+        cameraInfo->GetCameraType() != CAMERA_TYPE_DEFAULT, nullptr);
     SceneMode sceneMode = GetMode();
     if (sceneMode == SceneMode::CAPTURE) {
         auto it = cameraInfo->modePhotoProfiles_.find(SceneMode::CAPTURE);
@@ -2142,7 +2145,8 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     auto it = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     CHECK_EXECUTE(it != g_metaFocusModeMap_.end(), ProcessFocusDistanceUpdates(result));
     // continuous focus mode do not callback focusStateChange
-    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() || it->second != FOCUS_MODE_AUTO);
+    CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() ||
+        (it->second != FOCUS_MODE_AUTO && it->second != FOCUS_MODE_CONTINUOUS_AUTO));
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);

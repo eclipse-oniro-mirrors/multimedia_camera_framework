@@ -150,6 +150,12 @@ static const std::unordered_map<std::string, int32_t> mapHostNameType = {
     {"TABLE", 0x11},
 };
 
+static const std::unordered_map<std::string, int32_t> mapHostDeviceType = {
+    {"UNKNOWN_TYPE", 0x00},
+    {"PHONE", 0x0E},
+    {"TABLET", 0x11},
+};
+
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},
@@ -237,7 +243,9 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"CONFLICT_CAMERA", 7400107},
     {"DEVICE_DISABLED", 7400108},
     {"DEVICE_PREEMPTED", 7400109},
-    {"UNRESOLVED_CONFLICTS_BETWEEN_STREAMS", 7400110},
+    {"UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS", 7400110},
+    {"DEVICE_FREQUENTLY_SWITCHED", 7400111},
+    {"CAMERA_LENS_RETRACTED", 7400112},
     {"SERVICE_FATAL_ERROR", 7400201}
 };
 
@@ -420,6 +428,14 @@ static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
 static const std::unordered_map<std::string, int32_t> mapCameraConcurrentType = {
     {"CAMERA_LIMITED_CAPABILITY", 0},
     {"CAMERA_FULL_CAPABILITY", 1},
+static const std::unordered_map<std::string, int32_t> mapAuxiliaryType = {
+    {"CONTRACT_LENS", 0},
+};
+
+static const std::unordered_map<std::string, int32_t> mapAuxiliaryStatus = {
+    {"LOCKED", 0},
+    {"ON", 1},
+    {"OFF", 2},
 };
 
 enum CreateAsyncCallbackModes {

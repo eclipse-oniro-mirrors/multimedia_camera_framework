@@ -22,7 +22,7 @@
 #include "camera_error_code.h"
 #include "cj_lambda.h"
 
-const int32_t SECURE_CAMERA = 12;
+static const int32_t SECURE_CAMERA = 12;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -61,6 +61,9 @@ CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
 {
     std::vector<sptr<CameraDevice>> supportedCameraDevices = cameraManager_->GetSupportedCameras();
     CArrCJCameraDevice result = {nullptr, 0};
+    if (supportedCameraDevices.size() == 0) {
+        return result;
+    }
     CJCameraDevice *supportedCameras =
         static_cast<CJCameraDevice *>(malloc(sizeof(CJCameraDevice) * supportedCameraDevices.size()));
     if (supportedCameras == nullptr) {
@@ -89,7 +92,7 @@ CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
         i++;
     }
 
-    result.size = supportedCameraDevices.size();
+    result.size = static_cast<int64_t>(supportedCameraDevices.size());
     result.head = supportedCameras;
     *errCode = CameraError::NO_ERROR;
     return result;
@@ -123,17 +126,18 @@ CArrI32 CJCameraManager::GetSupportedSceneModes(std::string cameraId, int32_t *e
         }
     }
 
+    if (size <= 0) {
+        return result;
+    }
     int32_t *sceneModes = static_cast<int32_t *>(malloc(sizeof(int32_t) * size));
     if (sceneModes == nullptr) {
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
         return result;
     }
 
-    size = 0;
-    for (size_t i = 0; i < modeObjList.size(); i++) {
+    for (size_t i = 0; i < size; i++) {
         if (modeObjList[i] == CAPTURE || modeObjList[i] == VIDEO || modeObjList[i] == PROFESSIONAL_VIDEO) {
             sceneModes[size] = modeObjList[i];
-            size++;
         }
     }
     result.head = sceneModes;

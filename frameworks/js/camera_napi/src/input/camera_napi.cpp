@@ -107,6 +107,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY(
             "MetadataObjectType", CreateObjectWithMap(env, "MetadataObjectType", mapMetadataObjectType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("HostNameType", CreateObjectWithMap(env, "HostNameType", mapHostNameType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "HostDeviceType", CreateObjectWithMap(env, "HostDeviceType", mapHostDeviceType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("SceneMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
@@ -175,6 +177,10 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "FocusTrackingMode", mapFocusTrackingMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraConcurrentType",
             CreateObjectWithMap(env, "CameraConcurrentType", mapCameraConcurrentType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("AuxiliaryType",
+            CreateObjectWithMap(env, "AuxiliaryType", mapAuxiliaryType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("AuxiliaryStatus",
+            CreateObjectWithMap(env, "AuxiliaryStatus", mapAuxiliaryStatus, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
