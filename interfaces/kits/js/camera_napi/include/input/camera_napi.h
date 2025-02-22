@@ -428,6 +428,8 @@ static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
 static const std::unordered_map<std::string, int32_t> mapCameraConcurrentType = {
     {"CAMERA_LIMITED_CAPABILITY", 0},
     {"CAMERA_FULL_CAPABILITY", 1},
+};
+
 static const std::unordered_map<std::string, int32_t> mapAuxiliaryType = {
     {"CONTRACT_LENS", 0},
 };
