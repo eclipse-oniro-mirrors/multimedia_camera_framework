@@ -713,7 +713,10 @@ std::shared_ptr<Profile> CaptureSession::GetMaxSizePhotoProfile(ProfileSizeRatio
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET(inputDevice == nullptr, nullptr);
     auto cameraInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET(cameraInfo == nullptr || cameraInfo->GetCameraType() != CAMERA_TYPE_DEFAULT, nullptr);
+    CHECK_ERROR_RETURN_RET(cameraInfo == nullptr, nullptr);
+    // Non-foldable devices filter out physical lenses.
+    CHECK_ERROR_RETURN_RET(cameraInfo->GetCameraFoldScreenType() == CAMERA_FOLDSCREEN_UNSPECIFIED &&
+        cameraInfo->GetCameraType() != CAMERA_TYPE_DEFAULT, nullptr);
     SceneMode sceneMode = GetMode();
     if (sceneMode == SceneMode::CAPTURE) {
         auto it = cameraInfo->modePhotoProfiles_.find(SceneMode::CAPTURE);
