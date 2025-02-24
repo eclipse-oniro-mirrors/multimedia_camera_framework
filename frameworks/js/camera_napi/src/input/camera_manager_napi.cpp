@@ -1048,7 +1048,7 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
     }
     napi_valuetype argvType;
     napi_typeof(env, argv[PARAM0], &argvType);
-    if (argvType != napi_string) {
+    if (argvType != napi_object) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
             "CameraManagerNapi::GetCameraConcurrentInfos type of array is error");
         return nullptr;
