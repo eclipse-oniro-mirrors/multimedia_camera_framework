@@ -157,21 +157,11 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoAvailable(FocusTrackingIn
 void FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync(FocusTrackingInfo &focusTrackingInfo) const
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
-
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "%{public}s: failed to get event loop", __FUNCTION__);
-
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "%{public}s: failed to allocate work", __FUNCTION__);
-
     std::unique_ptr<FocusTrackingCallbackInfo> callback =
         std::make_unique<FocusTrackingCallbackInfo>(focusTrackingInfo, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [] (uv_work_t* work) {},
-        [] (uv_work_t* work, int status) {
-        FocusTrackingCallbackInfo* callback = reinterpret_cast<FocusTrackingCallbackInfo *>(work->data);
+    FocusTrackingCallbackInfo *event = callback.get();
+    auto task = [event] () {
+        FocusTrackingCallbackInfo* callback = reinterpret_cast<FocusTrackingCallbackInfo *>(event);
         if (callback) {
             auto listener = callback->listener_.lock();
             if (listener != nullptr) {
@@ -179,11 +169,9 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallbackAsync(FocusTracki
             }
             delete callback;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("%{public}s: failed to execute work", __FUNCTION__);
-        delete work;
     } else {
         callback.release();
     }

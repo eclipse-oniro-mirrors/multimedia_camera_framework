@@ -2079,27 +2079,23 @@ napi_value CameraSessionNapi::IsFocusRangeTypeSupported(napi_env env, napi_callb
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsFocusRangeTypeSupported is called!");
     MEDIA_DEBUG_LOG("IsFocusRangeTypeSupported is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    int32_t focusRangeType = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t value = 0;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        FocusRangeType focusRangeType = static_cast<FocusRangeType>(value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, focusRangeType);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsFocusRangeTypeSupported parse parameter occur error");
+
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusRangeTypeSupported(focusRangeType, isSupported);
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusRangeTypeSupported(
+            static_cast<FocusRangeType>(focusRangeType), isSupported);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
-        MEDIA_ERR_LOG("IsFocusRangeTypeSupported call Failed!");
+        MEDIA_ERR_LOG("IsFocusRangeTypeSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2109,24 +2105,21 @@ napi_value CameraSessionNapi::GetFocusRange(napi_env env, napi_callback_info inf
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetFocusRange is called!");
     MEDIA_DEBUG_LOG("GetFocusRange is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetFocusRange parse parameter occur error");
+
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         FocusRangeType focusRangeType = FocusRangeType::FOCUS_RANGE_TYPE_AUTO;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusRange(focusRangeType);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, focusRangeType, &result);
     } else {
-        MEDIA_ERR_LOG("GetFocusRange call Failed!");
+        MEDIA_ERR_LOG("GetFocusRange get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2136,29 +2129,22 @@ napi_value CameraSessionNapi::SetFocusRange(napi_env env, napi_callback_info inf
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi SetFocusRange is called!");
     MEDIA_DEBUG_LOG("SetFocusRange is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    int32_t focusRangeType = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t value = 0;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        FocusRangeType focusRangeType = static_cast<FocusRangeType>(value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, focusRangeType);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetFocusRange parse parameter occur error");
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
-        int retCode = cameraSessionNapi->cameraSession_->SetFocusRange(focusRangeType);
+        int retCode = cameraSessionNapi->cameraSession_->SetFocusRange(static_cast<FocusRangeType>(focusRangeType));
         cameraSessionNapi->cameraSession_->UnlockForControl();
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
-        MEDIA_ERR_LOG("SetFocusRange call Failed!");
+        MEDIA_ERR_LOG("SetFocusRange get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
-    return result;
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::IsFocusDrivenTypeSupported(napi_env env, napi_callback_info info)
@@ -2166,27 +2152,23 @@ napi_value CameraSessionNapi::IsFocusDrivenTypeSupported(napi_env env, napi_call
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi IsFocusDrivenTypeSupported is called!");
     MEDIA_DEBUG_LOG("IsFocusDrivenTypeSupported is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    int32_t focusDrivenType = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t value = 0;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        FocusDrivenType focusDrivenType = static_cast<FocusDrivenType>(value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, focusDrivenType);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsFocusDrivenTypeSupported parse parameter occur error");
+
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDrivenTypeSupported(focusDrivenType, isSupported);
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDrivenTypeSupported(
+            static_cast<FocusDrivenType>(focusDrivenType), isSupported);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_get_boolean(env, isSupported, &result);
     } else {
-        MEDIA_ERR_LOG("IsFocusDrivenTypeSupported call Failed!");
+        MEDIA_ERR_LOG("IsFocusDrivenTypeSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2196,24 +2178,21 @@ napi_value CameraSessionNapi::GetFocusDriven(napi_env env, napi_callback_info in
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetFocusDriven is called!");
     MEDIA_DEBUG_LOG("GetFocusDriven is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetFocusDriven parse parameter occur error");
+
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         FocusDrivenType focusDrivenType = FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDriven(focusDrivenType);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, focusDrivenType, &result);
     } else {
-        MEDIA_ERR_LOG("GetFocusDriven call Failed!");
+        MEDIA_ERR_LOG("GetFocusDriven get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2223,29 +2202,22 @@ napi_value CameraSessionNapi::SetFocusDriven(napi_env env, napi_callback_info in
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi SetFocusDriven is called!");
     MEDIA_DEBUG_LOG("SetFocusDriven is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    int32_t focusDrivenType = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t value = 0;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        FocusDrivenType focusDrivenType = static_cast<FocusDrivenType>(value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, focusDrivenType);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetFocusDriven parse parameter occur error");
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
-        int retCode = cameraSessionNapi->cameraSession_->SetFocusDriven(focusDrivenType);
+        int retCode = cameraSessionNapi->cameraSession_->SetFocusDriven(static_cast<FocusDrivenType>(focusDrivenType));
         cameraSessionNapi->cameraSession_->UnlockForControl();
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
-        MEDIA_ERR_LOG("SetFocusDriven call Failed!");
+        MEDIA_ERR_LOG("SetFocusDriven get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
-    return result;
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::GetSupportedColorReservationTypes(napi_env env, napi_callback_info info)
@@ -2253,25 +2225,24 @@ napi_value CameraSessionNapi::GetSupportedColorReservationTypes(napi_env env, na
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetSupportedColorReservationTypes is called!");
     MEDIA_DEBUG_LOG("GetSupportedColorReservationTypes is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    status = napi_create_array(env, &result);
-    CHECK_ERROR_RETURN_RET_LOG(status != napi_ok, result, "napi_create_array call Failed!");
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetSupportedColorReservationTypes parse parameter occur error");
+
+    napi_value result = nullptr;
+    napi_status status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("GetSupportedColorReservationTypes napi_create_array call Failed!");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "napi_create_array call Failed!");
+        return nullptr;
+    }
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<ColorReservationType> colorReservationTypes;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedColorReservationTypes(colorReservationTypes);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
 
-        MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedColorReservationTypes len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedColorReservationTypes len = %{public}zu",
             colorReservationTypes.size());
         if (!colorReservationTypes.empty()) {
             for (size_t i = 0; i < colorReservationTypes.size(); i++) {
@@ -2282,7 +2253,9 @@ napi_value CameraSessionNapi::GetSupportedColorReservationTypes(napi_env env, na
             }
         }
     } else {
-        MEDIA_ERR_LOG("GetSupportedColorReservationTypes call Failed!");
+        MEDIA_ERR_LOG("GetSupportedColorReservationTypes get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2292,24 +2265,21 @@ napi_value CameraSessionNapi::GetColorReservation(napi_env env, napi_callback_in
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi GetColorReservation is called!");
     MEDIA_DEBUG_LOG("GetColorReservation is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetColorReservation parse parameter occur error");
+
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         ColorReservationType colorReservationType = ColorReservationType::COLOR_RESERVATION_TYPE_NONE;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetColorReservation(colorReservationType);
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
         napi_create_int32(env, colorReservationType, &result);
     } else {
-        MEDIA_ERR_LOG("GetColorReservation call Failed!");
+        MEDIA_ERR_LOG("GetColorReservation get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2319,29 +2289,23 @@ napi_value CameraSessionNapi::SetColorReservation(napi_env env, napi_callback_in
     CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
         "SystemApi SetColorReservation is called!");
     MEDIA_DEBUG_LOG("SetColorReservation is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    int32_t colorReservationType = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t value = 0;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        ColorReservationType colorReservationType = static_cast<ColorReservationType>(value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, colorReservationType);
+    CHECK_ERROR_RETURN_RET_LOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetColorReservation parse parameter occur error");
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
-        int retCode = cameraSessionNapi->cameraSession_->SetColorReservation(colorReservationType);
+        int retCode = cameraSessionNapi->cameraSession_->SetColorReservation(
+            static_cast<ColorReservationType>(colorReservationType));
         cameraSessionNapi->cameraSession_->UnlockForControl();
         CHECK_ERROR_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
     } else {
-        MEDIA_ERR_LOG("SetColorReservation call Failed!");
+        MEDIA_ERR_LOG("SetColorReservation get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
-    return result;
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::SetQualityPrioritization(napi_env env, napi_callback_info info)
