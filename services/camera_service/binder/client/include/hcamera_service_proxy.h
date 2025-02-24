@@ -132,6 +132,11 @@ public:
     int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) override;
 
     int32_t RequireMemorySize(int32_t memSize) override;
+
+    int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
+
+    int32_t GetConcurrentCameraAbility(std::string& cameraId,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };

@@ -616,6 +616,8 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
+        DECLARE_NAPI_FUNCTION("getCameraDevice", GetCameraDevice),
+        DECLARE_NAPI_FUNCTION("getCameraConcurrentInfos", GetCameraConcurrentInfos),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off)
@@ -994,6 +996,152 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     }
     MEDIA_DEBUG_LOG("CameraManagerNapi::GetSupportedCameras size=[%{public}zu]", cameraObjList.size());
     return result;
+}
+
+napi_value CameraManagerNapi::GetCameraDevice(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCameraDevice is called");
+    CameraManagerNapi* cameraManagerNapi;
+    int32_t cameraPosition;
+    int32_t cameraType;
+    sptr<CameraDevice> cameraInfo = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, cameraType);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "GetCameraDevice with 2 invalid arguments!")) {
+            MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevice 2 invalid arguments");
+            return nullptr;
+    }
+    ProcessCameraInfo(cameraManagerNapi->cameraManager_, static_cast<const CameraPosition>(cameraPosition),
+        static_cast<const CameraType>(cameraType), cameraInfo);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraInfo is null.");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    result = CameraNapiObjCameraDevice(*cameraInfo).GenerateNapiValue(env);
+    return result;
+}
+
+napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCameraConcurrentInfos is called");
+    CameraManagerNapi* cameraManagerNapi;
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<SceneMode>> modes = {};
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    napi_status status;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
+        return nullptr;
+    }
+    if (argc != ARGS_ONE) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos argc is not ARGS_ONE");
+        return nullptr;
+    }
+    napi_valuetype argvType;
+    napi_typeof(env, argv[PARAM0], &argvType);
+    if (argvType != napi_object) {
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            "CameraManagerNapi::GetCameraConcurrentInfos type of array is error");
+        return nullptr;
+    }
+
+    std::vector<string>cameraIdv = {};
+    cameraManagerNapi->ParseGetCameraConcurrentInfos(env, argv[PARAM0], cameraIdv);
+    vector<sptr<CameraDevice>> cameraDeviceArrray = {};
+    for (auto cameraidonly : cameraIdv) {
+        cameraDeviceArrray.push_back(cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraidonly));
+    }
+   
+    bool issupported = cameraManagerNapi->cameraManager_->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, nullptr, "CameraManagerNapi::Camera is not support ConcurrentType");
+    issupported = cameraManagerNapi->cameraManager_->CheckConcurrentExecution(cameraDeviceArrray);
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, nullptr, "CameraManagerNapi::Camera is not support ConcurrentExecution");
+
+    cameraManagerNapi->cameraManager_->GetCameraConcurrentInfos(cameraDeviceArrray,
+        cameraConcurrentType, modes, outputCapabilities);
+    return CreateCameraConcurrentResult(env, cameraDeviceArrray, cameraConcurrentType, modes, outputCapabilities);
+}
+
+void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam,
+    std::vector<std::string> &cameraIdv)
+{
+    MEDIA_DEBUG_LOG("ParseGetCameraConcurrentInfos is called");
+    uint32_t length = 0;
+    napi_value value;
+    napi_get_array_length(env, arrayParam, &length);
+    for (uint32_t i = 0; i < length; i++) {
+        napi_get_element(env, arrayParam, i, &value);
+        napi_value res = nullptr;
+        if (napi_get_named_property(env, value, "cameraId", &res) == napi_ok) {
+            size_t sizeofres;
+            char buffer[PATH_MAX];
+            napi_get_value_string_utf8(env, res, buffer, PATH_MAX, &sizeofres);
+            std::string cameraidonly = std::string(buffer);
+            cameraIdv.push_back(cameraidonly);
+        }
+    }
+}
+
+napi_value CameraManagerNapi::CreateCameraConcurrentResult(napi_env env, vector<sptr<CameraDevice>> &cameraDeviceArrray,
+    std::vector<bool> &cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+    std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
+{
+    napi_value resjsArray = nullptr;
+    napi_status resjsArraystatus = napi_create_array(env, &resjsArray);
+    if (resjsArraystatus != napi_ok) {
+        MEDIA_ERR_LOG("resjsArray create is fail");
+        return nullptr;
+    }
+    for (size_t i = 0; i < cameraDeviceArrray.size(); i++) {
+        napi_value obj = nullptr;
+        napi_create_object(env, &obj);
+        napi_value cameranow = CameraNapiObjCameraDevice(*cameraDeviceArrray[i]).GenerateNapiValue(env);
+        napi_set_named_property(env, obj, "device", cameranow);
+        napi_value cameraconcurrent = nullptr;
+        napi_get_boolean(env, cameraConcurrentType[i], &cameraconcurrent);
+        napi_set_named_property(env, obj, "type", cameraconcurrent);
+        napi_value scenemodearray = nullptr;
+        napi_status scenemodearraystatus = napi_create_array(env, &scenemodearray);
+        if (scenemodearraystatus != napi_ok) {
+            MEDIA_ERR_LOG("scenemodearray create is fail");
+            continue;
+        }
+        int32_t index = 0;
+        for (auto modenow : modes[i]) {
+            auto itr = g_nativeToNapiSupportedMode_.find(modenow);
+            if (itr != g_nativeToNapiSupportedMode_.end()) {
+                napi_value modeitem = nullptr;
+                napi_create_int32(env, itr->second, &modeitem);
+                napi_set_element(env, scenemodearray, index, modeitem);
+                index++;
+            }
+        }
+        napi_set_named_property(env, obj, "modes", scenemodearray);
+        napi_value outputcapabilitiyarray = nullptr;
+        napi_status status = napi_create_array(env, &outputcapabilitiyarray);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("outputcapabilitiyarray create is fail");
+            continue;
+        }
+        index = 0;
+        for (auto outputCapability : outputCapabilities[i]) {
+            napi_value outputcapability = CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
+            napi_set_element(env, outputcapabilitiyarray, index, outputcapability);
+            index++;
+        }
+        napi_set_named_property(env, obj, "outputCapabilities", outputcapabilitiyarray);
+        napi_set_element(env, resjsArray, i, obj);
+    }
+    return resjsArray;
 }
 
 static napi_value CreateSceneModeJSArray(napi_env env, std::vector<SceneMode> nativeArray)

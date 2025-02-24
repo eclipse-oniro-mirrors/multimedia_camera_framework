@@ -22,7 +22,6 @@ namespace OHOS {
 namespace CameraStandard {
 
 thread_local sptr<PhotoOutput> CJPhotoOutput::sPhotoOutput_ = nullptr;
-thread_local sptr<Surface> CJPhotoOutput::sPhotoSurface_ = nullptr;
 
 void CJPhotoOutputCallback::OnCaptureStarted(const int32_t captureId) const
 {
@@ -131,7 +130,6 @@ int32_t CJPhotoOutput::CreatePhotoOutput()
     sptr<Surface> photoSurface;
     MEDIA_INFO_LOG("create surface as consumer");
     photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
-    sPhotoSurface_ = photoSurface;
     if (photoSurface == nullptr) {
         MEDIA_ERR_LOG("failed to get surface");
         return CameraError::CAMERA_SERVICE_ERROR;
@@ -139,7 +137,8 @@ int32_t CJPhotoOutput::CreatePhotoOutput()
     sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
     MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
                    photoSurface->GetDefaultHeight());
-    int retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &sPhotoOutput_);
+    int retCode =
+        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &sPhotoOutput_, photoSurface);
     if (sPhotoOutput_ == nullptr) {
         MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
     }
@@ -154,7 +153,6 @@ int32_t CJPhotoOutput::CreatePhotoOutputWithProfile(Profile &profile)
     sptr<Surface> photoSurface;
     MEDIA_INFO_LOG("create surface as consumer");
     photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
-    sPhotoSurface_ = photoSurface;
     if (photoSurface == nullptr) {
         MEDIA_ERR_LOG("failed to get surface");
         return CameraError::CAMERA_SERVICE_ERROR;
@@ -165,7 +163,8 @@ int32_t CJPhotoOutput::CreatePhotoOutputWithProfile(Profile &profile)
                    "surface width: %{public}d, height: %{public}d",
                    profile.GetSize().width, profile.GetSize().height, static_cast<int32_t>(profile.GetCameraFormat()),
                    photoSurface->GetDefaultWidth(), photoSurface->GetDefaultHeight());
-    int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_);
+    int retCode =
+        CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_, photoSurface);
     if (sPhotoOutput_ == nullptr) {
         MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
         return retCode;

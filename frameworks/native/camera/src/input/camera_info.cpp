@@ -177,6 +177,16 @@ std::vector<float> CameraInfo::GetExposureBiasRange()
 {
     CHECK_ERROR_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
 
+    if (cameraManager_->GetInstance().isConcurrentLimted == 1) {
+        for (int i = 0; i < cameraManager_->GetInstance().LimtedCapabilitySave.compensation.count;
+            i++) {
+            float num = static_cast<float>(cameraManager_->GetInstance().
+                LimtedCapabilitySave.compensation.range[i]);
+            exposureBiasRange_.push_back(num);
+        }
+        return exposureBiasRange_;
+    }
+
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},

@@ -96,6 +96,11 @@ public:
 
     Camera_ErrorCode SetTorchMode(Camera_TorchMode torchMode);
 
+    Camera_ErrorCode GetCameraDevice(Camera_Position position, Camera_Type type, Camera_Device *camera);
+
+    Camera_ErrorCode GetCameraConcurrentInfos(const Camera_Device *camera, uint32_t deviceSize,
+        Camera_ConcurrentInfo **CameraConcurrentInfo, uint32_t *infoSize);
+
     static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
 
     static Camera_ErrorCode GetHostDeviceName(Camera_Device* camera, char** hostDeviceName);

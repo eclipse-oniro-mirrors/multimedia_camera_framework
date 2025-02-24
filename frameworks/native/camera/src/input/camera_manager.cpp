@@ -24,6 +24,9 @@
 #include <ostream>
 #include <parameters.h>
 #include <sstream>
+#include <unordered_map>
+#include <climits>
+#include <regex>
 
 #include "ability/camera_ability_parse_util.h"
 #include "aperture_video_session.h"
@@ -115,6 +118,12 @@ const std::set<int32_t> isTemplateMode_ = {
 
 const std::set<int32_t> isPhotoMode_ = {
     SceneMode::CAPTURE, SceneMode::PORTRAIT
+};
+
+const std::unordered_map<CameraPosition, camera_position_enum_t> fwToMetaCameraPosition_ = {
+    {CAMERA_POSITION_FRONT, OHOS_CAMERA_POSITION_FRONT},
+    {CAMERA_POSITION_BACK, OHOS_CAMERA_POSITION_BACK},
+    {CAMERA_POSITION_UNSPECIFIED, OHOS_CAMERA_POSITION_OTHER}
 };
 
 bool ConvertMetaToFwkMode(const OperationMode opMode, SceneMode &scMode)
@@ -424,6 +433,20 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     return CameraErrorCode::SUCCESS;
 }
 
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface,
+    sptr<PhotoOutput>* pPhotoOutput, sptr<Surface> photoSurface)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
+    sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surface, photoSurface);
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+    *pPhotoOutput = photoOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
 int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
     __attribute__((no_sanitize("cfi")))
 {
@@ -443,6 +466,33 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
     sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surface);
+    CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
+    photoOutput->SetStream(streamCapture);
+    photoOutput->SetPhotoProfile(profile);
+    *pPhotoOutput = photoOutput;
+    return CameraErrorCode::SUCCESS;
+}
+
+int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surfaceProducer,
+    sptr<PhotoOutput> *pPhotoOutput, sptr<Surface> photoSurface)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surfaceProducer == nullptr),
+        CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutput serviceProxy is null or PhotoOutputSurface/profile is null");
+    CHECK_ERROR_RETURN_RET_LOG((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) || (profile.GetSize().width == 0)
+        || (profile.GetSize().height == 0), CameraErrorCode::INVALID_ARGUMENT,
+        "CreatePhotoOutput invalid fomrat or width or height is zero");
+    // to adapter yuv photo
+    CameraFormat yuvFormat = profile.GetCameraFormat();
+    camera_format_t metaFormat = GetCameraMetadataFormat(yuvFormat);
+    sptr<IStreamCapture> streamCapture = nullptr;
+    int32_t retCode = serviceProxy->CreatePhotoOutput(
+        surfaceProducer, metaFormat, profile.GetSize().width, profile.GetSize().height, streamCapture);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "Failed to get stream capture object from hcamera service!, %{public}d", retCode);
+    sptr<PhotoOutput> photoOutput = new(std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
     CHECK_ERROR_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     photoOutput->SetStream(streamCapture);
     photoOutput->SetPhotoProfile(profile);
@@ -1174,6 +1224,532 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
     }
     AlignVideoFpsProfile(deviceInfoList);
     return deviceInfoList;
+}
+
+void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
+    std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
+    std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
+{
+    MEDIA_INFO_LOG("CameraManager::GetCameraConcurrentInfos start");
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_LOG(
+        serviceProxy == nullptr, "CameraManager::InitCameraList serviceProxy is null, returning empty list!");
+    int32_t retCode;
+    int index = 0;
+    for (auto cameraDev : cameraDeviceArrray) {
+        std::vector<SceneMode> modeofThis = {};
+        std::vector<sptr<CameraOutputCapability>> outputCapabilitiesofThis = {};
+        CameraPosition cameraPosition = cameraDev->GetPosition();
+        auto iter = fwToMetaCameraPosition_.find(cameraPosition);
+        if (iter == fwToMetaCameraPosition_.end()) {
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
+            continue;
+        }
+        string idOfThis = {};
+        serviceProxy->GetIdforCameraConcurrentType(iter->second, idOfThis);
+        sptr<ICameraDeviceService> cameradevicephysic = nullptr;
+        CreateCameraDevice(idOfThis, &cameradevicephysic);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+        retCode = serviceProxy->GetConcurrentCameraAbility(idOfThis, cameraAbility);
+        if (retCode != CAMERA_OK) {
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
+            index++;
+            continue;
+        }
+        sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
+        camera_metadata_item_t item;
+        if (!cameraConcurrentType[index]) {
+            retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
+                OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
+            if (retCode == CAM_META_SUCCESS) {
+                GetMetadataInfos(item, modeofThis, outputCapabilitiesofThis, cameraAbility);
+            }
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
+        } else {
+            retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
+                OHOS_ABILITY_CAMERA_LIMITED_CAPABILITIES, &item);
+            if (retCode == CAM_META_SUCCESS) {
+                cameraDev->isConcurrentLimted_ = 1;
+                ParsingCameraConcurrentLimted(item, modeofThis, outputCapabilitiesofThis, cameraAbility, cameraObjnow);
+            } else {
+                MEDIA_ERR_LOG("GetCameraConcurrentInfos error");
+            }
+            modes.push_back(modeofThis);
+            outputCapabilities.push_back(outputCapabilitiesofThis);
+        }
+        index++;
+    }
+}
+
+void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
+    std::vector<SceneMode> &mode, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+    shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility, sptr<CameraDevice>cameraDevNow)
+{
+    MEDIA_INFO_LOG("CameraManager::ParsingCameraConcurrentLimted start");
+    double* originInfo = item.data.d;
+    uint32_t count = item.count;
+    cameraDevNow->limtedCapabilitySave_.flashmodes.count = 0;
+    cameraDevNow->limtedCapabilitySave_.flashmodes.mode.clear();
+    cameraDevNow->limtedCapabilitySave_.exposuremodes.count = 0;
+    cameraDevNow->limtedCapabilitySave_.exposuremodes.mode.clear();
+    cameraDevNow->limtedCapabilitySave_.ratiorange.count = 0;
+    cameraDevNow->limtedCapabilitySave_.ratiorange.mode.clear();
+    cameraDevNow->limtedCapabilitySave_.ratiorange.range.clear();
+    cameraDevNow->limtedCapabilitySave_.compensation.count = 0;
+    cameraDevNow->limtedCapabilitySave_.compensation.range.clear();
+    cameraDevNow->limtedCapabilitySave_.focusmodes.count = 0;
+    cameraDevNow->limtedCapabilitySave_.focusmodes.mode.clear();
+    cameraDevNow->limtedCapabilitySave_.stabilizationmodes.count = 0;
+    cameraDevNow->limtedCapabilitySave_.stabilizationmodes.mode.clear();
+    cameraDevNow->limtedCapabilitySave_.colorspaces.modeCount = 0;
+    cameraDevNow->limtedCapabilitySave_.colorspaces.modeInfo.clear();
+    for (uint32_t i = 0; i < count;) {
+        if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_FLASH_MODES) {
+            std::vector<int32_t>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.flashmodes.count = length;
+            GetAbilityStructofConcurrentLimted(vec, originInfo + i + STEP_TWO, length);
+            cameraDevNow->limtedCapabilitySave_.flashmodes.mode = vec;
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_EXPOSURE_MODES) {
+            std::vector<int32_t>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.exposuremodes.count = length;
+            GetAbilityStructofConcurrentLimted(vec, originInfo + i + STEP_TWO, length);
+            cameraDevNow->limtedCapabilitySave_.exposuremodes.mode = vec;
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_ZOOM_RATIO_RANGE) {
+            std::vector<float>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.ratiorange.count = length / STEP_THREE;
+            for (int j = i + STEP_TWO; j < i + length + STEP_TWO + STEP_ONE; j += STEP_THREE) {
+                cameraDevNow->limtedCapabilitySave_.ratiorange.mode.push_back(static_cast<int32_t>(originInfo[j]));
+                cameraDevNow->limtedCapabilitySave_.ratiorange.range.insert({static_cast<int32_t>(originInfo[j]),
+                    make_pair(static_cast<float>(originInfo[j + STEP_ONE]),
+                        static_cast<float>(originInfo[j + STEP_TWO]))});
+            }
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_AE_COMPENSATION_RANGE) {
+            std::vector<float>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.compensation.count = length;
+            GetAbilityStructofConcurrentLimtedfloat(vec, originInfo + i + STEP_TWO, length);
+            cameraDevNow->limtedCapabilitySave_.compensation.range = vec;
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_FOCUS_MODES) {
+            std::vector<int32_t>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.focusmodes.count = length;
+            GetAbilityStructofConcurrentLimted(vec, originInfo + i + STEP_TWO, length);
+            cameraDevNow->limtedCapabilitySave_.focusmodes.mode = vec;
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_VIDEO_STABILIZATION_MODES) {
+            std::vector<int32_t>vec;
+            int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
+            cameraDevNow->limtedCapabilitySave_.stabilizationmodes.count = length;
+            GetAbilityStructofConcurrentLimted(vec, originInfo + i + STEP_TWO, length);
+            cameraDevNow->limtedCapabilitySave_.stabilizationmodes.mode = vec;
+            i = i + length + STEP_TWO + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_AVAILABLE_COLOR_SPACES) {
+            std::shared_ptr<ColorSpaceInfoParse> colorSpaceParse = std::make_shared<ColorSpaceInfoParse>();
+            int countl = 0;
+            FindConcurrentLimtedEnd(originInfo, i, count, countl);
+            colorSpaceParse->getColorSpaceInfoforConcurrent(originInfo + i + STEP_ONE,
+                countl - STEP_ONE, cameraDevNow->limtedCapabilitySave_.colorspaces);
+                i = i + countl + STEP_ONE;
+        } else if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL) {
+            GetMetadataInfosfordouble(item, originInfo, i + STEP_ONE, mode, outputCapabilitiesofThis, cameraAbility);
+            break;
+        } else {
+            i++;
+        }
+    }
+    cameraConLimCapMap_.insert({cameraDevNow->GetID(), cameraDevNow->limtedCapabilitySave_});
+}
+
+void CameraManager::FindConcurrentLimtedEnd(double* originInfo, int32_t i, int count, int &countl)
+{
+    for (uint32_t j = i + STEP_ONE; j < count; j++) {
+        if (static_cast<camera_device_metadata_tag>(originInfo[j]) == OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL) {
+            break;
+        }
+        countl++;
+    }
+}
+
+void CameraManager::GetAbilityStructofConcurrentLimted(std::vector<int32_t>&vec, double* originInfo, int length)
+{
+    for (int i = 0; i < length; i++) {
+        vec.push_back(static_cast<int32_t>(originInfo[i]));
+    }
+}
+
+void CameraManager::GetAbilityStructofConcurrentLimtedfloat(std::vector<float>&vec, double* originInfo, int length)
+{
+    for (int i = 0; i < length; i++) {
+        vec.push_back(static_cast<float>(originInfo[i]));
+    }
+}
+
+void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
+    std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+    shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility)
+{
+    ProfilesWrapper profilesWrapper = {};
+    std::vector<ProfileLevelInfo> modeInfosum = {};
+    int32_t* originInfo = item.data.i32;
+    uint32_t count = item.count;
+    if (count == 0 || originInfo == nullptr) {
+        return;
+    }
+    uint32_t i = 0;
+    uint32_t j = i + STEP_THREE;
+    auto isModeEnd = [](int32_t *originInfo, uint32_t j) {
+        return originInfo[j] == MODE_END && originInfo[j - 1] == SPEC_END &&
+                originInfo[j - 2] == STREAM_END && originInfo[j - 3] == DETAIL_END;
+    };
+    while (j < count) {
+        if (originInfo[j] != MODE_END) {
+            j = j + STEP_FOUR;
+            continue;
+        }
+        if (isModeEnd(originInfo, j)) {
+            ProfileLevelInfo modeInfo = {};
+            modeofThis.push_back(static_cast<SceneMode>(originInfo[i]));
+            CameraAbilityParseUtil::GetSpecInfo(originInfo, i + 1, j - 1, modeInfo);
+            i = j + 1;
+            j = i + 1;
+            modeInfosum.push_back(modeInfo);
+        } else {
+            j++;
+        }
+    }
+    int32_t modecount = 0;
+    for (auto &modeInfo : modeInfosum) {
+        std::vector<SpecInfo> specInfos;
+        ProfilesWrapper profilesWrapper;
+        specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+        sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
+        for (SpecInfo& specInfo : specInfos) {
+            for (StreamInfo& streamInfo : specInfo.streamInfos) {
+                CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
+            }
+        }
+        int32_t modename = modeofThis[modecount];
+        SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper,
+            modename, cameraAbility);
+        outputCapabilitiesofThis.push_back(cameraOutputCapability);
+        modecount++;
+    }
+}
+
+void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
+    ProfilesWrapper &profilesWrapper, int32_t modeName,
+    shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility)
+{
+    if (IsSystemApp()) {
+        FillSupportPhotoFormats(profilesWrapper.photoProfiles);
+    }
+    cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
+    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
+    cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);
+    MEDIA_INFO_LOG("SetPreviewProfiles size = %{public}zu", profilesWrapper.previewProfiles.size());
+    if (!isPhotoMode_.count(modeName)) {
+        cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
+    }
+    MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", profilesWrapper.vidProfiles.size());
+    cameraOutputCapability->SetDepthProfiles(depthProfiles_);
+    MEDIA_INFO_LOG("SetDepthProfiles size = %{public}zu", depthProfiles_.size());
+
+    std::vector<MetadataObjectType> objectTypes = {};
+    camera_metadata_item_t metadataItem;
+    int32_t ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
+        OHOS_ABILITY_STATISTICS_DETECT_TYPE, &metadataItem);
+    if (ret == CAM_META_SUCCESS) {
+        for (uint32_t index = 0; index < metadataItem.count; index++) {
+            auto iterator =
+                g_metaToFwCameraMetaDetect_.find(static_cast<StatisticsDetectType>(metadataItem.data.u8[index]));
+            CHECK_ERROR_PRINT_LOG(iterator == g_metaToFwCameraMetaDetect_.end(),
+                "Not supported metadataItem %{public}d", metadataItem.data.u8[index]);
+            if (iterator != g_metaToFwCameraMetaDetect_.end()) {
+                objectTypes.push_back(iterator->second);
+            }
+        }
+    }
+    if (!CameraSecurity::CheckSystemApp()) {
+        MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
+        if (std::any_of(objectTypes.begin(), objectTypes.end(),
+                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
+            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
+        } else {
+            cameraOutputCapability->SetSupportedMetadataObjectType({});
+        }
+    } else {
+        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+    }
+    MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
+                   cameraOutputCapability->GetSupportedMetadataObjectType().size());
+}
+
+bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
+    std::vector<bool> &cameraConcurrentType)
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, false, "CameraManager::InitCameraList serviceProxy is null, returning empty list!");
+    int32_t retCode;
+    for (auto cameraDev : cameraDeviceArrray) {
+        CameraPosition cameraPosition = cameraDev->GetPosition();
+        string idofthis;
+        auto iter = fwToMetaCameraPosition_.find(cameraPosition);
+        serviceProxy->GetIdforCameraConcurrentType(iter->second, idofthis);
+
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+        retCode = serviceProxy->GetConcurrentCameraAbility(idofthis, cameraAbility);
+        if (retCode != CAMERA_OK) {
+            continue;
+        }
+        camera_metadata_item_t item;
+        retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONCURRENT_TYPE, &item);
+        if (retCode != CAMERA_OK) {
+            cameraConcurrentType.clear();
+            MEDIA_ERR_LOG("cameraAbility not support OHOS_ABILITY_CAMERA_CONCURRENT_TYPE");
+            return false;
+        }
+        bool cameratype = 0;
+        if (item.count > 0) {
+            cameratype = static_cast<bool>(item.data.u8[0]);
+        }
+        MEDIA_INFO_LOG("cameraid is %{public}s, type is %{public}d", idofthis.c_str(), cameratype);
+        cameraConcurrentType.push_back(cameratype);
+    }
+    return true;
+}
+
+bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
+    std::vector<std::string> &cameraIdv)
+{
+    for (int i = 1; i < cameraIdv.size(); i++) {
+        if (cameraIdv[i].empty()) {
+            MEDIA_ERR_LOG("CameraManager::CheckCameraConcurrentId get invalid cameraId");
+        }
+        std::regex regex("\\d+$");
+        std::smatch match;
+        std::string cameraId;
+        if (std::regex_search(cameraIdv[i], match, regex)) {
+            cameraId = match[0];
+        }
+        MEDIA_DEBUG_LOG("CameraManager::CheckCameraConcurrentId check cameraId: %{public}s", cameraId.c_str());
+        if (!idmap.count(cameraId)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cameraDeviceArrray)
+{
+    std::vector<std::string>cameraIdv = {};
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, false, "CameraManager::InitCameraList serviceProxy is null, returning empty list!");
+    int32_t retCode;
+    
+    for (auto cameraDev : cameraDeviceArrray) {
+        CameraPosition cameraPosition = cameraDev->GetPosition();
+        string idofthis;
+        auto iter = fwToMetaCameraPosition_.find(cameraPosition);
+        serviceProxy->GetIdforCameraConcurrentType(iter->second, idofthis);
+        cameraIdv.push_back(idofthis);
+    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraIdv.size() == 0, false, "no find cameraid");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    retCode = serviceProxy->GetConcurrentCameraAbility(cameraIdv[0], cameraAbility);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, false, "GetCameraAbility fail");
+    camera_metadata_item_t item;
+    retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &item);
+    if (retCode == CAMERA_OK) {
+        MEDIA_DEBUG_LOG("success find OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS");
+        for (uint32_t i = 0; i < item.count; i++) {
+            MEDIA_DEBUG_LOG("concurrent cameras: %{public}d", item.data.i32[i]);
+        }
+    }
+    int32_t* originInfo = item.data.i32;
+    std::unordered_map<std::string, int32_t>idmap;
+    idmap.clear();
+    int count = item.count;
+    for (int i = 0; i < count; i++) {
+        if (originInfo[i] == -1) {
+            if (CheckCameraConcurrentId(idmap, cameraIdv)) {
+                return true;
+            }
+            idmap.clear();
+        } else {
+            idmap[std::to_string(originInfo[i])]++;
+        }
+    }
+    if (CheckCameraConcurrentId(idmap, cameraIdv)) {
+        return true;
+    }
+    return false;
+}
+
+void CameraManager::GetMetadataInfosfordouble(camera_metadata_item_t &item, double* originInfo, uint32_t i,
+    std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
+    shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility)
+{
+    MEDIA_INFO_LOG("CameraManager::GetMetadataInfosfordouble start");
+    ProfilesWrapper profilesWrapper = {};
+    std::vector<ProfileLevelInfo> modeInfosum = {};
+    uint32_t count = item.count;
+    if (count == 0 || originInfo == nullptr) {
+        return;
+    }
+    uint32_t j = i + STEP_THREE;
+    auto isModeEnd = [](double *originInfo, uint32_t j) {
+        return static_cast<int32_t>(originInfo[j]) == INT_MAX && static_cast<int32_t>(originInfo[j - 1]) == INT_MAX &&
+                static_cast<int32_t>(originInfo[j - 2]) == INT_MAX &&
+                static_cast<int32_t>(originInfo[j - 3]) == INT_MAX;
+    };
+    while (j < count) {
+        if (static_cast<int32_t>(originInfo[j]) != INT_MAX) {
+            j = j + STEP_FOUR;
+            continue;
+        }
+        if (isModeEnd(originInfo, j)) {
+            ProfileLevelInfo modeInfo = {};
+            modeofThis.push_back(static_cast<SceneMode>(originInfo[i]));
+            GetSpecInfofordouble(originInfo, i + 1, j - 1, modeInfo);
+            modeInfosum.push_back(modeInfo);
+            i = j + 1;
+            j = i + 1;
+        } else {
+            j++;
+        }
+    }
+    int32_t modecount = 0;
+    for (auto &modeInfo : modeInfosum) {
+        std::vector<SpecInfo> specInfos;
+        ProfilesWrapper profilesWrapper;
+        specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+        sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
+        for (SpecInfo& specInfo : specInfos) {
+            for (StreamInfo& streamInfo : specInfo.streamInfos) {
+                CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
+            }
+        }
+        int32_t modename = modeofThis[modecount];
+        SetCameraOutputCapabilityofthis(cameraOutputCapability, profilesWrapper,
+            modename, cameraAbility);
+        
+        outputCapabilitiesofThis.push_back(cameraOutputCapability);
+        modecount++;
+    }
+}
+
+void CameraManager::GetSpecInfofordouble(double *originInfo, uint32_t start, uint32_t end, ProfileLevelInfo &modeInfo)
+{
+    uint32_t i = start;
+    uint32_t j = i + STEP_TWO;
+    std::vector<std::pair<uint32_t, uint32_t>> specIndexRange;
+    while (j <= end) {
+        if (static_cast<int32_t>(originInfo[j]) != INT_MAX) {
+            j = j + STEP_THREE;
+            continue;
+        }
+        if (static_cast<int32_t>(originInfo[j - STEP_ONE]) == INT_MAX &&
+            static_cast<int32_t>(originInfo[j - STEP_TWO]) == INT_MAX) {
+            std::pair<uint32_t, uint32_t> indexPair(i, j);
+            specIndexRange.push_back(indexPair);
+            i = j + STEP_ONE;
+            j = i + STEP_TWO;
+        } else {
+            j++;
+        }
+    }
+    uint32_t specCount = specIndexRange.size();
+    modeInfo.specInfos.resize(specCount);
+
+    for (uint32_t k = 0; k < specCount; ++k) {
+        SpecInfo& specInfo = modeInfo.specInfos[k];
+        i = specIndexRange[k].first;
+        j = specIndexRange[k].second;
+        specInfo.specId = static_cast<int32_t>(originInfo[j]);
+        GetStreamInfofordouble(originInfo, i + 1, j - 1, specInfo);
+    }
+}
+
+void CameraManager::GetStreamInfofordouble(double *originInfo, uint32_t start, uint32_t end, SpecInfo &specInfo)
+{
+    uint32_t i = start;
+    uint32_t j = i + STEP_ONE;
+
+    std::vector<std::pair<uint32_t, uint32_t>> streamIndexRange;
+    while (j <= end) {
+        if (static_cast<int32_t>(originInfo[j]) == INT_MAX) {
+            if (static_cast<int32_t>(originInfo[j - 1]) == INT_MAX) {
+                std::pair<uint32_t, uint32_t> indexPair(i, j);
+                streamIndexRange.push_back(indexPair);
+                i = j + STEP_ONE;
+                j = i + STEP_ONE;
+            } else {
+                j++;
+            }
+        } else {
+            j = j + STEP_TWO;
+        }
+    }
+    uint32_t streamTypeCount = streamIndexRange.size();
+    specInfo.streamInfos.resize(streamTypeCount);
+
+    for (uint32_t k = 0; k < streamTypeCount; ++k) {
+        StreamInfo& streamInfo = specInfo.streamInfos[k];
+        i = streamIndexRange[k].first;
+        j = streamIndexRange[k].second;
+        streamInfo.streamType = static_cast<int32_t>(originInfo[i]);
+        GetDetailInfofordouble(originInfo, i + 1, j - 1, streamInfo);
+    }
+}
+
+void CameraManager::GetDetailInfofordouble(double *originInfo, uint32_t start, uint32_t end, StreamInfo &streamInfo)
+{
+    uint32_t i = start;
+    uint32_t j = i;
+    std::vector<std::pair<uint32_t, uint32_t>> detailIndexRange;
+    while (j <= end) {
+        if (static_cast<int32_t>(originInfo[j]) == INT_MAX) {
+            std::pair<uint32_t, uint32_t> indexPair(i, j);
+            detailIndexRange.push_back(indexPair);
+            i = j + STEP_ONE;
+            j = i;
+        } else {
+            j++;
+        }
+    }
+
+    uint32_t detailCount = detailIndexRange.size();
+    streamInfo.detailInfos.resize(detailCount);
+
+    for (uint32_t k = 0; k < detailCount; ++k) {
+        auto &detailInfo = streamInfo.detailInfos[k];
+        i = detailIndexRange[k].first;
+        j = detailIndexRange[k].second;
+        detailInfo.format = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.width = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.height = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.fixedFps = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.minFps = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.maxFps = static_cast<uint32_t>(originInfo[i++]);
+        detailInfo.abilityIds.resize(j - i);
+        std::transform(originInfo + i, originInfo + j, detailInfo.abilityIds.begin(),
+            [](auto val) { return static_cast<uint32_t>(val); });
+    }
 }
 
 void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)

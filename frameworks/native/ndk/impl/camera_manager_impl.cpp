@@ -580,7 +580,8 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput);
+    int32_t retCode =
+        CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput, surface);
     CHECK_ERROR_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     Camera_PhotoOutput* out = new Camera_PhotoOutput(innerPhotoOutput);
     *photoOutput = out;
@@ -607,7 +608,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputWithoutSurface(const Camera_Pr
     CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Get producer failed");
 
     int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile,
-        surfaceProducer, &innerPhotoOutput);
+        surfaceProducer, &innerPhotoOutput, surface);
     CHECK_ERROR_RETURN_RET_LOG((retCode != CameraErrorCode::SUCCESS || innerPhotoOutput == nullptr),
         CAMERA_SERVICE_FATAL_ERROR, "Create photo output failed");
 
@@ -635,7 +636,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutputUsedInPreconfig(const char* su
     CHECK_ERROR_RETURN_RET_LOG(surfaceProducer == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig get surfaceProducer fail!");
     int32_t retCode =
-        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput);
+        CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &innerPhotoOutput, surface);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::CreatePhotoOutputUsedInPreconfig create innerPhotoOutput fail!");
     CHECK_ERROR_RETURN_RET_LOG(innerPhotoOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
@@ -865,6 +866,109 @@ Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
         "torchMode[%{public}d] is invalid", torchMode);
     int32_t ret = CameraManager::GetInstance()->SetTorchMode(itr->second);
     return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camera_Type type, Camera_Device *camera)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevice is called");
+
+    Camera_Device* outCameras = new Camera_Device;
+    CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
+    auto itr = g_NdkCameraPositionToFwk_.find(position);
+    if (itr != g_NdkCameraPositionToFwk_.end()) {
+        innerPosition = itr->second;
+    } else {
+        MEDIA_ERR_LOG("Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+
+    CameraType innerType = static_cast<CameraType>(type);
+    
+    sptr<CameraDevice> cameraInfo = nullptr;
+    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObjList.size() == 0, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedCameras  fail!");
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        sptr<CameraDevice> cameraDevice = cameraObjList[i];
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+        if (cameraDevice->GetPosition() == innerPosition &&
+            cameraDevice->GetCameraType() == innerType) {
+            cameraInfo = cameraDevice;
+            break;
+        }
+    }
+
+    outCameras->cameraId = cameraInfo->GetID().data();
+    outCameras->cameraPosition = position;
+    outCameras->cameraType = type;
+    outCameras->connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
+    camera = outCameras;
+
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *camera, uint32_t deviceSize,
+    Camera_ConcurrentInfo **CameraConcurrentInfo, uint32_t *infoSize)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::GetCameraConcurrentInfos is called");
+    std::vector<string>cameraIdv = {};
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<SceneMode>> modes = {};
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
+    vector<sptr<CameraDevice>> cameraDeviceArrray = {};
+    for (int i = 0; i < deviceSize; i++) {
+        string str(camera[i].cameraId);
+        cameraIdv.push_back(str);
+    }
+    for (auto cameraidonly : cameraIdv) {
+        cameraDeviceArrray.push_back(CameraManager::GetInstance()->GetCameraDeviceFromId(cameraidonly));
+    }
+    bool issupported = CameraManager::GetInstance()->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::GetConcurrentType() error");
+    issupported = CameraManager::GetInstance()->CheckConcurrentExecution(cameraDeviceArrray);
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::CheckConcurrentExe error");
+    CameraManager::GetInstance()->GetCameraConcurrentInfos(cameraDeviceArrray,
+        cameraConcurrentType, modes, outputCapabilities);
+    Camera_ConcurrentInfo *CameraConcurrentInfothis =  new Camera_ConcurrentInfo[deviceSize];
+    for (int i = 0; i < deviceSize; i++) {
+        CameraConcurrentInfothis[i].camera = camera[i];
+        if (cameraConcurrentType[i] == false) {
+            CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_LIMITED_CAPABILITY;
+        } else {
+            CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_FULL_CAPABILITY;
+        }
+        Camera_SceneMode* newmodes = new Camera_SceneMode[modes.size()];
+        for (int j = 0; j < modes[i].size(); j++) {
+            auto itr = g_fwModeToNdk_.find(modes[i][j]);
+            newmodes[j] = itr->second;
+        }
+        CameraConcurrentInfothis[i].sceneModes = newmodes;
+        Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()];
+        for (int j = 0; j < outputCapabilities[i].size(); j++) {
+            std::vector<Profile> previewProfiles = outputCapabilities[i][j]->GetPreviewProfiles();
+            std::vector<Profile> photoProfiles = outputCapabilities[i][j]->GetPhotoProfiles();
+            std::vector<VideoProfile> videoProfiles = outputCapabilities[i][j]->GetVideoProfiles();
+            std::vector<MetadataObjectType> metadataTypeList =
+                outputCapabilities[i][j]->GetSupportedMetadataObjectType();
+            std::vector<Profile> uniquePreviewProfiles;
+            for (const auto& profile : previewProfiles) {
+                if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
+                    profile) == uniquePreviewProfiles.end()) {
+                    uniquePreviewProfiles.push_back(profile);
+                }
+            }
+            GetSupportedPreviewProfiles(&newOutputCapability[j], uniquePreviewProfiles);
+            GetSupportedPhotoProfiles(&newOutputCapability[j], photoProfiles);
+            GetSupportedVideoProfiles(&newOutputCapability[j], videoProfiles);
+            GetSupportedMetadataTypeList(&newOutputCapability[j], metadataTypeList);
+        }
+        CameraConcurrentInfothis[i].outputCapabilities = newOutputCapability;
+    }
+    *CameraConcurrentInfo = CameraConcurrentInfothis;
+    *infoSize = deviceSize;
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback)

@@ -471,6 +471,38 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupportedByTorchMode(Camera_Manager* ca
 Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager,
     Camera_TorchMode torchMode);
 
+/**
+ * @brief Queries a specified device based on position and type.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param position the {@link Camera_Position} instance.
+ * @param type the {@link Camera_Type} instance.
+ * @param camera the {@link Camera_Device} to be set.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 16
+ */
+Camera_ErrorCode OH_CameraManager_GetCameraDevice(Camera_Manager *cameraManager, Camera_Position position,
+                                                  Camera_Type type, Camera_Device *camera);
+
+/**
+ * @brief Obtains the concurrent information of specified cameras, the empty return means concurrency is not supported.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param camera the {@link Camera_Device} instance.
+ * @param deviceSize length of the input device array.
+ * @param CameraConcurrentInfo the {@link Camera_ConcurrentInfo} to be set.
+ * @param infoSize length of the returned concurrency information array..
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 16
+ */
+Camera_ErrorCode OH_CameraManager_GetCameraConcurrentInfos(Camera_Manager *cameraManager, const Camera_Device *camera,
+                                                           uint32_t deviceSize,
+                                                           Camera_ConcurrentInfo **CameraConcurrentInfo,
+                                                           uint32_t *infoSize);
 #ifdef __cplusplus
 }
 #endif

@@ -16,6 +16,7 @@
 #include "input/camera_input.h"
 
 #include <cinttypes>
+#include <cstdint>
 #include <mutex>
 #include <securec.h>
 #include "camera_device.h"
@@ -186,6 +187,69 @@ int CameraInput::Open()
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
     } else {
         MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
+    }
+    return ServiceToCameraError(retCode);
+}
+
+const std::unordered_map<CameraPosition, camera_position_enum_t> fwToMetaCameraPosition_ = {
+    {CAMERA_POSITION_FRONT, OHOS_CAMERA_POSITION_FRONT},
+    {CAMERA_POSITION_BACK, OHOS_CAMERA_POSITION_BACK},
+    {CAMERA_POSITION_UNSPECIFIED, OHOS_CAMERA_POSITION_OTHER}
+};
+
+int CameraInput::Open(int32_t cameraConcurrentType)
+{
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    MEDIA_INFO_LOG("Enter Into CameraInput::Open with CameraConcurrentType"
+        " CameraConcurrentType = %{public}d", cameraConcurrentType);
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    auto deviceObj = GetCameraDevice();
+    auto cameraObject = GetCameraDeviceInfo();
+
+    CameraPosition cameraPosition = cameraObject->GetPosition();
+    auto cameraServiceOnly = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(cameraServiceOnly == nullptr,
+        CAMERA_UNKNOWN_ERROR, "GetMetadata Failed to get cameraProxy");
+
+    string idOfThis;
+    auto iter = fwToMetaCameraPosition_.find(cameraPosition);
+    if (iter == fwToMetaCameraPosition_.end()) {
+        MEDIA_ERR_LOG("CameraInput::Open can not find cameraPosition in fwToMetaCameraPosition_");
+        return retCode;
+    }
+
+    cameraServiceOnly->GetIdforCameraConcurrentType(iter->second, idOfThis);
+    sptr<ICameraDeviceService> cameraDevicePhysic = nullptr;
+    CameraManager::GetInstance()->CreateCameraDevice(idOfThis, &cameraDevicePhysic);
+    SetCameraDevice(cameraDevicePhysic);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    retCode = cameraServiceOnly->GetConcurrentCameraAbility(idOfThis, cameraAbility);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraInput::Open camera id: %{public}s get concurrent camera ability failed", idOfThis.c_str());
+        return retCode;
+    }
+
+    sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
+    if (cameraConcurrentType == 0) {
+        cameraObjnow->isConcurrentLimted_ = 1;
+        auto itr = CameraManager::GetInstance()->cameraConLimCapMap_.find(cameraObjnow->GetID());
+        if (itr != CameraManager::GetInstance()->cameraConLimCapMap_.end()) {
+            cameraObjnow->limtedCapabilitySave_ = itr->second;
+        } else {
+            MEDIA_ERR_LOG("CameraInput::Open can not find CameraDevice in ConcurrentCameraMap");
+            return CAMERA_DEVICE_ERROR;
+        }
+    }
+    std::lock_guard<std::mutex> lock2(deviceObjMutex_);
+    cameraObj_ = cameraObjnow;
+    CameraManager::GetInstance()->SetProfile(cameraObj_, cameraAbility);
+
+    if (cameraDevicePhysic) {
+        retCode = cameraDevicePhysic->Open(cameraConcurrentType);
+        CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::Open()with CameraConcurrentType deviceObj is nullptr");
     }
     return ServiceToCameraError(retCode);
 }

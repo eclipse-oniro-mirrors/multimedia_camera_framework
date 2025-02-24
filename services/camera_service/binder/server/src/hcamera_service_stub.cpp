@@ -174,6 +174,12 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_REQUIRE_MEMORY_SIZE):
             errCode = HCameraServiceStub::HandleRequireMemorySize(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GETID_FOR_CONCURRENT):
+            errCode = HCameraServiceStub::HandleGetIdforCameraConcurrentType(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CONCURRENT_CAMERA_ABILITY):
+            errCode = HCameraServiceStub::HandleGetConcurrentCameraAbility(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -793,6 +799,27 @@ int HCameraServiceStub::HandleRequireMemorySize(MessageParcel& data, MessageParc
     int32_t memSize = data.ReadInt32();
     int ret = RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret, "RequireMemorySize failed : %{public}d", ret);
+    return ret;
+}
+
+int HCameraServiceStub::HandleGetIdforCameraConcurrentType(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t position = data.ReadInt32();
+    std::string cameraid;
+    GetIdforCameraConcurrentType(position, cameraid);
+    reply.WriteString(cameraid);
+    return CAMERA_OK;
+}
+
+int HCameraServiceStub::HandleGetConcurrentCameraAbility(MessageParcel& data, MessageParcel& reply)
+{
+    std::string cameraId = data.ReadString();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int ret = GetConcurrentCameraAbility(cameraId, cameraAbility);
+    bool result = OHOS::Camera::MetadataUtils::EncodeCameraMetadata(cameraAbility, reply);
+    CHECK_ERROR_RETURN_RET_LOG(!result, IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetConcurrentCameraAbility write ability failed");
+    
     return ret;
 }
 } // namespace CameraStandard

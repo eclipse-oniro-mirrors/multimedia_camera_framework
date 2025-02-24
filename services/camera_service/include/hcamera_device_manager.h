@@ -168,6 +168,53 @@ private:
     std::set<std::string> conflicting_;
 };
 
+class CameraConcurrentSelector : public RefBase {
+public:
+    CameraConcurrentSelector() = default;
+    ~CameraConcurrentSelector() = default;
+
+    /**
+    * @brief Setting up a baseline camera and producing a table of concurrent cameras
+    */
+    void SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder);
+
+    /**
+    * @brief Check and save whether the camera can be retained.
+    */
+    bool SaveConcurrentCameras(std::vector<sptr<HCameraDeviceHolder>> holdersSortedByProprity,
+                                          sptr<HCameraDeviceHolder> holderWaitToConfirm);
+
+    /**
+    * @brief Return to cameras that must be retained.
+    *
+    * @return Return to cameras that must be retained.
+    */
+    inline std::vector<sptr<HCameraDeviceHolder>> GetCamerasRetainable()
+    {
+        return listOfCameraRetainable_;
+    }
+
+    /**
+    * @brief Return the Concurrent List.
+    *
+    * @return Return the Concurrent List.
+    */
+    inline std::vector<std::vector<std::int32_t>> GetConcurrentCameraTable()
+    {
+        return concurrentCameraTable_;
+    }
+
+    bool CanOpenCameraconcurrently(std::vector<sptr<HCameraDeviceHolder>> reservedCameras,
+                                   std::vector<std::vector<std::int32_t>> concurrentCameraTable);
+
+private:
+    sptr<HCameraDeviceHolder> requestCameraHolder_;
+    std::vector<sptr<HCameraDeviceHolder>> listOfCameraRetainable_ = {};
+    std::vector<std::vector<std::int32_t>> concurrentCameraTable_ = {};
+    int32_t GetCameraIdNumber(std::string);
+    bool ConcurrentWithRetainedDevicesOrNot(sptr<HCameraDeviceHolder> cameraIdNeedConfirm);
+};
+
 class HCameraDeviceManager : public RefBase {
 public:
     /**
@@ -204,21 +251,27 @@ public:
     *
     * @param pid Pid of active process.
     */
-    sptr<HCameraDeviceHolder> GetCameraHolderByPid(pid_t pid);
+    std::vector<sptr<HCameraDeviceHolder>> GetCameraHolderByPid(pid_t pid);
 
     /**
     * @brief Get cameras by active process pid.
     *
     * @param pid Pid of active process.
     */
-    sptr<HCameraDevice> GetCameraByPid(pid_t pidRequest);
+    std::vector<sptr<HCameraDevice>> GetCamerasByPid(pid_t pidRequest);
 
     /**
     * @brief Get process pid device manager instance.
     *
     * @return Returns pointer to camera device manager instance.
     */
-    pid_t GetActiveClient();
+    std::vector<pid_t> GetActiveClient();
+ 
+    /**
+    * @brief Get the existing holder object.
+    *
+    * @return Returns the list of existing holders.
+    */
 
     std::vector<sptr<HCameraDeviceHolder>> GetActiveCameraHolders();
 
@@ -238,8 +291,8 @@ public:
     * @param camerasNeedEvict Devices that need to be shut down.
     * @param cameraIdRequestOpen device is requested to turn on.
     */
-    bool GetConflictDevices(sptr<HCameraDevice> &camerasNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen);
-
+    bool GetConflictDevices(std::vector<sptr<HCameraDevice>> &cameraNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen,
+                            int32_t concurrentTypeOfRequest);
     /**
     * @brief handle active camera evictions in camera device manager.
     *
@@ -254,20 +307,25 @@ private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
     static std::mutex instanceMutex_;
-    SafeMap<pid_t, sptr<HCameraDeviceHolder>> pidToCameras_;
-    SafeMap<std::string, int32_t> stateOfACamera_;
+    std::map<pid_t, std::vector<sptr<HCameraDeviceHolder>>> pidToCameras_;
+    SafeMap<std::string, int32_t> stateOfRgmCamera_;
     // LRU ordered, most recent at end
     std::vector<sptr<HCameraDeviceHolder>> activeCameras_;
+    std::vector<sptr<HCameraDeviceHolder>> holderSortedByProprity_;
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
+    sptr<CameraConcurrentSelector> concurrentSelector_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
-    void UpdateProcessState(int32_t& activeState, int32_t& requestState,
+    void GenerateProcessCameraState(int32_t& activeState, int32_t& requestState,
         uint32_t activeAccessTokenId, uint32_t requestAccessTokenId);
-    void UpdateEachProcessState(int32_t& processState, uint32_t processTokenId);
+    void GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);
+    sptr<HCameraDeviceHolder> GenerateCameraHolder(sptr<HCameraDevice> device, pid_t pid, int32_t uid,
+                                                   uint32_t accessTokenId);
+    std::vector<sptr<HCameraDeviceHolder>> SortDeviceByPriority();
 };
 } // namespace CameraStandard
 } // namespace OHOS

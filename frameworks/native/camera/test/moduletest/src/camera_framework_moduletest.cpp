@@ -13207,5 +13207,174 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_video_support_hd
     intResult = videoSession->Release();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameras are enabled concurrently. 
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameras are enabled concurrently. 
+ */
+HWTEST_F(CameraFrameworkModuleTest, test_cameras_are_enable_concurrently, TestSize.Level0)
+{
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->Close();
+
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+
+    sptr<CameraDevice> deviceFront = nullptr;
+    sptr<CameraDevice> deviceBack = nullptr;
+
+    std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        sptr<CameraDevice> cameraDevice = cameraObjList[i];
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+        if (cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_BACK &&
+            cameraDevice->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            deviceBack = cameraDevice;
+        }
+        if (cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT &&
+            cameraDevice->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            deviceFront = cameraDevice;
+        }
+    }
+
+    if (deviceFront == nullptr || deviceBack == nullptr) {
+        MEDIA_ERR_LOG("The current device only has a camera and cannot Concurrent");
+        return;
+    }
+
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<SceneMode>> modes = {};
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
+    vector<sptr<CameraDevice>> cameraDeviceArrray = {};
+
+    cameraDeviceArrray.push_back(deviceBack);
+    cameraDeviceArrray.push_back(deviceFront);
+
+    bool issupported = camManagerObj->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    EXPECT_EQ(issupported, 1);
+
+    issupported = camManagerObj->CheckConcurrentExecution(cameraDeviceArrray);
+    EXPECT_EQ(issupported, 1);
+
+    camManagerObj->GetCameraConcurrentInfos(cameraDeviceArrray,
+        cameraConcurrentType, modes, outputCapabilities);
+
+    EXPECT_NE(cameraConcurrentType.size(), 0);
+    EXPECT_NE(modes.size(), 0);
+    EXPECT_NE(outputCapabilities.size(), 0);
+
+    sptr<CaptureSession> camSession = camManagerObj->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(camSession, nullptr);
+
+    sptr<CaptureSession> camSessionSecond = camManagerObj->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(camSessionSecond, nullptr);
+
+    int index0 = -1;
+    int index1 = -1;
+
+    for (int i = 0; i < modes[0].size(); i++) {
+        if (modes[0][i] == SceneMode::CAPTURE) {
+            index0 = i;
+            break;
+        }
+    }
+    if (index0 == -1) {
+        MEDIA_ERR_LOG("The current device do not support SceneMode CAPTURE");
+        return;
+    }
+
+    for (int i = 0; i < modes[1].size(); i++) {
+        if (modes[1][i] == SceneMode::CAPTURE) {
+            index1 = i;
+            break;
+        }
+    }
+    if (index1 == -1) {
+        MEDIA_ERR_LOG("The current device do not support SceneMode CAPTURE");
+       return;
+    }
+
+    int32_t intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CameraInput> inputFront = camManagerObj->CreateCameraInput(deviceFront);
+    sptr<CameraInput> inputBack = camManagerObj->CreateCameraInput(deviceBack);
+    ASSERT_NE(inputFront, nullptr);
+    ASSERT_NE(inputBack, nullptr);
+
+    intResult = inputFront->Open(cameraConcurrentType[0]);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = inputBack->Open(cameraConcurrentType[1]);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->AddInput((sptr<CaptureInput>&)inputFront);
+    EXPECT_EQ(intResult, 0);
+
+    vector<Profile>photoProfilesVec = outputCapabilities[0][index0]->GetPhotoProfiles();
+    vector<Profile>previewProfilesVec = outputCapabilities[0][index0]->GetPreviewProfiles();
+ 
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfilesVec[0].size_.width, previewProfilesVec[0].size_.height);
+    ASSERT_NE(previewOutput, nullptr);
+ 
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+ 
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfilesVec[0].size_.width, photoProfilesVec[0].size_.height);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+ 
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = camSessionSecond->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSessionSecond->AddInput((sptr<CaptureInput>&)inputBack);
+    EXPECT_EQ(intResult, 0);
+
+    photoProfilesVec = outputCapabilities[1][index1]->GetPhotoProfiles();
+    previewProfilesVec = outputCapabilities[1][index1]->GetPreviewProfiles();
+
+    sptr<CaptureOutput> previewOutput2 = CreatePreviewOutput(previewProfilesVec[0].size_.width, previewProfilesVec[0].size_.height);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSessionSecond->AddOutput(previewOutput2);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput2 = CreatePhotoOutput(photoProfilesVec[0].size_.width, photoProfilesVec[0].size_.height);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSessionSecond->AddOutput(photoOutput2);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_2 = (sptr<PhotoOutput>&)photoOutput2;
+
+    intResult = camSessionSecond->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->Start();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSessionSecond->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = camSession->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSessionSecond->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

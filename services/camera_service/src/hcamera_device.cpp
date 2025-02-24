@@ -139,7 +139,7 @@ HCameraDevice::HCameraDevice(
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
-    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId, IPCSkeleton::GetCallingPid());
+    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
     cameraPid_ = IPCSkeleton::GetCallingPid();
 }
@@ -468,6 +468,9 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
     MEDIA_INFO_LOG("enter HandlePrivacyBeforeOpenDevice");
     CHECK_ERROR_RETURN_RET_LOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
+    std::vector<sptr<HCameraDeviceHolder>> holders =
+        HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
+    CHECK_ERROR_RETURN_RET_LOG(!holders.empty(), true, "current pid has active clients, no action is required");
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
     if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
@@ -496,6 +499,9 @@ void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
 {
     MEDIA_INFO_LOG("enter HandlePrivacyAfterCloseDevice");
+    std::vector<sptr<HCameraDeviceHolder>> holders =
+        HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
+    CHECK_ERROR_PRINT_LOG(!holders.empty(), "current pid has active clients, no action is required");
     auto cameraPrivacy = GetCameraPrivacy();
     if (cameraPrivacy != nullptr) {
         if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
@@ -1345,12 +1351,14 @@ bool HCameraDevice::CanOpenCamera()
         }
         return ret;
     }
-    sptr<HCameraDevice> cameraNeedEvict;
-    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
-    if (cameraNeedEvict != nullptr) {
+    std::vector<sptr<HCameraDevice>> cameraNeedEvict;
+    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this, cameraConcurrentType_);
+    if (cameraNeedEvict.size() != 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
-        cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
-        cameraNeedEvict->CloseDevice();
+        for (auto deviceItem : cameraNeedEvict) {
+            deviceItem->OnError(DEVICE_PREEMPT, 0);
+            deviceItem->CloseDevice();
+        }
     }
     return ret;
 }
@@ -1695,6 +1703,45 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     publishInfo.SetSubscriberPermissions(permissionVec);
     EventFwk::CommonEventManager::PublishCommonEvent(CommonEventData, publishInfo);
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
+}
+
+int32_t HCameraDevice::Open(int32_t concurrentTypeofcamera)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
+    CHECK_ERROR_PRINT_LOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
+    CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
+        "HCameraDevice::Open IsAllowedUsingPermission failed");
+    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
+    SetCameraConcurrentType(concurrentTypeofcamera);
+    int32_t result = OpenDevice();
+    return result;
+}
+
+std::vector<std::vector<std::int32_t>> HCameraDevice::GetConcurrentDevicesTable()
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = GetDeviceAbility();
+    std::vector<std::vector<std::int32_t>> resultTable;
+    std::vector<std::int32_t> concurrentList;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CONCURRENT_SUPPORTED_CAMERAS, &item);
+    if (ret == CAM_META_SUCCESS) {
+        for (uint32_t index = 0; index < item.count; index++) {
+            int32_t cameraId = item.data.i32[index];
+            if (cameraId == -1) {
+                resultTable.push_back(concurrentList);
+                concurrentList.clear();
+            } else {
+                concurrentList.push_back(cameraId);
+            }
+        }
+    }
+    resultTable.push_back(concurrentList);
+    concurrentList.clear();
+    MEDIA_INFO_LOG("HCameraDevice::GetConcurrentDevicesTable device id : %{public}s"
+        "find concurrent table size: %{public}zu", cameraID_.c_str(), resultTable.size());
+    return resultTable;
 }
 } // namespace CameraStandard
 } // namespace OHOS

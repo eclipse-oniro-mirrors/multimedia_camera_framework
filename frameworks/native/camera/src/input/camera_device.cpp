@@ -17,6 +17,7 @@
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_rotation_api_utils.h"
 #include "input/camera_device.h"
 #include "input/camera_manager.h"
@@ -372,6 +373,16 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     uint32_t biasRangeCount = 2;
+
+    if (isConcurrentLimted_ == 1) {
+        std::vector<float> compensationRangeLimted = {};
+        for (int i = 0; i < limtedCapabilitySave_.compensation.count; i++) {
+            float num = static_cast<float>(limtedCapabilitySave_.compensation.range[i]);
+            compensationRangeLimted.push_back(num);
+        }
+        exposureBiasRange_ = compensationRangeLimted;
+        return exposureBiasRange_;
+    }
 
     CHECK_ERROR_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
 

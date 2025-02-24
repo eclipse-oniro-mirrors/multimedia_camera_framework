@@ -79,6 +79,13 @@ Camera_ErrorCode Camera_Input::OpenSecureCamera(uint64_t* secureSeqId)
     return FrameworkToNdkCameraError(ret);
 }
 
+Camera_ErrorCode Camera_Input::OpenConcurrentCameras(Camera_ConcurrentType type)
+{
+    int32_t ret = innerCameraInput_->Open(type);
+    MEDIA_INFO_LOG("Camera_Input::OpenSecureCamera secureSeqId = %{public}" PRId32 "", type);
+    return FrameworkToNdkCameraError(ret);
+}
+
 Camera_ErrorCode Camera_Input::Close()
 {
     int32_t ret = innerCameraInput_->Close();

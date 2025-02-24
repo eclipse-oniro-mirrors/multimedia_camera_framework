@@ -887,5 +887,41 @@ int32_t HCameraServiceProxy::RequireMemorySize(int32_t memSize)
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "RequireMemorySize, error: %{public}d", error);
     return error;
 }
+
+int32_t HCameraServiceProxy::GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(cameraPosition);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GETID_FOR_CONCURRENT),
+        data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "GetIdforCameraConcurrentType, error: %{public}d", error);
+    cameraId = reply.ReadString();
+    return error;
+}
+
+int32_t HCameraServiceProxy::GetConcurrentCameraAbility(std::string& cameraId,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CONCURRENT_CAMERA_ABILITY),
+        data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HCameraServiceProxy GetConcurrentCameraAbility failed, error: %{public}d", error);
+
+    Camera::MetadataUtils::DecodeCameraMetadata(reply, cameraAbility);
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

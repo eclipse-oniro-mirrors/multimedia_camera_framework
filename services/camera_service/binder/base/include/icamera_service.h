@@ -159,6 +159,11 @@ public:
 
     virtual int32_t RequireMemorySize(int32_t memSize) = 0;
 
+    virtual int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) = 0;
+
+    virtual int32_t GetConcurrentCameraAbility(std::string& cameraId,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard

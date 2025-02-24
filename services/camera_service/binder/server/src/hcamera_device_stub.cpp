@@ -69,6 +69,9 @@ int HCameraDeviceStub::OnRemoteRequest(
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT):
             errCode = HCameraDeviceStub::HandleDisableResult(data);
             break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN_CONCURRENT):
+            errCode = HCameraDeviceStub::HandleOpenConcurrent(data, reply);
+            break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DELAYED_CLOSE): {
                 CameraXCollie cameraXCollie("HCameraDeviceStub::delayedClose");
                 errCode = closeDelayed();
@@ -182,6 +185,17 @@ int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, Me
         errorCode = Open();
     }
 
+    return errorCode;
+}
+
+int32_t HCameraDeviceStub::HandleOpenConcurrent(MessageParcel &data, MessageParcel &reply)
+{
+    CameraXCollie cameraXCollie("HandleOpenConcurrent");
+    int32_t errorCode = ERR_NONE;
+    int32_t concurrentTypeofcamera = data.ReadInt32();
+    errorCode = Open(concurrentTypeofcamera);
+    CHECK_ERROR_RETURN_RET_LOG(errorCode != ERR_NONE, errorCode,
+        "HCameraDeviceStub::openSecureCamera failed : %{public}d", errorCode);
     return errorCode;
 }
 } // namespace CameraStandard

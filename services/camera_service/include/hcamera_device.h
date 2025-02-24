@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
+#include <vector>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
@@ -61,6 +62,7 @@ public:
 
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
+    int32_t Open(int32_t concurrentTypeofcamera) override;
     int32_t Close() override;
     int32_t closeDelayed() override;
     int32_t Release() override;
@@ -164,6 +166,23 @@ public:
 
     void SetMovingPhotoEndTimeCallback(std::function<void(int64_t, int64_t)> callback);
 
+    inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
+    {
+        cameraConcurrentType_ = cameraConcurrentTypenum;
+    }
+
+    inline int32_t GetCameraConcurrentType()
+    {
+        return cameraConcurrentType_;
+    }
+
+    std::vector<std::vector<std::int32_t>> GetConcurrentDevicesTable();
+
+    inline int32_t GetTargetConcurrencyType()
+    {
+        return cameraConcurrentType_;
+    }
+
 private:
     class FoldScreenListener;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
@@ -173,6 +192,7 @@ private:
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
+    int32_t cameraConcurrentType_;
 
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;

@@ -103,7 +103,6 @@ public:
 private:
     sptr<PhotoOutput> photoOutput_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
-    static thread_local sptr<Surface> sPhotoSurface_;
 
     std::shared_ptr<CJPhotoOutputCallback> photoOutputCallback_;
 };

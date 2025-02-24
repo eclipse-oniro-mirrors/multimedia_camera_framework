@@ -1068,11 +1068,11 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_027, TestSize.Level0)
     ASSERT_NE(device, nullptr);
     device->Open();
 
-    HCameraDeviceManager::GetInstance()->stateOfACamera_.Clear();
+    HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraService_->preCameraId_ = cameraIds[0];
     EXPECT_EQ(cameraService_->PrelaunchCamera(), CAMERA_OK);
 
-    HCameraDeviceManager::GetInstance()->stateOfACamera_.Clear();
+    HCameraDeviceManager::GetInstance()->stateOfRgmCamera_.Clear();
     cameraIds[0].resize(0);
     cameraService_->preCameraId_.clear();
     EXPECT_EQ(cameraService_->PrelaunchCamera(), 0);
@@ -1114,15 +1114,15 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level0)
     sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(
         pidOfRequestProcess, uidOfRequestProcess, 0,
         1, camDevice, accessTokenIdOfRequestProc, cost, conflicting);
-    deviceManager->pidToCameras_.EnsureInsert(pidOfRequestProcess, cameraHolder);
+    deviceManager->pidToCameras_[pidOfRequestProcess].push_back(cameraHolder);
     int32_t ret = cameraService_->AllowOpenByOHSide(cameraIds[0], state, canOpenCamera);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_TRUE(canOpenCamera);
 
     canOpenCamera = false;
-    deviceManager->pidToCameras_.Clear();
+    deviceManager->pidToCameras_.clear();
     cameraHolder->device_ = nullptr;
-    deviceManager->pidToCameras_.EnsureInsert(pidOfRequestProcess, cameraHolder);
+    deviceManager->pidToCameras_[pidOfRequestProcess].push_back(cameraHolder);
     ret = cameraService_->AllowOpenByOHSide(cameraIds[0], state, canOpenCamera);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_FALSE(canOpenCamera);

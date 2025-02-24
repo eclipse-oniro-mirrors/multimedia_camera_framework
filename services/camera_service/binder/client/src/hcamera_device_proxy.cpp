@@ -73,6 +73,22 @@ int32_t HCameraDeviceProxy::OpenSecureCamera(uint64_t* secureSeqId)
     return error;
 }
 
+int32_t HCameraDeviceProxy::Open(int32_t concurrentTypeofcamera)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(concurrentTypeofcamera);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN_CONCURRENT), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraDeviceProxy::Close()
 {
     MessageParcel data;
