@@ -37,6 +37,8 @@ int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, PhotoAssetIntf* photoA
     photoAssetProxy_ = photoAssetProxy;
     if (photoAssetProxy_) {
         fd_ = photoAssetProxy_->GetVideoFd();
+    } else {
+        MEDIA_ERR_LOG("AudioVideoMuxer::Create photoAssetProxy_ is nullptr!");
     }
     MEDIA_INFO_LOG("CreateAVMuxer with videoFd: %{public}d", fd_);
     muxer_ = AVMuxerFactory::CreateAVMuxer(fd_, static_cast<Plugins::OutputFormat>(format));
