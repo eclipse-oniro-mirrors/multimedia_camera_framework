@@ -77,10 +77,6 @@ bool CubicBezier::SetBezierValue(const std::vector<float>& zoomBezierValue)
     const size_t CONTROL_POINT_X2_INDEX = 3;
     const size_t CONTROL_POINT_Y2_INDEX = 4;
 
-    if (zoomBezierValue.size() < 5) {
-        return false;
-    }
-
     mDurationBase = zoomBezierValue[DURATION_BASE_INDEX];
     mControPointX1 = zoomBezierValue[CONTROL_POINT_X1_INDEX];
     mControPointY1 = zoomBezierValue[CONTROL_POINT_Y1_INDEX];
