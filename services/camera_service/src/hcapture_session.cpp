@@ -96,6 +96,7 @@ constexpr int32_t TELE_2X_ZOOM_PER = 2;
 constexpr int32_t WIDE_TELE_ZOOM_PER = 3;
 constexpr int32_t ZOOM_IN_PER = 0;
 constexpr int32_t ZOOM_OUT_PERF = 1;
+constexpr int32_t ZOOM_BEZIER_VALUE_COUNT = 5;
 } // namespace
 
 static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP = {
@@ -1254,6 +1255,27 @@ float HCaptureSession::GetCrossWaitTime(
     return waitTime;
 }
 
+bool HCaptureSession::QueryZoomBezierValue(std::vector<float> &zoomBezierValue)
+{
+    auto cameraDevice = GetCameraDevice();
+    CHECK_ERROR_RETURN_RET_LOG(
+        cameraDevice == nullptr, false, "HCaptureSession::QueryZoomBezierValue() cameraDevice is null");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
+    camera_metadata_item_t bezierItem;
+    int retFindMeta =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_ZOOM_BEZIER_CURVC_POINT, &bezierItem);
+    if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
+        MEDIA_ERR_LOG("HCaptureSession::QueryZoomBezierValue() current bezierValue not found");
+        return false;
+    }
+    for (int i = 0; i < static_cast<int>(bezierItem.count); i++) {
+        zoomBezierValue.push_back(bezierItem.data.f[i]);
+        MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomBezierValue()  bezierValue %{public}f.",
+            static_cast<float>(bezierItem.data.f[i]));
+    }
+    return true;
+}
+
 int32_t HCaptureSession::SetSmoothZoom(
     int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration)
 {
@@ -1267,6 +1289,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     int32_t currentRangeId = 0;
     QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
     std::vector<float> crossZoomAndTime {};
+    std::vector<float> zoomBezierValue {};
     QueryZoomPerformance(crossZoomAndTime, operationMode);
     std::vector<float> mCrossZoom {};
     int32_t waitCount = 4;
@@ -1279,7 +1302,11 @@ int32_t HCaptureSession::SetSmoothZoom(
     targetRangeId = GetRangeId(targetZoomRatio, mCrossZoom);
     currentRangeId = GetRangeId(currentZoomRatio, mCrossZoom);
     float waitMs = GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    bool retHaveBezierValue = QueryZoomBezierValue(zoomBezierValue);
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
+    if (retHaveBezierValue && zoomBezierValue.size() == ZOOM_BEZIER_VALUE_COUNT) {
+        zoomAlgorithm->SetBezierValue(zoomBezierValue);
+    }
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
     CHECK_ERROR_RETURN_RET_LOG(array.empty(), CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom array is empty");
     for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {

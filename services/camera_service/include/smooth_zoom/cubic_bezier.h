@@ -25,6 +25,7 @@ public:
     CubicBezier() = default;
     ~CubicBezier() = default;
 
+    bool SetBezierValue(const std::vector<float>& zoomBezierValue) override;
     std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom,
         const float& frameInterval) override;
 
@@ -38,6 +39,12 @@ private:
     static float BinarySearch(const float& value);
 
     static float GetInterpolation(const float& input);
+
+    static float mControPointX1;
+    static float mControPointX2;
+    static float mControPointY1;
+    static float mControPointY2;
+    static float mDurationBase;
 };
 } // namespace CameraStandard
 } // namespace OHOS
