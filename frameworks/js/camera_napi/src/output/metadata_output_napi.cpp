@@ -28,6 +28,7 @@
 #include "hilog/log.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -67,26 +68,19 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : ListenerBase(env)
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
         std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
-    work->data = reinterpret_cast<void *>(callbackInfo.get());
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(work->data);
+    MetadataOutputCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener, listener->OnMetadataObjectsAvailableCallback(callbackInfo->info_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     }  else {
         callbackInfo.release();
     }
@@ -219,26 +213,19 @@ MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBas
 void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<MetadataStateCallbackInfo> callbackInfo =
         std::make_unique<MetadataStateCallbackInfo>(errorType, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        MetadataStateCallbackInfo* callbackInfo = reinterpret_cast<MetadataStateCallbackInfo *>(work->data);
+    MetadataStateCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        MetadataStateCallbackInfo* callbackInfo = reinterpret_cast<MetadataStateCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener, listener->OnErrorCallback(callbackInfo->errorType_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }

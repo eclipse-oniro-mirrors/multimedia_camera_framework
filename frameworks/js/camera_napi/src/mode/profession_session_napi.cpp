@@ -19,6 +19,7 @@
 #include "js_native_api.h"
 #include "mode/profession_session_napi.h"
 #include "camera_napi_security_utils.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -825,26 +826,19 @@ void ProfessionSessionNapi::UnregisterLuminationInfoCallbackListener(
 void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnExposureInfoChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ExposureInfoChangedCallback> callback =
         std::make_unique<ExposureInfoChangedCallback>(info, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(work->data);
+    ExposureInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(event);
         if (callback) {
             auto listener = callback->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnExposureInfoChangedCallback(callback->info_));
             delete callback;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callback.release();
     }
@@ -875,26 +869,19 @@ void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
 void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<IsoInfoChangedCallback> callback =
         std::make_unique<IsoInfoChangedCallback>(info, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(work->data);
+    IsoInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        IsoInfoChangedCallback* callback = reinterpret_cast<IsoInfoChangedCallback *>(event);
         if (callback) {
             auto listener = callback->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnIsoInfoChangedCallback(callback->info_));
             delete callback;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callback.release();
     }
@@ -924,26 +911,19 @@ void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
 void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<ApertureInfoChangedCallback> callback =
         std::make_unique<ApertureInfoChangedCallback>(info, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        ApertureInfoChangedCallback* callback = reinterpret_cast<ApertureInfoChangedCallback *>(work->data);
+    ApertureInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        ApertureInfoChangedCallback* callback = reinterpret_cast<ApertureInfoChangedCallback *>(event);
         if (callback) {
             auto listener = callback->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnApertureInfoChangedCallback(callback->info_));
             delete callback;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callback.release();
     }
@@ -973,26 +953,19 @@ void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
 void LuminationInfoCallbackListener::OnLuminationInfoChangedCallbackAsync(LuminationInfo info) const
 {
     MEDIA_DEBUG_LOG("OnLuminationInfoChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<LuminationInfoChangedCallback> callback =
         std::make_unique<LuminationInfoChangedCallback>(info, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        LuminationInfoChangedCallback* callback = reinterpret_cast<LuminationInfoChangedCallback *>(work->data);
+    LuminationInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        LuminationInfoChangedCallback* callback = reinterpret_cast<LuminationInfoChangedCallback *>(event);
         if (callback) {
             auto listener = callback->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnLuminationInfoChangedCallback(callback->info_));
             delete callback;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callback.release();
     }

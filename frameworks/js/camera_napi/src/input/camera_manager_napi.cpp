@@ -60,6 +60,7 @@
 #include "mode/video_session_napi.h"
 #include "napi/native_common.h"
 #include "refbase.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -184,26 +185,19 @@ CameraManagerCallbackNapi::~CameraManagerCallbackNapi()
 void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnCameraStatusCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     std::unique_ptr<CameraStatusCallbackInfo> callbackInfo =
         std::make_unique<CameraStatusCallbackInfo>(cameraStatusInfo, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        CameraStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraStatusCallbackInfo *>(work->data);
+    CameraStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        CameraStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraStatusCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener, listener->OnCameraStatusCallback(callbackInfo->info_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -267,26 +261,19 @@ CameraMuteListenerNapi::~CameraMuteListenerNapi()
 
 void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
 {
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "Failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "Failed to allocate work");
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
         std::make_unique<CameraMuteCallbackInfo>(muteMode, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
+    CameraMuteCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnCameraMuteCallback(callbackInfo->muteMode_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("Failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -324,26 +311,19 @@ TorchListenerNapi::~TorchListenerNapi()
 void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &torchStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnTorchStatusChangeCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "Failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "Failed to allocate work");
     std::unique_ptr<TorchStatusChangeCallbackInfo> callbackInfo =
         std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        TorchStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<TorchStatusChangeCallbackInfo *>(work->data);
+    TorchStatusChangeCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        TorchStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<TorchStatusChangeCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             CHECK_EXECUTE(listener != nullptr, listener->OnTorchStatusChangeCallback(callbackInfo->info_));
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("Failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }
@@ -385,16 +365,11 @@ FoldListenerNapi::~FoldListenerNapi()
 void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &foldStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnFoldStatusChangedCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "Failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "Failed to allocate work");
     std::unique_ptr<FoldStatusChangeCallbackInfo> callbackInfo =
         std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, shared_from_this());
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        FoldStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<FoldStatusChangeCallbackInfo *>(work->data);
+    FoldStatusChangeCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        FoldStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<FoldStatusChangeCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener != nullptr) {
@@ -402,11 +377,9 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
             }
             delete callbackInfo;
         }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("Failed to execute work");
-        delete work;
     } else {
         callbackInfo.release();
     }

@@ -15,6 +15,7 @@
 #include "mode/time_lapse_photo_session_napi.h"
 #include "camera_napi_param_parser.h"
 #include <uv.h>
+#include "napi/native_node_api.h"
 
 using namespace std;
 
@@ -969,26 +970,18 @@ void TryAEInfoCallbackListener::OnTryAEInfoChangedCallback(TryAEInfo info) const
 void TryAEInfoCallbackListener::OnTryAEInfoChangedCallbackAsync(TryAEInfo info) const
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
     auto callback = make_unique<TryAEInfoChangedCallback>(info, shared_from_this());
-    work->data = callback.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {},
-        [] (uv_work_t* work, int status) {
-            TryAEInfoChangedCallback* callback = reinterpret_cast<TryAEInfoChangedCallback *>(work->data);
-            if (callback) {
-                auto listener = callback->listener_.lock();
-                CHECK_EXECUTE(listener != nullptr, listener->OnTryAEInfoChangedCallback(callback->info_));
-                delete callback;
-            }
-            delete work;
-        }, uv_qos_user_initiated);
-    if (ret) {
+    TryAEInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        TryAEInfoChangedCallback* callback = reinterpret_cast<TryAEInfoChangedCallback *>(event);
+        if (callback) {
+            auto listener = callback->listener_.lock();
+            CHECK_EXECUTE(listener != nullptr, listener->OnTryAEInfoChangedCallback(callback->info_));
+            delete callback;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
         MEDIA_ERR_LOG("failed to execute work");
-        delete work;
     } else {
         (void)callback.release();
     }
