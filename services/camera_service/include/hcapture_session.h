@@ -228,6 +228,7 @@ public:
     float GetCrossWaitTime(std::vector<std::vector<float>>& crossTime, int32_t targetRangeId, int32_t currentRangeId);
     void GetCrossZoomAndTime(std::vector<float>& crossZoomAndTime,
         std::vector<float>& crossZoom, std::vector<std::vector<float>>& crossTime);
+    bool QueryZoomBezierValue(std::vector<float>& zoomBezierValue);
     int32_t SetSmoothZoom(
         int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
     int32_t EnableMovingPhoto(bool isEnable) override;

@@ -34,6 +34,12 @@ constexpr float DURATION_POWER = 1.2;
 constexpr int MAX_ZOOM_ARRAY_SIZE = 100;
 }
 
+float CubicBezier::mControPointX1 = CONTROL_POINT_X1;
+float CubicBezier::mControPointX2 = CONTROL_POINT_X2;
+float CubicBezier::mControPointY1 = CONTROL_POINT_Y1;
+float CubicBezier::mControPointY2 = CONTROL_POINT_Y2;
+float CubicBezier::mDurationBase = DURATION_BASE;
+
 std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const float& targetZoom,
     const float& frameInterval)
 {
@@ -59,20 +65,40 @@ float CubicBezier::GetDuration(const float& currentZoom, const float& targetZoom
     if (currentZoom == 0) {
         return 0;
     } else {
-        return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + DURATION_BASE);
+        return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + mDurationBase);
     }
+}
+
+bool CubicBezier::SetBezierValue(const std::vector<float>& zoomBezierValue)
+{
+    const size_t DURATION_BASE_INDEX = 0;
+    const size_t CONTROL_POINT_X1_INDEX = 1;
+    const size_t CONTROL_POINT_Y1_INDEX = 2;
+    const size_t CONTROL_POINT_X2_INDEX = 3;
+    const size_t CONTROL_POINT_Y2_INDEX = 4;
+
+    if (zoomBezierValue.size() < 5) {
+        return false;
+    }
+
+    mDurationBase = zoomBezierValue[DURATION_BASE_INDEX];
+    mControPointX1 = zoomBezierValue[CONTROL_POINT_X1_INDEX];
+    mControPointY1 = zoomBezierValue[CONTROL_POINT_Y1_INDEX];
+    mControPointX2 = zoomBezierValue[CONTROL_POINT_X2_INDEX];
+    mControPointY2 = zoomBezierValue[CONTROL_POINT_Y2_INDEX];
+    return true;
 }
 
 float CubicBezier::GetCubicBezierY(const float& time)
 {
-    return CUBIC_BEZIER_MULTIPLE * (1- time) * (1 - time) * time * CONTROL_POINT_Y1 +
-        CUBIC_BEZIER_MULTIPLE * (1- time) * time * time * CONTROL_POINT_Y2 + time * time * time;
+    return CUBIC_BEZIER_MULTIPLE * (1- time) * (1 - time) * time * mControPointY1 +
+        CUBIC_BEZIER_MULTIPLE * (1- time) * time * time * mControPointY2 + time * time * time;
 }
 
 float CubicBezier::GetCubicBezierX(const float& time)
 {
-    return CUBIC_BEZIER_MULTIPLE * (1- time) * (1 - time) * time * CONTROL_POINT_X1 +
-        CUBIC_BEZIER_MULTIPLE * (1- time) * time * time * CONTROL_POINT_X2 + time * time * time;
+    return CUBIC_BEZIER_MULTIPLE * (1- time) * (1 - time) * time * mControPointX1 +
+        CUBIC_BEZIER_MULTIPLE * (1- time) * time * time * mControPointX2 + time * time * time;
 }
 
 float CubicBezier::BinarySearch(const float& value)
