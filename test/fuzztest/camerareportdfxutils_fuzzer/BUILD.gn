@@ -17,7 +17,7 @@ import("./../../../multimedia_camera_framework.gni")
 
 ohos_fuzztest("CameraReportDfxUtilsFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
-  fuzz_config_file = "../camerareportdfxutilsfuzztest_fuzzer"
+  fuzz_config_file = "../camerareportdfxutils_fuzzer"
 
   include_dirs = [
     "${multimedia_camera_framework_path}/services/camera_service/include",

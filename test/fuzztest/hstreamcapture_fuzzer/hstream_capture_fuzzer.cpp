@@ -47,8 +47,11 @@ const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;
+const int32_t NUM_1 = 1;
+const int32_t NUM_1024 = 1024;
 
 std::shared_ptr<HStreamCapture> HStreamCaptureFuzzer::fuzz_{nullptr};
+sptr<IBufferProducer> producer;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -84,12 +87,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
 {
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
-    }
-    sptr<Surface> photoSurface;
-    photoSurface = Surface::CreateSurfaceAsConsumer("hstreamcapture");
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
     int32_t captureId = GetData<int32_t>();
     uint8_t randomNum = GetData<uint8_t>();
@@ -188,6 +185,18 @@ void Test()
         MEDIA_INFO_LOG("hstreamCapture is null");
         return;
     }
+    sptr<Surface> photoSurface;
+    photoSurface = Surface::CreateSurfaceAsConsumer("hstreamcapture");
+    producer = photoSurface->GetProducer();
+    if (HStreamCaptureFuzzer::fuzz_ == nullptr) {
+        HStreamCaptureFuzzer::fuzz_ = std::make_shared
+            <HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    }
+    sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
+        std::make_shared<OHOS::Camera::CameraMetadata>(NUM_1, NUM_1024);
+    HStreamCaptureFuzzer::fuzz_->LinkInput(streamOperator, cameraAbility);
+    HStreamCaptureFuzzer::fuzz_->cameraAbility_ = cameraAbility;
     hstreamCapture->HStreamCaptureFuzzTest1();
     hstreamCapture->HStreamCaptureFuzzTest2();
 }

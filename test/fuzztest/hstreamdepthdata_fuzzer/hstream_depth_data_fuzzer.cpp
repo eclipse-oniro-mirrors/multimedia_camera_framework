@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,25 @@
  * limitations under the License.
  */
 
-#include "hstream_metadata_stub_fuzzer.h"
-#include "camera_log.h"
-#include "hstream_capture.h"
-#include "iservice_registry.h"
+#include "hstream_depth_data_fuzzer.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "message_parcel.h"
-#include "accesstoken_kit.h"
-#include "camera_metadata_info.h"
-#include "metadata_utils.h"
 #include "iconsumer_surface.h"
-#include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include <memory>
-#include "hstream_metadata_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
+using namespace OHOS::HDI::Camera::V1_0;
+static constexpr int32_t MAX_CODE_LEN = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-static constexpr int32_t MAX_CODE_NUM = 7;
-
-std::shared_ptr<HStreamMetadataStubFuzz> HStreamMetadataStubFuzzer::fuzz_{nullptr};
+const int32_t PHOTO_WIDTH = 1280;
+const int32_t PHOTO_HEIGHT = 960;
+const int32_t PHOTO_FORMAT = 2000;
+std::shared_ptr<HStreamDepthData> HStreamDepthDataFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -69,41 +63,30 @@ uint32_t GetArrLength(T& arr)
     return sizeof(arr) / sizeof(arr[0]);
 }
 
-void HStreamMetadataStubFuzzer::OnRemoteRequest(int32_t code)
+void HStreamDepthDataFuzzer::HStreamDepthDataFuzzTest()
 {
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HStreamMetadataStubFuzz>();
-    }
-    MessageParcel reply;
-    MessageOption option;
-    MessageParcel dataMessageParcel;
-    dataMessageParcel.WriteInterfaceToken(HStreamMetadataStubFuzz::GetDescriptor());
-    dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
-    dataMessageParcel.RewindRead(0);
-    fuzz_->OnRemoteRequest(code, dataMessageParcel, reply, option);
-}
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
 
+    if (fuzz_ == nullptr) {
+        fuzz_ = std::make_shared<HStreamDepthData>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    }
+    fuzz_->Start();
+    fuzz_->Stop();
+    fuzz_->Release();
+}
 
 void Test()
 {
-    auto hstreamMetadataStub = std::make_unique<HStreamMetadataStubFuzzer>();
-    if (hstreamMetadataStub == nullptr) {
-        MEDIA_INFO_LOG("hstreamMetadataStub is null");
+    auto hstreamDepthData = std::make_unique<HStreamDepthDataFuzzer>();
+    if (hstreamDepthData == nullptr) {
+        MEDIA_INFO_LOG("hstreamDepthData is null");
         return;
     }
-    for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
-        hstreamMetadataStub->OnRemoteRequest(i);
-    }
-    MessageParcel dataMessageParcel;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    static const int32_t audioPolicyServiceId = 3009;
-    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
-    auto proxy = std::make_shared<HStreamMetadataCallbackProxy>(object);
-    dataMessageParcel.WriteRemoteObject(proxy->AsObject());
-    HStreamMetadataStubFuzzer::fuzz_->HandleSetCallback(dataMessageParcel);
+    hstreamDepthData->HStreamDepthDataFuzzTest();
 }
 
 typedef void (*TestFuncs[1])();

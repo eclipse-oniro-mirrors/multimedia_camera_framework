@@ -22,6 +22,12 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraInputFuzzer {
+class CameraOcclusionDetectCallbackTest : public CameraOcclusionDetectCallback {
+public:
+    CameraOcclusionDetectCallbackTest() = default;
+    ~CameraOcclusionDetectCallbackTest() = default;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion, const uint8_t isCameraLensDirty) const override {}
+};
 
 class ResultCallbackMock : public ResultCallback {
 public:
