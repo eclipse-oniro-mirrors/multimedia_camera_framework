@@ -1,1 +1,9 @@
 src:*third_party/googletest/*
+{
+    "clangd.path": "${workspaceFolder}/prebuilts/clang/ohos/linux-x86_64/llvm/bin/clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/out/rk3568",
+        "--query-driver=${workspaceFolder}/prebuilts/clang/ohos/linux-x86_64/llvm/bin/clang",
+    ],
+    "git.ignoreLimitWarning": true
+}
