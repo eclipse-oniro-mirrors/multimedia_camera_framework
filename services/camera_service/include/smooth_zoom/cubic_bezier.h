@@ -39,7 +39,7 @@ private:
     static float BinarySearch(const float& value);
 
     static float GetInterpolation(const float& input);
-    
+
     static float mControPointX1;
     static float mControPointX2;
     static float mControPointY1;
