@@ -104,6 +104,7 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
     param->Set<Tag::MEDIA_CREATION_TIME>(mediaInfo->creationTime);
     param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
     param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
+    param->Set<Tag::VIDEO_IS_HDR_VIVID>(mediaInfo->codecInfo.isHdrvivid);
     auto ret = muxer_->SetParameter(param);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "add param failed, ret: %{public}d", ret);
