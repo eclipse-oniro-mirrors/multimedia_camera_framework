@@ -1258,6 +1258,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration)
 {
     constexpr int32_t ZOOM_RATIO_MULTIPLE = 100;
+    const int32_t MAX_FPS = 60;
     auto cameraDevice = GetCameraDevice();
     CHECK_ERROR_RETURN_RET_LOG(
         cameraDevice == nullptr, CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom device is null");
@@ -1266,6 +1267,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     int32_t targetRangeId = 0;
     int32_t currentRangeId = 0;
     QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
+    currentFps = currentFps > MAX_FPS ? MAX_FPS : currentFps;
     std::vector<float> crossZoomAndTime {};
     QueryZoomPerformance(crossZoomAndTime, operationMode);
     std::vector<float> mCrossZoom {};
@@ -1282,9 +1284,16 @@ int32_t HCaptureSession::SetSmoothZoom(
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
     CHECK_ERROR_RETURN_RET_LOG(array.empty(), CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom array is empty");
+    if (currentZoomRatio < targetZoomRatio) {
+        std::sort(mCrossZoom.begin(), mCrossZoom.end());
+    } else {
+        std::sort(mCrossZoom.begin(), mCrossZoom.end(), std::greater<float>());
+    }
     for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {
         float crossZoom = mCrossZoom[i];
+        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom crossZoomIterator is:  %{public}f", crossZoom);
         if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0 || isEqual(crossZoom, 199.0f)) {
+            MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom skip zoomCross is:  %{public}f", crossZoom);
             continue;
         }
         if (std::fabs(currentZoomRatio - crossZoom) <= std::numeric_limits<float>::epsilon() &&
@@ -1292,8 +1301,11 @@ int32_t HCaptureSession::SetSmoothZoom(
             waitTime = waitMs;
         }
         for (int j = 0; j < static_cast<int>(array.size()); j++) {
-            if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) < 0) {
-                waitTime = fmax(waitMs - frameIntervalMs * j, waitTime);
+            if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) <= 0) {
+                waitTime = waitMs - frameIntervalMs * j;
+                waitTime = waitTime >= 0 ? waitTime : 0;
+                MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom crossZoom is: %{public}f, waitTime is: %{public}f",
+                    crossZoom, waitTime);
                 break;
             }
         }
