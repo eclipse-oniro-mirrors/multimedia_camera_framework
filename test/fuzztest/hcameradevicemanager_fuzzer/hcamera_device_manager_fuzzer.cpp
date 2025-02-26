@@ -98,7 +98,7 @@ void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1()
     InitCameraDevice();
     pid_t pid = GetData<int32_t>();
     hCameraDeviceManager->GetCameraHolderByPid(pid);
-    hCameraDeviceManager->GetCameraByPid(pid);
+    hCameraDeviceManager->GetCamerasByPid(pid);
     hCameraDeviceManager->GetActiveClient();
     hCameraDeviceManager->GetActiveCameraHolders();
     int32_t state = GetData<int32_t>();
@@ -107,11 +107,12 @@ void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1()
     sptr<ICameraBroker> callback = nullptr;
     hCameraDeviceManager->SetPeerCallback(callback);
     hCameraDeviceManager->UnsetPeerCallback();
-    sptr<HCameraDevice> cameraNeedEvict = nullptr;
-    hCameraDeviceManager->GetConflictDevices(cameraNeedEvict, g_HCameraDevice);
+    std::vector<sptr<HCameraDevice>> cameraNeedEvict = {};
+    int32_t type = 0;
+    hCameraDeviceManager->GetConflictDevices(cameraNeedEvict, g_HCameraDevice, type);
     hCameraDeviceManager->RemoveDevice(g_cameraID);
     int32_t processState = GetData<int32_t>();
-    hCameraDeviceManager->UpdateEachProcessState(processState, GetData<uint32_t>());
+    hCameraDeviceManager->GenerateEachProcessCameraState(processState, GetData<uint32_t>());
     hCameraDeviceManager->IsMultiCameraActive(pid);
 }
 
