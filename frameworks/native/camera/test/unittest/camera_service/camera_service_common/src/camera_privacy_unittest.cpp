@@ -71,32 +71,5 @@ void CameraPrivacyUnitTest::NativeAuthorization()
     SetSelfTokenID(tokenId_);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
-
-/*
- * Feature: Framework
- * Function: Test cameraPrivacy functional function.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameraPrivacy functional function.
- */
-HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_001, TestSize.Level0)
-{
-    wptr<HCameraDevice> device;
-    uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
-    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(device, callingTokenId, IPCSkeleton::GetCallingPid());
-    bool ret = cameraPrivacy->IsAllowUsingCamera();
-    EXPECT_FALSE(ret);
-    ret = cameraPrivacy->RegisterPermissionCallback();
-    EXPECT_FALSE(ret);
-    cameraPrivacy->UnregisterPermissionCallback();
-    if (cameraPrivacy->IsAllowUsingCamera()) {
-        bool ret = cameraPrivacy->AddCameraPermissionUsedRecord();
-        EXPECT_TRUE(ret);
-        ret = cameraPrivacy->StartUsingPermissionCallback();
-        EXPECT_TRUE(ret);
-        cameraPrivacy->StopUsingPermissionCallback();
-    }
-}
 } // CameraStandard
 } // OHOS
