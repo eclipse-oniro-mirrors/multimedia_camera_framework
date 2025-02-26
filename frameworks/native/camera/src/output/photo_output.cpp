@@ -1104,20 +1104,25 @@ int32_t PhotoOutput::IsAutoAigcPhotoSupported(bool& isAutoAigcPhotoSupported)
     CHECK_ERROR_RETURN_RET_LOG(
         cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, cameraObj is nullptr");
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(
         metadata == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsAutoAigcPhotoSupported error, metadata is nullptr");
 
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_AIGC_PHOTO, &item);
+    MEDIA_DEBUG_LOG("PhotoOutput::IsAutoAigcPhotoSupported ret: %{public}d", ret);
     if (ret == CAM_META_SUCCESS) {
         if (item.count == 0) {
             MEDIA_WARNING_LOG("PhotoOutput::IsAutoAigcPhotoSupported item is nullptr");
             return CAMERA_OK;
         }
         SceneMode currentSceneMode = session->GetMode();
+        MEDIA_DEBUG_LOG(
+            "PhotoOutput::IsAutoAigcPhotoSupported curMode: %{public}d", static_cast<int>(currentSceneMode));
         for (int i = 0; i < static_cast<int>(item.count); i++) {
-            if (currentSceneMode == static_cast<int>(item.data.i32[i])) {
+            MEDIA_DEBUG_LOG(
+                "PhotoOutput::IsAutoAigcPhotoSupported item data: %{public}d", static_cast<int>(item.data.u8[i]));
+            if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
                 isAutoAigcPhotoSupported = true;
                 return CAMERA_OK;
             }
@@ -1143,7 +1148,7 @@ int32_t PhotoOutput::EnableAutoAigcPhoto(bool enabled)
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, SERVICE_FATL_ERROR, "PhotoOutput::EnableAutoAigcPhoto error");
     CHECK_ERROR_RETURN_RET_LOG(
         !isAutoAigcPhotoSupported, PARAMETER_ERROR, "PhotoOutput::EnableAutoAigcPhoto not supported");
-    int32_t res = captureSession->EnableAutoCloudImageEnhancement(enabled);
+    int32_t res = captureSession->EnableAutoAigcPhoto(enabled);
     MEDIA_INFO_LOG("PhotoOutput::EnableAutoAigcPhoto result: %{public}d", res);
     return res;
 }
