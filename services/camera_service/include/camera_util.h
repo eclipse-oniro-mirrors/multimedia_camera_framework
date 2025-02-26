@@ -105,8 +105,6 @@ enum CamServiceError {
     CAMERA_DCAMERA_ERROR_DEVICE_IN_USE,
     CAMERA_DCAMERA_ERROR_NO_PERMISSION,
     CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED,
-    CAMERA_DEVICE_SWITCH_FREQUENT,
-    CAMERA_DEVICE_LENS_RETRACTED,
 };
 
 enum ClientPriorityLevels {
@@ -188,8 +186,6 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
 bool CheckSystemApp();
 
 std::vector<std::string> SplitString(const std::string& input, char delimiter);
-
-int64_t GetTimestamp();
 
 inline bool IsCameraDebugOn()
 {

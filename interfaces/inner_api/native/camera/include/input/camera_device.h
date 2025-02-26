@@ -60,16 +60,6 @@ enum CameraFoldScreenType {
     CAMERA_FOLDSCREEN_OUTER
 };
 
-enum AuxiliaryType {
-    CONTRACTLENS = 0
-};
-
-enum AuxiliaryStatus {
-    AUXILIARY_LOCKED = 0,
-    AUXILIARY_ON,
-    AUXILIARY_OFF
-};
-
 typedef struct dmDeviceInfo {
     /**
      * Device name of the device.

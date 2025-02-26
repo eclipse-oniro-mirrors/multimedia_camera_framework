@@ -244,8 +244,6 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"DEVICE_DISABLED", 7400108},
     {"DEVICE_PREEMPTED", 7400109},
     {"UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS", 7400110},
-    {"DEVICE_FREQUENTLY_SWITCHED", 7400111},
-    {"CAMERA_LENS_RETRACTED", 7400112},
     {"SERVICE_FATAL_ERROR", 7400201}
 };
 
@@ -424,6 +422,7 @@ static const std::unordered_map<std::string, int32_t> mapColorReservationType = 
 static const std::unordered_map<std::string, int32_t> mapFocusTrackingMode = {
     {"AUTO", FOCUS_TRACKING_MODE_AUTO},
 };
+<<<<<<< HEAD
 
 static const std::unordered_map<std::string, int32_t> mapCameraConcurrentType = {
     {"CAMERA_LIMITED_CAPABILITY", 0},
@@ -440,6 +439,8 @@ static const std::unordered_map<std::string, int32_t> mapAuxiliaryStatus = {
     {"OFF", 2},
 };
 
+=======
+>>>>>>> parent of 92526c1e (设备异常提醒)
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

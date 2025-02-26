@@ -387,9 +387,12 @@ public:
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
     void InitCameraInput();
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
+<<<<<<< HEAD
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
+=======
+>>>>>>> parent of 92526c1e (设备异常提醒)
 private:
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;

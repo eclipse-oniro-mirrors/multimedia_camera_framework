@@ -44,6 +44,13 @@ CameraBeautyNotification::CameraBeautyNotification()
 CameraBeautyNotification::~CameraBeautyNotification()
 {}
 
+static int64_t GetDeliveryTime()
+{
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    return duration.count();
+}
+
 sptr<CameraBeautyNotification> CameraBeautyNotification::GetInstance()
 {
     if (instance_ != nullptr) {
@@ -78,7 +85,7 @@ void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(CAMERA_UID, userId);
 
     request.SetCreatorUserId(userId);
-    request.SetDeliveryTime(GetTimestamp());
+    request.SetDeliveryTime(GetDeliveryTime());
     request.SetAutoDeletedTime(OHOS::Notification::NotificationConstant::INVALID_AUTO_DELETE_TIME);
     request.SetTapDismissed(false);
     request.SetSlotType(OHOS::Notification::NotificationConstant::SlotType::SOCIAL_COMMUNICATION);
