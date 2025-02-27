@@ -68,6 +68,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 
 HStreamCapture::~HStreamCapture()
 {
+    photoAssetProxy_.Release();
     rotationMap_.Clear();
     MEDIA_INFO_LOG(
         "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
@@ -378,14 +379,46 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     return CAM_META_SUCCESS;
 }
 
+void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
+{
+    std::lock_guard<std::mutex> lock(GetMutex(key));
+    map_[key] = value;
+    cv_[key].notify_all();
+}
+ 
+std::shared_ptr<PhotoAssetIntf> ConcurrentMap::Get(const int32_t& key)
+{
+    std::unique_lock<std::mutex> lock(GetMutex(key));
+    cv_[key].wait(lock, [&] { return map_.count(key) > 0; });
+    return map_[key];
+}
+ 
+std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    return mutexes_[key];
+}
+ 
+void ConcurrentMap::Erase(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    mutexes_.erase(key);
+    map_.erase(key);
+    cv_.erase(key);
+}
+ 
+void ConcurrentMap::Release()
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    map_.clear();
+    mutexes_.clear();
+    cv_.clear();
+}
+
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(photoAssetLock_);
     MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy E captureId:%{public}d", captureId);
-    if (photoAssetProxy_.find(captureId) != photoAssetProxy_.end()) {
-        return CAMERA_OK;
-    }
     constexpr int32_t imageShotType = 0;
     constexpr int32_t movingPhotoShotType = 2;
     constexpr int32_t burstShotType = 3;
@@ -398,20 +431,16 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR,
         "HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
-    photoAssetProxy_.emplace(std::pair<int32_t, std::shared_ptr<PhotoAssetIntf>>(captureId, photoAssetProxy));
+    photoAssetProxy_.Insert(captureId, photoAssetProxy);
     MEDIA_DEBUG_LOG("CreateMediaLibraryPhotoAssetProxy X captureId:%{public}d", captureId);
     return CAMERA_OK;
 }
 
 std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t captureId)
 {
-    std::lock_guard<std::mutex> lock(photoAssetLock_);
-    auto it = photoAssetProxy_.find(captureId);
-    if (it == photoAssetProxy_.end()) {
-        return nullptr;
-    }
-    std::shared_ptr<PhotoAssetIntf> proxy = it->second;
-    photoAssetProxy_.erase(it);
+    CAMERA_SYNC_TRACE;
+    std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
+    photoAssetProxy_.Erase(captureId);
     return proxy;
 }
 
@@ -884,20 +913,15 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
 
 int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
 {
+    CAMERA_SYNC_TRACE;
     if (isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO))) {
         return CAMERA_UNSUPPORTED;
     }
-    std::lock_guard<std::mutex> lock(photoAssetLock_);
-    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", photoProxy->captureId_);
-    auto iter = photoAssetProxy_.find(photoProxy->captureId_);
-    if (iter == photoAssetProxy_.end()) {
-        MEDIA_ERR_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed, no iter captureId(%{public}d)",
-            photoProxy->captureId_);
-        return CAMERA_INVALID_ARG;
-    }
-    auto photoAssetProxy = iter->second;
+    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(photoProxy->captureId_);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
         "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
+    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)",
+        photoProxy->captureId_);
     MessageParcel data;
     photoProxy->WriteToParcel(data);
     photoProxy->CameraFreeBufferHandle();
