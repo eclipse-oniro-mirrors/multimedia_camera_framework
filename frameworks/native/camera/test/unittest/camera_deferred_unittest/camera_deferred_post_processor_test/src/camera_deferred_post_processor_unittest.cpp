@@ -35,26 +35,9 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 
-static const uint8_t* RAW_DATA = nullptr;
 static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
-static size_t g_dataSize = 0;
-static size_t g_pos;
-
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
+constexpr int VIDEO_SOURCE_FD = 1;
+constexpr int VIDEO_DESTINATION_FD = 2;
 
 void DeferredPostPorcessorUnitTest::SetUpTestCase(void) {}
 
@@ -164,23 +147,22 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_001, Te
  */
 HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, TestSize.Level0)
 {
-    constexpr int32_t EXECUTION_MODE_COUNT1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
     postProcessor->Initialize();
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % EXECUTION_MODE_COUNT1);
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(VIDEO_SOURCE_FD);
     postProcessor->SetExecutionMode(selectedExecutionMode);
     postProcessor->SetDefaultExecutionMode();
     std::vector<std::string> testStrings = {"test1", "test2"};
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = 1;
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    auto srcFd = GetData<int>();
-    auto dstFd = GetData<int>();
+    auto srcFd = 1;
+    auto dstFd = 1;
     postProcessor->copyFileByFd(srcFd, dstFd);
-    auto isAutoSuspend = GetData<bool>();
+    auto isAutoSuspend = true;
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+    sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_SOURCE_FD);
+    sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_DESTINATION_FD);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd_, dstFd_);
     std::shared_ptr<DeferredVideoWork> work =
         std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);

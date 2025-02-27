@@ -28,25 +28,6 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 constexpr int VIDEO_REQUEST_FD_ID = 1;
-static const uint8_t* RAW_DATA = nullptr;
-static size_t g_dataSize = 0;
-static size_t g_pos;
-
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
 
 void DeferredManagerUnitTest::SetUpTestCase(void)
 {
@@ -130,11 +111,11 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize
         static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
     };
     Media::Plugins::MediaType type1 = Media::Plugins::MediaType::TIMEDMETA;
-    uint8_t randomIndex = GetData<uint8_t>() % memoryFlags.size();
+    uint8_t randomIndex = 1;
     MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
     std::shared_ptr<AVAllocator> avAllocator =
         AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
-    int32_t capacity = GetData<int32_t>();
+    int32_t capacity = 1;
     std::shared_ptr<AVBuffer> sample = AVBuffer::CreateAVBuffer(avAllocator, capacity);
     mediaManager->started_ = false;
     EXPECT_EQ(mediaManager->WriteSample(type1, sample), ERROR_FAIL);
@@ -154,7 +135,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize
 {
     auto mpegManagerFactory = std::make_shared<MpegManagerFactory>();
     ASSERT_NE(mpegManagerFactory, nullptr);
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = 1;
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
@@ -175,7 +156,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize
 {
     auto mpegManager = std::make_shared<MpegManager>();
     ASSERT_NE(mpegManager, nullptr);
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = 1;
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     int flags = 1;
