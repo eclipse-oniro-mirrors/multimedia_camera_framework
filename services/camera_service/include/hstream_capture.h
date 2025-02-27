@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_STREAM_CAPTURE_H
 #define OHOS_CAMERA_H_STREAM_CAPTURE_H
+#include <condition_variable>
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
@@ -35,6 +36,19 @@ using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 class PhotoAssetIntf;
 class CameraServerPhotoProxy;
+class ConcurrentMap {
+public:
+    void Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value);
+    std::shared_ptr<PhotoAssetIntf> Get(const int32_t& key);
+    void Release();
+    void Erase(const int32_t& key);
+private:
+    std::map<int32_t, std::shared_ptr<PhotoAssetIntf>> map_;
+    std::map<int32_t, std::mutex> mutexes_;
+    std::map<int32_t, std::condition_variable> cv_;
+    std::mutex& GetMutex(const int32_t& key);
+    std::mutex map_mutex_;
+};
 constexpr const char* BURST_UUID_UNSET = "";
 class EXPORT_API HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
@@ -122,7 +136,8 @@ private:
     int32_t burstNum_;
     int32_t videoCodecType_ = 0;
     std::mutex photoAssetLock_;
-    std::map<int32_t, std::shared_ptr<PhotoAssetIntf>> photoAssetProxy_;
+    ConcurrentMap photoAssetProxy_;
+    std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
 };
 } // namespace CameraStandard
 } // namespace OHOS

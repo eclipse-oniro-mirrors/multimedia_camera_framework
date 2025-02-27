@@ -18,7 +18,7 @@
 
 #include <cstdint>
 #include <memory>
-
+#include <mutex>
 #include "camera_dynamic_loader.h"
 #include "photo_asset_interface.h"
 
@@ -38,6 +38,7 @@ public:
     int32_t GetUserId() override;
 
 private:
+    std::mutex opMutex_;
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> mediaLibraryLib_;
     std::shared_ptr<PhotoAssetIntf> photoAssetIntf_;

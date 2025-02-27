@@ -1517,18 +1517,18 @@ void ThumbnailCreatePixelMap(std::unique_ptr<Media::PixelMap>& pixelMap)
 
 void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
 {
+    CAMERA_SYNC_TRACE;
     auto photoOutput = photoOutput_.promote();
     CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "ThumbnailListener photoOutput is nullptr");
     auto surface = photoOutput->thumbnailSurface_;
     CHECK_ERROR_RETURN_LOG(surface == nullptr, "ThumbnailListener surface is nullptr");
-    std::string surfaceName = "Thumbnail";
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
     OHOS::Rect damage;
-    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer before", surfaceName.c_str());
+    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = Thumbnail AcquireBuffer before");
     SurfaceError surfaceRet = surface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = %{public}s AcquireBuffer end", surfaceName.c_str());
+    MEDIA_DEBUG_LOG("ThumbnailListener surfaceName = Thumbnail AcquireBuffer end");
     CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "ThumbnailListener Failed to acquire surface buffer");
     int32_t burstSeqId = -1;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::burstSequenceId, burstSeqId);
@@ -1556,8 +1556,8 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
-    MEDIA_INFO_LOG("ThumbnailListener surfaceName = %{public}s UpdateJSCallbackAsync captureId=%{public}d, end",
-        surfaceName.c_str(), captureId);
+    MEDIA_INFO_LOG("ThumbnailListener surfaceName = Thumbnail UpdateJSCallbackAsync captureId = %{public}d, end.",
+        captureId);
     auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
     if (photoOutput->IsYuvOrHeifPhoto()) {
         constexpr int32_t yuvFormat = 3;
