@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -132,6 +132,36 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_004, TestSize.Level0)
         EXPECT_TRUE(cameraAbility->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX));
     }
     EXPECT_FALSE(cameraAbility->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test focus range function supported or not
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test focus range function supported or not
+ */
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_005, TestSize.Level0)
+{
+    sptr<CameraAbility> cameraAbility = new CameraAbility();
+    ASSERT_NE(cameraAbility, nullptr);
+    EXPECT_FALSE(cameraAbility->IsFocusRangeTypeSupported(FocusRangeType::FOCUS_RANGE_TYPE_AUTO));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test focus driven function supported or not
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test focus driven function supported or not
+ */
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_006, TestSize.Level0)
+{
+    sptr<CameraAbility> cameraAbility = new CameraAbility();
+    ASSERT_NE(cameraAbility, nullptr);
+    EXPECT_FALSE(cameraAbility->IsFocusDrivenTypeSupported(FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO));
 }
 
 } // CameraStandard

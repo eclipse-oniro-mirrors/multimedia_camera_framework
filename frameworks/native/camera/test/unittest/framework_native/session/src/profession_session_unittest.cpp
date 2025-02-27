@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -328,6 +328,30 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, Te
 
     professionSession->SetLuminationInfoCallback(make_shared<LuminationInfoCallbackMock>());
     EXPECT_NE(professionSession->luminationInfoCallback_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ProfessionSession with SetISO normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: with SetISO normal branches
+ */
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, TestSize.Level0)
+{
+    if (IsSupportMode(sceneMode_)) {
+        Init();
+        int32_t iso = 0;
+        int32_t count = 1;
+        session_->LockForControl();
+        ASSERT_NE(session_->changedMetadata_, nullptr);
+        OHOS::Camera::DeleteCameraMetadataItem(session_->changedMetadata_->get(), OHOS_CONTROL_ISO_VALUE);
+        EXPECT_EQ(session_->SetISO(iso), CameraErrorCode::SUCCESS);
+        session_->changedMetadata_->addEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
+        EXPECT_EQ(session_->SetISO(iso), CameraErrorCode::SUCCESS);
+        session_->UnlockForControl();
+    }
 }
 }
 }

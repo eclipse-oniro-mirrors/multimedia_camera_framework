@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -764,6 +764,31 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level0)
     } else {
         EXPECT_EQ(ret, 180);
     }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with RemoveCallback while callback is not null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with RemoveCallback while callback is not null
+ */
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_017, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    std::shared_ptr<PreviewStateCallback> callback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    previewOutput->RemoveCallback(callback);
+    pid_t pid = 0;
+    previewOutput->CameraServerDied(pid);
+    ASSERT_NE(previewOutput->previewOutputListenerManager_, nullptr);
+
+    preview->Release();
 }
 }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -735,6 +735,26 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize
 
     cameras[0]->cameraOrientation_ = 1;
     EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput closeDelayed while deviceObj_ is null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput closeDelayed while deviceObj_ is null
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_022, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    int32_t delayTime = 1;
+    EXPECT_EQ(input->closeDelayed(delayTime), 0);
 }
 }
 }

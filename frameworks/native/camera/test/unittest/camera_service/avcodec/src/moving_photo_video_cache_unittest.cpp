@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,11 +24,14 @@
 #include "frame_record.h"
 #include "ipc_skeleton.h"
 #include "moving_photo_video_cache.h"
+#include "native_mfmagic.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+
+static const int64_t VIDEO_FRAMERATE = 1280;
 
 void MyFunction(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t rotation, int32_t captureId)
 {
@@ -101,6 +104,105 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_002, T
 
     handle->AbortCapture();
     EXPECT_EQ(handle->encodedEndCbFunc_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnCacheFrameFinish normal branches while isAbort_ is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnCacheFrameFinish normal branches while isAbort_ is true
+ */
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_003, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type);
+    std::vector<sptr<FrameRecord>> frameRecords;
+    uint64_t taskName = 1;
+    int32_t rotation = 1;
+    int32_t captureId = 1;
+    sptr<CachedFrameCallbackHandle> handle = sptr<CachedFrameCallbackHandle>
+        (new CachedFrameCallbackHandle(frameRecords, MyFunction, taskName, rotation, captureId));
+
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicTransformType = GraphicTransformType::GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
+    ASSERT_NE(frameRecord, nullptr);
+    bool cachedSuccess = true;
+    handle->OnCacheFrameFinish(frameRecord, cachedSuccess);
+    EXPECT_EQ(handle->cacheRecords_.size(), 0);
+    handle->isAbort_ = true;
+    handle->OnCacheFrameFinish(frameRecord, cachedSuccess);
+    ASSERT_NE(handle->encodedEndCbFunc_, nullptr);
+    EXPECT_EQ(handle->cacheRecords_.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test OnCacheFrameFinish normal branches while find frameRecord successfully
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnCacheFrameFinish normal branches while find frameRecord successfully
+ */
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_004, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type);
+    std::vector<sptr<FrameRecord>> frameRecords;
+    uint64_t taskName = 1;
+    int32_t rotation = 1;
+    int32_t captureId = 1;
+    sptr<CachedFrameCallbackHandle> handle = sptr<CachedFrameCallbackHandle>
+        (new CachedFrameCallbackHandle(frameRecords, MyFunction, taskName, rotation, captureId));
+    std::vector<uint8_t> memoryFlags = {
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
+        static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
+    };
+    uint8_t randomIndex = 1;
+    MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
+    std::shared_ptr<AVAllocator> avAllocator =
+        AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
+    int32_t capacity = 1;
+    std::shared_ptr<AVBuffer> buffer = AVBuffer::CreateAVBuffer(avAllocator, capacity);
+
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicTransformType = GraphicTransformType::GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord_1 = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
+    ASSERT_NE(frameRecord_1, nullptr);
+    sptr<FrameRecord> frameRecord_2 = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
+    ASSERT_NE(frameRecord_2, nullptr);
+    sptr<FrameRecord> frameRecord_3 = new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicTransformType);
+    ASSERT_NE(frameRecord_3, nullptr);
+    handle->cacheRecords_.insert(frameRecord_1);
+    handle->cacheRecords_.insert(frameRecord_2);
+    handle->cacheRecords_.insert(frameRecord_3);
+    frameRecord_3->encodedBuffer = std::make_shared<OHOS::Media::AVBuffer>();
+
+    std::vector<sptr<FrameRecord>> records;
+    uint64_t param1 = 1;
+    int32_t param2 = 1;
+    int32_t param3 = 1;
+    if (handle->encodedEndCbFunc_) {
+        handle->encodedEndCbFunc_(records, param1, param2, param3);
+    }
+    handle->OnCacheFrameFinish(frameRecord_1, false);
+    EXPECT_EQ(handle->successCacheRecords_.size(), 0);
+    EXPECT_EQ(handle->errorCacheRecords_.size(), 1);
+    handle->OnCacheFrameFinish(frameRecord_2, false);
+    EXPECT_EQ(handle->successCacheRecords_.size(), 0);
+    EXPECT_EQ(handle->errorCacheRecords_.size(), 1);
+    handle->OnCacheFrameFinish(frameRecord_3, true);
+    EXPECT_EQ(handle->successCacheRecords_.size(), 0);
+    EXPECT_EQ(handle->errorCacheRecords_.size(), 1);
 }
 } // CameraStandard
 } // OHOS
