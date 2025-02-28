@@ -2067,11 +2067,12 @@ std::shared_ptr<PhotoAssetIntf> HCaptureSession::ProcessPhotoProxy(int32_t captu
         int32_t cameraShotType = 3;
         photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
     } else {
+        MEDIA_DEBUG_LOG("CreateMediaLibrary GetPhotoAssetInstance %{public}d E", captureId);
         photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
+        MEDIA_DEBUG_LOG("CreateMediaLibrary GetPhotoAssetInstance %{public}d X", captureId);
     }
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
     if (!isBursting && picturePtr) {
-        uri = photoAssetProxy->GetPhotoAssetUri();
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
         taskThread = std::thread(RotatePicture, picturePtr);
     }
@@ -2082,8 +2083,8 @@ std::shared_ptr<PhotoAssetIntf> HCaptureSession::ProcessPhotoProxy(int32_t captu
         CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
         photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
         MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
-        uri = photoAssetProxy->GetPhotoAssetUri();
     }
+    uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && taskThread.joinable()) {
         taskThread.join();
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture X");
