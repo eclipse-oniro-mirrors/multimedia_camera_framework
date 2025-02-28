@@ -42,11 +42,15 @@ public:
     std::shared_ptr<PhotoAssetIntf> Get(const int32_t& key);
     void Release();
     void Erase(const int32_t& key);
+    std::mutex& GetMutex(const int32_t& key);
+    std::condition_variable& GetCv(const int32_t& key);
+    bool ReadyToUnlock(const int32_t& key, const int32_t& step, const int32_t& mode);
+    void IncreaseCaptureStep(const int32_t& key);
 private:
     std::map<int32_t, std::shared_ptr<PhotoAssetIntf>> map_;
     std::map<int32_t, std::mutex> mutexes_;
+    std::map<int32_t, int32_t> step_;
     std::map<int32_t, std::condition_variable> cv_;
-    std::mutex& GetMutex(const int32_t& key);
     std::mutex map_mutex_;
 };
 constexpr const char* BURST_UUID_UNSET = "";

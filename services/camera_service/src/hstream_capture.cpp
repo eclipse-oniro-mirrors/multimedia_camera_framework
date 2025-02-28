@@ -381,16 +381,22 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
 
 void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
 {
-    std::lock_guard<std::mutex> lock(GetMutex(key));
+    std::lock_guard<std::mutex> lock(map_mutex_);
     map_[key] = value;
+    step_[key] = 1;
     cv_[key].notify_all();
 }
  
 std::shared_ptr<PhotoAssetIntf> ConcurrentMap::Get(const int32_t& key)
 {
-    std::unique_lock<std::mutex> lock(GetMutex(key));
-    cv_[key].wait(lock, [&] { return map_.count(key) > 0; });
+    std::lock_guard<std::mutex> lock(map_mutex_);
     return map_[key];
+}
+
+std::condition_variable& ConcurrentMap::GetCv(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    return cv_[key];
 }
  
 std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
@@ -398,13 +404,33 @@ std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
     std::lock_guard<std::mutex> lock(map_mutex_);
     return mutexes_[key];
 }
+
+bool ConcurrentMap::ReadyToUnlock(const int32_t& key, const int32_t& step, const int32_t& mode)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    if (mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::CAPTURE) ||
+      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::QUICK_SHOT_PHOTO) ||
+      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PORTRAIT)) {
+        return step_.count(key) > 0 && step_[key] == step;
+    } else {
+        return map_.count(key) > 0;
+    }
+}
  
+void ConcurrentMap::IncreaseCaptureStep(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    step_[key] = step_[key] + 1;
+    cv_[key].notify_all();
+}
+
 void ConcurrentMap::Erase(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
     mutexes_.erase(key);
     map_.erase(key);
     cv_.erase(key);
+    step_.erase(key);
 }
  
 void ConcurrentMap::Release()
@@ -413,6 +439,7 @@ void ConcurrentMap::Release()
     map_.clear();
     mutexes_.clear();
     cv_.clear();
+    step_.clear();
 }
 
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
@@ -439,6 +466,10 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
+    const int32_t getPhotoAssetStep = 2;
+    std::unique_lock<std::mutex> lock(photoAssetProxy_.GetMutex(captureId));
+    photoAssetProxy_.GetCv(captureId).wait(lock,
+        [&] { return photoAssetProxy_.ReadyToUnlock(captureId, getPhotoAssetStep, GetMode()); });
     std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
     photoAssetProxy_.Erase(captureId);
     return proxy;
@@ -917,23 +948,27 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy>
     if (isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO))) {
         return CAMERA_UNSUPPORTED;
     }
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(photoProxy->captureId_);
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
-    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)",
-        photoProxy->captureId_);
-    MessageParcel data;
-    photoProxy->WriteToParcel(data);
-    photoProxy->CameraFreeBufferHandle();
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    cameraPhotoProxy->ReadFromParcel(data);
-    SetCameraPhotoProxyInfo(cameraPhotoProxy);
-    int32_t captureId = cameraPhotoProxy->GetCaptureId();
-    string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
-    CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
-    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
-    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
-    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
+    {
+        const int32_t updateMediaLibraryStep = 1;
+        std::unique_lock<std::mutex> lock(photoAssetProxy_.GetMutex(photoProxy->captureId_));
+        photoAssetProxy_.GetCv(photoProxy->captureId_).wait(lock,
+            [&] { return photoAssetProxy_.ReadyToUnlock(photoProxy->captureId_, updateMediaLibraryStep, GetMode()); });
+        std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(photoProxy->captureId_);
+        CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+            "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
+        MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)",
+            photoProxy->captureId_);
+        MessageParcel data;
+        photoProxy->WriteToParcel(data);
+        photoProxy->CameraFreeBufferHandle();
+        sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+        cameraPhotoProxy->ReadFromParcel(data);
+        SetCameraPhotoProxyInfo(cameraPhotoProxy);
+        MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
+        photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
+        MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
+    }
+    photoAssetProxy_.IncreaseCaptureStep(photoProxy->captureId_);
     MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", photoProxy->captureId_);
     return CAMERA_OK;
 }
