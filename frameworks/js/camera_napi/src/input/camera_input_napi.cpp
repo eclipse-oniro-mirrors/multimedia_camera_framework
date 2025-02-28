@@ -378,6 +378,10 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
 napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("closeDelayed is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi closeDelayed is called!");
+        return nullptr;
+    }
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>(
         "CameraInputNapi::closeDelayed", CameraNapiUtils::IncrementAndGet(cameraInputTaskId));
     int32_t delayTime  = 0 ;
