@@ -26,6 +26,7 @@
 #include <set>
 
 #include "camera_privacy.h"
+#include "camera_sensor_plugin.h"
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "camera_util.h"
@@ -41,6 +42,7 @@
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t HDI_STREAM_ID_INIT = 1;
+static std::mutex dropDetectionMutex_;
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
@@ -101,6 +103,8 @@ public:
     uint8_t GetUsedAsPosition();
     bool GetDeviceMuteMode();
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
+    static void DeviceEjectCallBack();
+    static void DeviceFaultCallBack();
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
     {
@@ -216,6 +220,10 @@ private:
     std::atomic<bool> deviceMuteMode_ {false};
     bool isHasOpenSecure = false;
     uint64_t mSecureCameraSeqId = 0L;
+    int32_t lastDeviceProtectionStatus_ = -1;
+    std::mutex deviceProtectionStatusMutex_;
+    int64_t lastDeviceEjectTime_ = 0;
+    std::atomic<int> deviceEjectTimes_ = 1;
 
     std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
@@ -258,6 +266,10 @@ private:
     std::mutex movingPhotoEndTimeCallbackLock_;
     std::function<void(int32_t, int64_t)> movingPhotoStartTimeCallback_;
     std::function<void(int32_t, int64_t)> movingPhotoEndTimeCallback_;
+    void ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Camera::CameraMetadata> &metadata);
+    bool CanReportDeviceProtectionStatus(int32_t status);
+    bool ShowDeviceProtectionDialog(DeviceProtectionStatus status);
+    std::string BuildDeviceProtectionDialogCommand(DeviceProtectionStatus status);
 };
 } // namespace CameraStandard
 } // namespace OHOS

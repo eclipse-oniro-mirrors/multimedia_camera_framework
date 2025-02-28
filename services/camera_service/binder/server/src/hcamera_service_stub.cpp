@@ -180,6 +180,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CONCURRENT_CAMERA_ABILITY):
             errCode = HCameraServiceStub::HandleGetConcurrentCameraAbility(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME):
+            errCode = HCameraServiceStub::HandleSetDeviceRetryTime(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -821,6 +824,11 @@ int HCameraServiceStub::HandleGetConcurrentCameraAbility(MessageParcel& data, Me
         "HCameraServiceStub HandleGetConcurrentCameraAbility write ability failed");
     
     return ret;
+}
+
+int HCameraServiceStub::HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply)
+{
+    return SetDeviceRetryTime();
 }
 } // namespace CameraStandard
 } // namespace OHOS
