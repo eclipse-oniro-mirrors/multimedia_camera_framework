@@ -121,39 +121,6 @@ void ProfessionSessionFuzzer::ProfessionSessionFuzzTest1()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    GetPermission();
-    manager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
-    if (fuzz_ == nullptr) {
-        fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
-    }
-    SceneMode sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
-    std::vector<sptr<CameraDevice>> cameras_;
-    cameras_ = manager->GetSupportedCameras();
-    sptr<CaptureInput> input = manager->CreateCameraInput(cameras_[0]);
-    sptr<CameraOutputCapability> modeAbility =
-        manager->GetSupportedOutputCapability(cameras_[0], sceneMode_);
-    captureSession->BeginConfig();
-    captureSession->AddInput(input);
-    input->Open();
-    Profile previewProfile;
-    VideoProfile videoProfile;
-    auto previewProfiles = modeAbility->GetPreviewProfiles();
-    auto videoProfiles = modeAbility->GetVideoProfiles();
-    for (const auto &vProfile : videoProfiles) {
-        for (const auto &pProfile : previewProfiles) {
-            if (vProfile.size_.width == pProfile.size_.width) {
-                previewProfile = pProfile;
-                videoProfile = vProfile;
-                break;
-            }
-        }
-    }
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
-    captureSession->AddOutput(previewOutput);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
-    captureSession->AddOutput(videoOutput);
-    captureSession->CommitConfig();
     MeteringMode meteringModes = static_cast<MeteringMode>(GetData<int32_t>() % NUM_FOUR);
     std::vector<MeteringMode> supportedMeteringModes = {};
     supportedMeteringModes.push_back(meteringModes);
@@ -209,7 +176,39 @@ void Test()
         MEDIA_INFO_LOG("professionSession is null");
         return;
     }
-    
+    GetPermission();
+    manager = CameraManager::GetInstance();
+    sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    if (ProfessionSessionFuzzer::fuzz_ == nullptr) {
+        ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    }
+    SceneMode sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
+    std::vector<sptr<CameraDevice>> cameras_;
+    cameras_ = manager->GetSupportedCameras();
+    sptr<CaptureInput> input = manager->CreateCameraInput(cameras_[0]);
+    sptr<CameraOutputCapability> modeAbility =
+        manager->GetSupportedOutputCapability(cameras_[0], sceneMode_);
+    captureSession->BeginConfig();
+    captureSession->AddInput(input);
+    input->Open();
+    Profile previewProfile;
+    VideoProfile videoProfile;
+    auto previewProfiles = modeAbility->GetPreviewProfiles();
+    auto videoProfiles = modeAbility->GetVideoProfiles();
+    for (const auto &vProfile : videoProfiles) {
+        for (const auto &pProfile : previewProfiles) {
+            if (vProfile.size_.width == pProfile.size_.width) {
+                previewProfile = pProfile;
+                videoProfile = vProfile;
+                break;
+            }
+        }
+    }
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    captureSession->AddOutput(previewOutput);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    captureSession->AddOutput(videoOutput);
+    captureSession->CommitConfig();
     professionSession->ProfessionSessionFuzzTest1();
     professionSession->ProfessionSessionFuzzTest2();
 }
