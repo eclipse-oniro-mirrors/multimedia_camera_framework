@@ -27,6 +27,7 @@ public:
 
     virtual std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom,
         const float& frameInterval) = 0;
+    virtual bool SetBezierValue(const std::vector<float>& zoomBezierValue) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
