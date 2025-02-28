@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -157,6 +157,79 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_004, TestSize.Level
     int32_t ret = muxer->Create(format, nullptr);
     EXPECT_EQ(ret, 1);
     muxer->muxer_ = nullptr;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test WriteSampleBuffer abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test WriteSampleBuffer abnormal branches.
+ */
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_005, TestSize.Level0)
+{
+    sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
+    OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
+    int32_t ret = muxer->Create(format, nullptr);
+    EXPECT_EQ(ret, 1);
+
+    std::shared_ptr<OHOS::Media::AVBuffer> sample = make_shared<OHOS::Media::AVBuffer>();
+    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
+    muxer->muxer_ = impl;
+    int num = 10;
+    TrackType type = static_cast<TrackType>(num);
+    ret = muxer->WriteSampleBuffer(sample, type);
+    EXPECT_EQ(ret, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AddTrack abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddTrack abnormal branches.
+ */
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level0)
+{
+    sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
+    int trackId = -1;
+    std::shared_ptr<Format> format = make_shared<Format>();
+    int num = 10;
+    TrackType type = static_cast<TrackType>(num);
+    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
+    muxer->muxer_ = impl;
+    int32_t ret = muxer->AddTrack(trackId, format, type);
+    EXPECT_EQ(ret, 0);
+
+    type = VIDEO_TRACK;
+    ret = muxer->AddTrack(trackId, format, type);
+    EXPECT_EQ(ret, 0);
+
+    type = META_TRACK;
+    ret = muxer->AddTrack(trackId, format, type);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Release abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Release abnormal branches.
+ */
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_007, TestSize.Level0)
+{
+    sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
+    std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();
+    muxer->muxer_ = impl;
+    int32_t ret = muxer->Release();
+    EXPECT_EQ(ret, 0);
+
+    ret = muxer->Release();
+    EXPECT_EQ(ret, 0);
 }
 } // CameraStandard
 } // OHOS

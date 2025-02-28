@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -4131,6 +4131,292 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_010, TestSize
     LcdFlashStatusInfo lcdFlashStatusInfo = {true, 0};
     lcdFlashStatusCallback->SetLcdFlashStatusInfo(lcdFlashStatusInfo);
     EXPECT_TRUE(lcdFlashStatusCallback->GetLcdFlashStatusInfo().isLcdFlashNeeded);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with GetMetadataFromService
+ * IsVideoDeferred
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with GetMetadataFromService
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_011, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->GetMetadataFromService(cameras_[0]);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetBeauty abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetBeauty abnormal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_012, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    BeautyType beautyType = AUTO_TYPE;
+    session->LockForControl();
+    session->SetBeauty(beautyType, 0);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->SetBeauty(beautyType, 3);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->SetBeauty(FACE_SLENDER, 0);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->SetBeauty(FACE_SLENDER, 3);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    uint32_t count = 1;
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_OFF;
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE);
+    session->SetBeauty(beautyType, 0);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->SetBeauty(FACE_SLENDER, 0);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    session->SetBeauty(beautyType, 0);
+    session->SetBeauty(FACE_SLENDER, 0);
+    int num = 10;
+    beautyType = static_cast<BeautyType>(num);
+    session->SetBeauty(beautyType, 0);
+    EXPECT_EQ(session->GetBeauty(beautyType), -1);
+    session->UnlockForControl();
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsFeatureSupported abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFeatureSupported abnormal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_013, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    SceneFeature feature = static_cast<SceneFeature>(10);
+    EXPECT_FALSE(session->IsFeatureSupported(feature));
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableDeferredType abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableDeferredType abnormal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_014, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    DeferredDeliveryImageType type = DELIVERY_NONE;
+    bool isEnableByUser = true;
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY);
+    session->EnableDeferredType(type, isEnableByUser);
+    uint8_t deferredType = HDI::Camera::V1_2::NONE;
+    session->changedMetadata_->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
+    session->EnableDeferredType(type, isEnableByUser);
+
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE);
+    session->EnableAutoDeferredVideoEnhancement(isEnableByUser);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
+    session->EnableAutoDeferredVideoEnhancement(isEnableByUser);
+
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CAMERA_USER_ID);
+    session->SetUserId();
+    int32_t userId = 1;
+    session->changedMetadata_->addEntry(OHOS_CAMERA_USER_ID, &userId, 1);
+    session->SetUserId();
+    session->UnlockForControl();
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test EnableDeferredType abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test EnableDeferredType abnormal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_015, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool enabled = true;
+    session->LockForControl();
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), session->HAL_CUSTOM_AR_MODE);
+    EXPECT_EQ(session->SetARMode(enabled), 0);
+    uint8_t value = 1;
+    session->changedMetadata_->addEntry(session->HAL_CUSTOM_AR_MODE, &value, 1);
+    EXPECT_EQ(session->SetARMode(enabled), 0);
+    session->UnlockForControl();
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSensorSensitivity abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetSensorSensitivity abnormal branches
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    uint32_t sensitivity = 1;
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), session->HAL_CUSTOM_SENSOR_SENSITIVITY);
+    EXPECT_EQ(session->SetSensorSensitivity(sensitivity), 0);
+    session->changedMetadata_->addEntry(session->HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, 1);
+    EXPECT_EQ(session->SetSensorSensitivity(sensitivity), 0);
+
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    EffectSuggestionType effectSuggestionType = EFFECT_SUGGESTION_PORTRAIT;
+    bool isEnable = true;
+    OHOS::Camera::DeleteCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE);
+    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
+    uint8_t type = OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT;
+    std::vector<uint8_t> vec = {type, isEnable};
+    session->changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
+    EXPECT_EQ(session->UpdateEffectSuggestion(effectSuggestionType, isEnable), 0);
+    session->UnlockForControl();
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 }
 }

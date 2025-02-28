@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -60,13 +60,10 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_001, TestSize.Level0)
     ASSERT_NE(cameraAbility, nullptr);
     cameraAbility->IsLcdFlashSupported();
     std::vector<FlashMode> flashModeList = cameraAbility->GetSupportedFlashModes();
-    bool isFlashModeSupported = false;
-    FlashMode flashMode = FlashMode::FLASH_MODE_OPEN;
-    isFlashModeSupported = cameraAbility->IsFlashModeSupported(flashMode);
-    if (((std::find(flashModeList.begin(), flashModeList.end(), flashMode)) != (flashModeList.end()))) {
-        EXPECT_TRUE(isFlashModeSupported);
-    }
-    EXPECT_FALSE(isFlashModeSupported);
+    cameraAbility->supportedFlashModes_.push_back(FlashMode::FLASH_MODE_OPEN);
+    EXPECT_TRUE(cameraAbility->IsFlashModeSupported(FlashMode::FLASH_MODE_OPEN));
+    cameraAbility->supportedFlashModes_.clear();
+    EXPECT_FALSE(cameraAbility->IsFlashModeSupported(FlashMode::FLASH_MODE_OPEN));
 }
 
 /*
@@ -84,13 +81,10 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_002, TestSize.Level0)
     cameraAbility->GetExposureBiasRange();
     cameraAbility->GetSupportedExposureRange();
     std::vector<ExposureMode> exposureModeList = cameraAbility->GetSupportedExposureModes();
-    bool isExposureModeSupported = false;
-    ExposureMode exposureMode = ExposureMode::EXPOSURE_MODE_AUTO;
-    isExposureModeSupported = cameraAbility->IsExposureModeSupported(exposureMode);
-    if (((std::find(exposureModeList.begin(), exposureModeList.end(), exposureMode)) != (exposureModeList.end()))) {
-        EXPECT_TRUE(isExposureModeSupported);
-    }
-    EXPECT_FALSE(isExposureModeSupported);
+    cameraAbility->supportedExposureModes_.push_back(ExposureMode::EXPOSURE_MODE_AUTO);
+    EXPECT_TRUE(cameraAbility->IsExposureModeSupported(ExposureMode::EXPOSURE_MODE_AUTO));
+    cameraAbility->supportedExposureModes_.clear();
+    EXPECT_FALSE(cameraAbility->IsExposureModeSupported(ExposureMode::EXPOSURE_MODE_AUTO));
 }
 
 /*
@@ -107,10 +101,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_003, TestSize.Level0)
     ASSERT_NE(cameraAbility, nullptr);
     cameraAbility->GetDepthFusionThreshold();
     bool isSupported = (cameraAbility->isDepthFusionSupported_).value_or(false);
-    if (isSupported) {
-        EXPECT_TRUE(cameraAbility->IsDepthFusionSupported());
-    }
-    EXPECT_FALSE(cameraAbility->IsDepthFusionSupported());
+    EXPECT_EQ(cameraAbility->IsDepthFusionSupported(), isSupported);
 }
 
 /*
@@ -125,13 +116,40 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_004, TestSize.Level0)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
-    bool issupport = (std::find(cameraAbility->supportedSceneFeature_.begin(),
-        cameraAbility->supportedSceneFeature_.end(), SceneFeature::FEATURE_ENUM_MAX)) !=
-        (cameraAbility->supportedSceneFeature_.end());
-    if (issupport) {
-        EXPECT_TRUE(cameraAbility->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX));
-    }
+    cameraAbility->supportedSceneFeature_.push_back(SceneFeature::FEATURE_ENUM_MAX);
+    EXPECT_TRUE(cameraAbility->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX));
+    cameraAbility->supportedSceneFeature_.clear();
     EXPECT_FALSE(cameraAbility->IsFeatureSupported(SceneFeature::FEATURE_ENUM_MAX));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test focus range function supported or not
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test focus range function supported or not
+ */
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_005, TestSize.Level0)
+{
+    sptr<CameraAbility> cameraAbility = new CameraAbility();
+    ASSERT_NE(cameraAbility, nullptr);
+    EXPECT_FALSE(cameraAbility->IsFocusRangeTypeSupported(FocusRangeType::FOCUS_RANGE_TYPE_AUTO));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test focus driven function supported or not
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test focus driven function supported or not
+ */
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_006, TestSize.Level0)
+{
+    sptr<CameraAbility> cameraAbility = new CameraAbility();
+    ASSERT_NE(cameraAbility, nullptr);
+    EXPECT_FALSE(cameraAbility->IsFocusDrivenTypeSupported(FocusDrivenType::FOCUS_DRIVEN_TYPE_AUTO));
 }
 
 } // CameraStandard

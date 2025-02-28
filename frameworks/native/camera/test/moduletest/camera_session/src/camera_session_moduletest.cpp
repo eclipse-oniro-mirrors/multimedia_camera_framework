@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -2464,7 +2464,6 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_010, TestSize.Leve
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(portraitMode);
     auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
-    portraitSession->~PortraitSession();
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);
@@ -3445,7 +3444,6 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_005, TestSize.Level0)
     SceneMode nightMode = SceneMode::NIGHT;
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(nightMode);
     auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
-    nightSession->~NightSession();
     uint32_t exposureValue = 0;
     std::vector<uint32_t> exposureRange;
     EXPECT_EQ(nightSession->GetExposureRange(exposureRange), SESSION_NOT_CONFIG);

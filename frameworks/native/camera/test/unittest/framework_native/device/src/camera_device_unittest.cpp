@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -162,6 +162,28 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_005, TestSize.Level0)
 
     cameras[0]->foldScreenType_ = CameraFoldScreenType::CAMERA_FOLDSCREEN_UNSPECIFIED;
     EXPECT_EQ(cameras[0]->GetCameraFoldScreenType(), CameraFoldScreenType::CAMERA_FOLDSCREEN_UNSPECIFIED);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with GetPosition abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetPosition abnormal branches
+ */
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+
+    cameras[0]->cameraPosition_ = CameraPosition::CAMERA_POSITION_FRONT;
+    EXPECT_EQ(cameras[0]->GetPosition(), CameraPosition::CAMERA_POSITION_FRONT);
+    cameras[0]->cameraPosition_ = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
+    EXPECT_EQ(cameras[0]->GetPosition(), CameraPosition::CAMERA_POSITION_UNSPECIFIED);
+    cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
+    EXPECT_EQ(cameras[0]->GetPosition(), CameraPosition::CAMERA_POSITION_UNSPECIFIED);
+    cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
+    EXPECT_EQ(cameras[0]->GetPosition(), CameraPosition::CAMERA_POSITION_UNSPECIFIED);
 }
 }
 }

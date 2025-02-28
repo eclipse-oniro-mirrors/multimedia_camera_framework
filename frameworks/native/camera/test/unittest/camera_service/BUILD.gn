@@ -62,7 +62,9 @@ ohos_unittest("camera_service_unittest") {
       "avcodec/src/camera_server_photo_proxy_unittest.cpp",
       "avcodec/src/frame_record_unittest.cpp",
       "avcodec/src/moving_photo_video_cache_unittest.cpp",
+      "avcodec/src/video_encoder_unittest.cpp",
       "camera_service_common/src/camera_app_manager_client_unittest.cpp",
+      "camera_service_common/src/camera_beauty_notification_unittest.cpp",
       "camera_service_common/src/camera_fwk_metadata_utils_unittest.cpp",
       "camera_service_common/src/camera_info_dumper_unittest.cpp",
       "camera_service_common/src/camera_privacy_unittest.cpp",
@@ -114,6 +116,7 @@ ohos_unittest("camera_service_unittest") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "i18n:intl_util",
     "init:libbegetutil",
     "ipc:ipc_core",
     "media_foundation:media_foundation",
@@ -138,6 +141,12 @@ ohos_unittest("camera_service_unittest") {
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
     defines += [ "CAMERA_USE_SENSOR" ]
+  }
+
+  if (defined(global_parts_info) &&
+      defined(
+          global_parts_info.notification_distributed_notification_service)) {
+    external_deps += [ "distributed_notification_service:ans_innerkits" ]
   }
 
   cflags = [

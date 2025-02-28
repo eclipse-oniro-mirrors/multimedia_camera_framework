@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -230,10 +230,8 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_005, TestSize.Lev
     const std::string cameraId = "dadsada";
     sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
     cameraHostManager_->cameraDevices_.emplace(cameraId, cameraDevice);
-    cameraHostManager_->~HCameraHostManager();
 
     cameraHostManager_->cameraDevices_.emplace("dddddd", nullptr);
-    cameraHostManager_->~HCameraHostManager();
     EXPECT_NE(cameraHostManager_->cameraDevices_.size(), 0);
 }
 
