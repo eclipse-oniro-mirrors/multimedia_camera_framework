@@ -439,7 +439,7 @@ void ConcurrentMap::Release()
     map_.clear();
     mutexes_.clear();
     cv_.clear();
-    step_.erase(key);
+    step_.clear();
 }
 
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
