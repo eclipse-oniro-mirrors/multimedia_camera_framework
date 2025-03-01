@@ -74,6 +74,10 @@ ohos_fuzztest("VideoEncoderFuzzTest") {
   ]
 
   sources = [
+    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/common/frame_record.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/sample_callback.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/video_encoder.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/moving_photo/moving_photo_surface_wrapper.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/demuxer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/media_manager.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager.cpp",

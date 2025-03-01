@@ -62,6 +62,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
   ]
 
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
     "hstream_capture_fuzzer.cpp",
