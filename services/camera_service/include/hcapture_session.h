@@ -222,8 +222,10 @@ public:
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
-    bool QueryFpsAndZoomRatio(float& currentFps, float& currentZoomRatio);
-    bool QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode);
+    bool QueryFpsAndZoomRatio(
+        float &currentFps, float &currentZoomRatio, std::vector<float> &crossZoomAndTime, int32_t operationMode);
+    bool QueryZoomPerformance(
+        std::vector<float> &crossZoomAndTime, int32_t operationMode, const camera_metadata_item_t &zoomItem);
     int32_t GetRangeId(float& zoomRatio, std::vector<float>& crossZoom);
     float GetCrossWaitTime(std::vector<std::vector<float>>& crossTime, int32_t targetRangeId, int32_t currentRangeId);
     void GetCrossZoomAndTime(std::vector<float>& crossZoomAndTime,

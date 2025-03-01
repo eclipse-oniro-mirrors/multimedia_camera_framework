@@ -1828,10 +1828,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level
 
     float currentFps = 0;
     float currentZoomRatio = 0;
-    EXPECT_EQ(camSession->QueryFpsAndZoomRatio(currentFps, currentZoomRatio), false);
     std::vector<float> crossZoomAndTime = {0, 0};
     int32_t operationMode = 0;
-    EXPECT_EQ(camSession->QueryZoomPerformance(crossZoomAndTime, operationMode), false);
+    EXPECT_EQ(camSession->QueryFpsAndZoomRatio(currentFps, currentZoomRatio, crossZoomAndTime, operationMode), false);
     int32_t smoothZoomType = 0;
     float targetZoomRatio = 0;
     float duration = 0;
