@@ -99,9 +99,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     fuzz_->GetHdiStreamByStreamID(GetData<int32_t>());
     int32_t featureMode = GetData<int32_t>();
     fuzz_->SetFeatureMode(featureMode);
-    float currentFps = GetData<float>();
-    float currentZoomRatio = GetData<float>();
-    fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
     int outFd = GetData<int32_t>();
     CameraInfoDumper infoDumper(outFd);
     fuzz_->DumpSessionInfo(infoDumper);
@@ -116,6 +113,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
     fuzz_->SetColorSpaceForStreams();
     fuzz_->CheckIfColorSpaceMatchesFormat(colorSpace);
+    fuzz_->GetPid();
     fuzz_->GetopMode();
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->GetCurrentStreamInfos(streamInfos);
@@ -140,7 +138,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
         fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
         fuzz_->NewInstance(0, 0, session);
     }
-    fuzz_->GetPid();
     StreamType streamType = StreamType::CAPTURE;
     fuzz_->AddOutput(streamType, nullptr);
     fuzz_->RemoveOutput(streamType, nullptr);
@@ -164,9 +161,11 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
     fuzz_->UpdateStreamInfos();
     CaptureSessionState sessionState = CaptureSessionState::SESSION_STARTED;
     fuzz_->GetSessionState(sessionState);
+    float currentFps = GetData<float>();
+    float currentZoomRatio = GetData<float>();
     std::vector<float> crossZoomAndTime;
     int32_t operationMode = GetData<int32_t>();
-    fuzz_->QueryZoomPerformance(crossZoomAndTime, operationMode);
+    fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio, crossZoomAndTime, operationMode);
     fuzz_->GetSensorOritation();
     fuzz_->GetMovingPhotoBufferDuration();
     float zoomRatio = GetData<float>();
