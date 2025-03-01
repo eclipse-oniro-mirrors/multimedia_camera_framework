@@ -18,7 +18,7 @@
 #include "camera_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "metadata_utils.h"
-#include "picture.h"
+#include "picture_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -340,7 +340,7 @@ int32_t HStreamCaptureProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPro
     return error;
 }
 
-int32_t HStreamCaptureProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
+int32_t HStreamCaptureProxy::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
     sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
     std::string &burstKey, int64_t timestamp)
 {
@@ -348,20 +348,20 @@ int32_t HStreamCaptureProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> 
     MessageParcel reply;
     MessageOption option;
     if (picture == nullptr || photoProxy == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
+        MEDIA_ERR_LOG("HStreamCaptureProxy CreateMediaLibrary picture or photoProxy is null");
         return IPC_PROXY_ERR;
     }
     data.WriteInterfaceToken(GetDescriptor());
-    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling E");
-    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
-    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling X");
+    MEDIA_DEBUG_LOG("HStreamCaptureProxy CreateMediaLibrary picture->Marshalling E");
+    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HStreamCaptureProxy picture Marshalling failed");
+    MEDIA_DEBUG_LOG("HStreamCaptureProxy CreateMediaLibrary picture->Marshalling X");
     photoProxy->WriteToParcel(data);
     data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
         data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamCaptureProxy CreateMediaLibrary failed, error: %{public}d", error);
     }
     uri = reply.ReadString();
     cameraShotType = reply.ReadInt32();

@@ -28,9 +28,6 @@
 #include "task_manager.h"
 #include "video_session_info.h"
 
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -45,7 +42,7 @@ public:
     void DeletePhotoSession(const int32_t userId);
     void OnProcessDone(const int32_t userId, const std::string& imageId,
         const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag);
-    void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<Media::Picture> picture,
+    void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<PictureIntf> picture,
         uint32_t cloudImageEnhanceFlag);
     void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode);
     void OnStateChanged(const int32_t userId, DpsStatus statusCode);
@@ -86,12 +83,12 @@ private:
         CallbackType callbackType;
         int userId;
         std::string imageId;
-        std::shared_ptr<Media::Picture> picture;
+        std::shared_ptr<PictureIntf> picture;
         long dataSize;
         DpsError errorCode;
         DpsStatus statusCode;
     };
-    
+
     struct RequestResult {
         CallbackType callbackType;
         const int32_t userId;

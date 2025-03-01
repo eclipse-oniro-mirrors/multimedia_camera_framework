@@ -16,7 +16,7 @@
 #include "deferred_photo_processing_session_callback_proxy.h"
 #include "deferred_processing_service_ipc_interface_code.h"
 #include "utils/dp_log.h"
-#include "picture.h"
+#include "picture_interface.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -46,7 +46,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
+    std::shared_ptr<PictureIntf> picture, uint32_t cloudImageEnhanceFlag)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -71,7 +71,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnProcessImageDone(const st
 }
 
 int32_t DeferredPhotoProcessingSessionCallbackProxy::OnDeliveryLowQualityImage(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<PictureIntf> picture)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -79,7 +79,9 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnDeliveryLowQualityImage(c
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(imageId);
-    if (picture && !picture->Marshalling(data)) {
+    DP_CHECK_ERROR_PRINT_LOG(picture == nullptr,
+        "DeferredPhotoProcessingSessionCallbackProxy OnDeliveryLowQualityImage picture is nullptr");
+    if (!picture->Marshalling(data)) {
         DP_ERR_LOG("OnDeliveryLowQualityImage Marshalling failed");
         return -1;
     }

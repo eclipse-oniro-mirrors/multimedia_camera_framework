@@ -30,15 +30,12 @@
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
 
-namespace OHOS::Media {
-    class Picture;
-}
-
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 class PhotoAssetIntf;
+class PictureIntf;
 class CameraServerPhotoProxy;
 class HStreamOperator;
 class ConcurrentMap {
@@ -117,7 +114,7 @@ public:
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp) override;
-    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
 
 private:

@@ -20,9 +20,6 @@
 #include <string>
 #include "buffer_info.h"
 #include "basic_definitions.h"
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {

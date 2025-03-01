@@ -73,6 +73,8 @@
             "base_group": [],
             "fwk_group": [
               "//foundation/multimedia/camera_framework/common:camera_utils",
+              "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_medialibrary",
+              "//foundation/multimedia/camera_framework/dynamic_libs:camera_dynamic_picture",
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
               "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
@@ -86,7 +88,6 @@
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
               "//foundation/multimedia/camera_framework/services/etc:camera_service.rc",
               "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
-              "//foundation/multimedia/camera_framework/services/camera_service:camera_dynamic_medialibrary",
               "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
             ]
           },

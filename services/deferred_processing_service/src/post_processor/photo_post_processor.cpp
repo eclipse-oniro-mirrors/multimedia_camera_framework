@@ -19,6 +19,7 @@
 
 #include "auxiliary_picture.h"
 #include "buffer_extra_data_impl.h"
+#include "camera_dynamic_loader.h"
 #include "dp_log.h"
 #include "dp_timer.h"
 #include "dp_utils.h"
@@ -27,7 +28,7 @@
 #include "foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include/photo_proxy.h"
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
-#include "picture.h"
+#include "picture_proxy.h"
 #include "securec.h"
 #include "v1_3/iimage_process_service.h"
 #include "v1_3/iimage_process_callback.h"
@@ -177,7 +178,7 @@ private:
     int32_t ProcessBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
     int32_t ProcessBufferInfoExt(const std::string& imageId,
         const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
-    std::shared_ptr<Media::Picture> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
+    std::shared_ptr<PictureIntf> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
 
     const int32_t userId_;
     std::weak_ptr<PhotoProcessResult> processResult_;
@@ -307,98 +308,34 @@ sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(BufferHandle *bufferHandle)
     return surfaceBuffer;
 }
 
-std::shared_ptr<Media::AuxiliaryPicture> CreateAuxiliaryPicture(BufferHandle *bufferHandle,
-    Media::AuxiliaryPictureType type)
+void SetAuxiliaryPicture(std::shared_ptr<PictureIntf> picture, BufferHandle *bufferHandle,
+    CameraAuxiliaryPictureType type)
 {
     DP_INFO_LOG("entered, AuxiliaryPictureType type = %{public}d", static_cast<int32_t>(type));
-    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
+    DP_CHECK_ERROR_RETURN_LOG(picture == nullptr || bufferHandle == nullptr, "bufferHandle is nullptr.");
 
     auto buffer = TransBufferHandleToSurfaceBuffer(bufferHandle);
-    auto uniquePtr = Media::AuxiliaryPicture::Create(buffer, type, {buffer->GetWidth(), buffer->GetHeight()});
-    auto auxiliaryPicture = std::shared_ptr<Media::AuxiliaryPicture>(uniquePtr.release());
-    return auxiliaryPicture;
-}
-
-inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
-{
-    float degree = DeferredProcessing::TransExifOrientationToDegree(exifOrientation);
-    if (pixelMap) {
-        DP_INFO_LOG("RotatePicture degree is %{public}f", degree);
-        pixelMap->rotate(degree);
-    } else {
-        DP_ERR_LOG("RotatePicture Failed pixelMap is nullptr");
-    }
-}
-
-std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
-{
-    std::string orientation = "";
-    if (exifData != nullptr) {
-        exifData->GetValue("Orientation", orientation);
-        std::string defalutExifOrientation = "1";
-        exifData->SetValue("Orientation", defalutExifOrientation);
-        DP_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
-        exifData->RemoveExifThumbnail();
-        DP_INFO_LOG("RemoveExifThumbnail");
-    } else {
-        DP_ERR_LOG("GetExifOrientation exifData is nullptr");
-    }
-    return orientation;
-}
-
-void RotatePicture(std::shared_ptr<Media::Picture> picture)
-{
-    std::string orientation = GetAndSetExifOrientation(
-        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
-    RotatePixelMap(picture->GetMainPixel(), orientation);
-    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
-    if (gainMap) {
-        RotatePixelMap(gainMap->GetContentPixel(), orientation);
-    }
-    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
-    if (depthMap) {
-        RotatePixelMap(depthMap->GetContentPixel(), orientation);
-    }
-    auto unrefocusMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::UNREFOCUS_MAP);
-    if (unrefocusMap) {
-        RotatePixelMap(unrefocusMap->GetContentPixel(), orientation);
-    }
-    auto linearMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::LINEAR_MAP);
-    if (linearMap) {
-        RotatePixelMap(linearMap->GetContentPixel(), orientation);
-    }
+    picture->SetAuxiliaryPicture(buffer, type);
 }
 
 void AssemleAuxilaryPicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer,
-    std::shared_ptr<Media::Picture>& picture)
+    std::shared_ptr<PictureIntf>& picture)
 {
     if (buffer.isGainMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.gainMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::GAINMAP);
-        if (auxiliaryPicture) {
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
+        SetAuxiliaryPicture(picture, buffer.gainMapHandle->GetBufferHandle(),
+            CameraAuxiliaryPictureType::GAINMAP);
     }
     if (buffer.isDepthMapValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.depthMapHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::DEPTH_MAP);
-        if (auxiliaryPicture) {
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
+        SetAuxiliaryPicture(picture, buffer.depthMapHandle->GetBufferHandle(),
+            CameraAuxiliaryPictureType::DEPTH_MAP);
     }
     if (buffer.isUnrefocusImageValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.unrefocusImageHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::UNREFOCUS_MAP);
-        if (auxiliaryPicture) {
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
+        SetAuxiliaryPicture(picture, buffer.unrefocusImageHandle->GetBufferHandle(),
+            CameraAuxiliaryPictureType::UNREFOCUS_MAP);
     }
     if (buffer.isHighBitDepthLinearImageValid) {
-        auto auxiliaryPicture = CreateAuxiliaryPicture(buffer.highBitDepthLinearImageHandle->GetBufferHandle(),
-            Media::AuxiliaryPictureType::LINEAR_MAP);
-        if (auxiliaryPicture) {
-            picture->SetAuxiliaryPicture(auxiliaryPicture);
-        }
+        SetAuxiliaryPicture(picture, buffer.highBitDepthLinearImageHandle->GetBufferHandle(),
+            CameraAuxiliaryPictureType::LINEAR_MAP);
     }
     if (buffer.isMakerInfoValid) {
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
@@ -406,7 +343,7 @@ void AssemleAuxilaryPicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& b
     }
 }
 
-std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
+std::shared_ptr<PictureIntf> PhotoPostProcessor::PhotoProcessListener::AssemblePicture(
     const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer)
 {
     int32_t exifDataSize = 0;
@@ -421,7 +358,10 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
         "unrefocusMap(%{public}d), linearMap(%{public}d), exif(%{public}d), makeInfo(%{public}d)",
         buffer.isGainMapValid, buffer.isDepthMapValid, buffer.isUnrefocusImageValid,
         buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid);
-    std::shared_ptr<Media::Picture> picture = Media::Picture::Create(imageBuffer);
+    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr,
+        "pictureProxy use count is not 1");
+    picture->Create(imageBuffer);
     DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
@@ -434,7 +374,7 @@ std::shared_ptr<Media::Picture> PhotoPostProcessor::PhotoProcessListener::Assemb
     }
     if (picture) {
         AssemleAuxilaryPicture(buffer, picture);
-        RotatePicture(picture);
+        picture->RotatePicture();
     }
     return picture;
 }
@@ -480,7 +420,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::ProcessBufferInfoExt(const std
         size, dataSize, isDegradedImage, deferredImageFormat, cloudImageEnhanceFlag);
     auto processResult = processResult_.lock();
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
-        std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
+        std::shared_ptr<PictureIntf> picture = AssemblePicture(buffer);
         DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, DPS_ERROR_IMAGE_PROC_FAILED,
             "failed to AssemblePicture.");
 

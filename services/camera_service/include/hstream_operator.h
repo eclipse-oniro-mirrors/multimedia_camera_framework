@@ -56,9 +56,6 @@
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
 #endif
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
@@ -169,7 +166,7 @@ public:
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig);
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
         std::string& burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
@@ -280,7 +277,7 @@ private:
     void GetMovingPhotoStartAndEndTime();
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
-    std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<Media::Picture> picturePtr,
+    std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,
         bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string& uri);
 
 #ifdef CAMERA_USE_SENSOR

@@ -68,7 +68,7 @@
 #include "moving_photo/moving_photo_surface_wrapper.h"
 #include "moving_photo_video_cache.h"
 #include "parameters.h"
-#include "picture.h"
+#include "picture_interface.h"
 #include "refbase.h"
 #include "smooth_zoom.h"
 #include "surface.h"
@@ -1328,68 +1328,17 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, 
     return CAMERA_OK;
 }
 
-static std::unordered_map<std::string, float> exifOrientationDegree = {
-    {"Top-left", 0},
-    {"Top-right", 90},
-    {"Bottom-right", 180},
-    {"Right-top", 90},
-    {"Left-bottom", 270},
-};
-
-inline float TransExifOrientationToDegree(const std::string& orientation)
-{
-    float degree = .0;
-    if (exifOrientationDegree.count(orientation)) {
-        degree = exifOrientationDegree[orientation];
-    }
-    return degree;
-}
-
-inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
-{
-    float degree = TransExifOrientationToDegree(exifOrientation);
-    if (pixelMap) {
-        MEDIA_INFO_LOG("RotatePixelMap degree is %{public}f", degree);
-        pixelMap->rotate(degree);
-    } else {
-        MEDIA_ERR_LOG("RotatePixelMap Failed pixelMap is nullptr");
-    }
-}
-
-std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
-{
-    std::string orientation = "";
-    if (exifData != nullptr) {
-        exifData->GetValue("Orientation", orientation);
-        std::string defalutExifOrientation = "1";
-        exifData->SetValue("Orientation", defalutExifOrientation);
-        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
-        exifData->RemoveExifThumbnail();
-        MEDIA_INFO_LOG("RemoveExifThumbnail");
-    } else {
-        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
-    }
-    return orientation;
-}
-
-void RotatePicture(std::shared_ptr<Media::Picture> picture)
+void RotatePicture(std::weak_ptr<PictureIntf> picture)
 {
     CAMERA_SYNC_TRACE;
-    std::string orientation = GetAndSetExifOrientation(
-        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
-    RotatePixelMap(picture->GetMainPixel(), orientation);
-    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
-    if (gainMap) {
-        RotatePixelMap(gainMap->GetContentPixel(), orientation);
-    }
-    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
-    if (depthMap) {
-        RotatePixelMap(depthMap->GetContentPixel(), orientation);
+    auto ptr = picture.lock();
+    if (ptr) {
+        ptr->RotatePicture();
     }
 }
 
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
-    std::shared_ptr<Media::Picture> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
+    std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     std::string& uri)
 {
     CAMERA_SYNC_TRACE;
@@ -1438,7 +1387,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     return photoAssetProxy;
 }
 
-int32_t HStreamOperator::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
+int32_t HStreamOperator::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
     std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
@@ -1464,9 +1413,8 @@ int32_t HStreamOperator::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
-    std::shared_ptr<Media::Picture> picturePtr(picture.release());
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
-        ProcessPhotoProxy(captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
+        ProcessPhotoProxy(captureId, picture, isBursting, cameraPhotoProxy, uri);
     CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (!isBursting && isSetMotionPhoto_ && taskManager_) {
         MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);

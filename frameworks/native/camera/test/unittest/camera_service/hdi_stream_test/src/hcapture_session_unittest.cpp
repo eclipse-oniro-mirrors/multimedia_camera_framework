@@ -28,7 +28,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
-#include "picture.h"
+#include "picture_interface.h"
 #include "hcapture_session_callback_stub.h"
 #include "camera_service_ipc_interface_code.h"
 
@@ -797,13 +797,15 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
     ASSERT_NE(session, nullptr);
     ASSERT_NE(hStreamOperator, nullptr);
 
-    sptr<SurfaceBuffer> surfaceBuffer;
+    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
     string burstKey = "";
     int64_t timestamp = 0000;
-    hStreamOperator->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
+    auto picture = GetPictureIntfInstance();
+    picture->Create(surfaceBuffer);
+    hStreamOperator->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType,
         burstKey, timestamp);
 
     EXPECT_EQ(session->Release(), CAMERA_OK);

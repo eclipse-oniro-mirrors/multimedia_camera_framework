@@ -47,10 +47,6 @@
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
 #endif
-
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 
@@ -141,7 +137,7 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId,
-        std::shared_ptr<Media::Picture> picturePtr, bool isBursting,
+        std::shared_ptr<PictureIntf> picturePtr, bool isBursting,
         sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string &uri);
     int32_t SetFeatureMode(int32_t featureMode) override;
     void GetOutputStatus(int32_t &status);

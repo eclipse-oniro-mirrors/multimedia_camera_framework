@@ -29,6 +29,7 @@ config("camera_framework_public_config") {
 
 config("camera_framework_local_config") {
   include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
@@ -58,6 +59,7 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/src/icamera_util.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",

@@ -41,8 +41,10 @@ ohos_unittest("camera_service_unittest") {
     "${multimedia_camera_framework_path}/interfaces/kits/native/include/",
     "${multimedia_camera_framework_path}/frameworks/native/ndk/impl",
     "${multimedia_camera_framework_path}/interfaces",
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
   ]
   sources = [
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
     "hdi_camera_test/src/hcamera_host_manager_unittest.cpp",
     "hdi_stream_test/src/hcapture_session_unittest.cpp",
@@ -80,8 +82,8 @@ ohos_unittest("camera_service_unittest") {
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_medialibrary",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
-    "${multimedia_camera_framework_path}/services/camera_service:camera_dynamic_medialibrary",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 

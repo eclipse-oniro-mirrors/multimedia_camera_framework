@@ -24,9 +24,6 @@
 #include "singleton.h"
 #include "task_manager.h"
 
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -38,7 +35,7 @@ public:
     void Start();
     void Stop();
     void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
-        std::shared_ptr<Media::Picture> picture);
+        std::shared_ptr<PictureIntf> picture);
     sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
