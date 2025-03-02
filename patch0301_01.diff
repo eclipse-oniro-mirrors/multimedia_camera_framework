@@ -1,1006 +1,3 @@
-+++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
-@@ -465,20 +465,6 @@ public:
-      */
-     void SetCallback(std::shared_ptr<SessionCallback> callback);
- 
--    /**
--     * @brief Set the moving photo callback.
--     *
--     * @param photoProxy Requested for the pointer where moving photo callback is present.
--     * @param uri get uri for medialibary.
--     * @param cameraShotType get cameraShotType for medialibary.
--     */
--
--    void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
--                            std::string &burstKey, int64_t timestamp);
--
--    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
--        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
--
-     /**
-      * @brief Get the application callback information.
-      *
-@@ -1653,6 +1639,8 @@ public:
- 
-     int32_t EnableAutoAigcPhoto(bool enabled);
- 
-+    void EnableOfflinePhoto();
-+
-     // White Balance
-     /**
-     * @brief Get Metering mode.
-diff --git a/interfaces/inner_api/native/test/test_common.cpp b/interfaces/inner_api/native/test/test_common.cpp
-index 8021c8b6..66c0359b 100644
---- a/interfaces/inner_api/native/test/test_common.cpp
-+++ b/interfaces/inner_api/native/test/test_common.cpp
-@@ -213,6 +213,11 @@ void TestPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration)
-     MEDIA_INFO_LOG("OnEstimatedCaptureDuration(), duration: %{public}d", duration);
- }
- 
-+void TestPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
-+{
-+    MEDIA_INFO_LOG("OnOfflineDeliveryFinished(), captureId: %{public}d", captureId);
-+}
-+
- void TestPhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
- {
-     MEDIA_INFO_LOG("OnCaptureError(), testName_: %{public}s, captureID: %{public}d, errorCode: %{public}d",
-diff --git a/interfaces/inner_api/native/test/test_common.h b/interfaces/inner_api/native/test/test_common.h
-index f54c15f2..609e6abc 100644
---- a/interfaces/inner_api/native/test/test_common.h
-+++ b/interfaces/inner_api/native/test/test_common.h
-@@ -108,6 +108,7 @@ public:
-     void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override;
-     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
-     void OnEstimatedCaptureDuration(const int32_t duration) const override;
-+    void OnOfflineDeliveryFinished(const int32_t captureId) const override;
- 
- private:
-     const char* testName_;
-diff --git a/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts b/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
-index 2b17e22b..653d90a3 100644
---- a/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
-+++ b/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
-@@ -8726,13 +8726,56 @@ function getCameraManager(context: Context): CameraManager;
-      * @throws { BusinessError } 401 - Parameter error. Possible causes:
-      * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
-      * 3. Parameter verification failed.
-+     */
-+    enableAutoAigcPhoto(enabled: boolean): void;
-+
-+    /**
-+     * Confirm if offline processing is supported.
-+     *
-+     * @returns { boolean } TRUE if the type of offline is supported.
-+     * @throws { BusinessError } 202 - Not System Application.
-+     * @throws { BusinessError } 7400201 - Camera service fatal error.
-+     * @syscap SystemCapability.Multimedia.Camera.Core
-+     * @systemapi
-+     * @since 16
-+     */
-+    isOfflineSupported(): boolean;
-+
-+    /**
-+     * Enable offline processing.
-+     *
-+     * @throws { BusinessError } 202 - Not System Application.
-      * @throws { BusinessError } 7400104 - session is not running.
-      * @throws { BusinessError } 7400201 - Camera service fatal error.
-      * @syscap SystemCapability.Multimedia.Camera.Core
-      * @systemapi
-      * @since 16
-      */
--    enableAutoAigcPhoto(enabled: boolean): void;    
-+    enableOffline(): void;
-+
-+    /**
-+     * Subscribes offline Delivery finished events.
-+     * This method is valid only after enableOffline() is called.
-+     *
-+     * @param { 'offlineDeliveryFinished' } type - Event type.
-+     * @param { AsyncCallback<void> } callback - Callback used to get offline Delivery finished events.
-+     * @syscap SystemCapability.Multimedia.Camera.Core
-+     * @systemapi
-+     * @since 16
-+     */
-+    on(type: 'offlineDeliveryFinished', callback: AsyncCallback<void>): void;
-+
-+    /**
-+     * Unsubscribes offline Delivery finished events.
-+     * This method is valid only after enableOffline() is called.
-+     *
-+     * @param { 'offlineDeliveryFinished' } type - Event type.
-+     * @param { AsyncCallback<void>} callback - Callback used to get offline Delivery finished events.
-+     * @syscap SystemCapability.Multimedia.Camera.Core
-+     * @systemapi
-+     * @since 16
-+     */
-+    off(type: 'offlineDeliveryFinished', callback?: AsyncCallback<void>): void
-   }
- 
-   /**
-diff --git a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
-index c5dc6a18..69124511 100644
---- a/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
-+++ b/interfaces/kits/js/camera_napi/include/output/photo_output_napi.h
-@@ -54,6 +54,7 @@ static const std::string CONST_GAINMAP_SURFACE = "gainmap";
- static const std::string CONST_DEEP_SURFACE = "deep";
- static const std::string CONST_EXIF_SURFACE = "exif";
- static const std::string CONST_DEBUG_SURFACE = "debug";
-+static const std::string CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED = "offlineDeliveryFinished";
- 
- struct CallbackInfo {
-     int32_t captureID;
-@@ -75,7 +76,8 @@ enum PhotoOutputEventType {
-     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
-     CAPTURE_PHOTO_ASSET_AVAILABLE,
-     CAPTURE_ESTIMATED_CAPTURE_DURATION,
--    CAPTURE_START_WITH_INFO
-+    CAPTURE_START_WITH_INFO,
-+    CAPTURE_OFFLINE_DELIVERY_FINISHED
- };
- 
- static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
-@@ -89,7 +91,8 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
-         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
-         {CAPTURE_READY, CONST_CAPTURE_READY},
-         {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
--        {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO}
-+        {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO},
-+        {CAPTURE_OFFLINE_DELIVERY_FINISHED, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED}
-     },
-     PhotoOutputEventType::CAPTURE_INVALID_TYPE
- );
-@@ -217,6 +220,7 @@ public:
-     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
-     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
-     void OnEstimatedCaptureDuration(const int32_t duration) const override;
-+    void OnOfflineDeliveryFinished(const int32_t captureId) const override;
- 
- private:
-     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
-@@ -229,6 +233,7 @@ private:
-     void ExecuteFrameShutterEndCb(const CallbackInfo& info) const;
-     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
-     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
-+    void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
- };
- 
- struct PhotoOutputCallbackInfo {
-@@ -327,6 +332,8 @@ public:
-     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
-     static napi_value IsAutoAigcPhotoSupported(napi_env env, napi_callback_info info);
-     static napi_value EnableAutoAigcPhoto(napi_env env, napi_callback_info info);
-+    static napi_value IsOfflineSupported(napi_env env, napi_callback_info info);
-+    static napi_value EnableOfflinePhoto(napi_env env, napi_callback_info info);
- 
-     PhotoOutputNapi();
-     ~PhotoOutputNapi() override;
-@@ -390,6 +397,11 @@ private:
-         const std::vector<napi_value>& args, bool isOnce);
-     void UnregisterCaptureStartWithInfoCallbackListener(
-         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-+    void RegisterOfflineDeliveryFinishedCallbackListener(
-+        const std::string& eventName, napi_env env, napi_value callback,
-+        const std::vector<napi_value>& args, bool isOnce);
-+    void UnregisterOfflineDeliveryFinishedCallbackListener(
-+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
- 
-     static thread_local napi_ref sConstructor_;
-     static thread_local sptr<PhotoOutput> sPhotoOutput_;
-diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
-index 569b5949..a5123e92 100644
---- a/services/camera_service/BUILD.gn
-+++ b/services/camera_service/BUILD.gn
-@@ -20,6 +20,18 @@ ohos_shared_library("camera_service") {
-   sources = [
-     "${multimedia_camera_framework_path}/frameworks/native/camera/src/ability/camera_ability_parse_util.cpp",
-     "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
-+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
-     "binder/client/src/hcamera_device_callback_proxy.cpp",
-     "binder/client/src/hcamera_listener_proxy.cpp",
-     "binder/client/src/hcamera_service_callback_proxy.cpp",
-@@ -74,6 +86,8 @@ ohos_shared_library("camera_service") {
-     "src/hstream_common.cpp",
-     "src/hstream_depth_data.cpp",
-     "src/hstream_metadata.cpp",
-+    "src/hstream_operator.cpp",
-+    "src/hstream_operator_manager.cpp",
-     "src/hstream_repeat.cpp",
-     "src/media_library/photo_asset_proxy.cpp",
-     "src/moving_photo/moving_photo_surface_wrapper.cpp",
-diff --git a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
-index 52b4f057..fbf1f1fa 100644
---- a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
-+++ b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
-@@ -171,10 +171,9 @@ enum CaptureSessionInterfaceCode {
-     CAMERA_CAPTURE_SESSION_SET_FEATURE_MODE,
-     CAMERA_CAPTURE_SESSION_ENABLE_MOTION_PHOTO,
-     CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE,
--    CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER,
-     CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE,
--    CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE,
-     CAMERA_CAPTURE_SESSION_UNSET_CALLBACK,
-+    CAMERA_CAPTURE_SESSION_SET_COMMIT_CONFIG_FLAG,
- };
- 
- /**
-@@ -201,6 +200,9 @@ enum StreamCaptureInterfaceCode {
-     CAMERA_CAPTURE_DFX,
-     CAMERA_STREAM_ADD_MEDIA_LIBRARY_PHOTO_PROXY,
-     CAMERA_STREAM_CAPTURE_UNSET_CALLBACK,
-+    CAMERA_STREAM_ENABLE_OFFLINE_PHOTO,
-+    CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER,
-+    CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE,
- };
- 
- /**
-@@ -312,7 +314,8 @@ enum StreamCaptureCallbackInterfaceCode {
-     CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER,
-     CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2,
-     CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END,
--    CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY
-+    CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY,
-+    CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED
- };
- 
- /**
-diff --git a/services/camera_service/binder/base/include/icapture_session.h b/services/camera_service/binder/base/include/icapture_session.h
-index 3c977e1c..5f000b82 100644
---- a/services/camera_service/binder/base/include/icapture_session.h
-+++ b/services/camera_service/binder/base/include/icapture_session.h
-@@ -24,9 +24,6 @@
- #include "camera_photo_proxy.h"
- #include "ability/camera_ability.h"
- 
--namespace OHOS::Media {
--    class Picture;
--}
- namespace OHOS {
- namespace CameraStandard {
- enum class CaptureSessionState : uint32_t {
-@@ -79,13 +76,10 @@ public:
- 
-     virtual int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) = 0;
- 
--    virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
--        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
--
--    virtual int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
--        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
-     virtual int32_t SetPreviewRotation(std::string &deviceClass) = 0;
- 
-+    virtual int32_t SetCommitConfigFlag(bool isNeedCommitting) = 0;
-+
-     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
- };
- } // namespace CameraStandard
-diff --git a/services/camera_service/binder/base/include/istream_capture.h b/services/camera_service/binder/base/include/istream_capture.h
-index 9636343d..e5117671 100644
---- a/services/camera_service/binder/base/include/istream_capture.h
-+++ b/services/camera_service/binder/base/include/istream_capture.h
-@@ -16,11 +16,15 @@
- #ifndef OHOS_CAMERA_ISTREAM_CAPTURE_H
- #define OHOS_CAMERA_ISTREAM_CAPTURE_H
- 
-+#include <cstdint>
- #include "camera_metadata_info.h"
- #include "istream_capture_callback.h"
- #include "istream_common.h"
- #include "surface.h"
- 
-+namespace OHOS::Media {
-+    class Picture;
-+}
- namespace OHOS {
- namespace CameraStandard {
- class CameraPhotoProxy;
-@@ -60,6 +64,14 @@ public:
- 
-     virtual int32_t AcquireBufferToPrepareProxy(int32_t captureId) = 0;
- 
-+    virtual int32_t EnableOfflinePhoto(bool isEnable) = 0;
-+    
-+    virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
-+
-+    virtual int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
-+
-     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
- };
- } // namespace CameraStandard
-diff --git a/services/camera_service/binder/base/include/istream_capture_callback.h b/services/camera_service/binder/base/include/istream_capture_callback.h
-index f790c774..e92615cb 100644
---- a/services/camera_service/binder/base/include/istream_capture_callback.h
-+++ b/services/camera_service/binder/base/include/istream_capture_callback.h
-@@ -36,6 +36,8 @@ public:
- 
-     virtual int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp) = 0;
- 
-+    virtual int32_t OnOfflineDeliveryFinished(int32_t captureId) = 0;
-+
-     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCaptureCallback");
- };
- } // namespace CameraStandard
-diff --git a/services/camera_service/binder/client/include/hcapture_session_proxy.h b/services/camera_service/binder/client/include/hcapture_session_proxy.h
-index c400ef01..c76f5d6a 100644
---- a/services/camera_service/binder/client/include/hcapture_session_proxy.h
-+++ b/services/camera_service/binder/client/include/hcapture_session_proxy.h
-@@ -67,13 +67,9 @@ public:
- 
-     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
- 
--    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
--        std::string &burstKey, int64_t timestamp) override;
--
--    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
--        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
--
-     int32_t SetPreviewRotation(std::string &deviceClass) override;
-+
-+    int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
- private:
-     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
- };
-diff --git a/services/camera_service/binder/client/include/hstream_capture_callback_proxy.h b/services/camera_service/binder/client/include/hstream_capture_callback_proxy.h
-index 4fbe5771..28229fb4 100644
---- a/services/camera_service/binder/client/include/hstream_capture_callback_proxy.h
-+++ b/services/camera_service/binder/client/include/hstream_capture_callback_proxy.h
-@@ -42,6 +42,8 @@ public:
- 
-     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp) override;
- 
-+    int32_t OnOfflineDeliveryFinished(int32_t captureId) override;
-+
- private:
-     static inline BrokerDelegator<HStreamCaptureCallbackProxy> delegator_;
- };
-diff --git a/services/camera_service/binder/client/include/hstream_capture_proxy.h b/services/camera_service/binder/client/include/hstream_capture_proxy.h
-index d28a1cf0..217fac7a 100644
---- a/services/camera_service/binder/client/include/hstream_capture_proxy.h
-+++ b/services/camera_service/binder/client/include/hstream_capture_proxy.h
-@@ -61,6 +61,14 @@ public:
- 
-     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
- 
-+    int32_t EnableOfflinePhoto(bool isEnable) override;
-+
-+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
-+
-+    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
-+
- private:
-     static inline BrokerDelegator<HStreamCaptureProxy> delegator_;
- };
-diff --git a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
-index 9668bed0..45fd1cc0 100644
---- a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
-+++ b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
-@@ -16,7 +16,6 @@
- #include "hcapture_session_proxy.h"
- #include "camera_log.h"
- #include "camera_service_ipc_interface_code.h"
--#include "picture.h"
- 
- namespace OHOS {
- namespace CameraStandard {
-@@ -337,69 +336,35 @@ int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror, bool isConf
-     return error;
- }
- 
--int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
--    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
-+int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
- {
-     MessageParcel data;
-     MessageParcel reply;
-     MessageOption option;
--    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
--        "HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
--    data.WriteInterfaceToken(GetDescriptor());
--    photoProxy->WriteToParcel(data);
--    data.WriteInt64(timestamp);
--    int error = Remote()->SendRequest(
--        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
--        data, reply, option);
--    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
--        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
--    uri = reply.ReadString();
--    cameraShotType = reply.ReadInt32();
--    burstKey = reply.ReadString();
--    return error;
--}
- 
--int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
--    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
--    std::string &burstKey, int64_t timestamp)
--{
--    MessageParcel data;
--    MessageParcel reply;
--    MessageOption option;
--    if (picture == nullptr || photoProxy == nullptr) {
--        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
--        return IPC_PROXY_ERR;
--    }
-     data.WriteInterfaceToken(GetDescriptor());
--    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling E");
--    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
--    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling X");
--    photoProxy->WriteToParcel(data);
--    data.WriteInt64(timestamp);
-+    data.WriteString(deviceClass);
-     int error = Remote()->SendRequest(
--        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
-+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE),
-         data, reply, option);
-     CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
--        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
--    uri = reply.ReadString();
--    cameraShotType = reply.ReadInt32();
--    burstKey = reply.ReadString();
-+        "HCaptureSessionProxy SetPreviewRotation failed, error: %{public}d", error);
-     return error;
- }
- 
--int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
-+int32_t HCaptureSessionProxy::SetCommitConfigFlag(bool isNeedCommitting)
- {
-     MessageParcel data;
-     MessageParcel reply;
-     MessageOption option;
- 
-     data.WriteInterfaceToken(GetDescriptor());
--    data.WriteString(deviceClass);
-+    data.WriteBool(isNeedCommitting);
-     int error = Remote()->SendRequest(
--        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE),
-+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_COMMIT_CONFIG_FLAG),
-         data, reply, option);
-     CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
--        "HCaptureSessionProxy SetPreviewRotation failed, error: %{public}d", error);
-+        "HCaptureSessionProxy SetCommitConfigFlag failed, error: %{public}d", error);
-     return error;
- }
- } // namespace CameraStandard
-diff --git a/services/camera_service/binder/client/src/hstream_capture_callback_proxy.cpp b/services/camera_service/binder/client/src/hstream_capture_callback_proxy.cpp
-index 4c90ee32..d275c008 100644
---- a/services/camera_service/binder/client/src/hstream_capture_callback_proxy.cpp
-+++ b/services/camera_service/binder/client/src/hstream_capture_callback_proxy.cpp
-@@ -155,5 +155,24 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureReady(int32_t captureId, uint64_t
-         "HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
-     return error;
- }
-+
-+int32_t HStreamCaptureCallbackProxy::OnOfflineDeliveryFinished(int32_t captureId)
-+{
-+    MessageParcel data;
-+    MessageParcel reply;
-+    MessageOption option;
-+    option.SetFlags(option.TF_ASYNC);
-+
-+    data.WriteInterfaceToken(GetDescriptor());
-+    data.WriteInt32(captureId);
-+
-+    int error = Remote()->SendRequest(
-+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED),
-+        data, reply, option);
-+    if (error != ERR_NONE) {
-+        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
-+    }
-+    return error;
-+}
- } // namespace CameraStandard
- } // namespace OHOS
-\ No newline at end of file
-diff --git a/services/camera_service/binder/client/src/hstream_capture_proxy.cpp b/services/camera_service/binder/client/src/hstream_capture_proxy.cpp
-index a38f0a4c..215a6429 100644
---- a/services/camera_service/binder/client/src/hstream_capture_proxy.cpp
-+++ b/services/camera_service/binder/client/src/hstream_capture_proxy.cpp
-@@ -18,6 +18,7 @@
- #include "camera_photo_proxy.h"
- #include "camera_service_ipc_interface_code.h"
- #include "metadata_utils.h"
-+#include "picture.h"
- 
- namespace OHOS {
- namespace CameraStandard {
-@@ -299,5 +300,73 @@ int32_t HStreamCaptureProxy::AcquireBufferToPrepareProxy(int32_t captureId)
-     }
-     return error;
- }
-+
-+
-+int32_t HStreamCaptureProxy::EnableOfflinePhoto(bool isEnable)
-+{
-+    MessageParcel data;
-+    MessageParcel reply;
-+    MessageOption option;
-+
-+    data.WriteInterfaceToken(GetDescriptor());
-+    data.WriteBool(isEnable);
-+    int error = Remote()->SendRequest(
-+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_OFFLINE_PHOTO), data, reply, option);
-+    if (error != ERR_NONE) {
-+        MEDIA_ERR_LOG("HStreamRepeatProxy EnableOfflinePhoto failed, error: %{public}d", error);
-+    }
-+    return error;
-+}
-+
-+int32_t HStreamCaptureProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
-+{
-+    MessageParcel data;
-+    MessageParcel reply;
-+    MessageOption option;
-+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
-+        "HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
-+    data.WriteInterfaceToken(GetDescriptor());
-+    photoProxy->WriteToParcel(data);
-+    data.WriteInt64(timestamp);
-+    int error = Remote()->SendRequest(
-+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER),
-+        data, reply, option);
-+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
-+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
-+    uri = reply.ReadString();
-+    cameraShotType = reply.ReadInt32();
-+    burstKey = reply.ReadString();
-+    return error;
-+}
-+
-+int32_t HStreamCaptureProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
-+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
-+    std::string &burstKey, int64_t timestamp)
-+{
-+    MessageParcel data;
-+    MessageParcel reply;
-+    MessageOption option;
-+    if (picture == nullptr || photoProxy == nullptr) {
-+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
-+        return IPC_PROXY_ERR;
-+    }
-+    data.WriteInterfaceToken(GetDescriptor());
-+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling E");
-+    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
-+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling X");
-+    photoProxy->WriteToParcel(data);
-+    data.WriteInt64(timestamp);
-+    int error = Remote()->SendRequest(
-+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
-+        data, reply, option);
-+    if (error != ERR_NONE) {
-+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
-+    }
-+    uri = reply.ReadString();
-+    cameraShotType = reply.ReadInt32();
-+    burstKey = reply.ReadString();
-+    return error;
-+}
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/binder/server/include/hcapture_session_stub.h b/services/camera_service/binder/server/include/hcapture_session_stub.h
-index 8701c958..3e0c71c9 100644
---- a/services/camera_service/binder/server/include/hcapture_session_stub.h
-+++ b/services/camera_service/binder/server/include/hcapture_session_stub.h
-@@ -45,8 +45,6 @@ private:
-     int32_t HandleSetFeatureMode(MessageParcel& data);
-     int32_t HandleEnableMovingPhoto(MessageParcel& data);
-     int32_t HandleStartMovingPhotoCapture(MessageParcel& data);
--    int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
--    int32_t HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply);
- };
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/binder/server/include/hstream_capture_callback_stub.h b/services/camera_service/binder/server/include/hstream_capture_callback_stub.h
-index 79238562..1a7ec733 100644
---- a/services/camera_service/binder/server/include/hstream_capture_callback_stub.h
-+++ b/services/camera_service/binder/server/include/hstream_capture_callback_stub.h
-@@ -34,6 +34,7 @@ private:
-     int HandleOnFrameShutter(MessageParcel& data);
-     int HandleOnFrameShutterEnd(MessageParcel& data);
-     int HandleOnCaptureReady(MessageParcel& data);
-+    int HandleOnOfflineDeliveryFinished(MessageParcel& data);
- };
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/binder/server/include/hstream_capture_stub.h b/services/camera_service/binder/server/include/hstream_capture_stub.h
-index 3cc619ba..2c566829 100644
---- a/services/camera_service/binder/server/include/hstream_capture_stub.h
-+++ b/services/camera_service/binder/server/include/hstream_capture_stub.h
-@@ -42,6 +42,9 @@ public:
-     int32_t HandleSetCameraPhotoRotation(MessageParcel& data);
-     int32_t HandleAddMediaLibraryPhotoProxy(MessageParcel& data);
-     int32_t HandleAcquireBufferToPrepareProxy(MessageParcel& data);
-+    int32_t HandleEnableOfflinePhoto(MessageParcel& data);
-+    int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
-+    int32_t HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply);
- };
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/binder/server/src/hcapture_session_stub.cpp b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
-index ef8200b2..3a2396b9 100644
---- a/services/camera_service/binder/server/src/hcapture_session_stub.cpp
-+++ b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
-@@ -19,7 +19,6 @@
- #include "camera_xcollie.h"
- #include "camera_service_ipc_interface_code.h"
- #include "camera_photo_proxy.h"
--#include "picture.h"
- #include <memory>
- 
- namespace OHOS {
-@@ -94,19 +93,19 @@ int HCaptureSessionStub::OnRemoteRequest(
-         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE):
-             errCode = HandleStartMovingPhotoCapture(data);
-             break;
--        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
--            errCode = HandleCreateMediaLibrary(data, reply);
--            break;
--        case static_cast<uint32_t>(
--            CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE):
--            errCode = HandleCreateMediaLibraryForPicture(data, reply);
--            break;
-         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
-             {
-                 std::string deviceClass = data.ReadString();
-                 errCode = SetPreviewRotation(deviceClass);
-             }
-             break;
-+
-+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_COMMIT_CONFIG_FLAG):
-+            {
-+                bool isNeedCommiting = data.ReadBool();
-+                errCode = SetCommitConfigFlag(isNeedCommiting);
-+            }
-+            break;
-         default:
-             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
-             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-@@ -264,48 +263,5 @@ int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
-     bool isConfig = data.ReadBool();
-     return EnableMovingPhotoMirror(isMirror, isConfig);
- }
--
--int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
--{
--    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
--    photoProxy->ReadFromParcel(data);
--    int64_t timestamp = data.ReadInt64();
--    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
--        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
--    std::string uri;
--    int32_t cameraShotType = 0;
--    std::string burstKey;
--    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
--    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
--        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
--        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
--    return ret;
--}
--
--int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
--{
--    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
--    Media::Picture *picturePtr = Media::Picture::Unmarshalling(data);
--    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
--
--    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
--        "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
--    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
--    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
--    photoProxy->ReadFromParcel(data);
--    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
--        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
--    int64_t timestamp = data.ReadInt64();
--    std::string uri;
--    int32_t cameraShotType = 0;
--    std::string burstKey;
--    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture E");
--    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
--    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture X");
--    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
--        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
--        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
--    return ret;
--}
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp b/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp
-index 8ffb8d88..364c95af 100644
---- a/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp
-+++ b/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp
-@@ -47,6 +47,10 @@ int HStreamCaptureCallbackStub::OnRemoteRequest(
-         case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY):
-             errCode = HandleOnCaptureReady(data);
-             break;
-+        case static_cast<uint32_t>(
-+            StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED):
-+            errCode = HandleOnOfflineDeliveryFinished(data);
-+            break;
-         default:
-             MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
-             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-@@ -110,6 +114,12 @@ int HStreamCaptureCallbackStub::HandleOnCaptureReady(MessageParcel& data)
- 
-     return OnCaptureReady(captureId, timestamp);
- }
-+
-+int HStreamCaptureCallbackStub::HandleOnOfflineDeliveryFinished(MessageParcel& data)
-+{
-+    int32_t captureId = data.ReadInt32();
-+    return OnOfflineDeliveryFinished(captureId);
-+}
- } // namespace CameraStandard
- } // namespace OHOS
- 
-diff --git a/services/camera_service/binder/server/src/hstream_capture_stub.cpp b/services/camera_service/binder/server/src/hstream_capture_stub.cpp
-index bb2e6fde..fe2ee408 100644
---- a/services/camera_service/binder/server/src/hstream_capture_stub.cpp
-+++ b/services/camera_service/binder/server/src/hstream_capture_stub.cpp
-@@ -14,11 +14,13 @@
-  */
- 
- #include "hstream_capture_stub.h"
-+#include "camera_server_photo_proxy.h"
- #include "camera_log.h"
- #include "camera_photo_proxy.h"
- #include "camera_service_ipc_interface_code.h"
- #include "camera_util.h"
- #include "metadata_utils.h"
-+#include "picture.h"
- 
- namespace OHOS {
- namespace CameraStandard {
-@@ -83,6 +85,16 @@ int HStreamCaptureStub::OnRemoteRequest(
-         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX):
-             errCode = HandleAcquireBufferToPrepareProxy(data);
-             break;
-+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_OFFLINE_PHOTO):
-+            errCode = HandleEnableOfflinePhoto(data);
-+            break;
-+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER):
-+            errCode = HandleCreateMediaLibrary(data, reply);
-+            break;
-+        case static_cast<uint32_t>(
-+            StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE):
-+            errCode = HandleCreateMediaLibraryForPicture(data, reply);
-+            break;
-         default:
-             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
-             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-@@ -184,7 +196,8 @@ int32_t HStreamCaptureStub::HandleAddMediaLibraryPhotoProxy(MessageParcel& data)
-     sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-     photoProxy->ReadFromParcel(data);
-     int ret = UpdateMediaLibraryPhotoAssetProxy(photoProxy);
--    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE, "HStreamCaptureStub::HandleSetCameraPhotoRotation failed : %{public}d", ret);
-+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
-+        "HStreamCaptureStub::HandleAddMediaLibraryPhotoProxy failed : %{public}d", ret);
-     return ret;
- }
- 
-@@ -205,5 +218,57 @@ int32_t HStreamCaptureStub::HandleAcquireBufferToPrepareProxy(MessageParcel& dat
-                           "HStreamCaptureStub::HandleAcquireBufferToPrepareProxy failed : %{public}d", ret);
-     return ret;
- }
-+
-+int32_t HStreamCaptureStub::HandleEnableOfflinePhoto(MessageParcel& data)
-+{
-+    bool isEnable = data.ReadBool();
-+    int32_t ret = EnableOfflinePhoto(isEnable);
-+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
-+        "HStreamCaptureStub::HandleEnableOfflinePhoto failed : %{public}d", ret);
-+    return ret;
-+}
-+
-+int32_t HStreamCaptureStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
-+{
-+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-+    photoProxy->ReadFromParcel(data);
-+    int64_t timestamp = data.ReadInt64();
-+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
-+        "HStreamCaptureStub HandleCreateMediaLibrary photoProxy is null");
-+    std::string uri;
-+    int32_t cameraShotType = 0;
-+    std::string burstKey;
-+    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-+    CHECK_ERROR_RETURN_RET_LOG((!reply.WriteString(uri) || !reply.WriteInt32(cameraShotType) ||
-+        !reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
-+        "HStreamCaptureStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
-+    return ret;
-+}
-+
-+int32_t HStreamCaptureStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
-+{
-+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
-+    Media::Picture *picturePtr = Media::Picture::Unmarshalling(data);
-+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
-+
-+    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
-+        "HStreamCaptureStub HandleCreateMediaLibrary picture is null");
-+    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
-+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-+    photoProxy->ReadFromParcel(data);
-+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
-+        "HStreamCaptureStub HandleCreateMediaLibrary photoProxy is null");
-+    int64_t timestamp = data.ReadInt64();
-+    std::string uri;
-+    int32_t cameraShotType = 0;
-+    std::string burstKey;
-+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture E");
-+    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
-+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture X");
-+    CHECK_ERROR_RETURN_RET_LOG((!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
-+        !(reply.WriteString(burstKey))), IPC_STUB_WRITE_PARCEL_ERR,
-+        "HStreamCaptureStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
-+    return ret;
-+}
- } // namespace CameraStandard
- } // namespace OHOS
-diff --git a/services/camera_service/include/dfx/camera_report_uitls.h b/services/camera_service/include/dfx/camera_report_uitls.h
-index 7007040f..9ad3503a 100644
---- a/services/camera_service/include/dfx/camera_report_uitls.h
-+++ b/services/camera_service/include/dfx/camera_report_uitls.h
-@@ -59,6 +59,8 @@ struct DfxCaptureInfo {
-     CallerInfo caller;
-     uint64_t captureStartTime;
-     uint64_t captureEndTime;
-+    bool isOfflinCapture = false;
-+    uint32_t offlineOutputCnt = 0;
- };
- 
- class CameraReportUtils {
-@@ -84,7 +86,7 @@ public:
-     void SetModeChangePerfEndInfo();
- 
-     void SetCapturePerfStartInfo(DfxCaptureInfo captureInfo);
--    void SetCapturePerfEndInfo(int32_t captureId);
-+    void SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCapture = false, int32_t offlineOutputCnt = 0);
- 
-     void SetSwitchCamPerfStartInfo(CallerInfo caller);
-     void SetSwitchCamPerfEndInfo();
-diff --git a/services/camera_service/include/hcamera_device.h b/services/camera_service/include/hcamera_device.h
-index 793df14c..2159e6ab 100644
---- a/services/camera_service/include/hcamera_device.h
-+++ b/services/camera_service/include/hcamera_device.h
-@@ -54,7 +54,7 @@ using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
- using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
- using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
- class EXPORT_API HCameraDevice
--    : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
-+    : public HCameraDeviceStub, public ICameraDeviceCallback {
- public:
-     explicit HCameraDevice(
-         sptr<HCameraHostManager>& cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
-@@ -75,34 +75,20 @@ public:
-     int32_t EnableResult(std::vector<int32_t>& results) override;
-     int32_t DisableResult(std::vector<int32_t>& results) override;
-     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
--    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator();
-     int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
-     int32_t UnSetCallback() override;
-     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
-     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
--    int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
-+    // int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
-     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceAbility();
-     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
-     std::string GetCameraId();
-     int32_t GetCameraType();
-     bool IsOpenedCameraDevice();
-     int32_t GetCallerToken();
--    int32_t CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
--        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
--    int32_t UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos);
- 
-     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
- 
--    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
--    int32_t OnCaptureStarted_V1_2(
--        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
--    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
--    int32_t OnCaptureEndedExt(
--        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
--    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
--    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
--    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
--    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-     int32_t ResetDeviceSettings();
-     int32_t DispatchDefaultSettingToHdi();
-     void SetDeviceMuteMode(bool muteMode);
-@@ -135,16 +121,6 @@ public:
-         std::lock_guard<std::mutex> lock(cameraPrivacyMutex_);
-         return cameraPrivacy_;
-     }
--
--    inline int32_t GenerateHdiStreamId()
--    {
--        return hdiStreamIdGenerator_.fetch_add(1);
--    }
--
--    inline void ResetHdiStreamId()
--    {
--        hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
--    }
-     
-     void NotifyCameraSessionStatus(bool running);
- 
-@@ -182,6 +158,8 @@ public:
-     {
-         return cameraConcurrentType_;
-     }
-+    int32_t GetStreamOperator(const sptr<IStreamOperatorCallback> &callbackObj,
-+        sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> &streamOperator);
- 
- private:
-     class FoldScreenListener;
-@@ -189,7 +167,6 @@ private:
- 
-     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
-     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
--    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
-     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
-     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
-     int32_t cameraConcurrentType_;
-@@ -234,19 +211,15 @@ private:
-     int64_t lastDeviceEjectTime_ = 0;
-     std::atomic<int> deviceEjectTimes_ = 1;
- 
--    std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
-     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
-     void ResetDeviceOpenLifeCycleSettings();
- 
-     sptr<ICameraDeviceServiceCallback> GetDeviceServiceCallback();
-     void ResetCachedSettings();
--    int32_t InitStreamOperator();
-     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
-     void RegisterFoldStatusListener();
-     void UnregisterFoldStatusListener();
-     void CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
--    int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
--    int32_t CommitStreams(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
-     bool CanOpenCamera();
-     void ResetZoomTimer();
-     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
-diff --git a/services/camera_service/include/hcamera_restore_param.h b/services/camera_service/include/hcamera_restore_param.h
-index bcb81f8b..3d3a1383 100644
---- a/services/camera_service/include/hcamera_restore_param.h
-+++ b/services/camera_service/include/hcamera_restore_param.h
-@@ -69,4 +69,4 @@ private:
- };
- } // namespace CameraStandard
- } // namespace OHOS
--#endif // OHOS_CAMERA_H_STREAM_COMMON_H
-+#endif // OHOS_CAMERA_H_STREAM_COMMON_H
-\ No newline at end of file
-diff --git a/services/camera_service/include/hcamera_service.h b/services/camera_service/include/hcamera_service.h
-index e8e2f100..0499cdbb 100644
---- a/services/camera_service/include/hcamera_service.h
-+++ b/services/camera_service/include/hcamera_service.h
-@@ -35,6 +35,7 @@
- #include "hcamera_service_stub.h"
- #include "hcapture_session.h"
- #include "hstream_capture.h"
-+#include "hstream_operator.h"
- #include "hstream_depth_data.h"
- #include "hstream_metadata.h"
- #include "hstream_repeat.h"
-diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
-index 7b3f044a..ffd6a532 100644
---- a/services/camera_service/include/hcapture_session.h
 +++ b/services/camera_service/include/hcapture_session.h
 @@ -27,24 +27,13 @@
  #include <refbase.h>
@@ -1954,3 +951,550 @@ index ed52aacf..fcd0cd67 100644
      return CAMERA_OK;
  }
  
+-int32_t HCameraDevice::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
+-{
+-    CAMERA_SYNC_TRACE;
+-    std::lock_guard<std::mutex> lock(opMutex_);
+-    if (streamOperator_ != nullptr && !releaseStreamIds.empty()) {
+-        MEDIA_INFO_LOG("HCameraDevice::ReleaseStreams %{public}s",
+-            Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
+-        int32_t rc = streamOperator_->ReleaseStreams(releaseStreamIds);
+-        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+-            MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
+-            CameraReportUtils::ReportCameraError(
+-                "HCameraDevice::ReleaseStreams", rc, true, CameraReportUtils::GetCallerInfo());
+-        }
+-    }
+-    return CAMERA_OK;
+-}
+-
+-sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> HCameraDevice::GetStreamOperator()
+-{
+-    std::lock_guard<std::mutex> lock(opMutex_);
+-    return streamOperator_;
+-}
+-
+ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, const int32_t errorMsg)
+ {
+     auto errType = static_cast<OHOS::HDI::Camera::V1_3::ErrorType>(type);
+@@ -1161,20 +1136,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
+     return CAMERA_OK;
+ }
+ 
+-int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
+-{
+-    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
+-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
+-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+-    if (cameraResult == nullptr) {
+-        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+-    }
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_EXECUTE(streamOperatorCallback != nullptr, streamOperatorCallback->OnResult(streamId, result));
+-    CHECK_EXECUTE(IsCameraDebugOn(), CheckOnResultData(cameraResult));
+-    return CAMERA_OK;
+-}
+-
+ void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+ {
+     MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
+@@ -1219,116 +1180,6 @@ int32_t HCameraDevice::GetCallerToken()
+     return callerToken_;
+ }
+ 
+-int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
+-{
+-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
+-    uint32_t major;
+-    uint32_t minor;
+-    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HCameraDevice::CreateStreams streamInfos is empty!");
+-    std::lock_guard<std::mutex> lock(opMutex_);
+-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = streamOperator_;
+-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+-        "HCameraDevice::CreateStreams GetStreamOperator is null!");
+-    // get higher streamOperator version
+-    streamOperator->GetVersion(major, minor);
+-    MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
+-        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
+-        if (streamOperatorV1_1 == nullptr) {
+-            MEDIA_ERR_LOG("HCameraDevice::CreateStreams IStreamOperator cast to V1_1 error");
+-            streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
+-        }
+-    }
+-    if (streamOperatorV1_1 != nullptr) {
+-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
+-        for (auto streamInfo : streamInfos) {
+-            if (streamInfo.extendedStreamInfos.size() > 0) {
+-                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1 type %{public}d",
+-                    streamInfo.extendedStreamInfos[0].type);
+-            }
+-        }
+-        hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
+-    } else {
+-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_0");
+-        std::vector<StreamInfo> streamInfos_V1_0;
+-        for (auto streamInfo : streamInfos) {
+-            streamInfos_V1_0.emplace_back(streamInfo.v1_0);
+-        }
+-        hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
+-    }
+-    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
+-        MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to commit %{public}d", hdiRc);
+-        CameraReportUtils::ReportCameraError(
+-            "HCameraDevice::CreateStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
+-        std::vector<int32_t> streamIds;
+-        for (auto& streamInfo : streamInfos) {
+-            streamIds.emplace_back(streamInfo.v1_0.streamId_);
+-        }
+-        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
+-            streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
+-            "HCameraDevice::CreateStreams(), Failed to release streams");
+-    }
+-    for (auto& info : streamInfos) {
+-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
+-    }
+-    return HdiToServiceError(hdiRc);
+-}
+-
+-int32_t HCameraDevice::CommitStreams(
+-    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
+-{
+-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
+-    uint32_t major;
+-    uint32_t minor;
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
+-    std::lock_guard<std::mutex> lock(opMutex_);
+-    streamOperator = streamOperator_;
+-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+-        "HCameraDevice::CommitStreams GetStreamOperator is null!");
+-    // get higher streamOperator version
+-    streamOperator->GetVersion(major, minor);
+-    MEDIA_INFO_LOG(
+-        "HCameraDevice::CommitStreams streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
+-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator cast to V1_1");
+-        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
+-        if (streamOperatorV1_1 == nullptr) {
+-            MEDIA_ERR_LOG("HCameraDevice::CommitStreams IStreamOperator cast to V1_1 error");
+-            streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
+-        }
+-    }
+-
+-    std::vector<uint8_t> setting;
+-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(deviceSettings, setting);
+-    MEDIA_INFO_LOG("HCameraDevice::CommitStreams, commit mode %{public}d", operationMode);
+-    if (streamOperatorV1_1 != nullptr) {
+-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_1");
+-        hdiRc = (CamRetCode)(streamOperatorV1_1->CommitStreams_V1_1(
+-            static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1>(operationMode), setting));
+-    } else {
+-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_0");
+-        OperationMode opMode = OperationMode::NORMAL;
+-        hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
+-    }
+-    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
+-        MEDIA_ERR_LOG("HCameraDevice::CommitStreams failed with error Code:%d", hdiRc);
+-        CameraReportUtils::ReportCameraError(
+-            "HCameraDevice::CommitStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
+-    }
+-    MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams end");
+-    return HdiToServiceError(hdiRc);
+-}
+-
+-int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
+-    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
+-{
+-    int retCode = CreateStreams(streamInfos);
+-    CHECK_ERROR_RETURN_RET(retCode != CAMERA_OK, retCode);
+-    return CommitStreams(deviceSettings, operationMode);
+-}
+-
+ bool HCameraDevice::CanOpenCamera()
+ {
+     int32_t cost;
+@@ -1375,35 +1226,6 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
+     return true;
+ }
+ 
+-int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
+-{
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+-    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
+-    streamOperator = GetStreamOperator();
+-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+-        "HCameraDevice::UpdateStreamInfos GetStreamOperator is null!");
+-    uint32_t major;
+-    uint32_t minor;
+-    streamOperator->GetVersion(major, minor);
+-    MEDIA_INFO_LOG("UpdateStreamInfos: streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
+-        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
+-        if (streamOperatorV1_2 == nullptr) {
+-            MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos IStreamOperator cast to V1_2 error");
+-            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator.GetRefPtr());
+-        }
+-    }
+-    CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
+-    if (streamOperatorV1_2 != nullptr) {
+-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos streamOperator V1_2");
+-        hdiRc = (CamRetCode)(streamOperatorV1_2->UpdateStreams(streamInfos));
+-    } else {
+-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos failed, streamOperator V1_2 is null.");
+-        return CAMERA_UNKNOWN_ERROR;
+-    }
+-    return HdiToServiceError(hdiRc);
+-}
+-
+ #ifdef CAMERA_USE_SENSOR
+ void HCameraDevice::RegisterDropDetectionListener()
+ {
+@@ -1595,64 +1417,6 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
+     return CAMERA_OK;
+ }
+ 
+-int32_t HCameraDevice::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureStarted(captureId, streamIds);
+-}
+-
+-int32_t HCameraDevice::OnCaptureStarted_V1_2(
+-    int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureStarted_V1_2(captureId, infos);
+-}
+-
+-int32_t HCameraDevice::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureEnded(captureId, infos);
+-}
+-
+-int32_t HCameraDevice::OnCaptureEndedExt(int32_t captureId,
+-    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureEndedExt(captureId, infos);
+-}
+-
+-int32_t HCameraDevice::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureError(captureId, infos);
+-}
+-
+-int32_t HCameraDevice::OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnFrameShutter(captureId, streamIds, timestamp);
+-}
+-
+-int32_t HCameraDevice::OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnFrameShutterEnd(captureId, streamIds, timestamp);
+-}
+-
+-int32_t HCameraDevice::OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+-{
+-    auto streamOperatorCallback = GetStreamOperatorCallback();
+-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
+-    return streamOperatorCallback->OnCaptureReady(captureId, streamIds, timestamp);
+-}
+-
+ void HCameraDevice::NotifyCameraSessionStatus(bool running)
+ {
+     bool isSystemCamera = (clientName_ == SYSTEM_CAMERA);
+diff --git a/services/camera_service/src/hcamera_service.cpp b/services/camera_service/src/hcamera_service.cpp
+index 3b40ea06..08bcb923 100644
+--- a/services/camera_service/src/hcamera_service.cpp
++++ b/services/camera_service/src/hcamera_service.cpp
+@@ -43,6 +43,7 @@
+ #include "device_manager.h"
+ #endif
+ #include "hcamera_device_manager.h"
++#include "hstream_operator_manager.h"
+ #include "ipc_skeleton.h"
+ #include "iservice_registry.h"
+ #include "os_account_manager.h"
+@@ -532,6 +533,10 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
+     session = captureSession;
+     pid_t pid = IPCSkeleton::GetCallingPid();
+     captureSessionsManager_.EnsureInsert(pid, captureSession);
++
++    sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken, opMode);
++    captureSession->SetStreamOperator(hStreamOperator);
++    HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 单例管理streamoperator 待找唯一key
+     return rc;
+ }
+ 
+@@ -1838,7 +1843,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
+     int count = 0;
+     for (auto& info : allStreamInfos) {
+         MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+-        count = (info.v1_0.streamId_ == 0) ? count++ : 0;
++        count += (info.v1_0.streamId_ == 0) ? 1: 0;
+     }
+     CaptureSessionState currentState;
+     captureSession->GetSessionState(currentState);
+diff --git a/services/camera_service/src/hcamera_session_manager.cpp b/services/camera_service/src/hcamera_session_manager.cpp
+index ac52f4b6..0be014a9 100644
+--- a/services/camera_service/src/hcamera_session_manager.cpp
++++ b/services/camera_service/src/hcamera_session_manager.cpp
+@@ -22,6 +22,7 @@
+ 
+ #include "camera_util.h"
+ #include "hcapture_session.h"
++#include "camera_dynamic_loader.h"
+ #include "parameters.h"
+ 
+ namespace OHOS {
+@@ -143,9 +144,6 @@ void HCameraSessionManager::RemoveGroup(pid_t pid)
+ void HCameraSessionManager::RemoveGroupNoLock(std::unordered_map<pid_t, SessionGroup>::iterator mapIt)
+ {
+     totalSessionMap_.erase(mapIt);
+-    if (totalSessionMap_.empty()) {
+-        CameraDynamicLoader::FreeDynamiclib(MEDIA_LIB_SO);
+-    }
+ }
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index 76587b90..4b56a3c5 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -65,7 +65,6 @@
+ #include "moving_photo/moving_photo_surface_wrapper.h"
+ #include "moving_photo_video_cache.h"
+ #include "parameters.h"
+-#include "picture.h"
+ #include "refbase.h"
+ #include "smooth_zoom.h"
+ #include "surface.h"
+@@ -80,12 +79,6 @@ namespace CameraStandard {
+ using namespace OHOS::HDI::Display::Composer::V1_1;
+ 
+ namespace {
+-#ifdef CAMERA_USE_SENSOR
+-constexpr int32_t POSTURE_INTERVAL = 100000000; // 100ms;
+-constexpr int VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT = 3;
+-#endif
+-static GravityData gravityData = { 0.0, 0.0, 0.0 };
+-static int32_t sensorRotation = 0;
+ constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
+ constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
+ constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
+@@ -149,10 +142,6 @@ HCaptureSession::~HCaptureSession()
+ {
+     CAMERA_SYNC_TRACE;
+     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
+-    if (displayListener_) {
+-        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+-        displayListener_ = nullptr;
+-    }
+ }
+ 
+ pid_t HCaptureSession::GetPid()
+@@ -168,17 +157,13 @@ int32_t HCaptureSession::GetopMode()
+ 
+ int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos)
+ {
+-    auto streams = streamContainer_.GetAllStreams();
+-    for (auto& stream : streams) {
+-        if (stream) {
+-            StreamInfo_V1_1 curStreamInfo;
+-            stream->SetStreamInfo(curStreamInfo);
+-            CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA, streamInfos.push_back(curStreamInfo));
+-        }
+-    }
+-    return CAMERA_OK;
++    auto hStreamOperatorSptr = hStreamOperator_.promote();
++    CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
++        "hStreamOperator_ is null");
++    return hStreamOperatorSptr->GetCurrentStreamInfos(streamInfos);
+ }
+ 
++
+ void HCaptureSession::DynamicConfigStream()
+ {
+     isDynamicConfiged_ = false;
+@@ -209,7 +194,9 @@ int32_t HCaptureSession::BeginConfig()
+             isDynamicConfiged_ = false;
+             return;
+         }
+-        if (!IsNeedDynamicConfig()) {
++        auto hStreamOperatorSptr = hStreamOperator_.promote();
++        CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
++        if (!IsNeedDynamicConfig() && (hStreamOperatorSptr->GetOfflineOutptSize() == 0)) {
+             UnlinkInputAndOutputs();
+             ClearSketchRepeatStream();
+             ClearMovingPhotoRepeatStream();
+@@ -279,13 +266,10 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
+         }
+         sptr<HCameraDevice> hCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
+         MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
+-        auto deviceSession = hCameraDevice->GetStreamOperatorCallback();
+-        if (deviceSession != nullptr) {
+-            errorCode = CAMERA_OPERATION_NOT_ALLOWED;
+-            return;
+-        }
+-        hCameraDevice->SetStreamOperatorCallback(this);
+         SetCameraDevice(hCameraDevice);
++        auto hStreamOperatorSptr = hStreamOperator_.promote();
++        CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
++        hStreamOperatorSptr->ResetHdiStreamId();
+         hCameraDevice->DispatchDefaultSettingToHdi();
+     });
+     if (errorCode == CAMERA_OK) {
+@@ -298,81 +282,6 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
+     return errorCode;
+ }
+ 
+-int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
+-{
+-    CAMERA_SYNC_TRACE;
+-    CHECK_ERROR_RETURN_RET_LOG(
+-        stream == nullptr, CAMERA_INVALID_ARG, "HCaptureSession::AddOutputStream stream is null");
+-    MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d",
+-        stream->GetFwkStreamId(), stream->GetStreamType());
+-    CHECK_ERROR_RETURN_RET_LOG(
+-        stream->GetFwkStreamId() == STREAM_ID_UNSET && stream->GetStreamType() != StreamType::METADATA,
+-        CAMERA_INVALID_ARG, "HCaptureSession::AddOutputStream stream is released!");
+-    bool isAddSuccess = streamContainer_.AddStream(stream);
+-    CHECK_ERROR_RETURN_RET_LOG(
+-        !isAddSuccess, CAMERA_INVALID_SESSION_CFG, "HCaptureSession::AddOutputStream add stream fail");
+-    if (stream->GetStreamType() == StreamType::CAPTURE) {
+-        auto captureStream = CastStream<HStreamCapture>(stream);
+-        captureStream->SetMode(opMode_);
+-        captureStream->SetColorSpace(currCaptureColorSpace_);
+-        CameraDynamicLoader::LoadDynamiclibAsync(MEDIA_LIB_SO);
+-    } else {
+-        stream->SetColorSpace(currColorSpace_);
+-    }
+-    return CAMERA_OK;
+-}
+-
+-void HCaptureSession::StartMovingPhotoStream()
+-{
+-    int32_t errorCode = 0;
+-    stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
+-        if (currentState != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
+-            MEDIA_ERR_LOG("EnableMovingPhoto, invalid session state: %{public}d, start after preview", currentState);
+-            errorCode = CAMERA_INVALID_STATE;
+-            return;
+-        }
+-        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+-        bool isPreviewStarted = false;
+-        for (auto& item : repeatStreams) {
+-            auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+-            auto repeatType = curStreamRepeat->GetRepeatStreamType();
+-            if (repeatType != RepeatStreamType::PREVIEW) {
+-                continue;
+-            }
+-            if (curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET && curStreamRepeat->producer_ != nullptr) {
+-                isPreviewStarted = true;
+-                break;
+-            }
+-        }
+-        CHECK_ERROR_RETURN_LOG(!isPreviewStarted, "EnableMovingPhoto, preview is not streaming");
+-        std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
+-        auto cameraDevice = GetCameraDevice();
+-        if (cameraDevice != nullptr) {
+-            settings = cameraDevice->CloneCachedSettings();
+-            DumpMetadata(settings);
+-        }
+-        for (auto& item : repeatStreams) {
+-            auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+-            auto repeatType = curStreamRepeat->GetRepeatStreamType();
+-            if (repeatType != RepeatStreamType::LIVEPHOTO) {
+-                continue;
+-            }
+-            if (isSetMotionPhoto_) {
+-                errorCode = curStreamRepeat->Start(settings);
+-#ifdef MOVING_PHOTO_ADD_AUDIO
+-                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+-                audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
+-#endif
+-            } else {
+-                errorCode = curStreamRepeat->Stop();
+-                StopMovingPhoto();
+-            }
+-            break;
+-        }
+-    });
+-    MEDIA_INFO_LOG("HCaptureSession::StartMovingPhotoStream result:%{public}d", errorCode);
+-}
+-
+ class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
+ public:
+     explicit DisplayRotationListener() {};
+@@ -416,24 +325,12 @@ public:
+     std::mutex mStreamManagerLock_;
+ };
+ 
+-void HCaptureSession::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
++int32_t HCaptureSession::SetPreviewRotation(std::string &deviceClass)
+ {
+-    if (displayListener_ == nullptr) {
+-        displayListener_ = new DisplayRotationListener();
+-        OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayListener(displayListener_);
+-    }
+-    displayListener_->AddHstreamRepeatForListener(repeat);
+-}
+-
+-void HCaptureSession::UnregisterDisplayListener(sptr<HStreamRepeat> repeatStream)
+-{
+-    CHECK_EXECUTE(displayListener_, displayListener_->RemoveHstreamRepeatForListener(repeatStream));
+-}
+-
+-int32_t HCaptureSession::SetPreviewRotation(std::string& deviceClass)
+-{
+-    enableStreamRotate_ = true;
+-    deviceClass_ = deviceClass;
++    auto hStreamOperatorSptr = hStreamOperator_.promote();
++    CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
++        "hStreamOperator_ is null");
++    hStreamOperatorSptr->SetPreviewRotation(deviceClass);
+     return CAMERA_OK;
+ }
+ 
+@@ -447,28 +344,14 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
+         return errorCode;
+     }
+     stateMachine_.StateGuard([this, &errorCode, streamType, &stream](const CaptureSessionState currentState) {
++        auto hStreamOperatorSptr = hStreamOperator_.promote();
++        CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
+         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
+             MEDIA_ERR_LOG("HCaptureSession::AddOutput Need to call BeginConfig before adding output");
+             errorCode = CAMERA_INVALID_STATE;
+             return;
+         }
+-        // Temp hack to fix the library linking issue
+-        sptr<IConsumerSurface> captureSurface = IConsumerSurface::Create();
+-        if (streamType == StreamType::CAPTURE) {
+-            errorCode = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+-        } else if (streamType == StreamType::REPEAT) {
+-            HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+-            if (enableStreamRotate_ && repeatSteam != nullptr &&
+-                repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+-                RegisterDisplayListener(repeatSteam);
+-                repeatSteam->SetPreviewRotation(deviceClass_);
+-            }
+-            errorCode = AddOutputStream(repeatSteam);
+-        } else if (streamType == StreamType::METADATA) {
+-            errorCode = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
+-        } else if (streamType == StreamType::DEPTH) {
+-            errorCode = AddOutputStream(static_cast<HStreamDepthData*>(stream.GetRefPtr()));
+-        }
++        errorCode = hStreamOperatorSptr->AddOutput(streamType, stream);
