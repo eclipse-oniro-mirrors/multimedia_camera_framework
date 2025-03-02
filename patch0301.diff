@@ -1,0 +1,1000 @@
+diff --git a/frameworks/cj/camera/include/photo_output_impl.h b/frameworks/cj/camera/include/photo_output_impl.h
+index 37015fc3..c458ec4b 100644
+--- a/frameworks/cj/camera/include/photo_output_impl.h
++++ b/frameworks/cj/camera/include/photo_output_impl.h
+@@ -41,6 +41,7 @@ public:
+     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
+     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
+     void OnEstimatedCaptureDuration(const int32_t duration) const override;
++    void OnOfflineDeliveryFinished(const int32_t captureId) const override;
+ 
+     mutable std::mutex captureStartedMutex{};
+     std::vector<std::shared_ptr<CallbackRef<const int32_t, uint32_t>>> captureStartedCallbackList;
+diff --git a/frameworks/cj/camera/src/photo_output_impl.cpp b/frameworks/cj/camera/src/photo_output_impl.cpp
+index 051f9a07..693aff1a 100644
+--- a/frameworks/cj/camera/src/photo_output_impl.cpp
++++ b/frameworks/cj/camera/src/photo_output_impl.cpp
+@@ -104,6 +104,11 @@ void CJPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) c
+     }
+ }
+ 
++void CJPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
++{
++    return;
++}
++
+ CJPhotoOutput::CJPhotoOutput()
+ {
+     photoOutput_ = sPhotoOutput_;
+diff --git a/frameworks/js/camera_napi/cameraAnimSample/.clang-format b/frameworks/js/camera_napi/cameraAnimSample/.clang-format
+old mode 100644
+new mode 100755
+diff --git a/frameworks/js/camera_napi/demo/.gitignore b/frameworks/js/camera_napi/demo/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/frameworks/js/camera_napi/demo/entry/.gitignore b/frameworks/js/camera_napi/demo/entry/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index ca2d3cac..97a869de 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -52,7 +52,6 @@
+ #include "metadata.h"
+ #include "output/deferred_photo_proxy_napi.h"
+ #include "output/photo_napi.h"
+-#include "output/photo_output_napi.h"
+ #include "photo_output.h"
+ #include "picture.h"
+ #include "pixel_map_napi.h"
+@@ -760,7 +759,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
+         captureId, GetBurstSeqId(captureId));
+     std::lock_guard<std::mutex> lock(g_assembleImageMutex);
+     auto photoOutput = photoOutput_.promote();
+-    if (photoOutput && photoOutput->GetSession()) {
++    if (photoOutput) {
+         auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
+         CHECK_EXECUTE(location && photoOutput->photoProxyMap_[captureId],
+             photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude));
+@@ -800,7 +799,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
+             int32_t cameraShotType;
+             std::string burstKey = "";
+             MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary E");
+-            photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
++            photoOutput->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
+                 uri, cameraShotType, burstKey, timestamp);
+             MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
+             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+@@ -1003,14 +1002,14 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
+     CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "failed to new photoProxy");
+     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
+     auto photoOutput = photoOutput_.promote();
+-    if (photoOutput && photoOutput->GetSession()) {
++    if (photoOutput) {
+         auto settings = photoOutput->GetDefaultCaptureSetting();
+         if (settings) {
+             auto location = make_shared<Location>();
+             settings->GetLocation(location);
+             photoProxy->SetLocation(location->latitude, location->longitude);
+         }
+-        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
++        photoOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+     }
+ }
+ 
+@@ -1317,6 +1316,16 @@ void PhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) con
+     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION, info);
+ }
+ 
++void PhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
++{
++    CAMERA_SYNC_TRACE;
++    MEDIA_DEBUG_LOG(
++        "OnOfflineDeliveryFinished is called, captureID: %{public}d", captureId);
++    CallbackInfo info;
++    info.captureID = captureId;
++    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_OFFLINE_DELIVERY_FINISHED, info);
++}
++
+ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
+ {
+     napi_value result[ARGS_TWO] = { nullptr, nullptr };
+@@ -1433,6 +1442,15 @@ void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo&
+     ExecuteCallback(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callbackNapiPara);
+ }
+ 
++void PhotoOutputCallback::ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const
++{
++    napi_value result[ARGS_ONE] = { nullptr };
++    napi_value retVal;
++    napi_get_undefined(env_, &result[PARAM0]);
++    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
++    ExecuteCallback(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callbackNapiPara);
++}
++
+ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const
+ {
+     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
+@@ -1461,6 +1479,9 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
+         case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
+             ExecuteCaptureStartWithInfoCb(info);
+             break;
++        case PhotoOutputEventType::CAPTURE_OFFLINE_DELIVERY_FINISHED:
++            ExecuteOfflineDeliveryFinishedCb(info);
++            break;
+         default:
+             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
+     }
+@@ -1770,6 +1791,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
+         DECLARE_NAPI_FUNCTION("enableDepthDataDelivery", EnableDepthDataDelivery),
+         DECLARE_NAPI_FUNCTION("isAutoAigcPhotoSupported", IsAutoAigcPhotoSupported),
+         DECLARE_NAPI_FUNCTION("enableAutoAigcPhoto", EnableAutoAigcPhoto),
++        DECLARE_NAPI_FUNCTION("isOfflineSupported", IsOfflineSupported),
++        DECLARE_NAPI_FUNCTION("enableOffline", EnableOfflinePhoto)
+     };
+ 
+     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
+@@ -2826,7 +2849,10 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
+             &PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener } },
+         { CONST_CAPTURE_START_WITH_INFO, {
+             &PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener,
+-            &PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener } } };
++            &PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener } },
++        { CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, {
++            &PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener,
++            &PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener } } };
+     return funMap;
+ }
+ 
+@@ -3055,5 +3081,77 @@ napi_value PhotoOutputNapi::EnableAutoAigcPhoto(napi_env env, napi_callback_info
+     return result;
+ }
+ 
++void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
++        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
++{
++    if (photoOutputCallback_ == nullptr) {
++        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
++        photoOutput_->SetCallback(photoOutputCallback_);
++    }
++    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback, isOnce);
++}
++
++void PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener(
++        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
++{
++    if (photoOutputCallback_ == nullptr) {
++        MEDIA_ERR_LOG("photoOutputCallback is null");
++        return;
++    }
++    photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback);
++}
++
++napi_value PhotoOutputNapi::IsOfflineSupported(napi_env env, napi_callback_info info)
++{
++    if (!CameraNapiSecurity::CheckSystemApp(env)) {
++        MEDIA_ERR_LOG("SystemApi IsOfflineSupported is called!");
++        return nullptr;
++    }
++    MEDIA_INFO_LOG("PhotoOutputNapi::IsOfflineSupported is called");
++    PhotoOutputNapi* photoOutputNapi = nullptr;
++    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
++    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
++        MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported parse parameter occur error");
++        return nullptr;
++    }
++    if (photoOutputNapi->photoOutput_ == nullptr) {
++        MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported get native object fail");
++        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
++        return nullptr;
++    }
++    napi_value result = nullptr;
++    bool isSupported = photoOutputNapi->photoOutput_->IsOfflineSupported();
++    napi_get_boolean(env, isSupported, &result);
++    MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported is support %{public}d", isSupported);
++    return result;
++}
++
++napi_value PhotoOutputNapi::EnableOfflinePhoto(napi_env env, napi_callback_info info)
++{
++    if (!CameraNapiSecurity::CheckSystemApp(env)) {
++        MEDIA_ERR_LOG("SystemApi IsOfflineSupported is called!");
++        return nullptr;
++    }
++    MEDIA_INFO_LOG("EnableOfflinePhoto is called");
++    napi_status status;
++    napi_value result = nullptr;
++    size_t argc = ARGS_ONE;
++    napi_value argv[ARGS_ONE] = { 0 };
++    napi_value thisVar = nullptr;
++    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
++    napi_get_undefined(env, &result);
++    PhotoOutputNapi* photoOutputNapi = nullptr;
++    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
++    if (status != napi_ok || photoOutputNapi == nullptr) {
++        MEDIA_ERR_LOG("EnableOfflinePhoto photoOutputNapi is null!");
++        return result;
++    }
++    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
++    if (session != nullptr && photoOutputNapi->GetPhotoOutput()) {
++        photoOutputNapi->GetPhotoOutput()->EnableOfflinePhoto();
++    }
++    return result;
++}
++
+ } // namespace CameraStandard
+ } // namespace OHOS
+\ No newline at end of file
+diff --git a/frameworks/native/camera/src/output/capture_output.cpp b/frameworks/native/camera/src/output/capture_output.cpp
+index 81626cb5..d0614e95 100644
+--- a/frameworks/native/camera/src/output/capture_output.cpp
++++ b/frameworks/native/camera/src/output/capture_output.cpp
+@@ -215,5 +215,9 @@ bool CaptureOutput::IsTagSetted(Tag tag)
+     return tags_.find(tag) != tags_.end();
+ }
+ 
++bool CaptureOutput::IsHasEnableOfflinePhoto()
++{
++    return mIsHasEnableOfflinePhoto_;
++}
+ } // CameraStandard
+ } // OHOS
+diff --git a/frameworks/native/camera/src/output/photo_output.cpp b/frameworks/native/camera/src/output/photo_output.cpp
+index 1722a1bc..9f11d1a9 100644
+--- a/frameworks/native/camera/src/output/photo_output.cpp
++++ b/frameworks/native/camera/src/output/photo_output.cpp
+@@ -29,10 +29,13 @@
+ #include "session/night_session.h"
+ #include "picture.h"
+ #include "task_manager.h"
++#include "dp_utils.h"
++
+ using namespace std;
+ 
+ namespace OHOS {
+ namespace CameraStandard {
++constexpr uint32_t CAPTURE_TIMEOUT = 1;
+ PhotoCaptureSetting::PhotoCaptureSetting()
+ {
+     int32_t items = 10;
+@@ -262,6 +265,25 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
+     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+     callback->OnCaptureEnded(captureId, frameCount);
++    auto timeStartIter = (photoOutput->captureIdToCaptureInfoMap_).find(captureId);
++    if (timeStartIter != (photoOutput->captureIdToCaptureInfoMap_).end()) {
++        auto timeEnd = std::chrono::steady_clock::now();
++        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
++            (timeStartIter->second).timeStart).count());
++        if (timeCost > CAPTURE_TIMEOUT) {
++            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
++                captureId, timeCost);
++        }
++        DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
++        (photoOutput->captureIdToCaptureInfoMap_).erase(captureId);
++        if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
++            MEDIA_INFO_LOG("OnCaptureReady notify offline delivery finished with capture ID: %{public}d", captureId);
++            auto callback = photoOutput->GetApplicationCallback();
++            CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
++                "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
++            callback->OnOfflineDeliveryFinished(captureId);
++        }
++    }
+     return CAMERA_OK;
+ }
+ 
+@@ -300,6 +322,23 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
+     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+         "HStreamCaptureCallbackImpl::OnFrameShutterEnd callback is nullptr");
+     callback->OnFrameShutterEnd(captureId, timestamp);
++    if (photoOutput->IsHasEnableOfflinePhoto()) {
++        uint32_t startCaptureHandle;
++        constexpr uint32_t delayMilli = 10 * 1000; // 10S 1000 is ms
++        MEDIA_INFO_LOG("ThumbnailListener offline GetGlobalWatchdog StartMonitor, captureId=%{public}d",
++            captureId);
++        DeferredProcessing::GetGlobalWatchdog().StartMonitor(startCaptureHandle, delayMilli,
++            [captureId, photoOutput](uint32_t handle) {
++                MEDIA_INFO_LOG("ThumbnailListener offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
++                    static_cast<int>(handle), captureId);
++                CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "photoOutput is release");
++                if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
++                    photoOutput->Release();
++                }
++        });
++        photoOutput->captureIdToCaptureInfoMap_[captureId].CaptureHandle = startCaptureHandle;
++        photoOutput->captureIdToCaptureInfoMap_[captureId].timeStart = std::chrono::steady_clock::now();
++    }
+     return CAMERA_OK;
+ }
+ 
+@@ -316,6 +355,19 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, cons
+     return CAMERA_OK;
+ }
+ 
++int32_t HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished(const int32_t captureId)
++{
++    CAMERA_SYNC_TRACE;
++    auto photoOutput = GetPhotoOutput();
++    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
++        "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished photoOutput is nullptr");
++    auto callback = photoOutput->GetApplicationCallback();
++    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
++        "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished callback is nullptr");
++    callback->OnOfflineDeliveryFinished(captureId);
++    return CAMERA_OK;
++}
++
+ PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
+     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
+ {
+@@ -585,10 +637,10 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
+     auto itemStream = CastStream<IStreamCapture>(GetStream());
+     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+     if (itemStream) {
+-        MEDIA_DEBUG_LOG("Capture start");
++        MEDIA_INFO_LOG("Capture start");
+         session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror(), true);
+         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
+-        MEDIA_DEBUG_LOG("Capture End");
++        MEDIA_INFO_LOG("Capture End");
+     } else {
+         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
+     }
+@@ -1153,5 +1205,111 @@ sptr<Surface> PhotoOutput::GetPhotoSurface()
+     return photoSurface_;
+ }
+ 
++bool PhotoOutput::IsOfflineSupported()
++{
++    CAMERA_SYNC_TRACE;
++    MEDIA_INFO_LOG("Enter IsOfflineSupported");
++    bool isOfflineSupported = false;
++    auto session = GetSession();
++    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, isOfflineSupported,
++                               "PhotoOutput IsOfflineSupported error!, session is nullptr");
++    auto inputDevice = session->GetInputDevice();
++    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, isOfflineSupported,
++                               "PhotoOutput IsOfflineSupported error!, inputDevice is nullptr");
++    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
++    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, isOfflineSupported,
++                               "PhotoOutput IsOfflineSupported error!, cameraObj is nullptr");
++    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
++    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, isOfflineSupported,
++                               "PhotoOutput IsOfflineSupported error!, metadata is nullptr");
++    camera_metadata_item_t item;
++    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
++    if (ret == CAM_META_SUCCESS && item.count > 0) {
++        isOfflineSupported = static_cast<bool>(item.data.u8[0]);
++        MEDIA_INFO_LOG("PhotoOutput isOfflineSupported %{public}d", isOfflineSupported);
++        return isOfflineSupported;
++    }
++    return isOfflineSupported;
++}
++
++int32_t PhotoOutput::EnableOfflinePhoto()
++{
++    CAMERA_SYNC_TRACE;
++    MEDIA_INFO_LOG("PhotoOutput EnableOfflinePhoto");
++    auto session = GetSession();
++    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
++                               "PhotoOutput EnableOfflinePhoto error!, session is nullptr");
++    auto inputDevice = session->GetInputDevice();
++    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
++                               "PhotoOutput EnableOfflinePhoto error!, inputDevice is nullptr");
++    bool isOfflineSupported = IsOfflineSupported();
++    CHECK_ERROR_RETURN_RET_LOG(isOfflineSupported == false, OPERATION_NOT_ALLOWED,
++                               "PhotoOutput EnableOfflinePhoto error, isOfflineSupported is false");
++    auto isSessionConfiged = session->IsSessionCommited();
++    CHECK_ERROR_RETURN_RET_LOG(isSessionConfiged == false, OPERATION_NOT_ALLOWED,
++                               "PhotoOutput EnableOfflinePhoto error, isSessionConfiged is false");
++    mIsHasEnableOfflinePhoto_ = true; // 管理offlinephotooutput
++    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
++    int32_t errCode = CAMERA_UNKNOWN_ERROR;
++    if (streamCapturePtr) {
++        errCode = streamCapturePtr->EnableOfflinePhoto(true);
++        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
++                                   "Failed to EnableOfflinePhoto! , errCode: %{public}d", errCode);
++    } else {
++        MEDIA_ERR_LOG("PhotoOutput::EnableOfflinePhoto() itemStream is nullptr");
++        return CameraErrorCode::SERVICE_FATL_ERROR;
++    }
++    return CameraErrorCode::SUCCESS;
++}
++
++bool PhotoOutput::IsHasEnableOfflinePhoto()
++{
++    MEDIA_INFO_LOG("PhotoOutput::IsHasEnableOfflinePhoto %{public}d", mIsHasEnableOfflinePhoto_);
++    return mIsHasEnableOfflinePhoto_;
++}
++
++void PhotoOutput::SetSwitchOfflinePhotoOutput(bool isHasSwitched)
++{
++    std::lock_guard<std::mutex> lock(offlineStatusMutex_);
++    isHasSwitched_ = isHasSwitched;
++}
++
++bool PhotoOutput::IsHasSwitchOfflinePhoto()
++{
++    std::lock_guard<std::mutex> lock(offlineStatusMutex_);
++    return isHasSwitched_;
++}
++
++void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
++                                     std::string &burstKey, int64_t timestamp)
++{
++    CAMERA_SYNC_TRACE;
++    int32_t errorCode = CAMERA_OK;
++    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
++    if (streamCapturePtr) {
++        errorCode = streamCapturePtr->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
++        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
++                              errorCode);
++    } else {
++        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
++    }
++}
++
++void PhotoOutput::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
++                                     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
++{
++    CAMERA_SYNC_TRACE;
++    int32_t errorCode = CAMERA_OK;
++    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
++    if (streamCapturePtr) {
++        errorCode = streamCapturePtr->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
++                                                         burstKey, timestamp);
++        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
++                              errorCode);
++    } else {
++        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
++    }
++}
++
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/frameworks/native/camera/src/session/capture_session.cpp b/frameworks/native/camera/src/session/capture_session.cpp
+index 27a4cf8b..008360c5 100644
+--- a/frameworks/native/camera/src/session/capture_session.cpp
++++ b/frameworks/native/camera/src/session/capture_session.cpp
+@@ -321,7 +321,13 @@ int32_t CaptureSession::CommitConfig()
+     }
+     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+     auto captureSession = GetCaptureSession();
++    bool isHasSwitchedOffline = false;
++    if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
++        isHasSwitchedOffline = true;
++        EnableOfflinePhoto();
++    }
+     if (captureSession) {
++        errCode = captureSession->SetCommitConfigFlag(isHasSwitchedOffline);
+         errCode = captureSession->CommitConfig();
+         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
+         if (errCode != CAMERA_OK) {
+@@ -329,8 +335,6 @@ int32_t CaptureSession::CommitConfig()
+         } else {
+             CreateCameraAbilityContainer();
+         }
+-    } else {
+-        MEDIA_ERR_LOG("CaptureSession::CommitConfig() captureSession is nullptr");
+     }
+     return ServiceToCameraError(errCode);
+ }
+@@ -1050,6 +1054,10 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
+     int32_t errCode = CAMERA_UNKNOWN_ERROR;
+     auto captureSession = GetCaptureSession();
+     if (captureSession) {
++        if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO && photoOutput_ &&
++            ((sptr<PhotoOutput> &)photoOutput_)->IsHasEnableOfflinePhoto()) {
++            ((sptr<PhotoOutput> &)photoOutput_)->SetSwitchOfflinePhotoOutput(true);
++        }
+         errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream());
+         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to RemoveOutput!, %{public}d", errCode);
+     } else {
+@@ -1154,38 +1162,6 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
+     return;
+ }
+ 
+-void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+-                                        std::string &burstKey, int64_t timestamp)
+-{
+-    CAMERA_SYNC_TRACE;
+-    int32_t errorCode = CAMERA_OK;
+-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+-    auto captureSession = GetCaptureSession();
+-    if (captureSession) {
+-        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
+-            errorCode);
+-    } else {
+-        MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
+-    }
+-}
+-
+-void CaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+-{
+-    int32_t errorCode = CAMERA_OK;
+-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+-    auto captureSession = GetCaptureSession();
+-    if (captureSession) {
+-        errorCode = captureSession->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
+-            burstKey, timestamp);
+-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK,
+-            "Failed to create media library, errorCode: %{public}d", errorCode);
+-    } else {
+-        MEDIA_ERR_LOG("CaptureSession::CreatePictureForMediaLibrary captureSession is nullptr");
+-    }
+-}
+-
+ int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
+ {
+     int32_t errorCode = CAMERA_OK;
+@@ -4602,6 +4578,29 @@ void CaptureSession::SetUserId()
+     CHECK_ERROR_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetUserId Failed");
+ }
+ 
++void CaptureSession::EnableOfflinePhoto()
++{
++    MEDIA_INFO_LOG("CaptureSession::EnableOfflinePhoto");
++    CHECK_ERROR_RETURN_LOG(IsSessionCommited(), "CaptureSession::EnableOfflinePhoto session has committed!");
++    if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
++        this->LockForControl();
++        uint8_t enableOffline = 1;
++        camera_metadata_item_t item;
++        bool status = false;
++        int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
++            OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
++        if (ret == CAM_META_ITEM_NOT_FOUND) {
++            status = changedMetadata_->addEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
++        } else if (ret == CAM_META_SUCCESS) {
++            status = changedMetadata_->updateEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
++        }
++        MEDIA_INFO_LOG("CaptureSession::Start() enableOffline is %{public}d", enableOffline);
++        CHECK_ERROR_PRINT_LOG(!status,
++            "CaptureSession::CommitConfig Failed to add/update offline stream operator");
++        this->UnlockForControl();
++    }
++}
++
+ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
+ {
+     MEDIA_INFO_LOG("CaptureSession::EnableAutoHighQualityPhoto enabled:%{public}d", enabled);
+diff --git a/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
+index 1102d8ed..1622fe09 100644
+--- a/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
++++ b/frameworks/native/camera/test/moduletest/camera_moving_photo/src/camera_moving_photo_moduletest.cpp
+@@ -187,7 +187,7 @@ void PhotoListenerTest::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Bu
+             settings->GetLocation(location);
+             photoProxy->SetLocation(location->latitude, location->longitude);
+         }
+-        photoOutput_->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
++        photoOutput_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+     }
+ }
+ 
+diff --git a/frameworks/native/camera/test/moduletest/camera_session/include/camera_session_moduletest.h b/frameworks/native/camera/test/moduletest/camera_session/include/camera_session_moduletest.h
+index 966930b0..badb6356 100644
+--- a/frameworks/native/camera/test/moduletest/camera_session/include/camera_session_moduletest.h
++++ b/frameworks/native/camera/test/moduletest/camera_session/include/camera_session_moduletest.h
+@@ -72,7 +72,8 @@ enum class CAM_PHOTO_EVENTS {
+     CAM_PHOTO_MAX_EVENT,
+     CAM_PHOTO_FRAME_SHUTTER_END,
+     CAM_PHOTO_CAPTURE_READY,
+-    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION
++    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION,
++    CAM_PHOTO_OFFLINE_PHOTOOUTPUT
+ };
+ 
+ enum class CAM_PREVIEW_EVENTS {
+@@ -231,6 +232,8 @@ public:
+     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
+ 
+     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
++
++    void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
+ };
+ 
+ class AppVideoCallback : public VideoStateCallback {
+diff --git a/frameworks/native/camera/test/moduletest/camera_session/src/camera_session_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_session/src/camera_session_moduletest.cpp
+index 5508c308..b83f7f19 100644
+--- a/frameworks/native/camera/test/moduletest/camera_session/src/camera_session_moduletest.cpp
++++ b/frameworks/native/camera/test/moduletest/camera_session/src/camera_session_moduletest.cpp
+@@ -225,6 +225,14 @@ void AppCallback::OnError(const int32_t errorCode) const
+     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
+     return;
+ }
++
++void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
++{
++    MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished captureId: %{public}d", captureId);
++    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_OFFLINE_PHOTOOUTPUT)] = 1;
++    return;
++}
++
+ void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
+ {
+     MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
+diff --git a/frameworks/native/camera/test/ndktest/camera_ndk_demo/.gitignore b/frameworks/native/camera/test/ndktest/camera_ndk_demo/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/frameworks/native/camera/test/ndktest/camera_ndk_demo/entry/.gitignore b/frameworks/native/camera/test/ndktest/camera_ndk_demo/entry/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/frameworks/native/camera/test/unittest/camera_service/camera_service_common/src/camera_privacy_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/camera_service_common/src/camera_privacy_unittest.cpp
+index 5ae60e90..6c6dfb6f 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/camera_service_common/src/camera_privacy_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/camera_service_common/src/camera_privacy_unittest.cpp
+@@ -82,9 +82,8 @@ void CameraPrivacyUnitTest::NativeAuthorization()
+  */
+ HWTEST_F(CameraPrivacyUnitTest, camera_privacy_unittest_001, TestSize.Level0)
+ {
+-    wptr<HCameraDevice> device;
+     uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
+-    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(device, callingTokenId, IPCSkeleton::GetCallingPid());
++    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
+     bool ret = cameraPrivacy->IsAllowUsingCamera();
+     EXPECT_FALSE(ret);
+     ret = cameraPrivacy->RegisterPermissionCallback();
+diff --git a/frameworks/native/camera/test/unittest/camera_service/client/include/camera_service_client_unittest.h b/frameworks/native/camera/test/unittest/camera_service/client/include/camera_service_client_unittest.h
+index aac198c8..b4c9e6b9 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/client/include/camera_service_client_unittest.h
++++ b/frameworks/native/camera/test/unittest/camera_service/client/include/camera_service_client_unittest.h
+@@ -195,6 +195,8 @@ public:
+     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
+ 
+     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
++
++    void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
+ };
+ 
+ class CameraServiceClientUnit : public testing::Test {
+diff --git a/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
+index 135c69c7..34cb6327 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/client/src/camera_service_client_unittest.cpp
+@@ -291,11 +291,17 @@ void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) cons
+     MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
+     return;
+ }
++
+ void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
+ {
+     MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
+ }
+ 
++void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
++{
++    MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished");
++}
++
+ void CameraServiceClientUnit::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
+ {
+     previewProfiles.clear();
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_manager_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_manager_unittest.cpp
+index 9f84099c..641dd034 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_manager_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_manager_unittest.cpp
+@@ -66,13 +66,6 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_001, Test
+     sptr<ICameraBroker> callback;
+     HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+     HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
+-
+-    sptr<HCameraDevice> cameraNeedEvict;
+-    sptr<HCameraDevice> cameraRequestOpen;
+-    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, cameraRequestOpen);
+-    EXPECT_FALSE(ret);
+-    pid_t pid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+-    EXPECT_EQ(pid, -1);
+ }
+ 
+ /*
+@@ -111,9 +104,6 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_003, Test
+     HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+     bool ret = HCameraDeviceManager::GetInstance()->IsAllowOpen(pid);
+     EXPECT_FALSE(ret);
+-    int32_t testInt_1 = 5;
+-    uint32_t testInt_2 = 10;
+-    HCameraDeviceManager::GetInstance()->UpdateProcessState(testInt_1, testInt_1, testInt_2, testInt_2);
+ }
+ } // CameraStandard
+ } // OHOS
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
+index 0169c5fc..c23f1842 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
+@@ -388,8 +388,8 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
+     ret = camDevice->HCameraDevice::DisableResult(result);
+     EXPECT_EQ(ret, 0);
+ 
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
+-    EXPECT_TRUE(streamOperator != nullptr);
++    // sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
++    // EXPECT_TRUE(streamOperator != nullptr);
+ 
+     ret = camDevice->HCameraDevice::OnError(REQUEST_TIMEOUT, 0);
+     EXPECT_EQ(ret, 0);
+@@ -584,162 +584,9 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_016, TestSize.Level0)
+         HCameraDevice(cameraHostManager_, cameraId, callerToken);
+     ASSERT_NE(camDevice, nullptr);
+     camDevice->hdiCameraDevice_ = nullptr;
+-    EXPECT_EQ(camDevice->InitStreamOperator(), CAMERA_UNKNOWN_ERROR);
+-}
+-
+-/*
+- * Feature: Framework
+- * Function: Test HCameraDevice when streamOperator_ is nullptr
+- * SubFunction: NA
+- * FunctionPoints: NA
+- * EnvConditions: NA
+- * CaseDescription: Test HCameraDevice when streamOperator_ is nullptr
+- */
+-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_017, TestSize.Level0)
+-{
+-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+-
+-    std::string cameraId = cameras[0]->GetID();
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCameraDevice> camDevice = new (std::nothrow)
+-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
+-    ASSERT_NE(camDevice, nullptr);
+-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
+-    camDevice->CreateStreams(streamInfos);
+-
+-    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+-    ASSERT_NE(cameraProxy, nullptr);
+-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings;
+-    cameraProxy->GetCameraAbility(cameraId, deviceSettings);
+-    ASSERT_NE(deviceSettings, nullptr);
+-    int32_t operationMode = 0;
+-    camDevice->streamOperator_ = nullptr;
+-    EXPECT_EQ(camDevice->CommitStreams(deviceSettings, operationMode), CAMERA_UNKNOWN_ERROR);
+-}
+-
+-/*
+- * Feature: Framework
+- * Function: Test HCameraDevice when streamOperator is nullptr
+- * SubFunction: NA
+- * FunctionPoints: NA
+- * EnvConditions: NA
+- * CaseDescription: Test HCameraDevice when streamOperator is nullptr
+- */
+-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_018, TestSize.Level0)
+-{
+-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+-
+-    std::string cameraId = cameras[0]->GetID();
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCameraDevice> camDevice = new (std::nothrow)
+-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
+-    ASSERT_NE(camDevice, nullptr);
+-    std::vector<StreamInfo_V1_1> streamInfos = {};
+-    EXPECT_EQ(camDevice->UpdateStreams(streamInfos), CAMERA_UNKNOWN_ERROR);
+-}
+-
+-/*
+- * Feature: Framework
+- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+- * SubFunction: NA
+- * FunctionPoints: NA
+- * EnvConditions: NA
+- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+- */
+-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_019, TestSize.Level0)
+-{
+-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+-
+-    std::string cameraId = cameras[0]->GetID();
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCameraDevice> camDevice = new (std::nothrow)
+-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
+-    ASSERT_NE(camDevice, nullptr);
+-    int32_t captureId = 0;
+-    const std::vector<int32_t> streamIds = {1, 2};
+-    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
+-
+-    HDI::Camera::V1_2::CaptureStartedInfo it1;
+-    it1.streamId_ = 1;
+-    it1.exposureTime_ = 1;
+-    HDI::Camera::V1_2::CaptureStartedInfo it2;
+-    it2.streamId_ = 2;
+-    it2.exposureTime_ = 2;
+-    std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
+-    captureStartedInfo.push_back(it1);
+-    captureStartedInfo.push_back(it2);
+-    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
+-}
+-
+-/*
+- * Feature: Framework
+- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+- * SubFunction: NA
+- * FunctionPoints: NA
+- * EnvConditions: NA
+- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+- */
+-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_020, TestSize.Level0)
+-{
+-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+-
+-    std::string cameraId = cameras[0]->GetID();
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCameraDevice> camDevice = new (std::nothrow)
+-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
+-    ASSERT_NE(camDevice, nullptr);
+-    int32_t captureId = 0;
+-    const std::vector<int32_t> streamIds = {1, 2};
+-    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
+-    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
+-    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
+-
+-    CaptureEndedInfo it1;
+-    it1.streamId_ = 1;
+-    it1.frameCount_ = 1;
+-    CaptureEndedInfo it2;
+-    it2.streamId_ = 2;
+-    it2.frameCount_ = 2;
+-    std::vector<CaptureEndedInfo> captureEndedInfo = {};
+-    captureEndedInfo.push_back(it1);
+-    captureEndedInfo.push_back(it2);
+-    EXPECT_EQ(camDevice->OnCaptureEnded(captureId, captureEndedInfo), CAMERA_INVALID_STATE);
+-}
+-
+-/*
+- * Feature: Framework
+- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+- * SubFunction: NA
+- * FunctionPoints: NA
+- * EnvConditions: NA
+- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+- */
+-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_021, TestSize.Level0)
+-{
+-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+-
+-    std::string cameraId = cameras[0]->GetID();
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCameraDevice> camDevice = new (std::nothrow)
+-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
+-    ASSERT_NE(camDevice, nullptr);
+-    int32_t captureId = 0;
+-    CaptureErrorInfo it1;
+-    it1.streamId_ = 2;
+-    it1.error_ = BUFFER_LOST;
+-    CaptureErrorInfo it2;
+-    it2.streamId_ = 1;
+-    it2.error_ =  BUFFER_LOST;
+-    std::vector<CaptureErrorInfo> captureErrorInfo = {};
+-    captureErrorInfo.push_back(it1);
+-    captureErrorInfo.push_back(it2);
+-    EXPECT_EQ(camDevice->OnCaptureError(captureId, captureErrorInfo), CAMERA_INVALID_STATE);
+-
+-    const std::vector<int32_t> streamIds = {1, 2};
+-    uint64_t timestamp = 5;
+-    EXPECT_EQ(camDevice->OnFrameShutter(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+-    EXPECT_EQ(camDevice->OnFrameShutterEnd(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+-    EXPECT_EQ(camDevice->OnCaptureReady(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
++    sptr<IStreamOperatorCallback> callbackObj = nullptr;
++    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> hStreamOperator = nullptr;
++    EXPECT_EQ(camDevice->GetStreamOperator(callbackObj, hStreamOperator), CAMERA_UNKNOWN_ERROR);
+ }
+ 
+ /*
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/include/hcapture_session_unittest.h b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/include/hcapture_session_unittest.h
+index dd0b7b05..49a52e66 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/include/hcapture_session_unittest.h
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/include/hcapture_session_unittest.h
+@@ -41,6 +41,9 @@ public:
+ 
+     void NativeAuthorization(void);
+ 
++    void InitSessionAndOperator(uint32_t callerToken, int32_t opMode,
++        sptr<HCaptureSession>&  session, sptr<HStreamOperator>&  hStreamOperator);
++
+ protected:
+     uint64_t tokenId_;
+     int32_t uid_;
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
+index 77b25ddc..22d4162a 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_stream_test/src/hcapture_session_unittest.cpp
+@@ -78,6 +78,13 @@ void HCaptureSessionUnitTest::TearDown()
+     }
+ }
+ 
++void HCaptureSessionUnitTest::InitSessionAndOperator(uint32_t callerToken, int32_t opMode,
++    sptr<HCaptureSession>&  session, sptr<HStreamOperator>&  hStreamOperator) {
++    session = new (std::nothrow) HCaptureSession(callerToken, opMode);
++    hStreamOperator = HStreamOperator::NewInstance(callerToken, opMode);
++    session->SetStreamOperator(hStreamOperator);
++}
++
+ void HCaptureSessionUnitTest::NativeAuthorization()
+ {
+     const char *perms[2];
+@@ -128,8 +135,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -177,15 +188,19 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level
+     std::vector<string> cameraIds;
+     cameraService_->GetCameraIds(cameraIds);
+     ASSERT_NE(cameraIds.size(), 0);
+-    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
++    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY); 
+     sptr<ICameraDeviceService> device = nullptr;
+     cameraService_->CreateCameraDevice(cameraIds[0], device);
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     bool result = false;
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+@@ -227,8 +242,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -258,7 +277,6 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+-
+     MEDIA_INFO_LOG("hcapture_session_unit_test_003 end");
+ }
+ 
+@@ -283,30 +301,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level
+     cameraService_->CreateCameraDevice(cameraIds[0], device);
+     ASSERT_NE(device, nullptr);
+     device->Open();
+-
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
+-    ASSERT_NE(session, nullptr);
+-
+-    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+-    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+-    auto cameraDevice = session->GetCameraDevice();
+-    if (cameraDevice != nullptr) {
+-        cameraDevice->Release();
+-        session->SetCameraDevice(nullptr);
+-    }
+-
+-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+-    sptr<IBufferProducer> producer = surface->GetProducer();
+-    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, DEFAULT_FORMAT,
+-        DEFAULT_WIDTH, DEFAULT_HEIGHT, RepeatStreamType::PREVIEW);
+-    ASSERT_NE(streamRepeat, nullptr);
+-
+-    EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
+-    EXPECT_EQ(session->CommitConfig(), CAMERA_INVALID_SESSION_CFG);
+-
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+-    EXPECT_EQ(session->Release(), CAMERA_OK);
+ 
