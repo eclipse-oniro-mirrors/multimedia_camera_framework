@@ -998,3 +998,503 @@ index 77b25ddc..22d4162a 100644
      EXPECT_EQ(device->Close(), CAMERA_OK);
 -    EXPECT_EQ(session->Release(), CAMERA_OK);
  
+     MEDIA_INFO_LOG("hcapture_session_unit_test_004 end");
+ }
+@@ -356,8 +351,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
+             device->OpenSecureCamera(&secureSeqId);
+ 
+             uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-            sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++            sptr<HCaptureSession> session = nullptr;
++            sptr<HStreamOperator> hStreamOperator = nullptr;
++            int32_t opMode = SceneMode::NORMAL;
++            InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+             ASSERT_NE(session, nullptr);
++            ASSERT_NE(hStreamOperator, nullptr);
+ 
+             sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+             sptr<IBufferProducer> producer = surface->GetProducer();
+@@ -402,8 +401,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -449,8 +452,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -474,11 +481,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
+     std::vector<StreamInfo_V1_1> streamInfos = {};
+ 
+     session->Start();
+-    session->CancelStreamsAndGetStreamInfos(streamInfos);
++    hStreamOperator->CancelStreamsAndGetStreamInfos(streamInfos);
+     ASSERT_TRUE(streamInfos.size() != 0);
+ 
+     session->Stop();
+-    session->CancelStreamsAndGetStreamInfos(streamInfos);
++    hStreamOperator->CancelStreamsAndGetStreamInfos(streamInfos);
+     ASSERT_TRUE(streamInfos.size() != 0);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+@@ -511,8 +518,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -539,7 +550,10 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
+     session->CommitConfig();
+ 
+     EXPECT_EQ(session->EnableMovingPhoto(true), CAMERA_OK);
+-    session->StartMovingPhoto(streamRepeat2);
++
++    shared_ptr<OHOS::Camera::CameraMetadata> settings;
++    cameraHostManager_->GetCameraAbility(cameraIds[0], settings);
++    hStreamOperator->StartMovingPhoto(settings, streamRepeat2);
+ 
+     EXPECT_EQ(session->EnableMovingPhoto(false), CAMERA_OK);
+     session->Start();
+@@ -567,8 +581,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+     uint32_t callerToken1 = ++callerToken;
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken1, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken1, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->OperatePermissionCheck(INTERFACE_CODE), CAMERA_OPERATION_NOT_ALLOWED);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -589,8 +607,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level
+     MEDIA_INFO_LOG("hcapture_session_unit_test_010 start");
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+     pid_t pid = session->GetPid();
+     session->DestroyStubObjectForPid(pid);
+ 
+@@ -619,8 +641,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -674,8 +700,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -727,15 +757,19 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
+     MEDIA_INFO_LOG("hcapture_session_unit_test_013 start");
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+     std::string uri;
+     int32_t cameraShotType;
+     string burstKey = "";
+     int64_t timestamp = 0000;
+-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
++    hStreamOperator->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+ 
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+ 
+@@ -754,9 +788,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
+ {
+     MEDIA_INFO_LOG("hcapture_session_unit_test_014 start");
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     sptr<SurfaceBuffer> surfaceBuffer;
+     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
+@@ -764,7 +802,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
+     int32_t cameraShotType;
+     string burstKey = "";
+     int64_t timestamp = 0000;
+-    session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
++    hStreamOperator->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
+         burstKey, timestamp);
+ 
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -795,9 +833,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     session->BeginConfig();
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -813,7 +855,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
+ 
+     int32_t captureId = 0;
+     std::vector<int32_t> streamIds = {1, 2};
+-    EXPECT_EQ(session->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_ARG);
+ 
+     HDI::Camera::V1_2::CaptureStartedInfo it1;
+     it1.streamId_ = 1;
+@@ -824,7 +866,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
+     std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
+     captureStartedInfo.push_back(it1);
+     captureStartedInfo.push_back(it2);
+-    EXPECT_EQ(session->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_ARG);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -855,9 +897,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     session->BeginConfig();
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -874,7 +920,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
+     int32_t captureId = 0;
+     std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> infos = {{1, 100, true, "video123"},
+         {2, 100, true, "video123"}};
+-    EXPECT_EQ(session->OnCaptureEndedExt(captureId, infos), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->OnCaptureEndedExt(captureId, infos), CAMERA_INVALID_ARG);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -903,9 +949,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -934,7 +984,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
+     std::vector<CaptureErrorInfo> captureErrorInfo = {};
+     captureErrorInfo.push_back(it1);
+     captureErrorInfo.push_back(it2);
+-    session->OnCaptureError(captureId, captureErrorInfo);
++    hStreamOperator->OnCaptureError(captureId, captureErrorInfo);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -963,9 +1013,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -986,9 +1040,9 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
+ 
+     int32_t streamId = 1;
+     std::vector<uint8_t> result = {0, 1};
+-    EXPECT_EQ(session->OnResult(streamId, result), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->OnResult(streamId, result), CAMERA_INVALID_ARG);
+     streamId = 2;
+-    EXPECT_EQ(session->OnResult(streamId, result), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->OnResult(streamId, result), CAMERA_INVALID_ARG);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -1017,9 +1071,13 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level
+     ASSERT_NE(device, nullptr);
+     device->Open();
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1063,8 +1121,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     bool result = false;
+     EXPECT_EQ(session->CanAddInput(device, result), CAMERA_INVALID_STATE);
+@@ -1106,8 +1168,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1125,11 +1191,11 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
+     EXPECT_EQ(session->RemoveOutput(StreamType::METADATA, streamMetadata), CAMERA_OK);
+     EXPECT_EQ(session->CommitConfig(), CAMERA_INVALID_SESSION_CFG);
+ 
+-    EXPECT_EQ(session->AddOutputStream(nullptr), CAMERA_INVALID_ARG);
+-    EXPECT_EQ(session->AddOutputStream(streamMetadata), CAMERA_OK);
+-    EXPECT_EQ(session->AddOutputStream(streamMetadata), CAMERA_INVALID_SESSION_CFG);
++    EXPECT_EQ(hStreamOperator->AddOutputStream(nullptr), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->AddOutputStream(streamMetadata), CAMERA_OK);
++    EXPECT_EQ(hStreamOperator->AddOutputStream(streamMetadata), CAMERA_INVALID_SESSION_CFG);
+     EXPECT_EQ(streamRepeat->Release(), CAMERA_OK);
+-    EXPECT_EQ(session->AddOutputStream(streamRepeat), CAMERA_INVALID_ARG);
++    EXPECT_EQ(hStreamOperator->AddOutputStream(streamRepeat), CAMERA_INVALID_ARG);
+ 
+     EXPECT_EQ(device->Close(), CAMERA_OK);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+@@ -1149,11 +1215,20 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level
+ {
+     MEDIA_INFO_LOG("hcapture_session_unit_test_022 start");
+ 
+-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++   uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+-    EXPECT_EQ(session->UpdateStreamInfos(), CAMERA_UNKNOWN_ERROR);
++    std::vector<string> cameraIds;
++    cameraService_->GetCameraIds(cameraIds);
++    ASSERT_NE(cameraIds.size(), 0);
++    shared_ptr<OHOS::Camera::CameraMetadata> settings;
++    cameraHostManager_->GetCameraAbility(cameraIds[0], settings);
++    EXPECT_EQ(hStreamOperator->UpdateStreamInfos(settings), CAMERA_UNKNOWN_ERROR);
+     EXPECT_EQ(session->Release(), CAMERA_OK);
+ 
+     MEDIA_INFO_LOG("hcapture_session_unit_test_022 end");
+@@ -1181,8 +1256,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1195,7 +1274,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
+     uint32_t otherStreamType = 5;
+     streamRepeat->streamType_ = static_cast<StreamType>(otherStreamType);
+ 
+-    session->AddOutputStream(streamRepeat);
++    session->AddOutput(StreamType::REPEAT, streamRepeat);
+     session->CommitConfig();
+     session->Start();
+ 
+@@ -1221,8 +1300,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level
+     MEDIA_INFO_LOG("hcapture_session_unit_test_024 start");
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     uint32_t otherCaptureSessionState = 6;
+     session->stateMachine_.currentState_ = static_cast<CaptureSessionState>(otherCaptureSessionState);
+@@ -1257,8 +1340,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1310,8 +1397,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1359,8 +1450,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+-    sptr<HCaptureSession> session = new (std::nothrow) HCaptureSession(callerToken, SceneMode::NORMAL);
++    sptr<HCaptureSession> session = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
++    int32_t opMode = SceneMode::NORMAL;
++    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+     ASSERT_NE(session, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+     EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+@@ -1409,9 +1504,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> camSession = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
+     SceneMode mode = PORTRAIT;
+-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
++    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+     ASSERT_NE(camSession, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     int32_t ret = camSession->AddInput(device);
+     EXPECT_EQ(ret, 10);
+@@ -1462,9 +1560,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
+     device->Open();
+ 
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HCaptureSession> camSession = nullptr;
++    sptr<HStreamOperator> hStreamOperator = nullptr;
+     SceneMode mode = PORTRAIT;
+-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
++    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+     ASSERT_NE(camSession, nullptr);
++    ASSERT_NE(hStreamOperator, nullptr);
+ 
+     camSession->BeginConfig();
+     camSession->Start();
+@@ -1492,12 +1593,12 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
+     std::vector<CaptureErrorInfo> info = {};
+     info.push_back(it1);
+     info.push_back(it2);
+-    camSession->OnCaptureError(0, info);
++    hStreamOperator->OnCaptureError(0, info);
+ 
+     std::vector<int32_t> streamIds = {1, 2};
+-    camSession->OnFrameShutter(0, streamIds, 0);
+-    camSession->OnFrameShutterEnd(0, streamIds, 0);
