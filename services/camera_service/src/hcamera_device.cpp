@@ -87,6 +87,7 @@ const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> HCameraDevice:
     {OHOS_CONTROL_LIGHT_PAINTING_FLASH, "OHOS_CONTROL_LIGHT_PAINTING_FLASH", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_MANUAL_EXPOSURE_TIME, "OHOS_CONTROL_MANUAL_EXPOSURE_TIME", DFX_UB_NOT_REPORT},
     {OHOS_CONTROL_CAMERA_USED_AS_POSITION, "OHOS_CONTROL_CAMERA_USED_AS_POSITION", DFX_UB_NOT_REPORT},
+    {OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, "OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR", DFX_UB_NOT_REPORT},
 };
 
 const std::unordered_map<DeviceProtectionStatus, CamServiceError> g_deviceProtectionToServiceError_ = {
@@ -328,7 +329,7 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
     }  else {
         MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
     }
-    MEDIA_INFO_LOG("CaptureSession::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
+    MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
     return errCode;
 }
 
@@ -411,14 +412,12 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
         return CAMERA_UNKNOWN_ERROR;
     } else {
         g_openingCameraDevice = this;
-        ResetHdiStreamId();
         isOpenedCameraDevice_.store(true);
         HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
 #ifdef CAMERA_USE_SENSOR
         RegisterDropDetectionListener();
 #endif
     }
-    errorCode = InitStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(errorCode != CAMERA_OK, errorCode,
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
     std::lock_guard<std::mutex> lockSetting(opMutex_);
@@ -557,9 +556,6 @@ int32_t HCameraDevice::CloseDevice()
             HandlePrivacyAfterCloseDevice();
         } else {
             MEDIA_INFO_LOG("hdiCameraDevice is null");
-        }
-        if (streamOperator_) {
-            streamOperator_ = nullptr;
         }
         SetStreamOperatorCallback(nullptr);
     }
@@ -709,6 +705,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, hdiSettings);
         ReportMetadataDebugLog(updateSettings_);
+        DumpMetadata(updateSettings_);
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
         CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
             "HCameraDevice::UpdateSetting Failed with error Code: %{public}d", rc);
@@ -992,80 +989,58 @@ void HCameraDevice::ResetDeviceOpenLifeCycleSettings()
         std::make_shared<OHOS::Camera::CameraMetadata>(DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH);
 }
 
-int32_t HCameraDevice::InitStreamOperator()
+int32_t HCameraDevice::GetStreamOperator(const sptr<IStreamOperatorCallback> &callbackObj,
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> &streamOperator)
 {
     std::lock_guard<std::mutex> lock(opMutex_);
+    proxyStreamOperatorCallback_ = callbackObj;
     CHECK_ERROR_RETURN_RET_LOG(hdiCameraDevice_ == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HCameraDevice::InitStreamOperator hdiCameraDevice_ is null");
+        "HCameraDevice::GetStreamOperator hdiCameraDevice_ is null");
     CamRetCode rc;
     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiCameraDeviceV1_1;
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
     int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
     if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice cast to V1_3");
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_3");
         hdiCameraDeviceV1_3 = OHOS::HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
     } else if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice cast to V1_2");
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_2");
         hdiCameraDeviceV1_2 = OHOS::HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     } else if (versionRes == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice cast to V1_1");
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_1");
         hdiCameraDeviceV1_1 = OHOS::HDI::Camera::V1_1::ICameraDevice::CastFrom(hdiCameraDevice_);
         if (hdiCameraDeviceV1_1 == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::InitStreamOperator ICameraDevice cast to V1_1 error");
+            MEDIA_ERR_LOG("HCameraDevice::GetStreamOperator ICameraDevice cast to V1_1 error");
             hdiCameraDeviceV1_1 = static_cast<OHOS::HDI::Camera::V1_1::ICameraDevice*>(hdiCameraDevice_.GetRefPtr());
         }
     }
 
     if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperator_v1_3;
-        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_3));
-        streamOperator_ = streamOperator_v1_3;
+        rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(callbackObj, streamOperator_v1_3));
+        streamOperator = streamOperator_v1_3;
     } else if (hdiCameraDeviceV1_2 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice V1_2");
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice V1_2");
         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
-        rc = (CamRetCode)(hdiCameraDeviceV1_2->GetStreamOperator_V1_2(this, streamOperator_v1_2));
-        streamOperator_ = streamOperator_v1_2;
+        rc = (CamRetCode)(hdiCameraDeviceV1_2->GetStreamOperator_V1_2(callbackObj, streamOperator_v1_2));
+        streamOperator = streamOperator_v1_2;
     } else if (hdiCameraDeviceV1_1 != nullptr && versionRes == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice V1_1");
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice V1_1");
         sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator_v1_1;
-        rc = (CamRetCode)(hdiCameraDeviceV1_1->GetStreamOperator_V1_1(this, streamOperator_v1_1));
-        streamOperator_ = streamOperator_v1_1;
+        rc = (CamRetCode)(hdiCameraDeviceV1_1->GetStreamOperator_V1_1(callbackObj, streamOperator_v1_1));
+        streamOperator = streamOperator_v1_1;
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::InitStreamOperator ICameraDevice V1_0");
-        rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator(this, streamOperator_));
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStreamOperator ICameraDevice V1_0");
+        rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator(callbackObj, streamOperator));
     }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HCameraDevice::InitStreamOperator failed with error Code:%{public}d", rc);
+        MEDIA_ERR_LOG("HCameraDevice::GetStreamOperator failed with error Code:%{public}d", rc);
         CameraReportUtils::ReportCameraError(
-            "HCameraDevice::InitStreamOperator", rc, true, CameraReportUtils::GetCallerInfo());
-        streamOperator_ = nullptr;
+            "HCameraDevice::GetStreamOperator", rc, true, CameraReportUtils::GetCallerInfo());
         return HdiToServiceError(rc);
     }
     return CAMERA_OK;
-}
-
-int32_t HCameraDevice::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
-{
-    CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(opMutex_);
-    if (streamOperator_ != nullptr && !releaseStreamIds.empty()) {
-        MEDIA_INFO_LOG("HCameraDevice::ReleaseStreams %{public}s",
-            Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
-        int32_t rc = streamOperator_->ReleaseStreams(releaseStreamIds);
-        if (rc != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
-            CameraReportUtils::ReportCameraError(
-                "HCameraDevice::ReleaseStreams", rc, true, CameraReportUtils::GetCallerInfo());
-        }
-    }
-    return CAMERA_OK;
-}
-
-sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> HCameraDevice::GetStreamOperator()
-{
-    std::lock_guard<std::mutex> lock(opMutex_);
-    return streamOperator_;
 }
 
 int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, const int32_t errorMsg)
@@ -1161,20 +1136,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     return CAMERA_OK;
 }
 
-int32_t HCameraDevice::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
-{
-    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    if (cameraResult == nullptr) {
-        cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
-    }
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_EXECUTE(streamOperatorCallback != nullptr, streamOperatorCallback->OnResult(streamId, result));
-    CHECK_EXECUTE(IsCameraDebugOn(), CheckOnResultData(cameraResult));
-    return CAMERA_OK;
-}
-
 void HCameraDevice::GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
     MEDIA_DEBUG_LOG("HCameraDevice::GetMovingPhotoStartAndEndTime enter.");
@@ -1217,116 +1178,6 @@ void HCameraDevice::SetMovingPhotoEndTimeCallback(std::function<void(int64_t, in
 int32_t HCameraDevice::GetCallerToken()
 {
     return callerToken_;
-}
-
-int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
-{
-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    uint32_t major;
-    uint32_t minor;
-    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HCameraDevice::CreateStreams streamInfos is empty!");
-    std::lock_guard<std::mutex> lock(opMutex_);
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = streamOperator_;
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HCameraDevice::CreateStreams GetStreamOperator is null!");
-    // get higher streamOperator version
-    streamOperator->GetVersion(major, minor);
-    MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
-        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
-        if (streamOperatorV1_1 == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::CreateStreams IStreamOperator cast to V1_1 error");
-            streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
-        }
-    }
-    if (streamOperatorV1_1 != nullptr) {
-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
-        for (auto streamInfo : streamInfos) {
-            if (streamInfo.extendedStreamInfos.size() > 0) {
-                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1 type %{public}d",
-                    streamInfo.extendedStreamInfos[0].type);
-            }
-        }
-        hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
-    } else {
-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_0");
-        std::vector<StreamInfo> streamInfos_V1_0;
-        for (auto streamInfo : streamInfos) {
-            streamInfos_V1_0.emplace_back(streamInfo.v1_0);
-        }
-        hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
-    }
-    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to commit %{public}d", hdiRc);
-        CameraReportUtils::ReportCameraError(
-            "HCameraDevice::CreateStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
-        std::vector<int32_t> streamIds;
-        for (auto& streamInfo : streamInfos) {
-            streamIds.emplace_back(streamInfo.v1_0.streamId_);
-        }
-        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
-            streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
-            "HCameraDevice::CreateStreams(), Failed to release streams");
-    }
-    for (auto& info : streamInfos) {
-        MEDIA_INFO_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
-    }
-    return HdiToServiceError(hdiRc);
-}
-
-int32_t HCameraDevice::CommitStreams(
-    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
-{
-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    uint32_t major;
-    uint32_t minor;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
-    std::lock_guard<std::mutex> lock(opMutex_);
-    streamOperator = streamOperator_;
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HCameraDevice::CommitStreams GetStreamOperator is null!");
-    // get higher streamOperator version
-    streamOperator->GetVersion(major, minor);
-    MEDIA_INFO_LOG(
-        "HCameraDevice::CommitStreams streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator cast to V1_1");
-        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
-        if (streamOperatorV1_1 == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::CommitStreams IStreamOperator cast to V1_1 error");
-            streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
-        }
-    }
-
-    std::vector<uint8_t> setting;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(deviceSettings, setting);
-    MEDIA_INFO_LOG("HCameraDevice::CommitStreams, commit mode %{public}d", operationMode);
-    if (streamOperatorV1_1 != nullptr) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_1");
-        hdiRc = (CamRetCode)(streamOperatorV1_1->CommitStreams_V1_1(
-            static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1>(operationMode), setting));
-    } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_0");
-        OperationMode opMode = OperationMode::NORMAL;
-        hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
-    }
-    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HCameraDevice::CommitStreams failed with error Code:%d", hdiRc);
-        CameraReportUtils::ReportCameraError(
-            "HCameraDevice::CommitStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
-    }
-    MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams end");
-    return HdiToServiceError(hdiRc);
-}
-
-int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
-    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode)
-{
-    int retCode = CreateStreams(streamInfos);
-    CHECK_ERROR_RETURN_RET(retCode != CAMERA_OK, retCode);
-    return CommitStreams(deviceSettings, operationMode);
 }
 
 bool HCameraDevice::CanOpenCamera()
@@ -1373,35 +1224,6 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
         conflicting.emplace(resourceCost.conflictingDevices_[i]);
     }
     return true;
-}
-
-int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
-{
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
-    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
-    streamOperator = GetStreamOperator();
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HCameraDevice::UpdateStreamInfos GetStreamOperator is null!");
-    uint32_t major;
-    uint32_t minor;
-    streamOperator->GetVersion(major, minor);
-    MEDIA_INFO_LOG("UpdateStreamInfos: streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
-    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
-        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
-        if (streamOperatorV1_2 == nullptr) {
-            MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos IStreamOperator cast to V1_2 error");
-            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator.GetRefPtr());
-        }
-    }
-    CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
-    if (streamOperatorV1_2 != nullptr) {
-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos streamOperator V1_2");
-        hdiRc = (CamRetCode)(streamOperatorV1_2->UpdateStreams(streamInfos));
-    } else {
-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos failed, streamOperator V1_2 is null.");
-        return CAMERA_UNKNOWN_ERROR;
-    }
-    return HdiToServiceError(hdiRc);
 }
 
 #ifdef CAMERA_USE_SENSOR
@@ -1593,64 +1415,6 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
             break;
     }
     return CAMERA_OK;
-}
-
-int32_t HCameraDevice::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureStarted(captureId, streamIds);
-}
-
-int32_t HCameraDevice::OnCaptureStarted_V1_2(
-    int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureStarted_V1_2(captureId, infos);
-}
-
-int32_t HCameraDevice::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureEnded(captureId, infos);
-}
-
-int32_t HCameraDevice::OnCaptureEndedExt(int32_t captureId,
-    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureEndedExt(captureId, infos);
-}
-
-int32_t HCameraDevice::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureError(captureId, infos);
-}
-
-int32_t HCameraDevice::OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnFrameShutter(captureId, streamIds, timestamp);
-}
-
-int32_t HCameraDevice::OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnFrameShutterEnd(captureId, streamIds, timestamp);
-}
-
-int32_t HCameraDevice::OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
-{
-    auto streamOperatorCallback = GetStreamOperatorCallback();
-    CHECK_ERROR_RETURN_RET(streamOperatorCallback == nullptr, CAMERA_INVALID_STATE);
-    return streamOperatorCallback->OnCaptureReady(captureId, streamIds, timestamp);
 }
 
 void HCameraDevice::NotifyCameraSessionStatus(bool running)

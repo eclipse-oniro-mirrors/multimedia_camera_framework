@@ -110,8 +110,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1()
     fuzz_->DisableResult(results);
     fuzz_->UpdateDeviceOpenLifeCycleSettings(settings);
     fuzz_->OpenDevice(true);
-    fuzz_->InitStreamOperator();
-    fuzz_->ReleaseStreams(results);
     fuzz_->CheckOnResultData(settings);
     fuzz_->ResetDeviceOpenLifeCycleSettings();
 }
@@ -132,34 +130,12 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2()
     fuzz_->HandlePrivacyBeforeOpenDevice();
     fuzz_->Release();
     fuzz_->OpenDevice(true);
-    fuzz_->InitStreamOperator();
-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
-    fuzz_->CreateStreams(streamInfos);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     fuzz_->ReportMetadataDebugLog(settings);
     int32_t operationMode = GetData<int32_t>();
-    fuzz_->CommitStreams(settings, operationMode);
-    fuzz_->UpdateStreams(streamInfos);
-    fuzz_->CreateAndCommitStreams(streamInfos, settings, operationMode);
     std::set<std::string> conflicting = {"fuzz1", "fuzz2"};
     fuzz_->GetCameraResourceCost(operationMode, conflicting);
-    const std::vector<int32_t> streamIds;
-    int32_t captureId = GetData<int32_t>();
-    fuzz_->OnCaptureStarted(captureId, streamIds);
-    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos;
-    fuzz_->OnCaptureStarted_V1_2(captureId, infos);
-    const std::vector<CaptureEndedInfo> infos_OnCaptureEnded;
-    fuzz_->OnCaptureEnded(captureId, infos_OnCaptureEnded);
-    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> infos_OnCaptureEndedExt;
-    fuzz_->OnCaptureEndedExt(captureId, infos_OnCaptureEndedExt);
-    const std::vector<CaptureErrorInfo> infos_OnCaptureError;
-    fuzz_->OnCaptureError(captureId, infos_OnCaptureError);
-    std::vector<int32_t> results = {GetData<uint32_t>()};
-    uint64_t timestamp = GetData<uint64_t>();
-    fuzz_->OnFrameShutter(captureId, results, timestamp);
-    fuzz_->OnFrameShutterEnd(captureId, results, timestamp);
-    fuzz_->OnCaptureReady(captureId, results, timestamp);
 }
 
 void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3()

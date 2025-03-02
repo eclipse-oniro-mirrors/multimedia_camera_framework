@@ -52,7 +52,6 @@
 #include "metadata.h"
 #include "output/deferred_photo_proxy_napi.h"
 #include "output/photo_napi.h"
-#include "output/photo_output_napi.h"
 #include "photo_output.h"
 #include "picture.h"
 #include "pixel_map_napi.h"
@@ -760,7 +759,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
         captureId, GetBurstSeqId(captureId));
     std::lock_guard<std::mutex> lock(g_assembleImageMutex);
     auto photoOutput = photoOutput_.promote();
-    if (photoOutput && photoOutput->GetSession()) {
+    if (photoOutput) {
         auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
         CHECK_EXECUTE(location && photoOutput->photoProxyMap_[captureId],
             photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude));
@@ -800,7 +799,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
             int32_t cameraShotType;
             std::string burstKey = "";
             MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary E");
-            photoOutput->GetSession()->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
+            photoOutput->CreateMediaLibrary(std::move(picture), photoOutput->photoProxyMap_[captureId],
                 uri, cameraShotType, burstKey, timestamp);
             MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
             MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
@@ -1003,14 +1002,14 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "failed to new photoProxy");
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     auto photoOutput = photoOutput_.promote();
-    if (photoOutput && photoOutput->GetSession()) {
+    if (photoOutput) {
         auto settings = photoOutput->GetDefaultCaptureSetting();
         if (settings) {
             auto location = make_shared<Location>();
             settings->GetLocation(location);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        photoOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
     }
 }
 
@@ -1317,6 +1316,16 @@ void PhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) con
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION, info);
 }
 
+void PhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG(
+        "OnOfflineDeliveryFinished is called, captureID: %{public}d", captureId);
+    CallbackInfo info;
+    info.captureID = captureId;
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_OFFLINE_DELIVERY_FINISHED, info);
+}
+
 void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
 {
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
@@ -1433,6 +1442,15 @@ void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo& 
     ExecuteCallback(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callbackNapiPara);
 }
 
+void PhotoOutputCallback::ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const
+{
+    napi_value result[ARGS_ONE] = { nullptr };
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+    ExecuteCallback(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callbackNapiPara);
+}
+
 void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
@@ -1460,6 +1478,9 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
             break;
         case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
             ExecuteCaptureStartWithInfoCb(info);
+            break;
+        case PhotoOutputEventType::CAPTURE_OFFLINE_DELIVERY_FINISHED:
+            ExecuteOfflineDeliveryFinishedCb(info);
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
@@ -1770,6 +1791,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableDepthDataDelivery", EnableDepthDataDelivery),
         DECLARE_NAPI_FUNCTION("isAutoAigcPhotoSupported", IsAutoAigcPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableAutoAigcPhoto", EnableAutoAigcPhoto),
+        DECLARE_NAPI_FUNCTION("isOfflineSupported", IsOfflineSupported),
+        DECLARE_NAPI_FUNCTION("enableOffline", EnableOfflinePhoto)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2826,7 +2849,10 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
             &PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener } },
         { CONST_CAPTURE_START_WITH_INFO, {
             &PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener,
-            &PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener } } };
+            &PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener } },
+        { CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, {
+            &PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener,
+            &PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener } } };
     return funMap;
 }
 
@@ -3055,5 +3081,76 @@ napi_value PhotoOutputNapi::EnableAutoAigcPhoto(napi_env env, napi_callback_info
     return result;
 }
 
+void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterOfflineDeliveryFinishedCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback);
+}
+
+napi_value PhotoOutputNapi::IsOfflineSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsOfflineSupported is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsOfflineSupported is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported parse parameter occur error");
+        return nullptr;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    bool isSupported = photoOutputNapi->photoOutput_->IsOfflineSupported();
+    napi_get_boolean(env, isSupported, &result);
+    MEDIA_ERR_LOG("PhotoOutputNapi::IsOfflineSupported is support %{public}d", isSupported);
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableOfflinePhoto(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsOfflineSupported is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("EnableOfflinePhoto is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("EnableOfflinePhoto photoOutputNapi is null!");
+        return result;
+    }
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (session != nullptr && photoOutputNapi->GetPhotoOutput()) {
+        photoOutputNapi->GetPhotoOutput()->EnableOfflinePhoto();
+    }
+    return result;
+}
 } // namespace CameraStandard
 } // namespace OHOS
