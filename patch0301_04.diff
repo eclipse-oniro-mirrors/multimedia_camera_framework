@@ -1,0 +1,1736 @@
++        return STREAM_ROTATE_180;
++    } else if (sensorDegree >= 240 && sensorDegree <= 300) { // Use ROTATION_270 when degree range is [240, 300]
++        return STREAM_ROTATE_270;
++    } else {
++        return sensorRotation;
++    }
++}
++
++int32_t HStreamOperator::CalcRotationDegree(GravityData data)
++{
++    float x = data.x;
++    float y = data.y;
++    float z = data.z;
++    int degree = -1;
++    if ((x * x + y * y) * VALID_INCLINATION_ANGLE_THRESHOLD_COEFFICIENT < z * z) {
++        return degree;
++    }
++    // arccotx = pi / 2 - arctanx, 90 is used to calculate acot(in degree); degree = rad / pi * 180
++    degree = 90 - static_cast<int>(round(atan2(y, -x) / M_PI * 180));
++    // Normalize the degree to the range of 0~360
++    return degree >= 0 ? degree % 360 : degree % 360 + 360;
++}
++#endif
++
++void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
++{
++    if (!isSetMotionPhoto_) {
++        return;
++    }
++    int32_t addMirrorRotation = 0;
++    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
++    if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
++        addMirrorRotation = STREAM_ROTATE_180;
++    }
++    int32_t realRotation = deviceSensorOritation_ + rotation + addMirrorRotation;
++    realRotation = realRotation % ROTATION_360;
++    StartRecord(timestamp, realRotation, captureId);
++}
++
++std::string HStreamOperator::CreateDisplayName()
++{
++    struct tm currentTime;
++    std::string formattedTime = "";
++    if (GetSystemCurrentTime(&currentTime)) {
++        std::stringstream ss;
++        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
++           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1) << std::setw(otherWidth)
++           << std::setfill(placeholder) << currentTime.tm_mday << connector << std::setw(otherWidth)
++           << std::setfill(placeholder) << currentTime.tm_hour << std::setw(otherWidth) << std::setfill(placeholder)
++           << currentTime.tm_min << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec;
++        formattedTime = ss.str();
++    } else {
++        MEDIA_ERR_LOG("Failed to get current time.");
++    }
++    if (lastDisplayName_ == formattedTime) {
++        saveIndex++;
++        formattedTime = formattedTime + connector + std::to_string(saveIndex);
++        MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
++        return formattedTime;
++    }
++    lastDisplayName_ = formattedTime;
++    saveIndex = 0;
++    MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
++    return formattedTime;
++}
++
++std::string HStreamOperator::CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId)
++{
++    struct tm currentTime;
++    std::string formattedTime = "";
++    std::stringstream ss;
++    // a group of burst capture use the same prefix
++    if (imageSeqId == 1) {
++        CHECK_ERROR_RETURN_RET_LOG(!GetSystemCurrentTime(&currentTime), formattedTime, "Failed to get current time.");
++        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
++           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1) << std::setw(otherWidth)
++           << std::setfill(placeholder) << currentTime.tm_mday << connector << std::setw(otherWidth)
++           << std::setfill(placeholder) << currentTime.tm_hour << std::setw(otherWidth) << std::setfill(placeholder)
++           << currentTime.tm_min << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec
++           << connector << burstTag;
++        lastBurstPrefix_ = ss.str();
++        ss << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
++    } else {
++        ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
++    }
++    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
++
++    if (seqId == 1) {
++        ss << coverTag;
++    }
++    formattedTime = ss.str();
++    MEDIA_INFO_LOG("CreateBurstDisplayName is %{private}s", formattedTime.c_str());
++    return formattedTime;
++}
++
++void HStreamOperator::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy, int32_t &cameraShotType,
++    bool &isBursting, std::string &burstKey)
++{
++    cameraPhotoProxy->SetShootingMode(opMode_);
++    int32_t captureId = cameraPhotoProxy->GetCaptureId();
++    std::string imageId = cameraPhotoProxy->GetPhotoId();
++    isBursting = false;
++    bool isCoverPhoto = false;
++    int32_t invalidBurstSeqId = -1;
++    std::list<sptr<HStreamCommon>> captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
++    std::list<sptr<HStreamCommon>> captureStreamsOffline = streamContainerOffline_.GetStreams(StreamType::CAPTURE);
++    captureStreams.insert(captureStreams.end(), captureStreamsOffline.begin(), captureStreamsOffline.end());
++    for (auto& stream : captureStreams) {
++        CHECK_WARNING_CONTINUE_LOG(stream == nullptr, "stream is null");
++        MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
++        auto streamCapture = CastStream<HStreamCapture>(stream);
++        isBursting = streamCapture->IsBurstCapture(captureId);
++        if (isBursting) {
++            burstKey = streamCapture->GetBurstKey(captureId);
++            streamCapture->SetBurstImages(captureId, imageId);
++            isCoverPhoto = streamCapture->IsBurstCover(captureId);
++            int32_t burstSeqId = cameraPhotoProxy->GetBurstSeqId();
++            int32_t imageSeqId = streamCapture->GetCurBurstSeq(captureId);
++            int32_t displaySeqId = (burstSeqId != invalidBurstSeqId) ? burstSeqId : imageSeqId;
++            cameraPhotoProxy->SetDisplayName(CreateBurstDisplayName(imageSeqId, displaySeqId));
++            streamCapture->CheckResetBurstKey(captureId);
++            MEDIA_INFO_LOG("isBursting burstKey:%{public}s isCoverPhoto:%{public}d", burstKey.c_str(), isCoverPhoto);
++            int32_t burstShotType = 3;
++            cameraShotType = burstShotType;
++            cameraPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
++            break;
++        }
++        MEDIA_INFO_LOG("CreateMediaLibrary not Bursting");
++    }
++}
++
++void HStreamOperator::ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
++    std::unordered_map<std::string, std::string> &mapPayload)
++{
++    std::string strBundleName = bundleName;
++    std::string strPid = std::to_string(pid);
++    std::string strTid = std::to_string(tid);
++    std::string strQos = std::to_string(qosLevel);
++    mapPayload["pid"] = strPid;
++    mapPayload[strTid] = strQos;
++    mapPayload["bundleName"] = strBundleName;
++    MEDIA_INFO_LOG("mapPayload pid: %{public}s. tid: %{public}s. Qos: %{public}s",
++        strPid.c_str(), strTid.c_str(), strQos.c_str());
++}
++
++int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
++    int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
++{
++    CAMERA_SYNC_TRACE;
++    constexpr int32_t movingPhotoShotType = 2;
++    constexpr int32_t imageShotType = 0;
++    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
++    MessageParcel data;
++    photoProxy->WriteToParcel(data);
++    photoProxy->CameraFreeBufferHandle();
++    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
++    cameraPhotoProxy->ReadFromParcel(data);
++    cameraPhotoProxy->SetDisplayName(CreateDisplayName());
++    int32_t captureId = cameraPhotoProxy->GetCaptureId();
++    bool isBursting = false;
++    string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
++    CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
++    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
++    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
++    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
++    auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
++    CHECK_ERROR_RETURN_RET_LOG(
++        photoAssetProxy == nullptr, CAMERA_ALLOC_ERROR, "HCaptureSession::CreateMediaLibrary get photoAssetProxy fail");
++    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
++    uri = photoAssetProxy->GetPhotoAssetUri();
++    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
++        MEDIA_INFO_LOG("taskManager setVideoFd start");
++        taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
++    } else {
++        photoAssetProxy.reset();
++    }
++    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
++    return CAMERA_OK;
++}
++
++static std::unordered_map<std::string, float> exifOrientationDegree = {
++    {"Top-left", 0},
++    {"Top-right", 90},
++    {"Bottom-right", 180},
++    {"Right-top", 90},
++    {"Left-bottom", 270},
++};
++
++inline float TransExifOrientationToDegree(const std::string& orientation)
++{
++    float degree = .0;
++    if (exifOrientationDegree.count(orientation)) {
++        degree = exifOrientationDegree[orientation];
++    }
++    return degree;
++}
++
++inline void RotatePixelMap(std::shared_ptr<Media::PixelMap> pixelMap, const std::string& exifOrientation)
++{
++    float degree = TransExifOrientationToDegree(exifOrientation);
++    if (pixelMap) {
++        MEDIA_INFO_LOG("RotatePixelMap degree is %{public}f", degree);
++        pixelMap->rotate(degree);
++    } else {
++        MEDIA_ERR_LOG("RotatePixelMap Failed pixelMap is nullptr");
++    }
++}
++
++std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
++{
++    std::string orientation = "";
++    if (exifData != nullptr) {
++        exifData->GetValue("Orientation", orientation);
++        std::string defalutExifOrientation = "1";
++        exifData->SetValue("Orientation", defalutExifOrientation);
++        MEDIA_INFO_LOG("GetExifOrientation orientation:%{public}s", orientation.c_str());
++        exifData->RemoveExifThumbnail();
++        MEDIA_INFO_LOG("RemoveExifThumbnail");
++    } else {
++        MEDIA_ERR_LOG("GetExifOrientation exifData is nullptr");
++    }
++    return orientation;
++}
++
++void RotatePicture(std::shared_ptr<Media::Picture> picture)
++{
++    CAMERA_SYNC_TRACE;
++    std::string orientation = GetAndSetExifOrientation(
++        reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
++    RotatePixelMap(picture->GetMainPixel(), orientation);
++    auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
++    if (gainMap) {
++        RotatePixelMap(gainMap->GetContentPixel(), orientation);
++    }
++    auto depthMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::DEPTH_MAP);
++    if (depthMap) {
++        RotatePixelMap(depthMap->GetContentPixel(), orientation);
++    }
++}
++
++std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
++    std::shared_ptr<Media::Picture> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
++    std::string& uri)
++{
++    CAMERA_SYNC_TRACE;
++    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");
++    sptr<HStreamCapture> captureStream = nullptr;
++    std::list<sptr<HStreamCommon>> captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
++    std::list<sptr<HStreamCommon>> captureStreamsOffline = streamContainerOffline_.GetStreams(StreamType::CAPTURE);
++    captureStreams.insert(captureStreams.end(), captureStreamsOffline.begin(), captureStreamsOffline.end());
++    for (auto& stream : captureStreams) {
++        captureStream = CastStream<HStreamCapture>(stream);
++        if (captureStream != nullptr) {
++            break;
++        }
++    }
++    CHECK_ERROR_RETURN_RET_LOG(captureStream == nullptr, nullptr, "stream is null");
++    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = nullptr;
++    std::thread taskThread;
++    if (isBursting) {
++        int32_t cameraShotType = 3;
++        photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, IPCSkeleton::GetCallingUid());
++    } else {
++        photoAssetProxy = captureStream->GetPhotoAssetInstance(captureId);
++    }
++    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, nullptr, "photoAssetProxy is null");
++    if (!isBursting && picturePtr) {
++        MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture E");
++        taskThread = std::thread(RotatePicture, picturePtr);
++    }
++    bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
++    if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
++        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
++        string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
++        CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
++        photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
++        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
++    }
++    uri = photoAssetProxy->GetPhotoAssetUri();
++    if (!isBursting && taskThread.joinable()) {
++        taskThread.join();
++        MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture X");
++    }
++    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage E");
++    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(
++        photoAssetProxy->GetUserId(), uri, picturePtr);
++    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage X");
++    return photoAssetProxy;
++}
++
++int32_t HStreamOperator::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
++    std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
++{
++    CAMERA_SYNC_TRACE;
++    const int MAX_RETRIES = 7;
++    int32_t tempPid = getpid();
++    int32_t tempTid = gettid();
++    std::unordered_map<std::string, std::string> mapPayload;
++    ConfigPayload(tempPid, tempTid, "camera_service", MAX_RETRIES, mapPayload);
++    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
++        OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE, 0, mapPayload);
++
++    constexpr int32_t movingPhotoShotType = 2;
++    constexpr int32_t imageShotType = 0;
++    cameraShotType = isSetMotionPhoto_ ? movingPhotoShotType : imageShotType;
++    MessageParcel data;
++    photoProxy->WriteToParcel(data);
++    photoProxy->CameraFreeBufferHandle();
++    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
++    cameraPhotoProxy->ReadFromParcel(data);
++    cameraPhotoProxy->SetDisplayName(CreateDisplayName());
++    int32_t captureId = cameraPhotoProxy->GetCaptureId();
++    bool isBursting = false;
++    CameraReportDfxUtils::GetInstance()->SetPrepareProxyEndInfo(captureId);
++    CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
++    SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
++    std::shared_ptr<Media::Picture> picturePtr(picture.release());
++    std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
++        ProcessPhotoProxy(captureId, picturePtr, isBursting, cameraPhotoProxy, uri);
++    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
++    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
++        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
++        if (taskManager_) {
++            taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
++        }
++    } else {
++        photoAssetProxy.reset();
++    }
++    CameraReportDfxUtils::GetInstance()->SetAddProxyEndInfo(captureId);
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnCaptureStarted captureId:%{public}d, streamIds:%{public}s", captureId,
++        Container2String(streamIds.begin(), streamIds.end()).c_str());
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& streamId : streamIds) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
++        if (curStream == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureStarted StreamId: %{public}d not found", streamId);
++            return CAMERA_INVALID_ARG;
++        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
++            CastStream<HStreamRepeat>(curStream)->OnFrameStarted();
++            CameraReportUtils::GetInstance().SetOpenCamPerfEndInfo();
++            CameraReportUtils::GetInstance().SetModeChangePerfEndInfo();
++            CameraReportUtils::GetInstance().SetSwitchCamPerfEndInfo();
++        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
++            CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId);
++        }
++    }
++    return CAMERA_OK;
++}
++
++void HStreamOperator::StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId)
++{
++    if (isSetMotionPhoto_) {
++        taskManager_->SubmitTask([this, timestamp, rotation, captureId]() {
++            this->StartOnceRecord(timestamp, rotation, captureId);
++        });
++    }
++}
++
++SessionDrainImageCallback::SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
++                                                     wptr<MovingPhotoListener> listener,
++                                                     wptr<MovingPhotoVideoCache> cache,
++                                                     uint64_t timestamp,
++                                                     int32_t rotation,
++                                                     int32_t captureId)
++    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), timestamp_(timestamp),
++      rotation_(rotation), captureId_(captureId)
++{
++}
++
++SessionDrainImageCallback::~SessionDrainImageCallback()
++{
++    MEDIA_INFO_LOG("~SessionDrainImageCallback enter");
++}
++
++void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
++{
++    MEDIA_INFO_LOG("OnDrainImage enter");
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        frameCacheList_.push_back(frame);
++    }
++    auto videoCache = videoCache_.promote();
++    if (frame->IsIdle() && videoCache) {
++        videoCache->CacheFrame(frame);
++    } else if (frame->IsFinishCache() && videoCache) {
++        videoCache->OnImageEncoded(frame, frame->IsEncoded());
++    } else if (frame->IsReadyConvert()) {
++        MEDIA_DEBUG_LOG("frame is ready convert");
++    } else {
++        MEDIA_INFO_LOG("videoCache and frame is not useful");
++    }
++}
++
++void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
++{
++    MEDIA_INFO_LOG("OnDrainImageFinish enter");
++    auto videoCache = videoCache_.promote();
++    if (videoCache) {
++        std::lock_guard<std::mutex> lock(mutex_);
++        videoCache_->GetFrameCachedResult(
++            frameCacheList_,
++            [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
++                         uint64_t timestamp,
++                         int32_t rotation,
++                         int32_t captureId) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation, captureId); },
++            timestamp_,
++            rotation_,
++            captureId_);
++    }
++    auto listener = listener_.promote();
++    CHECK_EXECUTE(listener && isFinished, listener->RemoveDrainImageManager(this));
++}
++
++void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId)
++{
++    MEDIA_INFO_LOG("StartOnceRecord enter");
++    // frameCacheList only used by now thread
++    std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
++    std::vector<sptr<FrameRecord>> frameCacheList;
++    sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
++        livephotoListener_, videoCache_, timestamp, rotation, captureId);
++    livephotoListener_->ClearCache(timestamp);
++    livephotoListener_->DrainOutImage(imageCallback);
++    MEDIA_INFO_LOG("StartOnceRecord end");
++}
++
++int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
++{
++    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
++    uint32_t major;
++    uint32_t minor;
++    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
++    std::lock_guard<std::mutex> lock(opMutex_);
++    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
++    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = streamOperator_;
++    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
++        "HStreamOperator::CreateStreams GetStreamOperator is null!");
++    // get higher streamOperator version
++    streamOperator_->GetVersion(major, minor);
++    MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
++    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
++        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
++        if (streamOperatorV1_1 == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::CreateStreams IStreamOperator cast to V1_1 error");
++            streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
++        }
++    }
++    if (streamOperatorV1_1 != nullptr) {
++        MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1");
++        for (auto streamInfo : streamInfos) {
++            if (streamInfo.extendedStreamInfos.size() > 0) {
++                MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1 type %{public}d",
++                    streamInfo.extendedStreamInfos[0].type);
++            }
++        }
++        hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
++    } else {
++        MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_0");
++        std::vector<StreamInfo> streamInfos_V1_0;
++        for (auto streamInfo : streamInfos) {
++            streamInfos_V1_0.emplace_back(streamInfo.v1_0);
++        }
++        hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
++    }
++    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
++        MEDIA_ERR_LOG("HStreamOperator::CreateStreams(), Failed to commit %{public}d", hdiRc);
++        CameraReportUtils::ReportCameraError(
++            "HStreamOperator::CreateStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
++        std::vector<int32_t> streamIds;
++        for (auto& streamInfo : streamInfos) {
++            streamIds.emplace_back(streamInfo.v1_0.streamId_);
++        }
++        CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
++            streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
++            "HStreamOperator::CreateStreams(), Failed to release streams");
++    }
++    for (auto& info : streamInfos) {
++        MEDIA_INFO_LOG("HStreamOperator::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
++    }
++    return HdiToServiceError(hdiRc);
++}
++
++int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
++{
++    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
++    CHECK_ERROR_RETURN_RET_LOG(streamOperator_ == nullptr, CAMERA_UNKNOWN_ERROR,
++        "HStreamOperator::UpdateStreamInfos GetStreamOperator is null!");
++    uint32_t major;
++    uint32_t minor;
++    streamOperator_->GetVersion(major, minor);
++    MEDIA_INFO_LOG("UpdateStreamInfos: streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
++    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
++        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator_);
++        if (streamOperatorV1_2 == nullptr) {
++            MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos IStreamOperator cast to V1_2 error");
++            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator_.GetRefPtr());
++        }
++    }
++    CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
++    if (streamOperatorV1_2 != nullptr) {
++        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos streamOperator V1_2");
++        hdiRc = (CamRetCode)(streamOperatorV1_2->UpdateStreams(streamInfos));
++    } else {
++        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos failed, streamOperator V1_2 is null.");
++        return CAMERA_UNKNOWN_ERROR;
++    }
++    return HdiToServiceError(hdiRc);
++}
++
++int32_t HStreamOperator::OnCaptureStarted_V1_2(
++    int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnCaptureStarted_V1_2 captureId:%{public}d", captureId);
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& captureInfo : infos) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
++        if (curStream == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureStarted_V1_2 StreamId: %{public}d not found."
++                          " exposureTime: %{public}u",
++                captureInfo.streamId_, captureInfo.exposureTime_);
++            return CAMERA_INVALID_ARG;
++        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
++            MEDIA_DEBUG_LOG("HStreamOperator::OnCaptureStarted_V1_2 StreamId: %{public}d."
++                            " exposureTime: %{public}u",
++                captureInfo.streamId_, captureInfo.exposureTime_);
++            CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId, captureInfo.exposureTime_);
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnCaptureEnded");
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& captureInfo : infos) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
++        if (curStream == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureEnded StreamId: %{public}d not found."
++                          " Framecount: %{public}d",
++                captureInfo.streamId_, captureInfo.frameCount_);
++            return CAMERA_INVALID_ARG;
++        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
++            CastStream<HStreamRepeat>(curStream)->OnFrameEnded(captureInfo.frameCount_);
++        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
++            CastStream<HStreamCapture>(curStream)->OnCaptureEnded(captureId, captureInfo.frameCount_);
++            if (mlastCaptureId == captureId && streamContainerOffline_.Size() > 0) {
++                HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
++            }
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnCaptureEndedExt(int32_t captureId,
++    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnCaptureEndedExt captureId:%{public}d", captureId);
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& captureInfo : infos) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
++        if (curStream == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureEndedExt StreamId: %{public}d not found."
++                          " Framecount: %{public}d",
++                captureInfo.streamId_, captureInfo.frameCount_);
++            return CAMERA_INVALID_ARG;
++        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
++            CastStream<HStreamRepeat>(curStream)->OnFrameEnded(captureInfo.frameCount_);
++            CaptureEndedInfoExt extInfo;
++            extInfo.streamId = captureInfo.streamId_;
++            extInfo.frameCount = captureInfo.frameCount_;
++            extInfo.isDeferredVideoEnhancementAvailable = captureInfo.isDeferredVideoEnhancementAvailable_;
++            extInfo.videoId = captureInfo.videoId_;
++            MEDIA_INFO_LOG("HStreamOperator::OnCaptureEndedExt captureId:%{public}d videoId:%{public}s "
++                           "isDeferredVideo:%{public}d",
++                captureId, extInfo.videoId.c_str(), extInfo.isDeferredVideoEnhancementAvailable);
++            CastStream<HStreamRepeat>(curStream)->OnDeferredVideoEnhancementInfo(extInfo);
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnCaptureError");
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& errInfo : infos) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(errInfo.streamId_);
++        if (curStream == nullptr) {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureError StreamId: %{public}d not found."
++                          " Error: %{public}d",
++                errInfo.streamId_, errInfo.error_);
++            return CAMERA_INVALID_ARG;
++        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
++            CastStream<HStreamRepeat>(curStream)->OnFrameError(errInfo.error_);
++        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
++            auto captureStream = CastStream<HStreamCapture>(curStream);
++            captureStream->rotationMap_.Erase(captureId);
++            captureStream->OnCaptureError(captureId, errInfo.error_);
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnFrameShutter(
++    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnFrameShutter ts is:%{public}" PRIu64, timestamp);
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& streamId : streamIds) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
++        if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
++            auto captureStream = CastStream<HStreamCapture>(curStream);
++            int32_t rotation = 0;
++            captureStream->rotationMap_.Find(captureId, rotation);
++            StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId);
++            captureStream->OnFrameShutter(captureId, timestamp);
++        } else {
++            MEDIA_ERR_LOG("HStreamOperator::OnFrameShutter StreamId: %{public}d not found", streamId);
++            return CAMERA_INVALID_ARG;
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnFrameShutterEnd(
++    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
++{
++    MEDIA_INFO_LOG("HStreamOperator::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& streamId : streamIds) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
++        if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
++            auto captureStream = CastStream<HStreamCapture>(curStream);
++            captureStream->rotationMap_.Erase(captureId);
++            captureStream->OnFrameShutterEnd(captureId, timestamp);
++            mlastCaptureId = captureId;
++        } else {
++            MEDIA_ERR_LOG("HStreamOperator::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
++            return CAMERA_INVALID_ARG;
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnCaptureReady(
++    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
++{
++    MEDIA_DEBUG_LOG("HStreamOperator::OnCaptureReady");
++    std::lock_guard<std::mutex> lock(cbMutex_);
++    for (auto& streamId : streamIds) {
++        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
++        if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
++            CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
++        } else {
++            MEDIA_ERR_LOG("HStreamOperator::OnCaptureReady StreamId: %{public}d not found", streamId);
++            return CAMERA_INVALID_ARG;
++        }
++    }
++    return CAMERA_OK;
++}
++
++int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& result)
++{
++    MEDIA_DEBUG_LOG("HStreamOperator::OnResult");
++    sptr<HStreamCommon> curStream;
++    const int32_t metaStreamId = -1;
++    if (streamId == metaStreamId) {
++        curStream = GetStreamByStreamID(streamId);
++    } else {
++        curStream = GetHdiStreamByStreamID(streamId);
++    }
++    if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::METADATA)) {
++        CastStream<HStreamMetadata>(curStream)->OnMetaResult(streamId, result);
++    } else {
++        MEDIA_ERR_LOG("HStreamOperator::OnResult StreamId: %{public}d is null or not Not adapted", streamId);
++        return CAMERA_INVALID_ARG;
++    }
++    return CAMERA_OK;
++}
++
++
++bool StreamContainer::AddStream(sptr<HStreamCommon> stream)
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    auto& list = streams_[stream->GetStreamType()];
++    auto it = std::find_if(list.begin(), list.end(), [stream](auto item) { return item == stream; });
++    if (it == list.end()) {
++        list.emplace_back(stream);
++        return true;
++    }
++    return false;
++}
++
++bool StreamContainer::RemoveStream(sptr<HStreamCommon> stream)
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    auto& list = streams_[stream->GetStreamType()];
++    auto it = std::find_if(list.begin(), list.end(), [stream](auto item) { return item == stream; });
++    CHECK_ERROR_RETURN_RET(it == list.end(), false);
++    list.erase(it);
++    return true;
++}
++
++sptr<HStreamCommon> StreamContainer::GetStream(int32_t streamId)
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    for (auto& pair : streams_) {
++        for (auto& stream : pair.second) {
++            CHECK_ERROR_RETURN_RET(stream->GetFwkStreamId() == streamId, stream);
++        }
++    }
++    return nullptr;
++}
++
++sptr<HStreamCommon> StreamContainer::GetHdiStream(int32_t streamId)
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    for (auto& pair : streams_) {
++        for (auto& stream : pair.second) {
++            CHECK_ERROR_RETURN_RET(stream->GetHdiStreamId() == streamId, stream);
++        }
++    }
++    return nullptr;
++}
++
++void StreamContainer::Clear()
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    streams_.clear();
++}
++
++size_t StreamContainer::Size()
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    size_t totalSize = 0;
++    for (auto& pair : streams_) {
++        totalSize += pair.second.size();
++    }
++    return totalSize;
++}
++
++std::list<sptr<HStreamCommon>> StreamContainer::GetStreams(const StreamType streamType)
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    std::list<sptr<HStreamCommon>> totalOrderedStreams;
++    for (auto& stream : streams_[streamType]) {
++        auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
++            [&stream](auto& it) { return stream->GetFwkStreamId() <= it->GetFwkStreamId(); });
++        totalOrderedStreams.emplace(insertPos, stream);
++    }
++    return totalOrderedStreams;
++}
++
++std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
++{
++    std::lock_guard<std::mutex> lock(streamsLock_);
++    std::list<sptr<HStreamCommon>> totalOrderedStreams;
++    for (auto& pair : streams_) {
++        for (auto& stream : pair.second) {
++            auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
++                [&stream](auto& it) { return stream->GetFwkStreamId() <= it->GetFwkStreamId(); });
++            totalOrderedStreams.emplace(insertPos, stream);
++        }
++    }
++    return totalOrderedStreams;
++}
++
++MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
++    shared_ptr<FixedSizeList<MetaElementType>> metaCache, uint32_t preCacheFrameCount, uint32_t postCacheFrameCount)
++    : movingPhotoSurfaceWrapper_(surfaceWrapper),
++      metaSurface_(metaSurface),
++      metaCache_(metaCache),
++      recorderBufferQueue_("videoBuffer", preCacheFrameCount),
++      postCacheFrameCount_(postCacheFrameCount)
++{
++    shutterTime_ = 0;
++}
++
++MovingPhotoListener::~MovingPhotoListener()
++{
++    recorderBufferQueue_.SetActive(false);
++    metaCache_->clear();
++    recorderBufferQueue_.Clear();
++    MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
++}
++
++void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback> callback)
++{
++    callbackMap_.Erase(callback);
++    MEDIA_INFO_LOG("RemoveDrainImageManager drainImageManagerVec_ Start %d", callbackMap_.Size());
++}
++
++void MovingPhotoListener::ClearCache(uint64_t timestamp)
++{
++    CHECK_ERROR_RETURN(!isNeededClear_.load());
++    MEDIA_INFO_LOG("ClearCache enter");
++    shutterTime_ = static_cast<int64_t>(timestamp);
++    while (!recorderBufferQueue_.Empty()) {
++        sptr<FrameRecord> popFrame = recorderBufferQueue_.Front();
++        MEDIA_DEBUG_LOG("surface_ release surface buffer %{public}llu, timestamp %{public}llu",
++            (long long unsigned)popFrame->GetTimeStamp(), (long long unsigned)timestamp);
++        if (popFrame->GetTimeStamp() > shutterTime_) {
++            isNeededClear_ = false;
++            MEDIA_INFO_LOG("ClearCache end");
++            return;
++        }
++        recorderBufferQueue_.Pop();
++        popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
++        popFrame->ReleaseMetaBuffer(metaSurface_, true);
++    }
++    // isNeededPop_ = true;
++}
++
++void MovingPhotoListener::SetClearFlag()
++{
++    MEDIA_INFO_LOG("need clear cache!");
++    isNeededClear_ = true;
++}
++
++void MovingPhotoListener::StopDrainOut()
++{
++    MEDIA_INFO_LOG("StopDrainOut drainImageManagerVec_ Start %d", callbackMap_.Size());
++    callbackMap_.Iterate([](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
++        manager->DrainFinish(false);
++    });
++    callbackMap_.Clear();
++}
++
++void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform)
++{
++    MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
++    if (recorderBufferQueue_.Full()) {
++        MEDIA_DEBUG_LOG("surface_ release surface buffer");
++        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
++        popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
++        popFrame->ReleaseMetaBuffer(metaSurface_, true);
++        MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
++            popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
++    }
++    MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
++        buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
++    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
++    CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
++    if (isNeededClear_ && isNeededPop_) {
++        if (timestamp < shutterTime_) {
++            frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
++            MEDIA_INFO_LOG("Drop this frame in cache");
++            return;
++        } else {
++            isNeededClear_ = false;
++            isNeededPop_ = false;
++            MEDIA_INFO_LOG("ClearCache end");
++        }
++    }
++    recorderBufferQueue_.Push(frameRecord);
++    auto metaPair = metaCache_->find_if([timestamp](const MetaElementType& value) {
++        return value.first == timestamp;
++    });
++    if (metaPair.has_value()) {
++        MEDIA_DEBUG_LOG("frame has meta");
++        frameRecord->SetMetaBuffer(metaPair.value().second);
++    }
++    vector<sptr<SessionDrainImageCallback>> callbacks;
++    callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
++        sptr<DrainImageManager> manager) {
++        callbacks.push_back(callback);
++    });
++    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
++        sptr<DrainImageManager> drainImageManager;
++        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
++            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
++            drainImageManager->DrainImage(frameRecord);
++        }
++    }
++}
++
++void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
++{
++    sptr<DrainImageManager> drainImageManager =
++        new DrainImageManager(drainImageCallback, recorderBufferQueue_.Size() + postCacheFrameCount_);
++    {
++        MEDIA_INFO_LOG("DrainOutImage enter %{public}zu", recorderBufferQueue_.Size());
++        callbackMap_.Insert(drainImageCallback, drainImageManager);
++    }
++    // Convert recorderBufferQueue_ to a vector
++    std::vector<sptr<FrameRecord>> frameList = recorderBufferQueue_.GetAllElements();
++    CHECK_EXECUTE(!frameList.empty(), frameList.back()->SetCoverFrame());
++    std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
++    for (const auto& frame : frameList) {
++        MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
++        drainImageManager->DrainImage(frame);
++    }
++}
++
++void MovingPhotoMetaListener::OnBufferAvailable()
++{
++    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
++    CHECK_ERROR_RETURN_LOG(!surface_, "streamRepeat surface is null");
++    int64_t timestamp;
++    OHOS::Rect damage;
++    sptr<SurfaceBuffer> buffer;
++    sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
++    SurfaceError surfaceRet = surface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
++    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to acquire meta surface buffer");
++    surfaceRet = surface_->DetachBufferFromQueue(buffer);
++    CHECK_ERROR_RETURN_LOG(surfaceRet != SURFACE_ERROR_OK, "Failed to detach meta buffer. %{public}d", surfaceRet);
++    metaCache_->add({timestamp, buffer});
++}
++
++MovingPhotoMetaListener::MovingPhotoMetaListener(sptr<Surface> surface,
++    shared_ptr<FixedSizeList<MetaElementType>> metaCache)
++    : surface_(surface), metaCache_(metaCache)
++{
++}
++
++MovingPhotoMetaListener::~MovingPhotoMetaListener()
++{
++    MEDIA_ERR_LOG("HStreamRepeat::MovingPhotoMetaListener ~ end");
++}
++
++} // namespace CameraStandard
++} // namespace OHOS
+diff --git a/services/camera_service/src/hstream_operator_manager.cpp b/services/camera_service/src/hstream_operator_manager.cpp
+new file mode 100755
+index 00000000..44b95a78
+--- /dev/null
++++ b/services/camera_service/src/hstream_operator_manager.cpp
+@@ -0,0 +1,99 @@
++/*
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_operator_manager.h"
++#include "hstream_operator.h"
++#include "camera_dynamic_loader.h"
++#include "camera_log.h"
++
++namespace OHOS {
++namespace CameraStandard {
++sptr<HStreamOperatorManager> HStreamOperatorManager::streamOperatorManager_;
++std::mutex HStreamOperatorManager::instanceMutex_;
++
++HStreamOperatorManager::HStreamOperatorManager() {}
++
++HStreamOperatorManager::~HStreamOperatorManager()
++{
++    HStreamOperatorManager::streamOperatorManager_ = nullptr;
++}
++
++sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()
++{
++    if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
++        std::unique_lock<std::mutex> lock(instanceMutex_);
++        if (HStreamOperatorManager::streamOperatorManager_ == nullptr) {
++            MEDIA_INFO_LOG("Initializing stream operator manager instance");
++            HStreamOperatorManager::streamOperatorManager_ = new HStreamOperatorManager();
++        }
++    }
++    return HStreamOperatorManager::streamOperatorManager_;
++}
++
++void HStreamOperatorManager::AddStreamOperator(sptr<HStreamOperator> hStreamOperator)
++{
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator start");
++    int32_t streamOperatorId = GenerateStreamOperatorId();
++    streamOperatorManagerMap_[streamOperatorId] = hStreamOperator;
++    hStreamOperator->SetStreamOperatorId(streamOperatorId);
++    MEDIA_INFO_LOG("HStreamOperatorManager::AddStreamOperator end hStreamOperatorId is %{public}d", streamOperatorId);
++    return;
++}
++
++void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
++{
++    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    if (hStreamOperatorId < 0) {
++        return;
++    }
++    auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
++    if (streamOperator == streamOperatorManagerMap_.end()) {
++        return;
++    }
++    streamOperatorManagerMap_.erase(hStreamOperatorId);
++    if (streamOperatorManagerMap_.size() == 0) {
++        CameraDynamicLoader::FreeDynamiclib(MEDIA_LIB_SO);
++    }
++    MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator end");
++    return;
++}
++
++void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
++{
++    std::lock_guard<std::mutex> lock(mapMutex_);
++    MEDIA_INFO_LOG("HStreamOperatorManager::UpdateStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
++    auto StreamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
++    if (StreamOperator == streamOperatorManagerMap_.end()) {
++        return;
++    }
++}
++
++int32_t HStreamOperatorManager::GetOfflineOutputSize()
++{
++    MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport size is %{public}zu", streamOperatorManagerMap_.size());
++    int32_t offlineOutputCount = 0;
++    for (auto streamOperator : streamOperatorManagerMap_) {
++        int32_t tempSize = (streamOperator.second)->GetOfflineOutptSize();
++        offlineOutputCount = offlineOutputCount + tempSize;
++    }
++    if (offlineOutputCount > 2) { // 2 is the threshold of the statistics
++        MEDIA_INFO_LOG("HStreamOperatorManager::DfxReport offlineOutputCount is %{public}d", offlineOutputCount);
++    }
++    return offlineOutputCount;
++}
++} // namespace CameraStandard
++} // namespace OHOS
+diff --git a/test/BUILD.gn b/test/BUILD.gn
+index ad9cede0..9571726f 100644
+--- a/test/BUILD.gn
++++ b/test/BUILD.gn
+@@ -64,6 +64,7 @@ group("camera_fuzz_test") {
+     "fuzztest/hstreammetadatacallbackstub_fuzzer:fuzztest",
+     "fuzztest/hstreammetadatastub_fuzzer:fuzztest",
+     "fuzztest/hstreamrepeat_fuzzer:fuzztest",
++    "fuzztest/hstreamoperator_fuzzer:fuzztest",
+     "fuzztest/lightscansession_fuzzer:fuzztest",
+     "fuzztest/mediamanager_fuzzer:fuzztest",
+     "fuzztest/metadataoutput_fuzzer:fuzztest",
+diff --git a/test/fuzztest/cameradevice_fuzzer/camera_device_fuzzer.cpp b/test/fuzztest/cameradevice_fuzzer/camera_device_fuzzer.cpp
+index a3a7f9f6..d101517c 100644
+--- a/test/fuzztest/cameradevice_fuzzer/camera_device_fuzzer.cpp
++++ b/test/fuzztest/cameradevice_fuzzer/camera_device_fuzzer.cpp
+@@ -153,11 +153,8 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
+         fuzzCameraDevice->UpdateSetting(ability);
+         auto out = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+         fuzzCameraDevice->GetStatus(ability, out);
+-        std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
+-        fuzzCameraDevice->UpdateStreams(streamInfos);
+         MessageParcel data;
+         data.WriteRawData(rawData, size);
+-        fuzzCameraDevice->CreateAndCommitStreams(streamInfos, ability, data.ReadInt32());
+         vector<uint8_t> result;
+         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(ability, result);
+         fuzzCameraDevice->OnResult(data.ReadUint64(), result);
+@@ -176,7 +173,6 @@ void CameraDeviceFuzzTest2Case1(uint8_t *rawData, size_t size)
+         fuzzCameraDevice->GetDeviceAbility();
+         fuzzCameraDevice->GetCameraType();
+         fuzzCameraDevice->GetCameraId();
+-        fuzzCameraDevice->GetStreamOperator();
+     }
+ }
+ 
+@@ -201,29 +197,6 @@ void CameraDeviceFuzzTest2Case2(uint8_t *rawData, size_t size)
+     fuzzCameraDevice->OpenSecureCamera(&secureSeqId);
+ }
+ 
+-void CameraDeviceFuzzTest2Case3(uint8_t *rawData, size_t size)
+-{
+-    // 运行会出错
+-    MessageParcel data;
+-    data.WriteRawData(rawData, size);
+-    if (fuzzCameraDevice) {
+-        vector<int32_t> streamIds{data.ReadInt32()};
+-        fuzzCameraDevice->OnFrameShutter(data.ReadInt32(), streamIds, data.ReadUint64());
+-        fuzzCameraDevice->OnFrameShutterEnd(data.ReadInt32(), streamIds, data.ReadUint64());
+-        fuzzCameraDevice->OnCaptureReady(data.ReadInt32(), streamIds, data.ReadUint64());
+-        vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos{{data.ReadInt32(), data.ReadInt32()}};
+-        fuzzCameraDevice->OnCaptureStarted_V1_2(data.ReadInt32(), infos);
+-        vector<CaptureEndedInfo> endedInfos{{data.ReadInt32(), data.ReadInt32()}};
+-        fuzzCameraDevice->OnCaptureEnded(data.ReadInt32(), endedInfos);
+-        vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> endedInfosExt;
+-        fuzzCameraDevice->OnCaptureEndedExt(data.ReadInt32(), endedInfosExt);
+-        auto err = static_cast<OHOS::HDI::Camera::V1_0::StreamError>(data.ReadInt32());
+-        vector<CaptureErrorInfo> errorInfos{{data.ReadInt32(), err}};
+-        fuzzCameraDevice->OnCaptureError(data.ReadInt32(), errorInfos);
+-        fuzzCameraDevice->OnCaptureStarted(data.ReadInt32(), streamIds);
+-    }
+-}
+-
+ void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
+ {
+     if (rawData == nullptr || size < NUM_TWO) {
+@@ -238,8 +211,6 @@ void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
+         fuzzCameraDevice->NotifyCameraStatus(data.ReadInt32());
+         fuzzCameraDevice->RemoveResourceWhenHostDied();
+         fuzzCameraDevice->NotifyCameraSessionStatus(data.ReadBool());
+-        std::vector<int32_t> releaseStreamIds;
+-        fuzzCameraDevice->ReleaseStreams(releaseStreamIds);
+         CameraDeviceFuzzTest2Case1(rawData, size);
+         fuzzCameraDevice->ResetDeviceSettings();
+         fuzzCameraDevice->SetDeviceMuteMode(data.ReadBool());
+diff --git a/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp b/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
+index a5e6c9f6..c1147a41 100644
+--- a/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
++++ b/test/fuzztest/capturesession_fuzzer/capture_session_fuzzer.cpp
+@@ -137,7 +137,6 @@ void Test(uint8_t *rawData, size_t size)
+     TestFocus(session, rawData, size);
+     TestZoom(session, rawData, size);
+     TestStabilization(session, rawData, size);
+-    TestCreateMediaLibrary(session, rawData, size);
+     TestProcess(session, rawData, size);
+     TestAperture(session, rawData, size);
+     TestBeauty(session, rawData, size);
+diff --git a/test/fuzztest/cloudenhancesession_fuzzer/cloud_enhance_session_fuzzer.cpp b/test/fuzztest/cloudenhancesession_fuzzer/cloud_enhance_session_fuzzer.cpp
+index f2b613b4..48c18f10 100644
+--- a/test/fuzztest/cloudenhancesession_fuzzer/cloud_enhance_session_fuzzer.cpp
++++ b/test/fuzztest/cloudenhancesession_fuzzer/cloud_enhance_session_fuzzer.cpp
+@@ -164,7 +164,6 @@ void Test(uint8_t *rawData, size_t size)
+     auto session = manager->CreateCaptureSession(g_sceneMode);
+     CHECK_ERROR_RETURN_LOG(!manager, "CloudEnhanceSessionFuzzer: CreateCaptureSession Error");
+     TestSession(session, rawData, size);
+-    TestCreateMediaLibrary(session, rawData, size);
+     session->EnableAutoCloudImageEnhancement(data.ReadBool());
+     session->Release();
+     session->Stop();
+diff --git a/test/fuzztest/hcameradevice_fuzzer/hcamera_device_fuzzer.cpp b/test/fuzztest/hcameradevice_fuzzer/hcamera_device_fuzzer.cpp
+index 3cec94d8..c826e031 100644
+--- a/test/fuzztest/hcameradevice_fuzzer/hcamera_device_fuzzer.cpp
++++ b/test/fuzztest/hcameradevice_fuzzer/hcamera_device_fuzzer.cpp
+@@ -110,8 +110,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1()
+     fuzz_->DisableResult(results);
+     fuzz_->UpdateDeviceOpenLifeCycleSettings(settings);
+     fuzz_->OpenDevice(true);
+-    fuzz_->InitStreamOperator();
+-    fuzz_->ReleaseStreams(results);
+     fuzz_->CheckOnResultData(settings);
+     fuzz_->ResetDeviceOpenLifeCycleSettings();
+ }
+@@ -132,34 +130,12 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2()
+     fuzz_->HandlePrivacyBeforeOpenDevice();
+     fuzz_->Release();
+     fuzz_->OpenDevice(true);
+-    fuzz_->InitStreamOperator();
+-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
+-    fuzz_->CreateStreams(streamInfos);
+     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+     settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+     fuzz_->ReportMetadataDebugLog(settings);
+     int32_t operationMode = GetData<int32_t>();
+-    fuzz_->CommitStreams(settings, operationMode);
+-    fuzz_->UpdateStreams(streamInfos);
+-    fuzz_->CreateAndCommitStreams(streamInfos, settings, operationMode);
+     std::set<std::string> conflicting = {"fuzz1", "fuzz2"};
+     fuzz_->GetCameraResourceCost(operationMode, conflicting);
+-    const std::vector<int32_t> streamIds;
+-    int32_t captureId = GetData<int32_t>();
+-    fuzz_->OnCaptureStarted(captureId, streamIds);
+-    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos;
+-    fuzz_->OnCaptureStarted_V1_2(captureId, infos);
+-    const std::vector<CaptureEndedInfo> infos_OnCaptureEnded;
+-    fuzz_->OnCaptureEnded(captureId, infos_OnCaptureEnded);
+-    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> infos_OnCaptureEndedExt;
+-    fuzz_->OnCaptureEndedExt(captureId, infos_OnCaptureEndedExt);
+-    const std::vector<CaptureErrorInfo> infos_OnCaptureError;
+-    fuzz_->OnCaptureError(captureId, infos_OnCaptureError);
+-    std::vector<int32_t> results = {GetData<uint32_t>()};
+-    uint64_t timestamp = GetData<uint64_t>();
+-    fuzz_->OnFrameShutter(captureId, results, timestamp);
+-    fuzz_->OnFrameShutterEnd(captureId, results, timestamp);
+-    fuzz_->OnCaptureReady(captureId, results, timestamp);
+ }
+ 
+ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3()
+diff --git a/test/fuzztest/hcapturesession_fuzzer/hcapture_session_fuzzer.cpp b/test/fuzztest/hcapturesession_fuzzer/hcapture_session_fuzzer.cpp
+index bc532179..f59784f8 100644
+--- a/test/fuzztest/hcapturesession_fuzzer/hcapture_session_fuzzer.cpp
++++ b/test/fuzztest/hcapturesession_fuzzer/hcapture_session_fuzzer.cpp
+@@ -86,17 +86,15 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+     int32_t opMode = GetData<int32_t>();
+     sptr<HCaptureSession> session;
++    sptr<HStreamOperator> hStreamOperator;
+     if (fuzz_ == nullptr) {
+         fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
+         fuzz_->NewInstance(0, 0, session);
++        hStreamOperator = HStreamOperator::NewInstance(0, 0);
++        fuzz_->SetStreamOperator(hStreamOperator);
+     }
+     fuzz_->BeginConfig();
+     fuzz_->CommitConfig();
+-    fuzz_->GetStreamByStreamID(GetData<int32_t>());
+-    int32_t captureId = GetData<int32_t>();
+-    fuzz_->StartMovingPhotoEncode(GetData<int32_t>(), GetData<int64_t>(), GetData<int32_t>(), captureId);
+-    fuzz_->StartRecord(GetData<int64_t>(), GetData<int32_t>(), captureId);
+-    fuzz_->GetHdiStreamByStreamID(GetData<int32_t>());
+     int32_t featureMode = GetData<int32_t>();
+     fuzz_->SetFeatureMode(featureMode);
+     float currentFps = GetData<float>();
+@@ -114,16 +112,11 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
+     ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
+     ColorSpace captureColorSpace = static_cast<ColorSpace>(callerToken % 23);
+     fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
+-    fuzz_->SetColorSpaceForStreams();
+-    fuzz_->CheckIfColorSpaceMatchesFormat(colorSpace);
+     fuzz_->GetopMode();
+     std::vector<StreamInfo_V1_1> streamInfos;
+     fuzz_->GetCurrentStreamInfos(streamInfos);
+     fuzz_->DynamicConfigStream();
+     fuzz_->AddInput(nullptr);
+-    sptr<HStreamCommon> stream = fuzz_->GetHdiStreamByStreamID(GetData<int32_t>());
+-    fuzz_->AddOutputStream(stream);
+-    fuzz_->StartMovingPhotoStream();
+     std::string deviceClass;
+     fuzz_->SetPreviewRotation(deviceClass);
+ }
+@@ -147,21 +140,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
+     fuzz_->RemoveInput(nullptr);
+     std::vector<StreamInfo_V1_1> streamInfos;
+     fuzz_->RemoveOutputStream(nullptr);
+-    int32_t width = GetData<int32_t>();
+-    int32_t height = GetData<int32_t>();
+-    int32_t streamId = GetData<int32_t>();
+-    sptr<OHOS::IBufferProducer> producer;
+-    int32_t format = GetData<int32_t>();
+-    fuzz_->CreateMovingPhotoStreamRepeat(format, width, height, producer);
+-    fuzz_->GetStreamByStreamID(streamId);
+-    fuzz_->GetHdiStreamByStreamID(streamId);
+-    fuzz_->ClearSketchRepeatStream();
+-    fuzz_->ClearMovingPhotoRepeatStream();
+-    fuzz_->StopMovingPhoto();
+     fuzz_->ValidateSession();
+-    fuzz_->CancelStreamsAndGetStreamInfos(streamInfos);
+-    fuzz_->RestartStreams();
+-    fuzz_->UpdateStreamInfos();
+     CaptureSessionState sessionState = CaptureSessionState::SESSION_STARTED;
+     fuzz_->GetSessionState(sessionState);
+     std::vector<float> crossZoomAndTime;
+@@ -224,9 +203,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
+     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
+     captureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+     fuzz_->UpdateMuteSetting(true, captureSettings);
+-    uint8_t usedAsPositionU8 = OHOS_CAMERA_POSITION_OTHER;
+-    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
+-    fuzz_->StartPreviewStream(captureSettings, cameraPosition);
+     fuzz_->Stop();
+ }
+ 
+@@ -243,7 +219,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
+         fuzz_->NewInstance(0, 0, session);
+     }
+     pid_t pid = 0;
+-    int64_t timestamp = GetData<int64_t>();
+     fuzz_->DestroyStubObjectForPid(pid);
+     sptr<ICaptureSessionCallback> callback;
+     fuzz_->SetCallback(callback);
+@@ -254,15 +229,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
+     int32_t seqId = GetData<int32_t>();
+     fuzz_->CreateBurstDisplayName(MAIN_CAMERA_ZOOM_RANGE, seqId);
+     fuzz_->CreateBurstDisplayName(imageSeqId, seqId);
+-    std::string burstKey;
+-    bool isBursting = GetData<bool>();
+-    int32_t cameraShotType = GetData<int32_t>();
+-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+-    fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
+-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+-    std::string uri;
+-    fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+-    fuzz_->CreateMediaLibrary(nullptr, photoProxy, uri, cameraShotType, burstKey, timestamp);
+ }
+ 
+ void Test()
+diff --git a/test/fuzztest/hstreamcapture_fuzzer/hstream_capture_fuzzer.cpp b/test/fuzztest/hstreamcapture_fuzzer/hstream_capture_fuzzer.cpp
+index decabb72..3b0c3d0e 100644
+--- a/test/fuzztest/hstreamcapture_fuzzer/hstream_capture_fuzzer.cpp
++++ b/test/fuzztest/hstreamcapture_fuzzer/hstream_capture_fuzzer.cpp
+@@ -151,9 +151,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
+     sptr<HCameraDevice> camDevice = new (std::nothrow)
+         HCameraDevice(cameraHostManager, cameraId, callingTokenId);
+     camDevice->OpenDevice(true);
+-    camDevice->InitStreamOperator();
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
+-    fuzz_->SetStreamOperator(streamOperator);
+     fuzz_->OnCaptureReady(captureId, timestamp);
+     fuzz_->Capture(captureSettings);
+     fuzz_->CancelCapture();
+diff --git a/test/fuzztest/hstreamcapturestub_fuzzer/hstream_capture_stub_fuzzer.h b/test/fuzztest/hstreamcapturestub_fuzzer/hstream_capture_stub_fuzzer.h
+index 149f965d..f93c24b9 100644
+--- a/test/fuzztest/hstreamcapturestub_fuzzer/hstream_capture_stub_fuzzer.h
++++ b/test/fuzztest/hstreamcapturestub_fuzzer/hstream_capture_stub_fuzzer.h
+@@ -95,6 +95,22 @@ public:
+     {
+         return 0;
+     }
++
++    int32_t EnableOfflinePhoto(bool isEnable)override
++    {
++        return 0;
++    }
++    
++    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
++        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override
++    {
++        return 0;
++    }
++    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
++        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override
++    {
++        return 0;
++    }
+ };
+ class HStreamCaptureStubFuzzer {
+ public:
+diff --git a/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn b/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn
+new file mode 100755
+index 00000000..3ffa05b0
+--- /dev/null
++++ b/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn
+@@ -0,0 +1,145 @@
++# Copyright (c) 2024 Huawei Device Co., Ltd.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import("//build/config/features.gni")
++import("//build/test.gni")
++import("./../../../multimedia_camera_framework.gni")
++
++ohos_fuzztest("HStreamOperatorFuzzTest") {
++  module_out_path = "camera_framework/camera_framework"
++  fuzz_config_file = "../hstreamoperator_fuzzer"
++
++  include_dirs = [
++    "${multimedia_camera_framework_path}/common/utils",
++    "${multimedia_camera_framework_path}/services/camera_service/include",
++    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
++    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
++    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
++    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
++    "${multimedia_camera_framework_path}/services/camera_service/include/adapter",
++    "${multimedia_camera_framework_path}/services/camera_service/include/app_manager_utils",
++    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
++    "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
++    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
++    "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
++    "${multimedia_camera_framework_path}/services/camera_service/include/moving_photo",
++    "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
++    "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
++    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
++    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
++    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
++    "${multimedia_camera_framework_path}/services/camera_service/src",
++    "${multimedia_camera_framework_path}/services/camera_service/binder",
++  ]
++
++  cflags = [
++    "-g",
++    "-O0",
++    "-Wno-unused-variable",
++    "-fno-omit-frame-pointer",
++  ]
++
++  sources = [
++    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
++    "hstream_operator_fuzzer.cpp",
++  ]
++
++  deps = [
++    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
++    "../../../frameworks/native/camera:camera_framework",
++  ]
++
++  external_deps = [
++    "ability_base:want",
++    "access_token:libaccesstoken_sdk",
++    "access_token:libnativetoken",
++    "access_token:libprivacy_sdk",
++    "access_token:libtoken_setproc",
++    "audio_framework:audio_capturer",
++    "audio_framework:audio_client",
++    "audio_framework:offline_audio_effect",
++    "av_codec:av_codec_client",
++    "av_codec:native_media_acodec",
++    "av_codec:native_media_aenc",
++    "av_codec:native_media_avcencinfo",
++    "av_codec:native_media_avmuxer",
++    "av_codec:native_media_codecbase",
++    "av_codec:native_media_venc",
++    "bundle_framework:appexecfwk_base",
++    "bundle_framework:appexecfwk_core",
++    "c_utils:utils",
++    "data_share:datashare_common",
++    "data_share:datashare_consumer",
++    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
++    "drivers_interface_camera:libcamera_proxy_1.0",
++    "drivers_interface_camera:libcamera_proxy_1.1",
++    "drivers_interface_camera:libmap_data_sequenceable_1.0",
++    "drivers_interface_camera:metadata",
++    "drivers_interface_display:libdisplay_buffer_hdi_impl",
++    "drivers_interface_display:libdisplay_buffer_proxy_1.0",
++    "drivers_interface_display:libdisplay_composer_hdi_impl_1.2",
++    "drivers_interface_display:libdisplay_composer_proxy_1.0",
++    "drivers_peripheral_display:hdi_gralloc_client",
++    "graphic_2d:librender_service_client",
++    "graphic_surface:surface",
++    "hdf_core:libhdi",
++    "hicollie:libhicollie",
++    "hilog:libhilog",
++    "hisysevent:libhisysevent",
++    "hitrace:hitrace_meter",
++    "init:libbegetutil",
++    "ipc:ipc_core",
++    "ipc:ipc_single",
++    "media_foundation:media_foundation",
++    "media_foundation:native_media_core",
++    "media_library:media_library",
++    "media_library:media_library_manager",
++    "memmgr:memmgrclient",
++    "os_account:libaccountkits",
++    "os_account:os_account_innerkits",
++    "safwk:system_ability_fwk",
++    "samgr:samgr_proxy",
++    "sensor:sensor_interface_native",
++    "window_manager:libdm",
++  ]
++
++  defines = []
++  if (use_sensor) {
++    external_deps += [ "sensor:sensor_interface_native" ]
++    defines += [ "CAMERA_USE_SENSOR" ]
++  }
++}
++
++group("fuzztest") {
++  testonly = true
++  deps = [ ":HStreamOperatorFuzzTest" ]
++}
+diff --git a/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.cpp b/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.cpp
+new file mode 100755
+index 00000000..99b59d9b
+--- /dev/null
++++ b/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.cpp
+@@ -0,0 +1,176 @@
++/*
++ * Copyright (c) 2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "hstream_operator_fuzzer.h"
++
++#include <cstddef>
++#include <cstdint>
++#include <memory>
++#include "camera_log.h"
++#include "message_parcel.h"
++#include "token_setproc.h"
++#include "nativetoken_kit.h"
++#include "accesstoken_kit.h"
++#include "system_ability_definition.h"
++#include "iservice_registry.h"
++#include "ipc_skeleton.h"
++#include "buffer_extra_data_impl.h"
++#include "picture.h"
++#include "camera_server_photo_proxy.h"
++#include "camera_photo_proxy.h"
++
++namespace OHOS {
++namespace CameraStandard {
++static constexpr int32_t MAX_CODE_LEN = 512;
++static constexpr int32_t MIN_SIZE_NUM = 4;
++static const uint8_t* RAW_DATA = nullptr;
++const size_t THRESHOLD = 10;
++static size_t g_dataSize = 0;
++static size_t g_pos;
++
++HStreamOperator *HStreamOperatorFuzzer::fuzz_ = nullptr;
++HStreamOperator *HStreamOperatorFuzzer::manager_ = nullptr;
++
++/*
++* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
++* tips: only support basic type
++*/
++template<class T>
++T GetData()
++{
++    T object {};
++    size_t objectSize = sizeof(object);
++    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
++        return object;
++    }
++    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
++    if (ret != EOK) {
++        return {};
++    }
++    g_pos += objectSize;
++    return object;
++}
++
++template<class T>
++uint32_t GetArrLength(T& arr)
++{
++    if (arr == nullptr) {
++        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
++        return 0;
++    }
++    return sizeof(arr) / sizeof(arr[0]);
++}
++
++void HStreamOperatorFuzzer::HStreamOperatorFuzzTest()
++{
++    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
++        return;
++    }
++    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
++    sptr<HStreamOperator> session;
++    sptr<HStreamOperator> hStreamOperator;
++    if (fuzz_ == nullptr) {
++        hStreamOperator = HStreamOperator::NewInstance(0, 0);
++        fuzz_ = hStreamOperator;
++    }
++    int32_t streamId = GetData<int32_t>();
++    fuzz_->GetStreamByStreamID(streamId);
++    int32_t rotation = GetData<int32_t>();
++    int32_t format = GetData<int32_t>();
++    int32_t captureId = GetData<int32_t>();
++    int64_t timestamp = GetData<int64_t>();
++    fuzz_->StartMovingPhotoEncode(rotation, timestamp, format, captureId);
++    fuzz_->StartRecord(timestamp, rotation, captureId);
++    fuzz_->GetHdiStreamByStreamID(streamId);
++    fuzz_->EnableMovingPhotoMirror(GetData<bool>(), GetData<bool>());
++    ColorSpace getColorSpace;
++    fuzz_->GetActiveColorSpace(getColorSpace);
++    ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
++    ColorSpace captureColorSpace = static_cast<ColorSpace>(callerToken % 23);
++    fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
++    fuzz_->GetStreamOperator();
++    std::vector<int32_t> results = {GetData<uint32_t>()};
++    fuzz_->ReleaseStreams(results);
++    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
++    fuzz_->CreateStreams(streamInfos);
++    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
++    const int32_t NUM_10 = 10;
++    const int32_t NUM_100 = 100;
++    settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
++    int32_t operationMode = GetData<int32_t>();
++    fuzz_->CommitStreams(settings, operationMode);
++    fuzz_->UpdateStreams(streamInfos);
++    fuzz_->CreateAndCommitStreams(streamInfos, settings, operationMode);
++    const std::vector<int32_t> streamIds;
++    fuzz_->OnCaptureStarted(captureId, streamIds);
++    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos;
++    fuzz_->OnCaptureStarted_V1_2(captureId, infos);
++    const std::vector<CaptureEndedInfo> infos_OnCaptureEnded;
++    fuzz_->OnCaptureEnded(captureId, infos_OnCaptureEnded);
++    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> infos_OnCaptureEndedExt;
++    fuzz_->OnCaptureEndedExt(captureId, infos_OnCaptureEndedExt);
++    const std::vector<CaptureErrorInfo> infos_OnCaptureError;
++    fuzz_->OnCaptureError(captureId, infos_OnCaptureError);
++    fuzz_->OnFrameShutter(captureId, results, timestamp);
++    fuzz_->OnFrameShutterEnd(captureId, results, timestamp);
++    fuzz_->OnCaptureReady(captureId, results, timestamp);
++}
++
++void Test()
++{
++    auto HStreamOperator = std::make_unique<HStreamOperatorFuzzer>();
++    if (HStreamOperator == nullptr) {
++        MEDIA_INFO_LOG("HStreamOperator is null");
++        return;
++    }
++    HStreamOperator->HStreamOperatorFuzzTest();
++}
++
++typedef void (*TestFuncs[1])();
++
++TestFuncs g_testFuncs = {
++    Test,
++};
++
++bool FuzzTest(const uint8_t* rawData, size_t size)
++{
++    // initialize data
++    RAW_DATA = rawData;
++    g_dataSize = size;
++    g_pos = 0;
++
++    uint32_t code = GetData<uint32_t>();
++    uint32_t len = GetArrLength(g_testFuncs);
++    if (len > 0) {
++        g_testFuncs[code % len]();
++    } else {
++        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
++    }
++
++    return true;
++}
++} // namespace CameraStandard
++} // namespace OHOS
++
++/* Fuzzer entry point */
++extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
++{
++    if (size < OHOS::CameraStandard::THRESHOLD) {
++        return 0;
++    }
++
++    OHOS::CameraStandard::FuzzTest(data, size);
++    return 0;
++}
+\ No newline at end of file
+diff --git a/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.h b/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.h
+new file mode 100755
+index 00000000..3cc4c310
+--- /dev/null
++++ b/test/fuzztest/hstreamoperator_fuzzer/hstream_operator_fuzzer.h
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (c) 2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef HSTREAM_OPERATOR_FUZZER_H
++#define HSTREAM_OPERATOR_FUZZER_H
++
++#include "hstream_operator.h"
++
++namespace OHOS {
++namespace CameraStandard {
++
++class HStreamOperatorFuzzer {
++public:
++static HStreamOperator *fuzz_;
++static HStreamOperator *manager_;
++static void HStreamOperatorFuzzTest();
++};
++
++} //CameraStandard
++} //CameraStandard
++#endif //HSTREAM_OPERATOR_FUZZER_H
+\ No newline at end of file
+diff --git a/test/fuzztest/hstreamoperator_fuzzer/project.xml b/test/fuzztest/hstreamoperator_fuzzer/project.xml
+new file mode 100755
+index 00000000..fb2c900a
+--- /dev/null
++++ b/test/fuzztest/hstreamoperator_fuzzer/project.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (c) 2025 Huawei Device Co., Ltd.
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<fuzz_config>
++  <fuzztest>
++    <!-- maximum length of a test input -->
++    <max_len>1000</max_len>
++    <!-- maximum total time in seconds to run the fuzzer -->
++    <max_total_time>3</max_total_time>
++    <!-- memory usage limit in Mb -->
++    <rss_limit_mb>4096</rss_limit_mb>
++  </fuzztest>
++</fuzz_config>
+diff --git a/test/fuzztest/photooutput_fuzzer/photo_output_fuzzer.h b/test/fuzztest/photooutput_fuzzer/photo_output_fuzzer.h
+index e6aa3878..ed7fb6a5 100644
+--- a/test/fuzztest/photooutput_fuzzer/photo_output_fuzzer.h
++++ b/test/fuzztest/photooutput_fuzzer/photo_output_fuzzer.h
+@@ -32,6 +32,7 @@ public:
+     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override {}
+     void OnEstimatedCaptureDuration(const int32_t duration) const override {}
+     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override {}
++    void OnOfflineDeliveryFinished(const int32_t captureId) const override {}
+ };
+ 
+ class IBufferConsumerListenerMock : public IBufferConsumerListener {
