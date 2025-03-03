@@ -196,6 +196,10 @@ public:
         }
     }
 
+    void OnOfflineDeliveryFinished(const int32_t captureId) const override
+    {
+        MEDIA_DEBUG_LOG("OnOfflineDeliveryFinished is called");
+    }
 private:
     Camera_PhotoOutput* photoOutput_;
     PhotoOutput_Callbacks callback_;

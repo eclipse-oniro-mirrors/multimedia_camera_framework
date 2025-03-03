@@ -48,7 +48,7 @@ using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
 class EXPORT_API HCameraDevice
-    : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
+    : public HCameraDeviceStub, public ICameraDeviceCallback {
 public:
     explicit HCameraDevice(
         sptr<HCameraHostManager>& cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
@@ -69,34 +69,20 @@ public:
     int32_t EnableResult(std::vector<int32_t>& results) override;
     int32_t DisableResult(std::vector<int32_t>& results) override;
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
     int32_t UnSetCallback() override;
     int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
-    int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
+    // int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceAbility();
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
     int32_t GetCameraType();
     bool IsOpenedCameraDevice();
     int32_t GetCallerToken();
-    int32_t CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
-        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
-    int32_t UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos);
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
-    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
-    int32_t OnCaptureStarted_V1_2(
-        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
-    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
-    int32_t OnCaptureEndedExt(
-        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos) override;
-    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
-    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
     void SetDeviceMuteMode(bool muteMode);
@@ -128,16 +114,6 @@ public:
     {
         std::lock_guard<std::mutex> lock(cameraPrivacyMutex_);
         return cameraPrivacy_;
-    }
-
-    inline int32_t GenerateHdiStreamId()
-    {
-        return hdiStreamIdGenerator_.fetch_add(1);
-    }
-
-    inline void ResetHdiStreamId()
-    {
-        hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     }
     
     void NotifyCameraSessionStatus(bool running);
@@ -176,6 +152,8 @@ public:
     {
         return cameraConcurrentType_;
     }
+    int32_t GetStreamOperator(const sptr<IStreamOperatorCallback> &callbackObj,
+        sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> &streamOperator);
 
 private:
     class FoldScreenListener;
@@ -183,7 +161,6 @@ private:
 
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
     int32_t cameraConcurrentType_;
@@ -225,19 +202,15 @@ private:
     int64_t lastDeviceEjectTime_ = 0;
     std::atomic<int> deviceEjectTimes_ = 1;
 
-    std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
     sptr<ICameraDeviceServiceCallback> GetDeviceServiceCallback();
     void ResetCachedSettings();
-    int32_t InitStreamOperator();
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
     void CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
-    int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
-    int32_t CommitStreams(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
     bool CanOpenCamera();
     void ResetZoomTimer();
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);

@@ -67,13 +67,9 @@ public:
 
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
 
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
-        std::string &burstKey, int64_t timestamp) override;
-
-    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
-
     int32_t SetPreviewRotation(std::string &deviceClass) override;
+
+    int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

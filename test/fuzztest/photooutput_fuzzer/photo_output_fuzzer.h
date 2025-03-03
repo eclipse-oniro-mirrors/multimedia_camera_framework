@@ -32,6 +32,7 @@ public:
     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override {}
     void OnEstimatedCaptureDuration(const int32_t duration) const override {}
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override {}
+    void OnOfflineDeliveryFinished(const int32_t captureId) const override {}
 };
 
 class IBufferConsumerListenerMock : public IBufferConsumerListener {

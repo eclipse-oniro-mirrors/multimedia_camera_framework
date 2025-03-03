@@ -23,6 +23,7 @@
 #include "metadata_utils.h"
 #include <cstdint>
 #include <unordered_set>
+#include "dp_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
