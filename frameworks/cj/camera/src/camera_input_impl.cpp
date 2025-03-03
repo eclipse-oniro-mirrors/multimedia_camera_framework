@@ -27,8 +27,6 @@
 #include "ffi_remote_data.h"
 #include "securec.h"
 
-#include "camera_input_impl.h"
-
 using namespace OHOS::FFI;
 
 namespace OHOS {
@@ -80,6 +78,9 @@ void CJCameraInput::OnError(int64_t callbackId)
 {
     if (errorCallback_ == nullptr) {
         errorCallback_ = std::make_shared<CJErrorCallbackListener>();
+        if (errorCallback_ == nullptr || cameraInput_ == nullptr) {
+            return;
+        }
         cameraInput_->SetErrorCallback(errorCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJErrorCallback error)>(callbackId);

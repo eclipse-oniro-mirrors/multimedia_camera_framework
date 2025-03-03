@@ -80,6 +80,9 @@ void CJMetadataOutput::OnMetadataObjectsAvailable(int64_t callbackId)
 {
     if (metadataOutputCallback_ == nullptr) {
         metadataOutputCallback_ = std::make_shared<CJMetadataOutputCallback>();
+        if (metadataOutputCallback_ == nullptr || metadataOutput_ == nullptr) {
+            return;
+        }
         metadataOutput_->SetCallback(metadataOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CArrCJMetadataObject metaObjects)>(callbackId);
@@ -112,6 +115,9 @@ void CJMetadataOutput::OnError(int64_t callbackId)
 {
     if (metadataStateCallback_ == nullptr) {
         metadataStateCallback_ = std::make_shared<CJMetadataStateCallback>();
+        if (metadataStateCallback_ == nullptr || metadataOutput_ == nullptr) {
+            return;
+        }
         metadataOutput_->SetCallback(metadataStateCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t errorType)>(callbackId);

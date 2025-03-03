@@ -40,7 +40,9 @@ void CJVideoCallbackListener::OnFrameStarted() const
         return;
     }
     for (size_t i = 0; i < frameStartedCallbackList.size(); i++) {
-        frameStartedCallbackList[i]->ref();
+        if (frameStartedCallbackList[i] != nullptr) {
+            frameStartedCallbackList[i]->ref();
+        }
     }
 }
 
@@ -51,7 +53,9 @@ void CJVideoCallbackListener::OnFrameEnded(const int32_t frameCount) const
         return;
     }
     for (size_t i = 0; i < frameEndedCallbackList.size(); i++) {
-        frameEndedCallbackList[i]->ref();
+        if (frameEndedCallbackList[i] != nullptr) {
+            frameEndedCallbackList[i]->ref();
+        }
     }
 }
 
@@ -62,7 +66,9 @@ void CJVideoCallbackListener::OnError(const int32_t errorCode) const
         return;
     }
     for (size_t i = 0; i < errorCallbackList.size(); i++) {
-        errorCallbackList[i]->ref(errorCode);
+        if (errorCallbackList[i] != nullptr) {
+            errorCallbackList[i]->ref(errorCode);
+        }
     }
 }
 
@@ -241,6 +247,9 @@ void CJVideoOutput::OnFrameStart(int64_t callbackId)
 {
     if (videoCallback_ == nullptr) {
         videoCallback_ = std::make_shared<CJVideoCallbackListener>();
+        if (videoCallback_ == nullptr || videoOutput_ == nullptr) {
+            return;
+        }
         videoOutput_->SetCallback(videoCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)()>(callbackId);
@@ -257,10 +266,10 @@ void CJVideoOutput::OffFrameStart(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(videoCallback_->frameStartedMutex);
-    auto callbackList = videoCallback_->frameStartedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = videoCallback_->frameStartedCallbackList.begin();
+        it != videoCallback_->frameStartedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            videoCallback_->frameStartedCallbackList.erase(it);
             break;
         }
     }
@@ -279,6 +288,9 @@ void CJVideoOutput::OnFrameEnd(int64_t callbackId)
 {
     if (videoCallback_ == nullptr) {
         videoCallback_ = std::make_shared<CJVideoCallbackListener>();
+        if (videoCallback_ == nullptr || videoOutput_ == nullptr) {
+            return;
+        }
         videoOutput_->SetCallback(videoCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)()>(callbackId);
@@ -295,10 +307,10 @@ void CJVideoOutput::OffFrameEnd(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(videoCallback_->frameEndedMutex);
-    auto callbackList = videoCallback_->frameEndedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = videoCallback_->frameEndedCallbackList.begin();
+        it != videoCallback_->frameEndedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            videoCallback_->frameEndedCallbackList.erase(it);
             break;
         }
     }
@@ -317,6 +329,9 @@ void CJVideoOutput::OnError(int64_t callbackId)
 {
     if (videoCallback_ == nullptr) {
         videoCallback_ = std::make_shared<CJVideoCallbackListener>();
+        if (videoCallback_ == nullptr || videoOutput_ == nullptr) {
+            return;
+        }
         videoOutput_->SetCallback(videoCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t errorCode)>(callbackId);
@@ -333,10 +348,9 @@ void CJVideoOutput::OffError(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(videoCallback_->errorMutex);
-    auto callbackList = videoCallback_->errorCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = videoCallback_->errorCallbackList.begin(); it != videoCallback_->errorCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            videoCallback_->errorCallbackList.erase(it);
             break;
         }
     }

@@ -25,17 +25,19 @@ thread_local sptr<PhotoOutput> CJPhotoOutput::sPhotoOutput_ = nullptr;
 
 void CJPhotoOutputCallback::OnCaptureStarted(const int32_t captureId) const
 {
+}
+
+void CJPhotoOutputCallback::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const
+{
     std::lock_guard<std::mutex> lock(captureStartedMutex);
     if (captureStartedCallbackList.size() == 0) {
         return;
     }
     for (size_t i = 0; i < captureStartedCallbackList.size(); i++) {
-        captureStartedCallbackList[i]->ref(captureId, 0);
+        if (captureStartedCallbackList[i] != nullptr) {
+            captureStartedCallbackList[i]->ref(captureId, exposureTime);
+        }
     }
-}
-
-void CJPhotoOutputCallback::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const
-{
 }
 
 void CJPhotoOutputCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const
@@ -45,7 +47,9 @@ void CJPhotoOutputCallback::OnCaptureEnded(const int32_t captureId, const int32_
         return;
     }
     for (size_t i = 0; i < captureEndedCallbackList.size(); i++) {
-        captureEndedCallbackList[i]->ref(captureId, frameCount);
+        if (captureEndedCallbackList[i] != nullptr) {
+            captureEndedCallbackList[i]->ref(captureId, frameCount);
+        }
     }
 }
 
@@ -56,7 +60,9 @@ void CJPhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64
         return;
     }
     for (size_t i = 0; i < frameShutterCallbackList.size(); i++) {
-        frameShutterCallbackList[i]->ref(captureId, timestamp);
+        if (frameShutterCallbackList[i] != nullptr) {
+            frameShutterCallbackList[i]->ref(captureId, timestamp);
+        }
     }
 }
 
@@ -67,7 +73,9 @@ void CJPhotoOutputCallback::OnFrameShutterEnd(const int32_t captureId, const uin
         return;
     }
     for (size_t i = 0; i < frameShutterEndCallbackList.size(); i++) {
-        frameShutterEndCallbackList[i]->ref(captureId);
+        if (frameShutterEndCallbackList[i] != nullptr) {
+            frameShutterEndCallbackList[i]->ref(captureId);
+        }
     }
 }
 
@@ -78,7 +86,9 @@ void CJPhotoOutputCallback::OnCaptureReady(const int32_t captureId, const uint64
         return;
     }
     for (size_t i = 0; i < captureReadyCallbackList.size(); i++) {
-        captureReadyCallbackList[i]->ref();
+        if (captureReadyCallbackList[i] != nullptr) {
+            captureReadyCallbackList[i]->ref();
+        }
     }
 }
 
@@ -89,7 +99,9 @@ void CJPhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_
         return;
     }
     for (size_t i = 0; i < captureErrorCallbackList.size(); i++) {
-        captureErrorCallbackList[i]->ref(errorCode);
+        if (captureErrorCallbackList[i] != nullptr) {
+            captureErrorCallbackList[i]->ref(errorCode);
+        }
     }
 }
 
@@ -100,7 +112,9 @@ void CJPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) c
         return;
     }
     for (size_t i = 0; i < estimatedCaptureDurationCallbackList.size(); i++) {
-        estimatedCaptureDurationCallbackList[i]->ref(duration);
+        if (estimatedCaptureDurationCallbackList[i] != nullptr) {
+            estimatedCaptureDurationCallbackList[i]->ref(duration);
+        }
     }
 }
 
@@ -125,8 +139,6 @@ int32_t CJPhotoOutput::Release()
 
 int32_t CJPhotoOutput::CreatePhotoOutput()
 {
-    std::string surfaceId = "";
-    MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
     sptr<Surface> photoSurface;
     MEDIA_INFO_LOG("create surface as consumer");
     photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
@@ -147,9 +159,7 @@ int32_t CJPhotoOutput::CreatePhotoOutput()
 
 int32_t CJPhotoOutput::CreatePhotoOutputWithProfile(Profile &profile)
 {
-    std::string surfaceId = "";
     MEDIA_DEBUG_LOG("CreatePhotoOutput is called, profile CameraFormat= %{public}d", profile.GetCameraFormat());
-    MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
     sptr<Surface> photoSurface;
     MEDIA_INFO_LOG("create surface as consumer");
     photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
@@ -194,6 +204,9 @@ int32_t CJPhotoOutput::Capture(CJPhotoCaptureSetting setting)
         return CameraError::CAMERA_SERVICE_ERROR;
     }
     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+    if (capSettings == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
     capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(setting.quality));
     capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
     capSettings->SetMirror(setting.mirror);
@@ -317,6 +330,9 @@ void CJPhotoOutput::OnCaptureStartWithInfo(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJCaptureStartInfo info)>(callbackId);
@@ -335,10 +351,10 @@ void CJPhotoOutput::OffCaptureStartWithInfo(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->captureStartedMutex);
-    auto callbackList = photoOutputCallback_->captureStartedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = photoOutputCallback_->captureStartedCallbackList.begin();
+        it != photoOutputCallback_->captureStartedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            photoOutputCallback_->captureStartedCallbackList.erase(it);
             break;
         }
     }
@@ -357,6 +373,9 @@ void CJPhotoOutput::OnFrameShutter(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJFrameShutterInfo info)>(callbackId);
@@ -375,10 +394,10 @@ void CJPhotoOutput::OffFrameShutter(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->frameShutterMutex);
-    auto callbackList = photoOutputCallback_->frameShutterCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = photoOutputCallback_->frameShutterCallbackList.begin();
+        it != photoOutputCallback_->frameShutterCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            photoOutputCallback_->frameShutterCallbackList.erase(it);
             break;
         }
     }
@@ -397,6 +416,9 @@ void CJPhotoOutput::OnCaptureEnd(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJCaptureEndInfo info)>(callbackId);
@@ -415,10 +437,10 @@ void CJPhotoOutput::OffCaptureEnd(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->captureEndedMutex);
-    auto callbackList = photoOutputCallback_->captureEndedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = photoOutputCallback_->captureEndedCallbackList.begin();
+        it != photoOutputCallback_->captureEndedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            photoOutputCallback_->captureEndedCallbackList.erase(it);
             break;
         }
     }
@@ -437,6 +459,9 @@ void CJPhotoOutput::OnFrameShutterEnd(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t id)>(callbackId);
@@ -453,10 +478,10 @@ void CJPhotoOutput::OffFrameShutterEnd(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->frameShutterEndMutex);
-    auto callbackList = photoOutputCallback_->frameShutterEndCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = photoOutputCallback_->frameShutterEndCallbackList.begin();
+        it != photoOutputCallback_->frameShutterEndCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            photoOutputCallback_->frameShutterEndCallbackList.erase(it);
             break;
         }
     }
@@ -475,6 +500,9 @@ void CJPhotoOutput::OnCaptureReady(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)()>(callbackId);
@@ -491,7 +519,13 @@ void CJPhotoOutput::OffCaptureReady(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->captureReadyMutex);
-    photoOutputCallback_->captureReadyCallbackList.clear();
+    for (auto it = photoOutputCallback_->captureReadyCallbackList.begin();
+        it != photoOutputCallback_->captureReadyCallbackList.end(); it++) {
+        if ((*it)->id == callbackId) {
+            photoOutputCallback_->captureReadyCallbackList.erase(it);
+            break;
+        }
+    }
 }
 
 void CJPhotoOutput::OffAllCaptureReady()
@@ -507,6 +541,9 @@ void CJPhotoOutput::OnEstimatedCaptureDuration(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t duration)>(callbackId);
@@ -523,7 +560,13 @@ void CJPhotoOutput::OffEstimatedCaptureDuration(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->estimatedCaptureDurationMutex);
-    photoOutputCallback_->estimatedCaptureDurationCallbackList.clear();
+    for (auto it = photoOutputCallback_->estimatedCaptureDurationCallbackList.begin();
+        it != photoOutputCallback_->estimatedCaptureDurationCallbackList.end(); it++) {
+        if ((*it)->id == callbackId) {
+            photoOutputCallback_->estimatedCaptureDurationCallbackList.erase(it);
+            break;
+        }
+    }
 }
 
 void CJPhotoOutput::OffAllEstimatedCaptureDuration()
@@ -539,6 +582,9 @@ void CJPhotoOutput::OnError(int64_t callbackId)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<CJPhotoOutputCallback>();
+        if (photoOutputCallback_ == nullptr || photoOutput_ == nullptr) {
+            return;
+        }
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t errorCode)>(callbackId);
@@ -555,7 +601,13 @@ void CJPhotoOutput::OffError(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(photoOutputCallback_->captureErrorMutex);
-    photoOutputCallback_->captureErrorCallbackList.clear();
+    for (auto it = photoOutputCallback_->captureErrorCallbackList.begin();
+        it != photoOutputCallback_->captureErrorCallbackList.end(); it++) {
+        if ((*it)->id == callbackId) {
+            photoOutputCallback_->captureErrorCallbackList.erase(it);
+            break;
+        }
+    }
 }
 
 void CJPhotoOutput::OffAllError()

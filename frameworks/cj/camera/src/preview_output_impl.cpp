@@ -32,7 +32,9 @@ void CJPreviewOutputCallback::OnFrameStarted() const
         return;
     }
     for (size_t i = 0; i < frameStartedCallbackList.size(); i++) {
-        frameStartedCallbackList[i]->ref();
+        if (frameStartedCallbackList[i] != nullptr) {
+            frameStartedCallbackList[i]->ref();
+        }
     }
 }
 
@@ -43,7 +45,9 @@ void CJPreviewOutputCallback::OnFrameEnded(const int32_t frameCount) const
         return;
     }
     for (size_t i = 0; i < frameEndedCallbackList.size(); i++) {
-        frameEndedCallbackList[i]->ref();
+        if (frameEndedCallbackList[i] != nullptr) {
+            frameEndedCallbackList[i]->ref();
+        }
     }
 }
 
@@ -54,7 +58,9 @@ void CJPreviewOutputCallback::OnError(const int32_t errorCode) const
         return;
     }
     for (size_t i = 0; i < errorCallbackList.size(); i++) {
-        errorCallbackList[i]->ref(errorCode);
+        if (errorCallbackList[i] != nullptr) {
+            errorCallbackList[i]->ref(errorCode);
+        }
     }
 }
 
@@ -187,6 +193,11 @@ FrameRateRange CJPreviewOutput::GetActiveFrameRate(int32_t *errCode)
 CJProfile CJPreviewOutput::GetActiveProfile(int32_t *errCode)
 {
     MEDIA_DEBUG_LOG("GetActiveProfile is called");
+    if (previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("previewOutput is nullptr.");
+        *errCode = CameraError::CAMERA_SERVICE_ERROR;
+        return CJProfile{0};
+    }
     auto profile = previewOutput_->GetPreviewProfile();
     if (profile == nullptr) {
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
@@ -200,6 +211,10 @@ CJProfile CJPreviewOutput::GetActiveProfile(int32_t *errCode)
 int32_t CJPreviewOutput::GetPreviewRotation(int32_t value, int32_t *errCode)
 {
     MEDIA_DEBUG_LOG("GetPreviewRotation is called!");
+    if (previewOutput_ == nullptr) {
+        *errCode = CameraError::CAMERA_SERVICE_ERROR;
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
     int32_t res = previewOutput_->GetPreviewRotation(value);
     if (res == CameraError::CAMERA_SERVICE_ERROR) {
         *errCode = CameraError::CAMERA_SERVICE_ERROR;
@@ -210,6 +225,9 @@ int32_t CJPreviewOutput::GetPreviewRotation(int32_t value, int32_t *errCode)
 int32_t CJPreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayLocked)
 {
     MEDIA_DEBUG_LOG("SetPreviewRotation is called!");
+    if (previewOutput_ == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
     int32_t errCode = previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
     if (errCode == CameraError::CAMERA_SERVICE_ERROR) {
         return errCode;
@@ -221,6 +239,9 @@ void CJPreviewOutput::OnFrameStart(int64_t callbackId)
 {
     if (previewCallback_ == nullptr) {
         previewCallback_ = std::make_shared<CJPreviewOutputCallback>();
+        if (previewCallback_ == nullptr || previewOutput_ == nullptr) {
+            return;
+        }
         previewOutput_->SetCallback(previewCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)()>(callbackId);
@@ -235,6 +256,9 @@ void CJPreviewOutput::OnFrameEnd(int64_t callbackId)
 {
     if (previewCallback_ == nullptr) {
         previewCallback_ = std::make_shared<CJPreviewOutputCallback>();
+        if (previewCallback_ == nullptr || previewOutput_ == nullptr) {
+            return;
+        }
         previewOutput_->SetCallback(previewCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)()>(callbackId);
@@ -249,6 +273,9 @@ void CJPreviewOutput::OnError(int64_t callbackId)
 {
     if (previewCallback_ == nullptr) {
         previewCallback_ = std::make_shared<CJPreviewOutputCallback>();
+        if (previewCallback_ == nullptr || previewOutput_ == nullptr) {
+            return;
+        }
         previewOutput_->SetCallback(previewCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(const int32_t errorCode)>(callbackId);
@@ -265,10 +292,10 @@ void CJPreviewOutput::OffFrameStart(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(previewCallback_->frameStartedMutex);
-    auto callbackList = previewCallback_->frameStartedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = previewCallback_->frameStartedCallbackList.begin();
+        it != previewCallback_->frameStartedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            previewCallback_->frameStartedCallbackList.erase(it);
             break;
         }
     }
@@ -280,10 +307,10 @@ void CJPreviewOutput::OffFrameEnd(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(previewCallback_->frameEndedMutex);
-    auto callbackList = previewCallback_->frameEndedCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = previewCallback_->frameEndedCallbackList.begin();
+        it != previewCallback_->frameEndedCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            previewCallback_->frameEndedCallbackList.erase(it);
             break;
         }
     }
@@ -295,10 +322,9 @@ void CJPreviewOutput::OffError(int64_t callbackId)
         return;
     }
     std::lock_guard<std::mutex> lock(previewCallback_->errorMutex);
-    auto callbackList = previewCallback_->errorCallbackList;
-    for (auto it = callbackList.begin(); it != callbackList.end(); it++) {
+    for (auto it = previewCallback_->errorCallbackList.begin(); it != previewCallback_->errorCallbackList.end(); it++) {
         if ((*it)->id == callbackId) {
-            callbackList.erase(it);
+            previewCallback_->errorCallbackList.erase(it);
             break;
         }
     }
