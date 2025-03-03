@@ -57,6 +57,7 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
+    "src/camera_sensor_plugin.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
     "src/device_protection_ability_connection.cpp",
