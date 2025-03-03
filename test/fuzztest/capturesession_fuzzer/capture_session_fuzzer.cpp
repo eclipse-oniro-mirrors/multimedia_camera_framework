@@ -137,6 +137,7 @@ void Test(uint8_t *rawData, size_t size)
     TestFocus(session, rawData, size);
     TestZoom(session, rawData, size);
     TestStabilization(session, rawData, size);
+    TestCreateMediaLibrary(session, rawData, size);
     TestProcess(session, rawData, size);
     TestAperture(session, rawData, size);
     TestBeauty(session, rawData, size);

@@ -142,8 +142,6 @@ public:
 
     virtual int32_t CreateStream() = 0;
 
-    bool IsHasEnableOfflinePhoto();
-
     virtual void AddTag(Tag tag) final;
     virtual void RemoveTag(Tag tag) final;
     virtual bool IsTagSetted(Tag tag) final;
@@ -181,7 +179,6 @@ private:
 
     std::mutex tagsMutex_;
     std::unordered_set<Tag> tags_;
-    bool mIsHasEnableOfflinePhoto_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

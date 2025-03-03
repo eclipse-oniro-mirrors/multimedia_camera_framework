@@ -22,20 +22,16 @@
 #include "hcamera_device.h"
 #include "hcamera_device_manager.h"
 #include "hcapture_session.h"
-#include "hstream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
 
-sptr<HStreamOperator> CastToSession(wptr<IStreamOperatorCallback> streamOpCb)
+sptr<HCaptureSession> CastToSession(sptr<IStreamOperatorCallback> streamOpCb)
 {
-    CHECK_ERROR_RETURN_RET_LOG(streamOpCb == nullptr, nullptr, "streamOpCb is nullptr");
-    auto streamOpCbSptr = streamOpCb.promote();
-    CHECK_ERROR_RETURN_RET_LOG(streamOpCbSptr == nullptr, nullptr, "streamOpCbWptr is nullptr");
-
-    return static_cast<HStreamOperator*>(streamOpCbSptr.GetRefPtr());
+    CHECK_ERROR_RETURN_RET(streamOpCb == nullptr, nullptr);
+    return static_cast<HCaptureSession*>(streamOpCb.GetRefPtr());
 }
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)

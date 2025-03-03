@@ -151,6 +151,9 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
     sptr<HCameraDevice> camDevice = new (std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callingTokenId);
     camDevice->OpenDevice(true);
+    camDevice->InitStreamOperator();
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
+    fuzz_->SetStreamOperator(streamOperator);
     fuzz_->OnCaptureReady(captureId, timestamp);
     fuzz_->Capture(captureSettings);
     fuzz_->CancelCapture();

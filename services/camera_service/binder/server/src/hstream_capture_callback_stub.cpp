@@ -47,10 +47,6 @@ int HStreamCaptureCallbackStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY):
             errCode = HandleOnCaptureReady(data);
             break;
-        case static_cast<uint32_t>(
-            StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED):
-            errCode = HandleOnOfflineDeliveryFinished(data);
-            break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -113,12 +109,6 @@ int HStreamCaptureCallbackStub::HandleOnCaptureReady(MessageParcel& data)
     uint64_t timestamp = data.ReadUint64();
 
     return OnCaptureReady(captureId, timestamp);
-}
-
-int HStreamCaptureCallbackStub::HandleOnOfflineDeliveryFinished(MessageParcel& data)
-{
-    int32_t captureId = data.ReadInt32();
-    return OnOfflineDeliveryFinished(captureId);
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -164,6 +164,7 @@ void Test(uint8_t *rawData, size_t size)
     auto session = manager->CreateCaptureSession(g_sceneMode);
     CHECK_ERROR_RETURN_LOG(!manager, "CloudEnhanceSessionFuzzer: CreateCaptureSession Error");
     TestSession(session, rawData, size);
+    TestCreateMediaLibrary(session, rawData, size);
     session->EnableAutoCloudImageEnhancement(data.ReadBool());
     session->Release();
     session->Stop();

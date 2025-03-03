@@ -259,14 +259,14 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     photoProxy->SetDeferredAttrs(imageIdStr, extraData.deferredProcessingType, extraData.size,
         extraData.deferredImageFormat);
     auto photoOutput = photoOutput_->GetInnerPhotoOutput();
-    if (photoOutput) {
+    if (photoOutput && photoOutput->GetSession()) {
         auto settings = photoOutput->GetDefaultCaptureSetting();
         if (settings) {
             auto location = std::make_shared<Location>();
             settings->GetLocation(location);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        photoOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
     }
 }
 

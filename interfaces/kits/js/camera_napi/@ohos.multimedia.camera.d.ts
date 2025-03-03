@@ -8726,56 +8726,13 @@ function getCameraManager(context: Context): CameraManager;
      * @throws { BusinessError } 401 - Parameter error. Possible causes:
      * 1. Mandatory parameters are left unspecified; 2. Incorrect parameter types;
      * 3. Parameter verification failed.
-     */
-    enableAutoAigcPhoto(enabled: boolean): void;
-
-    /**
-     * Confirm if offline processing is supported.
-     *
-     * @returns { boolean } TRUE if the type of offline is supported.
-     * @throws { BusinessError } 202 - Not System Application.
-     * @throws { BusinessError } 7400201 - Camera service fatal error.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 16
-     */
-    isOfflineSupported(): boolean;
-
-    /**
-     * Enable offline processing.
-     *
-     * @throws { BusinessError } 202 - Not System Application.
      * @throws { BusinessError } 7400104 - session is not running.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 16
      */
-    enableOffline(): void;
-
-    /**
-     * Subscribes offline Delivery finished events.
-     * This method is valid only after enableOffline() is called.
-     *
-     * @param { 'offlineDeliveryFinished' } type - Event type.
-     * @param { AsyncCallback<void> } callback - Callback used to get offline Delivery finished events.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 16
-     */
-    on(type: 'offlineDeliveryFinished', callback: AsyncCallback<void>): void;
-
-    /**
-     * Unsubscribes offline Delivery finished events.
-     * This method is valid only after enableOffline() is called.
-     *
-     * @param { 'offlineDeliveryFinished' } type - Event type.
-     * @param { AsyncCallback<void>} callback - Callback used to get offline Delivery finished events.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 16
-     */
-    off(type: 'offlineDeliveryFinished', callback?: AsyncCallback<void>): void
+    enableAutoAigcPhoto(enabled: boolean): void;    
   }
 
   /**

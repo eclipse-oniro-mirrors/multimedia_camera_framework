@@ -225,14 +225,6 @@ void AppCallback::OnError(const int32_t errorCode) const
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
     return;
 }
-
-void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
-{
-    MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished captureId: %{public}d", captureId);
-    g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_OFFLINE_PHOTOOUTPUT)] = 1;
-    return;
-}
-
 void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");

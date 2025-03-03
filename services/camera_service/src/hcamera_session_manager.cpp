@@ -22,7 +22,6 @@
 
 #include "camera_util.h"
 #include "hcapture_session.h"
-#include "camera_dynamic_loader.h"
 #include "parameters.h"
 
 namespace OHOS {
@@ -144,6 +143,9 @@ void HCameraSessionManager::RemoveGroup(pid_t pid)
 void HCameraSessionManager::RemoveGroupNoLock(std::unordered_map<pid_t, SessionGroup>::iterator mapIt)
 {
     totalSessionMap_.erase(mapIt);
+    if (totalSessionMap_.empty()) {
+        CameraDynamicLoader::FreeDynamiclib(MEDIA_LIB_SO);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

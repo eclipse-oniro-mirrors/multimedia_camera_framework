@@ -215,9 +215,5 @@ bool CaptureOutput::IsTagSetted(Tag tag)
     return tags_.find(tag) != tags_.end();
 }
 
-bool CaptureOutput::IsHasEnableOfflinePhoto()
-{
-    return mIsHasEnableOfflinePhoto_;
-}
 } // CameraStandard
 } // OHOS
