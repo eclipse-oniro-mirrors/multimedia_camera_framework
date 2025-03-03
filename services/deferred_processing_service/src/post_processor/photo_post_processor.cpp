@@ -598,8 +598,6 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
 
     std::lock_guard<std::mutex> lock(mutex_);
     DP_CHECK_ERROR_RETURN_LOG(session_ == nullptr, "PhotoPostProcessor::ProcessImage imageProcessSession is nullptr");
-    int32_t ret = session_->ProcessImage(imageId);
-    DP_INFO_LOG("processImage, ret: %{public}d", ret);
     uint32_t callbackHandle;
     constexpr uint32_t maxProcessingTimeMs = 11 * 1000;
     GetGlobalWatchdog().StartMonitor(callbackHandle, maxProcessingTimeMs, [this, imageId](uint32_t handle) {
@@ -610,6 +608,8 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
     DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog registered, userId: %{public}d, handle: %{public}d",
         userId_, static_cast<int>(callbackHandle));
     imageId2Handle_.Insert(imageId, callbackHandle);
+    int32_t ret = session_->ProcessImage(imageId);
+    DP_INFO_LOG("processImage, ret: %{public}d", ret);
 }
 
 void PhotoPostProcessor::RemoveImage(std::string imageId)
