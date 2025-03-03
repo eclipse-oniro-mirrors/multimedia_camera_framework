@@ -213,6 +213,11 @@ void TestPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration)
     MEDIA_INFO_LOG("OnEstimatedCaptureDuration(), duration: %{public}d", duration);
 }
 
+void TestPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
+{
+    MEDIA_INFO_LOG("OnOfflineDeliveryFinished(), captureId: %{public}d", captureId);
+}
+
 void TestPhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
 {
     MEDIA_INFO_LOG("OnCaptureError(), testName_: %{public}s, captureID: %{public}d, errorCode: %{public}d",

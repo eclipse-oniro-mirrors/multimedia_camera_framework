@@ -153,11 +153,8 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
         fuzzCameraDevice->UpdateSetting(ability);
         auto out = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
         fuzzCameraDevice->GetStatus(ability, out);
-        std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
-        fuzzCameraDevice->UpdateStreams(streamInfos);
         MessageParcel data;
         data.WriteRawData(rawData, size);
-        fuzzCameraDevice->CreateAndCommitStreams(streamInfos, ability, data.ReadInt32());
         vector<uint8_t> result;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(ability, result);
         fuzzCameraDevice->OnResult(data.ReadUint64(), result);
@@ -176,7 +173,6 @@ void CameraDeviceFuzzTest2Case1(uint8_t *rawData, size_t size)
         fuzzCameraDevice->GetDeviceAbility();
         fuzzCameraDevice->GetCameraType();
         fuzzCameraDevice->GetCameraId();
-        fuzzCameraDevice->GetStreamOperator();
     }
 }
 
@@ -201,29 +197,6 @@ void CameraDeviceFuzzTest2Case2(uint8_t *rawData, size_t size)
     fuzzCameraDevice->OpenSecureCamera(&secureSeqId);
 }
 
-void CameraDeviceFuzzTest2Case3(uint8_t *rawData, size_t size)
-{
-    // 运行会出错
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    if (fuzzCameraDevice) {
-        vector<int32_t> streamIds{data.ReadInt32()};
-        fuzzCameraDevice->OnFrameShutter(data.ReadInt32(), streamIds, data.ReadUint64());
-        fuzzCameraDevice->OnFrameShutterEnd(data.ReadInt32(), streamIds, data.ReadUint64());
-        fuzzCameraDevice->OnCaptureReady(data.ReadInt32(), streamIds, data.ReadUint64());
-        vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> infos{{data.ReadInt32(), data.ReadInt32()}};
-        fuzzCameraDevice->OnCaptureStarted_V1_2(data.ReadInt32(), infos);
-        vector<CaptureEndedInfo> endedInfos{{data.ReadInt32(), data.ReadInt32()}};
-        fuzzCameraDevice->OnCaptureEnded(data.ReadInt32(), endedInfos);
-        vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt> endedInfosExt;
-        fuzzCameraDevice->OnCaptureEndedExt(data.ReadInt32(), endedInfosExt);
-        auto err = static_cast<OHOS::HDI::Camera::V1_0::StreamError>(data.ReadInt32());
-        vector<CaptureErrorInfo> errorInfos{{data.ReadInt32(), err}};
-        fuzzCameraDevice->OnCaptureError(data.ReadInt32(), errorInfos);
-        fuzzCameraDevice->OnCaptureStarted(data.ReadInt32(), streamIds);
-    }
-}
-
 void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < NUM_TWO) {
@@ -238,8 +211,6 @@ void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size)
         fuzzCameraDevice->NotifyCameraStatus(data.ReadInt32());
         fuzzCameraDevice->RemoveResourceWhenHostDied();
         fuzzCameraDevice->NotifyCameraSessionStatus(data.ReadBool());
-        std::vector<int32_t> releaseStreamIds;
-        fuzzCameraDevice->ReleaseStreams(releaseStreamIds);
         CameraDeviceFuzzTest2Case1(rawData, size);
         fuzzCameraDevice->ResetDeviceSettings();
         fuzzCameraDevice->SetDeviceMuteMode(data.ReadBool());

@@ -187,7 +187,7 @@ void PhotoListenerTest::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Bu
             settings->GetLocation(location);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        photoOutput_->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        photoOutput_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
     }
 }
 

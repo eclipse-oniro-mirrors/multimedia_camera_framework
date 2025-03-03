@@ -36,6 +36,8 @@ public:
 
     virtual int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp) = 0;
 
+    virtual int32_t OnOfflineDeliveryFinished(int32_t captureId) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCaptureCallback");
 };
 } // namespace CameraStandard

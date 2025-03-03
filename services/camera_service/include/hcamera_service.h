@@ -36,6 +36,7 @@
 #include "hcamera_service_stub.h"
 #include "hcapture_session.h"
 #include "hstream_capture.h"
+#include "hstream_operator.h"
 #include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"

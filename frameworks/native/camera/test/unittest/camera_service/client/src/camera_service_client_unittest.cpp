@@ -291,9 +291,15 @@ void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) cons
     MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
     return;
 }
+
 void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
 {
     MEDIA_DEBUG_LOG("AppCallback::OnLcdFlashStatusChanged");
+}
+
+void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
+{
+    MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished");
 }
 
 void CameraServiceClientUnit::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
