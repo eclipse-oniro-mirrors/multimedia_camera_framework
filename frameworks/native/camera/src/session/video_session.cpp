@@ -174,6 +174,7 @@ FocusTrackingInfo::FocusTrackingInfo(const FocusTrackingInfoParms& parms)
 VideoSession::~VideoSession()
 {
     focusTrackingInfoCallback_ = nullptr;
+    lightStatusCallback_ = nullptr;
 }
 
 bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
@@ -387,6 +388,47 @@ bool VideoSession::ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMet
     return true;
 }
 
+void VideoSession::SetLightStatusCallback(std::shared_ptr<LightStatusCallback> callback)
+{
+    std::lock_guard<std::mutex> lock(videoSessionCallbackMutex_);
+    lightStatusCallback_ = callback;
+}
+
+std::shared_ptr<LightStatusCallback> VideoSession::GetLightStatusCallback()
+{
+    std::lock_guard<std::mutex> lock(videoSessionCallbackMutex_);
+    return lightStatusCallback_;
+}
+
+void VideoSession::ProcessLightStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    MEDIA_DEBUG_LOG("VideoSession::ProcessLightStatusChange is called");
+    auto lightStatusCallback = GetLightStatusCallback();
+    if (lightStatusCallback == nullptr) {
+        MEDIA_DEBUG_LOG("%{public}s lightStatusCallback is null", __FUNCTION__);
+        return;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t *metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LIGHT_STATUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_DEBUG_LOG("can't get OHOS_STATUS_LIGHT_STATUS value");
+        return;
+    } else {
+        uint8_t value = item.data.u8[0];
+        MEDIA_DEBUG_LOG("the isInsufficientLightDetected is %{public}d", value);
+        MEDIA_DEBUG_LOG("the lightStatus_ is %{public}d", lightStatus_);
+        if (value != lightStatus_) {
+            SetLightStatus(value);
+            LightStatus light;
+            light.status = value;
+            MEDIA_DEBUG_LOG("the current light status is %{public}d", light.status);
+            lightStatusCallback->OnLightStatusChanged(light);
+        }
+    }
+    MEDIA_DEBUG_LOG("VideoSession::ProcessLightStatusChange is end");
+}
+
 void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const uint64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
@@ -399,6 +441,7 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
     session->ProcessMacroStatusChange(result);
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessFocusTrackingInfo(result);
+    session->ProcessLightStatusChange(result);
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -2034,6 +2034,7 @@ private:
     sptr<CameraAbilityContainer> cameraAbilityContainer_ = nullptr;
     atomic<bool> supportSpecSearch_ = false;
     void CheckSpecSearch();
+    bool CheckLightStatus();
     void PopulateProfileLists(std::vector<Profile>& photoProfileList,
                               std::vector<Profile>& previewProfileList,
                               std::vector<VideoProfile>& videoProfileList);

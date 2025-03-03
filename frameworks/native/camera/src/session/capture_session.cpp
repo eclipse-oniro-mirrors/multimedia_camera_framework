@@ -297,6 +297,9 @@ int32_t CaptureSession::CommitConfig()
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CommitConfig");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::CommitConfig operation Not allowed!");
+    if (!CheckLightStatus()) {
+        MEDIA_ERR_LOG("CaptureSession::CommitConfig the camera can't support light status!");
+    }
 
     MEDIA_INFO_LOG("CaptureSession::CommitConfig isColorSpaceSetted_ = %{public}d", isColorSpaceSetted_);
     if (!isColorSpaceSetted_) {
@@ -353,6 +356,22 @@ void CaptureSession::CheckSpecSearch()
         return;
     }
     supportSpecSearch_ = true;
+}
+
+bool CaptureSession::CheckLightStatus()
+{
+    camera_metadata_item_t item;
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LIGHT_STATUS, &item);
+    if (retCode != CAM_META_SUCCESS || item.data.u8[0] == 0) {
+        MEDIA_ERR_LOG("lightStatus is not support");
+        return false;
+    }
+    uint8_t lightStart = 1;
+    LockForControl();
+    changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_STATUS, &lightStart, 1);
+    UnlockForControl();
+    return true;
 }
 
 void CaptureSession::PopulateProfileLists(std::vector<Profile>& photoProfileList,
