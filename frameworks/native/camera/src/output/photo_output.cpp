@@ -27,7 +27,7 @@
 #include "input/camera_device.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
-#include "picture.h"
+#include "picture_interface.h"
 #include "task_manager.h"
 #include "dp_utils.h"
 
@@ -1300,14 +1300,14 @@ void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::str
     }
 }
 
-void PhotoOutput::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+void PhotoOutput::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
     if (streamCapturePtr) {
-        errorCode = streamCapturePtr->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
+        errorCode = streamCapturePtr->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType,
                                                          burstKey, timestamp);
         CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
                               errorCode);

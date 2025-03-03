@@ -19,11 +19,9 @@
 #include "iremote_broker.h"
 #include "ipc_file_descriptor.h"
 #include "basic_definitions.h"
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 namespace DeferredProcessing {
 enum ErrorCode {
     // session specific error code
@@ -55,9 +53,9 @@ class IDeferredPhotoProcessingSessionCallback : public IRemoteBroker {
 public:
     virtual int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes,
         uint32_t cloudImageEnhanceFlag) = 0;
-    virtual int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+    virtual int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         uint32_t cloudImageEnhanceFlag) = 0;
-    virtual int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture) = 0;
+    virtual int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual int32_t OnError(const std::string &imageId, const ErrorCode errorCode) = 0;
     virtual int32_t OnStateChanged(const StatusCode status) = 0;
     DECLARE_INTERFACE_DESCRIPTOR(u"IDeferredPhotoProcessingSessionCallback");

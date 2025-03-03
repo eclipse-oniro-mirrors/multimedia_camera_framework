@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include "dp_log.h"
+#include "picture_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -45,7 +46,7 @@ sptr<IPCFileDescriptor> BufferInfo::GetIPCFileDescriptor()
     return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 
-BufferInfoExt::BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
+BufferInfoExt::BufferInfoExt(std::shared_ptr<PictureIntf> picture, long dataSize, bool isHighQuality,
     uint32_t cloudImageEnhanceFlag)
     : picture_(picture),
       dataSize_(dataSize),
@@ -59,7 +60,7 @@ BufferInfoExt::~BufferInfoExt()
     picture_ = nullptr;
 }
 
-std::shared_ptr<Media::Picture> BufferInfoExt::GetPicture()
+std::shared_ptr<PictureIntf> BufferInfoExt::GetPicture()
 {
     return picture_;
 }

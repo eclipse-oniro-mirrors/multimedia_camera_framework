@@ -22,12 +22,10 @@
 #include "istream_common.h"
 #include "surface.h"
 
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 class CameraPhotoProxy;
+class PictureIntf;
 class IStreamCapture : public IStreamCommon {
 public:
     virtual int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) = 0;
@@ -69,7 +67,7 @@ public:
     virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
 
-    virtual int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+    virtual int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");

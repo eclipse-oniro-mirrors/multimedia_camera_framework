@@ -155,8 +155,6 @@ inline bool StrToI64(const std::string &str, int64_t &value)
 }
 
 Watchdog& GetGlobalWatchdog();
-float TransExifOrientationToDegree(const std::string& orientation);
-
 struct DpsCallerInfo {
     int32_t pid;
     int32_t uid;

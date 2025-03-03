@@ -15,7 +15,8 @@
 #include "deferred_photo_processing_session_callback_stub.h"
 #include "deferred_processing_service_ipc_interface_code.h"
 #include "dp_log.h"
-#include "picture.h"
+#include "picture_proxy.h"
+#include "camera_dynamic_loader.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -98,7 +99,12 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleProcessLowQualityImage(Mes
 {
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage enter");
     std::string imageId = data.ReadString();
-    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    std::shared_ptr<PictureIntf> picturePtr = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "picturePtr is nullptr");
+    DP_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling E");
+    picturePtr->Unmarshalling(data);
+    DP_DEBUG_LOG("HandleProcessLowQualityImage Picture::Unmarshalling X");
     int32_t ret = OnDeliveryLowQualityImage(imageId, picturePtr);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleProcessLowQualityImage result: %{public}d", ret);
     return ret;
@@ -109,7 +115,12 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessPictureDone(Messa
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone enter");
     std::string imageId = data.ReadString();
     uint32_t cloudImageEnhanceFlag = data.ReadUint32();
-    std::shared_ptr<Media::Picture> picturePtr(Media::Picture::Unmarshalling(data));
+    std::shared_ptr<PictureIntf> picturePtr = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "picturePtr is nullptr");
+    DP_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
+    picturePtr->Unmarshalling(data);
+    DP_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
     int32_t ret = OnProcessImageDone(imageId, picturePtr, cloudImageEnhanceFlag);
     DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessPictureDone result: %{public}d,"
         "cloudImageEnhanceFlag: %{public}u", ret, cloudImageEnhanceFlag);

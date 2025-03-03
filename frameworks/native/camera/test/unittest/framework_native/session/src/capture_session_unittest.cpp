@@ -30,7 +30,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "sketch_wrapper.h"
-#include "picture.h"
+#include "picture_interface.h"
 
 using namespace testing::ext;
 

@@ -14,13 +14,14 @@
  */
 
 #include "hstream_capture_stub.h"
+#include "camera_dynamic_loader.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_log.h"
 #include "camera_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "metadata_utils.h"
-#include "picture.h"
+#include "picture_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -247,13 +248,14 @@ int32_t HStreamCaptureStub::HandleCreateMediaLibrary(MessageParcel& data, Messag
 
 int32_t HStreamCaptureStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
 {
+    std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
+    CHECK_ERROR_RETURN_RET_LOG(pictureProxy == nullptr || pictureProxy.use_count() != 1, IPC_STUB_INVALID_DATA_ERR,
+        "pictureProxy use count is not 1");    
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
-    Media::Picture *picturePtr = Media::Picture::Unmarshalling(data);
+    pictureProxy->Unmarshalling(data);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
-
-    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
+    CHECK_ERROR_RETURN_RET_LOG(pictureProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleCreateMediaLibrary picture is null");
-    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
     sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
     photoProxy->ReadFromParcel(data);
     CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -263,7 +265,7 @@ int32_t HStreamCaptureStub::HandleCreateMediaLibraryForPicture(MessageParcel& da
     int32_t cameraShotType = 0;
     std::string burstKey;
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture E");
-    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
+    int32_t ret = CreateMediaLibrary(pictureProxy, photoProxy, uri, cameraShotType, burstKey, timestamp);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleCreateMediaLibraryForPicture X");
     CHECK_ERROR_RETURN_RET_LOG((!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
         !(reply.WriteString(burstKey))), IPC_STUB_WRITE_PARCEL_ERR,

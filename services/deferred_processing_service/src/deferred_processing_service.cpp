@@ -19,7 +19,7 @@
 #include "events_monitor.h"
 #include "dp_log.h"
 #include "dps.h"
-
+#include "picture_interface.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -58,7 +58,7 @@ void DeferredProcessingService::Stop()
 }
 
 void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<PictureIntf> picture)
 {
     DP_INFO_LOG("entered.");
     auto sessionManager = DPS_GetSessionManager();

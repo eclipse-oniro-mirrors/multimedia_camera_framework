@@ -28,9 +28,9 @@ public:
     virtual ~DeferredPhotoProcessingSessionCallbackProxy() = default;
     int32_t OnProcessImageDone(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, long bytes,
         uint32_t cloudImageEnhanceFlag) override;
-    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+    int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         uint32_t cloudImageEnhanceFlag) override;
-    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture)override;
+    int32_t OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture)override;
     int32_t OnError(const std::string &imageId, ErrorCode errorCode) override;
     int32_t OnStateChanged(StatusCode status) override;
 

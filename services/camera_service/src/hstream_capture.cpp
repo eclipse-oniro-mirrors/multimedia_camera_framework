@@ -27,11 +27,11 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
-#include "media_library/photo_asset_interface.h"
-#include "media_library/photo_asset_proxy.h"
+#include "photo_asset_interface.h"
+#include "photo_asset_proxy.h"
 #include "camera_report_dfx_uitls.h"
 #include "bms_adapter.h"
-#include "picture.h"
+#include "picture_interface.h"
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
 
@@ -1011,12 +1011,12 @@ void HStreamCapture::SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
     hStreamOperator_ = hStreamOperator;
 }
 
-int32_t HStreamCapture::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy>& photoProxy,
+int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
     std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_) {
-        hStreamOperatorSptr_->CreateMediaLibrary(std::move(picture), photoProxy,
+        hStreamOperatorSptr_->CreateMediaLibrary(picture, photoProxy,
             uri, cameraShotType, burstKey, timestamp);
     }
     return CAMERA_OK;

@@ -17,15 +17,25 @@
 #include <cinttypes>
 #include <cstdio>
 #include <fcntl.h>
+#include <memory>
 #include <securec.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include "camera_output_capability.h"
 #include "camera_util.h"
 #include "camera_log.h"
-
+#include "picture_proxy.h"
 namespace OHOS {
 namespace CameraStandard {
+
+std::shared_ptr<PictureIntf> GetPictureIntfInstance()
+{
+    auto pictureProxy = PictureProxy::CreatePictureProxy();
+    CHECK_ERROR_PRINT_LOG(pictureProxy == nullptr || pictureProxy.use_count() != 1,
+        "pictureProxy use count is not 1");
+    return pictureProxy;
+}
+
 camera_format_t TestUtils::GetCameraMetadataFormat(CameraFormat format)
 {
     camera_format_t metaFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
@@ -301,13 +311,13 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string&
 }
 
 void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
+    std::shared_ptr<PictureIntf> picture, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
 }
 
 void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<PictureIntf> picture)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
 }

@@ -33,6 +33,7 @@ namespace OHOS::Media {
 }
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 const std::string dataWidth = "dataWidth";
 const std::string dataHeight = "dataHeight";
 static const std::string CONST_CAPTURE_START = "captureStart";
@@ -142,7 +143,6 @@ public:
     void RemoveCallback(const std::string eventName, napi_value callback);
     void ExecuteDeepCopySurfaceBuffer();
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
-
 private:
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;

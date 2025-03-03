@@ -26,16 +26,12 @@
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
 #include "camera_photo_proxy.h"
-
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
     class TaskManager;
 }
-
+class PictureIntf;
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -508,7 +504,7 @@ public:
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
         std::string &burstKey, int64_t timestamp);
 
-    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+    void CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
         std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
 
     /**
@@ -544,7 +540,7 @@ public:
     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
     std::map<int32_t, int32_t> captureIdCountMap_;
     std::map<int32_t, uint32_t> captureIdHandleMap_;
-    std::map<int32_t, std::unique_ptr<Media::Picture>> captureIdPictureMap_;
+    std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
 
     std::map<int32_t, sptr<CameraPhotoProxy>> photoProxyMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdGainmapMap_;

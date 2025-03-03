@@ -21,7 +21,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 class DeferredProcUnitTest : public testing::Test {
 public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
@@ -41,7 +40,7 @@ public:
     uint64_t tokenId_;
     int32_t uid_;
     int32_t userId_;
-    std::shared_ptr<Media::Picture> picture_;
+    std::shared_ptr<PictureIntf> picture_;
 };
 } // CameraStandard
 } // OHOS
