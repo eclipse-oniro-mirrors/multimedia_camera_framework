@@ -19,6 +19,7 @@
 #include "capture_scene_const.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
+#include <vector>
 
 using namespace testing::ext;
 
@@ -47,6 +48,37 @@ void HCameraDeviceManagerUnitTest::TearDown()
 
 /*
  * Feature: Framework
+ * Function: Test RemoveDevice and GetConflictDevices normal branches while camera device holder is empty.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RemoveDevice and GetConflictDevices abnormal branches while camera device holder is empty.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_001, TestSize.Level0)
+{
+    std::string cameraId;
+    HCameraDeviceManager::GetInstance()->RemoveDevice(cameraId);
+    EXPECT_TRUE(HCameraDeviceManager::GetInstance()->activeCameras_.empty());
+ 
+    int32_t state = 1;
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
+    state = 0;
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
+    sptr<ICameraBroker> callback;
+    HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+    HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
+ 
+    std::vector<sptr<HCameraDevice>> cameraNeedEvict;
+    sptr<HCameraDevice> cameraRequestOpen;
+    int32_t type = 1;
+    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, cameraRequestOpen, type);
+    EXPECT_FALSE(ret);
+    std::vector<pid_t> pid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    EXPECT_EQ(pid.size(), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test GetACameraId normal branches.
  * SubFunction: NA
  * FunctionPoints: NA
@@ -62,6 +94,28 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_002, Test
     HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
     ret = HCameraDeviceManager::GetInstance()->GetACameraId();
     ASSERT_NE(ret, "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsAllowOpen and UpdateProcessState normal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsAllowOpen and UpdateProcessState normal branches.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_003, TestSize.Level0)
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MessageParcel data;
+    auto remoteObject = data.ReadRemoteObject();
+    auto callback = iface_cast<ICameraBroker>(remoteObject);
+    HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+    bool ret = HCameraDeviceManager::GetInstance()->IsAllowOpen(pid);
+    EXPECT_FALSE(ret);
+    int32_t testInt_1 = 5;
+    uint32_t testInt_2 = 10;
+    HCameraDeviceManager::GetInstance()->GenerateProcessCameraState(testInt_1, testInt_1, testInt_2, testInt_2);
 }
 } // CameraStandard
 } // OHOS
