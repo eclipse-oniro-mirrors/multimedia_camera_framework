@@ -42,8 +42,6 @@ public:
 
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp) override;
 
-    int32_t OnOfflineDeliveryFinished(int32_t captureId) override;
-
 private:
     static inline BrokerDelegator<HStreamCaptureCallbackProxy> delegator_;
 };

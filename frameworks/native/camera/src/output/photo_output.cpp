@@ -29,13 +29,10 @@
 #include "session/night_session.h"
 #include "picture.h"
 #include "task_manager.h"
-#include "dp_utils.h"
-
 using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr uint32_t CAPTURE_TIMEOUT = 1;
 PhotoCaptureSetting::PhotoCaptureSetting()
 {
     int32_t items = 10;
@@ -265,25 +262,6 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
     callback->OnCaptureEnded(captureId, frameCount);
-    auto timeStartIter = (photoOutput->captureIdToCaptureInfoMap_).find(captureId);
-    if (timeStartIter != (photoOutput->captureIdToCaptureInfoMap_).end()) {
-        auto timeEnd = std::chrono::steady_clock::now();
-        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
-            (timeStartIter->second).timeStart).count());
-        if (timeCost > CAPTURE_TIMEOUT) {
-            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
-                captureId, timeCost);
-        }
-        DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
-        (photoOutput->captureIdToCaptureInfoMap_).erase(captureId);
-        if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
-            MEDIA_INFO_LOG("OnCaptureReady notify offline delivery finished with capture ID: %{public}d", captureId);
-            auto callback = photoOutput->GetApplicationCallback();
-            CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
-                "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
-            callback->OnOfflineDeliveryFinished(captureId);
-        }
-    }
     return CAMERA_OK;
 }
 
@@ -322,23 +300,6 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnFrameShutterEnd callback is nullptr");
     callback->OnFrameShutterEnd(captureId, timestamp);
-    if (photoOutput->IsHasEnableOfflinePhoto()) {
-        uint32_t startCaptureHandle;
-        constexpr uint32_t delayMilli = 10 * 1000; // 10S 1000 is ms
-        MEDIA_INFO_LOG("ThumbnailListener offline GetGlobalWatchdog StartMonitor, captureId=%{public}d",
-            captureId);
-        DeferredProcessing::GetGlobalWatchdog().StartMonitor(startCaptureHandle, delayMilli,
-            [captureId, photoOutput](uint32_t handle) {
-                MEDIA_INFO_LOG("ThumbnailListener offline Watchdog executed, handle: %{public}d, captureId= %{public}d",
-                    static_cast<int>(handle), captureId);
-                CHECK_ERROR_RETURN_LOG(photoOutput == nullptr, "photoOutput is release");
-                if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
-                    photoOutput->Release();
-                }
-        });
-        photoOutput->captureIdToCaptureInfoMap_[captureId].CaptureHandle = startCaptureHandle;
-        photoOutput->captureIdToCaptureInfoMap_[captureId].timeStart = std::chrono::steady_clock::now();
-    }
     return CAMERA_OK;
 }
 
@@ -352,19 +313,6 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, cons
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
     callback->OnCaptureReady(captureId, timestamp);
-    return CAMERA_OK;
-}
-
-int32_t HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished(const int32_t captureId)
-{
-    CAMERA_SYNC_TRACE;
-    auto photoOutput = GetPhotoOutput();
-    CHECK_ERROR_RETURN_RET_LOG(photoOutput == nullptr, CAMERA_OK,
-        "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished photoOutput is nullptr");
-    auto callback = photoOutput->GetApplicationCallback();
-    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
-        "HStreamCaptureCallbackImpl::OnOfflineDeliveryFinished callback is nullptr");
-    callback->OnOfflineDeliveryFinished(captureId);
     return CAMERA_OK;
 }
 
@@ -637,10 +585,10 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     auto itemStream = CastStream<IStreamCapture>(GetStream());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
-        MEDIA_INFO_LOG("Capture start");
+        MEDIA_DEBUG_LOG("Capture start");
         session->EnableMovingPhotoMirror(photoCaptureSettings->GetMirror(), true);
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
-        MEDIA_INFO_LOG("Capture End");
+        MEDIA_DEBUG_LOG("Capture End");
     } else {
         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
@@ -1210,110 +1158,5 @@ sptr<Surface> PhotoOutput::GetPhotoSurface()
     return photoSurface_;
 }
 
-bool PhotoOutput::IsOfflineSupported()
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("Enter IsOfflineSupported");
-    bool isOfflineSupported = false;
-    auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, session is nullptr");
-    auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, inputDevice is nullptr");
-    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, cameraObj is nullptr");
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, isOfflineSupported,
-                               "PhotoOutput IsOfflineSupported error!, metadata is nullptr");
-    camera_metadata_item_t item;
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
-    if (ret == CAM_META_SUCCESS && item.count > 0) {
-        isOfflineSupported = static_cast<bool>(item.data.u8[0]);
-        MEDIA_INFO_LOG("PhotoOutput isOfflineSupported %{public}d", isOfflineSupported);
-        return isOfflineSupported;
-    }
-    return isOfflineSupported;
-}
-
-int32_t PhotoOutput::EnableOfflinePhoto()
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PhotoOutput EnableOfflinePhoto");
-    auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SESSION_NOT_RUNNING,
-                               "PhotoOutput EnableOfflinePhoto error!, session is nullptr");
-    auto inputDevice = session->GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SESSION_NOT_RUNNING,
-                               "PhotoOutput EnableOfflinePhoto error!, inputDevice is nullptr");
-    bool isOfflineSupported = IsOfflineSupported();
-    CHECK_ERROR_RETURN_RET_LOG(isOfflineSupported == false, OPERATION_NOT_ALLOWED,
-                               "PhotoOutput EnableOfflinePhoto error, isOfflineSupported is false");
-    auto isSessionConfiged = session->IsSessionCommited();
-    CHECK_ERROR_RETURN_RET_LOG(isSessionConfiged == false, OPERATION_NOT_ALLOWED,
-                               "PhotoOutput EnableOfflinePhoto error, isSessionConfiged is false");
-    mIsHasEnableOfflinePhoto_ = true; // 管理offlinephotooutput
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (streamCapturePtr) {
-        errCode = streamCapturePtr->EnableOfflinePhoto(true);
-        CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, SERVICE_FATL_ERROR,
-                                   "Failed to EnableOfflinePhoto! , errCode: %{public}d", errCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::EnableOfflinePhoto() itemStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
-    return CameraErrorCode::SUCCESS;
-}
-
-bool PhotoOutput::IsHasEnableOfflinePhoto()
-{
-    MEDIA_INFO_LOG("PhotoOutput::IsHasEnableOfflinePhoto %{public}d", mIsHasEnableOfflinePhoto_);
-    return mIsHasEnableOfflinePhoto_;
-}
-
-void PhotoOutput::SetSwitchOfflinePhotoOutput(bool isHasSwitched)
-{
-    std::lock_guard<std::mutex> lock(offlineStatusMutex_);
-    isHasSwitched_ = isHasSwitched;
-}
-
-bool PhotoOutput::IsHasSwitchOfflinePhoto()
-{
-    std::lock_guard<std::mutex> lock(offlineStatusMutex_);
-    return isHasSwitched_;
-}
-
-void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-    std::string &burstKey, int64_t timestamp)
-{
-    CAMERA_SYNC_TRACE;
-    int32_t errorCode = CAMERA_OK;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr) {
-        errorCode = streamCapturePtr->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
-                              errorCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
-    }
-}
-
-void PhotoOutput::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
-    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
-{
-    CAMERA_SYNC_TRACE;
-    int32_t errorCode = CAMERA_OK;
-    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr) {
-        errorCode = streamCapturePtr->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
-                                                         burstKey, timestamp);
-        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
-                              errorCode);
-    } else {
-        MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
-    }
-}
 } // namespace CameraStandard
 } // namespace OHOS

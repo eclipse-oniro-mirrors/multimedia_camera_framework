@@ -466,6 +466,20 @@ public:
     void SetCallback(std::shared_ptr<SessionCallback> callback);
 
     /**
+     * @brief Set the moving photo callback.
+     *
+     * @param photoProxy Requested for the pointer where moving photo callback is present.
+     * @param uri get uri for medialibary.
+     * @param cameraShotType get cameraShotType for medialibary.
+     */
+
+    void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+                            std::string &burstKey, int64_t timestamp);
+
+    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer to SessionCallback set by application.
@@ -1638,8 +1652,6 @@ public:
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
     int32_t EnableAutoAigcPhoto(bool enabled);
-
-    void EnableOfflinePhoto();
 
     // White Balance
     /**

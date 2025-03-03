@@ -195,8 +195,6 @@ public:
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
 
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
-
-    void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
 };
 
 class CameraServiceClientUnit : public testing::Test {

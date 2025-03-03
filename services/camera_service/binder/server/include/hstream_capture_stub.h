@@ -42,9 +42,6 @@ public:
     int32_t HandleSetCameraPhotoRotation(MessageParcel& data);
     int32_t HandleAddMediaLibraryPhotoProxy(MessageParcel& data);
     int32_t HandleAcquireBufferToPrepareProxy(MessageParcel& data);
-    int32_t HandleEnableOfflinePhoto(MessageParcel& data);
-    int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
-    int32_t HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -321,13 +321,7 @@ int32_t CaptureSession::CommitConfig()
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
-    bool isHasSwitchedOffline = false;
-    if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
-        isHasSwitchedOffline = true;
-        EnableOfflinePhoto();
-    }
     if (captureSession) {
-        errCode = captureSession->SetCommitConfigFlag(isHasSwitchedOffline);
         errCode = captureSession->CommitConfig();
         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
         if (errCode != CAMERA_OK) {
@@ -335,6 +329,8 @@ int32_t CaptureSession::CommitConfig()
         } else {
             CreateCameraAbilityContainer();
         }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CommitConfig() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -1054,10 +1050,6 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO && photoOutput_ &&
-            ((sptr<PhotoOutput> &)photoOutput_)->IsHasEnableOfflinePhoto()) {
-            ((sptr<PhotoOutput> &)photoOutput_)->SetSwitchOfflinePhotoOutput(true);
-        }
         errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream());
         CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to RemoveOutput!, %{public}d", errCode);
     } else {
@@ -1160,6 +1152,38 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
         }
     }
     return;
+}
+
+void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+                                        std::string &burstKey, int64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK, "Failed to create media library, errorCode: %{public}d",
+            errorCode);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
+    }
+}
+
+void CaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+{
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType,
+            burstKey, timestamp);
+        CHECK_ERROR_PRINT_LOG(errorCode != CAMERA_OK,
+            "Failed to create media library, errorCode: %{public}d", errorCode);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CreatePictureForMediaLibrary captureSession is nullptr");
+    }
 }
 
 int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
@@ -4576,29 +4600,6 @@ void CaptureSession::SetUserId()
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUserId Failed!");
     int32_t errCode = this->UnlockForControl();
     CHECK_ERROR_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetUserId Failed");
-}
-
-void CaptureSession::EnableOfflinePhoto()
-{
-    MEDIA_INFO_LOG("CaptureSession::EnableOfflinePhoto");
-    CHECK_ERROR_RETURN_LOG(IsSessionCommited(), "CaptureSession::EnableOfflinePhoto session has committed!");
-    if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
-        this->LockForControl();
-        uint8_t enableOffline = 1;
-        camera_metadata_item_t item;
-        bool status = false;
-        int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
-            OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
-        }
-        MEDIA_INFO_LOG("CaptureSession::Start() enableOffline is %{public}d", enableOffline);
-        CHECK_ERROR_PRINT_LOG(!status,
-            "CaptureSession::CommitConfig Failed to add/update offline stream operator");
-        this->UnlockForControl();
-    }
 }
 
 int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)

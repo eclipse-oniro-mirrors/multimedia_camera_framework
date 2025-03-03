@@ -45,6 +45,8 @@ private:
     int32_t HandleSetFeatureMode(MessageParcel& data);
     int32_t HandleEnableMovingPhoto(MessageParcel& data);
     int32_t HandleStartMovingPhotoCapture(MessageParcel& data);
+    int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
+    int32_t HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

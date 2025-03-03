@@ -101,13 +101,6 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for photo capture callback error
      */
     virtual void OnCaptureError(const int32_t captureId, const int32_t errorCode) const = 0;
-
-    /**
-     * @brief Called when camera offline delivery finished.
-     *
-     * @param captureId Obtain the constant capture id for the photo capture callback.
-     */
-    virtual void OnOfflineDeliveryFinished(const int32_t captureId) const = 0;
 };
 
 class [[deprecated]] PhotoCallback {
@@ -145,13 +138,6 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for photo capture callback error
      */
     virtual void OnCaptureError(const int32_t captureId, const int32_t errorCode) const = 0;
-
-    /**
-     * @brief Called when camera offline delivery finished.
-     *
-     * @param captureId Obtain the constant capture id for the photo capture callback.
-     */
-    virtual void OnOfflineDeliveryFinished(const int32_t captureId) const = 0;
 };
 
 typedef struct Location {
@@ -264,11 +250,6 @@ private:
     std::shared_ptr<Location> location_;
     std::mutex locationMutex_;
 };
-
-typedef struct captureMonitorInfo {
-    int32_t CaptureHandle;
-    std::chrono::time_point<std::chrono::steady_clock> timeStart;
-} captureMonitorInfo;
 
 constexpr uint8_t CAPTURE_PHOTO = 1 << 0;
 constexpr uint8_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
@@ -495,21 +476,6 @@ public:
      * @brief Enable auto aigc photo.
      */
     int32_t EnableAutoAigcPhoto(bool enabled);
-    bool IsOfflineSupported();
-
-    int32_t EnableOfflinePhoto();
-
-    bool IsHasEnableOfflinePhoto();
-
-    void SetSwitchOfflinePhotoOutput(bool isHasSwitched);
-
-    bool IsHasSwitchOfflinePhoto();
-
-    void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-        std::string &burstKey, int64_t timestamp);
-
-    void CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp);
 
     /**
      * @brief Get photo buffer.
@@ -553,10 +519,8 @@ public:
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
-    std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 private:
     std::mutex callbackMutex_;
-    std::mutex offlineStatusMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
     bool isNativeSurface_ = false;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
@@ -564,8 +528,6 @@ private:
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
     void CameraServerDied(pid_t pid) override;
-    bool mIsHasEnableOfflinePhoto_ = false;
-    bool isHasSwitched_ = false;
 };
 
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
@@ -626,13 +588,6 @@ public:
      * @param timestamp Represents timestamp information for the photo capture callback
      */
     int32_t OnCaptureReady(const int32_t captureId, const uint64_t timestamp) override;
-
-    /**
-     * @brief Called when camera offline delivery finished.
-     *
-     * @param captureId Obtain the constant capture id for the photo capture callback.
-     */
-    int32_t OnOfflineDeliveryFinished(const int32_t captureId) override;
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {

@@ -104,11 +104,6 @@ void CJPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) c
     }
 }
 
-void CJPhotoOutputCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
-{
-    return;
-}
-
 CJPhotoOutput::CJPhotoOutput()
 {
     photoOutput_ = sPhotoOutput_;

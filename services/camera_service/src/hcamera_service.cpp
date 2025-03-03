@@ -43,7 +43,6 @@
 #include "device_manager.h"
 #endif
 #include "hcamera_device_manager.h"
-#include "hstream_operator_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "os_account_manager.h"
@@ -532,10 +531,6 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
-
-    sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken, opMode);
-    captureSession->SetStreamOperator(hStreamOperator);
-    HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 单例管理streamoperator 待找唯一key
     return rc;
 }
 
@@ -1832,7 +1827,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     int count = 0;
     for (auto& info : allStreamInfos) {
         MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
-        count += (info.v1_0.streamId_ == 0) ? 1: 0;
+        count = (info.v1_0.streamId_ == 0) ? count++ : 0;
     }
     CaptureSessionState currentState;
     captureSession->GetSessionState(currentState);

@@ -16,6 +16,7 @@
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -336,6 +337,56 @@ int32_t HCaptureSessionProxy::EnableMovingPhotoMirror(bool isMirror, bool isConf
     return error;
 }
 
+int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
+    data.WriteInterfaceToken(GetDescriptor());
+    photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
+    return error;
+}
+
+int32_t HCaptureSessionProxy::CreateMediaLibrary(std::unique_ptr<Media::Picture> picture,
+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
+    std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (picture == nullptr || photoProxy == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary picture or photoProxy is null");
+        return IPC_PROXY_ERR;
+    }
+    data.WriteInterfaceToken(GetDescriptor());
+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling E");
+    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HCaptureSessionProxy picture Marshalling failed");
+    MEDIA_DEBUG_LOG("HCaptureSessionProxy CreateMediaLibrary picture->Marshalling X");
+    photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
+    return error;
+}
+
 int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
 {
     MessageParcel data;
@@ -349,22 +400,6 @@ int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
         data, reply, option);
     CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
         "HCaptureSessionProxy SetPreviewRotation failed, error: %{public}d", error);
-    return error;
-}
-
-int32_t HCaptureSessionProxy::SetCommitConfigFlag(bool isNeedCommitting)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    data.WriteInterfaceToken(GetDescriptor());
-    data.WriteBool(isNeedCommitting);
-    int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_COMMIT_CONFIG_FLAG),
-        data, reply, option);
-    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
-        "HCaptureSessionProxy SetCommitConfigFlag failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard
