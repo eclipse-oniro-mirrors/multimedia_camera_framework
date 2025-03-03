@@ -137,6 +137,8 @@ public:
 
     int32_t GetConcurrentCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
+
+    int32_t SetDeviceRetryTime() override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };

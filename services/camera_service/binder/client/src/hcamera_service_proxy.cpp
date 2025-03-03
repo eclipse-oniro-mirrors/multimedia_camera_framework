@@ -923,5 +923,19 @@ int32_t HCameraServiceProxy::GetConcurrentCameraAbility(std::string& cameraId,
     Camera::MetadataUtils::DecodeCameraMetadata(reply, cameraAbility);
     return error;
 }
+
+int32_t HCameraServiceProxy::SetDeviceRetryTime()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME),
+        data, reply, option);
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

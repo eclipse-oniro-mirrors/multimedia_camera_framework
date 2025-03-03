@@ -164,6 +164,8 @@ public:
     virtual int32_t GetConcurrentCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) = 0;
 
+    virtual int32_t SetDeviceRetryTime() = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard
