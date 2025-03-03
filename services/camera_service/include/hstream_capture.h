@@ -30,12 +30,17 @@
 #include "v1_2/istream_operator.h"
 #include "safe_map.h"
 
+namespace OHOS::Media {
+    class Picture;
+}
+
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 class PhotoAssetIntf;
 class CameraServerPhotoProxy;
+class HStreamOperator;
 class ConcurrentMap {
 public:
     void Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value);
@@ -81,6 +86,7 @@ public:
     int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp);
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
+    int32_t OnOfflineDeliveryFinished(int32_t captureId);
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_, int32_t captureId);
     void SetMode(int32_t modeName);
@@ -104,6 +110,15 @@ public:
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetInstance(int32_t captureId);
     bool GetAddPhotoProxyEnabled();
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
+    int32_t EnableOfflinePhoto(bool isEnable) override;
+    bool IsHasEnableOfflinePhoto();
+    void SwitchToOffline();
+    bool IsHasSwitchToOffline();
+    void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+        std::string& burstKey, int64_t timestamp) override;
+    int32_t CreateMediaLibrary(std::unique_ptr<Media::Picture> picture, sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp) override;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -120,6 +135,8 @@ private:
     int32_t thumbnailSwitch_;
     int32_t rawDeliverySwitch_;
     int32_t movingPhotoSwitch_;
+    std::condition_variable testDelay_;
+    std::mutex testDelayMutex_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
     sptr<BufferProducerSequenceable> rawBufferQueue_;
     sptr<BufferProducerSequenceable> gainmapBufferQueue_;
@@ -141,6 +158,10 @@ private:
     int32_t videoCodecType_ = 0;
     std::mutex photoAssetLock_;
     ConcurrentMap photoAssetProxy_;
+    bool mEnableOfflinePhoto_ = false;
+    bool mSwitchToOfflinePhoto_ = false;
+    int32_t mlastCaptureId = 0;
+    wptr<HStreamOperator> hStreamOperator_;
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
 };
 } // namespace CameraStandard
