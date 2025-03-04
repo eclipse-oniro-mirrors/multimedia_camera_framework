@@ -84,6 +84,7 @@ public:
     void SetUsedAsPosition(camera_position_enum_t cameraPosition);
     int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
     int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
+    std::vector<int32_t> GetFrameRateRange();
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);

@@ -27,6 +27,7 @@
 #include <refbase.h>
 #include <unordered_map>
 #include <unordered_set>
+#include "camera_rotate_strategy_parser.h"
 #include "camera_util.h"
 #include "camera_dynamic_loader.h"
 #include "fixed_size_list.h"
@@ -287,6 +288,10 @@ public:
     static std::mutex g_mediaTaskLock_;
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
+    void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
+    std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
+    void UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
+        std::vector<int32_t> &frameRateRange);
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
@@ -387,6 +392,8 @@ private:
     sptr<AvcodecTaskManager> taskManager_;
     std::mutex displayListenerLock_;
     sptr<DisplayRotationListener> displayListener_;
+    std::mutex cameraRotateStrategyInfosLock_;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

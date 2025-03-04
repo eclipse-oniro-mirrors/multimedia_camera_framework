@@ -24,6 +24,7 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "camera_rotate_strategy_parser.h"
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
@@ -280,6 +281,7 @@ private:
     sptr<ICameraBroker> peerCallback_;
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif
