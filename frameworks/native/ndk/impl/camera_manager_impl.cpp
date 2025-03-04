@@ -902,6 +902,10 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         }
     }
 
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("Camera_Manager::GetCameraDevice cameraInfo is null!");
+        return CAMERA_SERVICE_FATAL_ERROR;
+    }
     outCameras->cameraId = cameraInfo->GetID().data();
     outCameras->cameraPosition = position;
     outCameras->cameraType = type;
@@ -920,7 +924,7 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
     std::vector<std::vector<SceneMode>> modes = {};
     std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
-    for (int i = 0; i < deviceSize; i++) {
+    for (uint32_t i = 0; i < deviceSize; i++) {
         string str(camera[i].cameraId);
         cameraIdv.push_back(str);
     }
@@ -942,13 +946,13 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
             CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_FULL_CAPABILITY;
         }
         Camera_SceneMode* newmodes = new Camera_SceneMode[modes.size()];
-        for (int j = 0; j < modes[i].size(); j++) {
+        for (uint32_t j = 0; j < modes[i].size(); j++) {
             auto itr = g_fwModeToNdk_.find(modes[i][j]);
             newmodes[j] = itr->second;
         }
         CameraConcurrentInfothis[i].sceneModes = newmodes;
         Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()];
-        for (int j = 0; j < outputCapabilities[i].size(); j++) {
+        for (uint32_t j = 0; j < outputCapabilities[i].size(); j++) {
             std::vector<Profile> previewProfiles = outputCapabilities[i][j]->GetPreviewProfiles();
             std::vector<Profile> photoProfiles = outputCapabilities[i][j]->GetPhotoProfiles();
             std::vector<VideoProfile> videoProfiles = outputCapabilities[i][j]->GetVideoProfiles();

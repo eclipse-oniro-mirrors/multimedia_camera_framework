@@ -293,7 +293,7 @@ private:
     string preCameraClient_;
     bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
-    CameraServiceStatus serviceStatus_;
+    CameraServiceStatus serviceStatus_ = CameraServiceStatus::SERVICE_READY;
 
     std::mutex peerCallbackMutex_;
     sptr<ICameraBroker> peerCallback_;
