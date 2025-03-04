@@ -249,6 +249,7 @@ public:
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
     bool QueryFpsAndZoomRatio(float& currentFps, float& currentZoomRatio);
     bool QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode);
+    bool QueryZoomBezierValue(std::vector<float>& zoomBezierValue);
     int32_t SetSmoothZoom(
         int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
     int32_t EnableMovingPhoto(bool isEnable) override;
