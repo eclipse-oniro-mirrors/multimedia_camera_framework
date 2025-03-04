@@ -1307,7 +1307,7 @@ void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
     cameraDevNow->limtedCapabilitySave_.stabilizationmodes.mode.clear();
     cameraDevNow->limtedCapabilitySave_.colorspaces.modeCount = 0;
     cameraDevNow->limtedCapabilitySave_.colorspaces.modeInfo.clear();
-    for (uint32_t i = 0; i < count;) {
+    for (int32_t i = 0; i < count;) {
         if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_FLASH_MODES) {
             std::vector<int32_t>vec;
             int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);
@@ -1373,7 +1373,7 @@ void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
 
 void CameraManager::FindConcurrentLimtedEnd(double* originInfo, int32_t i, int count, int &countl)
 {
-    for (uint32_t j = i + STEP_ONE; j < count; j++) {
+    for (int32_t j = i + STEP_ONE; j < count; j++) {
         if (static_cast<camera_device_metadata_tag>(originInfo[j]) == OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL) {
             break;
         }
@@ -1534,7 +1534,7 @@ bool CameraManager::GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDevi
 bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int32_t> &idmap,
     std::vector<std::string> &cameraIdv)
 {
-    for (int i = 1; i < cameraIdv.size(); i++) {
+    for (uint32_t i = 1; i < cameraIdv.size(); i++) {
         if (cameraIdv[i].empty()) {
             MEDIA_ERR_LOG("CameraManager::CheckCameraConcurrentId get invalid cameraId");
         }
@@ -1583,8 +1583,8 @@ bool CameraManager::CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cam
     int32_t* originInfo = item.data.i32;
     std::unordered_map<std::string, int32_t>idmap;
     idmap.clear();
-    int count = item.count;
-    for (int i = 0; i < count; i++) {
+    uint32_t count = item.count;
+    for (uint32_t i = 0; i < count; i++) {
         if (originInfo[i] == -1) {
             if (CheckCameraConcurrentId(idmap, cameraIdv)) {
                 return true;

@@ -163,7 +163,7 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
-    int32_t cameraConcurrentType_;
+    int32_t cameraConcurrentType_ = 0;
 
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
