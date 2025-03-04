@@ -237,6 +237,7 @@ public:
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
     sptr<AvcodecTaskManager> taskManager_;
+    std::vector<int32_t> GetFrameRateRange();
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);

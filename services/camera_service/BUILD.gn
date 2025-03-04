@@ -69,9 +69,11 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
+    "src/camera_rotate_strategy_parser.cpp",
     "src/camera_sensor_plugin.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/camera_xml_parser.cpp",
     "src/device_protection_ability_connection.cpp",
     "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
@@ -247,6 +249,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "e2fsprogs:libext2_uuid",
+    "libxml2:libxml2",
   ]
 
   defines = []

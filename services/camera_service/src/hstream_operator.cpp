@@ -1782,6 +1782,18 @@ int32_t HStreamOperator::OnResult(int32_t streamId, const std::vector<uint8_t>& 
     return CAMERA_OK;
 }
 
+std::vector<int32_t> HStreamOperator::GetFrameRateRange()
+{
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& item : repeatStreams) {
+        auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+        auto repeatType = curStreamRepeat->GetRepeatStreamType();
+        if (repeatType == RepeatStreamType::PREVIEW) {
+            return curStreamRepeat->GetFrameRateRange();
+        }
+    }
+    return {};
+}
 
 bool StreamContainer::AddStream(sptr<HStreamCommon> stream)
 {

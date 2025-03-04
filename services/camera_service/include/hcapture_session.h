@@ -27,6 +27,7 @@
 #include <refbase.h>
 #include <unordered_map>
 #include <unordered_set>
+#include "camera_rotate_strategy_parser.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_repeat.h"
@@ -164,6 +165,10 @@ public:
 
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
+    void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
+    std::vector<CameraRotateStrategyInfo> GetCameraRotateStrategyInfos();
+    void UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
+        std::vector<int32_t> &frameRateRange);
 
 private:
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
@@ -239,6 +244,8 @@ private:
     bool isDynamicConfiged_ = false;
     std::string deviceClass_ = "phone";
     wptr<HStreamOperator> hStreamOperator_;
+    std::mutex cameraRotateStrategyInfosLock_;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

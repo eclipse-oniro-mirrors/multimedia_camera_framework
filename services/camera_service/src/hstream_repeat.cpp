@@ -1069,5 +1069,10 @@ void HStreamRepeat::UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::Ca
     }
     CHECK_ERROR_PRINT_LOG(!status, "UpdateAutoFrameRateSettings Failed to set auto-frame rate in VideoSettings");
 }
+
+std::vector<int32_t> HStreamRepeat::GetFrameRateRange()
+{
+    return streamFrameRateRange_;
+}
 } // namespace CameraStandard
 } // namespace OHOS
