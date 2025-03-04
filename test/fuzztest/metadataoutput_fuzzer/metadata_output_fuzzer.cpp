@@ -98,7 +98,9 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest()
     }
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "MetadataOutputFuzzer: GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     sptr<CaptureOutput> metadata = cameraManager_->CreateMetadataOutput();
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     session->BeginConfig();
@@ -114,9 +116,6 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest()
     fuzz_->GetAppStateCallback();
     fuzz_->GetSupportedMetadataObjectTypes();
     std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
-    fuzz_->SetCapturingMetadataObjectTypes(metadataObjectTypes);
-    fuzz_->AddMetadataObjectTypes(metadataObjectTypes);
-    fuzz_->RemoveMetadataObjectTypes(metadataObjectTypes);
     fuzz_->checkValidType(typeAdded, supportedType);
     std::vector<MetadataObjectType> typesOfMetadata;
     typesOfMetadata.push_back(MetadataObjectType::FACE);
@@ -168,6 +167,9 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1()
     fuzz_->GetSurface();
     fuzz_->surface_ = nullptr;
     fuzz_->ReleaseSurface();
+    fuzz_->SetCapturingMetadataObjectTypes(metadataObjectTypes);
+    fuzz_->AddMetadataObjectTypes(metadataObjectTypes);
+    fuzz_->RemoveMetadataObjectTypes(metadataObjectTypes);
 }
 
 void Test()

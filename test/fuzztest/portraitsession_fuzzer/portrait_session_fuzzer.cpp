@@ -185,7 +185,9 @@ void PortraitSessionFuzzer::PortraitSessionFuzzTest()
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "PortraitSessionFuzzer: GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);

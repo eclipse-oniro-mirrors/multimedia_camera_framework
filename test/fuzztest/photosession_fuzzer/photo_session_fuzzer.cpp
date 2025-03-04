@@ -34,10 +34,9 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-sptr<PhotoSession> fuzz = nullptr;
-sptr<CameraDevice> camera = nullptr;
-sptr<CameraManager> cameraManager = nullptr;
-sptr<CaptureOutput> photoOutput = nullptr;
+sptr<PhotoSession> fuzz_ = nullptr;
+sptr<CameraManager> cameraManager_ = nullptr;
+sptr<CaptureOutput> photoOutput_ = nullptr;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -74,13 +73,13 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    cameraManager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
-    fuzz = static_cast<PhotoSession*>(captureSession.GetRefPtr());
-    if (fuzz == nullptr) {
+    cameraManager_ = CameraManager::GetInstance();
+    sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    fuzz_ = static_cast<PhotoSession*>(captureSession.GetRefPtr());
+    if (fuzz_ == nullptr) {
         return;
     }
-    fuzz->CanAddOutput(photoOutput);
+    fuzz_->CanAddOutput(photoOutput_);
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<PreconfigType> preconfigTypeVec = {
         PRECONFIG_720P,
@@ -98,18 +97,17 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest()
     };
     uint8_t underNumSec = randomNum % profileSizeRatioVec.size();
     ProfileSizeRatio profileSizeRatio = profileSizeRatioVec[underNumSec];
-    fuzz->GeneratePreconfigProfiles(preconfigType, profileSizeRatio);
-    auto configs = fuzz->GeneratePreconfigProfiles(PRECONFIG_720P, RATIO_1_1);
-    fuzz->IsPreconfigProfilesLegal(configs);
-    fuzz->CanPreconfig(preconfigType, profileSizeRatio);
-    fuzz->Preconfig(preconfigType, profileSizeRatio);
-    auto cameras = cameraManager->GetSupportedCameras();
-    camera = cameras[0];
-    CHECK_ERROR_RETURN_LOG(!camera, "PhotoSessionFuzzer: Camera is null");
+    fuzz_->GeneratePreconfigProfiles(preconfigType, profileSizeRatio);
+    auto configs = fuzz_->GeneratePreconfigProfiles(PRECONFIG_720P, RATIO_1_1);
+    fuzz_->IsPreconfigProfilesLegal(configs);
+    fuzz_->CanPreconfig(preconfigType, profileSizeRatio);
+    fuzz_->Preconfig(preconfigType, profileSizeRatio);
+    auto cameras = cameraManager_->GetSupportedCameras();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "PhotoSessionFuzzer: GetSupportedCameras Error");
     Profile photo(CameraFormat::CAMERA_FORMAT_JPEG, {640, 480});
-    fuzz->IsPhotoProfileLegal(camera, photo);
+    fuzz_->IsPhotoProfileLegal(cameras[0], photo);
     Profile preview(CameraFormat::CAMERA_FORMAT_YUV_420_SP, {640, 480});
-    fuzz->IsPreviewProfileLegal(camera, preview);
+    fuzz_->IsPreviewProfileLegal(cameras[0], preview);
 }
 
 void Test()

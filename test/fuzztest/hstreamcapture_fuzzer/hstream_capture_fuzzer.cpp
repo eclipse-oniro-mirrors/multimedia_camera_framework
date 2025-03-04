@@ -124,8 +124,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     fuzz_->SetCameraPhotoRotation(GetData<bool>());
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy);
-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-    fuzz_->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
 }
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()

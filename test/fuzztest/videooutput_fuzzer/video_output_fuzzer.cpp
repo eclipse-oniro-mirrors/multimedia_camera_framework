@@ -76,12 +76,15 @@ void VideoOutputFuzzer::VideoOutputFuzzTest()
     }
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetSupportedCameras Error");
     auto s = manager->CreateCaptureSession(SceneMode::VIDEO);
     s->BeginConfig();
-    auto cap = s->GetCameraOutputCapabilities(cameras[0])[0];
-    auto vp = cap->GetVideoProfiles()[0];
+    auto cap = s->GetCameraOutputCapabilities(cameras[0]);
+    CHECK_ERROR_RETURN_LOG(cap.empty(), "GetCameraOutputCapabilities Error");
+    auto vp = cap[0]->GetVideoProfiles();
+    CHECK_ERROR_RETURN_LOG(vp.empty(), "GetVideoProfiles Error");
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    auto output = manager->CreateVideoOutput(vp, surface);
+    auto output = manager->CreateVideoOutput(vp[0], surface);
     output->Start();
     output->Stop();
     output->Resume();
@@ -93,8 +96,7 @@ void VideoOutputFuzzer::VideoOutputFuzzTest()
     int32_t minFrameRate = GetData<int32_t>();
     int32_t maxFrameRate = GetData<int32_t>();
     output->SetFrameRateRange(minFrameRate, maxFrameRate);
-    int32_t format = GetData<int32_t>();
-    output->SetOutputFormat(format);
+    output->SetOutputFormat(GetData<int32_t>());
     output->SetFrameRate(minFrameRate, maxFrameRate);
     output->GetSupportedFrameRates();
     bool enabled = GetData<bool>();
@@ -105,13 +107,13 @@ void VideoOutputFuzzer::VideoOutputFuzzTest()
     int pid = GetData<int>();
     output->CameraServerDied(pid);
     output->canSetFrameRateRange(minFrameRate, maxFrameRate);
-    output->GetVideoRotation(format);
+    output->GetVideoRotation(GetData<int32_t>());
     output->IsAutoDeferredVideoEnhancementSupported();
     output->IsAutoDeferredVideoEnhancementEnabled();
     output->EnableAutoDeferredVideoEnhancement(enabled);
     output->IsVideoStarted();
     output->IsRotationSupported(enabled);
-    output->SetRotation(format);
+    output->SetRotation(GetData<int32_t>());
     output->IsAutoVideoFrameRateSupported();
     output->EnableAutoVideoFrameRate(enabled);
     std::vector<int32_t> supportedRotations;

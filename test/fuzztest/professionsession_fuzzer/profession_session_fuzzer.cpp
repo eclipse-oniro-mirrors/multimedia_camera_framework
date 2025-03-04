@@ -38,7 +38,7 @@ static size_t g_pos;
 const int32_t NUM_FOUR = 4;
 const int32_t NUM_THREE = 3;
 ProfessionSession *ProfessionSessionFuzzer::fuzz_ = nullptr;
-sptr<CameraManager> manager;
+sptr<CameraManager> manager_;
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -102,7 +102,7 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile& profile)
     sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
 
     sptr<CaptureOutput> previewOutput = nullptr;
-    previewOutput = manager->CreatePreviewOutput(profile, pSurface);
+    previewOutput = manager_->CreatePreviewOutput(profile, pSurface);
     return previewOutput;
 }
 
@@ -112,7 +112,7 @@ sptr<CaptureOutput> CreateVideoOutput(VideoProfile& videoProfile)
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
     sptr<CaptureOutput> videoOutput = nullptr;
-    videoOutput = manager->CreateVideoOutput(videoProfile, videoSurface);
+    videoOutput = manager_->CreateVideoOutput(videoProfile, videoSurface);
     return videoOutput;
 }
 
@@ -177,17 +177,17 @@ void Test()
         return;
     }
     GetPermission();
-    manager = CameraManager::GetInstance();
-    sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
-    if (ProfessionSessionFuzzer::fuzz_ == nullptr) {
-        ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
-    }
+    manager_ = CameraManager::GetInstance();
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
+    ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     SceneMode sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
-    std::vector<sptr<CameraDevice>> cameras_;
-    cameras_ = manager->GetSupportedCameras();
-    sptr<CaptureInput> input = manager->CreateCameraInput(cameras_[0]);
+    std::vector<sptr<CameraDevice>> cameras;
+    cameras = manager_->GetSupportedCameras();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
+    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
+    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     sptr<CameraOutputCapability> modeAbility =
-        manager->GetSupportedOutputCapability(cameras_[0], sceneMode_);
+        manager_->GetSupportedOutputCapability(cameras[0], sceneMode_);
     captureSession->BeginConfig();
     captureSession->AddInput(input);
     input->Open();
