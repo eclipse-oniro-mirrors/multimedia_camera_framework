@@ -19,6 +19,7 @@
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_device.h"
 #include "camera_log.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
@@ -1547,5 +1548,40 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, Test
     ASSERT_NE(foldServiceCallback, nullptr);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test cameraManager get camera concurrent infos
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager get camera concurrent infos
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceList_.clear();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<SceneMode>> modes = {};
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
+    sptr<CameraDevice> deviceFront = nullptr;
+    sptr<CameraDevice> deviceBack = nullptr;
+    for (auto iterator : cameras) {
+        if (iterator->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT &&
+            iterator->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            deviceFront = iterator;
+        } else if (iterator->GetPosition() == CameraPosition::CAMERA_POSITION_BACK &&
+                   iterator->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            deviceBack = iterator;
+        }
+    }
+    if (deviceFront != nullptr && deviceBack != nullptr) {
+        std::vector<sptr<CameraDevice>> concurrentCameras = {deviceFront, deviceBack};
+        bool isSupported = cameraManager_->GetConcurrentType(concurrentCameras, cameraConcurrentType);
+        if (isSupported) {
+            cameraManager_->GetCameraConcurrentInfos(
+                concurrentCameras, cameraConcurrentType, modes, outputCapabilities);
+        }
+    }
+}
 }
 }
