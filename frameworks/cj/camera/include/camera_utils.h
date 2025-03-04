@@ -189,8 +189,6 @@ CJCameraStatusInfo CameraStatusInfoToCJCameraStatusInfo(const CameraStatusInfo &
 CJCameraOutputCapability CameraOutputCapabilityToCJCameraOutputCapability(
     sptr<CameraOutputCapability> cameraOutputCapability, int32_t *errCode);
 
-double CJFloatToDouble(float val);
-
 char *MallocCString(const std::string &origin);
 } // namespace CameraStandard
 } // namespace OHOS

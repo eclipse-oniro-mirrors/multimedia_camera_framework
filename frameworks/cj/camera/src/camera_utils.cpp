@@ -31,18 +31,10 @@ char *MallocCString(const std::string &origin)
     return std::char_traits<char>::copy(res, origin.c_str(), len);
 }
 
-double CJFloatToDouble(float val)
-{
-    const double precision = 1000000.0;
-    val *= precision;
-    double result = static_cast<double>(val / precision);
-    return result;
-}
-
 CArrCJProfile VectorProfileToCArrCJProfile(std::vector<Profile> profile, int32_t *errCode)
 {
     CArrCJProfile result = CArrCJProfile{0};
-    result.size = profile.size();
+    result.size = static_cast<int64_t>(profile.size());
     if (profile.size() == 0) {
         return result;
     }
@@ -63,7 +55,7 @@ CArrCJProfile VectorProfileToCArrCJProfile(std::vector<Profile> profile, int32_t
 CArrCJVideoProfile VectorVideoProfileToCArrCJVideoProfile(std::vector<VideoProfile> profile, int32_t *errCode)
 {
     CArrCJVideoProfile result = CArrCJVideoProfile{0};
-    result.size = profile.size();
+    result.size = static_cast<int64_t>(profile.size());
     if (profile.size() == 0) {
         return result;
     }
@@ -89,6 +81,9 @@ CJCameraOutputCapability CameraOutputCapabilityToCJCameraOutputCapability(
 {
     CJCameraOutputCapability result =
         CJCameraOutputCapability{CArrCJProfile{0}, CArrCJProfile{0}, CArrCJVideoProfile{0}, CArrI32{0}};
+    if (cameraOutputCapability == nullptr) {
+        return result;
+    }
     std::vector<Profile> photoProfiles_ = cameraOutputCapability->GetPhotoProfiles();
     std::vector<Profile> previewProfiles_ = cameraOutputCapability->GetPreviewProfiles();
     std::vector<VideoProfile> videoProfiles_ = cameraOutputCapability->GetVideoProfiles();
@@ -112,7 +107,7 @@ CJCameraOutputCapability CameraOutputCapabilityToCJCameraOutputCapability(
         return CJCameraOutputCapability{CArrCJProfile{0}, CArrCJProfile{0}, CArrCJVideoProfile{0}, CArrI32{0}};
     }
 
-    result.supportedMetadataObjectTypes.size = metadataObjectType_.size();
+    result.supportedMetadataObjectTypes.size = static_cast<int64_t>(metadataObjectType_.size());
     if (metadataObjectType_.size() == 0) {
         return result;
     }
