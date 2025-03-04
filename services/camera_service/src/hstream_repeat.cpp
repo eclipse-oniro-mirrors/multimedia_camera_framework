@@ -961,5 +961,10 @@ int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& prod
     }
     return CAMERA_OK;
 }
+
+std::vector<int32_t> HStreamRepeat::GetFrameRateRange()
+{
+    return streamFrameRateRange_;
+}
 } // namespace CameraStandard
 } // namespace OHOS

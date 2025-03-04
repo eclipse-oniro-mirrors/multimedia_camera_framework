@@ -1479,6 +1479,11 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
             continue;
         }
         curStreamRepeat->SetUsedAsPosition(cameraPosition);
+        if (OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus() == OHOS::Rosen::FoldStatus::FOLDED) {
+            auto infos = GetCameraRotateStrategyInfos();
+            auto frameRateRange = curStreamRepeat->GetFrameRateRange();
+            UpdateCameraRotateAngleAndZoom(infos, frameRateRange);
+        }
         errorCode = curStreamRepeat->Start(settings);
         hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
         if (isSetMotionPhoto_ && hasDerferedPreview) {
@@ -2384,6 +2389,53 @@ int32_t StreamOperatorCallback::OnResult(int32_t streamId, const std::vector<uin
         return CAMERA_INVALID_ARG;
     }
     return CAMERA_OK;
+}
+
+void HCaptureSession::SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos)
+{
+    std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
+    cameraRotateStrategyInfos_ = infos;
+}
+
+std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyInfos()
+{
+    std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
+    return cameraRotateStrategyInfos_;
+}
+
+void HCaptureSession::UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
+    std::vector<int32_t> &frameRateRange)
+{
+    int index = 0;
+    int uid = IPCSkeleton::GetCallingUid();
+    std::string bundleName = GetClientBundle(uid);
+    if (frameRateRange.size() == 0) {
+        MEDIA_ERR_LOG("frame rate is null.");
+        return;
+    }
+    for (size_t i = 0; i < infos.size(); i++) {
+        if (infos[i].bundleName == bundleName && infos[i].fps == frameRateRange[0] &&
+            infos[i].fps == frameRateRange[1]) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) {
+        MEDIA_INFO_LOG("Update roteta angle not supported");
+        return;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    int16_t rotateDegree = infos[index].rotateDegree;
+    MEDIA_INFO_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom rotateDegree: %{public}d", rotateDegree);
+    settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1);
+    float zoom = infos[index].wideValue;
+    MEDIA_INFO_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom zoom: %{public}f", zoom);
+    settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoom, 1);
+    auto cameraDevive = GetCameraDevice();
+    if (cameraDevive != nullptr) {
+        cameraDevive->UpdateSettingOnce(settings);
+        MEDIA_INFO_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom success.");
+    }
 }
 
 StateMachine::StateMachine()

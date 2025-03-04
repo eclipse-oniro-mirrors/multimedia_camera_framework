@@ -58,8 +58,10 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
+    "src/camera_rotate_strategy_parser.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/camera_xml_parser.cpp",
     "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
     "src/hcamera_device.cpp",
@@ -208,8 +210,8 @@ ohos_shared_library("camera_service") {
   public_external_deps = [
     "audio_framework:offline_audio_effect",
     "e2fsprogs:libext2_uuid",
+    "libxml2:libxml2",
   ]
-
   defines = []
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
