@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "camera_datashare_helper.h"
+#include "camera_rotate_strategy_parser.h"
 #include "camera_sensor_plugin.h"
 #include "camera_util.h"
 #include "common_event_support.h"
@@ -300,6 +301,7 @@ private:
 
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;

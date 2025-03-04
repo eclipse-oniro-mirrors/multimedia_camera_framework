@@ -89,6 +89,7 @@ public:
     int32_t SetCameraRotation(bool isEnable, int32_t rotation) override;
     int32_t SetCameraApi(uint32_t apiCompatibleVersion) override;
     int32_t ToggleAutoVideoFrameRate(bool isEnable) override;
+    std::vector<int32_t> GetFrameRateRange();
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
