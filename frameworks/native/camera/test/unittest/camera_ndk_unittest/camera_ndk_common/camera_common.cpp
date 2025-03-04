@@ -278,6 +278,11 @@ void CameraNdkCommon::CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraM
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
 
+void CameraNdkCommon::CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
 void CameraNdkCommon::CameraPreviewOutptOnFrameStartCb(Camera_PreviewOutput* previewOutput)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);

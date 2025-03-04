@@ -178,8 +178,9 @@ Camera_Manager::~Camera_Manager()
 Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
     auto innerCallback = make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
-    cameraManager_->RegisterCameraStatusCallback(innerCallback);
-    cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback);
+    if (cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback)) {
+        cameraManager_->RegisterCameraStatusCallback(innerCallback);
+    }
     return CAMERA_OK;
 }
 
@@ -195,8 +196,9 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cam
 Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
     auto innerTorchStatusCallback = make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
-    cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
-    torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback);
+    if (torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback)) {
+        cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
+    }
     return CAMERA_OK;
 }
 
@@ -976,8 +978,9 @@ Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnF
     auto innerFoldStatusCallback = make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
     CHECK_ERROR_RETURN_RET_LOG(
         innerFoldStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerFoldStatusCallback failed!");
-    cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
-    cameraFoldStatusCallbackMap_.SetMapValue(foldStatusCallback, innerFoldStatusCallback);
+    if (cameraFoldStatusCallbackMap_.SetMapValue(foldStatusCallback, innerFoldStatusCallback)) {
+        cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
+    }
     return CAMERA_OK;
 }
 
