@@ -50,8 +50,9 @@ CaptureOutput* curOutput;
 bool g_isSupported;
 bool g_isCameraDevicePermission = false;
 SceneMode g_sceneMode;
+std::vector<Profile> previewProfile_ = {};
 
-sptr<CameraManager> manager;
+sptr<CameraManager> manager_;
 
 void GetPermission()
 {
@@ -81,14 +82,14 @@ void GetPermission()
 sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    auto manager = CameraManager::GetInstance();
-    auto cameras = manager->GetSupportedCameras();
+    auto manager_ = CameraManager::GetInstance();
+    auto cameras = manager_->GetSupportedCameras();
     CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     camera = cameras[data.ReadUint32() % cameras.size()];
     CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
-    return manager->CreateCameraInput(camera);
+    return manager_->CreateCameraInput(camera);
 }
 
 sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
@@ -97,7 +98,7 @@ sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
     if (surface == nullptr) {
         return nullptr;
     }
-    return manager->CreatePreviewOutput(previewProfile, surface);
+    return manager_->CreatePreviewOutput(previewProfile, surface);
 }
 
 void Test(uint8_t *rawData, size_t size)
@@ -106,16 +107,17 @@ void Test(uint8_t *rawData, size_t size)
     GetPermission();
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    std::vector<Profile> previewProfile_ = {};
-    std::vector<Profile> photoProfile_ = {};
-    manager = CameraManager::GetInstance();
-    sptr<CaptureSession> session = manager->CreateCaptureSession(SceneMode::CAPTURE);
-    std::vector<sptr<CameraDevice>> cameras_ = manager->GetCameraDeviceListFromServer();
-    sptr<CaptureInput> input = manager->CreateCameraInput(cameras_[0]);
+    manager_ = CameraManager::GetInstance();
+    sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    std::vector<sptr<CameraDevice>> camera = manager_->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(camera.empty(), "GetCameraDeviceListFromServer Error");
+    sptr<CaptureInput> input = manager_->CreateCameraInput(camera[0]);
+    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     input->Open();
-    auto outputCapability = manager->GetSupportedOutputCapability(cameras_[0], 0);
+    auto outputCapability = manager_->GetSupportedOutputCapability(camera[0], 0);
+    CHECK_ERROR_RETURN_LOG(!outputCapability, "GetSupportedOutputCapability Error");
     previewProfile_ = outputCapability->GetPreviewProfiles();
-    photoProfile_ = outputCapability->GetPhotoProfiles();
+    CHECK_ERROR_RETURN_LOG(previewProfile_.empty(), "GetPreviewProfiles Error");
     outputCapability->GetVideoProfiles();
     sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
     session->BeginConfig();
@@ -123,9 +125,9 @@ void Test(uint8_t *rawData, size_t size)
     session->AddOutput(preview);
     session->CommitConfig();
     sptr<ICameraDeviceService> deviceObj = nullptr;
-    manager->CreateCameraDevice(cameras_[0]->GetID(), &deviceObj);
+    manager_->CreateCameraDevice(camera[0]->GetID(), &deviceObj);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    camInput->SwitchCameraDevice(deviceObj, cameras_[0]);
+    camInput->SwitchCameraDevice(deviceObj, camera[0]);
     input->GetCameraDeviceInfo();
     session->SetInputDevice(input);
     session->GetInputDevice()->GetCameraDeviceInfo();
@@ -153,12 +155,12 @@ void Test(uint8_t *rawData, size_t size)
 sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    auto manager = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_RET_LOG(!manager, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
+    auto manager_ = CameraManager::GetInstance();
+    CHECK_ERROR_RETURN_RET_LOG(!manager_, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
-    auto capability = manager->GetSupportedOutputCapability(camera, g_sceneMode);
+    auto capability = manager_->GetSupportedOutputCapability(camera, g_sceneMode);
     CHECK_ERROR_RETURN_RET_LOG(!capability, nullptr, "CaptureSessionFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
     CHECK_ERROR_RETURN_RET_LOG(profiles.empty(), nullptr, "CaptureSessionFuzzer: GetPhotoProfiles empty");
@@ -167,7 +169,7 @@ sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_RET_LOG(!photoSurface, nullptr, "CaptureSessionFuzzer: create photoSurface Error");
     surface = photoSurface->GetProducer();
     CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "CaptureSessionFuzzer: surface GetProducer Error");
-    return manager->CreatePhotoOutput(profile, surface);
+    return manager_->CreatePhotoOutput(profile, surface);
 }
 
 void TestWhiteBalance(sptr<CaptureSession> session, uint8_t *rawData, size_t size)

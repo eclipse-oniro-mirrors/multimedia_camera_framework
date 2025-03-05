@@ -71,9 +71,7 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<DeferredProcessing::SessionCoordinator>();
-    }
+    fuzz_ = std::make_shared<DeferredProcessing::SessionCoordinator>();
     fuzz_->Initialize();
     int32_t userId = GetData<int32_t>();
     uint8_t randomNum = GetData<uint8_t>();

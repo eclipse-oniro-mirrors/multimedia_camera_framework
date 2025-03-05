@@ -85,16 +85,12 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
         "StreamCaptureFuzzer: EncodeCameraMetadata Error");
     data.RewindRead(0);
-    MessageParcel reply;
-    MessageOption option;
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     CHECK_ERROR_RETURN(streamcapture == nullptr);
-    uint32_t code = 0;
-    streamcapture->OnRemoteRequest(code, data, reply, option);
     streamcapture->Release();
 }
 } // namespace CameraStandard

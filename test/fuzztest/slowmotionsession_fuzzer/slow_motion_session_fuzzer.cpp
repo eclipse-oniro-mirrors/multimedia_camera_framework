@@ -66,6 +66,7 @@ sptr<CaptureOutput> CreatePreviewOutput()
 {
     previewProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = manager->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_RET(cameras.empty(), nullptr);
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     previewProfile_ = outputCapability->GetPreviewProfiles();
@@ -80,6 +81,7 @@ sptr<CaptureOutput> CreateVideoOutput()
 {
     videoProfile_ = {};
     std::vector<sptr<CameraDevice>> cameras = manager->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_RET(cameras.empty(), nullptr);
     auto outputCapability = manager->GetSupportedOutputCapability(cameras[0],
         static_cast<int32_t>(SceneMode::SLOW_MOTION));
     videoProfile_ = outputCapability->GetVideoProfiles();
@@ -128,27 +130,23 @@ void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest()
     GetPermission();
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::SLOW_MOTION);
-    std::vector<sptr<CameraDevice>> cameras_;
-
-    cameras_ = manager->GetCameraDeviceListFromServer();
-    sptr<CaptureInput> input = manager->CreateCameraInput(cameras_[0]);
+    std::vector<sptr<CameraDevice>> cameras;
+    cameras = manager->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "SlowMotionSessionFuzzer: GetCameraDeviceListFromServer Error");
+    sptr<CaptureInput> input = manager->CreateCameraInput(cameras[0]);
+    CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     input->Open();
-
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-
     captureSession->BeginConfig();
     captureSession->AddInput(input);
-
     sptr<CameraDevice> info = captureSession->innerInputDevice_->GetCameraDeviceInfo();
     info->modePreviewProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), previewProfile_);
     info->modeVideoProfiles_.emplace(static_cast<int32_t>(SceneMode::SLOW_MOTION), videoProfile_);
-
     captureSession->AddOutput(previewOutput);
     captureSession->AddOutput(videoOutput);
     captureSession->CommitConfig();
     input->Release();
-
     sptr<SlowMotionSession> fuzz_ = static_cast<SlowMotionSession*>(captureSession.GetRefPtr());
     if (fuzz_ == nullptr) {
         return;
