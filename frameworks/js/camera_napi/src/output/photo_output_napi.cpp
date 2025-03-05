@@ -1504,21 +1504,34 @@ ThumbnailListener::~ThumbnailListener()
     }
 }
 
+void ThumbnailListener::ClearTaskManager()
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_) {
+        taskManager_->CancelAllTasks();
+        taskManager_.reset();
+        taskManager_ = nullptr;
+    }
+}
+
 void ThumbnailListener::OnBufferAvailable()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is called");
-    if (taskManager_ == nullptr) {
-        MEDIA_ERR_LOG("ThumbnailListener::OnBufferAvailable taskManager_ is null");
-        return;
-    }
     wptr<ThumbnailListener> thisPtr(this);
-    taskManager_->SubmitTask([thisPtr]() {
-        auto listener = thisPtr.promote();
-        if (listener) {
-            listener->ExecuteDeepCopySurfaceBuffer();
+    {
+        std::lock_guard<std::mutex> lock(taskManagerMutex_);
+        if (taskManager_ == nullptr) {
+            MEDIA_ERR_LOG("ThumbnailListener::OnBufferAvailable taskManager_ is null");
+            return;
         }
-    });
+        taskManager_->SubmitTask([thisPtr]() {
+            auto listener = thisPtr.promote();
+            if (listener) {
+                listener->ExecuteDeepCopySurfaceBuffer();
+            }
+        });
+    }
     constexpr int32_t memSize = 20 * 1024;
     int32_t retCode = CameraManager::GetInstance()->RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_LOG(retCode != 0, "ThumbnailListener::OnBufferAvailable RequireMemorySize failed");
@@ -2577,9 +2590,7 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
     if (thumbnailListener_ != nullptr) {
         thumbnailListener_->RemoveCallbackRef(eventName, callback);
         if (thumbnailListener_->taskManager_) {
-            thumbnailListener_->taskManager_->CancelAllTasks();
-            thumbnailListener_->taskManager_.reset();
-            thumbnailListener_->taskManager_ = nullptr;
+            thumbnailListener_->ClearTaskManager();
         }
     }
 }
