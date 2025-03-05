@@ -169,6 +169,10 @@ void CameraInput::InputRemoveDeathRecipient()
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    if (timeId_ != -1) {
+        CameraTimer::GetInstance()->Unregister(timeId_);
+    }
+    CameraTimer::GetInstance()->DecreaseUserCount();
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
@@ -314,6 +318,8 @@ int CameraInput::closeDelayed(int32_t delayTime)
         uint32_t count = 1;
         metadata->addEntry(OHOS_CONTROL_CAMERA_CLOSE_AFTER_SECONDS, &delayTime, count);
         deviceObj->UpdateSetting(metadata);
+        CameraDeviceSvcCallback_ = nullptr;
+        deviceObj->SetCallback(CameraDeviceSvcCallback_);
     }
     if (deviceObj) {
         MEDIA_INFO_LOG("CameraInput::closeDelayed() deviceObj is true");
@@ -324,7 +330,10 @@ int CameraInput::closeDelayed(int32_t delayTime)
     }
     auto deviceWptr = wptr<ICameraDeviceService>(deviceObj);
     const int delayTaskTime = delayTime * 1000;
-    CameraTimer::GetInstance()->Register(
+    if (timeId_ != -1) {
+        CameraTimer::GetInstance()->Unregister(timeId_);
+    }
+    timeId_ = CameraTimer::GetInstance()->Register(
         [deviceWptr] {
             auto device = deviceWptr.promote();
             if (device) {

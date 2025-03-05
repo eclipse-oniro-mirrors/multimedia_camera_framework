@@ -708,6 +708,10 @@ int32_t HCameraDevice::closeDelayedDevice()
         CHECK_ERROR_RETURN_RET(hdiCameraDevice_ == nullptr, CAMERA_OK);
         hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     }
+    {
+        std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
+        deviceSvcCallback_ = nullptr;
+    }
     if (hdiCameraDeviceV1_2 != nullptr) {
         int32_t errCode = hdiCameraDeviceV1_2->Reset();
         CHECK_ERROR_RETURN_RET_LOG(errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR, CAMERA_UNKNOWN_ERROR,
