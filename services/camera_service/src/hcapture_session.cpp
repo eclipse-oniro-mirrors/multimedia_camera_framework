@@ -282,6 +282,18 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
     return errorCode;
 }
 
+void HCaptureSession::BeforeDeviceClose()
+{
+    MEDIA_INFO_LOG("HCaptureSession::BeforeDeviceClose UnlinkInputAndOutputs");
+    UnlinkInputAndOutputs();
+    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    CHECK_ERROR_RETURN_LOG(
+        hStreamOperatorSptr == nullptr, "HCaptureSession::BeforeDeviceClose hStreamOperatorSptr is null");
+    if (!hStreamOperatorSptr->IsOfflineCapture()) {
+        hStreamOperatorSptr->Release();
+    }
+}
+
 class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
 public:
     explicit DisplayRotationListener() {};
@@ -1169,6 +1181,23 @@ void HCaptureSession::GetOutputStatus(int32_t& status)
     auto hStreamOperatorSptr = hStreamOperator_.promote();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
     hStreamOperatorSptr->GetOutputStatus(status);
+}
+
+void HCaptureSession::SetCameraDevice(sptr<HCameraDevice> device)
+{
+    std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+    if (cameraDevice_ != nullptr) {
+        cameraDevice_->SetCameraCloseListener(nullptr);
+    }
+    if (device != nullptr) {
+        device->SetCameraCloseListener(this);
+    }
+    cameraDevice_ = device;
+
+    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    if (hStreamOperatorSptr != nullptr) {
+        hStreamOperatorSptr->SetCameraDevice(device);
+    }
 }
 
 std::string HCaptureSession::CreateDisplayName()

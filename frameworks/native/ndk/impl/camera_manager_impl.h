@@ -131,13 +131,15 @@ private:
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
 
-    NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
+    static NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
         cameraStatusCallbackMap_;
 
-    NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange, OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
+    static NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange,
+        OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
         cameraFoldStatusCallbackMap_;
 
-    NDKCallbackMap<OH_CameraManager_TorchStatusCallback, OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
+    static NDKCallbackMap<OH_CameraManager_TorchStatusCallback,
+        OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
         torchStatusCallbackMap_;
 
     static thread_local OHOS::sptr<OHOS::Surface> photoSurface_;

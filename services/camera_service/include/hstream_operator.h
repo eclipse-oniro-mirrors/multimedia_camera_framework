@@ -216,6 +216,7 @@ public:
     void ExpandMovingPhotoRepeatStream();
     void ClearMovingPhotoRepeatStream();
     void GetStreamOperator();
+    bool IsOfflineCapture();
     inline void ResetHdiStreamId()
     {
         hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;

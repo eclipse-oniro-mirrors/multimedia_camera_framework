@@ -29,6 +29,15 @@ using namespace OHOS;
 using namespace OHOS::CameraStandard;
 const char* DEFAULT_SURFACEID = "photoOutput";
 thread_local OHOS::sptr<OHOS::Surface> Camera_Manager::photoSurface_ = nullptr;
+NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
+    Camera_Manager::cameraStatusCallbackMap_;
+
+NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange, OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
+    Camera_Manager::cameraFoldStatusCallbackMap_;
+
+NDKCallbackMap<OH_CameraManager_TorchStatusCallback, OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
+    Camera_Manager::torchStatusCallbackMap_;
+
 const std::unordered_map<SceneMode, Camera_SceneMode> g_fwModeToNdk_ = {
     {SceneMode::CAPTURE, Camera_SceneMode::NORMAL_PHOTO},
     {SceneMode::VIDEO, Camera_SceneMode::NORMAL_VIDEO},

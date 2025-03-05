@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 #include <vector>
+#include "refbase.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
@@ -47,6 +48,12 @@ using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
+
+class IHCameraCloseListener : public virtual RefBase {
+public:
+    virtual void BeforeDeviceClose() = 0;
+};
+
 class EXPORT_API HCameraDevice
     : public HCameraDeviceStub, public ICameraDeviceCallback {
 public:
@@ -155,6 +162,12 @@ public:
     int32_t GetStreamOperator(const sptr<IStreamOperatorCallback> &callbackObj,
         sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> &streamOperator);
 
+    inline void SetCameraCloseListener(wptr<IHCameraCloseListener> listener)
+    {
+        std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
+        cameraCloseListener_ = listener;
+    }
+
 private:
     class FoldScreenListener;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
@@ -243,6 +256,9 @@ private:
     bool CanReportDeviceProtectionStatus(int32_t status);
     bool ShowDeviceProtectionDialog(DeviceProtectionStatus status);
     std::string BuildDeviceProtectionDialogCommand(DeviceProtectionStatus status);
+
+    std::mutex cameraCloseListenerMutex_;
+    wptr<IHCameraCloseListener> cameraCloseListener_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
