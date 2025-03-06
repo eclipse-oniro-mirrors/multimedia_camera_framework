@@ -98,6 +98,9 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
         std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
         g_cameraServiceInstance = this;
     }
+    unique_ptr<CameraRotateStrategyParser> cameraRotateStrategyParser = make_unique<CameraRotateStrategyParser>();
+    cameraRotateStrategyParser->LoadConfiguration();
+    cameraRotateStrategyInfos_ = cameraRotateStrategyParser->GetCameraRotateStrategyInfos();
     statusCallback_ = std::make_shared<ServiceHostStatus>(this);
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_AND_RETURN_LOG(
@@ -469,6 +472,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
+    captureSession->SetCameraRotateStrategyInfos(cameraRotateStrategyInfos_);
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
