@@ -442,6 +442,14 @@ static const std::unordered_map<std::string, int32_t> mapAuxiliaryStatus = {
     {"OFF", 2},
 };
 
+static const std::unordered_map<std::string, int32_t> mapSlowMotionStatus = {
+    {"DISABLED", 0},
+    {"READY", 1},
+    {"VIDEO_START", 2},
+    {"VIDEO_DONE", 3},
+    {"FINISHED", 4},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
