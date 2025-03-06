@@ -338,6 +338,33 @@ std::string GetClientBundle(int uid)
     return bundleName;
 }
 
+std::string GetClientNameByToken(int tokenIdNum)
+{
+    using namespace Security::AccessToken;
+    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenIdNum);
+    ATokenTypeEnum tokenType = AccessTokenKit::GetTokenType(tokenId);
+    if (tokenType == TOKEN_HAP) {
+        HapTokenInfoExt hapTokenInfo = {};
+        int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenId, hapTokenInfo);
+        if (ret != 0) {
+            MEDIA_ERR_LOG("GetHapTokenInfoExtension fail, ret %{public}d", ret);
+            return "unknown";
+        }
+        return hapTokenInfo.baseInfo.bundleName;
+    } else if (tokenType == TOKEN_NATIVE) {
+        NativeTokenInfo nativeTokenInfo = {};
+        int ret = AccessTokenKit::GetNativeTokenInfo(tokenId, nativeTokenInfo);
+        if (ret != 0) {
+            MEDIA_ERR_LOG("GetNativeTokenInfo fail, ret %{public}d", ret);
+            return "unknown";
+        }
+        return nativeTokenInfo.processName;
+    } else {
+        MEDIA_ERR_LOG("unexpected token type %{public}d", tokenType);
+        return "unknown";
+    }
+}
+
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared)
 {
     return PRIORITY_LEVEL_SAME;

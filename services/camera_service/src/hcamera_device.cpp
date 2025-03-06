@@ -400,7 +400,8 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     int pid = IPCSkeleton::GetCallingPid();
     int uid = IPCSkeleton::GetCallingUid();
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
-    clientName_ = GetClientBundle(uid);
+    int tokenId = IPCSkeleton::GetCallingTokenID();
+    clientName_ = GetClientNameByToken(tokenId);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_START);
 #endif
@@ -1424,10 +1425,11 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     int32_t type = GetCameraType();
     want.SetParam(IS_SYSTEM_CAMERA, type);
     want.SetParam(CAMERA_MSG, msg);
+    want.SetParam(CLIENT_NAME, clientName_);
     MEDIA_DEBUG_LOG(
         "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, "
-        "cameraType: %{public}d, msg: %{public}d",
-        clientUserId_, cameraID_.c_str(), state, type, msg);
+        "cameraType: %{public}d, msg: %{public}d, clientName: %{public}s",
+        clientUserId_, cameraID_.c_str(), state, type, msg, clientName_.c_str());
     EventFwk::CommonEventData CommonEventData { want };
     EventFwk::CommonEventPublishInfo publishInfo;
     std::vector<std::string> permissionVec { OHOS_PERMISSION_MANAGE_CAMERA_CONFIG };

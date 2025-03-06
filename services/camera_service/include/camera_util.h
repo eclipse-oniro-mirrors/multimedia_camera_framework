@@ -57,6 +57,7 @@ static const std::string CAMERA_ID = "cameraId";
 static const std::string CAMERA_STATE = "cameraState";
 static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
 static const std::string CAMERA_MSG = "cameraMsg";
+static const std::string CLIENT_NAME = "clientName";
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
 static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
@@ -169,6 +170,8 @@ bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> c
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
 
 std::string GetClientBundle(int uid);
+
+std::string GetClientNameByToken(int tokenIdNum);
 
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared);
 
