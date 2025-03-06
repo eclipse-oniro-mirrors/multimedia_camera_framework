@@ -636,7 +636,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         rotationValue = item.data.i32[0];
     }
     MEDIA_INFO_LOG("set rotation app rotationValue %{public}d", rotationValue); // 0 270 270+270=180
-    rotationMap_.EnsureInsert(captureId, rotationValue);
     // real rotation
     if (enableCameraPhotoRotation_) {
         rotation = rotationValue;
@@ -667,6 +666,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     } else if (result == CAM_META_SUCCESS) {
         status = captureMetadataSetting_->updateEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
     }
+    rotationMap_.EnsureInsert(captureId, rotation);
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
     CHECK_ERROR_PRINT_LOG(result != CAM_META_SUCCESS, "set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
