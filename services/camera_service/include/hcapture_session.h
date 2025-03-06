@@ -92,7 +92,7 @@ using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 
 class CameraInfoDumper;
 
-class EXPORT_API HCaptureSession : public HCaptureSessionStub {
+class EXPORT_API HCaptureSession : public HCaptureSessionStub, public IHCameraCloseListener {
 public:
     static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
@@ -170,21 +170,15 @@ public:
     void UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
         std::vector<int32_t> &frameRateRange);
 
+    void BeforeDeviceClose() override;
+
 private:
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
     bool isNeedCommitting_ = false;
-    inline void SetCameraDevice(sptr<HCameraDevice> device)
-    {
-        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
-        cameraDevice_ = device;
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
-        if (hStreamOperatorSptr != nullptr) {
-            hStreamOperatorSptr->SetCameraDevice(device);
-        }
-    }
+    void SetCameraDevice(sptr<HCameraDevice> device);
     inline const sptr<HCameraDevice> GetCameraDevice()
     {
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);

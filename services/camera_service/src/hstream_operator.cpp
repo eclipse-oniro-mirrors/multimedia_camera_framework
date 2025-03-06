@@ -376,6 +376,21 @@ void  HStreamOperator::GetStreamOperator()
     cameraDevice_->GetStreamOperator(this, streamOperator_);
 }
 
+bool HStreamOperator::IsOfflineCapture()
+{
+    auto allStream = streamContainer_.GetAllStreams();
+    for (auto& stream : allStream) {
+        if (stream->GetStreamType() != StreamType::CAPTURE) {
+            continue;
+        }
+        HStreamCapture* captureStream = static_cast<HStreamCapture*>(stream.GetRefPtr());
+        if (captureStream->IsHasSwitchToOffline()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     int32_t opMode)
 {

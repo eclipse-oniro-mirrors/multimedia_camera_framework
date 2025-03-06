@@ -110,6 +110,7 @@ public:
     int32_t EnableOfflinePhoto(bool isEnable) override;
     bool IsHasEnableOfflinePhoto();
     void SwitchToOffline();
+    int32_t UnlinkInput() override;
     bool IsHasSwitchToOffline();
     void SetStreamOperator(wptr<HStreamOperator> hStreamOperator);
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
