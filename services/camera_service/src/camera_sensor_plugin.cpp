@@ -16,7 +16,7 @@
 #include "camera_sensor_plugin.h"
 
 namespace OHOS {
-namespace CameraStandard {
+namespace Rosen {
 namespace {
     constexpr uint32_t SLEEP_TIME_US = 10000;
 }
