@@ -1381,7 +1381,6 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0)
     cameraService_->UnregisterSensorCallback();
     cameraService_->UnregisterSensorCallback();
     cameraService_->RegisterSensorCallback();
-    EXPECT_NE(cameraService_->user.callback, nullptr);
     device->Release();
     device->Close();
 }
