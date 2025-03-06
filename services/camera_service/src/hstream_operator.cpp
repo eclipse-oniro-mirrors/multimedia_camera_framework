@@ -1197,7 +1197,7 @@ void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestam
     if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
         addMirrorRotation = STREAM_ROTATE_180;
     }
-    int32_t realRotation = deviceSensorOritation_ + rotation + addMirrorRotation;
+    int32_t realRotation = rotation + addMirrorRotation;
     realRotation = realRotation % ROTATION_360;
     StartRecord(timestamp, realRotation, captureId);
 }
