@@ -190,6 +190,7 @@ if (gen_camera_picker) {
       "ace_engine:ace_uicontent",
       "c_utils:utils",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
       "samgr:samgr_proxy",
