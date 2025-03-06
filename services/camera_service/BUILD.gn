@@ -57,8 +57,10 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
+    "src/camera_rotate_strategy_parser.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/camera_xml_parser.cpp",
     "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
     "src/hcamera_device.cpp",
@@ -204,7 +206,10 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
   ]
 
-  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
+  public_external_deps = [
+    "e2fsprogs:libext2_uuid",
+    "libxml2:libxml2",
+  ]
 
   defines = []
   if (use_sensor) {
