@@ -256,7 +256,7 @@ private:
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
     void UnregisterSensorCallback();
-    static void DropDetectionDataCallbackImpl(const MotionSensorEvent &motionData);
+    static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
 #endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);

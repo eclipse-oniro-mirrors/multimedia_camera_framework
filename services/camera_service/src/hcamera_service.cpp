@@ -1767,20 +1767,20 @@ void HCameraService::RegisterSensorCallback()
     }
     isRegisterSensorSuccess = false;
     MEDIA_INFO_LOG("HCameraService::RegisterDropDetectionListener start");
-    CHECK_ERROR_RETURN_LOG(!LoadMotionSensor(), "RegisterDropDetectionListener LoadMotionSensor fail");
-    CHECK_ERROR_RETURN_LOG(!SubscribeCallback(MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
-        "RegisterDropDetectionListener SubscribeCallback fail");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::LoadMotionSensor(), "RegisterDropDetectionListener LoadMotionSensor fail");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::SubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION,
+        DropDetectionDataCallbackImpl), "RegisterDropDetectionListener SubscribeCallback fail");
     isRegisterSensorSuccess = true;
 }
 
 void HCameraService::UnregisterSensorCallback()
 {
-    CHECK_ERROR_RETURN_LOG(!UnsubscribeCallback(MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
+    CHECK_ERROR_RETURN_LOG(!UnsubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
         "UnRegisterDropDetectionListener fail");
-    UnloadMotionSensor();
+    OHOS::Rosen::UnloadMotionSensor();
 }
 
-void HCameraService::DropDetectionDataCallbackImpl(const MotionSensorEvent &motionData)
+void HCameraService::DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData)
 {
     MEDIA_INFO_LOG("HCameraService::DropDetectionCallback type = %{public}d, status = %{public}d",
         motionData.type, motionData.status);

@@ -26,7 +26,7 @@
 #include "camera_log.h"
 
 namespace OHOS {
-namespace CameraStandard {
+namespace Rosen {
 #if (defined(__aarch64__) || defined(__x86_64__))
 const std::string PLUGIN_SO_PATH = "/system/lib64/platformsdk/libmotion_agent.z.so";
 #else
