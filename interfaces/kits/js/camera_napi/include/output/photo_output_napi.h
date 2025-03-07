@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
@@ -252,6 +253,8 @@ public:
     virtual ~ThumbnailListener();
     void OnBufferAvailable() override;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+    void ClearTaskManager();
+    std::mutex taskManagerMutex_;
 private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
