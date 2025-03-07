@@ -650,5 +650,96 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
     input->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test BuildDeviceProtectionDialogCommand
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BuildDeviceProtectionDialogCommand
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_023, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    std::string commandStr = camDevice->BuildDeviceProtectionDialogCommand(OHOS_DEVICE_EJECT_BLOCK);
+    ASSERT_NE(commandStr, "");
+    commandStr = camDevice->BuildDeviceProtectionDialogCommand(OHOS_DEVICE_EXTERNAL_PRESS);
+    ASSERT_NE(commandStr, "");
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ShowDeviceProtectionDialog
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ShowDeviceProtectionDialog
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    bool ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EJECT_BLOCK);
+    ASSERT_TRUE(ret);
+    ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EXTERNAL_PRESS);
+    ASSERT_TRUE(ret);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test DeviceEjectCallBack
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeviceEjectCallBack
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_025, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    camDevice->DeviceEjectCallBack();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ReportDeviceProtectionStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportDeviceProtectionStatus
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    uint32_t count = 1;
+    int32_t status = 2;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    metadata->addEntry(OHOS_DEVICE_PROTECTION_STATE, &status, count);
+    camDevice->ReportDeviceProtectionStatus(metadata);
+}
 }
 }
