@@ -16,7 +16,6 @@
 #include "camera_rotate_strategy_parser.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include <stdexcept>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -41,6 +40,7 @@ bool CameraRotateStrategyParser::LoadConfiguration()
 void CameraRotateStrategyParser::Destroy()
 {
     curNode_->FreeDoc();
+    curNode_->CleanUpParser();
 }
 
 bool CameraRotateStrategyParser::ParseInternal(std::shared_ptr<CameraXmlNode> curNode)
@@ -61,53 +61,50 @@ bool CameraRotateStrategyParser::ParseInternal(std::shared_ptr<CameraXmlNode> cu
 void CameraRotateStrategyParser::ParserStrategyInfo(std::shared_ptr<CameraXmlNode> curNode)
 {
     std::lock_guard<std::mutex> lock(strategyInfosMutex_);
-    while (curNode->IsNodeValid()) {
-        if (curNode->IsElementNode()) {
-            CameraRotateStrategyInfo info = {};
-            curNode->GetProp("bundleName", info.bundleName);
+    if (curNode->IsNodeValid() && curNode->IsElementNode()) {
+        CameraRotateStrategyInfo info = {};
+        curNode->GetProp("bundleName", info.bundleName);
 
-            std::string pValue;
-            float wideValue = 0.0;
-            curNode->GetProp("wideValue", pValue);
-            char* endPtr;
-            wideValue = std::strtof(pValue.c_str(), &endPtr);
-            if (*endPtr != '\0' || pValue.empty()) {
-                MEDIA_ERR_LOG("The wideValue parameter is invalid.");
-                wideValue = 0.0;
-            }
-            info.wideValue = wideValue;
-            endPtr = nullptr;
-
-            int rotateDegree = 0;
-            curNode->GetProp("rotateDegree", pValue);
-            long result = strtol(pValue.c_str(), &endPtr, DECIMAL);
-
-            if (*endPtr != '\0' || pValue.empty()) {
-                MEDIA_ERR_LOG("The rotateDegree parameter is invalid.");
-                rotateDegree = 0;
-            } else {
-                rotateDegree = static_cast<int16_t>(result);
-            }
-            info.rotateDegree = rotateDegree;
-
-            int16_t fps = 0;
-            curNode->GetProp("fps", pValue);
-            endPtr = nullptr;
-            result = strtol(pValue.c_str(), &endPtr, DECIMAL);
-
-            if (*endPtr != '\0' || pValue.empty()) {
-                MEDIA_ERR_LOG("The fps parameter is invalid.");
-                fps = 0;
-            } else {
-                fps = static_cast<int16_t>(result);
-            }
-            info.fps = fps;
-            cameraRotateStrategyInfos_.push_back(info);
-            MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, "
-                "rotateDegree:%{public}d, fps:%{public}d",
-                info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
+        std::string pValue;
+        float wideValue = -1.0;
+        curNode->GetProp("wideValue", pValue);
+        char* endPtr;
+        wideValue = std::strtof(pValue.c_str(), &endPtr);
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The wideValue parameter is invalid.");
+            wideValue = -1.0;
         }
-        curNode->MoveToNext();
+        info.wideValue = wideValue;
+        endPtr = nullptr;
+
+        int16_t rotateDegree = -1;
+        curNode->GetProp("rotateDegree", pValue);
+        long result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The rotateDegree parameter is invalid.");
+            rotateDegree = -1;
+        } else {
+            rotateDegree = static_cast<int16_t>(result);
+        }
+        info.rotateDegree = rotateDegree;
+
+        int16_t fps = -1;
+        curNode->GetProp("fps", pValue);
+        endPtr = nullptr;
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+
+        if (*endPtr != '\0' || pValue.empty()) {
+            MEDIA_ERR_LOG("The fps parameter is invalid.");
+            fps = -1;
+        } else {
+            fps = static_cast<int16_t>(result);
+        }
+        info.fps = fps;
+        cameraRotateStrategyInfos_.push_back(info);
+        MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, "
+            "rotateDegree:%{public}d, fps:%{public}d",
+            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
     }
 }
 } // namespace CameraStandard

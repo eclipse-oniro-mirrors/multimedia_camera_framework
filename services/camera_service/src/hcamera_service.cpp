@@ -101,6 +101,7 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     unique_ptr<CameraRotateStrategyParser> cameraRotateStrategyParser = make_unique<CameraRotateStrategyParser>();
     cameraRotateStrategyParser->LoadConfiguration();
     cameraRotateStrategyInfos_ = cameraRotateStrategyParser->GetCameraRotateStrategyInfos();
+    cameraRotateStrategyParser->Destroy();
     statusCallback_ = std::make_shared<ServiceHostStatus>(this);
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_AND_RETURN_LOG(
