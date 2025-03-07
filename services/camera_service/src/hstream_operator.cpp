@@ -108,7 +108,42 @@ int32_t HStreamOperator::Initialize(const uint32_t callerToken, int32_t opMode)
     opMode_ = opMode;
     MEDIA_INFO_LOG(
         "HStreamOperator::opMode_= %{public}d", opMode_);
+    InitDefaultColortSpace(static_cast<SceneMode>(opMode));
     return CAMERA_OK;
+}
+
+void HStreamOperator::InitDefaultColortSpace(SceneMode opMode)
+{
+    static const std::unordered_map<SceneMode, ColorSpace> colorSpaceMap = {
+        {SceneMode::NORMAL, ColorSpace::SRGB},
+        {SceneMode::CAPTURE, ColorSpace::SRGB},
+        {SceneMode::VIDEO, ColorSpace::BT2020_HLG_LIMIT},
+        {SceneMode::PORTRAIT, ColorSpace::DISPLAY_P3},
+        {SceneMode::NIGHT, ColorSpace::DISPLAY_P3},
+        {SceneMode::PROFESSIONAL, ColorSpace::DISPLAY_P3},
+        {SceneMode::SLOW_MOTION, ColorSpace::BT709_LIMIT},
+        {SceneMode::SCAN, ColorSpace::BT709_LIMIT},
+        {SceneMode::CAPTURE_MACRO, ColorSpace::DISPLAY_P3},
+        {SceneMode::VIDEO_MACRO, ColorSpace::BT2020_HLG_LIMIT},
+        {SceneMode::PROFESSIONAL_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::PROFESSIONAL_VIDEO, ColorSpace::BT709_LIMIT},
+        {SceneMode::HIGH_FRAME_RATE, ColorSpace::BT709_LIMIT},
+        {SceneMode::HIGH_RES_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::SECURE, ColorSpace::SRGB},
+        {SceneMode::QUICK_SHOT_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::LIGHT_PAINTING, ColorSpace::DISPLAY_P3},
+        {SceneMode::PANORAMA_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::TIMELAPSE_PHOTO, ColorSpace::DISPLAY_P3},
+        {SceneMode::APERTURE_VIDEO, ColorSpace::BT709_LIMIT},
+        {SceneMode::FLUORESCENCE_PHOTO, ColorSpace::DISPLAY_P3},
+    };
+    auto it = colorSpaceMap.find(opMode);
+    if (it != colorSpaceMap.end()) {
+        currColorSpace_ = it->second;
+    } else {
+        currColorSpace_ = ColorSpace::SRGB;
+    }
+    MEDIA_DEBUG_LOG("HStreamOperator::InitDefaultColortSpace colorSpace:%{public}d", currColorSpace_);
 }
 
 HStreamOperator::HStreamOperator()
@@ -159,11 +194,10 @@ int32_t HStreamOperator::AddOutputStream(sptr<HStreamCommon> stream)
     if (stream->GetStreamType() == StreamType::CAPTURE) {
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
-        captureStream->SetColorSpace(currCaptureColorSpace_);
         CameraDynamicLoader::LoadDynamiclibAsync(MEDIA_LIB_SO); // cache dynamiclib
-    } else {
-        stream->SetColorSpace(currColorSpace_);
     }
+    MEDIA_INFO_LOG("HCaptureSession::AddOutputStream stream colorSpace:%{public}d", currColorSpace_);
+    stream->SetColorSpace(currColorSpace_);
     return CAMERA_OK;
 }
 
@@ -503,7 +537,8 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
                 audioCapturerSession_ = new AudioCapturerSession();
             }
             if (!taskManager_ && audioCapturerSession_) {
-                taskManager_ = new AvcodecTaskManager(audioCapturerSession_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC);
+                taskManager_ = new AvcodecTaskManager(audioCapturerSession_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC,
+                    currColorSpace_);
                 taskManager_->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
             }
             if (!videoCache_ && taskManager_) {
@@ -617,28 +652,29 @@ int32_t HStreamOperator::GetActiveColorSpace(ColorSpace& colorSpace)
     return CAMERA_OK;
 }
 
-int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
+int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
-    CHECK_ERROR_RETURN_RET_LOG(colorSpace == currColorSpace_ && captureColorSpace == currCaptureColorSpace_, result,
+    CHECK_ERROR_RETURN_RET_LOG(colorSpace == currColorSpace_, result,
         "HStreamOperator::SetColorSpace() colorSpace no need to update.");
     currColorSpace_ = colorSpace;
-    currCaptureColorSpace_ = captureColorSpace;
+    MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() old ColorSpace : %{public}d, old ColorSpace : %{public}d",
+        currColorSpace_, colorSpace);
     result = CheckIfColorSpaceMatchesFormat(colorSpace);
     if (result != CAMERA_OK) {
-        if (isNeedUpdate) {
-            MEDIA_ERR_LOG("HStreamOperator::SetColorSpace() Failed, format and colorSpace not match.");
-            return result;
-        } else {
+        if (opMode_ == static_cast<int32_t>(SceneMode::VIDEO) && !isNeedUpdate) {
             MEDIA_ERR_LOG(
-                "HStreamOperator::SetColorSpace() %{public}d, format and colorSpace: %{public}d not match.",
+                "HCaptrureSession::SetColorSpace() %{public}d, format and colorSpace : %{public}d not match.",
                 result, colorSpace);
             currColorSpace_ = ColorSpace::BT709;
+        } else {
+            MEDIA_ERR_LOG("HStreamOperator::SetColorSpace() Failed, format and colorSpace not match.");
+            return result;
         }
     }
-    MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() colorSpace: %{public}d, captureColorSpace: %{public}d, "
-        "isNeedUpdate: %{public}d", currColorSpace_, captureColorSpace, isNeedUpdate);
-    SetColorSpaceForStreams();
+    CHECK_EXECUTE(!isNeedUpdate, SetColorSpaceForStreams());
+    MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() colorSpace: %{public}d, isNeedUpdate: %{public}d",
+        currColorSpace_, isNeedUpdate);
     return result;
 }
 
@@ -647,11 +683,7 @@ void HStreamOperator::SetColorSpaceForStreams()
     auto streams = streamContainer_.GetAllStreams();
     for (auto& stream : streams) {
         MEDIA_DEBUG_LOG("HStreamOperator::SetColorSpaceForStreams() streams type %{public}d", stream->GetStreamType());
-        if (stream->GetStreamType() == StreamType::CAPTURE) {
-            stream->SetColorSpace(currCaptureColorSpace_);
-        } else {
-            stream->SetColorSpace(currColorSpace_);
-        }
+        stream->SetColorSpace(currColorSpace_);
     }
 }
 
@@ -707,26 +739,34 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
         colorSpace == ColorSpace::BT2020_HLG_LIMIT || colorSpace == ColorSpace::BT2020_PQ_LIMIT)) {
         return CAMERA_OK;
     }
-
+    MEDIA_DEBUG_LOG("HStreamOperator::CheckIfColorSpaceMatchesFormat start");
     // 选择BT2020，需要匹配10bit的format；若不匹配，返回error
     auto streams = streamContainer_.GetAllStreams();
     for (auto& curStream : streams) {
         if (!curStream) {
             continue;
         }
-        // 当前拍照流不支持BT2020，无需校验format
-        if (curStream->GetStreamType() != StreamType::REPEAT) {
-            continue;
-        }
         StreamInfo_V1_1 curStreamInfo;
         curStream->SetStreamInfo(curStreamInfo);
-        MEDIA_INFO_LOG("HStreamOperator::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
+        MEDIA_INFO_LOG("HCaptureSession::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
             static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStreamInfo.v1_0.format_);
-        CHECK_ERROR_RETURN_RET_LOG(
-            !(curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_P010 ||
-                curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_P010),
-            CAMERA_OPERATION_NOT_ALLOWED, "HCaptureSession::CheckFormat, stream format not match");
+        camera_format_t format = static_cast<camera_format_t>(curStreamInfo.v1_0.format_);
+        if (curStream->GetStreamType() == StreamType::CAPTURE) {
+            if (!(format == OHOS_CAMERA_FORMAT_YCRCB_420_SP || format == OHOS_CAMERA_FORMAT_JPEG ||
+                format == OHOS_CAMERA_FORMAT_HEIC)) {
+                MEDIA_ERR_LOG("HCaptureSession::CheckFormat, streamType: %{public}d, format not match",
+                    curStream->GetStreamType());
+                    return CAMERA_OPERATION_NOT_ALLOWED;
+            }
+        } else if (curStream->GetStreamType() == StreamType::REPEAT) {
+            if (!(format == OHOS_CAMERA_FORMAT_YCRCB_P010 || format == OHOS_CAMERA_FORMAT_YCBCR_P010)) {
+                MEDIA_ERR_LOG("HCaptureSession::CheckFormat, streamType: %{public}d, format not match",
+                    curStream->GetStreamType());
+                return CAMERA_OPERATION_NOT_ALLOWED;
+            }
+        }
     }
+    MEDIA_DEBUG_LOG("HStreamOperator::CheckIfColorSpaceMatchesFormat end");
     return CAMERA_OK;
 }
 
@@ -1567,6 +1607,9 @@ int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo
         MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1");
         for (auto streamInfo : streamInfos) {
             if (streamInfo.extendedStreamInfos.size() > 0) {
+                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamId:%{public}d width:%{public}d height:%{public}d"
+                    "format:%{public}d dataspace:%{public}d", streamInfo.v1_0.streamId_, streamInfo.v1_0.width_,
+                    streamInfo.v1_0.height_, streamInfo.v1_0.format_, streamInfo.v1_0.dataspace_);
                 MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1 type %{public}d",
                     streamInfo.extendedStreamInfos[0].type);
             }

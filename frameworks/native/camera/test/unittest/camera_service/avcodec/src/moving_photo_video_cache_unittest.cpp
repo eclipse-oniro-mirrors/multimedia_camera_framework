@@ -70,10 +70,11 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_001, T
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
     sptr<MovingPhotoVideoCache> cache = new MovingPhotoVideoCache(taskManager);
 
-    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type);
+    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type, colorSpace);
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 1;
     int32_t rotation = 1;
@@ -118,7 +119,8 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_003, T
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type, colorSpace);
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 1;
     int32_t rotation = 1;
@@ -153,7 +155,8 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_004, T
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> manager = new AvcodecTaskManager(session, type, colorSpace);
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 1;
     int32_t rotation = 1;

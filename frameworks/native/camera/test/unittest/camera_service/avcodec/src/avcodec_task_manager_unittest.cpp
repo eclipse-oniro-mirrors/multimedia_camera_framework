@@ -64,7 +64,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
     shared_ptr<TaskManager> manager = taskManager->GetTaskManager();
     ASSERT_NE(manager, nullptr);
@@ -95,7 +96,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
     vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 1;
@@ -103,7 +105,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize
     int32_t captureId = 1;
     taskManager->DoMuxerVideo(frameRecords, taskName, captureRotation, captureId);
     EXPECT_TRUE(frameRecords.empty());
-    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type);
+    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type, colorSpace);
     taskManager->audioEncoder_ = nullptr;
 }
 
@@ -119,7 +121,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
     vector<sptr<FrameRecord>> frameRecords;
     vector<sptr<FrameRecord>> choosedBuffer;
@@ -145,7 +148,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
     taskManager->videoEncoder_ = nullptr;
     taskManager->audioEncoder_ = make_unique<AudioEncoder>();
@@ -165,9 +169,10 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
 
-    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type);
+    taskManager->videoEncoder_ = make_unique<VideoEncoder>(type, colorSpace);
     taskManager->audioEncoder_ = nullptr;
     taskManager->Stop();
     EXPECT_FALSE(taskManager->videoEncoder_->isStarted_);

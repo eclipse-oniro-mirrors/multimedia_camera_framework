@@ -63,6 +63,7 @@
 #include <drivers/interface/display/graphic/common/v1_0/cm_color_space.h>
 #include "napi/native_node_api.h"
 #include "picture_proxy.h"
+#include "hdr_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -159,6 +160,28 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
         context->errorCode = photoOutput->Capture(capSettings);
     }
     context->status = context->errorCode == 0;
+}
+
+void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
+{
+    std::vector<uint32_t> keys = {};
+    CHECK_ERROR_RETURN_LOG(inBuffer == nullptr, "CopyMetaData: inBuffer is nullptr");
+    auto ret = inBuffer->ListMetadataKeys(keys);
+    CHECK_ERROR_RETURN_LOG(ret != GSError::GSERROR_OK,
+        "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
+    for (uint32_t key : keys) {
+        std::vector<uint8_t> values;
+        ret = inBuffer->GetMetadata(key, values);
+        if (ret != 0) {
+            MEDIA_INFO_LOG("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
+            continue;
+        }
+        ret = outBuffer->SetMetadata(key, values);
+        if (ret != 0) {
+            MEDIA_INFO_LOG("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
+            continue;
+        }
+    }
 }
 
 bool ValidQualityLevelFromJs(int32_t jsQuality)
@@ -262,26 +285,6 @@ int32_t GetCaptureId(sptr<SurfaceBuffer> surfaceBuffer)
     }
     MEDIA_INFO_LOG("PhotoListener captureId:%{public}d, burstSeqId:%{public}d", captureId, burstSeqId);
     return captureId;
-}
-
-OHOS::ColorManager::ColorSpace GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
-{
-    OHOS::ColorManager::ColorSpace colorSpace =
-        OHOS::ColorManager::ColorSpace(OHOS::ColorManager::ColorSpaceName::NONE);
-    HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
-    GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
-    if (gsErr != GSERROR_OK) {
-        MEDIA_ERR_LOG("Failed to get colorSpaceType!");
-    } else {
-        MEDIA_INFO_LOG("get colorSpaceType:%{public}d", colorSpaceType);
-    }
-    auto it = COLORSPACE_MAP.find(colorSpaceType);
-    if (it != COLORSPACE_MAP.end()) {
-        colorSpace = it->second;
-    } else {
-        MEDIA_ERR_LOG("colorSpace not supported!");
-    }
-    return colorSpace;
 }
 
 void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photoOutput)
@@ -1525,13 +1528,39 @@ void ThumbnailListener::OnBufferAvailable()
     MEDIA_INFO_LOG("ThumbnailListener::OnBufferAvailable is end");
 }
 
-void ThumbnailCreatePixelMap(std::unique_ptr<Media::PixelMap>& pixelMap)
+OHOS::ColorManager::ColorSpaceName GetColorSpace(sptr<SurfaceBuffer> surfaceBuffer)
 {
+    OHOS::ColorManager::ColorSpaceName colorSpace = OHOS::ColorManager::ColorSpaceName::NONE;
+    HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType colorSpaceType;
+    GSError gsErr = MetadataHelper::GetColorSpaceType(surfaceBuffer, colorSpaceType);
+    if (gsErr != GSERROR_OK) {
+        MEDIA_ERR_LOG("Failed to get colorSpaceType from surfaceBuffer!");
+        return colorSpace;
+    } else {
+        MEDIA_INFO_LOG("Get current colorSpaceType is : %{public}d", colorSpaceType);
+    }
+    auto it = COLORSPACE_MAP.find(colorSpaceType);
+    if (it != COLORSPACE_MAP.end()) {
+        colorSpace = it->second;
+        MEDIA_INFO_LOG("Current get colorSpaceName: %{public}d", colorSpace);
+    } else {
+        MEDIA_ERR_LOG("Current colorSpace is not supported!");
+        return colorSpace;
+    }
+    return colorSpace;
+}
+
+void ThumbnailSetColorSpaceAndRotate(std::unique_ptr<Media::PixelMap>& pixelMap, sptr<SurfaceBuffer> surfaceBuffer,
+    OHOS::ColorManager::ColorSpaceName colorSpaceName)
+{
+    int32_t thumbnailrotation = 0;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataRotation, thumbnailrotation);
+    MEDIA_DEBUG_LOG("ThumbnailListener current rotation is : %{public}d", thumbnailrotation);
     if (!pixelMap) {
         MEDIA_ERR_LOG("ThumbnailListener Failed to create PixelMap.");
     } else {
-        OHOS::ColorManager::ColorSpace colorSpace(OHOS::ColorManager::ColorSpaceName::DISPLAY_P3);
-        pixelMap->InnerSetColorSpace(colorSpace);
+        pixelMap->InnerSetColorSpace(OHOS::ColorManager::ColorSpace(colorSpaceName));
+        pixelMap->rotate(thumbnailrotation);
     }
 }
 
@@ -1563,21 +1592,19 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     int32_t captureId = GetCaptureId(surfaceBuffer);
     MEDIA_INFO_LOG("ThumbnailListener thumbnailWidth:%{public}d, thumbnailheight: %{public}d, captureId: %{public}d,"
         "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, captureId, burstSeqId);
-    Media::InitializationOptions opts {
-        .size = { .width = thumbnailWidth, .height = thumbnailHeight },
-        .srcPixelFormat = Media::PixelFormat::RGBA_8888,
-        .pixelFormat = Media::PixelFormat::RGBA_8888,
-    };
-    const int32_t formatSize = 4;
-    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(surfaceBuffer->GetVirAddr()),
-        thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
-    ThumbnailCreatePixelMap(pixelMap);
+    OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
+    CHECK_ERROR_RETURN_LOG(colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, "Thumbnail GetcolorSpace failed!");
+    bool isHdr = colorSpace == OHOS::ColorManager::ColorSpaceName::BT2020_HLG;
+    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer, thumbnailWidth, thumbnailHeight, isHdr);
+    std::unique_ptr<Media::PixelMap> pixelMap = CreatePixelMapFromSurfaceBuffer(newSurfaceBuffer,
+        thumbnailWidth, thumbnailHeight, isHdr);
+    CHECK_ERROR_RETURN_LOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
+    ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     surface->ReleaseBuffer(surfaceBuffer, -1);
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
-    MEDIA_INFO_LOG("ThumbnailListener surfaceName = Thumbnail UpdateJSCallbackAsync captureId = %{public}d, end.",
-        captureId);
     auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
     if (photoOutput->IsYuvOrHeifPhoto()) {
         constexpr int32_t yuvFormat = 3;
@@ -1585,6 +1612,105 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
         photoProxy->imageFormat_ = yuvFormat;
         photoOutput->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
     }
+}
+
+void ThumbnailListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+    int32_t thumbnailWidth, int32_t thumbnailHeight, bool isHdr) const
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("ThumbnailListener::DeepCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d ",
+        thumbnailWidth, thumbnailHeight, surfaceBuffer->GetFormat());
+    int32_t thumbnailStride = 0;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataStride, thumbnailStride);
+    MEDIA_INFO_LOG("ThumbnailListener::DeepCopyBuffer current stride : %{public}d", thumbnailStride);
+    BufferRequestConfig requestConfig = {
+        .width = thumbnailStride,
+        .height = thumbnailHeight,
+        .strideAlignment = thumbnailStride,
+        .format = surfaceBuffer->GetFormat(),
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+        .timeout = 0,
+    };
+    CHECK_ERROR_RETURN_LOG(newSurfaceBuffer == nullptr, "Deep copy surfaceBuffer failed");
+    GSError allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
+    if (allocErrorCode != 0) {
+        MEDIA_ERR_LOG("Create surfaceBuffer Alloc failed");
+        return;
+    }
+    MEDIA_INFO_LOG("ThumbnailListener::DeepCopyBuffer SurfaceBuffer alloc ret : %{public}d",
+        allocErrorCode);
+    int32_t colorLength = thumbnailStride * thumbnailHeight * PIXEL_SIZE_HDR_YUV;
+    colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), colorLength) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
+        return;
+    }
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
+    MEDIA_DEBUG_LOG("ThumbnailListener::DeepCopyBuffer SurfaceBuffer end");
+}
+
+unique_ptr<Media::PixelMap> ThumbnailListener::CreatePixelMapFromSurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer,
+    int32_t width, int32_t height, bool isHdr)
+{
+    CHECK_ERROR_RETURN_RET_LOG(surfaceBuffer == nullptr, nullptr,
+        "ThumbnailListener::CreatePixelMapFromSurfaceBuffer surfaceBuffer is nullptr");
+    MEDIA_INFO_LOG("ThumbnailListener Width:%{public}d, height:%{public}d, isHdr:%{public}d, format:%{public}d",
+        width, height, isHdr, surfaceBuffer->GetFormat());
+    Media::InitializationOptions options {
+        .size = { .width = width, .height = height } };
+    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
+    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
+    options.useDMA = true;
+    int32_t colorLength = width * height * PIXEL_SIZE_HDR_YUV;
+    colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
+    std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
+    void* nativeBuffer = surfaceBuffer.GetRefPtr();
+    RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);
+    ref->IncStrongRef(ref);
+    if (isHdr) {
+        pixelMap->SetHdrType(OHOS::Media::ImageHdrType::HDR_VIVID_SINGLE);
+    }
+    pixelMap->SetPixelsAddr(surfaceBuffer->GetVirAddr(), surfaceBuffer.GetRefPtr(), colorLength,
+        Media::AllocatorType::DMA_ALLOC, nullptr);
+    
+    MEDIA_DEBUG_LOG("ThumbnailListener::CreatePixelMapFromSurfaceBuffer end");
+    return SetPixelMapYuvInfo(surfaceBuffer, std::move(pixelMap), isHdr);
+}
+
+unique_ptr<Media::PixelMap> ThumbnailListener::SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
+    unique_ptr<Media::PixelMap> pixelMap, bool isHdr)
+{
+    MEDIA_INFO_LOG("ThumbnailListener::SetPixelMapYuvInf enter");
+    uint8_t ratio = isHdr ? HDR_PIXEL_SIZE : SDR_PIXEL_SIZE;
+    int32_t srcWidth = pixelMap->GetWidth();
+    int32_t srcHeight = pixelMap->GetHeight();
+    Media::YUVDataInfo yuvDataInfo = { .yWidth = srcWidth,
+                                       .yHeight = srcHeight,
+                                       .uvWidth = srcWidth / 2,
+                                       .uvHeight = srcHeight / 2,
+                                       .yStride = srcWidth,
+                                       .uvStride = srcWidth,
+                                       .uvOffset = srcWidth * srcHeight};
+    if (surfaceBuffer == nullptr) {
+        pixelMap->SetImageYUVInfo(yuvDataInfo);
+        return pixelMap;
+    }
+    OH_NativeBuffer_Planes *planes = nullptr;
+    GSError retVal = surfaceBuffer->GetPlanesInfo(reinterpret_cast<void**>(&planes));
+    if (retVal != OHOS::GSERROR_OK || planes == nullptr) {
+        pixelMap->SetImageYUVInfo(yuvDataInfo);
+        return pixelMap;
+    }
+    
+    yuvDataInfo.yStride = planes->planes[PLANE_Y].columnStride / ratio;
+    yuvDataInfo.uvStride = planes->planes[PLANE_U].columnStride / ratio;
+    yuvDataInfo.yOffset = planes->planes[PLANE_Y].offset / ratio;
+    yuvDataInfo.uvOffset = planes->planes[PLANE_U].offset / ratio;
+
+    pixelMap->SetImageYUVInfo(yuvDataInfo);
+    MEDIA_INFO_LOG("ThumbnailListener::SetPixelMapYuvInf end");
+    return pixelMap;
 }
 
 void ThumbnailListener::UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp,

@@ -51,7 +51,7 @@ AvcodecTaskManager::~AvcodecTaskManager()
 }
 
 AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession,
-    VideoCodecType type) : videoCodecType_(type)
+    VideoCodecType type, ColorSpace colorSpace) : videoCodecType_(type), colorSpace_(colorSpace)
 {
     CAMERA_SYNC_TRACE;
     #ifdef MOVING_PHOTO_ADD_AUDIO
@@ -59,7 +59,7 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     audioEncoder_ = make_unique<AudioEncoder>();
     #endif
     // Create Task Manager
-    videoEncoder_ = make_shared<VideoEncoder>(type);
+    videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -150,6 +150,9 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
         == VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    if (videoCodecType_ == VIDEO_ENCODE_TYPE_HEVC && videoEncoder_->IsHdr(colorSpace_)) {
+        formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_IS_HDR_VIVID, IS_HDR_VIVID);
+    }
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     formatVideo->PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);

@@ -66,8 +66,9 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest()
     }
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
     if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<AvcodecTaskManager>(session, type);
+        fuzz_ = std::make_shared<AvcodecTaskManager>(session, type, colorSpace);
     }
     fuzz_->GetTaskManager();
     fuzz_->GetEncoderManager();

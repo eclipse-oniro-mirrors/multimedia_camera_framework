@@ -59,7 +59,7 @@ public:
 
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
 
-    int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
+    int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate) override;
 
     int32_t SetFeatureMode(int32_t featureMode) override;
 

@@ -51,7 +51,8 @@ constexpr uint32_t RELEASE_WAIT_TIME = 10000;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
-    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type);
+    explicit AvcodecTaskManager(sptr<AudioCapturerSession> audioCapturerSession, VideoCodecType type,
+        ColorSpace colorSpace);
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, vector<sptr<AudioRecord>>& audioRecords,
@@ -98,6 +99,7 @@ private:
     int64_t postBufferDuration_ = NANOSEC_RANGE;
     uint32_t timerId_ = 0;
     shared_ptr<AudioDeferredProcess> audioDeferredProcess_ = nullptr;
+    ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
 };
 } // CameraStandard
 } // OHOS

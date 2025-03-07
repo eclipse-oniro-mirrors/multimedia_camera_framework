@@ -227,9 +227,8 @@ int HCaptureSessionStub::HandleGetActiveColorSpace(MessageParcel &reply)
 int HCaptureSessionStub::HandleSetColorSpace(MessageParcel &data)
 {
     ColorSpace colorSpace = static_cast<ColorSpace>(data.ReadInt32());
-    ColorSpace colorSpaceForCapture = static_cast<ColorSpace>(data.ReadInt32());
     bool isNeedUpdate = data.ReadBool();
-    return SetColorSpace(colorSpace, colorSpaceForCapture, isNeedUpdate);
+    return SetColorSpace(colorSpace, isNeedUpdate);
 }
 
 int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel &reply)

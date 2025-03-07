@@ -68,7 +68,7 @@ public:
 
     virtual int32_t GetActiveColorSpace(ColorSpace& colorSpace) = 0;
 
-    virtual int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) = 0;
+    virtual int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate) = 0;
 
     virtual int32_t SetFeatureMode(int32_t featureMode) = 0;
 

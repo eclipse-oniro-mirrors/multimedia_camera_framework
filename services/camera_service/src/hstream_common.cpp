@@ -84,8 +84,9 @@ HStreamCommon::HStreamCommon(
     callerToken_ = IPCSkeleton::GetCallingTokenID();
     const int32_t metaStreamId = -1;
     fwkStreamId_ = streamType == StreamType::METADATA ? metaStreamId : GenerateStreamId();
-    MEDIA_DEBUG_LOG(
-        "HStreamCommon Create streamId_ is %{public}d, streamType is:%{public}d", fwkStreamId_, streamType_);
+    MEDIA_DEBUG_LOG("HStreamCommon Create streamId:%{public}d type:%{public}d width:%{public}d height:%{public}d"
+                    " format:%{public}d ",
+        fwkStreamId_, streamType_,  width_, height_, format_);
 }
 
 HStreamCommon::~HStreamCommon()
@@ -172,11 +173,13 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     } else {
         MEDIA_ERR_LOG("HStreamCommon::SetStreamInfo find format error, pixelFormat use default format");
     }
-    MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo pixelFormat is %{public}d", pixelFormat);
+    MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo pixelFormat:%{public}d type:%{public}d colorSpace:%{public}d",
+        pixelFormat, streamType_, dataSpace_);
     streamInfo.v1_0.streamId_ = hdiStreamId_;
     streamInfo.v1_0.width_ = width_;
     streamInfo.v1_0.height_ = height_;
     streamInfo.v1_0.format_ = pixelFormat;
+    streamInfo.v1_0.dataspace_ = dataSpace_;
     streamInfo.v1_0.minFrameDuration_ = 0;
     streamInfo.v1_0.tunneledMode_ = true;
     {
@@ -188,8 +191,6 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
             streamInfo.v1_0.bufferQueue_ = nullptr;
         }
     }
-    MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo type %{public}d, dataSpace %{public}d", streamType_, dataSpace_);
-    streamInfo.v1_0.dataspace_ = dataSpace_;
     streamInfo.extendedStreamInfos = {};
 }
 

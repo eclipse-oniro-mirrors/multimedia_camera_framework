@@ -63,7 +63,8 @@ void VideoEncoderUnitTest::TearDown()
 HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type, colorSpace);
     int32_t rotation = 1;
     std::shared_ptr<Size> size = std::make_shared<Size>();
     encoder->RestartVideoCodec(size, rotation);
@@ -90,7 +91,8 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level0)
 HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type, colorSpace);
 
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -129,7 +131,8 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level0)
 HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level0)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type);
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    std::shared_ptr<VideoEncoder> encoder = make_unique<VideoEncoder>(type, colorSpace);
     encoder->encoder_ = nullptr;
     EXPECT_EQ(encoder->Release(), 0);
 }
