@@ -5067,7 +5067,7 @@ function getCameraManager(context: Context): CameraManager;
    * @systemapi
    * @since 11
    */
-  interface VideoSessionForSys extends VideoSession, Beauty, ColorEffect, ColorManagement, Macro {
+  interface VideoSessionForSys extends VideoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion {
   }
 
   /**
@@ -5241,6 +5241,28 @@ function getCameraManager(context: Context): CameraManager;
      * @since 13
      */
     off(type: 'autoDeviceSwitchStatusChange', callback?: AsyncCallback<AutoDeviceSwitchStatus>): void;
+
+    /**
+     * Subscribes to effect suggestion event callback.
+     *
+     * @param { 'effectSuggestionChange' } type - Event type.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 18
+     */
+    on(type: 'effectSuggestionChange', callback: AsyncCallback<EffectSuggestionType>): void;
+
+    /**
+     * Unsubscribes from effect suggestion event callback.
+     *
+     * @param { 'effectSuggestionChange' } type - Event type.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 18
+     */
+    off(type: 'effectSuggestionChange', callback?: AsyncCallback<EffectSuggestionType>): void;
 
     /**
      * Gets session functions.
@@ -7741,7 +7763,16 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 12
      */
-    EFFECT_SUGGESTION_SUNRISE_SUNSET = 4
+    EFFECT_SUGGESTION_SUNRISE_SUNSET = 4,
+
+    /**
+     * Stage.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 18
+     */
+    EFFECT_SUGGESTION_STAGE = 5
   }
 
   /**

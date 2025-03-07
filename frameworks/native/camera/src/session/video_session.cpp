@@ -442,6 +442,7 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessFocusTrackingInfo(result);
     session->ProcessLightStatusChange(result);
+    session->ProcessEffectSuggestionTypeUpdates(result);
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -345,6 +345,7 @@ static const std::unordered_map<std::string, int32_t> mapEffectSuggestionType = 
     {"EFFECT_SUGGESTION_FOOD", 2},
     {"EFFECT_SUGGESTION_SKY", 3},
     {"EFFECT_SUGGESTION_SUNRISE_SUNSET", 4},
+    {"EFFECT_SUGGESTION_STAGE", 5},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPolicyType = {

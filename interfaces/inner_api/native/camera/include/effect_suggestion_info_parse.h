@@ -15,7 +15,10 @@
 #ifndef EFFECT_SUGGESTION_INFO_PARSE_H
 #define EFFECT_SUGGESTION_INFO_PARSE_H
 
+#include <numeric>
 #include <queue>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <iostream>
 #include <cstdint>
@@ -27,11 +30,31 @@ using namespace std;
 typedef struct EffectSuggestionModeInfo {
     int32_t modeType;
     std::vector<int32_t> effectSuggestionList;
+    std::string to_string() const
+    {
+        std::ostringstream oss;
+        std::string listStr = std::accumulate(effectSuggestionList.cbegin(), effectSuggestionList.cend(), std::string(),
+            [](const auto& prefix, const auto& item) {
+                    return prefix + (prefix.empty() ? "" : ",") + std::to_string(item);
+                });
+        oss << "EffectSuggestionModeInfo{modeType:" << modeType << ",effectSuggestionList:[" << listStr << "]}";
+        return oss.str();
+    }
 } EffectSuggestionModeInfo;
 
 typedef struct EffectSuggestionInfo {
     uint32_t modeCount;
     std::vector<EffectSuggestionModeInfo> modeInfo;
+    std::string to_string() const
+    {
+        std::ostringstream oss;
+        std::string listStr = std::accumulate(modeInfo.cbegin(), modeInfo.cend(), std::string(),
+            [](const auto& prefix, const auto& item) {
+                return prefix + (prefix.empty() ? "" : ",") + item.to_string();
+                });
+        oss << "EffectSuggestionInfo{modeCount:" << modeCount << ",modeInfo:[" << listStr << "]}";
+        return oss.str();
+    }
 } EffectSuggestionInfo;
 
 class EffectSuggestionInfoParse {
