@@ -249,7 +249,6 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "e2fsprogs:libext2_uuid",
-    "libxml2:libxml2",
   ]
 
   defines = []
