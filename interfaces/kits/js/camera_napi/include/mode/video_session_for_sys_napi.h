@@ -46,6 +46,28 @@ struct FocusTrackingCallbackInfo {
         : focusTrackingInfo_(focusTrackingInfo), listener_(listener) {}
 };
 
+class LightStatusCallbackListener : public LightStatusCallback,
+                                    public ListenerBase,
+                                    public std::enable_shared_from_this<LightStatusCallbackListener> {
+public:
+    LightStatusCallbackListener(napi_env env) : ListenerBase(env)
+    {}
+    ~LightStatusCallbackListener() = default;
+    void OnLightStatusChanged(LightStatus &status) override;
+
+private:
+    void OnLightStatusChangedCallback(LightStatus &status) const;
+    void OnLightStatusChangedCallbackAsync(LightStatus &status) const;
+};
+
+struct LightStatusChangedCallback {
+    LightStatus status_;
+    weak_ptr<const LightStatusCallbackListener> listener_;
+    LightStatusChangedCallback(LightStatus status, shared_ptr<const LightStatusCallbackListener> listener)
+        : status_(status), listener_(listener)
+    {}
+};
+
 class VideoSessionForSysNapi : public VideoSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -60,12 +82,17 @@ public:
     sptr<VideoSession> videoSession_;
     static thread_local napi_ref sConstructor_;
     std::shared_ptr<FocusTrackingCallbackListener> focusTrackingInfoCallback_;
+    std::shared_ptr<LightStatusCallbackListener> lightStatusCallback_ = nullptr;
 
 protected:
     void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterLightStatusCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value> &args, bool isOnce) override;
+    void UnregisterLightStatusCallbackListener(
+        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

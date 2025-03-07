@@ -158,6 +158,11 @@ static const std::unordered_map<std::string, int32_t> mapHostDeviceType = {
     {"TABLET", 0x11},
 };
 
+static const std::unordered_map<std::string, int32_t> mapLightStatus = {
+    {"NORMAL", 0},
+    {"INSUFFICIENT", 1},
+};
+
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},

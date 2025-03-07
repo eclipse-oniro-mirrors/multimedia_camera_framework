@@ -26,9 +26,15 @@
 namespace OHOS {
 namespace CameraStandard {
 
+class LightStatusCallback;
+
 enum FocusTrackingMode : int32_t {
     FOCUS_TRACKING_MODE_AUTO = 0,
 };
+
+typedef struct {
+    int32_t status;
+} LightStatus;
 
 struct FocusTrackingInfoParms {
     FocusTrackingMode trackingMode = FOCUS_TRACKING_MODE_AUTO;
@@ -146,6 +152,38 @@ public:
      */
     void ProcessFocusTrackingInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
+    /**
+     * @brief Set the exposure hint callback.
+     * which will be called when there is exposure hint change.
+     *
+     * @param The LightStatusCallback pointer.
+     */
+    void SetLightStatusCallback(std::shared_ptr<LightStatusCallback> callback);
+
+    /**
+     * @brief Get light status callback pointer.
+     *
+     * @return Focus light status callback pointer.
+     */
+    std::shared_ptr<LightStatusCallback> GetLightStatusCallback();
+
+    /**
+     * @brief This function is called when there is LightStatus change
+     * and process the LightStatus callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessLightStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    void SetLightStatus(uint8_t status)
+    {
+        lightStatus_ = status;
+    }
+    uint8_t GetLightStatus()
+    {
+        return lightStatus_;
+    }
+
 protected:
     std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
@@ -158,10 +196,19 @@ private:
     bool ProcessFocusTrackingModeInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
         FocusTrackingMode& mode);
     bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata, Rect& rect);
+    std::shared_ptr<LightStatusCallback> lightStatusCallback_ = nullptr;
 
     std::mutex videoSessionCallbackMutex_;
     std::shared_ptr<FocusTrackingCallback> focusTrackingInfoCallback_ = nullptr;
     static const std::unordered_map<camera_focus_tracking_mode_t, FocusTrackingMode> metaToFwFocusTrackingMode_;
+    int32_t lightStatus_ = 0;
+};
+
+class LightStatusCallback {
+public:
+    LightStatusCallback() = default;
+    virtual ~LightStatusCallback() = default;
+    virtual void OnLightStatusChanged(LightStatus &status) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
