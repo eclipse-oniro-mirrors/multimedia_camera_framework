@@ -821,5 +821,23 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize
         }
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput device retry
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput device retry
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+ 
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    input->ControlAuxiliary(AuxiliaryType::CONTRACTLENS, AuxiliaryStatus::AUXILIARY_ON);
+}
 }
 }
