@@ -206,10 +206,7 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
   ]
 
-  public_external_deps = [
-    "e2fsprogs:libext2_uuid",
-    "libxml2:libxml2",
-  ]
+  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
 
   defines = []
   if (use_sensor) {
