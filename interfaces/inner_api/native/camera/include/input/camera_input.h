@@ -390,7 +390,6 @@ public:
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
-    void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
     std::queue<uint32_t>timeQueue_;
     void UnregisterTime();
 private:
