@@ -390,8 +390,9 @@ public:
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
+    std::queue<uint32_t>timeQueue_;
+    void UnregisterTime();
 private:
-    uint32_t timeId_ = -1;
     std::mutex deviceObjMutex_;
     std::mutex errorCallbackMutex_;
     std::mutex cameraDeviceInfoMutex_;
