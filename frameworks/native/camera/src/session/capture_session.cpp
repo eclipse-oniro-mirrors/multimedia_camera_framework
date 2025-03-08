@@ -586,6 +586,10 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
         MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession is nullptr");
         return ServiceToCameraError(errCode);
     }
+    auto cameraInput = (sptr<CameraInput>&)input;
+    if (!cameraInput->timeQueue_.empty()) {
+        cameraInput->UnregisterTime();
+    }
     errCode = captureSession->AddInput(((sptr<CameraInput>&)input)->GetCameraDevice());
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);

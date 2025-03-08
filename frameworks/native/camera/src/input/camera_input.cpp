@@ -169,9 +169,7 @@ void CameraInput::InputRemoveDeathRecipient()
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
-    if (timeId_ != -1) {
-        CameraTimer::GetInstance()->Unregister(timeId_);
-    }
+    UnregisterTime();
     CameraTimer::GetInstance()->DecreaseUserCount();
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
@@ -183,6 +181,7 @@ CameraInput::~CameraInput()
 int CameraInput::Open()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
+    UnregisterTime();
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Open");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto deviceObj = GetCameraDevice();
@@ -291,6 +290,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 int CameraInput::Close()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
+    UnregisterTime();
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Close");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto deviceObj = GetCameraDevice();
@@ -318,8 +318,6 @@ int CameraInput::closeDelayed(int32_t delayTime)
         uint32_t count = 1;
         metadata->addEntry(OHOS_CONTROL_CAMERA_CLOSE_AFTER_SECONDS, &delayTime, count);
         deviceObj->UpdateSetting(metadata);
-        CameraDeviceSvcCallback_ = nullptr;
-        deviceObj->SetCallback(CameraDeviceSvcCallback_);
     }
     if (deviceObj) {
         MEDIA_INFO_LOG("CameraInput::closeDelayed() deviceObj is true");
@@ -328,21 +326,30 @@ int CameraInput::closeDelayed(int32_t delayTime)
     } else {
         MEDIA_ERR_LOG("CameraInput::closeDelayed() deviceObj is nullptr");
     }
-    auto deviceWptr = wptr<ICameraDeviceService>(deviceObj);
+    auto thiswptr = wptr<CameraInput>(this);
     const int delayTaskTime = delayTime * 1000;
-    if (timeId_ != -1) {
-        CameraTimer::GetInstance()->Unregister(timeId_);
-    }
-    timeId_ = CameraTimer::GetInstance()->Register(
-        [deviceWptr] {
-            auto device = deviceWptr.promote();
-            if (device) {
+    UnregisterTime();
+    uint32_t timeIdFirst = CameraTimer::GetInstance()->Register(
+        [thiswptr] {
+            auto input = thiswptr.promote();
+            if (input) {
                 MEDIA_INFO_LOG("Enter Into CameraInput::closeDelayed obj->close");
-                device->Close();
+                input->Close();
             }
         }, delayTaskTime, true);
 
+    timeQueue_.push(timeIdFirst);
     return ServiceToCameraError(retCode);
+}
+
+void CameraInput::UnregisterTime()
+{
+    MEDIA_INFO_LOG("Enter Into CameraInput::UnregisterTime");
+    while (!timeQueue_.empty()) {
+        uint32_t timeIdFirst = timeQueue_.front();
+        timeQueue_.pop();
+        CameraTimer::GetInstance()->Unregister(timeIdFirst);
+    }
 }
 
 int CameraInput::Release()
