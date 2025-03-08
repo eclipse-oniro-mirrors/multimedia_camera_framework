@@ -189,5 +189,69 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallback(FocusTrackingInf
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
     ExecuteCallback("focusTrackingInfoAvailable", callbackNapiPara);
 }
+
+void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterLightStatusCallbackListener called");
+    if (lightStatusCallback_ == nullptr) {
+        lightStatusCallback_ = std::make_shared<LightStatusCallbackListener>(env);
+        videoSession_->SetLightStatusCallback(lightStatusCallback_);
+        videoSession_->SetLightStatus(0);
+    }
+    lightStatusCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionForSysNapi::UnregisterLightStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    MEDIA_INFO_LOG("VideoSessionForSysNapi::UnregisterLightStatusCallbackListener is called");
+    if (lightStatusCallback_ == nullptr) {
+        MEDIA_DEBUG_LOG("abilityCallback is null");
+    } else {
+        lightStatusCallback_->RemoveCallbackRef(eventName, callback);
+    }
+}
+
+void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus &status) const
+{
+    MEDIA_INFO_LOG("OnLightStatusChangedCallbackAsync is called");
+    std::unique_ptr<LightStatusChangedCallback> callback =
+        std::make_unique<LightStatusChangedCallback>(status, shared_from_this());
+    LightStatusChangedCallback *event = callback.get();
+    auto task = [event] () {
+        LightStatusChangedCallback* callback = reinterpret_cast<LightStatusChangedCallback *>(event);
+        if (callback) {
+            MEDIA_DEBUG_LOG("the light status is %{public}d", callback->status_.status);
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnLightStatusChangedCallback(callback->status_);
+            }
+            delete callback;
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callback.release();
+    }
+}
+
+void LightStatusCallbackListener::OnLightStatusChangedCallback(LightStatus &status) const
+{
+    MEDIA_DEBUG_LOG("OnLightStatusChangedCallback is called, light status is %{public}d", status.status);
+    ExecuteCallbackScopeSafe("lightStatus", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value result;
+        napi_create_uint32(env_, status.status, &result);
+        return ExecuteCallbackData(env_, errCode, result);
+    });
+}
+
+void LightStatusCallbackListener::OnLightStatusChanged(LightStatus &status)
+{
+    MEDIA_DEBUG_LOG("OnLightStatusChanged is called, lightStatus: %{public}d", status.status);
+    OnLightStatusChangedCallbackAsync(status);
+}
 } // namespace CameraStandard
 } // namespace OHOS

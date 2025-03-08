@@ -153,6 +153,7 @@ ohos_shared_library("deferred_processing_service") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/common/utils",
   ]
 
   if (target_cpu == "arm") {
@@ -192,8 +193,6 @@ ohos_shared_library("deferred_processing_service") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
-    "image_framework:image",
-    "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",

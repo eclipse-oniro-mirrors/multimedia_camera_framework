@@ -83,8 +83,9 @@ Camera_PreviewOutput::~Camera_PreviewOutput()
 Camera_ErrorCode Camera_PreviewOutput::RegisterCallback(PreviewOutput_Callbacks* callback)
 {
     shared_ptr<InnerPreviewOutputCallback> innerCallback = make_shared<InnerPreviewOutputCallback>(this, callback);
-    innerPreviewOutput_->SetCallback(innerCallback);
-    callbackMap_.SetMapValue(callback, innerCallback);
+    if (callbackMap_.SetMapValue(callback, innerCallback)) {
+        innerPreviewOutput_->SetCallback(innerCallback);
+    }
     return CAMERA_OK;
 }
 

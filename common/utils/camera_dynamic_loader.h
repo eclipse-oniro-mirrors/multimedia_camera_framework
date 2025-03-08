@@ -23,6 +23,7 @@ namespace CameraStandard {
 using namespace std;
 
 const std::string MEDIA_LIB_SO = "libcamera_dynamic_medialibrary.z.so";
+const std::string PICTURE_SO = "libcamera_dynamic_picture.z.so";
 
 class Dynamiclib {
 public:

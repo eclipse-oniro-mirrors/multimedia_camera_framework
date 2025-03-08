@@ -26,6 +26,8 @@
 #include <vector>
 
 #include "camera_datashare_helper.h"
+#include "camera_rotate_strategy_parser.h"
+#include "camera_sensor_plugin.h"
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
@@ -35,6 +37,7 @@
 #include "hcamera_service_stub.h"
 #include "hcapture_session.h"
 #include "hstream_capture.h"
+#include "hstream_operator.h"
 #include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
@@ -43,10 +46,6 @@
 #include "privacy_kit.h"
 #include "refbase.h"
 #include "system_ability.h"
-#ifdef CAMERA_USE_SENSOR
-#include "sensor_agent.h"
-#include "sensor_agent_type.h"
-#endif
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_photo_processing_session.h"
 
@@ -168,6 +167,7 @@ public:
     int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
     int32_t GetConcurrentCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
+    int32_t SetDeviceRetryTime() override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -256,7 +256,7 @@ private:
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
     void UnregisterSensorCallback();
-    static void DropDetectionDataCallbackImpl(SensorEvent *event);
+    static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
 #endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
@@ -294,16 +294,14 @@ private:
     string preCameraClient_;
     bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
-    CameraServiceStatus serviceStatus_;
+    CameraServiceStatus serviceStatus_ = CameraServiceStatus::SERVICE_READY;
 
     std::mutex peerCallbackMutex_;
     sptr<ICameraBroker> peerCallback_;
 
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
-#ifdef CAMERA_USE_SENSOR
-    SensorUser user = { "", nullptr, nullptr };
-#endif
+    std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;

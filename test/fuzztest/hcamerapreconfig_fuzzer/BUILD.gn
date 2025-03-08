@@ -61,6 +61,7 @@ ohos_fuzztest("HCameraPreConfigFuzzTest") {
   ]
 
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/ability/camera_ability_parse_util.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/src/camera_info_dumper.cpp",
     "${multimedia_camera_framework_path}/services/camera_service/src/hcamera_preconfig.cpp",
     "hcamera_preconfig_fuzzer.cpp",

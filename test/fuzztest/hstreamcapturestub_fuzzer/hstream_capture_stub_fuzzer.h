@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 class HStreamCaptureStubFuzz : public HStreamCaptureStub {
 public:
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override
@@ -92,6 +93,22 @@ public:
         return 0;
     }
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override
+    {
+        return 0;
+    }
+
+    int32_t EnableOfflinePhoto(bool isEnable)override
+    {
+        return 0;
+    }
+    
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override
+    {
+        return 0;
+    }
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override
     {
         return 0;
     }

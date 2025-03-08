@@ -22,6 +22,20 @@
 
 namespace OHOS {
 namespace CameraStandard {
+namespace {
+void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<DepthDataAsyncContext*>(data);
+    CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_resolve_deferred(env, context->deferred, result);
+    napi_delete_async_work(env, context->work);
+    delete context->objectInfo;
+    delete context;
+}
+} // namespace
+
 thread_local napi_ref DepthDataNapi::sConstructor_ = nullptr;
 thread_local napi_value DepthDataNapi::sFormat_ = nullptr;
 thread_local napi_value DepthDataNapi::sDepthMap_ = nullptr;
@@ -267,13 +281,7 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
                     context->objectInfo->accuracy_ = nullptr;
                 }
             },
-            [](napi_env env, napi_status status, void* data) {
-                auto context = static_cast<DepthDataAsyncContext*>(data);
-                napi_resolve_deferred(env, context->deferred, nullptr);
-                napi_delete_async_work(env, context->work);
-                delete context->objectInfo;
-                delete context;
-            }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataNapi::Release");
             napi_get_undefined(env, &result);

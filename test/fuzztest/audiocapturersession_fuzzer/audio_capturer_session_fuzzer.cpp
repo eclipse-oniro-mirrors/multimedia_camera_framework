@@ -68,7 +68,6 @@ void AudioCapturerSessionFuzzer::AudioCapturerSessionFuzzerTest()
     if (audioCapturerSession == nullptr) {
         audioCapturerSession = std::make_shared<AudioCapturerSession>();
     }
-    audioCapturerSession->StartAudioCapture();
     audioCapturerSession->ProcessAudioBuffer();
 
     int64_t startTime = GetData<int64_t>();
@@ -78,6 +77,7 @@ void AudioCapturerSessionFuzzer::AudioCapturerSessionFuzzerTest()
     audioCapturerSession->getMicNum();
     audioCapturerSession->Release();
     audioCapturerSession->Stop();
+    audioCapturerSession->StartAudioCapture();
 }
 
 void Test()

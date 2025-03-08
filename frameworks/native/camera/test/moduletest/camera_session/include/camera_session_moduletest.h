@@ -72,7 +72,8 @@ enum class CAM_PHOTO_EVENTS {
     CAM_PHOTO_MAX_EVENT,
     CAM_PHOTO_FRAME_SHUTTER_END,
     CAM_PHOTO_CAPTURE_READY,
-    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION
+    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION,
+    CAM_PHOTO_OFFLINE_PHOTOOUTPUT
 };
 
 enum class CAM_PREVIEW_EVENTS {
@@ -231,6 +232,8 @@ public:
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
 
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override;
+
+    void OnOfflineDeliveryFinished(const int32_t captureId)  const override;
 };
 
 class AppVideoCallback : public VideoStateCallback {

@@ -59,8 +59,12 @@ CJCameraManager::~CJCameraManager()
 
 CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
 {
-    std::vector<sptr<CameraDevice>> supportedCameraDevices = cameraManager_->GetSupportedCameras();
     CArrCJCameraDevice result = {nullptr, 0};
+    if (cameraManager_ == nullptr) {
+        *errCode = CameraError::CAMERA_SERVICE_ERROR;
+        return result;
+    }
+    std::vector<sptr<CameraDevice>> supportedCameraDevices = cameraManager_->GetSupportedCameras();
     if (supportedCameraDevices.size() == 0) {
         return result;
     }
@@ -74,6 +78,15 @@ CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
     int i = 0;
     for (auto it = supportedCameraDevices.begin(); it != supportedCameraDevices.end(); ++it) {
         sptr<CameraDevice> cameraDevice = *it;
+        
+        if (cameraDevice == nullptr) {
+            *errCode = CameraError::CAMERA_SERVICE_ERROR;
+            for (int j = 0; j < i; j++) {
+                free(supportedCameras[j].cameraId);
+            }
+            free(supportedCameras);
+            return result;
+        }
         char *cameraDeviceId = MallocCString(cameraDevice->GetID());
         if (cameraDeviceId == nullptr) {
             *errCode = CameraError::CAMERA_SERVICE_ERROR;
@@ -100,8 +113,12 @@ CArrCJCameraDevice CJCameraManager::GetSupportedCameras(int32_t *errCode)
 
 CArrI32 CJCameraManager::GetSupportedSceneModes(std::string cameraId, int32_t *errCode)
 {
-    sptr<CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(cameraId);
     CArrI32 result = {nullptr, 0};
+    if (cameraManager_ == nullptr) {
+        *errCode = CameraError::CAMERA_SERVICE_ERROR;
+        return result;
+    }
+    sptr<CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(cameraId);
     if (cameraInfo == nullptr) {
         *errCode = CameraError::INVALID_PARAM;
         return result;
@@ -135,7 +152,7 @@ CArrI32 CJCameraManager::GetSupportedSceneModes(std::string cameraId, int32_t *e
         return result;
     }
 
-    for (size_t i = 0; i < size; i++) {
+    for (int64_t i = 0; i < size; i++) {
         if (modeObjList[i] == CAPTURE || modeObjList[i] == VIDEO || modeObjList[i] == PROFESSIONAL_VIDEO) {
             sceneModes[size] = modeObjList[i];
         }
@@ -148,6 +165,9 @@ CArrI32 CJCameraManager::GetSupportedSceneModes(std::string cameraId, int32_t *e
 
 sptr<CameraOutputCapability> CJCameraManager::GetSupportedOutputCapability(sptr<CameraDevice> &camera, int32_t modeType)
 {
+    if (cameraManager_ == nullptr) {
+        return nullptr;
+    }
     return cameraManager_->GetSupportedOutputCapability(camera, modeType);
 }
 
@@ -159,6 +179,9 @@ bool CJCameraManager::IsCameraMuted()
 
 int64_t CJCameraManager::CreateCameraInputWithCameraDevice(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput)
 {
+    if (cameraManager_ == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
     int retCode = cameraManager_->CreateCameraInput(camera, pCameraInput);
     if (retCode == CamServiceError::CAMERA_NO_PERMISSION) {
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -169,6 +192,9 @@ int64_t CJCameraManager::CreateCameraInputWithCameraDevice(sptr<CameraDevice> &c
 int64_t CJCameraManager::CreateCameraInputWithCameraDeviceInfo(CameraPosition position, CameraType cameraType,
                                                                sptr<CameraInput> *pCameraInput)
 {
+    if (cameraManager_ == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
     std::vector<sptr<CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
     sptr<CameraDevice> cameraInfo = nullptr;
     for (size_t i = 0; i < cameraObjList.size(); i++) {
@@ -222,6 +248,9 @@ int32_t CJCameraManager::SetTorchMode(int32_t modeType)
 
 sptr<CameraDevice> CJCameraManager::GetCameraDeviceById(std::string cameraId)
 {
+    if (cameraManager_ == nullptr) {
+        return nullptr;
+    }
     return cameraManager_->GetCameraDeviceFromId(cameraId);
 }
 
@@ -229,6 +258,9 @@ void CJCameraManager::OnCameraStatusChanged(int64_t callbackId)
 {
     if (cameraManagerCallback_ == nullptr) {
         cameraManagerCallback_ = std::make_shared<CJCameraManagerCallback>();
+        if (cameraManagerCallback_ == nullptr || cameraManager_ == nullptr) {
+            return;
+        }
         cameraManager_->RegisterCameraStatusCallback(cameraManagerCallback_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJCameraStatusInfo info)>(callbackId);
@@ -261,6 +293,9 @@ void CJCameraManager::OnFoldStatusChanged(int64_t callbackId)
 {
     if (foldListener_ == nullptr) {
         foldListener_ = std::make_shared<CJFoldListener>();
+        if (foldListener_ == nullptr || cameraManager_ == nullptr) {
+            return;
+        }
         cameraManager_->RegisterFoldListener(foldListener_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJFoldStatusInfo info)>(callbackId);
@@ -298,6 +333,9 @@ void CJCameraManager::OnTorchStatusChange(int64_t callbackId)
 {
     if (torchListener_ == nullptr) {
         torchListener_ = std::make_shared<CJTorchListener>();
+        if (torchListener_ == nullptr || cameraManager_ == nullptr) {
+            return;
+        }
         cameraManager_->RegisterTorchListener(torchListener_);
     }
     auto cFunc = reinterpret_cast<void (*)(CJTorchStatusInfo info)>(callbackId);

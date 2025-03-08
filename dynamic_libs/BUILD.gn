@@ -1,0 +1,97 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("./../multimedia_camera_framework.gni")
+
+config("camera_dynamic_medialibrary_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/media_library/include",
+  ]
+}
+ohos_shared_library("camera_dynamic_medialibrary") {
+  install_enable = true
+  sources = [ "${multimedia_camera_framework_path}/dynamic_libs/media_library/src/photo_asset_adapter.cpp" ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [ "${multimedia_camera_framework_path}/common/utils" ]
+  public_configs = [ ":camera_dynamic_medialibrary_public_config" ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_single",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+config("camera_dynamic_picture_public_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/dynamic_libs/image_framework/include",
+  ]
+}
+
+ohos_shared_library("camera_dynamic_picture") {
+  install_enable = true
+  sources = [ "${multimedia_camera_framework_path}/dynamic_libs/image_framework/src/picture_adapter.cpp" ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  include_dirs = [ "${multimedia_camera_framework_path}/common/utils" ]
+  public_configs = [ ":camera_dynamic_picture_public_config" ]
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

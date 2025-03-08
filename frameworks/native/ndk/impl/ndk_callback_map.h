@@ -23,13 +23,18 @@
 template<typename K, typename V>
 class NDKCallbackMap {
 public:
-    void SetMapValue(K key, std::shared_ptr<V> value)
+    bool SetMapValue(K key, std::shared_ptr<V> value)
     {
         if (key == nullptr) {
-            return;
+            return false;
         }
         std::lock_guard<std::mutex> lock(mapMutex_);
+        auto it = callbackMap_.find(key);
+        if (it != callbackMap_.end()) {
+            return false;
+        }
         callbackMap_[key] = value;
+        return true;
     }
 
     std::shared_ptr<V> RemoveValue(K key)

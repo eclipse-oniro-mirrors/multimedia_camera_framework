@@ -19,6 +19,7 @@
 #include "dp_log.h"
 #include "buffer_info.h"
 #include "dps_event_report.h"
+#include "picture_interface.h"
 #include "steady_clock.h"
 #include "picture.h"
 #include "video_session_info.h"
@@ -255,7 +256,7 @@ void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& 
 }
 
 void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
-    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
+    std::shared_ptr<PictureIntf> picture, uint32_t cloudImageEnhanceFlag)
 {
     DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d,"
         "cloudImageEnhanceFlag: %{public}u.", userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()),

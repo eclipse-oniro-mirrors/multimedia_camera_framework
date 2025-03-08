@@ -566,6 +566,9 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize
     sptr<CameraDevice> camera = cameras[0];
     ASSERT_NE(camera, nullptr);
 
+    CameraPosition tempPositionType = camera->cameraPosition_;
+    CameraFoldScreenType tempFoldType = camera->foldScreenType_;
+
     camera->cameraPosition_ = CAMERA_POSITION_FRONT;
     camera->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
     CameraPosition cameraPosition = camera->GetPosition();
@@ -579,6 +582,9 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_016, TestSize
 
     camera->SetCameraDeviceUsedAsPosition(cameraPosition);
     EXPECT_EQ(camera->GetUsedAsPosition(), cameraPosition);
+
+    camera->cameraPosition_ = tempPositionType;
+    camera->foldScreenType_ = tempFoldType;
 }
 
 /*
@@ -714,10 +720,13 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_020, TestSize
     sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
+    std::string tempFoldType = cameraManager_->foldScreenType_;
     cameraManager_->foldScreenType_ = "1";
     ASSERT_TRUE(cameraManager_->GetIsFoldable());
 
     ASSERT_FALSE(cameraManager_->GetSupportedCamerasWithFoldStatus().empty());
+
+    cameraManager_->foldScreenType_ = tempFoldType;
 }
 
 /*
@@ -733,8 +742,12 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_021, TestSize
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
 
+    uint32_t tempCameraOrientation = cameras[0]->cameraOrientation_;
+
     cameras[0]->cameraOrientation_ = 1;
     EXPECT_EQ(cameras[0]->GetCameraOrientation(), 1);
+
+    cameras[0]->cameraOrientation_ = tempCameraOrientation;
 }
 
 /*
@@ -755,6 +768,76 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_022, TestSize
 
     int32_t delayTime = 1;
     EXPECT_EQ(input->closeDelayed(delayTime), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with open camera device concurrently
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameradevice with open camera device concurrently
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_023, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceList_.clear();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::vector<bool> cameraConcurrentType = {};
+    std::vector<std::vector<SceneMode>> modes = {};
+    std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
+    sptr<CameraDevice> deviceFront = nullptr;
+    sptr<CameraDevice> deviceBack = nullptr;
+    for (auto iterator : cameras) {
+        MEDIA_INFO_LOG("camera_framework_input_unittest_022"
+            "device id:%{public}s position: %{public}d, cameraType: %{public}d",
+            iterator->GetID().c_str(), iterator->GetPosition(), iterator->GetCameraType());
+        if (iterator->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT &&
+            iterator->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            deviceFront = iterator;
+            MEDIA_INFO_LOG("camera_framework_input_unittest_022 deviceFront is not null");
+        } else if (iterator->GetPosition() == CameraPosition::CAMERA_POSITION_BACK &&
+                   iterator->GetCameraType() == CameraType::CAMERA_TYPE_DEFAULT) {
+            MEDIA_INFO_LOG("camera_framework_input_unittest_022 deviceBack is not null");
+            deviceBack = iterator;
+        }
+    }
+    if (deviceFront != nullptr && deviceBack != nullptr) {
+        MEDIA_INFO_LOG("camera_framework_input_unittest_022 device is not null");
+        std::vector<sptr<CameraDevice>> concurrentCameras = {deviceFront, deviceBack};
+        bool isSupported = cameraManager_->GetConcurrentType(concurrentCameras, cameraConcurrentType);
+        if (isSupported) {
+            MEDIA_INFO_LOG("camera_framework_input_unittest_022 can open concurrently");
+            cameraManager_->GetCameraConcurrentInfos(
+                concurrentCameras, cameraConcurrentType, modes, outputCapabilities);
+        }
+        if (outputCapabilities.size() != 0 && cameraConcurrentType.size() != 0) {
+            MEDIA_INFO_LOG("camera_framework_input_unittest_022 outputCapabilities not empty");
+            sptr<CameraInput> inputFront = cameraManager_->CreateCameraInput(deviceFront);
+            sptr<CameraInput> inputBack = cameraManager_->CreateCameraInput(deviceFront);
+            int32_t ret = inputFront->Open(cameraConcurrentType[0]);
+            EXPECT_EQ(ret, 0);
+            ret = inputFront->Close();
+            EXPECT_EQ(ret, 0);
+        }
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraInput device retry
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraInput device retry
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_024, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+ 
+    sptr<CameraInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    input->ControlAuxiliary(AuxiliaryType::CONTRACTLENS, AuxiliaryStatus::AUXILIARY_ON);
 }
 }
 }

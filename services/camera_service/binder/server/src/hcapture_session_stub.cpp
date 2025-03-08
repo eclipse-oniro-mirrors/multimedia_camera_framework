@@ -19,7 +19,6 @@
 #include "camera_xcollie.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_photo_proxy.h"
-#include "picture.h"
 #include <memory>
 
 namespace OHOS {
@@ -94,17 +93,17 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE):
             errCode = HandleStartMovingPhotoCapture(data);
             break;
-        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
-            errCode = HandleCreateMediaLibrary(data, reply);
-            break;
-        case static_cast<uint32_t>(
-            CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE):
-            errCode = HandleCreateMediaLibraryForPicture(data, reply);
-            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
             {
                 std::string deviceClass = data.ReadString();
                 errCode = SetPreviewRotation(deviceClass);
+            }
+            break;
+
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_COMMIT_CONFIG_FLAG):
+            {
+                bool isNeedCommiting = data.ReadBool();
+                errCode = SetCommitConfigFlag(isNeedCommiting);
             }
             break;
         default:
@@ -263,49 +262,6 @@ int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
     bool isMirror = data.ReadBool();
     bool isConfig = data.ReadBool();
     return EnableMovingPhotoMirror(isMirror, isConfig);
-}
-
-int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
-{
-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-    photoProxy->ReadFromParcel(data);
-    int64_t timestamp = data.ReadInt64();
-    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
-    std::string uri;
-    int32_t cameraShotType = 0;
-    std::string burstKey;
-    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
-        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
-        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
-    return ret;
-}
-
-int32_t HCaptureSessionStub::HandleCreateMediaLibraryForPicture(MessageParcel& data, MessageParcel &reply)
-{
-    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling E");
-    Media::Picture *picturePtr = Media::Picture::Unmarshalling(data);
-    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture Picture::Unmarshalling X");
-
-    CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HCaptureSessionStub HandleCreateMediaLibrary picture is null");
-    std::unique_ptr<Media::Picture> picture(std::move(picturePtr));
-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-    photoProxy->ReadFromParcel(data);
-    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
-    int64_t timestamp = data.ReadInt64();
-    std::string uri;
-    int32_t cameraShotType = 0;
-    std::string burstKey;
-    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture E");
-    int32_t ret = CreateMediaLibrary(std::move(picture), photoProxy, uri, cameraShotType, burstKey, timestamp);
-    MEDIA_DEBUG_LOG("HCaptureSessionStub HandleCreateMediaLibraryForPicture X");
-    CHECK_ERROR_RETURN_RET_LOG(!(reply.WriteString(uri)) || !(reply.WriteInt32(cameraShotType)) ||
-        !(reply.WriteString(burstKey)), IPC_STUB_WRITE_PARCEL_ERR,
-        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
-    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

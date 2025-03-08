@@ -19,18 +19,16 @@
 #include "ipc_file_descriptor.h"
 #include "shared_buffer.h"
 
-namespace OHOS::Media {
-    class Picture;
-}
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 namespace DeferredProcessing {
 class BufferInfo {
 public:
     BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality,
         uint32_t cloudImageEnhanceFlag);
     ~BufferInfo();
-    
+
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
 
     inline int32_t GetDataSize()
@@ -56,16 +54,16 @@ private:
 };
 class BufferInfoExt {
 public:
-    explicit BufferInfoExt(std::shared_ptr<Media::Picture> picture, long dataSize, bool isHighQuality,
+    explicit BufferInfoExt(std::shared_ptr<PictureIntf> picture, long dataSize, bool isHighQuality,
         uint32_t cloudImageEnhanceFlag);
     ~BufferInfoExt();
-    std::shared_ptr<Media::Picture> GetPicture();
+    std::shared_ptr<PictureIntf> GetPicture();
     long GetDataSize();
     bool IsHighQuality();
     uint32_t GetCloudImageEnhanceFlag();
 
 private:
-    std::shared_ptr<Media::Picture> picture_;
+    std::shared_ptr<PictureIntf> picture_;
     long dataSize_;
     bool isHighQuality_;
     uint32_t cloudImageEnhanceFlag_;

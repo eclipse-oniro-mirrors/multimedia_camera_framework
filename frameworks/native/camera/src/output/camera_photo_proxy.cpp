@@ -42,6 +42,7 @@ CameraPhotoProxy::CameraPhotoProxy()
     captureId_ = 0;
     burstSeqId_ = -1;
     imageFormat_ = 0;
+    cloudImageEnhanceFlag_ = 0;
 }
 
 CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
@@ -61,6 +62,7 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     imageFormat_ = 0;
     captureId_ = captureId;
     burstSeqId_ = -1;
+    cloudImageEnhanceFlag_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }
@@ -82,6 +84,7 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     captureId_ = captureId;
     burstSeqId_ = burstSeqId;
     imageFormat_ = 0;
+    cloudImageEnhanceFlag_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }

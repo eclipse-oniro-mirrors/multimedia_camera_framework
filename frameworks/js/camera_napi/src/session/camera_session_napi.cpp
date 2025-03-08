@@ -4406,6 +4406,24 @@ void CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener(const std::s
         "this type callback can not be unregistered in current session!");
 }
 
+void CameraSessionNapi::RegisterLightStatusCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "SystemApi on lightStatusChange is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterLightStatusCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env),
+        "SystemApi off lightStatusChange is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
 const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "exposureStateChange", {
         &CameraSessionNapi::RegisterExposureCallbackListener,
@@ -4464,6 +4482,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "focusTrackingInfoAvailable", {
         &CameraSessionNapi::RegisterFocusTrackingInfoCallbackListener,
         &CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener } },
+    { "lightStatus", {
+        &CameraSessionNapi::RegisterLightStatusCallbackListener,
+        &CameraSessionNapi::UnregisterLightStatusCallbackListener } },
 };
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()

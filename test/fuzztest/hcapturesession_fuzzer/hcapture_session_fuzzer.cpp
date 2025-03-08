@@ -85,23 +85,17 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = GetData<int32_t>();
-    sptr<HCaptureSession> session;
+    sptr<HStreamOperator> hStreamOperator;
     if (fuzz_ == nullptr) {
         fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
         fuzz_->NewInstance(0, 0, session);
+        hStreamOperator = HStreamOperator::NewInstance(0, 0);
+        fuzz_->SetStreamOperator(hStreamOperator);
     }
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();
-    fuzz_->GetStreamByStreamID(GetData<int32_t>());
-    int32_t captureId = GetData<int32_t>();
-    fuzz_->StartMovingPhotoEncode(GetData<int32_t>(), GetData<int64_t>(), GetData<int32_t>(), captureId);
-    fuzz_->StartRecord(GetData<int64_t>(), GetData<int32_t>(), captureId);
-    fuzz_->GetHdiStreamByStreamID(GetData<int32_t>());
     int32_t featureMode = GetData<int32_t>();
     fuzz_->SetFeatureMode(featureMode);
-    float currentFps = GetData<float>();
-    float currentZoomRatio = GetData<float>();
-    fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
     int outFd = GetData<int32_t>();
     CameraInfoDumper infoDumper(outFd);
     fuzz_->DumpSessionInfo(infoDumper);
@@ -114,16 +108,12 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
     ColorSpace captureColorSpace = static_cast<ColorSpace>(callerToken % 23);
     fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
-    fuzz_->SetColorSpaceForStreams();
-    fuzz_->CheckIfColorSpaceMatchesFormat(colorSpace);
+    fuzz_->GetPid();
     fuzz_->GetopMode();
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->GetCurrentStreamInfos(streamInfos);
     fuzz_->DynamicConfigStream();
     fuzz_->AddInput(nullptr);
-    sptr<HStreamCommon> stream = fuzz_->GetHdiStreamByStreamID(GetData<int32_t>());
-    fuzz_->AddOutputStream(stream);
-    fuzz_->StartMovingPhotoStream();
     std::string deviceClass;
     fuzz_->SetPreviewRotation(deviceClass);
 }
@@ -140,35 +130,21 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
         fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
         fuzz_->NewInstance(0, 0, session);
     }
-    fuzz_->GetPid();
     StreamType streamType = StreamType::CAPTURE;
     fuzz_->AddOutput(streamType, nullptr);
     fuzz_->RemoveOutput(streamType, nullptr);
     fuzz_->RemoveInput(nullptr);
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->RemoveOutputStream(nullptr);
-    int32_t width = GetData<int32_t>();
-    int32_t height = GetData<int32_t>();
-    int32_t streamId = GetData<int32_t>();
-    sptr<OHOS::IBufferProducer> producer;
-    int32_t format = GetData<int32_t>();
-    fuzz_->CreateMovingPhotoStreamRepeat(format, width, height, producer);
-    fuzz_->GetStreamByStreamID(streamId);
-    fuzz_->GetHdiStreamByStreamID(streamId);
-    fuzz_->ClearSketchRepeatStream();
-    fuzz_->ClearMovingPhotoRepeatStream();
-    fuzz_->StopMovingPhoto();
     fuzz_->ValidateSession();
-    fuzz_->CancelStreamsAndGetStreamInfos(streamInfos);
-    fuzz_->RestartStreams();
-    fuzz_->UpdateStreamInfos();
     CaptureSessionState sessionState = CaptureSessionState::SESSION_STARTED;
     fuzz_->GetSessionState(sessionState);
+    float currentFps = GetData<float>();
+    float currentZoomRatio = GetData<float>();
     std::vector<float> crossZoomAndTime;
     int32_t operationMode = GetData<int32_t>();
-    fuzz_->QueryZoomPerformance(crossZoomAndTime, operationMode);
+    fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio, crossZoomAndTime, operationMode);
     fuzz_->GetSensorOritation();
-    fuzz_->GetMovingPhotoBufferDuration();
     float zoomRatio = GetData<float>();
     std::vector<float> crossZoom;
     fuzz_->GetRangeId(zoomRatio, crossZoom);
@@ -224,9 +200,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
     captureSettings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     fuzz_->UpdateMuteSetting(true, captureSettings);
-    uint8_t usedAsPositionU8 = OHOS_CAMERA_POSITION_OTHER;
-    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
-    fuzz_->StartPreviewStream(captureSettings, cameraPosition);
     fuzz_->Stop();
 }
 
@@ -243,7 +216,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
         fuzz_->NewInstance(0, 0, session);
     }
     pid_t pid = 0;
-    int64_t timestamp = GetData<int64_t>();
     fuzz_->DestroyStubObjectForPid(pid);
     sptr<ICaptureSessionCallback> callback;
     fuzz_->SetCallback(callback);
@@ -254,15 +226,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
     int32_t seqId = GetData<int32_t>();
     fuzz_->CreateBurstDisplayName(MAIN_CAMERA_ZOOM_RANGE, seqId);
     fuzz_->CreateBurstDisplayName(imageSeqId, seqId);
-    std::string burstKey;
-    bool isBursting = GetData<bool>();
-    int32_t cameraShotType = GetData<int32_t>();
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-    std::string uri;
-    fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-    fuzz_->CreateMediaLibrary(nullptr, photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 
 void Test()

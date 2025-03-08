@@ -1047,6 +1047,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level0)
     }
     device->Release();
     device->Close();
+    deviceManager->activeCameras_.clear();
 }
 
 /*
@@ -1103,36 +1104,12 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level0)
     bool canOpenCamera = false;
 
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new HCameraDevice(cameraHostManager_, cameraIds[0], callingTokenId);
-    int32_t cost = 0;
-    std::set<std::string> conflicting;
-    camDevice->GetCameraResourceCost(cost, conflicting);
-    int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
-    int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
-    uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(
-        pidOfRequestProcess, uidOfRequestProcess, 0,
-        1, camDevice, accessTokenIdOfRequestProc, cost, conflicting);
-    deviceManager->pidToCameras_[pidOfRequestProcess].push_back(cameraHolder);
     int32_t ret = cameraService_->AllowOpenByOHSide(cameraIds[0], state, canOpenCamera);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_TRUE(canOpenCamera);
 
-    canOpenCamera = false;
+    device->Close();
     deviceManager->pidToCameras_.clear();
-    cameraHolder->device_ = nullptr;
-    deviceManager->pidToCameras_[pidOfRequestProcess].push_back(cameraHolder);
-    ret = cameraService_->AllowOpenByOHSide(cameraIds[0], state, canOpenCamera);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_FALSE(canOpenCamera);
-
-    if (camDevice) {
-        camDevice = nullptr;
-    }
-    if (cameraHolder) {
-        cameraHolder = nullptr;
-    }
 }
 
 /*
@@ -1404,7 +1381,6 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0)
     cameraService_->UnregisterSensorCallback();
     cameraService_->UnregisterSensorCallback();
     cameraService_->RegisterSensorCallback();
-    EXPECT_NE(cameraService_->user.callback, nullptr);
     device->Release();
     device->Close();
 }

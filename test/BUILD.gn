@@ -63,6 +63,7 @@ group("camera_fuzz_test") {
     "fuzztest/hstreammetadatacallbackproxy_fuzzer:fuzztest",
     "fuzztest/hstreammetadatacallbackstub_fuzzer:fuzztest",
     "fuzztest/hstreammetadatastub_fuzzer:fuzztest",
+    "fuzztest/hstreamoperator_fuzzer:fuzztest",
     "fuzztest/hstreamrepeat_fuzzer:fuzztest",
     "fuzztest/lightscansession_fuzzer:fuzztest",
     "fuzztest/mediamanager_fuzzer:fuzztest",

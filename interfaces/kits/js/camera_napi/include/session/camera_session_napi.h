@@ -517,6 +517,11 @@ protected:
     virtual void UnregisterLuminationInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
+    virtual void RegisterLightStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterLightStatusCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
     virtual void RegisterTryAEInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,

@@ -30,7 +30,7 @@
 #include "token_setproc.h"
 #include "os_account_manager.h"
 #include "sketch_wrapper.h"
-#include "picture.h"
+#include "picture_interface.h"
 
 using namespace testing::ext;
 
@@ -277,36 +277,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_004, TestSize.Level0)
     input->Close();
     preview->Release();
     input->Release();
-    session->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test captureSession with SetPreviewRotation and CreateMediaLibrary
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetPreviewRotation for captureSession is nullptr and CreateMediaLibrary for
- * captureSession is nullptr and not nullptr
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_005, TestSize.Level0)
-{
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    EXPECT_NE(session->GetCaptureSession(), nullptr);
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
-    string burstKey = "";
-    int64_t timestamp = 0000;
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-
-    std::string deviceClass;
-    session->SetCaptureSession(nullptr);
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-    EXPECT_EQ(session->SetPreviewRotation(deviceClass), CAMERA_OK);
-
     session->Release();
 }
 
@@ -3852,14 +3822,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_002, TestSize
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    sptr<SurfaceBuffer> surfaceBuffer;
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
-    string burstKey = "";
-    int64_t timestamp = 0000;
-    session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy,
-        uri, cameraShotType, burstKey, timestamp);
 
     session->SetExposureCallback(nullptr);
     EXPECT_EQ(session->GetExposureCallback(), nullptr);

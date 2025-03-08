@@ -124,8 +124,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     fuzz_->SetCameraPhotoRotation(GetData<bool>());
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy);
-    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
-    fuzz_->UpdateMediaLibraryPhotoAssetProxy(photoProxy);
 }
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
@@ -151,9 +149,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()
     sptr<HCameraDevice> camDevice = new (std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callingTokenId);
     camDevice->OpenDevice(true);
-    camDevice->InitStreamOperator();
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
-    fuzz_->SetStreamOperator(streamOperator);
     fuzz_->OnCaptureReady(captureId, timestamp);
     fuzz_->Capture(captureSettings);
     fuzz_->CancelCapture();

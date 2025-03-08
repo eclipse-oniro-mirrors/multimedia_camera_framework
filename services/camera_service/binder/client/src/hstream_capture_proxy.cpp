@@ -18,6 +18,7 @@
 #include "camera_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "metadata_utils.h"
+#include "picture_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -297,6 +298,74 @@ int32_t HStreamCaptureProxy::AcquireBufferToPrepareProxy(int32_t captureId)
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy AcquireBufferToPrepareProxy failed, error: %{public}d", error);
     }
+    return error;
+}
+
+
+int32_t HStreamCaptureProxy::EnableOfflinePhoto(bool isEnable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isEnable);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_OFFLINE_PHOTO), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy EnableOfflinePhoto failed, error: %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HStreamCaptureProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, IPC_PROXY_ERR,
+        "HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
+    data.WriteInterfaceToken(GetDescriptor());
+    photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
+    return error;
+}
+
+int32_t HStreamCaptureProxy::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
+    sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
+    std::string &burstKey, int64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (picture == nullptr || photoProxy == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CreateMediaLibrary picture or photoProxy is null");
+        return IPC_PROXY_ERR;
+    }
+    data.WriteInterfaceToken(GetDescriptor());
+    MEDIA_DEBUG_LOG("HStreamCaptureProxy CreateMediaLibrary picture->Marshalling E");
+    CHECK_ERROR_PRINT_LOG(!picture->Marshalling(data), "HStreamCaptureProxy picture Marshalling failed");
+    MEDIA_DEBUG_LOG("HStreamCaptureProxy CreateMediaLibrary picture->Marshalling X");
+    photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CREATE_MEDIA_LIBRARY_MANAGER_PICTURE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CreateMediaLibrary failed, error: %{public}d", error);
+    }
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
     return error;
 }
 } // namespace CameraStandard

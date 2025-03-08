@@ -18,7 +18,6 @@
 
 #include "input/camera_manager.h"
 #include "pixel_map.h"
-#include "picture.h"
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -31,7 +30,7 @@
 #include "os_account_manager.h"
 #include "test_common.h"
 #include "token_setproc.h"
-
+#include "picture_interface.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace testing::ext;
@@ -63,7 +62,12 @@ void DeferredProcUnitTest::SetUp()
     options.alphaType = Media::AlphaType::IMAGE_ALPHA_TYPE_OPAQUE;
     std::shared_ptr<Media::PixelMap> pixelmap = Media::PixelMap::Create(color, BUFFER_LENGTH, options);
     EXPECT_NE(pixelmap, nullptr);
-    picture_ = Media::Picture::Create(pixelmap);
+    auto picture = GetPictureIntfInstance();
+    if (picture == nullptr) {
+        picture_ = nullptr;
+    } else {
+        picture_ = picture;
+    }
 }
 
 void DeferredProcUnitTest::TearDown()

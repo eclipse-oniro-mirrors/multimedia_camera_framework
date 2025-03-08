@@ -52,6 +52,7 @@ public:
     int32_t burstSeqId_;
     sptr<Surface> photoSurface_;
     int32_t imageFormat_;
+    uint32_t cloudImageEnhanceFlag_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -15,11 +15,12 @@
 
 #include <sys/mman.h>
 #include "deferred_proc_session/deferred_photo_proc_session.h"
+#include "picture_proxy.h"
 #include "iservice_registry.h"
 #include "camera_log.h"
 #include "camera_util.h"
 #include "system_ability_definition.h"
-#include "picture.h"
+#include "picture_interface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -72,15 +73,15 @@ int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredPro
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
+    std::shared_ptr<PictureIntf> pictureIntf, uint32_t cloudImageEnhanceFlag)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
         "called, status:%{public}s, cloudImageEnhanceFlag: %{public}u", imageId.c_str(), cloudImageEnhanceFlag);
-    if (picture != nullptr) {
+    if (pictureIntf != nullptr) {
         MEDIA_INFO_LOG("picture is not null");
     }
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
-        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, picture, cloudImageEnhanceFlag);
+        deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, pictureIntf, cloudImageEnhanceFlag);
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
@@ -88,13 +89,13 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
 }
 
 int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
-    std::shared_ptr<Media::Picture> picture)
+    std::shared_ptr<PictureIntf> pictureIntf)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
-    if (picture != nullptr) {
-        MEDIA_INFO_LOG("picture is not null");
-        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, picture);
+    if (pictureIntf != nullptr) {
+        MEDIA_INFO_LOG("pictureIntf is not null");
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, pictureIntf);
     }
     return 0;
 }

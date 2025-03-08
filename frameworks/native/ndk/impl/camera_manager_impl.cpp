@@ -29,6 +29,15 @@ using namespace OHOS;
 using namespace OHOS::CameraStandard;
 const char* DEFAULT_SURFACEID = "photoOutput";
 thread_local OHOS::sptr<OHOS::Surface> Camera_Manager::photoSurface_ = nullptr;
+NDKCallbackMap<CameraManager_Callbacks*, OHOS::CameraStandard::InnerCameraManagerCameraStatusCallback>
+    Camera_Manager::cameraStatusCallbackMap_;
+
+NDKCallbackMap<OH_CameraManager_OnFoldStatusInfoChange, OHOS::CameraStandard::InnerCameraManagerFoldStatusCallback>
+    Camera_Manager::cameraFoldStatusCallbackMap_;
+
+NDKCallbackMap<OH_CameraManager_TorchStatusCallback, OHOS::CameraStandard::InnerCameraManagerTorchStatusCallback>
+    Camera_Manager::torchStatusCallbackMap_;
+
 const std::unordered_map<SceneMode, Camera_SceneMode> g_fwModeToNdk_ = {
     {SceneMode::CAPTURE, Camera_SceneMode::NORMAL_PHOTO},
     {SceneMode::VIDEO, Camera_SceneMode::NORMAL_VIDEO},
@@ -178,8 +187,9 @@ Camera_Manager::~Camera_Manager()
 Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
     auto innerCallback = make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
-    cameraManager_->RegisterCameraStatusCallback(innerCallback);
-    cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback);
+    if (cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback)) {
+        cameraManager_->RegisterCameraStatusCallback(innerCallback);
+    }
     return CAMERA_OK;
 }
 
@@ -195,8 +205,9 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cam
 Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
     auto innerTorchStatusCallback = make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
-    cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
-    torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback);
+    if (torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback)) {
+        cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
+    }
     return CAMERA_OK;
 }
 
@@ -900,6 +911,10 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         }
     }
 
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("Camera_Manager::GetCameraDevice cameraInfo is null!");
+        return CAMERA_SERVICE_FATAL_ERROR;
+    }
     outCameras->cameraId = cameraInfo->GetID().data();
     outCameras->cameraPosition = position;
     outCameras->cameraType = type;
@@ -918,7 +933,7 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
     std::vector<std::vector<SceneMode>> modes = {};
     std::vector<std::vector<sptr<CameraOutputCapability>>> outputCapabilities = {};
     vector<sptr<CameraDevice>> cameraDeviceArrray = {};
-    for (int i = 0; i < deviceSize; i++) {
+    for (uint32_t i = 0; i < deviceSize; i++) {
         string str(camera[i].cameraId);
         cameraIdv.push_back(str);
     }
@@ -940,13 +955,13 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
             CameraConcurrentInfothis[i].type = CONCURRENT_TYPE_FULL_CAPABILITY;
         }
         Camera_SceneMode* newmodes = new Camera_SceneMode[modes.size()];
-        for (int j = 0; j < modes[i].size(); j++) {
+        for (uint32_t j = 0; j < modes[i].size(); j++) {
             auto itr = g_fwModeToNdk_.find(modes[i][j]);
             newmodes[j] = itr->second;
         }
         CameraConcurrentInfothis[i].sceneModes = newmodes;
         Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()];
-        for (int j = 0; j < outputCapabilities[i].size(); j++) {
+        for (uint32_t j = 0; j < outputCapabilities[i].size(); j++) {
             std::vector<Profile> previewProfiles = outputCapabilities[i][j]->GetPreviewProfiles();
             std::vector<Profile> photoProfiles = outputCapabilities[i][j]->GetPhotoProfiles();
             std::vector<VideoProfile> videoProfiles = outputCapabilities[i][j]->GetVideoProfiles();
@@ -976,8 +991,9 @@ Camera_ErrorCode Camera_Manager::RegisterFoldStatusCallback(OH_CameraManager_OnF
     auto innerFoldStatusCallback = make_shared<InnerCameraManagerFoldStatusCallback>(this, foldStatusCallback);
     CHECK_ERROR_RETURN_RET_LOG(
         innerFoldStatusCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerFoldStatusCallback failed!");
-    cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
-    cameraFoldStatusCallbackMap_.SetMapValue(foldStatusCallback, innerFoldStatusCallback);
+    if (cameraFoldStatusCallbackMap_.SetMapValue(foldStatusCallback, innerFoldStatusCallback)) {
+        cameraManager_->RegisterFoldListener(innerFoldStatusCallback);
+    }
     return CAMERA_OK;
 }
 

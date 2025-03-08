@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 enum class VideoSaveMode {
     CREATE = 0,
     APPEND,
@@ -108,6 +109,7 @@ public:
     void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
+    void OnOfflineDeliveryFinished(const int32_t captureId) const override;
 
 private:
     const char* testName_;
@@ -152,9 +154,9 @@ class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCal
 public:
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag);
-    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+    void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         uint32_t cloudImageEnhanceFlag);
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<Media::Picture> picture);
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
     void OnError(const std::string& imageId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);
 };
@@ -180,6 +182,8 @@ private:
     int32_t previewIndex_ = 0;
     int32_t secondPreviewIndex_ = 0;
 };
+
+std::shared_ptr<PictureIntf> GetPictureIntfInstance();
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // CAMERA_TEST_COMMON_H

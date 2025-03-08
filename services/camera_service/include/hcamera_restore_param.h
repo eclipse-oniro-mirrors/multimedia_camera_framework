@@ -69,4 +69,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_H_STREAM_COMMON_H
+#endif // OHOS_CAMERA_H_STREAM_COMMON_H

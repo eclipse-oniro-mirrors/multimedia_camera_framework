@@ -14,6 +14,7 @@
  */
 
 #include "camera_manager_unittest.h"
+#include "camera/camera_manager.h"
 #include "camera_log.h"
 #include "access_token.h"
 #include "hap_token_info.h"
@@ -1177,5 +1178,83 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_033, TestSize.Level0)
     EXPECT_EQ(ret, CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test cameraManager by registering multiple state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager by registering multiple state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_register_status_callback_unittest_001, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    CameraManager_Callbacks setCameraManagerResultCallback = { .onCameraStatus = &CameraManagerOnCameraStatusCb };
+    auto statusListenerManager = cameraManager->cameraManager_->GetCameraStatusListenerManager();
+    statusListenerManager->ClearListeners();
+    ret = OH_CameraManager_RegisterCallback(cameraManager, &setCameraManagerResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_RegisterCallback(cameraManager, &setCameraManagerResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 1);
+    ret = OH_CameraManager_UnregisterCallback(cameraManager, &setCameraManagerResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 0);
+    statusListenerManager->ClearListeners();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager by registering multiple torch state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager by registering multiple torch state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_register_torch_callback_unittest_001, TestSize.Level0)
+{
+    auto statusListenerManager = cameraManager->cameraManager_->GetTorchServiceListenerManager();
+    statusListenerManager->ClearListeners();
+    Camera_ErrorCode ret =
+        OH_CameraManager_RegisterTorchStatusCallback(cameraManager, CameraManagerOnCameraTorchStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_RegisterTorchStatusCallback(cameraManager, CameraManagerOnCameraTorchStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 1);
+    ret = OH_CameraManager_UnregisterTorchStatusCallback(cameraManager, CameraManagerOnCameraTorchStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 0);
+    statusListenerManager->ClearListeners();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager by registering multiple fold state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager by registering multiple fold state callbacks,
+ * then unregister the callback, and check for any leaked callback.
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_register_callback_unittest_001, TestSize.Level0)
+{
+    auto statusListenerManager = cameraManager->cameraManager_->GetFoldStatusListenerManager();
+    statusListenerManager->ClearListeners();
+    Camera_ErrorCode ret =
+        OH_CameraManager_RegisterFoldStatusInfoCallback(cameraManager, CameraManagerOnCameraFoldStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraManager_RegisterFoldStatusInfoCallback(cameraManager, CameraManagerOnCameraFoldStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 1);
+    ret = OH_CameraManager_UnregisterFoldStatusInfoCallback(cameraManager, CameraManagerOnCameraFoldStatusCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(statusListenerManager->GetListenerCount(), 0);
+    statusListenerManager->ClearListeners();
+}
 } // CameraStandard
 } // OHOS

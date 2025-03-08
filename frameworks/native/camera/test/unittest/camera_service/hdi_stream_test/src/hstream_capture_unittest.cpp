@@ -129,6 +129,7 @@ public:
     MOCK_METHOD2(OnFrameShutter, int32_t(int32_t captureId, uint64_t timestamp));
     MOCK_METHOD2(OnFrameShutterEnd, int32_t(int32_t captureId, uint64_t timestamp));
     MOCK_METHOD2(OnCaptureReady, int32_t(int32_t captureId, uint64_t timestamp));
+    MOCK_METHOD1(OnOfflineDeliveryFinished, int32_t(int32_t captureId));
     ~MockHStreamCaptureCallbackStub() {}
 };
 
@@ -658,6 +659,7 @@ HWTEST_F(HStreamCaptureUnitTest, CheckResetBurstKeys003, TestSize.Level0)
  */
 HWTEST_F(HStreamCaptureUnitTest, CheckBurstCapture001, TestSize.Level0)
 {
+    MEDIA_INFO_LOG("CheckBurstCapture001 start");
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;

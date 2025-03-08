@@ -61,6 +61,14 @@ public:
 
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
 
+    int32_t EnableOfflinePhoto(bool isEnable) override;
+
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
+
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
+
 private:
     static inline BrokerDelegator<HStreamCaptureProxy> delegator_;
 };

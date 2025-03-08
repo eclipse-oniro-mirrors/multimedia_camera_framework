@@ -27,10 +27,13 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
-#include "media_library/photo_asset_interface.h"
-#include "media_library/photo_asset_proxy.h"
+#include "photo_asset_interface.h"
+#include "photo_asset_proxy.h"
 #include "camera_report_dfx_uitls.h"
 #include "bms_adapter.h"
+#include "picture_interface.h"
+#include "hstream_operator_manager.h"
+#include "hstream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -381,16 +384,22 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
 
 void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
 {
-    std::lock_guard<std::mutex> lock(GetMutex(key));
+    std::lock_guard<std::mutex> lock(map_mutex_);
     map_[key] = value;
+    step_[key] = 1;
     cv_[key].notify_all();
 }
  
 std::shared_ptr<PhotoAssetIntf> ConcurrentMap::Get(const int32_t& key)
 {
-    std::unique_lock<std::mutex> lock(GetMutex(key));
-    cv_[key].wait(lock, [&] { return map_.count(key) > 0; });
+    std::lock_guard<std::mutex> lock(map_mutex_);
     return map_[key];
+}
+
+std::condition_variable& ConcurrentMap::GetCv(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    return cv_[key];
 }
  
 std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
@@ -398,13 +407,33 @@ std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
     std::lock_guard<std::mutex> lock(map_mutex_);
     return mutexes_[key];
 }
+
+bool ConcurrentMap::ReadyToUnlock(const int32_t& key, const int32_t& step, const int32_t& mode)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    if (mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::CAPTURE) ||
+      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::QUICK_SHOT_PHOTO) ||
+      mode == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PORTRAIT)) {
+        return step_.count(key) > 0 && step_[key] == step;
+    } else {
+        return map_.count(key) > 0;
+    }
+}
  
+void ConcurrentMap::IncreaseCaptureStep(const int32_t& key)
+{
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    step_[key] = step_[key] + 1;
+    cv_[key].notify_all();
+}
+
 void ConcurrentMap::Erase(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
     mutexes_.erase(key);
     map_.erase(key);
     cv_.erase(key);
+    step_.erase(key);
 }
  
 void ConcurrentMap::Release()
@@ -413,6 +442,7 @@ void ConcurrentMap::Release()
     map_.clear();
     mutexes_.clear();
     cv_.clear();
+    step_.clear();
 }
 
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
@@ -439,6 +469,10 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
+    const int32_t getPhotoAssetStep = 2;
+    std::unique_lock<std::mutex> lock(photoAssetProxy_.GetMutex(captureId));
+    photoAssetProxy_.GetCv(captureId).wait(lock,
+        [&] { return photoAssetProxy_.ReadyToUnlock(captureId, getPhotoAssetStep, GetMode()); });
     std::shared_ptr<PhotoAssetIntf> proxy = photoAssetProxy_.Get(captureId);
     photoAssetProxy_.Erase(captureId);
     return proxy;
@@ -601,8 +635,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (result == CAM_META_SUCCESS && item.count > 0) {
         rotationValue = item.data.i32[0];
     }
-    MEDIA_INFO_LOG("set rotation app rotationValue %{public}d", rotationValue);
-    rotationMap_.EnsureInsert(captureId, rotationValue);
+    MEDIA_INFO_LOG("set rotation app rotationValue %{public}d", rotationValue); // 0 270 270+270=180
     // real rotation
     if (enableCameraPhotoRotation_) {
         rotation = rotationValue;
@@ -633,6 +666,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     } else if (result == CAM_META_SUCCESS) {
         status = captureMetadataSetting_->updateEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
     }
+    rotationMap_.EnsureInsert(captureId, rotation);
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
     CHECK_ERROR_PRINT_LOG(result != CAM_META_SUCCESS, "set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
@@ -641,7 +675,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
 int32_t HStreamCapture::CancelCapture()
 {
     CAMERA_SYNC_TRACE;
-    // Cancel capture is dummy till continuous/burst mode is supported
+    // Cancel capture dummy till continuous/burst mode is supported
     StopStream();
     return CAMERA_OK;
 }
@@ -726,7 +760,13 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamCaptureCallback_ = nullptr;
     }
-    return HStreamCommon::ReleaseStream(isDelay);
+    int32_t errorCode = HStreamCommon::ReleaseStream(isDelay);
+    auto hStreamOperatorSptr_ = hStreamOperator_.promote();
+    if (hStreamOperatorSptr_ && mSwitchToOfflinePhoto_) {
+        hStreamOperatorSptr_->Release();
+    }
+    mSwitchToOfflinePhoto_ = false;
+    return errorCode;
 }
 
 int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
@@ -766,7 +806,10 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(callbackLock_);
     CHECK_EXECUTE(streamCaptureCallback_ != nullptr, streamCaptureCallback_->OnCaptureEnded(captureId, frameCount));
-    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId);
+    MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureEnded with capture ID: %{public}d", captureId);
+    int32_t offlineOutputCnt = mSwitchToOfflinePhoto_ ?
+        HStreamOperatorManager::GetInstance()->GetOfflineOutputSize() : 0;
+    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId, mSwitchToOfflinePhoto_, offlineOutputCnt);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
@@ -838,6 +881,36 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
         ResetBurst();
     }
     return CAMERA_OK;
+}
+
+int32_t HStreamCapture::EnableOfflinePhoto(bool isEnable)
+{
+    mEnableOfflinePhoto_ = isEnable;
+    return CAMERA_OK;
+}
+
+bool HStreamCapture::IsHasEnableOfflinePhoto()
+{
+    return mEnableOfflinePhoto_;
+}
+
+void HStreamCapture::SwitchToOffline()
+{
+    mSwitchToOfflinePhoto_ = true;
+}
+
+int32_t HStreamCapture::UnlinkInput()
+{
+    if (mSwitchToOfflinePhoto_) {
+        MEDIA_INFO_LOG("HStreamCapture::UnlinkInput, current is offline capture, cancel unlink");
+        return CAMERA_OK;
+    }
+    return HStreamCommon::UnlinkInput();
+}
+
+bool HStreamCapture::IsHasSwitchToOffline()
+{
+    return mSwitchToOfflinePhoto_;
 }
 
 void HStreamCapture::DumpStreamInfo(CameraInfoDumper& infoDumper)
@@ -917,24 +990,54 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy>
     if (isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO))) {
         return CAMERA_UNSUPPORTED;
     }
-    std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(photoProxy->captureId_);
-    CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
-    MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)",
-        photoProxy->captureId_);
-    MessageParcel data;
-    photoProxy->WriteToParcel(data);
-    photoProxy->CameraFreeBufferHandle();
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    cameraPhotoProxy->ReadFromParcel(data);
-    SetCameraPhotoProxyInfo(cameraPhotoProxy);
-    int32_t captureId = cameraPhotoProxy->GetCaptureId();
-    string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
-    CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
-    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
-    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
-    MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
+    {
+        const int32_t updateMediaLibraryStep = 1;
+        std::unique_lock<std::mutex> lock(photoAssetProxy_.GetMutex(photoProxy->captureId_));
+        photoAssetProxy_.GetCv(photoProxy->captureId_).wait(lock,
+            [&] { return photoAssetProxy_.ReadyToUnlock(photoProxy->captureId_, updateMediaLibraryStep, GetMode()); });
+        std::shared_ptr<PhotoAssetIntf> photoAssetProxy = photoAssetProxy_.Get(photoProxy->captureId_);
+        CHECK_ERROR_RETURN_RET_LOG(photoAssetProxy == nullptr, CAMERA_UNKNOWN_ERROR,
+            "HStreamCapture UpdateMediaLibraryPhotoAssetProxy failed");
+        MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)",
+            photoProxy->captureId_);
+        MessageParcel data;
+        photoProxy->WriteToParcel(data);
+        photoProxy->CameraFreeBufferHandle();
+        sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
+        cameraPhotoProxy->ReadFromParcel(data);
+        SetCameraPhotoProxyInfo(cameraPhotoProxy);
+        MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
+        photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
+        MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
+    }
+    photoAssetProxy_.IncreaseCaptureStep(photoProxy->captureId_);
     MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", photoProxy->captureId_);
+    return CAMERA_OK;
+}
+
+void HStreamCapture::SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
+{
+    hStreamOperator_ = hStreamOperator;
+}
+
+int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
+    std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
+{
+    auto hStreamOperatorSptr_ = hStreamOperator_.promote();
+    if (hStreamOperatorSptr_) {
+        hStreamOperatorSptr_->CreateMediaLibrary(picture, photoProxy,
+            uri, cameraShotType, burstKey, timestamp);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri,
+    int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
+{
+    auto hStreamOperatorSptr_ = hStreamOperator_.promote();
+    if (hStreamOperatorSptr_) {
+        hStreamOperatorSptr_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+    }
     return CAMERA_OK;
 }
 } // namespace CameraStandard

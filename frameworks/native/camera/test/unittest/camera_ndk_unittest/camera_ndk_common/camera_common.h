@@ -67,6 +67,7 @@ public:
         Camera_SmoothZoomInfo* smoothZoomInfo);
     static void CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status);
     static void CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
+    static void CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status);
     static void CameraPreviewOutptOnFrameStartCb(Camera_PreviewOutput* previewOutput);
     static void CameraPreviewOutptOnFrameEndCb(Camera_PreviewOutput* previewOutput, int32_t frameCount);
     static void CameraPreviewOutptOnErrorCb(Camera_PreviewOutput* previewOutput, Camera_ErrorCode errorCode);

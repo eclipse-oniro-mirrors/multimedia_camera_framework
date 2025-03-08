@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
@@ -33,6 +34,7 @@ namespace OHOS::Media {
 }
 namespace OHOS {
 namespace CameraStandard {
+class PictureIntf;
 const std::string dataWidth = "dataWidth";
 const std::string dataHeight = "dataHeight";
 static const std::string CONST_CAPTURE_START = "captureStart";
@@ -54,6 +56,7 @@ static const std::string CONST_GAINMAP_SURFACE = "gainmap";
 static const std::string CONST_DEEP_SURFACE = "deep";
 static const std::string CONST_EXIF_SURFACE = "exif";
 static const std::string CONST_DEBUG_SURFACE = "debug";
+static const std::string CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED = "offlineDeliveryFinished";
 
 struct CallbackInfo {
     int32_t captureID;
@@ -75,7 +78,8 @@ enum PhotoOutputEventType {
     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
     CAPTURE_PHOTO_ASSET_AVAILABLE,
     CAPTURE_ESTIMATED_CAPTURE_DURATION,
-    CAPTURE_START_WITH_INFO
+    CAPTURE_START_WITH_INFO,
+    CAPTURE_OFFLINE_DELIVERY_FINISHED
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
@@ -89,7 +93,8 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
         {CAPTURE_READY, CONST_CAPTURE_READY},
         {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
-        {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO}
+        {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO},
+        {CAPTURE_OFFLINE_DELIVERY_FINISHED, CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED}
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -139,7 +144,6 @@ public:
     void RemoveCallback(const std::string eventName, napi_value callback);
     void ExecuteDeepCopySurfaceBuffer();
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
-
 private:
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;
@@ -217,6 +221,7 @@ public:
     void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
+    void OnOfflineDeliveryFinished(const int32_t captureId) const override;
 
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
@@ -229,6 +234,7 @@ private:
     void ExecuteFrameShutterEndCb(const CallbackInfo& info) const;
     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
+    void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
 };
 
 struct PhotoOutputCallbackInfo {
@@ -247,6 +253,8 @@ public:
     virtual ~ThumbnailListener();
     void OnBufferAvailable() override;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+    void ClearTaskManager();
+    std::mutex taskManagerMutex_;
 private:
     wptr<PhotoOutput> photoOutput_;
     void UpdateJSCallback() const;
@@ -327,6 +335,8 @@ public:
     static napi_value GetPhotoRotation(napi_env env, napi_callback_info info);
     static napi_value IsAutoAigcPhotoSupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoAigcPhoto(napi_env env, napi_callback_info info);
+    static napi_value IsOfflineSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableOfflinePhoto(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;
@@ -389,6 +399,11 @@ private:
     void RegisterCaptureStartWithInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterCaptureStartWithInfoCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterOfflineDeliveryFinishedCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterOfflineDeliveryFinishedCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

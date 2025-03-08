@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_ISTREAM_CAPTURE_H
 #define OHOS_CAMERA_ISTREAM_CAPTURE_H
 
+#include <cstdint>
 #include "camera_metadata_info.h"
 #include "istream_capture_callback.h"
 #include "istream_common.h"
@@ -24,6 +25,7 @@
 namespace OHOS {
 namespace CameraStandard {
 class CameraPhotoProxy;
+class PictureIntf;
 class IStreamCapture : public IStreamCommon {
 public:
     virtual int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) = 0;
@@ -59,6 +61,14 @@ public:
     virtual int32_t UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy) = 0;
 
     virtual int32_t AcquireBufferToPrepareProxy(int32_t captureId) = 0;
+
+    virtual int32_t EnableOfflinePhoto(bool isEnable) = 0;
+    
+    virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
+
+    virtual int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };

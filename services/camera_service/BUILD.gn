@@ -20,6 +20,18 @@ ohos_shared_library("camera_service") {
   sources = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/src/ability/camera_ability_parse_util.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/base_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/delayed_task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_group/task_group.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_manager.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/task_registry.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_pool.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/task_manager/thread_utils.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/core/timer_core.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/steady_clock.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/time_broker.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/timer/timer.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
     "binder/client/src/hcamera_device_callback_proxy.cpp",
     "binder/client/src/hcamera_listener_proxy.cpp",
     "binder/client/src/hcamera_service_callback_proxy.cpp",
@@ -57,8 +69,11 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_info_dumper.cpp",
     "src/camera_privacy.cpp",
+    "src/camera_rotate_strategy_parser.cpp",
+    "src/camera_sensor_plugin.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/camera_xml_parser.cpp",
     "src/device_protection_ability_connection.cpp",
     "src/dfx/camera_report_dfx_uitls.cpp",
     "src/dfx/camera_report_uitls.cpp",
@@ -74,8 +89,9 @@ ohos_shared_library("camera_service") {
     "src/hstream_common.cpp",
     "src/hstream_depth_data.cpp",
     "src/hstream_metadata.cpp",
+    "src/hstream_operator.cpp",
+    "src/hstream_operator_manager.cpp",
     "src/hstream_repeat.cpp",
-    "src/media_library/photo_asset_proxy.cpp",
     "src/moving_photo/moving_photo_surface_wrapper.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
     "src/smooth_zoom/smooth_zoom.cpp",
@@ -281,50 +297,6 @@ ohos_shared_library("camera_service") {
       cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
-
-  cflags_cc = cflags
-
-  part_name = "camera_framework"
-  subsystem_name = "multimedia"
-}
-
-ohos_shared_library("camera_dynamic_medialibrary") {
-  install_enable = true
-  sources = [ "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_adapter.cpp" ]
-  cflags = [
-    "-fPIC",
-    "-Wall",
-    "-Os",
-  ]
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  include_dirs = [
-    "${multimedia_camera_framework_path}/common/utils",
-    "${multimedia_camera_framework_path}/services/camera_service/include/media_library",
-  ]
-
-  if (target_cpu == "arm") {
-    cflags += [ "-DBINDER_IPC_32BIT" ]
-  }
-
-  deps = [ "${multimedia_camera_framework_path}/common:camera_utils" ]
-
-  external_deps = [
-    "c_utils:utils",
-    "data_share:datashare_common",
-    "data_share:datashare_consumer",
-    "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "hitrace:hitrace_meter",
-    "image_framework:image_native",
-    "ipc:ipc_single",
-    "media_library:media_library",
-    "media_library:media_library_manager",
-    "samgr:samgr_proxy",
-  ]
 
   cflags_cc = cflags
 

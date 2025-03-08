@@ -388,9 +388,6 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
     ret = camDevice->HCameraDevice::DisableResult(result);
     EXPECT_EQ(ret, 0);
 
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = camDevice->HCameraDevice::GetStreamOperator();
-    EXPECT_TRUE(streamOperator != nullptr);
-
     ret = camDevice->HCameraDevice::OnError(REQUEST_TIMEOUT, 0);
     EXPECT_EQ(ret, 0);
 
@@ -584,162 +581,9 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_016, TestSize.Level0)
         HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
     camDevice->hdiCameraDevice_ = nullptr;
-    EXPECT_EQ(camDevice->InitStreamOperator(), CAMERA_UNKNOWN_ERROR);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice when streamOperator_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice when streamOperator_ is nullptr
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_017, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow)
-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
-    camDevice->CreateStreams(streamInfos);
-
-    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
-    ASSERT_NE(cameraProxy, nullptr);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings;
-    cameraProxy->GetCameraAbility(cameraId, deviceSettings);
-    ASSERT_NE(deviceSettings, nullptr);
-    int32_t operationMode = 0;
-    camDevice->streamOperator_ = nullptr;
-    EXPECT_EQ(camDevice->CommitStreams(deviceSettings, operationMode), CAMERA_UNKNOWN_ERROR);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice when streamOperator is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice when streamOperator is nullptr
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_018, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow)
-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-    std::vector<StreamInfo_V1_1> streamInfos = {};
-    EXPECT_EQ(camDevice->UpdateStreams(streamInfos), CAMERA_UNKNOWN_ERROR);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_019, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow)
-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-    int32_t captureId = 0;
-    const std::vector<int32_t> streamIds = {1, 2};
-    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
-
-    HDI::Camera::V1_2::CaptureStartedInfo it1;
-    it1.streamId_ = 1;
-    it1.exposureTime_ = 1;
-    HDI::Camera::V1_2::CaptureStartedInfo it2;
-    it2.streamId_ = 2;
-    it2.exposureTime_ = 2;
-    std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
-    captureStartedInfo.push_back(it1);
-    captureStartedInfo.push_back(it2);
-    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_020, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow)
-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-    int32_t captureId = 0;
-    const std::vector<int32_t> streamIds = {1, 2};
-    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
-    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
-    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
-
-    CaptureEndedInfo it1;
-    it1.streamId_ = 1;
-    it1.frameCount_ = 1;
-    CaptureEndedInfo it2;
-    it2.streamId_ = 2;
-    it2.frameCount_ = 2;
-    std::vector<CaptureEndedInfo> captureEndedInfo = {};
-    captureEndedInfo.push_back(it1);
-    captureEndedInfo.push_back(it2);
-    EXPECT_EQ(camDevice->OnCaptureEnded(captureId, captureEndedInfo), CAMERA_INVALID_STATE);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice when streamOperatorCallback is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
- */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_021, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
-
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new (std::nothrow)
-        HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    ASSERT_NE(camDevice, nullptr);
-    int32_t captureId = 0;
-    CaptureErrorInfo it1;
-    it1.streamId_ = 2;
-    it1.error_ = BUFFER_LOST;
-    CaptureErrorInfo it2;
-    it2.streamId_ = 1;
-    it2.error_ =  BUFFER_LOST;
-    std::vector<CaptureErrorInfo> captureErrorInfo = {};
-    captureErrorInfo.push_back(it1);
-    captureErrorInfo.push_back(it2);
-    EXPECT_EQ(camDevice->OnCaptureError(captureId, captureErrorInfo), CAMERA_INVALID_STATE);
-
-    const std::vector<int32_t> streamIds = {1, 2};
-    uint64_t timestamp = 5;
-    EXPECT_EQ(camDevice->OnFrameShutter(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
-    EXPECT_EQ(camDevice->OnFrameShutterEnd(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
-    EXPECT_EQ(camDevice->OnCaptureReady(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+    sptr<IStreamOperatorCallback> callbackObj = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> hStreamOperator = nullptr;
+    EXPECT_EQ(camDevice->GetStreamOperator(callbackObj, hStreamOperator), CAMERA_UNKNOWN_ERROR);
 }
 
 /*
@@ -806,5 +650,96 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
     input->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test BuildDeviceProtectionDialogCommand
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test BuildDeviceProtectionDialogCommand
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_023, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    std::string commandStr = camDevice->BuildDeviceProtectionDialogCommand(OHOS_DEVICE_EJECT_BLOCK);
+    ASSERT_NE(commandStr, "");
+    commandStr = camDevice->BuildDeviceProtectionDialogCommand(OHOS_DEVICE_EXTERNAL_PRESS);
+    ASSERT_NE(commandStr, "");
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ShowDeviceProtectionDialog
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ShowDeviceProtectionDialog
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    bool ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EJECT_BLOCK);
+    ASSERT_TRUE(ret);
+    ret = camDevice->ShowDeviceProtectionDialog(OHOS_DEVICE_EXTERNAL_PRESS);
+    ASSERT_TRUE(ret);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test DeviceEjectCallBack
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeviceEjectCallBack
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_025, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    camDevice->DeviceEjectCallBack();
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test ReportDeviceProtectionStatus
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportDeviceProtectionStatus
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+ 
+    uint32_t count = 1;
+    int32_t status = 2;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    metadata->addEntry(OHOS_DEVICE_PROTECTION_STATE, &status, count);
+    camDevice->ReportDeviceProtectionStatus(metadata);
+}
 }
 }

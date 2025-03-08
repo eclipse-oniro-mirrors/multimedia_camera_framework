@@ -158,6 +158,11 @@ static const std::unordered_map<std::string, int32_t> mapHostDeviceType = {
     {"TABLET", 0x11},
 };
 
+static const std::unordered_map<std::string, int32_t> mapLightStatus = {
+    {"NORMAL", 0},
+    {"INSUFFICIENT", 1},
+};
+
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},
@@ -177,7 +182,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"MACRO_PHOTO", JS_CAPTURE_MARCO},
     {"MACRO_VIDEO", JS_VIDEO_MARCO},
     {"LIGHT_PAINTING_PHOTO", JS_LIGHT_PAINTING },
-    {"HIGH_RES_PHOTO", JS_HIGH_RES_PHOTO},
+    {"HIGH_RESOLUTION_PHOTO", JS_HIGH_RES_PHOTO},
     {"SECURE_PHOTO", JS_SECURE_CAMERA},
     {"QUICK_SHOT_PHOTO", JS_QUICK_SHOT_PHOTO},
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
@@ -440,6 +445,14 @@ static const std::unordered_map<std::string, int32_t> mapAuxiliaryStatus = {
     {"LOCKED", 0},
     {"ON", 1},
     {"OFF", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapSlowMotionStatus = {
+    {"DISABLED", 0},
+    {"READY", 1},
+    {"VIDEO_START", 2},
+    {"VIDEO_DONE", 3},
+    {"FINISHED", 4},
 };
 
 enum CreateAsyncCallbackModes {
