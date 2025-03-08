@@ -66,6 +66,7 @@ ohos_unittest("camera_service_unittest") {
       "avcodec/src/moving_photo_video_cache_unittest.cpp",
       "avcodec/src/video_encoder_unittest.cpp",
       "camera_service_common/src/camera_app_manager_client_unittest.cpp",
+      "camera_service_common/src/camera_app_manager_utils_unittest.cpp",
       "camera_service_common/src/camera_beauty_notification_unittest.cpp",
       "camera_service_common/src/camera_fwk_metadata_utils_unittest.cpp",
       "camera_service_common/src/camera_info_dumper_unittest.cpp",
