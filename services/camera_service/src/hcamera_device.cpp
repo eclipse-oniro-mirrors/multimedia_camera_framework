@@ -1449,6 +1449,7 @@ std::vector<std::vector<std::int32_t>> HCameraDevice::GetConcurrentDevicesTable(
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = GetDeviceAbility();
     std::vector<std::vector<std::int32_t>> resultTable;
+    CHECK_ERROR_RETURN_RET(ability == nullptr, resultTable);
     std::vector<std::int32_t> concurrentList;
     int32_t ret;
     camera_metadata_item_t item;
