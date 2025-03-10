@@ -571,7 +571,7 @@ int32_t HStreamOperator::CreateMovingPhotoStreamRepeat(
 const sptr<HStreamCommon> HStreamOperator::GetStreamByStreamID(int32_t streamId)
 {
     auto stream = streamContainer_.GetStream(streamId) != nullptr ? streamContainer_.GetStream(streamId) :
-        streamContainer_.GetStream(streamId);
+        streamContainerOffine_.GetStream(streamId);
 
     CHECK_ERROR_PRINT_LOG(stream == nullptr,
         "HStreamOperator::GetStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
@@ -1041,6 +1041,8 @@ int32_t HStreamOperator::Release()
         taskManager_->ClearTaskResource();
         taskManager_ = nullptr;
     }
+    streamContainer_.Clear();
+    streamContainerOffline_.Clear();
     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
     return errorCode;
 }
