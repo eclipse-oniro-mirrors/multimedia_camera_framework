@@ -179,6 +179,8 @@ private:
     void OnReceiveEvent(const EventFwk::CommonEventData &data);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
+    int8_t ChooseFisrtBootFoldCamIdx(
+        FoldStatus curFoldStatus, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList);
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif

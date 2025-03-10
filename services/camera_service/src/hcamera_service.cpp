@@ -1264,10 +1264,27 @@ int32_t HCameraService::PrelaunchCamera()
     CHECK_ERROR_RETURN_RET_LOG(HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0,
         CAMERA_DEVICE_CONFLICT, "HCameraService::PrelaunchCamera there is a device active in A side, abort!");
     if (preCameraId_.empty()) {
-        vector<string> cameraIds_;
-        cameraHostManager_->GetCameras(cameraIds_);
-        CHECK_ERROR_RETURN_RET(cameraIds_.empty(), CAMERA_OK);
-        preCameraId_ = cameraIds_.front();
+        MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera firstBoot in");
+        if (OHOS::Rosen::DisplayManager::GetInstance().IsFoldable()) {
+            // foldable devices
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera firstBoot foldable");
+            FoldStatus curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera curFoldStatus:%d", curFoldStatus);
+            std::vector<std::string> cameraIds;
+            std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+            int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+            CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, CAMERA_OK, "HCameraService::PrelaunchCamera exit");
+            int8_t camIdx = ChooseFisrtBootFoldCamIdx(curFoldStatus, cameraAbilityList);
+            CHECK_ERROR_RETURN_RET_LOG(camIdx != -1, CAMERA_OK, "HCameraService::PrelaunchCamera exit");
+            preCameraId_ = cameraIds[camIdx];
+        } else {
+            // unfoldable devices
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera firstBoot unfoldable");
+            vector<string> cameraIds_;
+            cameraHostManager_->GetCameras(cameraIds_);
+            CHECK_ERROR_RETURN_RET_LOG(cameraIds_.empty(), CAMERA_OK, "HCameraService::PrelaunchCamera exit");
+            preCameraId_ = cameraIds_.front();
+        }
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
@@ -1275,6 +1292,70 @@ int32_t HCameraService::PrelaunchCamera()
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HCameraService::Prelaunch failed");
     return ret;
+}
+
+/**
+    camIdx select strategy:
+    1. make sure curFoldStatus match foldStatusValue
+    2. priority: BACK > FRONT > OTHER
+    curFoldStatus 0: UNKNOWN_FOLD
+    curFoldStatus 1: EXPAND
+    curFoldStatus 2: FOLDED
+    curFoldStatus 3: HALF_FOLD
+    foldStatusValue 0: OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE
+    foldStatusValue 1: OHOS_CAMERA_FOLD_STATUS_EXPANDED
+    foldStatusValue 2: OHOS_CAMERA_FOLD_STATUS_FOLDED
+    foldStatusValue 3: OHOS_CAMERA_FOLD_STATUS_EXPANDED + OHOS_CAMERA_FOLD_STATUS_FOLDED
+    positionValue 0: OHOS_CAMERA_POSITION_FRONT
+    positionValue 1: OHOS_CAMERA_POSITION_BACK
+    positionValue 2: OHOS_CAMERA_POSITION_OTHER
+*/
+int8_t HCameraService::ChooseFisrtBootFoldCamIdx(
+    FoldStatus curFoldStatus, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList)
+{
+    int8_t camIdx = -1;
+    uint8_t foldStatusValue = 0;
+    uint8_t positionValue = 0;
+    uint8_t EXPAND_SUPPORT = 1;
+    uint8_t FOLD_SUPPORT = 2;
+    uint8_t ALL_SUPPORT = 3;
+    for (size_t i = 0; i < cameraAbilityList.size(); i++) {
+        camera_metadata_item_t item;
+        int ret =
+            OHOS::Camera::FindCameraMetadataItem(cameraAbilityList[i]->get(), OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0) {
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device fold ablity is %{public}d", item.data.u8[0]);
+            foldStatusValue = item.data.u8[0];
+        } else {
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device ablity not found");
+        }
+        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbilityList[i]->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0) {
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device position is %{public}d", item.data.u8[0]);
+            positionValue = item.data.u8[0];
+        } else {
+            MEDIA_DEBUG_LOG("HCameraService::PrelaunchCamera device position not found");
+        }
+        // check is fold supported
+        bool isFoldSupported = false;
+        if (curFoldStatus == FOLDED) {
+            isFoldSupported = (foldStatusValue == FOLD_SUPPORT || foldStatusValue == ALL_SUPPORT);
+        } else if (curFoldStatus == EXPAND || curFoldStatus == HALF_FOLD) {
+            isFoldSupported = (foldStatusValue == EXPAND_SUPPORT || foldStatusValue == ALL_SUPPORT);
+        }
+        // choose camIdx by priority
+        if (isFoldSupported) {
+            if (positionValue == OHOS_CAMERA_POSITION_BACK) {
+                camIdx = i;
+                break; // use BACK
+            } else if (positionValue == OHOS_CAMERA_POSITION_FRONT && camIdx == -1) {
+                camIdx = i; // record FRONT find BACK continue
+            } else if (positionValue == OHOS_CAMERA_POSITION_OTHER && camIdx == -1) {
+                camIdx = i; // record OTHER find BACK&FRONT continue
+            }
+        }
+    }
+    return camIdx;
 }
 
 int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
