@@ -66,6 +66,7 @@ constexpr float VIDEO_BITRATE_CONSTANT = 0.7;
 constexpr float HEVC_TO_AVC_FACTOR = 1.5;
 constexpr int64_t NANOSEC_RANGE = 1600000000LL;
 constexpr int32_t I32_TWO = 2;
+constexpr bool IS_HDR_VIVID = true;
 
 class CodecAVBufferInfo : public RefBase {
 public:

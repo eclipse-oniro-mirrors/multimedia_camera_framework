@@ -7438,11 +7438,22 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level0)
     EXPECT_EQ(intResult, 0);
 
     std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
+    bool falg = false;
+    for (auto curColorSpace : colorSpaceLists) {
+        if ( curColorSpace == ColorSpace::SRGB) {
+            falg = true;
+            break;
+        }
+    }
     if (colorSpaceLists.size() != 0) {
         ColorSpace colorSpace;
         intResult = session_->GetActiveColorSpace(colorSpace);
         EXPECT_EQ(intResult, 0);
-        EXPECT_EQ(colorSpaceLists[0], colorSpace);
+        if (!falg) {
+            MEDIA_ERR_LOG("current session not supported colorSpace SRGB");
+            return;
+        }
+        EXPECT_EQ(ColorSpace::SRGB, colorSpace);
     }
 
     intResult = session_->Start();

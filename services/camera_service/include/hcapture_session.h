@@ -118,7 +118,7 @@ public:
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
-    int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
+    int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate) override;
     bool QueryFpsAndZoomRatio(
         float &currentFps, float &currentZoomRatio, std::vector<float> &crossZoomAndTime, int32_t operationMode);
     bool QueryZoomPerformance(
@@ -173,6 +173,7 @@ public:
     void BeforeDeviceClose() override;
 
 private:
+    void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";

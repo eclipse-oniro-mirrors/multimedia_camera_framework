@@ -41,9 +41,18 @@ VideoEncoder::~VideoEncoder()
     Release();
 }
 
-VideoEncoder::VideoEncoder(VideoCodecType type) : videoCodecType_(type)
+VideoEncoder::VideoEncoder(VideoCodecType type, ColorSpace colorSpace) : videoCodecType_(type),
+    isHdr_(IsHdr(colorSpace))
 {
     MEDIA_INFO_LOG("VideoEncoder enter");
+}
+
+bool VideoEncoder::IsHdr(ColorSpace colorSpace)
+{
+    std::vector<ColorSpace> hdrColorSpaces = {BT2020_HLG, BT2020_PQ, BT2020_HLG_LIMIT,
+                                             BT2020_PQ_LIMIT};
+    auto it = std::find(hdrColorSpaces.begin(), hdrColorSpaces.end(), colorSpace);
+    return it != hdrColorSpaces.end();
 }
 
 int32_t VideoEncoder::Create(const std::string &codecMime)
@@ -359,6 +368,9 @@ int32_t VideoEncoder::Configure()
     format.PutLongValue(MediaDescriptionKey::MD_KEY_BITRATE, bitrate_);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_I_FRAME_INTERVAL, INT_MAX);
+    if (videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC && isHdr_) {
+        format.PutIntValue(MediaDescriptionKey::MD_KEY_PROFILE, HEVC_PROFILE_MAIN_10);
+    }
     int ret = encoder_->Configure(format);
     CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
     return 0;

@@ -22,6 +22,7 @@
 #include "sample_info.h"
 #include "camera_util.h"
 #include "surface_buffer.h"
+#include "icapture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,7 +31,7 @@ using namespace OHOS::MediaAVCodec;
 class VideoEncoder : public std::enable_shared_from_this<VideoEncoder> {
 public:
     VideoEncoder() = default;
-    explicit VideoEncoder(VideoCodecType type);
+    explicit VideoEncoder(VideoCodecType type, ColorSpace colorSpace);
     ~VideoEncoder();
 
     int32_t Create(const std::string &codecMime);
@@ -55,6 +56,7 @@ public:
     private:
         std::weak_ptr<VideoEncoder> videoEncoder_;
     };
+    bool IsHdr(ColorSpace colorSpace);
 
 private:
     int32_t SetCallback();
@@ -75,6 +77,7 @@ private:
     int32_t bitrate_ = 0;
     bool successFrame_ = false;
     int64_t preFrameTimestamp_ = 0;
+    bool isHdr_ = false;
 };
 } // CameraStandard
 } // OHOS

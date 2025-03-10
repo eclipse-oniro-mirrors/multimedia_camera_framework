@@ -633,11 +633,12 @@ int32_t HCaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
+int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
     stateMachine_.StateGuard(
-        [&result, this, &colorSpace, &captureColorSpace, &isNeedUpdate](CaptureSessionState currentState) {
+        [&result, this, &colorSpace, &isNeedUpdate](CaptureSessionState currentState) {
+            MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() ColorSpace : %{public}d", colorSpace);
             if (!(currentState == CaptureSessionState::SESSION_CONFIG_INPROGRESS ||
                     currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)) {
                 MEDIA_ERR_LOG("HCaptureSession::SetColorSpace(), Invalid session state: %{public}d", currentState);
@@ -647,7 +648,7 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
 
             auto hStreamOperatorSptr = hStreamOperator_.promote();
             CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
-            result = hStreamOperatorSptr->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate);
+            result = hStreamOperatorSptr->SetColorSpace(colorSpace, isNeedUpdate);
             if (isNeedUpdate &&  result != CAMERA_OK) {
                 return;
             }

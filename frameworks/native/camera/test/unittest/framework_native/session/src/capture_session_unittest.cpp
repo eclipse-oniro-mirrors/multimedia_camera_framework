@@ -3789,6 +3789,101 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
 
 /*
  * Feature: Framework
+ * Function: Test CaptureSession with SetColorSpace HDR and GetActiveColorSpace when Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = nullptr;
+    for (const auto& preProfile : previewProfile_) {
+        if (preProfile.format_ == CAMERA_FORMAT_YCRCB_P010) {
+            preview = CreatePreviewOutput(preProfile);
+            break;
+        }
+    }
+
+    if (preview == nullptr) {
+        MEDIA_WARNING_LOG("Format YCRCB_P010 is not supported!");
+        return;
+    }
+    
+    ColorSpace colorSpace = BT2020_HLG;
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
+    EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    session->UnlockForControl();
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CaptureSession with SetColorSpace HDR and GetActiveColorSpace when not Configed.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with SetColorSpace and GetActiveColorSpace when not Configed.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level0)
+{
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> preview = nullptr;
+    for (const auto& preProfile : previewProfile_) {
+        if (preProfile.format_ == CAMERA_FORMAT_YCRCB_P010) {
+            preview = CreatePreviewOutput(preProfile);
+            break;
+        }
+    }
+    if (preview == nullptr) {
+        MEDIA_WARNING_LOG("Format YCRCB_P010 is not supported!");
+        return;
+    }
+
+    ColorSpace colorSpace = BT2020_HLG;
+    EXPECT_EQ(session->SetColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test FoldCallback with OnFoldStatusChanged and Constructor
  * SubFunction: NA
  * FunctionPoints: NA

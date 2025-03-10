@@ -2068,11 +2068,8 @@ private:
     void OnSettingUpdated(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     ColorSpaceInfo GetSupportedColorSpaceInfo();
-    bool IsModeWithVideoStream();
-    void SetDefaultColorSpace();
     void UpdateDeviceDeferredability();
     void ProcessProfilesAbilityId(const SceneMode supportModes);
-    int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
     void ProcessFocusDistanceUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void FindTagId();
     bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);

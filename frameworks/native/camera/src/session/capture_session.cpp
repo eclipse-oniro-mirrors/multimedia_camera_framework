@@ -306,8 +306,6 @@ int32_t CaptureSession::CommitConfig()
         auto preconfigProfiles = GetPreconfigProfiles();
         if (preconfigProfiles != nullptr) {
             SetColorSpace(preconfigProfiles->colorSpace);
-        } else {
-            SetDefaultColorSpace();
         }
     }
     // DELIVERY_PHOTO for default when commit
@@ -503,62 +501,6 @@ void CaptureSession::CreateCameraAbilityContainer()
     MEDIA_DEBUG_LOG("CreateCameraAbilityContainer conflictAbilities size %{public}zu", conflictAbilities.size());
     std::lock_guard<std::mutex> lock(abilityContainerMutex_);
     cameraAbilityContainer_ = new CameraAbilityContainer(abilities, conflictAbilities, this);
-}
-
-void CaptureSession::SetDefaultColorSpace()
-{
-    CM_ColorSpaceType metaColorSpace = CM_ColorSpaceType::CM_COLORSPACE_NONE;
-    CM_ColorSpaceType captureColorSpace = CM_ColorSpaceType::CM_COLORSPACE_NONE;
-    ColorSpaceInfo colorSpaceInfo = GetSupportedColorSpaceInfo();
-    CHECK_ERROR_RETURN_LOG(colorSpaceInfo.modeCount == 0,
-        "CaptureSession::SetDefaultColorSpace SupportedColorSpaceInfo is null.");
-    for (uint32_t i = 0; i < colorSpaceInfo.modeCount; i++) {
-        if (GetMode() != colorSpaceInfo.modeInfo[i].modeType) {
-            continue;
-        }
-        MEDIA_INFO_LOG("CaptureSession::SetDefaultColorSpace get %{public}d mode colorSpaceInfo success.", GetMode());
-        std::vector<int32_t> supportedColorSpaces = colorSpaceInfo.modeInfo[i].streamInfo[0].colorSpaces;
-        metaColorSpace = static_cast<CM_ColorSpaceType>(supportedColorSpaces[0]);
-        captureColorSpace = static_cast<CM_ColorSpaceType>(supportedColorSpaces[0]);
-        if (!IsModeWithVideoStream()) {
-            break;
-        }
-        for (uint32_t j = 0; j < colorSpaceInfo.modeInfo[i].streamTypeCount; j++) {
-            if (colorSpaceInfo.modeInfo[i].streamInfo[j].streamType == STILL_CAPTURE) {
-                captureColorSpace =
-                    static_cast<CM_ColorSpaceType>(colorSpaceInfo.modeInfo[i].streamInfo[j].colorSpaces[0]);
-                break;
-            }
-        }
-    }
-
-    auto captureSession = GetCaptureSession();
-    CHECK_ERROR_RETURN_LOG(!captureSession, "CaptureSession::SetDefaultColorSpace() captureSession is nullptr");
-
-    ColorSpace fwkColorSpace;
-    ColorSpace fwkCaptureColorSpace;
-    auto itr = g_metaColorSpaceMap_.find(metaColorSpace);
-    if (itr != g_metaColorSpaceMap_.end()) {
-        fwkColorSpace = itr->second;
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace, %{public}d failed", static_cast<int32_t>(metaColorSpace));
-        return;
-    }
-
-    itr = g_metaColorSpaceMap_.find(captureColorSpace);
-    if (itr != g_metaColorSpaceMap_.end()) {
-        fwkCaptureColorSpace = itr->second;
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace, %{public}d fail", static_cast<int32_t>(captureColorSpace));
-        return;
-    }
-    MEDIA_INFO_LOG("CaptureSession::SetDefaultColorSpace mode = %{public}d, ColorSpace = %{public}d, "
-        "captureColorSpace = %{public}d.", GetMode(), fwkColorSpace, fwkCaptureColorSpace);
-
-    int32_t errCode = captureSession->SetColorSpace(fwkColorSpace, fwkCaptureColorSpace, false);
-    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK,
-        "CaptureSession::SetDefaultColorSpace failed to SetColorSpace!, %{public}d", ServiceToCameraError(errCode));
-    return;
 }
 
 bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
@@ -3592,6 +3534,14 @@ ColorSpaceInfo CaptureSession::GetSupportedColorSpaceInfo()
     return colorSpaceInfo;
 }
 
+bool CheckColorSpaceForSystemApp(ColorSpace colorSpace)
+{
+    if (!CameraSecurity::CheckSystemApp() && colorSpace == ColorSpace::BT2020_HLG) {
+        return false;
+    }
+    return true;
+}
+
 std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
 {
     std::vector<ColorSpace> supportedColorSpaces = {};
@@ -3608,7 +3558,8 @@ std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
         supportedColorSpaces.reserve(colorSpaces.size());
         for (uint32_t j = 0; j < colorSpaces.size(); j++) {
             auto itr = g_metaColorSpaceMap_.find(static_cast<CM_ColorSpaceType>(colorSpaces[j]));
-            CHECK_EXECUTE(itr != g_metaColorSpaceMap_.end(), supportedColorSpaces.emplace_back(itr->second));
+            CHECK_EXECUTE(itr != g_metaColorSpaceMap_.end() && CheckColorSpaceForSystemApp(itr->second),
+                supportedColorSpaces.emplace_back(itr->second));
         }
         return supportedColorSpaces;
     }
@@ -3644,82 +3595,32 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::SetColorSpace() captureSession is nullptr");
-    CM_ColorSpaceType metaColorSpace;
     auto itr = g_fwkColorSpaceMap_.find(colorSpace);
     CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkColorSpaceMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::SetColorSpace() map failed, %{public}d", static_cast<int32_t>(colorSpace));
-        metaColorSpace = itr->second;
+    CM_ColorSpaceType fwkColorSpace = itr->second;
 
-    CM_ColorSpaceType captureColorSpace = metaColorSpace;
     ColorSpaceInfo colorSpaceInfo = GetSupportedColorSpaceInfo();
-
-    ColorSpace fwkCaptureColorSpace;
-    auto it = g_metaColorSpaceMap_.find(captureColorSpace);
-    CHECK_ERROR_RETURN_RET_LOG(it == g_metaColorSpaceMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
-        "CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(captureColorSpace));
-        fwkCaptureColorSpace = it->second;
-
-    CHECK_ERROR_RETURN_RET_LOG(ProcessCaptureColorSpace(colorSpaceInfo, fwkCaptureColorSpace) !=
-        CameraErrorCode::SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
-        "CaptureSession::SetDefaultColorSpace() is failed.");
-
+    for (uint32_t i = 0; i < colorSpaceInfo.modeCount; i++) {
+        if (GetMode() != colorSpaceInfo.modeInfo[i].modeType) {
+            continue;
+        }
+        std::vector<int32_t> supportedColorSpaces = colorSpaceInfo.modeInfo[i].streamInfo[0].colorSpaces;
+        auto curColorSpace = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
+            static_cast<int32_t>(fwkColorSpace));
+        if (curColorSpace == supportedColorSpaces.end()) {
+            MEDIA_ERR_LOG("CaptureSession::SetColorSpace input colorSpace not found in supportedList.");
+            return CameraErrorCode::INVALID_ARGUMENT;
+        }
+    }
     if (IsSessionConfiged()) {
         isColorSpaceSetted_ = true;
     }
     // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
     MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
-    int32_t errCode = captureSession->SetColorSpace(colorSpace, fwkCaptureColorSpace, IsSessionCommited());
+    int32_t errCode = captureSession->SetColorSpace(colorSpace, IsSessionCommited());
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to SetColorSpace!, %{public}d", errCode);
     return ServiceToCameraError(errCode);
-}
-
-int32_t CaptureSession::ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace)
-{
-    CM_ColorSpaceType metaColorSpace;
-    CM_ColorSpaceType captureColorSpace;
-    for (uint32_t i = 0; i < colorSpaceInfo.modeCount; i++) {
-        if (GetMode() != colorSpaceInfo.modeInfo[i].modeType) {
-            continue;
-        }
-
-        auto it = g_fwkColorSpaceMap_.find(fwkCaptureColorSpace);
-        CHECK_ERROR_RETURN_RET_LOG(it == g_fwkColorSpaceMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
-            "CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(fwkCaptureColorSpace));
-            metaColorSpace = it->second;
-
-        MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace mode %{public}d, color %{public}d.", GetMode(), metaColorSpace);
-        std::vector<int32_t> supportedColorSpaces = colorSpaceInfo.modeInfo[i].streamInfo[0].colorSpaces;
-        auto itColorSpace =
-            std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(), static_cast<int32_t>(metaColorSpace));
-        CHECK_ERROR_RETURN_RET_LOG(itColorSpace == supportedColorSpaces.end(), CameraErrorCode::INVALID_ARGUMENT,
-            "CaptureSession::SetColorSpace input not found in supportedList.");
-
-        if (!IsModeWithVideoStream()) {
-            break;
-        }
-
-        captureColorSpace = metaColorSpace;
-        for (uint32_t j = 0; j < colorSpaceInfo.modeInfo[i].streamTypeCount; j++) {
-            if (colorSpaceInfo.modeInfo[i].streamInfo[j].streamType == OutputCapStreamType::STILL_CAPTURE) {
-                captureColorSpace =
-                    static_cast<CM_ColorSpaceType>(colorSpaceInfo.modeInfo[i].streamInfo[j].colorSpaces[0]);
-                MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace captureColorSpace = %{public}d ", captureColorSpace);
-                break;
-            }
-        }
-        break;
-    }
-
-    auto it = g_metaColorSpaceMap_.find(captureColorSpace);
-    CHECK_ERROR_RETURN_RET_LOG(it == g_metaColorSpaceMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
-        "CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(captureColorSpace));
-        fwkCaptureColorSpace = it->second;
-    return CameraErrorCode::SUCCESS;
-}
-
-bool CaptureSession::IsModeWithVideoStream()
-{
-    return GetMode() == SceneMode::VIDEO;
 }
 
 std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()

@@ -253,7 +253,7 @@ int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace& colorSpace)
     return error;
 }
 
-int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
+int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -261,7 +261,6 @@ int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, ColorSpace ca
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(static_cast<int32_t>(colorSpace));
-    data.WriteInt32(static_cast<int32_t>(captureColorSpace));
     data.WriteBool(isNeedUpdate);
 
     int error = Remote()->SendRequest(

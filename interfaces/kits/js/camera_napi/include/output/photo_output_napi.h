@@ -28,6 +28,7 @@
 #include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
+#include "pixel_map.h"
 
 namespace OHOS::Media {
     class PixelMap;
@@ -262,6 +263,19 @@ private:
     void UpdateJSCallback(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>) const;
     void UpdateJSCallbackAsync(int32_t captureId, int64_t timestamp, unique_ptr<Media::PixelMap>);
     void ExecuteDeepCopySurfaceBuffer();
+    
+    unique_ptr<Media::PixelMap> CreatePixelMapFromSurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer,
+        int32_t width, int32_t height, bool isHdr);
+    unique_ptr<Media::PixelMap> SetPixelMapYuvInfo(sptr<SurfaceBuffer> &surfaceBuffer,
+        unique_ptr<Media::PixelMap> pixelMap, bool isHdr);
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer,
+        int32_t thumbnailWidth, int32_t thumbnailHeight, bool isHdr) const;
+
+    static constexpr int32_t PLANE_Y = 0;
+    static constexpr int32_t PLANE_U = 1;
+    static constexpr uint8_t PIXEL_SIZE_HDR_YUV = 3;
+    static constexpr uint8_t  HDR_PIXEL_SIZE = 2;
+    static constexpr uint8_t SDR_PIXEL_SIZE = 1;
 };
 
 struct ThumbnailListenerInfo {

@@ -34,6 +34,7 @@
 #include "picture_interface.h"
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -91,7 +92,8 @@ void HStreamCapture::FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInf
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_GAINMAP),
         .width = width_,
         .height = height_,
-        .format = format,
+        .format = format, // HDR:NV21 P3:NV21
+        .dataspace = dataSpace_, // HDR:BT2020_HLG_FULL P3:P3_FULL
         .bufferQueue = gainmapBufferQueue_,
     };
     HDI::Camera::V1_1::ExtendedStreamInfo deepExtendedStreamInfo = {
@@ -125,6 +127,7 @@ void HStreamCapture::FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInf
 void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
+    MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo streamId:%{public}d format:%{public}d", GetFwkStreamId(), format_);
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
     if (format_ == OHOS_CAMERA_FORMAT_HEIC) {
         streamInfo.v1_0.encodeType_ =
@@ -133,15 +136,21 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
-        FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
+        if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
+            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
+        }
+        if (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_P3_FULL; // HDR photo need P3 for captureStream
+        } else if (dataSpace_ == CM_BT709_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_SRGB_FULL; // video session need SRGB for captureStream
+        }
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     }
     if (rawDeliverySwitch_) {
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
-            .type =
-                static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
+            .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
             .width = width_,
             .height = height_,
             .format = streamInfo.v1_0.format_,
@@ -151,12 +160,15 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
     if (thumbnailSwitch_) {
+        MEDIA_DEBUG_LOG("HStreamCapture::SetStreamInfo Set thumbnail info, dataspace:%{public}d", dataSpace_);
+        int32_t pixelFormat = GRAPHIC_PIXEL_FMT_YCRCB_420_SP;
+        pixelFormat = dataSpace_ == CM_BT2020_HLG_FULL ? GRAPHIC_PIXEL_FMT_YCRCB_P010 : pixelFormat;
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
             .type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL,
             .width = 0,
             .height = 0,
-            .format = 0,
-            .dataspace = 0,
+            .format = pixelFormat, // HDR: YCRCB_P010 P3: nv21
+            .dataspace = dataSpace_, // HDR: BT2020_HLG_FULL P3: P3
             .bufferQueue = thumbnailBufferQueue_,
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);

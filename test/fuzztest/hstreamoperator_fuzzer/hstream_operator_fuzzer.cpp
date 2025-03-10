@@ -98,11 +98,10 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest()
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
     ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
-    ColorSpace captureColorSpace = static_cast<ColorSpace>(callerToken % 23);
-    fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
+    fuzz_->SetColorSpace(colorSpace, GetData<bool>());
     fuzz_->GetStreamOperator();
     std::vector<int32_t> results = {GetData<uint32_t>()};
-    fuzz_->ReleaseStreams(results);
+    fuzz_->ReleaseStreams();
     std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos;
     fuzz_->CreateStreams(streamInfos);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;

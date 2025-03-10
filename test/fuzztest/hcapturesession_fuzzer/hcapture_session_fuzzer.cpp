@@ -106,8 +106,7 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
     ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
-    ColorSpace captureColorSpace = static_cast<ColorSpace>(callerToken % 23);
-    fuzz_->SetColorSpace(colorSpace, captureColorSpace, GetData<bool>());
+    fuzz_->SetColorSpace(colorSpace, GetData<bool>());
     fuzz_->GetPid();
     fuzz_->GetopMode();
     std::vector<StreamInfo_V1_1> streamInfos;

@@ -594,7 +594,6 @@ void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     pid_t pid = data.ReadInt32();
     session->CameraServerDied(pid);
     session->CreateCameraAbilityContainer();
-    session->SetDefaultColorSpace();
 }
 
 void TestOther3(sptr<CaptureSession> session, uint8_t *rawData, size_t size)

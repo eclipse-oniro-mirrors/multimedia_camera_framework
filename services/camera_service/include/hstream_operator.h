@@ -180,7 +180,7 @@ public:
     void ReleaseStreams();
     void StopMovingPhoto();
     int32_t GetActiveColorSpace(ColorSpace& colorSpace);
-    int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate);
+    int32_t SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate);
     void SetColorSpaceForStreams();
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
@@ -281,6 +281,7 @@ private:
         std::unordered_map<std::string, std::string> &mapPayload);
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,
         bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string& uri);
+    void InitDefaultColortSpace(SceneMode opMode);
 
 #ifdef CAMERA_USE_SENSOR
     std::mutex sensorLock_;
@@ -305,7 +306,6 @@ private:
     uint32_t callerToken_;
     int32_t opMode_;
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
-    ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
     bool enableStreamRotate_ = false;
     bool isDynamicConfiged_ = false;

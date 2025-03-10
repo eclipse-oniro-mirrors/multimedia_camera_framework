@@ -420,8 +420,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
     EXPECT_EQ(session->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_OK);
     session->CommitConfig();
 
-    EXPECT_EQ(session->SetColorSpace(ColorSpace::BT2020_HLG,
-        ColorSpace::BT2020_HLG, true), CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->SetColorSpace(ColorSpace::BT2020_HLG, true), CAMERA_OPERATION_NOT_ALLOWED);
 
     EXPECT_EQ(device->Close(), CAMERA_OK);
     EXPECT_EQ(session->Release(), CAMERA_OK);
@@ -1793,10 +1792,8 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level
 
     bool isNeedUpdate = false;
     ColorSpace colorSpace = ColorSpace::SRGB;
-    ColorSpace captureColorSpace = ColorSpace::SRGB;
-    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
-    captureColorSpace = ColorSpace::SRGB;
-    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
     camSession->Release();
 }
 

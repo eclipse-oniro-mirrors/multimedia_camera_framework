@@ -1366,8 +1366,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test RegisterSensorCallback and UnregisterSensorCallback in a various order
  */
-HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0)
-{
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0) {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
     ASSERT_NE(cameraIds.size(), 0);
