@@ -455,6 +455,16 @@ static const std::unordered_map<std::string, int32_t> mapSlowMotionStatus = {
     {"FINISHED", 4},
 };
 
+static const std::unordered_map<std::string, int32_t> mapWhiteBalanceMode = {
+    {"AUTO", 0},
+    {"CLOUDY", 1},
+    {"INCANDESCENT", 2},
+    {"FLUORESCENT", 3},
+    {"DAYLIGHT", 4},
+    {"MANUAL", 5},
+    {"LOCKED", 6},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
