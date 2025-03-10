@@ -688,7 +688,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(
     vctZoomRatio.resize(arrayCount, 0);
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_FPS, &fps, count);
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &zoomRatio, count);
-    metaIn->addEntry(OHOS_ABILITY_CAMERA_ZOOM_PERFORMANCE, vctZoomRatio.data(), arrayCount);
+    metaIn->addEntry(OHOS_STATUS_CAMERA_ZOOM_PERFORMANCE, vctZoomRatio.data(), arrayCount);
     cameraDevice->GetStatus(metaIn, metaOut);
 
     camera_metadata_item_t item;
@@ -709,7 +709,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(
         currentFps = static_cast<float>(item.data.ui32[0]);
         MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps %{public}d.", item.data.ui32[0]);
     }
-    retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_ABILITY_CAMERA_ZOOM_PERFORMANCE, &item);
+    retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_ZOOM_PERFORMANCE, &item);
     if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
         MEDIA_ERR_LOG("HCaptureSession::QueryFpsAndZoomRatio() current PERFORMANCE not found");
         return false;
