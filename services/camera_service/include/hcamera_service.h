@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
 #include <mutex>
+#include "camera_metadata_info.h"
 #define EXPORT_API __attribute__((visibility("default")))
 
 #include <iostream>
@@ -41,6 +42,7 @@
 #include "hstream_depth_data.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
+#include "datashare_helper.h"
 #include "icamera_service_callback.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
@@ -232,6 +234,8 @@ private:
     void DumpCameraStreamInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraZoom(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraCompensation(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraColorSpace(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAF(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraQualityPrioritization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraAE(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
@@ -240,6 +244,8 @@ private:
     void DumpCameraVideoFrameRateRange(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraPrelaunch(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraThumbnail(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraConcurrency(
+        CameraInfoDumper& infoDumper, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
 
     vector<shared_ptr<CameraMetaInfo>> ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos);
     vector<shared_ptr<CameraMetaInfo>> ChoosePhysicalCameras(const vector<shared_ptr<CameraMetaInfo>>& cameraInfos,

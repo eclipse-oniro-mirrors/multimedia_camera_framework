@@ -66,12 +66,12 @@
 #include "moving_photo_video_cache.h"
 #include "parameters.h"
 #include "refbase.h"
+#include "res_sched_client.h"
+#include "res_type.h"
 #include "smooth_zoom.h"
 #include "surface.h"
 #include "surface_buffer.h"
 #include "v1_0/types.h"
-#include "res_type.h"
-#include "res_sched_client.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -90,7 +90,19 @@ constexpr int32_t WIDE_TELE_ZOOM_PER = 3;
 constexpr int32_t ZOOM_IN_PER = 0;
 constexpr int32_t ZOOM_OUT_PERF = 1;
 constexpr int32_t ZOOM_BEZIER_VALUE_COUNT = 5;
-} // namespace
+static const int32_t SESSIONID_BEGIN = 1;
+static const int32_t SESSIONID_MAX = INT32_MAX - 1000;
+static std::atomic<int32_t> g_currentSessionId = SESSIONID_BEGIN;
+
+static int32_t GenerateSessionId()
+{
+    int newId = g_currentSessionId++;
+    if (newId > SESSIONID_MAX) {
+        g_currentSessionId = SESSIONID_BEGIN;
+    }
+    return newId;
+}
+}  // namespace
 
 static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP = {
     { CaptureSessionState::SESSION_INIT, "Init" },
@@ -108,25 +120,32 @@ CamServiceError HCaptureSession::NewInstance(
         return CAMERA_ALLOC_ERROR;
     }
 
-    auto& sessionManager = HCameraSessionManager::GetInstance();
-    MEDIA_DEBUG_LOG("HCaptureSession::NewInstance start, total session:(%{public}zu), current pid(%{public}d).",
-        sessionManager.GetTotalSessionSize(), session->pid_);
-    errCode = sessionManager.AddSession(session); // Do not move this AddSession after RemoveSession
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    MEDIA_DEBUG_LOG("HCaptureSession::NewInstance start, total "
+                    "session:(%{public}zu), current pid(%{public}d).",
+        sessionManager.GetTotalSessionSize(),
+        session->pid_);
+    errCode = sessionManager.AddSession(session);  // Do not move this AddSession after RemoveSession
     if (errCode == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED) {
         auto previousSession = sessionManager.GetGroupDefaultSession(session->pid_);
         auto disconnectDevice = previousSession->GetCameraDevice();
         CHECK_EXECUTE(disconnectDevice != nullptr,
             disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
 
-        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession not support multicamera, release last one.");
+        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession maximum session limit reached. "
+            "Releasing the earliest session.");
         previousSession->Release();
         sessionManager.RemoveSession(previousSession);
         errCode = CAMERA_OK; // If there is no error to throw, return CAMERA_OK.
     }
     outSession = session;
-    MEDIA_INFO_LOG("HCaptureSession::NewInstance end, total session:(%{public}zu). current opMode_= %{public}d "
+    MEDIA_INFO_LOG("HCaptureSession::NewInstance end,sessionId: %{public}d, "
+                   "total session:(%{public}zu). current opMode_= %{public}d "
                    "errorCode:%{public}d",
-        sessionManager.GetTotalSessionSize(), opMode, errCode);
+        outSession->sessionId_,
+        sessionManager.GetTotalSessionSize(),
+        opMode,
+        errCode);
     return errCode;
 }
 
@@ -134,6 +153,7 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 {
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
+    sessionId_ = GenerateSessionId();
     callerToken_ = callingTokenId;
     opMode_ = opMode;
 }
@@ -147,6 +167,11 @@ HCaptureSession::~HCaptureSession()
 pid_t HCaptureSession::GetPid()
 {
     return pid_;
+}
+
+int32_t HCaptureSession::GetSessionId()
+{
+    return sessionId_;
 }
 
 int32_t HCaptureSession::GetopMode()
@@ -167,11 +192,16 @@ int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& str
 void HCaptureSession::DynamicConfigStream()
 {
     isDynamicConfiged_ = false;
-    MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream enter. currentState = %{public}s", GetSessionState().c_str());
+    MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream enter. currentState = "
+                   "%{public}s, sessionID: %{public}d",
+        GetSessionState().c_str(),
+        GetSessionId());
     auto currentState = stateMachine_.GetCurrentState();
     if (currentState == CaptureSessionState::SESSION_STARTED) {
-        isDynamicConfiged_ = CheckSystemApp(); // System applications support dynamic config stream.
-        MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
+        isDynamicConfiged_ = CheckSystemApp();  // System applications support dynamic config stream.
+        MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic "
+                       "stream config, sessionID: %{public}d",
+            GetSessionId());
     }
 }
 
@@ -184,12 +214,15 @@ int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
     int32_t errCode;
-    MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([&errCode, this](const CaptureSessionState state) {
         DynamicConfigStream();
         bool isStateValid = stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_INPROGRESS);
         if (!isStateValid) {
-            MEDIA_ERR_LOG("HCaptureSession::BeginConfig in invalid state %{public}d", state);
+            MEDIA_ERR_LOG("HCaptureSession::BeginConfig in invalid state %{public}d, "
+                          ", sessionID: %{public}d",
+                state,
+                GetSessionId());
             errCode = CAMERA_INVALID_STATE;
             isDynamicConfiged_ = false;
             return;
@@ -203,10 +236,11 @@ int32_t HCaptureSession::BeginConfig()
         }
     });
     if (errCode == CAMERA_OK) {
-        MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success");
+        MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success, sessionID: %{public}d", GetSessionId());
     } else {
         CameraReportUtils::ReportCameraError(
-            "HCaptureSession::BeginConfig", errCode, false, CameraReportUtils::GetCallerInfo());
+            "HCaptureSession::BeginConfig, sessionID: " + std::to_string(GetSessionId()),
+            errCode, false, CameraReportUtils::GetCallerInfo());
     }
     return errCode;
 }
@@ -218,12 +252,16 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
     result = false;
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
-            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Need to call BeginConfig before adding input");
+            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Need to call BeginConfig "
+                          "before adding input, sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
         if ((GetCameraDevice() != nullptr)) {
-            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Only one input is supported");
+            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Only one input is supported, "
+                          "sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_SESSION_CFG;
             return;
         }
@@ -236,7 +274,7 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
     });
     if (errorCode == CAMERA_OK) {
         result = true;
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::CanAddInput"));
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::CanAddInput, sessionID: %d", GetSessionId()));
     }
     return errorCode;
 }
@@ -247,20 +285,24 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
     int32_t errorCode = CAMERA_OK;
     if (cameraDevice == nullptr) {
         errorCode = CAMERA_INVALID_ARG;
-        MEDIA_ERR_LOG("HCaptureSession::AddInput cameraDevice is null");
+        MEDIA_ERR_LOG("HCaptureSession::AddInput cameraDevice is null, sessionID: %{public}d", GetSessionId());
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
-    MEDIA_INFO_LOG("HCaptureSession::AddInput prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::AddInput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
-            MEDIA_ERR_LOG("HCaptureSession::AddInput Need to call BeginConfig before adding input");
+            MEDIA_ERR_LOG("HCaptureSession::AddInput Need to call BeginConfig before "
+                          "adding input, sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
         if ((GetCameraDevice() != nullptr)) {
-            MEDIA_ERR_LOG("HCaptureSession::AddInput Only one input is supported");
+            MEDIA_ERR_LOG("HCaptureSession::AddInput Only one input is supported, "
+                          "sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_SESSION_CFG;
             return;
         }
@@ -273,12 +315,12 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         hCameraDevice->DispatchDefaultSettingToHdi();
     });
     if (errorCode == CAMERA_OK) {
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput, sessionID: %d", GetSessionId()));
     } else {
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    MEDIA_INFO_LOG("HCaptureSession::AddInput execute success");
+    MEDIA_INFO_LOG("HCaptureSession::AddInput execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
@@ -350,7 +392,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::AddOutput stream is null");
+        MEDIA_ERR_LOG("HCaptureSession::AddOutput stream is null, sessionID: %{public}d", GetSessionId());
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
@@ -359,19 +401,26 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
         auto hStreamOperatorSptr = hStreamOperator_.promote();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
-            MEDIA_ERR_LOG("HCaptureSession::AddOutput Need to call BeginConfig before adding output");
+            MEDIA_ERR_LOG("HCaptureSession::AddOutput Need to call BeginConfig "
+                          "before adding output, sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
         errorCode = hStreamOperatorSptr->AddOutput(streamType, stream);
     });
     if (errorCode == CAMERA_OK) {
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddOutput with %d", streamType));
+        CAMERA_SYSEVENT_STATISTIC(
+            CreateMsg("CaptureSession::AddOutput with %d, sessionID: %{public}d", streamType, GetSessionId()));
     } else {
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::AddOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = %{public}d", streamType, errorCode);
+    MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = "
+                   "%{public}d, sessionID: %{public}d",
+        streamType,
+        errorCode,
+        GetSessionId());
     return errorCode;
 }
 
@@ -380,15 +429,19 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
     int32_t errorCode = CAMERA_OK;
     if (cameraDevice == nullptr) {
         errorCode = CAMERA_INVALID_ARG;
-        MEDIA_ERR_LOG("HCaptureSession::RemoveInput cameraDevice is null");
+        MEDIA_ERR_LOG("HCaptureSession::RemoveInput cameraDevice is null, "
+                      "sessionID: %{public}d",
+            GetSessionId());
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::RemoveInput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
-    MEDIA_INFO_LOG("HCaptureSession::RemoveInput prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::RemoveInput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
-            MEDIA_ERR_LOG("HCaptureSession::RemoveInput Need to call BeginConfig before removing input");
+            MEDIA_ERR_LOG("HCaptureSession::RemoveInput Need to call BeginConfig "
+                          "before removing input, sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -406,17 +459,19 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
             SetCameraDevice(nullptr);
             currentDevice->SetStreamOperatorCallback(nullptr);
         } else {
-            MEDIA_ERR_LOG("HCaptureSession::RemoveInput Invalid camera device");
+            MEDIA_ERR_LOG("HCaptureSession::RemoveInput Invalid camera device, "
+                          "sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_SESSION_CFG;
         }
     });
     if (errorCode == CAMERA_OK) {
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveInput"));
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveInput, sessionID: %d", GetSessionId()));
     } else {
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::RemoveInput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    MEDIA_INFO_LOG("HCaptureSession::RemoveInput execute success");
+    MEDIA_INFO_LOG("HCaptureSession::RemoveInput execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
@@ -440,15 +495,17 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::RemoveOutput stream is null");
+        MEDIA_ERR_LOG("HCaptureSession::RemoveOutput stream is null, sessionID: %{public}d", GetSessionId());
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::RemoveOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
-    MEDIA_INFO_LOG("HCaptureSession::RemoveOutput prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::RemoveOutput prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([this, &errorCode, streamType, &stream](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
-            MEDIA_ERR_LOG("HCaptureSession::RemoveOutput Need to call BeginConfig before removing output");
+            MEDIA_ERR_LOG("HCaptureSession::RemoveOutput Need to call BeginConfig "
+                          "before removing output, sessionID: %{public}d",
+                GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -457,19 +514,23 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         errorCode = hStreamOperatorSptr->RemoveOutput(streamType, stream);
     });
     if (errorCode == CAMERA_OK) {
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveOutput with %d", streamType));
+        CAMERA_SYSEVENT_STATISTIC(
+            CreateMsg("CaptureSession::RemoveOutput with %d, sessionID: %d", streamType, GetSessionId()));
     } else {
         CameraReportUtils::ReportCameraError(
             "HCaptureSession::RemoveOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
-    MEDIA_INFO_LOG("HCaptureSession::RemoveOutput execute success");
+    MEDIA_INFO_LOG("HCaptureSession::RemoveOutput execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
 int32_t HCaptureSession::ValidateSessionInputs()
 {
-    CHECK_ERROR_RETURN_RET_LOG(GetCameraDevice() == nullptr, CAMERA_INVALID_SESSION_CFG,
-        "HCaptureSession::ValidateSessionInputs No inputs present");
+    CHECK_ERROR_RETURN_RET_LOG(GetCameraDevice() == nullptr,
+        CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::ValidateSessionInputs No inputs "
+        "present, sessionID: %{public}d",
+        GetSessionId());
     return CAMERA_OK;
 }
 
@@ -514,7 +575,8 @@ int32_t HCaptureSession::UnlinkInputAndOutputs()
 
 void HCaptureSession::ExpandSketchRepeatStream()
 {
-    MEDIA_DEBUG_LOG("Enter HCaptureSession::ExpandSketchRepeatStream()");
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ExpandSketchRepeatStream(), "
+        "sessionID: %{public}d", GetSessionId());
     auto hStreamOperatorSptr = hStreamOperator_.promote();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr,
         "HCaptureSession::ValidateSessionOutputs No outputs present");
@@ -525,9 +587,9 @@ void HCaptureSession::ExpandSketchRepeatStream()
 void HCaptureSession::ExpandMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("ExpandMovingPhotoRepeatStream enter");
+    MEDIA_DEBUG_LOG("ExpandMovingPhotoRepeatStream enter, sessionID: %{public}d", GetSessionId());
     if (!GetCameraDevice()->CheckMovingPhotoSupported(GetopMode())) {
-        MEDIA_DEBUG_LOG("movingPhoto is not supported");
+        MEDIA_DEBUG_LOG("movingPhoto is not supported, sessionID: %{public}d", GetSessionId());
         return;
     }
     auto hStreamOperatorSptr = hStreamOperator_.promote();
@@ -539,7 +601,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
 
 void HCaptureSession::ClearSketchRepeatStream()
 {
-    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream()");
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream(), sessionID: %{public}d", GetSessionId());
 
     auto hStreamOperatorSptr = hStreamOperator_.promote();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
@@ -549,7 +611,9 @@ void HCaptureSession::ClearSketchRepeatStream()
 void HCaptureSession::ClearMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream(), "
+                    "sessionID: %{public}d",
+        GetSessionId());
     // Already added session lock in BeginConfig()
     auto hStreamOperatorSptr = hStreamOperator_.promote();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
@@ -574,15 +638,12 @@ int32_t HCaptureSession::SetCommitConfigFlag(bool isNeedCommitting)
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HCaptureSession::CommitConfig begin");
+    MEDIA_INFO_LOG("HCaptureSession::CommitConfig begin, sessionID: %{public}d", GetSessionId());
     int32_t errorCode = CAMERA_OK;
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
         bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
-        if (!isTransferSupport) {
-            MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Need to call BeginConfig before committing configuration");
-            errorCode = CAMERA_INVALID_STATE;
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!isTransferSupport, "HCaptureSession::CommitConfig() Need to call BeginConfig "
+            "before committing configuration, sessionID: %{public}d", GetSessionId());
         if (isNeedCommitting_) {
             stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
             return;
@@ -593,13 +654,13 @@ int32_t HCaptureSession::CommitConfig()
         errorCode = ValidateSession();
         CHECK_ERROR_RETURN(errorCode != CAMERA_OK);
         if (!IsNeedDynamicConfig()) {
-            // expand moving photo always
-            ExpandMovingPhotoRepeatStream();
+            ExpandMovingPhotoRepeatStream(); // expand moving photo always
             ExpandSketchRepeatStream();
         }
         auto device = GetCameraDevice();
         if (device == nullptr) {
-            MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. camera device is null");
+            MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. "
+                          "camera device is null, sessionID: %{public}d", GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -607,21 +668,22 @@ int32_t HCaptureSession::CommitConfig()
         uint64_t secureSeqId = 0L;
         device->GetSecureCameraSeq(&secureSeqId);
         if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
-            MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d.", GetopMode());
+            MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d, "
+                          "sessionID: %{public}d.", GetopMode(), GetSessionId());
             errorCode = CAMERA_OPERATION_NOT_ALLOWED;
             return;
         }
-
-        MEDIA_INFO_LOG("HCaptureSession::CommitConfig secureSeqId = %{public}" PRIu64 "", secureSeqId);
+        MEDIA_INFO_LOG("HCaptureSession::CommitConfig, sessionID: %{public}d, "
+                       "secureSeqId = %{public}" PRIu64 "", GetSessionId(), secureSeqId);
         errorCode = LinkInputAndOutputs();
-        CHECK_ERROR_RETURN_LOG(errorCode != CAMERA_OK,
-            "HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);
+        CHECK_ERROR_RETURN_LOG(errorCode != CAMERA_OK, "HCaptureSession::CommitConfig() Failed to commit "
+            "config. rc: %{public}d, sessionID: %{public}d", errorCode, GetSessionId());
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
-    CHECK_EXECUTE(errorCode != CAMERA_OK,
-        CameraReportUtils::ReportCameraError(
-            "HCaptureSession::CommitConfig", errorCode, false, CameraReportUtils::GetCallerInfo()));
-    MEDIA_INFO_LOG("HCaptureSession::CommitConfig end");
+    CHECK_EXECUTE(errorCode != CAMERA_OK, CameraReportUtils::ReportCameraError(
+        "HCaptureSession::CommitConfig, sessionID: " + std::to_string(GetSessionId()),
+        errorCode, false, CameraReportUtils::GetCallerInfo()));
+    MEDIA_INFO_LOG("HCaptureSession::CommitConfig end, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
@@ -641,7 +703,10 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
             MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() ColorSpace : %{public}d", colorSpace);
             if (!(currentState == CaptureSessionState::SESSION_CONFIG_INPROGRESS ||
                     currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)) {
-                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace(), Invalid session state: %{public}d", currentState);
+                MEDIA_ERR_LOG("HCaptureSession::SetColorSpace(), Invalid session state: "
+                              "%{public}d, sessionID: %{public}d",
+                    currentState,
+                    GetSessionId());
                 result = CAMERA_INVALID_STATE;
                 return;
             }
@@ -691,31 +756,31 @@ bool HCaptureSession::QueryFpsAndZoomRatio(
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &zoomRatio, count);
     metaIn->addEntry(OHOS_STATUS_CAMERA_ZOOM_PERFORMANCE, vctZoomRatio.data(), arrayCount);
     cameraDevice->GetStatus(metaIn, metaOut);
-
     camera_metadata_item_t item;
     int retFindMeta =
         OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &item);
-    if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryFpsAndZoomRatio() current zoom not found");
-        return false;
-    } else if (retFindMeta == CAM_META_SUCCESS) {
+    CHECK_ERROR_RETURN_RET_LOG(retFindMeta == CAM_META_ITEM_NOT_FOUND || item.count == 0, false,
+        "HCaptureSession::QueryFpsAndZoomRatio() current zoom not found, sessionID: %{public}d", GetSessionId());
+    if (retFindMeta == CAM_META_SUCCESS) {
         currentZoomRatio = static_cast<float>(item.data.ui32[0]);
-        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current zoom %{public}d.", item.data.ui32[0]);
+        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current zoom "
+                       "%{public}d, sessionID: %{public}d.", item.data.ui32[0], GetSessionId());
     }
     retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_FPS, &item);
-    if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps not found");
-        return false;
-    } else if (retFindMeta == CAM_META_SUCCESS) {
+    CHECK_ERROR_RETURN_RET_LOG(retFindMeta == CAM_META_ITEM_NOT_FOUND || item.count == 0, false,
+        "HCaptureSession::QueryFpsAndZoomRatio() current fps not found, sessionID: %{public}d", GetSessionId());
+    if (retFindMeta == CAM_META_SUCCESS) {
         currentFps = static_cast<float>(item.data.ui32[0]);
-        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps %{public}d.", item.data.ui32[0]);
+        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps "
+            "%{public}d, sessionID: %{public}d.", item.data.ui32[0], GetSessionId());
     }
     retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_ZOOM_PERFORMANCE, &item);
-    if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryFpsAndZoomRatio() current PERFORMANCE not found");
-        return false;
-    } else if (retFindMeta == CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() zoom performance count %{public}d.", item.count);
+    CHECK_ERROR_RETURN_RET_LOG(retFindMeta == CAM_META_ITEM_NOT_FOUND || item.count == 0, false,
+        "HCaptureSession::QueryFpsAndZoomRatio() current PERFORMANCE not found, sessionID: %{public}d",
+        GetSessionId());
+    if (retFindMeta == CAM_META_SUCCESS) {
+        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() zoom performance count %{public}d,"
+            "sessionID: %{public}d.", item.count, GetSessionId());
         QueryZoomPerformance(crossZoomAndTime, operationMode, item);
     }
     return true;
@@ -736,16 +801,20 @@ bool HCaptureSession::QueryZoomPerformance(
     }
     int dataLenPerPoint = 3;
     int headLenPerMode = 2;
-    MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance() operationMode %{public}d.",
-        static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode));
+    MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance() operationMode %{public}d, "
+                    "sessionID: %{public}d.",
+        static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode),
+        GetSessionId());
     for (int i = 0; i < static_cast<int>(zoomItem.count);) {
         int sceneMode = static_cast<int>(zoomItem.data.ui32[i]);
         int zoomPointsNum = static_cast<int>(zoomItem.data.ui32[i + 1]);
         if (static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode) == sceneMode) {
             for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++) {
                 crossZoomAndTime.push_back(zoomItem.data.ui32[i + headLenPerMode + j]);
-                MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance()  crossZoomAndTime %{public}d.",
-                    static_cast<int>(zoomItem.data.ui32[i + headLenPerMode + j]));
+                MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance()    crossZoomAndTime "
+                                "%{public}d, sessionID: %{public}d.",
+                    static_cast<int>(zoomItem.data.ui32[i + headLenPerMode + j]),
+                    GetSessionId());
             }
             break;
         } else {
@@ -759,8 +828,11 @@ int32_t HCaptureSession::GetSensorOritation()
 {
     auto cameraDevice = GetCameraDevice();
     int32_t sensorOrientation = 0;
-    CHECK_ERROR_RETURN_RET_LOG(
-        cameraDevice == nullptr, sensorOrientation, "HCaptureSession::GetSensorOritation() cameraDevice is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr,
+        sensorOrientation,
+        "HCaptureSession::GetSensorOritation() "
+        "cameraDevice is null, sessionID: %{public}d",
+        GetSessionId());
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
     CHECK_ERROR_RETURN_RET(ability == nullptr, sensorOrientation);
     camera_metadata_item_t item;
@@ -768,7 +840,10 @@ int32_t HCaptureSession::GetSensorOritation()
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, sensorOrientation,
         "HCaptureSession::GetSensorOritation get sensor orientation failed");
     sensorOrientation = item.data.i32[0];
-    MEDIA_INFO_LOG("HCaptureSession::GetSensorOritation sensor orientation %{public}d", sensorOrientation);
+    MEDIA_INFO_LOG("HCaptureSession::GetSensorOritation sensor orientation "
+                   "%{public}d, sessionID: %{public}d",
+        sensorOrientation,
+        GetSessionId());
     return sensorOrientation;
 }
 
@@ -840,9 +915,13 @@ float HCaptureSession::GetCrossWaitTime(
             }
             break;
     }
-    MEDIA_DEBUG_LOG("HCaptureSession::GetCrossWaitTime waitTime %{public}f, targetRangeId %{public}d,"
-                    " currentRangeId %{public}d",
-        waitTime, targetRangeId, currentRangeId);
+    MEDIA_DEBUG_LOG("HCaptureSession::GetCrossWaitTime waitTime %{public}f, "
+                    "targetRangeId %{public}d,"
+                    " currentRangeId %{public}d, sessionID: %{public}d",
+        waitTime,
+        targetRangeId,
+        currentRangeId,
+        GetSessionId());
     return waitTime;
 }
 
@@ -873,8 +952,8 @@ int32_t HCaptureSession::SetSmoothZoom(
     constexpr int32_t ZOOM_RATIO_MULTIPLE = 100;
     const int32_t MAX_FPS = 60;
     auto cameraDevice = GetCameraDevice();
-    CHECK_ERROR_RETURN_RET_LOG(
-        cameraDevice == nullptr, CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom device is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HCaptureSession::SetSmoothZoom device is null, sessionID: %{public}d", GetSessionId());
     float currentFps = 30.0f;
     float currentZoomRatio = 1.0f;
     int32_t targetRangeId = 0;
@@ -935,7 +1014,8 @@ int32_t HCaptureSession::SetSmoothZoom(
             static_cast<uint32_t>(array[i]), static_cast<uint32_t>(i * frameIntervalMs + waitTime));
     }
     duration = (static_cast<int>(array.size()) - 1) * frameIntervalMs + waitTime;
-    MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() duration %{public}f", duration);
+    MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() duration %{public}f, "
+                    "sessionID: %{public}d", duration, GetSessionId());
     ProcessMetaZoomArray(zoomAndTimeArray, cameraDevice);
     return CAMERA_OK;
 }
@@ -944,8 +1024,11 @@ void HCaptureSession::ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArr
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaZoomArray = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     uint32_t zoomCount = static_cast<uint32_t>(zoomAndTimeArray.size());
-    MEDIA_INFO_LOG("HCaptureSession::ProcessMetaZoomArray() zoomArray size: %{public}zu, zoomCount: %{public}u",
-        zoomAndTimeArray.size(), zoomCount);
+    MEDIA_INFO_LOG("HCaptureSession::ProcessMetaZoomArray() zoomArray size: "
+                   "%{public}zu, zoomCount: %{public}u, sessionID: %{public}d",
+        zoomAndTimeArray.size(),
+        zoomCount,
+        GetSessionId());
     metaZoomArray->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, zoomAndTimeArray.data(), zoomCount);
     cameraDevice->UpdateSettingOnce(metaZoomArray);
 }
@@ -967,23 +1050,25 @@ int32_t HCaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    MEDIA_INFO_LOG("HCaptureSession::Start prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::Start prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
         bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_STARTED);
         if (!isTransferSupport) {
-            MEDIA_ERR_LOG("HCaptureSession::Start() Need to call after committing configuration");
+            MEDIA_ERR_LOG("HCaptureSession::Start() Need to call after "
+                          "committing configuration, sessionID: %{public}d", GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
-
         std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
         auto cameraDevice = GetCameraDevice();
         uint8_t usedAsPositionU8 = OHOS_CAMERA_POSITION_OTHER;
-        MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 default = %{public}d", usedAsPositionU8);
+        MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 default = "
+                       "%{public}d, sessionID: %{public}d", usedAsPositionU8, GetSessionId());
         if (cameraDevice != nullptr) {
             settings = cameraDevice->CloneCachedSettings();
             usedAsPositionU8 = cameraDevice->GetUsedAsPosition();
-            MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 set %{public}d", usedAsPositionU8);
+            MEDIA_INFO_LOG("HCaptureSession::Start usedAsPositionU8 set "
+                           "%{public}d, sessionID: %{public}d", usedAsPositionU8, GetSessionId());
             DumpMetadata(settings);
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
         }
@@ -1001,7 +1086,15 @@ int32_t HCaptureSession::Start()
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
     });
-    MEDIA_INFO_LOG("HCaptureSession::Start execute success");
+    MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
+    std::string concurrencyString = "Concurrency cameras:[";
+    std::list<sptr<HCaptureSession>> sessionList = HCameraSessionManager::GetInstance().GetGroupSessions(pid_);
+    for (auto entry : sessionList) {
+        if (entry->isSessionStarted_) {
+            concurrencyString.append(entry->GetCameraDevice()->GetCameraId() + "    ");
+        }
+    }
+    concurrencyString.append("]");
     return errorCode;
 }
 
@@ -1016,11 +1109,12 @@ int32_t HCaptureSession::Stop()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    MEDIA_INFO_LOG("HCaptureSession::Stop prepare execute");
+    MEDIA_INFO_LOG("HCaptureSession::Stop prepare execute, sessionID: %{public}d", GetSessionId());
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
         bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
         if (!isTransferSupport) {
-            MEDIA_ERR_LOG("HCaptureSession::Stop() Need to call after Start");
+            MEDIA_ERR_LOG("HCaptureSession::Stop() Need to call after Start, "
+                          "sessionID: %{public}d", GetSessionId());
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -1036,7 +1130,7 @@ int32_t HCaptureSession::Stop()
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
-    MEDIA_INFO_LOG("HCaptureSession::Stop execute success");
+    MEDIA_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
     return errorCode;
 }
 
@@ -1044,9 +1138,12 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    MEDIA_INFO_LOG("HCaptureSession::Release prepare execute, release type is:%{public}d pid(%{public}d)", type, pid_);
+    int32_t sid = GetSessionId();
+    MEDIA_INFO_LOG("HCaptureSession::Release prepare execute, release type "
+                   "is:%{public}d pid(%{public}d), sessionID: %{public}d", type, pid_, GetSessionId());
     // Check release without lock first
-    CHECK_ERROR_RETURN_RET_LOG(stateMachine_.IsStateNoLock(CaptureSessionState::SESSION_RELEASED), CAMERA_INVALID_STATE,
+    CHECK_ERROR_RETURN_RET_LOG(stateMachine_.IsStateNoLock(CaptureSessionState::SESSION_RELEASED),
+        CAMERA_INVALID_STATE,
         "HCaptureSession::Release error, session is already released!");
 
     stateMachine_.StateGuard([&errorCode, this, type](CaptureSessionState currentState) {
@@ -1076,13 +1173,13 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
     });
-    MEDIA_INFO_LOG("HCaptureSession::Release execute success");
+    MEDIA_INFO_LOG("HCaptureSession::Release execute success, sessionID: %{public}d", sid);
     return errorCode;
 }
 
 int32_t HCaptureSession::Release()
 {
-    MEDIA_INFO_LOG("HCaptureSession::Release()");
+    MEDIA_INFO_LOG("HCaptureSession::Release(), sessionID: %{public}d", GetSessionId());
     CameraReportUtils::GetInstance().SetModeChangePerfStartInfo(opMode_, CameraReportUtils::GetCallerInfo());
     return Release(CaptureSessionReleaseType::RELEASE_TYPE_CLIENT);
 }
@@ -1090,7 +1187,8 @@ int32_t HCaptureSession::Release()
 int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
 {
     CHECK_ERROR_RETURN_RET_LOG(stateMachine_.GetCurrentState() == CaptureSessionState::SESSION_RELEASED,
-        CAMERA_INVALID_STATE, "HCaptureSession::OperatePermissionCheck session is released");
+        CAMERA_INVALID_STATE,
+        "HCaptureSession::OperatePermissionCheck session is released");
     switch (static_cast<CaptureSessionInterfaceCode>(interfaceCode)) {
         case CAMERA_CAPTURE_SESSION_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
@@ -1120,7 +1218,9 @@ void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
 int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback>& callback)
 {
     if (callback == nullptr) {
-        MEDIA_WARNING_LOG("HCaptureSession::SetCallback callback is null, we should clear the callback");
+        MEDIA_WARNING_LOG("HCaptureSession::SetCallback callback is null, we "
+                          "should clear the callback, sessionID: %{public}d",
+            GetSessionId());
     }
     // Not implement yet.
     return CAMERA_OK;
@@ -1214,12 +1314,13 @@ std::string HCaptureSession::CreateDisplayName()
            << currentTime.tm_min << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec;
         formattedTime = ss.str();
     } else {
-        MEDIA_ERR_LOG("Failed to get current time.");
+        MEDIA_ERR_LOG("Failed to get current time.sessionID: %{public}d", GetSessionId());
     }
     if (lastDisplayName_ == formattedTime) {
         saveIndex++;
         formattedTime = formattedTime + connector + std::to_string(saveIndex);
-        MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
+        MEDIA_INFO_LOG(
+            "CreateDisplayName is %{private}s, sessionID: %{public}d", formattedTime.c_str(), GetSessionId());
         return formattedTime;
     }
     lastDisplayName_ = formattedTime;
@@ -1247,19 +1348,20 @@ std::string HCaptureSession::CreateBurstDisplayName(int32_t imageSeqId, int32_t 
     } else {
         ss << lastBurstPrefix_ << std::setw(burstWidth) << std::setfill(placeholder) << seqId;
     }
-    MEDIA_DEBUG_LOG("burst prefix is %{private}s", lastBurstPrefix_.c_str());
+    MEDIA_DEBUG_LOG("burst prefix is %{private}s, sessionID: %{public}d", lastBurstPrefix_.c_str(), GetSessionId());
 
     if (seqId == 1) {
         ss << coverTag;
     }
     formattedTime = ss.str();
-    MEDIA_INFO_LOG("CreateBurstDisplayName is %{private}s", formattedTime.c_str());
+    MEDIA_INFO_LOG(
+        "CreateBurstDisplayName is %{private}s, sessionID: %{public}d", formattedTime.c_str(), GetSessionId());
     return formattedTime;
 }
 
 int32_t HCaptureSession::SetFeatureMode(int32_t featureMode)
 {
-    MEDIA_INFO_LOG("SetFeatureMode is called!");
+    MEDIA_INFO_LOG("SetFeatureMode is called!sessionID: %{public}d", GetSessionId());
     featureMode_ = featureMode;
     return CAMERA_OK;
 }
@@ -1347,5 +1449,5 @@ std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyIn
     std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
     return cameraRotateStrategyInfos_;
 }
-} // namespace CameraStandard
-} // namespace OHOS
+}  // namespace CameraStandard
+}  // namespace OHOS

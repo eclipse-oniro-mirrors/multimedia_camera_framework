@@ -53,14 +53,16 @@ static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ =
 namespace {
 static const int32_t STREAMID_BEGIN = 1;
 static const int32_t CAPTUREID_BEGIN = 1;
-static int32_t g_currentStreamId = STREAMID_BEGIN;
+static const int32_t STREAMID_MAX = INT32_MAX - 1000;
+static const int32_t CAPTUREID_MAX = INT32_MAX - 1000;
+static std::atomic<int32_t> g_currentStreamId = STREAMID_BEGIN;
 
 static std::atomic_int32_t g_currentCaptureId = CAPTUREID_BEGIN;
 
 static int32_t GenerateStreamId()
 {
     int newId = g_currentStreamId++;
-    if (newId == INT32_MAX) {
+    if (newId == STREAMID_MAX) {
         g_currentStreamId = STREAMID_BEGIN;
     }
     return newId;
@@ -69,7 +71,7 @@ static int32_t GenerateStreamId()
 static int32_t GenerateCaptureId()
 {
     int32_t newId = g_currentCaptureId++;
-    if (newId == INT32_MAX) {
+    if (newId == CAPTUREID_MAX) {
         g_currentCaptureId = CAPTUREID_BEGIN;
     }
     return newId;

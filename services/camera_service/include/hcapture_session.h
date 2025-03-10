@@ -130,8 +130,11 @@ public:
     bool QueryZoomBezierValue(std::vector<float>& zoomBezierValue);
     int32_t SetSmoothZoom(
         int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
+    void AddZoomAndTimeArray(
+        std::vector<uint32_t> &zoomAndTimeArray, std::vector<float> array, float frameIntervalMs, float waitTime);
     int32_t EnableMovingPhoto(bool isEnable) override;
     pid_t GetPid();
+    int32_t GetSessionId();
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     int32_t GetopMode();
 
@@ -232,6 +235,7 @@ private:
     #endif
     pid_t pid_ = 0;
     uid_t uid_ = 0;
+    int32_t sessionId_ = 0;
     uint32_t callerToken_ = 0;
     int32_t opMode_ = 0;
     int32_t featureMode_ = 0;

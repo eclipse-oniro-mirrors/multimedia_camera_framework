@@ -60,9 +60,15 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
     return cameraDeviceManager_;
 }
 
+size_t HCameraDeviceManager::GetActiveCamerasCount()
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveCamerasCount: %{public}zu", activeCameras_.size());
+    return activeCameras_.size();
+}
+
 void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
 {
-    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start, cameraID: %{public}s", device->GetCameraId().c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
     int32_t cost = 0;
     std::set<std::string> conflicting;
@@ -76,7 +82,7 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
     pidToCameras_[pid].push_back(cameraHolder);
     MEDIA_DEBUG_LOG("HCameraDeviceManager::AddDevice pidToCameras_ size: %{public}zu", pidToCameras_.size());
     activeCameras_.push_back(cameraHolder);
-    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end, cameraID: %{public}s", device->GetCameraId().c_str());
 }
 
 void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
