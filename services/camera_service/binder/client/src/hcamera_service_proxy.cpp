@@ -835,5 +835,19 @@ int32_t HCameraServiceProxy::RequireMemorySize(int32_t memSize)
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "RequireMemorySize, error: %{public}d", error);
     return error;
 }
+
+int32_t HCameraServiceProxy::SetDeviceRetryTime()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME),
+        data, reply, option);
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
