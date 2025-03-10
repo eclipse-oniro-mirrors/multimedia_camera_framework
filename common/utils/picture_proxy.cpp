@@ -93,6 +93,7 @@ void PictureProxy::Unmarshalling(Parcel &data)
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
     if (!pictureIntf) {
         MEDIA_ERR_LOG("PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
+        return;
     }
     pictureIntf->Unmarshalling(data);
 }

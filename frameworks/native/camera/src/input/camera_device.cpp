@@ -326,7 +326,7 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     uint32_t zoomRangeCount = 2;
     camera_metadata_item_t item;
 
-    CHECK_ERROR_RETURN_RET_LOG(cachedMetadata_ != nullptr, {},
+    CHECK_ERROR_RETURN_RET_LOG(cachedMetadata_ == nullptr, {},
         "Failed to get zoom ratio range with cachedMetadata_ is nullptr");
     ret = Camera::FindCameraMetadataItem(cachedMetadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},

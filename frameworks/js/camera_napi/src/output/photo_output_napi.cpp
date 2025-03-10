@@ -579,8 +579,8 @@ void PhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sanitize("c
         photoProxy->bufferHandle_ = bufferHandle;
 
         std::shared_ptr<PictureIntf> pictureProxy = PictureProxy::CreatePictureProxy();
-        pictureProxy->Create(newSurfaceBuffer);
         CHECK_ERROR_RETURN_LOG(pictureProxy == nullptr, "pictureProxy is nullptr");
+        pictureProxy->Create(newSurfaceBuffer);
 
         Media::ImageInfo imageInfo;
         MEDIA_INFO_LOG("PhotoListener AssembleAuxiliaryPhoto MainSurface w=%{public}d, h=%{public}d, f=%{public}d",
