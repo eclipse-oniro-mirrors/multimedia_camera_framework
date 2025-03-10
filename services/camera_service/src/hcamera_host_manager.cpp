@@ -900,12 +900,16 @@ int32_t HCameraHostManager::SetFlashlight(const std::string& cameraId, bool isEn
 
 int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string clientName)
 {
+    MEDIA_DEBUG_LOG("HCameraHostManager::Prelaunch start");
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::Prelaunch failed with invalid device info");
     sptr<HCameraRestoreParam> cameraRestoreParam = GetRestoreParam(clientName, cameraId);
     int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
-    if (foldStatus != cameraRestoreParam->GetFlodStatus()) {
+    int restoreFoldStatus = cameraRestoreParam->GetFlodStatus();
+    MEDIA_DEBUG_LOG("HCameraHostManager::Prelaunch foldStatus:%{public}d, restoreFoldStatus:%{public}d",
+        foldStatus, restoreFoldStatus);
+    if (foldStatus != restoreFoldStatus && restoreFoldStatus != 0) {
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
         return 0;
     }
