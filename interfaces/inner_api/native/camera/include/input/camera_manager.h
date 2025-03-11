@@ -817,6 +817,7 @@ public:
     std::unordered_map<std::string, CameraConcurrentLimtedCapability> cameraConLimCapMap_;
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
     friend int CameraInput::Open(int32_t cameraConcurrentType);
+    std::string GetFoldScreenType();
 
 protected:
     // Only for UT
