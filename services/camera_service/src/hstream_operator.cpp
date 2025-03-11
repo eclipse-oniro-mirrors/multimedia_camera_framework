@@ -571,7 +571,7 @@ int32_t HStreamOperator::CreateMovingPhotoStreamRepeat(
 const sptr<HStreamCommon> HStreamOperator::GetStreamByStreamID(int32_t streamId)
 {
     auto stream = streamContainer_.GetStream(streamId) != nullptr ? streamContainer_.GetStream(streamId) :
-        streamContainerOffine_.GetStream(streamId);
+        streamContainerOffline_.GetStream(streamId);
 
     CHECK_ERROR_PRINT_LOG(stream == nullptr,
         "HStreamOperator::GetStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
