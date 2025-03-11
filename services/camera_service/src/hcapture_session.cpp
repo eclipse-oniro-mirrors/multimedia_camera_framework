@@ -719,6 +719,7 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
             }
             if (isNeedUpdate) {
                 auto device = GetCameraDevice();
+                CHECK_ERROR_RETURN_LOG(device == nullptr, "HCaptureSession::SetColorSpace device is null");
                 std::shared_ptr<OHOS::Camera::CameraMetadata> settings = device->CloneCachedSettings();
                 MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() CloneCachedSettings");
                 DumpMetadata(settings);
