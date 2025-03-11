@@ -93,9 +93,10 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage() is"
         "called, status:%{public}s", imageId.c_str());
-    if (pictureIntf != nullptr) {
+    auto callback = deferredPhotoProcSession_->GetCallback();
+    if (pictureIntf != nullptr && callback != nullptr) {
         MEDIA_INFO_LOG("pictureIntf is not null");
-        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, pictureIntf);
+        callback->OnDeliveryLowQualityImage(imageId, pictureIntf);
     }
     return 0;
 }

@@ -2067,8 +2067,8 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
 
 void MovingPhotoMetaListener::OnBufferAvailable()
 {
-    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
     CHECK_ERROR_RETURN_LOG(!surface_, "streamRepeat surface is null");
+    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> buffer;

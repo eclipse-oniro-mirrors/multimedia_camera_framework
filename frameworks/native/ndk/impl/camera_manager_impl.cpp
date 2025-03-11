@@ -384,8 +384,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
     CHECK_ERROR_PRINT_LOG(!outCapability->supportedMetadataObjectTypes,
         "Failed to allocate memory for supportedMetadataObjectTypes");
     for (size_t index = 0; index < metadataTypeList.size(); index++) {
-        Camera_MetadataObjectType outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
-        outCapability->supportedMetadataObjectTypes[index] = &outmetadataObject;
+        Camera_MetadataObjectType* outmetadataObject = new Camera_MetadataObjectType {};
+        *outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
+        outCapability->supportedMetadataObjectTypes[index] = outmetadataObject;
     }
     return CAMERA_OK;
 }
@@ -433,40 +434,45 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode
 
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability)
 {
-    if (cameraOutputCapability != nullptr) {
-        if (cameraOutputCapability->previewProfiles != nullptr) {
-            for (size_t index = 0; index < cameraOutputCapability->previewProfilesSize; index++) {
-                if (cameraOutputCapability->previewProfiles[index] != nullptr) {
-                    delete cameraOutputCapability->previewProfiles[index];
-                }
+    CHECK_ERROR_RETURN_RET_LOG(cameraOutputCapability == nullptr, CAMERA_OK,
+        "Camera_Manager::DeleteSupportedCameraOutputCapability cameraOutputCapability is nullptr");
+
+    if (cameraOutputCapability->previewProfiles != nullptr) {
+        for (size_t index = 0; index < cameraOutputCapability->previewProfilesSize; index++) {
+            if (cameraOutputCapability->previewProfiles[index] != nullptr) {
+                delete cameraOutputCapability->previewProfiles[index];
             }
-            delete[] cameraOutputCapability->previewProfiles;
         }
-
-        if (cameraOutputCapability->photoProfiles != nullptr) {
-            for (size_t index = 0; index < cameraOutputCapability->photoProfilesSize; index++) {
-                if (cameraOutputCapability->photoProfiles[index] != nullptr) {
-                    delete cameraOutputCapability->photoProfiles[index];
-                }
-            }
-            delete[] cameraOutputCapability->photoProfiles;
-        }
-
-        if (cameraOutputCapability->videoProfiles != nullptr) {
-            for (size_t index = 0; index < cameraOutputCapability->videoProfilesSize; index++) {
-                if (cameraOutputCapability->videoProfiles[index] != nullptr) {
-                    delete cameraOutputCapability->videoProfiles[index];
-                }
-            }
-            delete[] cameraOutputCapability->videoProfiles;
-        }
-
-        if (cameraOutputCapability->supportedMetadataObjectTypes != nullptr) {
-            delete[] cameraOutputCapability->supportedMetadataObjectTypes;
-        }
-
-        delete cameraOutputCapability;
+        delete[] cameraOutputCapability->previewProfiles;
     }
+
+    if (cameraOutputCapability->photoProfiles != nullptr) {
+        for (size_t index = 0; index < cameraOutputCapability->photoProfilesSize; index++) {
+            if (cameraOutputCapability->photoProfiles[index] != nullptr) {
+                delete cameraOutputCapability->photoProfiles[index];
+            }
+        }
+        delete[] cameraOutputCapability->photoProfiles;
+    }
+
+    if (cameraOutputCapability->videoProfiles != nullptr) {
+        for (size_t index = 0; index < cameraOutputCapability->videoProfilesSize; index++) {
+            if (cameraOutputCapability->videoProfiles[index] != nullptr) {
+                delete cameraOutputCapability->videoProfiles[index];
+            }
+        }
+        delete[] cameraOutputCapability->videoProfiles;
+    }
+
+    if (cameraOutputCapability->supportedMetadataObjectTypes != nullptr) {
+        for (size_t index = 0; index < cameraOutputCapability->metadataProfilesSize; index++) {
+            if (cameraOutputCapability->supportedMetadataObjectTypes[index] != nullptr) {
+                delete cameraOutputCapability->supportedMetadataObjectTypes[index];
+            }
+        }
+        delete[] cameraOutputCapability->supportedMetadataObjectTypes;
+    }
+    delete cameraOutputCapability;
     return CAMERA_OK;
 }
 Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
