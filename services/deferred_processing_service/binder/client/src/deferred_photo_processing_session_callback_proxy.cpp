@@ -79,7 +79,7 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnDeliveryLowQualityImage(c
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(imageId);
-    DP_CHECK_ERROR_PRINT_LOG(picture == nullptr,
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, -1,
         "DeferredPhotoProcessingSessionCallbackProxy OnDeliveryLowQualityImage picture is nullptr");
     if (!picture->Marshalling(data)) {
         DP_ERR_LOG("OnDeliveryLowQualityImage Marshalling failed");
