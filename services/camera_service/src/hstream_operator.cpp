@@ -664,7 +664,7 @@ int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
     if (result != CAMERA_OK) {
         if (opMode_ == static_cast<int32_t>(SceneMode::VIDEO) && !isNeedUpdate) {
             MEDIA_ERR_LOG(
-                "HCaptrureSession::SetColorSpace() %{public}d, format and colorSpace : %{public}d not match.",
+                "HStreamOperator::SetColorSpace() %{public}d, format and colorSpace : %{public}d not match.",
                 result, colorSpace);
             currColorSpace_ = ColorSpace::BT709;
         } else {
@@ -746,20 +746,20 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
         if (!curStream) {
             continue;
         }
-        StreamInfo_V1_1 curStreamInfo;
-        curStream->SetStreamInfo(curStreamInfo);
         MEDIA_INFO_LOG("HCaptureSession::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStreamInfo.v1_0.format_);
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStream->format_);
         camera_format_t format = static_cast<camera_format_t>(curStreamInfo.v1_0.format_);
         if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            if (!(format == OHOS_CAMERA_FORMAT_YCRCB_420_SP || format == OHOS_CAMERA_FORMAT_JPEG ||
-                format == OHOS_CAMERA_FORMAT_HEIC)) {
+            if (!(curStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP ||
+                curStream->format_ == OHOS_CAMERA_FORMAT_JPEG ||
+                curStream->format_ == OHOS_CAMERA_FORMAT_HEIC)) {
                 MEDIA_ERR_LOG("HCaptureSession::CheckFormat, streamType: %{public}d, format not match",
                     curStream->GetStreamType());
                     return CAMERA_OPERATION_NOT_ALLOWED;
             }
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
-            if (!(format == OHOS_CAMERA_FORMAT_YCRCB_P010 || format == OHOS_CAMERA_FORMAT_YCBCR_P010)) {
+            if (!(curStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_P010 ||
+                curStream->format_ == OHOS_CAMERA_FORMAT_YCBCR_P010)) {
                 MEDIA_ERR_LOG("HCaptureSession::CheckFormat, streamType: %{public}d, format not match",
                     curStream->GetStreamType());
                 return CAMERA_OPERATION_NOT_ALLOWED;
