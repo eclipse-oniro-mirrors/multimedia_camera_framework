@@ -242,8 +242,10 @@ const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbili
 CameraPosition CameraDevice::GetPosition()
 {
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
+    auto foldType = CameraManager::GetInstance()->GetFoldScreenType();
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && cameraPosition_ == CAMERA_POSITION_FRONT &&
-        foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
+        (foldScreenType_ == CAMERA_FOLDSCREEN_INNER || foldStatus_ == OHOS_CAMERA_FOLD_STATUS_EXPANDED) &&
+        !foldType.empty() && (foldType[0] == '1' || foldType[0] == '4')) {
         cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
     }
     return cameraPosition_;
