@@ -75,6 +75,7 @@ private:
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_ = nullptr;
     Global::Resource::ResourceManager *resourceManager_ = nullptr;
     Global::Resource::ResConfig *resConfig_ = nullptr;
+    bool isNotificationSuccess_ = false;
 };
 
 } // namespace CameraStandard

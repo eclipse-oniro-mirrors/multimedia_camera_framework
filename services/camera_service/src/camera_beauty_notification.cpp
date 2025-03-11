@@ -60,6 +60,7 @@ sptr<CameraBeautyNotification> CameraBeautyNotification::GetInstance()
 void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
 {
     std::lock_guard<std::mutex> lock(notificationMutex_);
+    isNotificationSuccess_ = false;
     int32_t beautyStatus = GetBeautyStatus();
     int32_t beautyTimes = GetBeautyTimes();
     std::shared_ptr<Notification::NotificationContent> content =
@@ -105,6 +106,7 @@ void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
     SetActionButton(buttonName, request, beautyStatus);
     int ret = Notification::NotificationHelper::PublishNotification(request);
     MEDIA_INFO_LOG("CameraBeautyNotification::PublishNotification result = %{public}d", ret);
+    isNotificationSuccess_ = (ret == CAMERA_OK);
     if (ret == CAMERA_OK && isBanner && beautyTimes <= CONTROL_FLAG_LIMIT && isRecordTimes) {
         beautyTimes_.operator++();
         SetBeautyTimesFromDataShareHelper(GetBeautyTimes());
@@ -114,6 +116,10 @@ void CameraBeautyNotification::PublishNotification(bool isRecordTimes)
 void CameraBeautyNotification::CancelNotification()
 {
     std::lock_guard<std::mutex> lock(notificationMutex_);
+    if (!isNotificationSuccess_) {
+        return;
+    }
+    isNotificationSuccess_ = false;
     int ret = Notification::NotificationHelper::CancelNotification(BEAUTY_NOTIFICATION_ID);
     MEDIA_INFO_LOG("CameraBeautyNotification::CancelNotification result = %{public}d", ret);
 }

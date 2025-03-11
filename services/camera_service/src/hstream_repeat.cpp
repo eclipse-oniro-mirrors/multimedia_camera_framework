@@ -1008,9 +1008,6 @@ void HStreamRepeat::UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMet
 
 void HStreamRepeat::CancelNotification()
 {
-    if (!IsNeedBeautyNotification()) {
-        return;
-    }
     CameraBeautyNotification::GetInstance()->CancelNotification();
 }
 
