@@ -754,7 +754,7 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
                 curStream->format_ == OHOS_CAMERA_FORMAT_HEIC)) {
                 MEDIA_ERR_LOG("HCaptureSession::CheckFormat, streamType: %{public}d, format not match",
                     curStream->GetStreamType());
-                    return CAMERA_OPERATION_NOT_ALLOWED;
+                return CAMERA_OPERATION_NOT_ALLOWED;
             }
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
             if (!(curStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_P010 ||
