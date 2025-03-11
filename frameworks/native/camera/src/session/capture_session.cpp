@@ -131,7 +131,8 @@ const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType>
     {OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT, EFFECT_SUGGESTION_PORTRAIT},
     {OHOS_CAMERA_EFFECT_SUGGESTION_FOOD, EFFECT_SUGGESTION_FOOD},
     {OHOS_CAMERA_EFFECT_SUGGESTION_SKY, EFFECT_SUGGESTION_SKY},
-    {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET}
+    {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET},
+    {OHOS_CAMERA_EFFECT_SUGGESTION_STAGE, EFFECT_SUGGESTION_STAGE}
 };
 
 const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
@@ -140,7 +141,8 @@ const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
     {EFFECT_SUGGESTION_PORTRAIT, OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT},
     {EFFECT_SUGGESTION_FOOD, OHOS_CAMERA_EFFECT_SUGGESTION_FOOD},
     {EFFECT_SUGGESTION_SKY, OHOS_CAMERA_EFFECT_SUGGESTION_SKY},
-    {EFFECT_SUGGESTION_SUNRISE_SUNSET, OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET}
+    {EFFECT_SUGGESTION_SUNRISE_SUNSET, OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET},
+    {EFFECT_SUGGESTION_STAGE, OHOS_CAMERA_EFFECT_SUGGESTION_STAGE}
 };
 
 // WhiteBalanceMode
@@ -4726,7 +4728,10 @@ void CaptureSession::SetARCallback(std::shared_ptr<ARCallback> arCallback)
 bool CaptureSession::IsEffectSuggestionSupported()
 {
     MEDIA_DEBUG_LOG("Enter IsEffectSuggestionSupported");
-    return !this->GetSupportedEffectSuggestionType().empty();
+    bool isEffectSuggestionSupported = !this->GetSupportedEffectSuggestionType().empty();
+    MEDIA_DEBUG_LOG("IsEffectSuggestionSupported: %{public}s, ScenMode: %{public}d",
+        isEffectSuggestionSupported ? "true" : "false", GetMode());
+    return isEffectSuggestionSupported;
 }
 
 int32_t CaptureSession::EnableEffectSuggestion(bool isEnable)
@@ -4770,6 +4775,7 @@ EffectSuggestionInfo CaptureSession::GetSupportedEffectSuggestionInfo()
     std::shared_ptr<EffectSuggestionInfoParse> infoParse = std::make_shared<EffectSuggestionInfoParse>();
     MEDIA_INFO_LOG("CaptureSession::GetSupportedEffectSuggestionInfo item.count %{public}d", item.count);
     infoParse->GetEffectSuggestionInfo(item.data.i32, item.count, effectSuggestionInfo);
+    MEDIA_DEBUG_LOG("SupportedEffectSuggestionInfo: %{public}s", effectSuggestionInfo.to_string().c_str());
     return effectSuggestionInfo;
 }
 
@@ -4784,7 +4790,6 @@ std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionTy
         if (GetMode() != effectSuggestionInfo.modeInfo[i].modeType) {
             continue;
         }
-        MEDIA_DEBUG_LOG("CaptureSession::GetSupportedEffectSuggestionType modeType %{public}d found.", GetMode());
         std::vector<int32_t> effectSuggestionList = effectSuggestionInfo.modeInfo[i].effectSuggestionList;
         supportedEffectSuggestionList.reserve(effectSuggestionList.size());
         for (uint32_t j = 0; j < effectSuggestionList.size(); j++) {
@@ -4793,6 +4798,13 @@ std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionTy
             CHECK_EXECUTE(itr != metaEffectSuggestionTypeMap_.end(),
                 supportedEffectSuggestionList.emplace_back(itr->second));
         }
+        std::string supportedEffectSuggestionStr = std::accumulate(
+            supportedEffectSuggestionList.cbegin(), supportedEffectSuggestionList.cend(), std::string(),
+            [](const auto& prefix, const auto& item) {
+                return prefix + (prefix.empty() ? "" : ",") + std::to_string(item);
+            });
+        MEDIA_DEBUG_LOG("The SupportedEffectSuggestionType List of ScenMode: %{public}d is [%{public}s].", GetMode(),
+            supportedEffectSuggestionStr.c_str());
         return supportedEffectSuggestionList;
     }
     MEDIA_ERR_LOG("no effectSuggestionInfo for mode %{public}d", GetMode());

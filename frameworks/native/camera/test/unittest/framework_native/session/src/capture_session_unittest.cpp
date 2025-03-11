@@ -19,8 +19,12 @@
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_device_ability_items.h"
+#include "camera_metadata_operator.h"
 #include "camera_util.h"
 #include "gmock/gmock.h"
+#include "capture_scene_const.h"
+#include "capture_session.h"
 #include "hap_token_info.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -4474,6 +4478,506 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_016, TestSize
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
     EXPECT_EQ(session->Release(), 0);
+}
+
+
+/**
+ * @tc.name: capture_session_function_unittest_017
+ * @tc.desc: Test GetSupportedEffectSuggestionType in capture mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_017, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(nullptr, photoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    std::vector<EffectSuggestionType> expectedVec;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    session->UnlockForControl();
+    expectedVec =
+    {EffectSuggestionType::EFFECT_SUGGESTION_NONE, EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT,
+     EffectSuggestionType::EFFECT_SUGGESTION_FOOD, EffectSuggestionType::EFFECT_SUGGESTION_SKY,
+     EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET, EffectSuggestionType::EFFECT_SUGGESTION_STAGE};
+    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+
+    EXPECT_EQ(CAMERA_OK, photoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_018
+ * @tc.desc: Test GetSupportedEffectSuggestionType with stage ability enabled in video mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_018, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(nullptr, videoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    std::vector<EffectSuggestionType> expectedVec;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {2, 1, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    session->UnlockForControl();
+
+    expectedVec =
+    {EffectSuggestionType::EFFECT_SUGGESTION_STAGE};
+
+    EXPECT_EQ(expectedVec, session->GetSupportedEffectSuggestionType());
+
+    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_019
+ * @tc.desc: Test IsEffectSuggestionSupported with stage ability enabled in capture mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_019, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(nullptr, photoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(false, session->IsEffectSuggestionSupported());
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    session->UnlockForControl();
+    EXPECT_EQ(true, session->IsEffectSuggestionSupported());
+
+    EXPECT_EQ(CAMERA_OK, photoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_020
+ * @tc.desc: Test IsEffectSuggestionSupported with stage ability enabled in video mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_020, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(nullptr, videoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(false, session->IsEffectSuggestionSupported());
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {2, 1, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    session->UnlockForControl();
+    EXPECT_EQ(true, session->IsEffectSuggestionSupported());
+
+    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_021
+ * @tc.desc: Test EnableEffectSuggestion with stage ability enabled in capture mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_021, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(nullptr, photoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(true));
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(false));
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(true));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    ASSERT_EQ(1, metaData.count);
+    EXPECT_EQ(true, metaData.data.u8[0]);
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(false));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    ASSERT_EQ(1, metaData.count);
+    EXPECT_EQ(false, metaData.data.u8[0]);
+
+    EXPECT_EQ(CAMERA_OK, photoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_022
+ * @tc.desc: Test IsEffectSuggestionSupported with stage ability enabled in video mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_022, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(nullptr, videoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(true));
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->EnableEffectSuggestion(false));
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {2, 1, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(true));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    ASSERT_EQ(1, metaData.count);
+    EXPECT_EQ(true, metaData.data.u8[0]);
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->EnableEffectSuggestion(false));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &metaData);
+    ASSERT_EQ(1, metaData.count);
+    EXPECT_EQ(false, metaData.data.u8[0]);
+
+    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_023
+ * @tc.desc: Test SetEffectSuggestionStatus with stage ability enabled in capture mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_023, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(nullptr, photoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+    std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {
+        {EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true},
+        {EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT, false}};
+    std::vector<uint8_t> expectedVec = {5, 1, 1, 0};
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
+    ASSERT_EQ(expectedVec.size(), metaData.count);
+    for (size_t i = 0; i < expectedVec.size(); i++) {
+        EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
+    }
+
+    EXPECT_EQ(CAMERA_OK, photoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_024
+ * @tc.desc: Test SetEffectSuggestionStatus with stage ability enabled in video mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_024, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(nullptr, videoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+    std::vector<EffectSuggestionStatus> effectSuggestionStatusList = {
+        {EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true}};
+    std::vector<uint8_t> expectedVec = {5, 1};
+
+    Camera::DeleteCameraMetadataItem(session->GetMetadata()->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED);
+    EXPECT_EQ(OPERATION_NOT_ALLOWED, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {2, 1, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->SetEffectSuggestionStatus(effectSuggestionStatusList));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &metaData);
+    ASSERT_EQ(expectedVec.size(), metaData.count);
+    for (size_t i = 0; i < expectedVec.size(); i++) {
+        EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
+    }
+
+    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_025
+ * @tc.desc: Test UpdateEffectSuggestion with stage ability enabled in capture mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_025, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::CAPTURE, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile_[0]);
+    ASSERT_NE(nullptr, photoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(photoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+    std::vector<uint8_t> expectedVec = {5, 1};
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {1, 6, 0, 1, 2, 3, 4, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 9);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
+    ASSERT_EQ(expectedVec.size(), metaData.count);
+    for (size_t i = 0; i < expectedVec.size(); i++) {
+        EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
+    }
+
+    EXPECT_EQ(CAMERA_OK, photoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
+}
+
+/**
+ * @tc.name: capture_session_function_unittest_026
+ * @tc.desc: Test SetEffectSuggestionStatus with stage ability enabled in video mode
+ * @tc.type: FUNC
+ * @tc.require: AR20250222876922
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_function_unittest_026, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(nullptr, session);
+    ASSERT_EQ(SceneMode::VIDEO, session->GetMode());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(nullptr, input);
+    ASSERT_EQ(CAMERA_OK, input->Open());
+
+    UpdataCameraOutputCapability();
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile_[0]);
+    ASSERT_NE(nullptr, videoOutput);
+
+    ASSERT_EQ(CAMERA_OK, session->BeginConfig());
+    ASSERT_EQ(CAMERA_OK, session->AddInput(input));
+    ASSERT_EQ(CAMERA_OK, session->AddOutput(videoOutput));
+    ASSERT_EQ(CAMERA_OK, session->CommitConfig());
+
+    std::vector<uint32_t> vec;
+    camera_metadata_item_t metaData;
+    std::vector<uint8_t> expectedVec = {5, 1};
+
+    session->LockForControl();
+    ASSERT_NE(nullptr, session->changedMetadata_);
+    vec = {2, 1, 5, -1};
+    session->changedMetadata_->addEntry(OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, vec.data(), 4);
+    session->UnlockForControl();
+
+    session->LockForControl();
+    EXPECT_EQ(CAMERA_OK, session->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_STAGE, true));
+    session->UnlockForControl();
+    Camera::FindCameraMetadataItem(session->GetMetadata()->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &metaData);
+    ASSERT_EQ(expectedVec.size(), metaData.count);
+    for (size_t i = 0; i < expectedVec.size(); i++) {
+        EXPECT_EQ(expectedVec[i], metaData.data.u8[i]);
+    }
+
+    EXPECT_EQ(CAMERA_OK, videoOutput->Release());
+    EXPECT_EQ(CAMERA_OK, input->Close());
+    EXPECT_EQ(CAMERA_OK, session->Release());
 }
 }
 }
