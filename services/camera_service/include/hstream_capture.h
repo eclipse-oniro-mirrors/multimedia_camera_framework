@@ -93,7 +93,6 @@ public:
     int32_t SetMovingPhotoVideoCodecType(int32_t videoCodecType) override;
     int32_t GetMovingPhotoVideoCodecType();
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
-    void FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
     SafeMap<int32_t, int32_t> rotationMap_ = {};
     bool IsBurstCapture(int32_t captureId) const;
     bool IsBurstCover(int32_t captureId) const;
@@ -129,6 +128,8 @@ private:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> cameraPhotoProxy);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
+    void FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
+    void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     int32_t rawDeliverySwitch_;

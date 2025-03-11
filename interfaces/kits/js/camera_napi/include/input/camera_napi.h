@@ -105,6 +105,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_JPEG", CameraFormat::CAMERA_FORMAT_JPEG},
     {"CAMERA_FORMAT_RGBA_8888", CameraFormat::CAMERA_FORMAT_RGBA_8888},
     {"CAMERA_FORMAT_DNG", CameraFormat::CAMERA_FORMAT_DNG},
+    {"CAMERA_FORMAT_DNG_XDRAW", CameraFormat::CAMERA_FORMAT_DNG_XDRAW},
     {"CAMERA_FORMAT_YCBCR_P010", CameraFormat::CAMERA_FORMAT_YCBCR_P010},
     {"CAMERA_FORMAT_YCRCB_P010", CameraFormat::CAMERA_FORMAT_YCRCB_P010},
     {"CAMERA_FORMAT_HEIC", CameraFormat::CAMERA_FORMAT_HEIC},

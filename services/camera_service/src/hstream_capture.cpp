@@ -23,6 +23,7 @@
 #include "camera_server_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
+#include "camera/v1_4/types.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -86,7 +87,7 @@ int32_t HStreamCapture::LinkInput(sptr<HDI::Camera::V1_0::IStreamOperator> strea
     return HStreamCommon::LinkInput(streamOperator, cameraAbility);
 }
 
-void HStreamCapture::FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format)
+void HStreamCapture::FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format)
 {
     HDI::Camera::V1_1::ExtendedStreamInfo gainmapExtendedStreamInfo = {
         .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_GAINMAP),
@@ -124,30 +125,9 @@ void HStreamCapture::FullfillPictureExtendStreamInfos(StreamInfo_V1_1 &streamInf
         extendedStreams.begin(), extendedStreams.end());
 }
 
-void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
+void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
-    HStreamCommon::SetStreamInfo(streamInfo);
-    MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo streamId:%{public}d format:%{public}d", GetFwkStreamId(), format_);
-    streamInfo.v1_0.intent_ = STILL_CAPTURE;
-    if (format_ == OHOS_CAMERA_FORMAT_HEIC) {
-        streamInfo.v1_0.encodeType_ =
-            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
-        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
-    } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
-        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
-        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
-        if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
-            FullfillPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
-        }
-        if (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_P3_FULL; // HDR photo need P3 for captureStream
-        } else if (dataSpace_ == CM_BT709_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_SRGB_FULL; // video session need SRGB for captureStream
-        }
-    } else {
-        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
-    }
-    if (rawDeliverySwitch_) {
+    if (rawDeliverySwitch_ && format_ != OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
         HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
             .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
@@ -173,6 +153,35 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         };
         streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
+}
+
+void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
+{
+    HStreamCommon::SetStreamInfo(streamInfo);
+    MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo streamId:%{public}d format:%{public}d", GetFwkStreamId(), format_);
+    streamInfo.v1_0.intent_ = STILL_CAPTURE;
+    if (format_ == OHOS_CAMERA_FORMAT_HEIC) {
+        streamInfo.v1_0.encodeType_ =
+            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
+        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
+    } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+        streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
+        if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
+            FillingPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
+        }
+        if (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_P3_FULL; // HDR photo need P3 for captureStream
+        } else if (dataSpace_ == CM_BT709_LIMIT) {
+            streamInfo.v1_0.dataspace_ = CM_SRGB_FULL; // video session need SRGB for captureStream
+        }
+    } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
+        streamInfo.v1_0.encodeType_ =
+            static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
+    } else {
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
+    }
+    FillingRawAndThumbnailStreamInfo(streamInfo);
 }
 
 int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)

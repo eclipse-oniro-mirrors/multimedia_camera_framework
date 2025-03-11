@@ -27,6 +27,7 @@ using namespace Media;
 constexpr const char* prefix = "IMG_";
 constexpr const char* suffixJpeg = "jpg";
 constexpr const char* suffixHeif = "heic";
+constexpr const char* suffixDng = "dng";
 constexpr const char* connector = "_";
 constexpr const char* burstTag = "BURST";
 constexpr const char* coverTag = "_COVER";
@@ -52,7 +53,8 @@ static const std::map<int32_t, PhotoFormat> formatMap = {
     {0, PhotoFormat::RGBA},
     {1, PhotoFormat::JPG},
     {2, PhotoFormat::HEIF},
-    {3, PhotoFormat::YUV}
+    {3, PhotoFormat::YUV},
+    {4, PhotoFormat::DNG},
 };
 
 std::string CreateDisplayName();

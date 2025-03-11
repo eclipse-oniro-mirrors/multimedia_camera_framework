@@ -227,8 +227,24 @@ std::string CameraServerPhotoProxy::GetTitle()
 
 std::string CameraServerPhotoProxy::GetExtension()
 {
-    return (GetFormat() == PhotoFormat::HEIF) ? suffixHeif : suffixJpeg;
+    std::string suffix = suffixJpeg;
+    switch (GetFormat()) {
+        case PhotoFormat::HEIF : {
+            suffix = suffixHeif;
+            break;
+        }
+        case PhotoFormat::DNG : {
+            suffix = suffixDng;
+            break;
+        }
+        default: {
+            suffix = suffixJpeg;
+            break;
+        }
+    }
+    return suffix;
 }
+
 double CameraServerPhotoProxy::GetLatitude()
 {
     return latitude_;
