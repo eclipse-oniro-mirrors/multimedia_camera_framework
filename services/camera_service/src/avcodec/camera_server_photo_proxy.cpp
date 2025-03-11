@@ -49,6 +49,7 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     burstKey_ = "";
     isCoverPhoto_ = false;
     imageFormat_ = 0;
+    cloudImageEnhanceFlag_ = 0;
 }
 
 CameraServerPhotoProxy::~CameraServerPhotoProxy()
@@ -127,6 +128,7 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     captureId_ = parcel.ReadInt32();
     burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
+    cloudImageEnhanceFlag_ = parcel.ReadUint32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
 }
@@ -267,5 +269,12 @@ void CameraServerPhotoProxy::SetBurstInfo(std::string burstKey, bool isCoverPhot
     isCoverPhoto_ = isCoverPhoto;
     isHighQuality_ = true; // tell media lib disable deferred photo
 }
+
+uint32_t CameraServerPhotoProxy::GetCloudImageEnhanceFlag()
+{
+    MEDIA_DEBUG_LOG("%{public}s get value: %{public}u", __FUNCTION__, cloudImageEnhanceFlag_);
+    return cloudImageEnhanceFlag_;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -34,6 +34,7 @@ public:
     void WriteToParcel(MessageParcel &parcel);
     void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize, int32_t imageFormat);
     void SetLocation(double latitude, double longitude);
+    void SetCloudImageEnhanceFlag(uint32_t cloudImageEnhanceFlag);
     int32_t CameraFreeBufferHandle();
 
     BufferHandle* bufferHandle_;

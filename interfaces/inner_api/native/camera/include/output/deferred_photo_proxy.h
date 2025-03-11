@@ -54,6 +54,7 @@ public:
     void Release() override;
     std::string GetBurstKey() override;
     bool IsCoverPhoto() override;
+    uint32_t GetCloudImageEnhanceFlag() override;
 
 private:
     uint8_t* buffer_;
