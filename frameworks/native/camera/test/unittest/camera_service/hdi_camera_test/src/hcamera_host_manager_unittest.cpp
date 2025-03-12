@@ -292,6 +292,5 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
     cameraHostManager_->DeInit();
     input->Close();
 }
-
 }
 }

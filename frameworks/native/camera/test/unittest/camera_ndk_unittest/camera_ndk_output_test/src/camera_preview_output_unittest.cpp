@@ -174,6 +174,8 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_003, TestSi
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(cameraInput, nullptr);
@@ -182,6 +184,14 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_003, TestSi
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_PreviewOutput_GetSupportedFrameRates(nullptr, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, nullptr, &size);
@@ -190,21 +200,14 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_003, TestSi
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
-        ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
+    if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
+        ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_PreviewOutput_DeleteFrameRates(previewOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -254,6 +257,8 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_005, TestSi
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(&cameraInput, nullptr);
@@ -262,25 +267,26 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_005, TestSi
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
-    ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, &frameRateRange, &size);
-    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, &frameRateRange, &size);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_FrameRateRange activeframeRateRange;
+    ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
+    EXPECT_EQ(ret, CAMERA_OK);
     if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
         ret = OH_PreviewOutput_SetFrameRate(nullptr, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
         ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_OK);
     }
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_FrameRateRange activeframeRateRange;
-    ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
-    EXPECT_EQ(ret, CAMERA_OK);
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_PreviewOutput_DeleteFrameRates(previewOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -308,6 +314,8 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_006, TestSi
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     ASSERT_NE(&cameraInput, nullptr);
@@ -316,19 +324,15 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_006, TestSi
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
-    ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, &frameRateRange, &size);
-    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
-        ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
     ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_GetSupportedFrameRates(previewOutput, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_PreviewOutput_GetActiveFrameRate(nullptr, &activeframeRateRange);
@@ -337,6 +341,11 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_006, TestSi
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_PreviewOutput_GetActiveFrameRate(previewOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
+    if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
+        ret = OH_PreviewOutput_SetFrameRate(previewOutput, minFps, maxFps);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_PreviewOutput_DeleteFrameRates(previewOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
