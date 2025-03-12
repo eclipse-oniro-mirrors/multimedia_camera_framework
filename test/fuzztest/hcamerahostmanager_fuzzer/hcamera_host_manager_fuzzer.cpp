@@ -76,20 +76,15 @@ void HCameraHostManagerFuzzer::HCameraHostManagerFuzzTest1()
     }
     wptr<HCameraHostManager> hostManager =nullptr;
     std::shared_ptr<HCameraHostManager::StatusCallback> statusCallback = std::make_shared<StatusCallbackDemo>();
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCameraHostManager>(statusCallback);
-    }
+    fuzz_ = std::make_shared<HCameraHostManager>(statusCallback);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string cameraId(testStrings[randomNum % testStrings.size()]);
-    fuzz_->Init();
     bool isEnable = GetData<bool>();
-    fuzz_->AddCameraHost(cameraId);
-    fuzz_->RemoveCameraHost(HCameraHostManager::LOCAL_SERVICE_NAME);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     fuzz_->GetCameraAbility(cameraId, ability);
     fuzz_->SetFlashlight(cameraId, isEnable);
-    fuzz_->DeInit();
 }
 
 void Test()

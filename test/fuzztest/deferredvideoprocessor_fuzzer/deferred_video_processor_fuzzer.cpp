@@ -70,22 +70,19 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest()
         return;
     }
     int32_t userId = GetData<int32_t>();
-    std::shared_ptr<VideoJobRepository> repository;
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    if (repository == nullptr) {
-        repository = std::make_shared<VideoJobRepository>(userId);
-    }
+    std::shared_ptr<VideoJobRepository> repository = std::make_shared<VideoJobRepository>(userId);
+    CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
     repository->SetJobFailed(videoId);
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
-    if (center_ == nullptr) {
-        center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
-    }
+    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
+    CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
     fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);

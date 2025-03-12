@@ -27,7 +27,7 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-std::shared_ptr<CameraWindowManagerClient> CameraWindowManagerClientFuzzer::fuzz_{nullptr};
+sptr<CameraWindowManagerClient> CameraWindowManagerClientFuzzer::fuzz_{nullptr};
 std::shared_ptr<CameraWindowManagerClient::WMSSaStatusChangeCallback>
     CameraWindowManagerClientFuzzer::callback_{nullptr};
 
@@ -67,22 +67,21 @@ void CameraWindowManagerClientFuzzer::CameraWindowManagerClientFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraWindowManagerClient>();
-    }
+    fuzz_ = CameraWindowManagerClient::GetInstance();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     pid_t pid;
     int32_t systemAbilityId = GetData<int32_t>();
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string deviceId(testStrings[randomNum % testStrings.size()]);
-    fuzz_->GetInstance();
+    fuzz_->InitWindowProxy();
     fuzz_->GetFocusWindowInfo(pid);
     fuzz_->GetWindowManagerAgent();
-    fuzz_->UnregisterWindowManagerAgent();
     if (callback_ == nullptr) {
         callback_ = std::make_shared<CameraWindowManagerClient::WMSSaStatusChangeCallback>();
     }
     callback_->OnRemoveSystemAbility(systemAbilityId, deviceId);
+    fuzz_->UnregisterWindowManagerAgent();
 }
 
 void Test()

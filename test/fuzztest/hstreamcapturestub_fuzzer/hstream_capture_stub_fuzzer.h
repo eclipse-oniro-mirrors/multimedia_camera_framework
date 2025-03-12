@@ -118,7 +118,14 @@ public:
 static std::shared_ptr<HStreamCaptureStubFuzz> fuzz_;
 static void HStreamCaptureStubFuzzTest1();
 static void HStreamCaptureStubFuzzTest2();
-static void OnRemoteRequest(int32_t code);
+static void HStreamCaptureStubFuzzTest3();
+static void HStreamCaptureStubFuzzTest4();
+static void HStreamCaptureStubFuzzTest5();
+static void HStreamCaptureStubFuzzTest6();
+static void HStreamCaptureStubFuzzTest7();
+static void HStreamCaptureStubFuzzTest8();
+static void HStreamCaptureStubFuzzTest9();
+static void HStreamCaptureStubFuzzTest10();
 };
 } //CameraStandard
 } //OHOS

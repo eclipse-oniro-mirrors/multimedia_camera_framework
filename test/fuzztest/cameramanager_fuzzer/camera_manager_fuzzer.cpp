@@ -78,9 +78,8 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (manager == nullptr) {
-        manager = CameraManager::GetInstance();
-    }
+    manager = CameraManager::GetInstance();
+    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     auto session = manager->CreateCaptureSession();
     manager->CreateCaptureSession(&session);
     int userId = GetData<int>();
@@ -126,9 +125,8 @@ void CameraManagerFuzzer::CameraManagerFuzzTest2()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (manager == nullptr) {
-        manager = CameraManager::GetInstance();
-    }
+    manager = CameraManager::GetInstance();
+    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     std::string cameraId;
     manager->GetCameraDeviceFromId(cameraId);
     manager->GetCameras();
@@ -164,9 +162,8 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (manager == nullptr) {
-        manager = CameraManager::GetInstance();
-    }
+    manager = CameraManager::GetInstance();
+    CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     ITorchServiceCallbackFuzz torchServiceCallback;
     TorchStatus torchStatus = TorchStatus::TORCH_STATUS_ON;
     torchServiceCallback.OnTorchStatusChange(torchStatus);

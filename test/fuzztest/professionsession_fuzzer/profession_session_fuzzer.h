@@ -23,7 +23,7 @@ namespace CameraStandard {
 
 class ProfessionSessionFuzzer {
 public:
-static ProfessionSession *fuzz_;
+static sptr<ProfessionSession> fuzz_;
 
 static void ProfessionSessionFuzzTest1();
 static void ProfessionSessionFuzzTest2();

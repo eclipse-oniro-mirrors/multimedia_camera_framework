@@ -73,9 +73,8 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    if (repository == nullptr) {
-        repository = std::make_shared<VideoJobRepository>(userId);
-    }
+    repository = std::make_shared<VideoJobRepository>(userId);
+    CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
@@ -83,9 +82,8 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
-    }
+    fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetWork();
     fuzz_->GetJob();
     fuzz_->GetExecutionMode();
@@ -95,9 +93,6 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest()
     fuzz_->HandleScreenEvent(value);
     fuzz_->HandleChargingEvent(value);
     fuzz_->HandleBatteryEvent(value);
-    auto isNeedReset = GetData<bool>();
-    auto useTime = GetData<int32_t>();
-    fuzz_->UpdateAvailableTime(isNeedReset, useTime);
 }
 
 void Test()

@@ -38,12 +38,13 @@ ohos_fuzztest("CameraReportDfxUtilsFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_report_dfx_uitls.cpp",
-    "camera_report_dfx_utils_fuzzer.cpp",
+  sources = [ "camera_report_dfx_utils_fuzzer.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 
-  deps = [ "../../../frameworks/native/camera:camera_framework" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

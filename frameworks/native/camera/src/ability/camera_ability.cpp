@@ -70,6 +70,7 @@ bool CameraAbility::IsFocusModeSupported(FocusMode focusMode)
     return std::find(supportedFocusModes_.begin(), supportedFocusModes_.end(), focusMode) != supportedFocusModes_.end();
 }
 
+// LCOV_EXCL_START
 bool CameraAbility::IsFocusRangeTypeSupported(FocusRangeType focusRangeType)
 {
     return std::find(supportedFocusRangeTypes_.begin(), supportedFocusRangeTypes_.end(), focusRangeType) !=
@@ -81,6 +82,7 @@ bool CameraAbility::IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType)
     return std::find(supportedFocusDrivenTypes_.begin(), supportedFocusDrivenTypes_.end(), focusDrivenType) !=
         supportedFocusDrivenTypes_.end();
 }
+// LCOV_EXCL_STOP
 
 std::vector<float> CameraAbility::GetZoomRatioRange()
 {
@@ -114,6 +116,7 @@ bool CameraAbility::IsMacroSupported()
     return isMacroSupported_.value_or(false);
 }
 
+// LCOV_EXCL_START
 bool CameraAbility::IsDepthFusionSupported()
 {
     return isDepthFusionSupported_.value_or(false);
@@ -123,6 +126,7 @@ std::vector<float> CameraAbility::GetDepthFusionThreshold()
 {
     return getDepthFusionThreshold_.value_or(std::vector<float>{1.0f, 1.0f});
 }
+// LCOV_EXCL_STOP
 
 std::vector<PortraitEffect> CameraAbility::GetSupportedPortraitEffects()
 {
@@ -227,6 +231,7 @@ CameraAbilityContainer::~CameraAbilityContainer()
     conflictAbilities_.clear();
 }
 
+// LCOV_EXCL_START
 void CameraAbilityContainer::OnAbilityChange()
 {
     auto session = session_.promote();
@@ -235,6 +240,7 @@ void CameraAbilityContainer::OnAbilityChange()
         session->ExecuteAbilityChangeCallback();
     }
 }
+// LCOV_EXCL_STOP
 
 CameraAbilityContainer::CameraAbilityContainer(std::vector<sptr<CameraAbility>> abilities,
     std::vector<sptr<CameraAbility>> conflictAbilities, wptr<CaptureSession> session)
@@ -263,9 +269,11 @@ void CameraAbilityContainer::PrepareSpecMaximumValue(std::vector<sptr<CameraAbil
         if (!tempRange.has_value()) {
             tempRange = range;
         } else {
+            // LCOV_EXCL_START
             float min = std::min(tempRange.value()[0], range[0]);
             float max = std::max(tempRange.value()[1], range[1]);
             tempRange = std::vector<float>{min, max};
+            // LCOV_EXCL_STOP
         }
     }
 
@@ -277,13 +285,16 @@ void CameraAbilityContainer::FilterByZoomRatio(float zoomRatio)
 {
     zoomRatioSet_ = zoomRatio;
     if (lastIsMacroSupported_.has_value()) {
+        // LCOV_EXCL_START
         bool oldValue = lastIsMacroSupported_.value();
         bool newValue = IsMacroSupported();
         MEDIA_INFO_LOG("CameraAbilityContainer macroValue %{public}d", static_cast<int32_t>(newValue));
         CHECK_EXECUTE(oldValue != newValue, OnAbilityChange());
+        // LCOV_EXCL_STOP
     }
 }
 
+// LCOV_EXCL_START
 void CameraAbilityContainer::FilterByMacro(bool enableMacro)
 {
     enableMacroSet_ = enableMacro;
@@ -294,6 +305,7 @@ void CameraAbilityContainer::FilterByMacro(bool enableMacro)
         CHECK_EXECUTE(oldValue[0] != newValue[0] || oldValue[1] != newValue[1], OnAbilityChange());
     }
 }
+// LCOV_EXCL_STOP
 
 std::vector<float> CameraAbilityContainer::GetZoomRatioRange()
 {

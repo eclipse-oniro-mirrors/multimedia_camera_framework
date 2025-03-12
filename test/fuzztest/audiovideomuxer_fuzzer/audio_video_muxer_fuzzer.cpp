@@ -66,9 +66,8 @@ void AudioVideoMuxerFuzzer::AudioVideoMuxerFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<AudioVideoMuxer>();
-    }
+    fuzz_ = std::make_shared<AudioVideoMuxer>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     OH_AVOutputFormat outputFormat = AV_OUTPUT_FORMAT_MPEG_4;
     fuzz_->Create(outputFormat, nullptr);
     std::shared_ptr<OHOS::Media::AVBuffer> sample = std::make_shared<OHOS::Media::AVBuffer>();

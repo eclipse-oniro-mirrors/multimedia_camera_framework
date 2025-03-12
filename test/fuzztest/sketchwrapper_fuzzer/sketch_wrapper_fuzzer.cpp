@@ -82,20 +82,19 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest1()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        auto cameraManager_ = CameraManager::GetInstance();
-        CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-        Size previewSize;
-        previewSize.width = PREVIEW_WIDTH_1;
-        previewSize.height = PREVIEW_HEIGHT_1;
-        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-        Profile previewProfile = Profile(previewFormat, previewSize);
-        sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
-        Size sketchSize;
-        sketchSize.width = PREVIEW_WIDTH_2;
-        sketchSize.height = PREVIEW_HEIGHT_2;
-        fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
-    }
+    auto cameraManager_ = CameraManager::GetInstance();
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = PREVIEW_WIDTH_1;
+    previewSize.height = PREVIEW_HEIGHT_1;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    Size sketchSize;
+    sketchSize.width = PREVIEW_WIDTH_2;
+    sketchSize.height = PREVIEW_HEIGHT_2;
+    fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     sptr<CaptureSession> session = CameraManager::GetInstance()->CreateCaptureSession();
@@ -124,20 +123,19 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest2()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        auto cameraManager_ = CameraManager::GetInstance();
-        CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-        Size previewSize;
-        previewSize.width = PREVIEW_WIDTH_1;
-        previewSize.height = PREVIEW_HEIGHT_1;
-        sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-        Profile previewProfile = Profile(previewFormat, previewSize);
-        sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
-        Size sketchSize;
-        sketchSize.width = PREVIEW_WIDTH_2;
-        sketchSize.height = PREVIEW_HEIGHT_2;
-        fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
-    }
+    auto cameraManager_ = CameraManager::GetInstance();
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = PREVIEW_WIDTH_1;
+    previewSize.height = PREVIEW_HEIGHT_1;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    Size sketchSize;
+    sketchSize.width = PREVIEW_WIDTH_2;
+    sketchSize.height = PREVIEW_HEIGHT_2;
+    fuzz_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), sketchSize);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
         std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
     sptr<CaptureSession> session = CameraManager::GetInstance()->CreateCaptureSession();

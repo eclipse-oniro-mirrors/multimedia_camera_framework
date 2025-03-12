@@ -38,7 +38,7 @@ static size_t g_pos;
 const int NUM_10 = 10;
 const int NUM_100 = 100;
 
-HCameraDevice *HCameraDeviceFuzzer::fuzz_ = nullptr;
+sptr<HCameraDevice> HCameraDeviceFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -74,12 +74,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1()
 {
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
-    }
-    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
-    if (fuzz_ == nullptr) {
-        std::string cameraId;
-        uint32_t callingTokenId = GetData<uint32_t>();
-        fuzz_ = new HCameraDevice(cameraHostManager, cameraId, callingTokenId);
     }
     fuzz_->GetDeviceMuteMode();
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
@@ -119,12 +113,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        std::string cameraId;
-        const uint32_t callingTokenId = GetData<uint32_t>();
-        sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
-        fuzz_ = new HCameraDevice(cameraHostManager, cameraId, callingTokenId);
-    }
     fuzz_->Close();
     fuzz_->CheckPermissionBeforeOpenDevice();
     fuzz_->HandlePrivacyBeforeOpenDevice();
@@ -142,12 +130,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3()
 {
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
-    }
-    std::string cameraId;
-    const uint32_t callingTokenId = GetData<uint32_t>();
-    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
-    if (fuzz_ == nullptr) {
-        fuzz_ = new HCameraDevice(cameraHostManager, cameraId, callingTokenId);
     }
     fuzz_->GetCameraId();
     fuzz_->GetCameraType();
@@ -194,12 +176,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest4()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    std::string cameraId;
-    uint32_t callingTokenId = GetData<uint32_t>();
-    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
-    if (fuzz_ == nullptr) {
-        fuzz_ = new HCameraDevice(cameraHostManager, cameraId, callingTokenId);
-    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
@@ -223,6 +199,12 @@ void Test()
         MEDIA_INFO_LOG("dcameraDevice is null");
         return;
     }
+    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
+    std::string cameraId;
+    uint32_t callingTokenId = GetData<uint32_t>();
+    HCameraDeviceFuzzer::fuzz_ = new (std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callingTokenId);
+    CHECK_ERROR_RETURN_LOG(!HCameraDeviceFuzzer::fuzz_, "CreateFuzz Error");
     dcameraDevice->HCameraDeviceFuzzTest1();
     dcameraDevice->HCameraDeviceFuzzTest2();
     dcameraDevice->HCameraDeviceFuzzTest3();

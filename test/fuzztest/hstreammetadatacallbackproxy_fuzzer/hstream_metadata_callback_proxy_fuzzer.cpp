@@ -66,10 +66,9 @@ void HStreamMetadataCallbackProxyFuzzer::HStreamMetadataCallbackProxyFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        sptr<IRemoteObject> impl;
-        fuzz_ = std::make_shared<HStreamMetadataCallbackProxy>(impl);
-    }
+    sptr<IRemoteObject> impl;
+    fuzz_ = std::make_shared<HStreamMetadataCallbackProxy>(impl);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t streamId = GetData<int32_t>();
     const std::shared_ptr<OHOS::Camera::CameraMetadata> result;
     fuzz_->OnMetadataResult(streamId, result);

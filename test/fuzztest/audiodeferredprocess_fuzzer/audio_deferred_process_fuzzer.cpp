@@ -63,19 +63,18 @@ void AudioDeferredProcessFuzzer::AudioDeferredProcessFuzzerTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (audioDeferredProcess == nullptr) {
-        audioDeferredProcess = std::make_shared<AudioDeferredProcess>();
-    }
+    audioDeferredProcess_ = std::make_shared<AudioDeferredProcess>();
+    CHECK_ERROR_RETURN_LOG(!audioDeferredProcess_, "Create audioDeferredProcess_ Error");
 
     AudioStreamInfo inputOptions;
     AudioStreamInfo outputOptions;
-    audioDeferredProcess->GetOfflineEffectChain();
-    audioDeferredProcess->StoreOptions(inputOptions, outputOptions);
-    audioDeferredProcess->GetOneUnprocessedSize();
+    audioDeferredProcess_->GetOfflineEffectChain();
+    audioDeferredProcess_->StoreOptions(inputOptions, outputOptions);
+    audioDeferredProcess_->GetOneUnprocessedSize();
     vector<sptr<AudioRecord>> audioRecords{};
     vector<sptr<AudioRecord>> processedRecords{};
-    audioDeferredProcess->Process(audioRecords, processedRecords);
-    audioDeferredProcess->Release();
+    audioDeferredProcess_->Process(audioRecords, processedRecords);
+    audioDeferredProcess_->Release();
 }
 
 void Test()

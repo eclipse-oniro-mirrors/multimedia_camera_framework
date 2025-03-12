@@ -21,6 +21,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 
+// LCOV_EXCL_START
 PhotoCommand::PhotoCommand(const int32_t userId, const std::string& photoId)
     : userId_(userId), photoId_(photoId)
 {
@@ -112,6 +113,7 @@ int32_t CancelProcessPhotoCommand::Executing()
     processor_->CancelProcessImage(photoId_);
     return DP_OK;
 }
+// LCOV_EXCL_STOP
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

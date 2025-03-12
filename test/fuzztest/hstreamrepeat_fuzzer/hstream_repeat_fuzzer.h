@@ -117,7 +117,7 @@ public:
 class HStreamRepeatFuzzer {
 public:
 static bool hasPermission;
-static HStreamRepeat *fuzz_;
+static std::shared_ptr<HStreamRepeat> fuzz_;
 static void HStreamRepeatFuzzTest1();
 static void HStreamRepeatFuzzTest2();
 static void HStreamRepeatFuzzTest3();

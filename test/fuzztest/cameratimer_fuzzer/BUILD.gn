@@ -36,7 +36,7 @@ ohos_fuzztest("CameraTimerFuzzTest") {
 
   sources = [ "camera_timer_fuzzer.cpp" ]
 
-  deps = [ "../../../services/camera_service:camera_service" ]
+  deps = [ "${multimedia_camera_framework_path}/services/camera_service:camera_service" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

@@ -33,7 +33,8 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraTimerFuzzer::hasPermission = false;
-CameraTimer *CameraTimerFuzzer::fuzz_ = nullptr;
+
+std::shared_ptr<CameraTimer> CameraTimerFuzzer::fuzz_{nullptr};
 
 void CameraTimerFuzzer::CheckPermission()
 {
@@ -58,9 +59,8 @@ void CameraTimerFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = CameraTimer::GetInstance();
-    }
+    fuzz_ = CameraTimer::GetInstance();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
 

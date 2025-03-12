@@ -37,7 +37,7 @@ static size_t g_pos;
 
 const int32_t NUM_FOUR = 4;
 const int32_t NUM_THREE = 3;
-ProfessionSession *ProfessionSessionFuzzer::fuzz_ = nullptr;
+sptr<ProfessionSession> ProfessionSessionFuzzer::fuzz_{nullptr};
 sptr<CameraManager> manager_;
 
 /*
@@ -180,6 +180,7 @@ void Test()
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
     ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    CHECK_ERROR_RETURN_LOG(!ProfessionSessionFuzzer::fuzz_, "Create fuzz_ Error");
     SceneMode sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
     std::vector<sptr<CameraDevice>> cameras;
     cameras = manager_->GetSupportedCameras();

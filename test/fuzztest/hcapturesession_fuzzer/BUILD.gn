@@ -71,40 +71,13 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcapture_session_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/adapter/bms_adapter.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_capturer_session.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_deferred_process.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_encoder.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_video_muxer.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/avcodec_task_manager.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/common/frame_record.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/moving_photo_video_cache.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/sample_callback.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/video_encoder.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_info_dumper.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_timer.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_util.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_report_dfx_uitls.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_report_uitls.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/hcapture_session.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/hstream_common.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/media_library/photo_asset_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/moving_photo/moving_photo_surface_wrapper.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/smooth_zoom/cubic_bezier.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/smooth_zoom/smooth_zoom.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/src/hcamera_session_manager.cpp",
-    "hcapture_session_fuzzer.cpp",
-  ]
+  sources = [ "hcapture_session_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
-    "../../../frameworks/native/camera:camera_framework",
   ]
 
   external_deps = [

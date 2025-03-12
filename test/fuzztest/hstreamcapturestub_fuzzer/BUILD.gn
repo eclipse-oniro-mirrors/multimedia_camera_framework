@@ -64,9 +64,8 @@ ohos_fuzztest("HStreamCaptureStubFuzzTest") {
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
   ]
   external_deps = [
     "ability_base:want",

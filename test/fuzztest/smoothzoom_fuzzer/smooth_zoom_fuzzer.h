@@ -24,7 +24,7 @@ namespace CameraStandard {
 class SmoothZoomFuzzer {
 public:
 static bool hasPermission;
-static SmoothZoom *fuzz_;
+static std::share_ptr<SmoothZoom> fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();

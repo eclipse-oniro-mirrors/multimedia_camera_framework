@@ -66,9 +66,8 @@ void CommandServerFuzzer::CommandServerFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CommandServer>();
-    }
+    fuzz_ = std::make_shared<CommandServer>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t threadPriority = GetData<int32_t>();
     fuzz_->SetThreadPriority(threadPriority);
     fuzz_->GetThreadPriority();

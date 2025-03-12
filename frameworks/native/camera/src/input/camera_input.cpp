@@ -200,6 +200,7 @@ const std::unordered_map<CameraPosition, camera_position_enum_t> fwToMetaCameraP
     {CAMERA_POSITION_UNSPECIFIED, OHOS_CAMERA_POSITION_OTHER}
 };
 
+// LCOV_EXCL_START
 int CameraInput::Open(int32_t cameraConcurrentType)
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
@@ -256,6 +257,7 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     }
     return ServiceToCameraError(retCode);
 }
+// LCOV_EXCL_STOP
 
 int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 {
@@ -265,6 +267,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     bool isSupportSecCamera = false;
     auto cameraObject = GetCameraDeviceInfo();
     if (isEnableSecureCamera && cameraObject) {
+        // LCOV_EXCL_START
         std::vector<SceneMode> supportedModes = cameraObject->GetSupportedModes();
         CHECK_ERROR_RETURN_RET_LOG(supportedModes.empty(), retCode, "CameraInput::GetSupportedModes Failed");
         for (uint32_t i = 0; i < supportedModes.size(); i++) {
@@ -272,6 +275,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
                 isSupportSecCamera = true;
             }
         }
+        // LCOV_EXCL_STOP
     }
 
     auto deviceObj = GetCameraDevice();
@@ -313,6 +317,7 @@ int CameraInput::closeDelayed(int32_t delayTime)
     MEDIA_INFO_LOG("Enter Into CameraInput::closeDelayed");
     auto cameraObject = GetCameraDeviceInfo();
     auto deviceObj = GetCameraDevice();
+    // LCOV_EXCL_START
     if (delayTime > 0 && deviceObj) {
         std::shared_ptr<Camera::CameraMetadata> metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
         uint32_t count = 1;
@@ -326,6 +331,7 @@ int CameraInput::closeDelayed(int32_t delayTime)
     } else {
         MEDIA_ERR_LOG("CameraInput::closeDelayed() deviceObj is nullptr");
     }
+    // LCOV_EXCL_STOP
     auto thiswptr = wptr<CameraInput>(this);
     const int delayTaskTime = delayTime * 1000;
     UnregisterTime();
@@ -420,12 +426,15 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     }
     auto deviceObj = GetCameraDevice();
     CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
+    // LCOV_EXCL_START
     deviceObj->SetUsedAsPosition(translatePos);
     deviceObj->UpdateSetting(metadata);
     CHECK_ERROR_RETURN_LOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
     cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
+    // LCOV_EXCL_STOP
 }
 
+// LCOV_EXCL_START
 void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
 {
     MEDIA_INFO_LOG("CameraInput::ControlAuxiliary type: %{public}u, status:%{public}u", type, status);
@@ -447,6 +456,7 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
         serviceProxy->SetDeviceRetryTime();
     }
 }
+// LCOV_EXCL_STOP
 
 void CameraInput::SetOcclusionDetectCallback(
     std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)

@@ -24,7 +24,7 @@ namespace CameraStandard {
 class AudioDeferredProcessFuzzer {
 public:
     void AudioDeferredProcessFuzzerTest();
-    std::shared_ptr<AudioDeferredProcess> audioDeferredProcess{nullptr};
+    std::shared_ptr<AudioDeferredProcess> audioDeferredProcess_{nullptr};
 };
 
 } //CameraStandard

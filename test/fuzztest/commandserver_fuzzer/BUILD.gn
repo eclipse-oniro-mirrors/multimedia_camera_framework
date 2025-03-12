@@ -38,14 +38,13 @@ ohos_fuzztest("CommandServerFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/base/command_server/command_server_impl.cpp",
-    "command_server_fuzzer.cpp",
+  sources = [ "command_server_fuzzer.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
   ]
 
-  deps = [ "../../../frameworks/native/camera:camera_framework" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

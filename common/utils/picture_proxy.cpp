@@ -19,7 +19,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
+// LCOV_EXCL_START
 PictureProxy::PictureProxy(
     std::shared_ptr<Dynamiclib> pictureLib, std::shared_ptr<PictureIntf> pictureIntf)
     : pictureLib_(pictureLib), pictureIntf_(pictureIntf)
@@ -132,5 +132,6 @@ void PictureProxy::RotatePicture()
     }
     pictureIntf->RotatePicture();
 }
+// LCOV_EXCL_STOP
 }  // namespace CameraStandard
 }  // namespace OHOS

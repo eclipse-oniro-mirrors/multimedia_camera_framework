@@ -73,13 +73,12 @@ ohos_fuzztest("AudioCapturerSessionFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_capturer_session.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_deferred_process.cpp",
-    "audio_capturer_session_fuzzer.cpp",
-  ]
+  sources = [ "audio_capturer_session_fuzzer.cpp" ]
 
-  deps = [ "../../../frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
 
   external_deps = [
     "ability_base:want",

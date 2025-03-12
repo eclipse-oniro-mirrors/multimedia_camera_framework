@@ -76,10 +76,9 @@ void DeferredVideoProcessingSessionProxyFuzzer::DeferredVideoProcessingSessionPr
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        sptr<IRemoteObject> object;
-        fuzz_ = std::make_shared<DeferredVideoProcessingSessionProxy>(object);
-    }
+    sptr<IRemoteObject> object;
+    fuzz_ = std::make_shared<DeferredVideoProcessingSessionProxy>(object);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->BeginSynchronize();
     fuzz_->EndSynchronize();
     uint8_t randomNum = GetData<uint8_t>();

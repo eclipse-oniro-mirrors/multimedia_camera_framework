@@ -24,7 +24,7 @@ namespace CameraStandard {
 class CubicBezierFuzzer {
 public:
 static bool hasPermission;
-static CubicBezier *fuzz_;
+static std::shared_ptr<CubicBezier> fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();

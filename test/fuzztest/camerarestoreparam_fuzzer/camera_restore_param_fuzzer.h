@@ -24,7 +24,7 @@ namespace CameraStandard {
 class CameraRestoreParamFuzzer {
 public:
 static bool hasPermission;
-static HCameraRestoreParam *fuzz_;
+static std::shared_ptr<HCameraRestoreParam> fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();

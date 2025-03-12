@@ -61,18 +61,12 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src/output/camera_photo_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/camera_server_photo_proxy.cpp",
-    "hstream_capture_fuzzer.cpp",
-  ]
+  sources = [ "hstream_capture_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
   ]
   external_deps = [
     "ability_base:want",

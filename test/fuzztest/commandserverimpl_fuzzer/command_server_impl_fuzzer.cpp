@@ -66,12 +66,11 @@ void CommandServerImplFuzzer::CommandServerImplFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        uint8_t randomNum = GetData<uint8_t>();
-        std::vector<std::string> testStrings = {"test1", "test2"};
-        std::string cmdServerName(testStrings[randomNum % testStrings.size()]);
-        fuzz_ = std::make_shared<CommandServerImpl>(cmdServerName);
-    }
+    uint8_t randomNum = GetData<uint8_t>();
+    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::string cmdServerName(testStrings[randomNum % testStrings.size()]);
+    fuzz_ = std::make_shared<CommandServerImpl>(cmdServerName);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t threadPriority = GetData<int32_t>();
     fuzz_->SetThreadPriority(threadPriority);
     fuzz_->GetThreadPriority();

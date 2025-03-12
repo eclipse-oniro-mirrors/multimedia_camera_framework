@@ -67,9 +67,8 @@ void CameraDemuxerFuzzer::CameraDemuxerFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<Demuxer>();
-    }
+    fuzz_ = std::make_shared<Demuxer>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<AVSourceTest> source = std::make_shared<AVSourceTest>();
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;
     fuzz_->Create(source, tracks);

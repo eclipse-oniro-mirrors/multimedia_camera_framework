@@ -37,7 +37,7 @@ ohos_fuzztest("CameraRestoreParamFuzzTest") {
 
   sources = [ "camera_restore_param_fuzzer.cpp" ]
 
-  deps = [ "../../../services/camera_service:camera_service" ]
+  deps = [ "${multimedia_camera_framework_path}/services/camera_service:camera_service" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

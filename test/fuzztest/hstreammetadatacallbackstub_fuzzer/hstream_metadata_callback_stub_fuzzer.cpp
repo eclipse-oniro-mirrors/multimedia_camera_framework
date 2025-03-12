@@ -72,9 +72,8 @@ void HStreamMetadataCallbackStubFuzzer::OnRemoteRequest(int32_t code)
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HStreamMetadataCallbackStubFuzz>();
-    }
+    fuzz_ = std::make_shared<HStreamMetadataCallbackStubFuzz>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel reply;
     MessageOption option;
     MessageParcel dataMessageParcel;

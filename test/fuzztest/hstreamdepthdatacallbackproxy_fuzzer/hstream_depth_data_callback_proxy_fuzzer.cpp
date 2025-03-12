@@ -72,17 +72,16 @@ void HStreamDepthDataCallbackProxyFuzzer::HStreamDepthDataCallbackProxyFuzzTest(
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        if (samgr == nullptr) {
-            return;
-        }
-        sptr<IRemoteObject> impl = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-        if (impl == nullptr) {
-            return;
-        }
-        fuzz_ = std::make_shared<HStreamDepthDataCallbackProxy>(impl);
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        return;
     }
+    sptr<IRemoteObject> impl = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (impl == nullptr) {
+        return;
+    }
+    fuzz_ = std::make_shared<HStreamDepthDataCallbackProxy>(impl);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 }
 
 void Test()
