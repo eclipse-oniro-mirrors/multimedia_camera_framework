@@ -84,8 +84,10 @@ public:
     void SetBurstInfo(std::string burstKey, bool isCoverPhoto);
     int32_t GetCaptureId();
     int32_t GetBurstSeqId();
+    uint32_t GetCloudImageEnhanceFlag() override;
 
 private:
+    uint32_t cloudImageEnhanceFlag_;
     BufferHandle* bufferHandle_;
     int32_t format_;
     int32_t photoWidth_;

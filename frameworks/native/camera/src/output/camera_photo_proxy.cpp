@@ -112,6 +112,7 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     captureId_ = parcel.ReadInt32();
     burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
+    cloudImageEnhanceFlag_ = parcel.ReadUint32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -152,6 +153,7 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
     parcel.WriteInt32(captureId_);
     parcel.WriteInt32(burstSeqId_);
     parcel.WriteInt32(imageFormat_);
+    parcel.WriteUint32(cloudImageEnhanceFlag_);
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);
         bool ret = WriteBufferHandle(parcel, *bufferHandle_);
@@ -181,5 +183,13 @@ void CameraPhotoProxy::SetLocation(double latitude, double longitude)
     latitude_ = latitude;
     longitude_ = longitude;
 }
+
+void CameraPhotoProxy::SetCloudImageEnhanceFlag(uint32_t cloudImageEnhanceFlag)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_DEBUG_LOG("%{public}s set value: %{public}u", __FUNCTION__, cloudImageEnhanceFlag);
+    cloudImageEnhanceFlag_ = cloudImageEnhanceFlag;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -227,5 +227,11 @@ int32_t DeferredPhotoProxy::GetShootingMode()
 {
     return 0;
 }
+
+uint32_t DeferredPhotoProxy::GetCloudImageEnhanceFlag()
+{
+    return 0;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
