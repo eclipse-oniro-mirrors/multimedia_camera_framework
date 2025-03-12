@@ -71,9 +71,8 @@ void CameraAbilityBuilderFuzzer::CameraAbilityBuilderFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraAbilityBuilder>();
-    }
+    fuzz_ = std::make_shared<CameraAbilityBuilder>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     sptr<CameraAbility> ability;
     sptr<CaptureSession> session;
     fuzz_->SetOtherTag(ability, GetData<int32_t>(), session);

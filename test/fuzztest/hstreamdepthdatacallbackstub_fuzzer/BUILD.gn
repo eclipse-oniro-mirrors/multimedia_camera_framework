@@ -60,16 +60,12 @@ ohos_fuzztest("HStreamDepthDataCallbackStubFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_callback_stub.cpp",
-    "hstream_depth_data_callback_stub_fuzzer.cpp",
-  ]
+  sources = [ "hstream_depth_data_callback_stub_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
   ]
   external_deps = [
     "ability_base:want",

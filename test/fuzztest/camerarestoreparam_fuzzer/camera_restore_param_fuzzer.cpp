@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CameraRestoreParamFuzzer::hasPermission = false;
-HCameraRestoreParam *CameraRestoreParamFuzzer::fuzz_ = nullptr;
+std::shared_ptr<HCameraRestoreParam> CameraRestoreParamFuzzer::fuzz_{nullptr};
 
 void CameraRestoreParamFuzzer::CheckPermission()
 {
@@ -58,11 +58,10 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        std::string clientName;
-        std::string cameraId;
-        fuzz_ = new HCameraRestoreParam(clientName, cameraId);
-    }
+    std::string clientName;
+    std::string cameraId;
+    fuzz_ = std::make_shared<HCameraRestoreParam>(clientName, cameraId);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     
     MessageParcel data;
     data.WriteRawData(rawData, size);

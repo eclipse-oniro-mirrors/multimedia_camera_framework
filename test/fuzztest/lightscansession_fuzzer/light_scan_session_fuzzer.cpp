@@ -69,12 +69,11 @@ void LightScanSessionFuzzer::LightPaintingSessionFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzzLight_ == nullptr) {
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
     auto lightPaintingSession = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
     fuzzLight_ = lightPaintingSession;
-    }
+    CHECK_ERROR_RETURN_LOG(!fuzzLight_, "Create fuzzLight_ Error");
 
     std::vector<LightPaintingType> supportedType;
     fuzzLight_->GetSupportedLightPaintings(supportedType);
@@ -88,12 +87,11 @@ void LightScanSessionFuzzer::ScanSessionFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzzScan_ == nullptr) {
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
     sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
     fuzzScan_ = scanSession;
-    }
+    CHECK_ERROR_RETURN_LOG(!fuzzScan_, "Create fuzzScan_ Error");
     fuzzScan_->BeginConfig();
     sptr<CaptureOutput> preview = nullptr;
     fuzzScan_->AddOutput(preview);

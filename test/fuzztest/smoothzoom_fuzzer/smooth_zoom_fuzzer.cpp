@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool SmoothZoomFuzzer::hasPermission = false;
-SmoothZoom *SmoothZoomFuzzer::fuzz_ = nullptr;
+std::shared_ptr<SmoothZoom> SmoothZoomFuzzer::fuzz_{nullptr};
 
 void SmoothZoomFuzzer::CheckPermission()
 {
@@ -58,9 +58,8 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = new SmoothZoom();
-    }
+    fuzz_ = std::make_shared<SmoothZoom>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
 

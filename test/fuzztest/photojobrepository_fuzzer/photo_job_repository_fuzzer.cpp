@@ -67,10 +67,9 @@ void PhotoJobRepositoryFuzzer::PhotoJobRepositoryFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        int32_t userId = GetData<int32_t>();
-        fuzz_ = std::make_shared<PhotoJobRepository>(userId);
-    }
+    int32_t userId = GetData<int32_t>();
+    fuzz_ = std::make_shared<PhotoJobRepository>(userId);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string imageId(testStrings[randomNum % testStrings.size()]);

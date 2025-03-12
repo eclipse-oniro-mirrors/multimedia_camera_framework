@@ -64,8 +64,7 @@ void HStreamDepthDataProxyFuzzer::HStreamDepthDataProxyFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        auto mgr = OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    auto mgr = OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (mgr == nullptr) {
         return;
     }
@@ -73,8 +72,8 @@ void HStreamDepthDataProxyFuzzer::HStreamDepthDataProxyFuzzTest()
     if (object == nullptr) {
         return;
     }
-        fuzz_ = std::make_shared<HStreamDepthDataProxy>(object);
-    }
+    fuzz_ = std::make_shared<HStreamDepthDataProxy>(object);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Start();
     fuzz_->Stop();
     fuzz_->Release();

@@ -42,7 +42,7 @@ const int32_t ITEM_CAP = 10;
 const int32_t DATA_CAP = 100;
 
 bool g_hasPermission = false;
-HStreamCaptureStub *fuzz_ = nullptr;
+std::shared_ptr<HStreamCaptureStub> fuzz_{nullptr};
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
 {
@@ -95,12 +95,11 @@ void Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
-        sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        fuzz_ = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    }
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
     Test_OnRemoteRequest(rawData, size);
     Test_HandleCapture(rawData, size);

@@ -73,14 +73,11 @@ ohos_fuzztest("AudioDeferredProcessFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_deferred_process.cpp",
-    "audio_deferred_process_fuzzer.cpp",
-  ]
+  sources = [ "audio_deferred_process_fuzzer.cpp" ]
 
   deps = [
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 
   external_deps = [

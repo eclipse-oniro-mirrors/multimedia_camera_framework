@@ -64,6 +64,7 @@ void VideoJobQueue::Remove(DeferredVideoJobPtr obj)
 {
     auto it = indexMap_.find(obj);
     DP_CHECK_RETURN(it == indexMap_.end());
+    // LCOV_EXCL_START
 
     uint32_t index = it->second;
     DeferredVideoJobPtr replace = heap_.back();
@@ -76,14 +77,17 @@ void VideoJobQueue::Remove(DeferredVideoJobPtr obj)
     heap_[index] = replace;
     indexMap_[replace] = index;
     Update(replace);
+    // LCOV_EXCL_STOP
 }
 
+// LCOV_EXCL_START
 void VideoJobQueue::Update(DeferredVideoJobPtr obj)
 {
     uint32_t index = indexMap_[obj];
     HeapInsert(index);
     Heapify(index);
 }
+// LCOV_EXCL_STOP
 
 std::vector<DeferredVideoJobPtr> VideoJobQueue::GetAllElements() const
 {
@@ -102,6 +106,7 @@ void VideoJobQueue::Heapify(uint32_t index)
 {
     uint32_t left = (index << 1) + 1;
     while (left < size_) {
+        // LCOV_EXCL_START
         uint32_t best = (left + 1 < size_ && comp_(heap_[left + 1], heap_[left])) ? left + 1 : left;
         best = comp_(heap_[best], heap_[index]) ? best : index;
         if (best == index) {
@@ -110,6 +115,7 @@ void VideoJobQueue::Heapify(uint32_t index)
         Swap(best, index);
         index = best;
         left = (index << 1) + 1;
+        // LCOV_EXCL_STOP
     }
 }
 

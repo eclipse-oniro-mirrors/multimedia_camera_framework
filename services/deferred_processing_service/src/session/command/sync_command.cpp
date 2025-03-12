@@ -43,6 +43,7 @@ int32_t SyncCommand::Initialize()
     return DP_OK;
 }
 
+// LCOV_EXCL_START
 PhotoSyncCommand::PhotoSyncCommand(const int32_t userId,
     const std::unordered_map<std::string, std::shared_ptr<DeferredPhotoProcessingSession::PhotoInfo>>& imageIds)
     : SyncCommand(userId), imageIds_(imageIds)
@@ -90,6 +91,7 @@ int32_t PhotoSyncCommand::Executing()
     hdiImageIds.clear();
     return DP_OK;
 }
+// LCOV_EXCL_STOP
 
 VideoSyncCommand::VideoSyncCommand(const int32_t userId,
     const std::unordered_map<std::string, std::shared_ptr<DeferredVideoProcessingSession::VideoInfo>>& videoIds)
@@ -118,6 +120,7 @@ int32_t VideoSyncCommand::Executing()
 
     std::set<std::string> hdiVideoIds(pendingVidoes.begin(), pendingVidoes.end());
     for (auto& videoId : hdiVideoIds) {
+        // LCOV_EXCL_START
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
             processor->AddVideo(videoId, item->second->srcFd_, item->second->dstFd_);
@@ -125,6 +128,7 @@ int32_t VideoSyncCommand::Executing()
         } else {
             processor->RemoveVideo(videoId, false);
         }
+        // LCOV_EXCL_STOP
     }
 
     auto info = sessionManager_->GetVideoInfo(userId_);

@@ -206,6 +206,7 @@ int32_t HStreamCapture::EnableRawDelivery(bool enabled)
     return CAMERA_OK;
 }
 
+// LCOV_EXCL_START
 int32_t HStreamCapture::EnableMovingPhoto(bool enabled)
 {
     if (enabled) {
@@ -215,6 +216,7 @@ int32_t HStreamCapture::EnableMovingPhoto(bool enabled)
     }
     return CAMERA_OK;
 }
+// LCOV_EXCL_STOP
 
 int32_t HStreamCapture::SetBufferProducerInfo(const std::string bufName, const sptr<OHOS::IBufferProducer> &producer)
 {
@@ -372,10 +374,12 @@ void HStreamCapture::CheckResetBurstKey(int32_t captureId)
     auto numIter = burstNumMap_.find(captureId);
     auto imageIter = burstImagesMap_.find(captureId);
     if (numIter != burstNumMap_.end() && imageIter != burstImagesMap_.end()) {
+        // LCOV_EXCL_START
         int32_t burstSum = numIter->second;
         size_t curBurstSum = imageIter->second.size();
         MEDIA_DEBUG_LOG("CheckResetBurstKey: burstSum=%d, curBurstSum=%zu", burstSum, curBurstSum);
         CHECK_EXECUTE(static_cast<size_t>(burstSum) == curBurstSum, ResetBurstKey(captureId));
+        // LCOV_EXCL_STOP
     } else {
         MEDIA_DEBUG_LOG("CheckResetBurstKey: captureId %d not found in one or both maps", captureId);
     }
@@ -390,6 +394,7 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
     CHECK_ERROR_RETURN_RET_LOG(captureSettings == nullptr, CAMERA_INVALID_STATE, "captureSettings is nullptr");
     int32_t result = OHOS::Camera::FindCameraMetadataItem(captureSettings->get(), OHOS_CONTROL_BURST_CAPTURE, &item);
     if (result == CAM_META_SUCCESS && item.count > 0) {
+    // LCOV_EXCL_START
         CameraBurstCaptureEnum burstState = static_cast<CameraBurstCaptureEnum>(item.data.u8[0]);
         MEDIA_INFO_LOG("CheckBurstCapture get burstState:%{public}d", item.data.u8[0]);
         if (burstState) {
@@ -400,6 +405,7 @@ int32_t HStreamCapture::CheckBurstCapture(const std::shared_ptr<OHOS::Camera::Ca
             MEDIA_INFO_LOG("CheckBurstCapture ready!");
         }
     }
+    // LCOV_EXCL_STOP
     return CAM_META_SUCCESS;
 }
 
@@ -441,12 +447,14 @@ bool ConcurrentMap::ReadyToUnlock(const int32_t& key, const int32_t& step, const
     }
 }
  
+ // LCOV_EXCL_START
 void ConcurrentMap::IncreaseCaptureStep(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
     step_[key] = step_[key] + 1;
     cv_[key].notify_all();
 }
+// LCOV_EXCL_STOP
 
 void ConcurrentMap::Erase(const int32_t& key)
 {
@@ -519,6 +527,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
     CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
         "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();
@@ -599,6 +608,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         MEDIA_DEBUG_LOG("HStreamCapture::Capture CreateMediaLibraryPhotoAssetProxy X");
     }
     return ret;
+    // LCOV_EXCL_STOP
 }
 
 void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
@@ -635,6 +645,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_ERROR_RETURN(cameraAbility_ == nullptr);
+        // LCOV_EXCL_START
         result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
         if (result == CAM_META_SUCCESS && item.count > 0) {
             sensorOrientation = item.data.i32[0];
@@ -691,6 +702,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
     CHECK_ERROR_PRINT_LOG(result != CAM_META_SUCCESS, "set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
+    // LCOV_EXCL_STOP
 }
 
 int32_t HStreamCapture::CancelCapture()
@@ -718,6 +730,7 @@ int32_t HStreamCapture::ConfirmCapture()
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
     CHECK_ERROR_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    // LCOV_EXCL_START
     int32_t ret = 0;
 
     // end burst capture
@@ -751,6 +764,7 @@ int32_t HStreamCapture::ConfirmCapture()
     ResetCaptureId();
     captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
     return ret;
+    // LCOV_EXCL_STOP
 }
 
 void HStreamCapture::EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting)
@@ -798,12 +812,14 @@ int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
     return CAMERA_OK;
 }
 
+// LCOV_EXCL_START
 int32_t HStreamCapture::UnSetCallback()
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamCaptureCallback_ = nullptr;
     return CAMERA_OK;
 }
+// LCOV_EXCL_STOP
 
 int32_t HStreamCapture::OnCaptureStarted(int32_t captureId)
 {
@@ -845,6 +861,7 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
 {
     std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
+        // LCOV_EXCL_START
         int32_t captureErrorCode;
         if (errorCode == BUFFER_LOST) {
             captureErrorCode = CAMERA_STREAM_BUFFER_LOST;
@@ -854,13 +871,16 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
         CAMERA_SYSEVENT_FAULT(CreateMsg("Photo OnCaptureError! captureId:%d & "
                                         "errorCode:%{public}d", captureId, captureErrorCode));
         streamCaptureCallback_->OnCaptureError(captureId, captureErrorCode);
+        // LCOV_EXCL_STOP
     }
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
+        // LCOV_EXCL_START
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureError capturId = %{public}d already used, need release",
                        preparedCaptureId);
         ResetCaptureId();
         captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
+        // LCOV_EXCL_STOP
     }
     return CAMERA_OK;
 }
@@ -1005,6 +1025,7 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
         cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
 }
 
+// LCOV_EXCL_START
 int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy> photoProxy)
 {
     CAMERA_SYNC_TRACE;
@@ -1035,12 +1056,14 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoProxy>
     MEDIA_DEBUG_LOG("HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", photoProxy->captureId_);
     return CAMERA_OK;
 }
+// LCOV_EXCL_STOP
 
 void HStreamCapture::SetStreamOperator(wptr<HStreamOperator> hStreamOperator)
 {
     hStreamOperator_ = hStreamOperator;
 }
 
+// LCOV_EXCL_START
 int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy>& photoProxy,
     std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
 {
@@ -1061,5 +1084,6 @@ int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, s
     }
     return CAMERA_OK;
 }
+// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

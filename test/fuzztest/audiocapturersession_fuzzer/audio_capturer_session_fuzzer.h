@@ -27,7 +27,7 @@ using namespace DeferredProcessing;
 class AudioCapturerSessionFuzzer {
 public:
     void AudioCapturerSessionFuzzerTest();
-    std::shared_ptr<AudioCapturerSession> audioCapturerSession{nullptr};
+    std::shared_ptr<AudioCapturerSession> audioCapturerSession_{nullptr};
 };
 
 } //CameraStandard

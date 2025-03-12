@@ -61,22 +61,12 @@ ohos_fuzztest("HStreamDepthDataFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hstream_depth_data_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/adapter/bms_adapter.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_info_dumper.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_util.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_report_uitls.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/hstream_common.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/hstream_depth_data.cpp",
-    "hstream_depth_data_fuzzer.cpp",
-  ]
+  sources = [ "hstream_depth_data_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
   ]
   external_deps = [
     "ability_base:want",

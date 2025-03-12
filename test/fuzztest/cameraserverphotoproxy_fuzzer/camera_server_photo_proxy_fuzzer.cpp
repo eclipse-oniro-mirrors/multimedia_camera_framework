@@ -64,9 +64,8 @@ void CameraServerPhotoProxyFuzzer::CameraServerPhotoProxyFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraServerPhotoProxy>();
-    }
+    fuzz_ = std::make_shared<CameraServerPhotoProxy>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     fuzz_->bufferHandle_ = static_cast<BufferHandle *>(malloc(handleSize));
     fuzz_->imageFormat_ = GetData<int32_t>();

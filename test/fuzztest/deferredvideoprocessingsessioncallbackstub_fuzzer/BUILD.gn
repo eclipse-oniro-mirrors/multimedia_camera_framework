@@ -71,16 +71,10 @@ ohos_fuzztest("DeferredVideoProcessingSessionCallBackStubFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_callback_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_video_processing_session_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_video_processing_session_callback_stub.cpp",
-    "../../../services/deferred_processing_service/src/base/buffer_info.cpp",
-    "../../../services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
-    "deferred_video_processing_session_callback_stub_fuzzer.cpp",
-  ]
+  sources = [ "deferred_video_processing_session_callback_stub_fuzzer.cpp" ]
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
   ]

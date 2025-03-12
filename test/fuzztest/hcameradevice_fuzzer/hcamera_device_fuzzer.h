@@ -68,7 +68,7 @@ public:
 class HCameraDeviceFuzzer {
 public:
 static bool hasPermission;
-static HCameraDevice *fuzz_;
+static sptr<HCameraDevice> fuzz_;
 static void HCameraDeviceFuzzTest1();
 static void HCameraDeviceFuzzTest2();
 static void HCameraDeviceFuzzTest3();

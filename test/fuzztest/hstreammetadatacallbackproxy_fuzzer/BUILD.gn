@@ -37,12 +37,13 @@ ohos_fuzztest("HStreamMetadataCallbackProxyFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/hstream_metadata_callback_proxy.cpp",
-    "hstream_metadata_callback_proxy_fuzzer.cpp",
+  sources = [ "hstream_metadata_callback_proxy_fuzzer.cpp" ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]
 
-  deps = [ "../../../frameworks/native/camera:camera_framework" ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

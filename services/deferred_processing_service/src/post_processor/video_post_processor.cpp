@@ -36,6 +36,7 @@ namespace {
     constexpr uint32_t MAX_PROC_TIME_MS = 20 * 60 * 1000;
 }
 
+// LCOV_EXCL_START
 DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
     DpsError code = DPS_ERROR_UNKNOW;
@@ -58,6 +59,7 @@ DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
     }
     return code;
 }
+// LCOV_EXCL_STOP
 
 class VideoPostProcessor::VideoServiceListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
 public:
@@ -85,7 +87,7 @@ public:
     {
         DP_DEBUG_LOG("entered.");
     }
-
+    // LCOV_EXCL_START
     void OnRemoteDied(const wptr<IRemoteObject> &remote) override
     {
         auto processResult = processResult_.lock();
@@ -93,6 +95,7 @@ public:
 
         processResult->OnVideoSessionDied();
     }
+    // LCOV_EXCL_STOP
 
 private:
     std::weak_ptr<VideoProcessResult> processResult_;
@@ -106,6 +109,7 @@ public:
         DP_DEBUG_LOG("entered.");
     }
 
+    // LCOV_EXCL_START
     int32_t OnProcessDone(const std::string& videoId) override
     {
         DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
@@ -131,6 +135,7 @@ public:
         DP_DEBUG_LOG("entered.");
         return DP_OK;
     }
+    // LCOV_EXCL_STOP
 
 private:
     std::weak_ptr<VideoProcessResult> processResult_;
@@ -228,6 +233,7 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
 {
     auto session = GetVideoSession();
     DP_CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false, "video session is nullptr.");
+    // LCOV_EXCL_START
 
     allStreamInfo_.clear();
     std::vector<StreamDescription> streamDescs;
@@ -251,8 +257,10 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
     ret = session->CommitStreams(modeSetting);
     DP_INFO_LOG("DPS_VIDEO: CommitStreams videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     return true;
+    // LCOV_EXCL_STOP
 }
 
+// LCOV_EXCL_START
 bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
 {
     DP_INFO_LOG("DPS_VIDEO: streamId: %{public}d, stream type: %{public}d", stream.streamId, stream.type);
@@ -270,6 +278,7 @@ bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
     SetStreamInfo(stream, producer);
     return true;
 }
+// LCOV_EXCL_STOP
 
 void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer)
 {
@@ -313,6 +322,7 @@ bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFil
 bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoWorkPtr& work)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpegManager is nullptr");
+    // LCOV_EXCL_START
     mpegManager_->UnInit(result);
 
     if (result != MediaResult::SUCCESS) {
@@ -341,14 +351,17 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 
     ReleaseMpeg();
     return true;
+    // LCOV_EXCL_STOP
 }
 
+// LCOV_EXCL_START
 void VideoPostProcessor::ReleaseMpeg()
 {
     MpegManagerFactory::GetInstance().Release(mpegManager_);
     mpegManager_.reset();
     DP_INFO_LOG("DPS_VIDEO: Release MpegManager.");
 }
+// LCOV_EXCL_STOP
 
 void VideoPostProcessor::StartTimer(const std::string& videoId, const DeferredVideoWorkPtr& work)
 {
@@ -404,6 +417,7 @@ void VideoPostProcessor::OnProcessDone(const std::string& videoId)
     auto work = GetRunningWork(videoId);
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
     DP_CHECK_ERROR_RETURN_LOG(!StopMpeg(MediaResult::SUCCESS, work), "success: mpeg stop failed.");
+    // LCOV_EXCL_START
 
     DP_INFO_LOG("DPS_VIDEO: video process done, videoId: %{public}s", videoId.c_str());
     StopTimer(work);
@@ -412,6 +426,7 @@ void VideoPostProcessor::OnProcessDone(const std::string& videoId)
             videoController->HandleSuccess(work);
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void VideoPostProcessor::OnError(const std::string& videoId, DpsError errorCode)

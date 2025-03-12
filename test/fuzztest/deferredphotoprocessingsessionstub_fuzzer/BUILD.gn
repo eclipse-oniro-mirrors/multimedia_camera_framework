@@ -74,12 +74,7 @@ ohos_fuzztest("DeferredPhotoProcessingSessionStubFuzzTest") {
 
   defines = []
 
-  sources = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_power_manager.cpp",
-    "deferred_photo_processing_session_stub_fuzzer.cpp",
-  ]
+  sources = [ "deferred_photo_processing_session_stub_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",

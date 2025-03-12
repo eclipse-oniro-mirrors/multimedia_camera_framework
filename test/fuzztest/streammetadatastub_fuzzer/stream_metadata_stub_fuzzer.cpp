@@ -68,7 +68,7 @@ namespace CameraStandard {
 namespace StreamMetadataStubFuzzer {
 
 bool g_hasPermission = false;
-HStreamMetadataStub *fuzz_ = nullptr;
+sptr<HStreamMetadataStub> fuzz_{nullptr};
 
 void CheckPermission()
 {
@@ -93,14 +93,13 @@ void Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
-        sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        const int32_t face = 0;
-        std::vector<int32_t> type = {face};
-        fuzz_ = new HStreamMetadata(producer, PHOTO_FORMAT, type);
-    }
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamMetadataStubFuzzer: Create photoSurface Error");
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    const int32_t face = 0;
+    std::vector<int32_t> type = {face};
+    fuzz_ = new HStreamMetadata(producer, PHOTO_FORMAT, type);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
     Test_OnRemoteRequest(rawData, size);
 }

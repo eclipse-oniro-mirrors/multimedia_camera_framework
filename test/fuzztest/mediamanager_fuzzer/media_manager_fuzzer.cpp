@@ -65,9 +65,8 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<MediaManager>();
-    }
+    fuzz_ = std::make_shared<MediaManager>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     auto inFd = GetData<int32_t>();
     auto outFd = GetData<int32_t>();
     auto tempFd = GetData<int32_t>();
@@ -111,15 +110,17 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
 
 void MediaManagerFuzzer::ReaderFuzzTest()
 {
-    std::shared_ptr<Reader> inputReader_ {nullptr};
-    inputReader_ = std::make_shared<Reader>();
-    inputReader_->GetSourceFormat();
+    std::shared_ptr<Reader> inputReader {nullptr};
+    inputReader = std::make_shared<Reader>();
+    CHECK_ERROR_RETURN_LOG(!inputReader, "Create inputReader Error");
+    inputReader->GetSourceFormat();
 }
 
 void MediaManagerFuzzer::TrackFuzzTest()
 {
     std::shared_ptr<Track> track {nullptr};
     track = std::make_shared<Track>();
+    CHECK_ERROR_RETURN_LOG(!track, "Create track Error");
     TrackFormat formatOfIndex;
     Format trackFormat;
     int32_t trackType = GetData<int32_t>();
@@ -148,6 +149,7 @@ void MediaManagerFuzzer::WriterFuzzTest()
 {
     std::shared_ptr<Writer> writer {nullptr};
     writer = std::make_shared<Writer>();
+    CHECK_ERROR_RETURN_LOG(!writer, "Create writer Error");
     auto outputFd = GetData<int32_t>();
     std::shared_ptr<AVSourceFuzz> source = std::make_shared<AVSourceFuzz>();
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks;
@@ -172,6 +174,7 @@ void MediaManagerFuzzer::MuxerFuzzTest()
 {
     std::shared_ptr<Muxer> muxer {nullptr};
     muxer = std::make_shared<Muxer>();
+    CHECK_ERROR_RETURN_LOG(!muxer, "Create muxer Error");
     auto outputFd = GetData<int32_t>();
     std::vector<Plugins::OutputFormat> outputFormats = {
         Plugins::OutputFormat::DEFAULT,

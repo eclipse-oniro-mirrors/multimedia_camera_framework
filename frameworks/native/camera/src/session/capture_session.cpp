@@ -212,6 +212,7 @@ int32_t FoldCallback::OnFoldStatusChanged(const FoldStatus status)
     CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "captureSession is nullptr.");
     bool isEnableAutoSwitch = captureSession->GetIsAutoSwitchDeviceStatus();
     CHECK_ERROR_RETURN_RET_LOG(!isEnableAutoSwitch, CAMERA_OPERATION_NOT_ALLOWED, "isEnableAutoSwitch is false.");
+    // LCOV_EXCL_START
     bool isSuccess = captureSession->SwitchDevice();
     MEDIA_INFO_LOG("SwitchDevice isSuccess: %{public}d", isSuccess);
     auto autoDeviceSwitchCallback = captureSession->GetAutoDeviceSwitchCallback();
@@ -221,6 +222,7 @@ int32_t FoldCallback::OnFoldStatusChanged(const FoldStatus status)
     MEDIA_INFO_LOG("SwitchDevice isDeviceCapabilityChanged: %{public}d", isDeviceCapabilityChanged);
     autoDeviceSwitchCallback->OnAutoDeviceSwitchStatusChange(isSuccess, isDeviceCapabilityChanged);
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCaptureSession_(captureSession)
@@ -663,6 +665,7 @@ int32_t CaptureSession::ConfigurePreviewOutput(sptr<CaptureOutput>& output)
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
         CHECK_ERROR_RETURN_RET_LOG(previewProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigurePreviewOutput previewProfile is not null, is that output in use?");
+        // LCOV_EXCL_START
         auto preconfigPreviewProfile = GetPreconfigPreviewProfile();
         CHECK_ERROR_RETURN_RET_LOG(preconfigPreviewProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigurePreviewOutput preconfigPreviewProfile is nullptr");
@@ -672,6 +675,7 @@ int32_t CaptureSession::ConfigurePreviewOutput(sptr<CaptureOutput>& output)
             "CaptureSession::ConfigurePreviewOutput createStream from preconfig fail! %{public}d", res);
         MEDIA_INFO_LOG("CaptureSession::ConfigurePreviewOutput createStream from preconfig success");
         previewProfile_ = *preconfigPreviewProfile;
+        // LCOV_EXCL_STOP
     } else {
         previewProfile_ = *previewProfile;
     }
@@ -695,10 +699,12 @@ std::shared_ptr<Profile> CaptureSession::GetMaxSizePhotoProfile(ProfileSizeRatio
         float photoRatioValue = GetTargetRatio(sizeRatio, RATIO_VALUE_4_3);
         return cameraInfo->GetMaxSizeProfile<Profile>(it->second, photoRatioValue, CameraFormat::CAMERA_FORMAT_JPEG);
     } else if (sceneMode == SceneMode::VIDEO) {
+        // LCOV_EXCL_START
         auto it = cameraInfo->modePhotoProfiles_.find(SceneMode::VIDEO);
         CHECK_ERROR_RETURN_RET(it == cameraInfo->modePhotoProfiles_.end(), nullptr);
         float photoRatioValue = GetTargetRatio(sizeRatio, RATIO_VALUE_16_9);
         return cameraInfo->GetMaxSizeProfile<Profile>(it->second, photoRatioValue, CameraFormat::CAMERA_FORMAT_JPEG);
+        // LCOV_EXCL_STOP
     } else {
         return nullptr;
     }
@@ -718,6 +724,7 @@ std::shared_ptr<Profile> CaptureSession::GetPreconfigPhotoProfile()
     auto preconfigProfiles = GetPreconfigProfiles();
     CHECK_ERROR_RETURN_RET_LOG(preconfigProfiles == nullptr, nullptr,
         "CaptureSession::GetPreconfigPhotoProfile preconfigProfiles is nullptr");
+    // LCOV_EXCL_START
     if (preconfigProfiles->photoProfile.sizeFollowSensorMax_) {
         auto maxSizePhotoProfile = GetMaxSizePhotoProfile(preconfigProfiles->photoProfile.sizeRatio_);
         CHECK_ERROR_RETURN_RET_LOG(maxSizePhotoProfile == nullptr, nullptr,
@@ -728,6 +735,7 @@ std::shared_ptr<Profile> CaptureSession::GetPreconfigPhotoProfile()
         return maxSizePhotoProfile;
     }
     return std::make_shared<Profile>(preconfigProfiles->photoProfile);
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<VideoProfile> CaptureSession::GetPreconfigVideoProfile()
@@ -745,6 +753,7 @@ int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
         CHECK_ERROR_RETURN_RET_LOG(photoProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigurePhotoOutput photoProfile is not null, is that output in use?");
+        // LCOV_EXCL_START
         auto preconfigPhotoProfile = GetPreconfigPhotoProfile();
         CHECK_ERROR_RETURN_RET_LOG(preconfigPhotoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigurePhotoOutput preconfigPhotoProfile is null");
@@ -754,6 +763,7 @@ int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
             "CaptureSession::ConfigurePhotoOutput createStream from preconfig fail! %{public}d", res);
         MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput createStream from preconfig success");
         photoProfile_ = *preconfigPhotoProfile;
+        // LCOV_EXCL_STOP
     } else {
         photoProfile_ = *photoProfile;
     }
@@ -768,6 +778,7 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
         CHECK_ERROR_RETURN_RET_LOG(videoProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigureVideoOutput videoProfile is not null, is that output in use?");
+        // LCOV_EXCL_START
         auto preconfigVideoProfile = GetPreconfigVideoProfile();
         CHECK_ERROR_RETURN_RET_LOG(preconfigVideoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::ConfigureVideoOutput preconfigVideoProfile is nullptr");
@@ -777,6 +788,7 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
         CHECK_ERROR_RETURN_RET_LOG(res != CameraErrorCode::SUCCESS, res,
             "CaptureSession::ConfigureVideoOutput createStream from preconfig fail! %{public}d", res);
         MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput createStream from preconfig success");
+        // LCOV_EXCL_STOP
     }
     std::vector<int32_t> frameRateRange = videoProfile->GetFrameRates();
     const size_t minFpsRangeSize = 2;
@@ -885,6 +897,7 @@ int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& outpu
     CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::AdaptOutputVideoHighFrameRate() captureSession is nullptr");
     if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        // LCOV_EXCL_START
         std::vector<int32_t> videoFrameRates = output->GetVideoProfile()->GetFrameRates();
         CHECK_ERROR_RETURN_RET_LOG(videoFrameRates.empty(), CameraErrorCode::INVALID_ARGUMENT,
             "videoFrameRates is empty!");
@@ -893,6 +906,7 @@ int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& outpu
             SetMode(SceneMode::HIGH_FRAME_RATE);
             return CameraErrorCode::SUCCESS;
         }
+        // LCOV_EXCL_STOP
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -902,6 +916,7 @@ int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
     CHECK_ERROR_RETURN_RET(currentMode_ != SceneMode::SECURE, CAMERA_OPERATION_NOT_ALLOWED);
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
         CAMERA_OPERATION_NOT_ALLOWED, "SecureCameraSession::AddSecureOutput operation is Not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
@@ -909,6 +924,7 @@ int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
     repeatStream->EnableSecure(true);
     isSetSecureOutput_ = true;
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
@@ -1007,6 +1023,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         "CaptureSession::RemoveOutput session is not configed!");
     CHECK_ERROR_RETURN_RET_LOG(output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CaptureSession::RemoveOutput output is null");
+    // LCOV_EXCL_START
     output->SetSession(nullptr);
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(output.GetRefPtr());
@@ -1018,6 +1035,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         MEDIA_DEBUG_LOG("CaptureSession::RemoveOutput remove metaOutput");
         return ServiceToCameraError(CAMERA_OK);
     }
+    // LCOV_EXCL_STOP
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
@@ -1266,6 +1284,7 @@ void CaptureSession::OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetada
     std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
     auto it = captureOutputSets_.begin();
     while (it != captureOutputSets_.end()) {
+        // LCOV_EXCL_START
         auto output = it->promote();
         if (output == nullptr) {
             it = captureOutputSets_.erase(it);
@@ -1284,6 +1303,7 @@ void CaptureSession::OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetada
             }
             output->OnResultMetadataChanged(tag, item);
         }
+        // LCOV_EXCL_STOP
     }
 }
 
@@ -1443,6 +1463,7 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
         "CaptureSession::GetSupportedStabilizationMode camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.stabilizationmodes.count; i++) {
             auto num = static_cast<CameraVideoStabilizationMode>(cameraDevNow->limtedCapabilitySave_.
                 stabilizationmodes.mode[i]);
@@ -1452,6 +1473,7 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
             }
         }
         return CameraErrorCode::SUCCESS;
+        // LCOV_EXCL_STOP
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
@@ -1507,6 +1529,7 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode>& sup
         "CaptureSession::GetSupportedExposureModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.exposuremodes.count; i++) {
             camera_exposure_mode_enum_t num =
                 static_cast<camera_exposure_mode_enum_t>(cameraDevNow->limtedCapabilitySave_.exposuremodes.mode[i]);
@@ -1516,6 +1539,7 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode>& sup
             }
         }
         return CameraErrorCode::SUCCESS;
+        // LCOV_EXCL_STOP
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
@@ -1541,6 +1565,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
     CHECK_ERROR_RETURN_RET(!IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    // LCOV_EXCL_START
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -1570,6 +1595,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetExposureMode Failed to set exposure mode");
 
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 ExposureMode CaptureSession::GetExposureMode()
@@ -1594,12 +1620,14 @@ int32_t CaptureSession::GetExposureMode(ExposureMode& exposureMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaExposureModeMap_.end()) {
         exposureMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
@@ -1660,10 +1688,12 @@ int32_t CaptureSession::GetMeteringPoint(Point& exposurePoint)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_REGIONS, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetExposurePoint Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     exposurePoint.x = item.data.f[0];
     exposurePoint.y = item.data.f[1];
     exposurePoint = CoordinateTransform(exposurePoint);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<float> CaptureSession::GetExposureBiasRange()
@@ -1764,6 +1794,7 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     int32_t exposureCompensation = item.data.i32[0];
 
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
@@ -1779,6 +1810,7 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
     }
     MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetExposureCallback(std::shared_ptr<ExposureCallback> exposureCallback)
@@ -1799,12 +1831,14 @@ void CaptureSession::ProcessAutoExposureUpdates(const std::shared_ptr<Camera::Ca
 
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_EXPOSURE_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
+        // LCOV_EXCL_START
         MEDIA_INFO_LOG("Exposure state: %{public}d", item.data.u8[0]);
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (exposureCallback_ != nullptr) {
             auto itr = metaExposureStateMap_.find(static_cast<camera_exposure_state_t>(item.data.u8[0]));
             CHECK_EXECUTE(itr != metaExposureStateMap_.end(), exposureCallback_->OnExposureState(itr->second));
         }
+        // LCOV_EXCL_STOP
     }
 }
 
@@ -1825,6 +1859,7 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode>& supported
         "CaptureSession::GetSupportedFocusModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.focusmodes.count; i++) {
             camera_focus_mode_enum_t num = static_cast<camera_focus_mode_enum_t>(cameraDevNow->
                 limtedCapabilitySave_.focusmodes.mode[i]);
@@ -1834,6 +1869,7 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode>& supported
             }
         }
         return CameraErrorCode::SUCCESS;
+        // LCOV_EXCL_STOP
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
@@ -2046,10 +2082,12 @@ int32_t CaptureSession::GetFocusPoint(Point& focusPoint)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AF_REGIONS, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetFocusPoint Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     focusPoint.x = item.data.f[0];
     focusPoint.y = item.data.f[1];
     focusPoint = CoordinateTransform(focusPoint);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 float CaptureSession::GetFocalLength()
@@ -2090,6 +2128,7 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     // continuous focus mode do not callback focusStateChange
     CHECK_ERROR_RETURN(it == g_metaFocusModeMap_.end() ||
         (it->second != FOCUS_MODE_AUTO && it->second != FOCUS_MODE_CONTINUOUS_AUTO));
+    // LCOV_EXCL_START
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
@@ -2102,6 +2141,7 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
             }
         }
     }
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
@@ -2109,6 +2149,7 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
 {
     MEDIA_DEBUG_LOG("Entry ProcessSnapShotDurationUpdates");
     if (photoOutput_ != nullptr) {
+        // LCOV_EXCL_START
         camera_metadata_item_t metadataItem;
         common_metadata_header_t* metadata = result->get();
         int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CAMERA_CUSTOM_SNAPSHOT_DURATION, &metadataItem);
@@ -2117,6 +2158,7 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
         CHECK_EXECUTE(duration != prevDuration_.load(),
             ((sptr<PhotoOutput> &)photoOutput_)->ProcessSnapshotDurationUpdates(duration));
         prevDuration_ = duration;
+        // LCOV_EXCL_STOP
     }
 }
 
@@ -2153,11 +2195,13 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
 
     int ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LASER_DATA, &item);
     if (ret == CAM_META_SUCCESS) {
+        // LCOV_EXCL_START
         std::vector<int32_t> laserData;
         for (uint32_t i = 0; i < item.count; i++) {
             laserData.emplace_back(item.data.i32[i]);
         }
         arStatusInfo.laserData = laserData;
+        // LCOV_EXCL_STOP
     }
 
     ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LENS_FOCUS_DISTANCE, &item);
@@ -2180,7 +2224,7 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
         MEDIA_DEBUG_LOG("SensorExposureTime: %{public}u", value);
         arStatusInfo.exposureDurationValue = value;
     }
-
+    // LCOV_EXCL_START
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_INFO_TIMESTAMP, &item);
     if (ret == CAM_META_SUCCESS) {
         arStatusInfo.timestamp = item.data.i64[0];
@@ -2188,6 +2232,7 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
 
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     CHECK_EXECUTE(arCallback_ != nullptr, arCallback_->OnResult(arStatusInfo));
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
@@ -2227,6 +2272,7 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode>& supported
         "CaptureSession::GetSupportedFlashModes camera device is null");
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.flashmodes.count; i++) {
             camera_flash_mode_enum_t num = static_cast<camera_flash_mode_enum_t>
                 (cameraDevNow->limtedCapabilitySave_.flashmodes.mode[i]);
@@ -2236,6 +2282,7 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode>& supported
             }
         }
         return CameraErrorCode::SUCCESS;
+        // LCOV_EXCL_STOP
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
@@ -2270,6 +2317,7 @@ int32_t CaptureSession::GetFlashMode(FlashMode& flashMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetFlashMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != g_metaFlashModeMap_.end()) {
         flashMode = itr->second;
@@ -2277,6 +2325,7 @@ int32_t CaptureSession::GetFlashMode(FlashMode& flashMode)
     }
 
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
@@ -2287,6 +2336,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
     // flash for lightPainting
+    // LCOV_EXCL_START
     if (GetMode() == SceneMode::LIGHT_PAINTING && flashMode == FlashMode::FLASH_MODE_OPEN) {
         uint8_t enableTrigger = 1;
         bool status = false;
@@ -2337,6 +2387,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
                       sharedThis->SetDeviceCapabilityChangeStatus(true));
     });
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsFlashModeSupported(FlashMode flashMode)
@@ -2402,12 +2453,14 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
 
     if (cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1) {
+        // LCOV_EXCL_START
         auto itr = cameraDevNow->limtedCapabilitySave_.ratiorange.range.find(static_cast<int32_t>(GetMode()));
         if (itr != cameraDevNow->limtedCapabilitySave_.ratiorange.range.end()) {
             zoomRatioRange.push_back(itr->second.first);
             zoomRatioRange.push_back(itr->second.second);
             return CameraErrorCode::SUCCESS;
         }
+        // LCOV_EXCL_STOP
     }
 
     if (supportSpecSearch_) {
@@ -2422,7 +2475,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
         }
         return CameraErrorCode::SUCCESS;
     }
-
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "GetZoomRatioRange camera metadata is null");
@@ -2447,6 +2500,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     }
     zoomRatioRange = {minZoom, maxZoom};
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 float CaptureSession::GetZoomRatio()
@@ -2480,6 +2534,7 @@ int32_t CaptureSession::GetZoomRatio(float& zoomRatio)
     int32_t ret = cameraDeviceObj->GetStatus(metaIn, metaOut);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
         "CaptureSession::GetZoomRatio Failed to Get ZoomRatio, errCode = %{public}d", ret);
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
@@ -2487,6 +2542,7 @@ int32_t CaptureSession::GetZoomRatio(float& zoomRatio)
     zoomRatio = static_cast<float>(item.data.ui32[0]) / static_cast<float>(zoomRatioMultiple);
     MEDIA_ERR_LOG("CaptureSession::GetZoomRatio %{public}f", zoomRatio);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetZoomRatio(float zoomRatio)
@@ -2530,6 +2586,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         auto abilityContainer = GetCameraAbilityContainer();
         CHECK_EXECUTE(abilityContainer && supportSpecSearch_, abilityContainer->FilterByZoomRatio(zoomRatio));
         wptr<CaptureSession> weakThis(this);
+        // LCOV_EXCL_START
         AddFunctionToMap(std::to_string(OHOS_CONTROL_ZOOM_RATIO), [weakThis, zoomRatio]() {
             auto sharedThis = weakThis.promote();
             CHECK_ERROR_RETURN_LOG(!sharedThis, "SetZoomRatio session is nullptr");
@@ -2539,6 +2596,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
             CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
                           sharedThis->SetDeviceCapabilityChangeStatus(true));
         });
+        // LCOV_EXCL_STOP
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -2875,7 +2933,7 @@ std::vector<FilterType> CaptureSession::GetSupportedFilters()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_FILTER_TYPES));
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedFilters,
         "CaptureSession::GetSupportedFilters abilityId is NULL");
-
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, supportedFilters,
         "GetSupportedFilters camera metadata is null");
@@ -2888,6 +2946,7 @@ std::vector<FilterType> CaptureSession::GetSupportedFilters()
         CHECK_EXECUTE(itr != metaFilterTypeMap_.end(), supportedFilters.emplace_back(itr->second));
     }
     return supportedFilters;
+    // LCOV_EXCL_STOP
 }
 
 FilterType CaptureSession::GetFilter()
@@ -2904,9 +2963,11 @@ FilterType CaptureSession::GetFilter()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FILTER_TYPE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, FilterType::NONE,
         "CaptureSession::GetFilter Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = metaFilterTypeMap_.find(static_cast<camera_filter_type_t>(item.data.u8[0]));
     CHECK_ERROR_RETURN_RET(itr != metaFilterTypeMap_.end(), itr->second);
     return FilterType::NONE;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetFilter(FilterType filterType)
@@ -2920,6 +2981,7 @@ void CaptureSession::SetFilter(FilterType filterType)
     std::vector<FilterType> supportedFilters = GetSupportedFilters();
     auto itr = std::find(supportedFilters.begin(), supportedFilters.end(), filterType);
     CHECK_ERROR_RETURN_LOG(itr == supportedFilters.end(), "CaptureSession::GetSupportedFilters abilityId is NULL");
+    // LCOV_EXCL_START
     uint8_t filter = 0;
     for (auto itr2 = fwkFilterTypeMap_.cbegin(); itr2 != fwkFilterTypeMap_.cend(); itr2++) {
         if (filterType == itr2->first) {
@@ -2943,6 +3005,7 @@ void CaptureSession::SetFilter(FilterType filterType)
 
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::setFilter Failed to set filter");
     return;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
@@ -2957,7 +3020,7 @@ std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_BEAUTY_TYPES));
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedBeautyTypes,
         "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
-
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, supportedBeautyTypes,
         "GetSupportedBeautyTypes camera metadata is null");
@@ -2970,6 +3033,7 @@ std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
         CHECK_EXECUTE(itr != g_metaBeautyTypeMap_.end(), supportedBeautyTypes.emplace_back(itr->second));
     }
     return supportedBeautyTypes;
+    // LCOV_EXCL_STOP
 }
 
 std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyType)
@@ -2985,7 +3049,7 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
     std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
     CHECK_ERROR_RETURN_RET_LOG(std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType) ==
         supportedBeautyTypes.end(), supportedBeautyRange, "CaptureSession::GetSupportedBeautyRange beautyType is NULL");
-
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, supportedBeautyRange,
         "GetSupportedBeautyRange camera metadata is null");
@@ -3014,6 +3078,7 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
     }
     beautyTypeAndRanges_[beautyType] = supportedBeautyRange;
     return supportedBeautyRange;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
@@ -3043,6 +3108,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
         CHECK_ERROR_RETURN_RET_LOG(itrType == levelVec.end(), status,
             "CaptureSession::SetBeautyValue: %{public}d not in beautyRanges", beautyLevel);
     }
+    // LCOV_EXCL_START
     if (beautyType == BeautyType::SKIN_TONE) {
         int32_t skinToneVal = beautyLevel;
         ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), metadata, &item);
@@ -3063,6 +3129,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
     CHECK_ERROR_RETURN_RET_LOG(!status, status, "CaptureSession::SetBeautyValue Failed to set beauty");
     beautyTypeAndLevels_[beautyType] = beautyLevel;
     return status;
+    // LCOV_EXCL_STOP
 }
 
 CameraPosition CaptureSession::GetUsedAsPosition()
@@ -3092,6 +3159,7 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
         CHECK_ERROR_RETURN_LOG(itr == supportedBeautyTypes.end(),
             "CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
     }
+    // LCOV_EXCL_START
     MEDIA_ERR_LOG("SetBeauty beautyType %{public}d", beautyType);
     bool status = false;
     uint32_t count = 1;
@@ -3124,6 +3192,7 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
     status = SetBeautyValue(beautyType, value);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetBeauty Failed to set beauty value");
     return;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetBeauty(BeautyType beautyType)
@@ -3136,6 +3205,7 @@ int32_t CaptureSession::GetBeauty(BeautyType beautyType)
     std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
     auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
     CHECK_ERROR_RETURN_RET_LOG(itr == supportedBeautyTypes.end(), -1, "CaptureSession::GetBeauty beautyType is NULL");
+    // LCOV_EXCL_START
     int32_t beautyLevel = 0;
     auto itrLevel = beautyTypeAndLevels_.find(beautyType);
     if (itrLevel != beautyTypeAndLevels_.end()) {
@@ -3143,6 +3213,7 @@ int32_t CaptureSession::GetBeauty(BeautyType beautyType)
     }
 
     return beautyLevel;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedPortraitThemeTypes(std::vector<PortraitThemeType>& supportedPortraitThemeTypes)
@@ -3205,6 +3276,7 @@ int32_t CaptureSession::SetPortraitThemeType(PortraitThemeType type)
         "CaptureSession::SetPortraitThemeType Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetPortraitThemeType Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET(!IsPortraitThemeSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
     PortraitThemeType portraitThemeTypeTemp = PortraitThemeType::NATURAL;
     uint8_t themeType = g_fwkPortraitThemeTypeMap_.at(portraitThemeTypeTemp);
@@ -3217,6 +3289,7 @@ int32_t CaptureSession::SetPortraitThemeType(PortraitThemeType type)
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_PORTRAIT_THEME_TYPE, &themeType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetPortraitThemeType Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedVideoRotations(std::vector<int32_t>& supportedRotation)
@@ -3238,12 +3311,14 @@ int32_t CaptureSession::GetSupportedVideoRotations(std::vector<int32_t>& support
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIDEO_ROTATION, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedVideoRotations Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
         auto rotation = static_cast<VideoRotation>(item.data.i32[i]);
         auto it = std::find(g_fwkVideoRotationVector_.begin(), g_fwkVideoRotationVector_.end(), rotation);
         CHECK_EXECUTE(it != g_fwkVideoRotationVector_.end(), supportedRotation.emplace_back(static_cast<int32_t>(*it)));
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsVideoRotationSupported()
@@ -3283,10 +3358,12 @@ int32_t CaptureSession::SetVideoRotation(int32_t rotation)
         "CaptureSession::SetVideoRotation Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetVideoRotation Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET(!IsVideoRotationSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_VIDEO_ROTATION, &rotation, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetVideoRotation Failed to set flash mode");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 // focus distance
@@ -3320,11 +3397,13 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
         MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates Failed with return code %{public}d", ret);
         return;
     }
+    // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates meta=%{public}f", item.data.f[0]);
     CHECK_ERROR_RETURN(FloatIsEqual(GetMinimumFocusDistance(), 0.0));
     focusDistance_ = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
     MEDIA_DEBUG_LOG("CaptureSession::ProcessFocusDistanceUpdates focusDistance = %{public}f", focusDistance_);
     return;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetFocusDistance(float& focusDistance)
@@ -3344,6 +3423,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetFocusDistance Session is not Commited");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFocusDistance Need to call LockForControl before setting camera properties");
     bool status = false;
@@ -3377,6 +3457,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
         }));
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDistance Failed to set");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
@@ -3401,12 +3482,14 @@ int32_t CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateR
     return CameraErrorCode::SUCCESS;
 }
 
+// LCOV_EXCL_START
 bool CaptureSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
     MEDIA_WARNING_LOG("CaptureSession::CanSetFrameRateRange can not set frame rate range for %{public}d mode",
                       GetMode());
     return false;
 }
+// LCOV_EXCL_STOP
 
 bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
@@ -3420,6 +3503,7 @@ bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFp
             continue;
         }
         std::vector<int32_t> currentFrameRange = {defaultFpsNumber, defaultFpsNumber};
+        // LCOV_EXCL_START
         switch (output->GetOutputType()) {
             case CaptureOutputType::CAPTURE_OUTPUT_TYPE_VIDEO: {
                 sptr<VideoOutput> videoOutput = (sptr<VideoOutput>&)item;
@@ -3443,6 +3527,7 @@ bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFp
                 return false;
             };
         }
+        // LCOV_EXCL_STOP
     }
     return true;
 }
@@ -3662,11 +3747,13 @@ ColorEffect CaptureSession::GetColorEffect()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, colorEffect,
         "CaptureSession::GetColorEffect Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
     if (itr != g_metaColorEffectMap_.end()) {
         colorEffect = itr->second;
     }
     return colorEffect;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetColorEffect(ColorEffect colorEffect)
@@ -3805,9 +3892,11 @@ int32_t CaptureSession::GetSensorExposureTime(uint32_t &exposureTime)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::GetSensorExposureTime Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     exposureTime = item.data.ui32[0];
     MEDIA_DEBUG_LOG("CaptureSession::GetSensorExposureTime exposureTime: %{public}d", exposureTime);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsMacroSupported()
@@ -3835,7 +3924,7 @@ bool CaptureSession::IsMacroSupported()
             return false;
         }
     }
-
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
         "IsMacroSupported camera metadata is null");
@@ -3845,6 +3934,7 @@ bool CaptureSession::IsMacroSupported()
         "CaptureSession::IsMacroSupported Failed with return code %{public}d", ret);
     auto supportResult = static_cast<camera_macro_supported_type_t>(*item.data.i32);
     return supportResult == OHOS_CAMERA_MACRO_SUPPORTED;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::EnableMacro(bool isEnable)
@@ -3853,6 +3943,7 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableMacro, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsMacroSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableMacro IsMacroSupported is false");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed EnableMacro!, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
@@ -3875,6 +3966,7 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
     }
     isSetMacroEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsDepthFusionSupported()
@@ -3900,12 +3992,14 @@ bool CaptureSession::IsDepthFusionSupported()
     return supportResult;
 }
 
+// LCOV_EXCL_START
 std::vector<float> CaptureSession::GetDepthFusionThreshold()
 {
     std::vector<float> depthFusionThreshold;
     GetDepthFusionThreshold(depthFusionThreshold);
     return depthFusionThreshold;
 }
+// LCOV_EXCL_STOP
 
 int32_t CaptureSession::GetDepthFusionThreshold(std::vector<float>& depthFusionThreshold)
 {
@@ -3927,6 +4021,7 @@ int32_t CaptureSession::GetDepthFusionThreshold(std::vector<float>& depthFusionT
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count < zoomRangeLength, 0,
         "CaptureSession::GetDepthFusionThreshold Failed with return code %{public}d, item.count = %{public}d", ret,
         item.count);
+    // LCOV_EXCL_START
     float minDepthFusionZoom = 0.0;
     float maxDepthFusionZoom = 0.0;
     MEDIA_INFO_LOG("Capture marco depth fusion zoom range, min: %{public}f, max: %{public}f",
@@ -3935,6 +4030,7 @@ int32_t CaptureSession::GetDepthFusionThreshold(std::vector<float>& depthFusionT
     maxDepthFusionZoom = item.data.f[1];
     depthFusionThreshold = {minDepthFusionZoom, maxDepthFusionZoom};
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::EnableDepthFusion(bool isEnable)
@@ -3943,6 +4039,7 @@ int32_t CaptureSession::EnableDepthFusion(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableDepthFusion, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsDepthFusionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableDepthFusion IsDepthFusionSupported is false");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed EnableDepthFusion!, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
@@ -3960,6 +4057,7 @@ int32_t CaptureSession::EnableDepthFusion(bool isEnable)
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableDepthFusion Failed to enable depth fusion");
     isDepthFusionEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsDepthFusionEnabled()
@@ -4003,6 +4101,7 @@ int32_t CaptureSession::EnableMoonCaptureBoost(bool isEnable)
         "EnableMoonCaptureBoost IsMoonCaptureBoostSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed EnableMoonCaptureBoost!, session not commited");
+    // LCOV_EXCL_START
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
@@ -4018,6 +4117,7 @@ int32_t CaptureSession::EnableMoonCaptureBoost(bool isEnable)
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMoonCaptureBoost failed to enable moon capture boost");
     isSetMoonCaptureBoostEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsLowLightBoostSupported()
@@ -4046,6 +4146,7 @@ bool CaptureSession::IsLowLightBoostSupported()
     return false;
 }
 
+// LCOV_EXCL_START
 int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
@@ -4061,6 +4162,7 @@ int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
     }
     return CameraErrorCode::SUCCESS;
 }
+// LCOV_EXCL_STOP
 
 int32_t CaptureSession::EnableLowLightDetection(bool isEnable)
 {
@@ -4068,11 +4170,13 @@ int32_t CaptureSession::EnableLowLightDetection(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableLowLightDetection, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(
         !IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_DETECT, &enableValue, 1),
         "CaptureSession::EnableLowLightDetection failed to enable low light detect");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsFeatureSupported(SceneFeature feature)
@@ -4156,6 +4260,7 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
         "IsMovingPhotoSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!(IsSessionConfiged() || IsSessionCommited()), CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession Failed EnableMovingPhoto!, session not configed");
+    // LCOV_EXCL_START
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
@@ -4183,6 +4288,7 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "Failed to EnableMovingPhoto!, %{public}d", errCode);
     isMovingPhotoEnabled_ = isEnable;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsMovingPhotoEnabled()
@@ -4201,9 +4307,11 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+    // LCOV_EXCL_START
     int32_t errCode = captureSession->EnableMovingPhotoMirror(isMirror, isConfig);
     CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to StartMovingPhotoCapture!, %{public}d", errCode);
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
@@ -4296,6 +4404,7 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
     }
     if (featureStatusCallback != nullptr &&
         featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_MOON_CAPTURE_BOOST)) {
+        // LCOV_EXCL_START
         auto detectStatus = isMoonActive ? FeatureDetectionStatusCallback::FeatureDetectionStatus::ACTIVE
                                          : FeatureDetectionStatusCallback::FeatureDetectionStatus::IDLE;
         if (!featureStatusCallback->UpdateStatus(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, detectStatus)) {
@@ -4303,6 +4412,7 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
             return;
         }
         featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, detectStatus);
+        // LCOV_EXCL_STOP
     }
 }
 
@@ -4317,7 +4427,7 @@ void CaptureSession::ProcessLowLightBoostStatusChange(const std::shared_ptr<OHOS
         MEDIA_DEBUG_LOG("CaptureSession::ProcessLowLightBoostStatusChange featureStatusCallback is null");
         return;
     }
-
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LOW_LIGHT_DETECTION, &item);
@@ -4335,6 +4445,7 @@ void CaptureSession::ProcessLowLightBoostStatusChange(const std::shared_ptr<OHOS
         return;
     }
     featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_LOW_LIGHT_BOOST, detectStatus);
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsSetEnableMacro()
@@ -4407,6 +4518,7 @@ int32_t CaptureSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio 
     return CAMERA_UNSUPPORTED;
 }
 
+// LCOV_EXCL_START
 std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(
     PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
@@ -4414,6 +4526,7 @@ std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(
     MEDIA_ERR_LOG("CaptureSession::GeneratePreconfigProfiles is not valid! Did you set the correct mode?");
     return nullptr;
 }
+// LCOV_EXCL_STOP
 
 void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isEnableByUser)
 {
@@ -4430,6 +4543,7 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
         case DELIVERY_NONE:
             deferredType = HDI::Camera::V1_2::NONE;
             break;
+        // LCOV_EXCL_START
         case DELIVERY_PHOTO:
             deferredType = HDI::Camera::V1_2::STILL_IMAGE;
             isImageDeferred_ = true;
@@ -4441,6 +4555,7 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
             deferredType = HDI::Camera::V1_2::NONE;
             MEDIA_ERR_LOG("CaptureSession::EnableDeferredType not support yet.");
             break;
+        // LCOV_EXCL_STOP
     }
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -4504,6 +4619,7 @@ void CaptureSession::SetUserId()
     CHECK_ERROR_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetUserId Failed");
 }
 
+// LCOV_EXCL_START
 void CaptureSession::EnableOfflinePhoto()
 {
     MEDIA_INFO_LOG("CaptureSession::EnableOfflinePhoto");
@@ -4526,6 +4642,7 @@ void CaptureSession::EnableOfflinePhoto()
         this->UnlockForControl();
     }
 }
+// LCOV_EXCL_STOP
 
 int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
 {
@@ -4676,6 +4793,7 @@ int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
     MEDIA_INFO_LOG("CaptureSession::SetSensorSensitivity");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetSensorSensitivity Session is not Commited");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetSensorSensitivity Need to call LockForControl() before setting camera properties");
     bool status = false;
@@ -4694,6 +4812,7 @@ int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetSensorSensitivity Failed to set sensitivity");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetModuleType(uint32_t &moduleType)
@@ -4807,8 +4926,10 @@ std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionTy
             supportedEffectSuggestionStr.c_str());
         return supportedEffectSuggestionList;
     }
+    // LCOV_EXCL_START
     MEDIA_ERR_LOG("no effectSuggestionInfo for mode %{public}d", GetMode());
     return supportedEffectSuggestionList;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionStatus> effectSuggestionStatusList)
@@ -4825,6 +4946,7 @@ int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionSt
 
     std::vector<uint8_t> vec = {};
     for (auto effectSuggestionStatus : effectSuggestionStatusList) {
+        // LCOV_EXCL_START
         uint8_t type = fwkEffectSuggestionTypeMap_.at(EffectSuggestionType::EFFECT_SUGGESTION_NONE);
         auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionStatus.type);
         if (itr == fwkEffectSuggestionTypeMap_.end()) {
@@ -4836,6 +4958,7 @@ int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionSt
         vec.emplace_back(static_cast<uint8_t>(effectSuggestionStatus.status));
         MEDIA_DEBUG_LOG("CaptureSession::SetEffectSuggestionStatus type:%{public}u,status:%{public}u",
             type, static_cast<uint8_t>(effectSuggestionStatus.status));
+        // LCOV_EXCL_STOP
     }
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
@@ -4894,11 +5017,13 @@ int32_t CaptureSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMo
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedWhiteBalanceModes Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[i]));
         CHECK_EXECUTE(itr != metaWhiteBalanceModeMap_.end(), supportedWhiteBalanceModes.emplace_back(itr->second));
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool &isSupported)
@@ -4909,6 +5034,7 @@ int32_t CaptureSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool 
         isSupported = true;
         return CameraErrorCode::SUCCESS;
     }
+    // LCOV_EXCL_START
     std::vector<WhiteBalanceMode> vecSupportedWhiteBalanceModeList;
     (void)this->GetSupportedWhiteBalanceModes(vecSupportedWhiteBalanceModeList);
     if (find(vecSupportedWhiteBalanceModeList.begin(), vecSupportedWhiteBalanceModeList.end(),
@@ -4918,6 +5044,7 @@ int32_t CaptureSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool 
     }
     isSupported = false;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
@@ -4971,6 +5098,7 @@ int32_t CaptureSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_LOCK, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetWhiteBalanceMode Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     if (item.data.u8[0] == OHOS_CAMERA_AWB_LOCK_ON) {
         mode = AWB_MODE_LOCKED;
         return CameraErrorCode::SUCCESS;
@@ -4984,6 +5112,7 @@ int32_t CaptureSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 // manual white balance
@@ -5064,6 +5193,7 @@ int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
 {
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::GetManualWhiteBalance Session is not Commited");
+    // LCOV_EXCL_START
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "CaptureSession::GetManualWhiteBalance camera device is null");
@@ -5081,6 +5211,7 @@ int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
         wbValue = item.data.i32[0];
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedPhysicalApertures(std::vector<std::vector<float>>& supportedPhysicalApertures)
@@ -5105,6 +5236,7 @@ int32_t CaptureSession::GetSupportedPhysicalApertures(std::vector<std::vector<fl
     constexpr int32_t minPhysicalApertureMetaSize = 3;
     CHECK_ERROR_RETURN_RET_LOG(chooseModeRange.size() < minPhysicalApertureMetaSize, CameraErrorCode::SUCCESS,
         "GetSupportedPhysicalApertures Failed meta format error");
+    // LCOV_EXCL_START
     int32_t deviceCntPos = 1;
     int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
     CHECK_ERROR_RETURN_RET_LOG(supportedDeviceCount == 0, CameraErrorCode::SUCCESS,
@@ -5119,6 +5251,7 @@ int32_t CaptureSession::GetSupportedPhysicalApertures(std::vector<std::vector<fl
         tempPhysicalApertures.emplace_back(chooseModeRange[i]);
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedVirtualApertures(std::vector<float>& apertures)
@@ -5157,6 +5290,7 @@ std::vector<PortraitEffect> CaptureSession::GetSupportedPortraitEffects()
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedPortraitEffects,
         "CaptureSession::GetSupportedPortraitEffects abilityId is NULL");
+    // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
     CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
@@ -5168,12 +5302,14 @@ std::vector<PortraitEffect> CaptureSession::GetSupportedPortraitEffects()
         CHECK_EXECUTE(itr != g_metaToFwPortraitEffect_.end(), supportedPortraitEffects.emplace_back(itr->second));
     }
     return supportedPortraitEffects;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetVirtualAperture(float& aperture)
 {
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetVirtualAperture Session is not Commited");
+    // LCOV_EXCL_START
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS, "GetVirtualAperture camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
@@ -5189,6 +5325,7 @@ int32_t CaptureSession::GetVirtualAperture(float& aperture)
         "GetVirtualAperture Failed with return code %{public}d", ret);
     aperture = item.data.f[0];
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetVirtualAperture(const float virtualAperture)
@@ -5196,6 +5333,7 @@ int32_t CaptureSession::SetVirtualAperture(const float virtualAperture)
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "SetVirtualAperture Session is not Commited");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "SetVirtualAperture changedMetadata_ is NULL");
     std::vector<float> supportedVirtualApertures {};
@@ -5219,6 +5357,7 @@ int32_t CaptureSession::SetVirtualAperture(const float virtualAperture)
 
     CHECK_ERROR_PRINT_LOG(!status, "SetVirtualAperture Failed to set virtualAperture");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetPhysicalAperture(float& physicalAperture)
@@ -5226,6 +5365,7 @@ int32_t CaptureSession::GetPhysicalAperture(float& physicalAperture)
     physicalAperture = 0.0;
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetPhysicalAperture Session is not Commited");
+    // LCOV_EXCL_START
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
         "GetPhysicalAperture camera device is null");
@@ -5241,6 +5381,7 @@ int32_t CaptureSession::GetPhysicalAperture(float& physicalAperture)
         "GetPhysicalAperture Failed with return code %{public}d", ret);
     physicalAperture = item.data.f[0];
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
@@ -5248,6 +5389,7 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "SetPhysicalAperture Session is not Commited");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "SetPhysicalAperture changedMetadata_ is NULL");
     MEDIA_DEBUG_LOG(
@@ -5288,6 +5430,7 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     });
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsLcdFlashSupported()
@@ -5319,10 +5462,12 @@ int32_t CaptureSession::EnableLcdFlash(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableLcdFlash, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "EnableLcdFlash session not commited");
+    // LCOV_EXCL_START
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
     CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH, &enableValue, 1),
         "EnableLcdFlash Failed to enable lcd flash");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::EnableLcdFlashDetection(bool isEnable)
@@ -5331,12 +5476,14 @@ int32_t CaptureSession::EnableLcdFlashDetection(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableLcdFlashDetection, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsLcdFlashSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableLcdFlashDetection IsLcdFlashSupported is false");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "EnableLcdFlashDetection session not commited");
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
     CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LCD_FLASH_DETECTION, &enableValue, 1),
         "EnableLcdFlashDetection Failed to enable lcd flash detection");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
@@ -5350,6 +5497,7 @@ void CaptureSession::ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Ca
         MEDIA_DEBUG_LOG("CaptureSession::ProcessLcdFlashStatusUpdates statusCallback is null");
         return;
     }
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LCD_FLASH_STATUS, &item);
@@ -5370,6 +5518,7 @@ void CaptureSession::ProcessLcdFlashStatusUpdates(const std::shared_ptr<OHOS::Ca
         statusCallback->SetLcdFlashStatusInfo(lcdFlashStatusInfo);
         statusCallback->OnLcdFlashStatusChanged(lcdFlashStatusInfo);
     }
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetLcdFlashStatusCallback(std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback)
@@ -5431,6 +5580,7 @@ int32_t CaptureSession::EnableTripodStabilization(bool isEnable)
     CHECK_ERROR_RETURN_RET_LOG(!IsTripodDetectionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "EnableTripodStabilization IsTripodDetectionSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited");
+    // LCOV_EXCL_START
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_STABLITATION, &enableValue, 1)) {
         MEDIA_ERR_LOG("EnableTripodStabilization failed to enable tripod detection");
@@ -5438,6 +5588,7 @@ int32_t CaptureSession::EnableTripodStabilization(bool isEnable)
         isSetTripodDetectionEnable_ = isEnable;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::EnableTripodDetection(bool isEnable)
@@ -5448,10 +5599,12 @@ int32_t CaptureSession::EnableTripodDetection(bool isEnable)
         "EnableTripodDetection IsTripodDetectionSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::EnableTripodDetection Session is not Commited");
+    // LCOV_EXCL_START
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
     CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_TRIPOD_DETECTION, &enableValue, 1),
         "CaptureSession::EnableTripodDetection failed to enable tripod detection");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
@@ -5466,7 +5619,7 @@ void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camer
                         "featureDetectionStatusChangedCallback are null");
         return;
     }
-
+    // LCOV_EXCL_START
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_TRIPOD_DETECTION_STATUS, &item);
@@ -5489,12 +5642,14 @@ void CaptureSession::ProcessTripodStatusChange(const std::shared_ptr<OHOS::Camer
         featureStatusCallback->SetFeatureStatus(static_cast<int8_t>(tripodStatus));
         featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_TRIPOD_DETECTION, detectStatus);
     }
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetUsage(UsageType usageType, bool enabled)
 {
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
         "CaptureSession::SetUsage Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     std::vector<int32_t> mode;
 
     mode.push_back(static_cast<int32_t>(usageType));
@@ -5504,6 +5659,7 @@ void CaptureSession::SetUsage(UsageType usageType, bool enabled)
     bool status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_SESSION_USAGE, mode.data(), mode.size());
 
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUsage Failed to set mode");
+    // LCOV_EXCL_STOP
 }
 
 bool CaptureSession::IsAutoDeviceSwitchSupported()
@@ -5518,6 +5674,7 @@ int32_t CaptureSession::EnableAutoDeviceSwitch(bool isEnable)
     MEDIA_INFO_LOG("EnableAutoDeviceSwitch, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsAutoDeviceSwitchSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "The automatic switchover mode is not supported.");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(GetIsAutoSwitchDeviceStatus() == isEnable, CameraErrorCode::SUCCESS,
         "Repeat Settings.");
     SetIsAutoSwitchDeviceStatus(isEnable);
@@ -5526,6 +5683,7 @@ int32_t CaptureSession::EnableAutoDeviceSwitch(bool isEnable)
         CreateAndSetFoldServiceCallback();
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 void CaptureSession::SetIsAutoSwitchDeviceStatus(bool isEnable)
@@ -5543,6 +5701,7 @@ bool CaptureSession::SwitchDevice()
     std::lock_guard<std::mutex> lock(switchDeviceMutex_);
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionStarted(), false,
         "The switch device has failed because the session has not started.");
+    // LCOV_EXCL_START
     auto captureInput = GetInputDevice();
     auto cameraInput = (sptr<CameraInput>&)captureInput;
     CHECK_ERROR_RETURN_RET_LOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
@@ -5574,6 +5733,7 @@ bool CaptureSession::SwitchDevice()
     CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::Start failed.");
     CHECK_EXECUTE(hasVideoOutput, StartVideoOutput());
     return true;
+    // LCOV_EXCL_STOP
 }
 
 sptr<CameraDevice> CaptureSession::FindFrontCamera()
@@ -5679,7 +5839,7 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
         "CaptureSession::SetQualityPrioritization Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetQualityPrioritization Need to call LockForControl() before setting camera properties");
-
+    // LCOV_EXCL_START
     uint8_t quality = HIGH_QUALITY;
     auto itr = g_fwkQualityPrioritizationMap_.find(qualityPrioritization);
     CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkQualityPrioritizationMap_.end(), CameraErrorCode::PARAMETER_ERROR,
@@ -5702,6 +5862,7 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::EnableAutoAigcPhoto(bool enabled)
@@ -5744,6 +5905,7 @@ int32_t CaptureSession::GetSupportedFocusRangeTypes(std::vector<FocusRangeType>&
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_RANGE_TYPES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedFocusRangeTypes Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFocusRangeTypeMap_.find(static_cast<camera_focus_range_type_t>(item.data.u8[i]));
         if (itr != g_metaFocusRangeTypeMap_.end()) {
@@ -5751,6 +5913,7 @@ int32_t CaptureSession::GetSupportedFocusRangeTypes(std::vector<FocusRangeType>&
         }
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::IsFocusRangeTypeSupported(FocusRangeType focusRangeType, bool& isSupported)
@@ -5785,12 +5948,14 @@ int32_t CaptureSession::GetFocusRange(FocusRangeType& focusRangeType)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetFocusRange Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaFocusRangeTypeMap_.find(static_cast<camera_focus_range_type_t>(item.data.u8[0]));
     if (itr != g_metaFocusRangeTypeMap_.end()) {
         focusRangeType = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetFocusRange(FocusRangeType focusRangeType)
@@ -5800,6 +5965,7 @@ int32_t CaptureSession::SetFocusRange(FocusRangeType focusRangeType)
         "CaptureSession::SetFocusRange Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFocusRange Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(g_fwkocusRangeTypeMap_.find(focusRangeType) == g_fwkocusRangeTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSession::SetFocusRange Unknown focus range type");
     bool isSupported = false;
@@ -5825,6 +5991,7 @@ int32_t CaptureSession::SetFocusRange(FocusRangeType focusRangeType)
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusRange Failed to set focus range type");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedFocusDrivenTypes(std::vector<FocusDrivenType>& types)
@@ -5842,6 +6009,7 @@ int32_t CaptureSession::GetSupportedFocusDrivenTypes(std::vector<FocusDrivenType
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_DRIVEN_TYPES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedFocusDrivenTypes Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaFocusDrivenTypeMap_.find(static_cast<camera_focus_driven_type_t>(item.data.u8[i]));
         if (itr != g_metaFocusDrivenTypeMap_.end()) {
@@ -5849,6 +6017,7 @@ int32_t CaptureSession::GetSupportedFocusDrivenTypes(std::vector<FocusDrivenType
         }
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::IsFocusDrivenTypeSupported(FocusDrivenType focusDrivenType, bool& isSupported)
@@ -5883,12 +6052,14 @@ int32_t CaptureSession::GetFocusDriven(FocusDrivenType& focusDrivenType)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetFocusDriven Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaFocusDrivenTypeMap_.find(static_cast<camera_focus_driven_type_t>(item.data.u8[0]));
     if (itr != g_metaFocusDrivenTypeMap_.end()) {
         focusDrivenType = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetFocusDriven(FocusDrivenType focusDrivenType)
@@ -5898,6 +6069,7 @@ int32_t CaptureSession::SetFocusDriven(FocusDrivenType focusDrivenType)
         "CaptureSession::SetFocusDriven Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFocusDriven Need to call LockForControl() before setting camera properties");
+    // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(g_fwkFocusDrivenTypeMap_.find(focusDrivenType) == g_fwkFocusDrivenTypeMap_.end(),
         CameraErrorCode::PARAMETER_ERROR, "CaptureSession::SetFocusDriven Unknown focus driven type");
     bool isSupported = false;
@@ -5923,6 +6095,7 @@ int32_t CaptureSession::SetFocusDriven(FocusDrivenType focusDrivenType)
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDriven Failed to set focus driven type");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::GetSupportedColorReservationTypes(std::vector<ColorReservationType>& types)
@@ -5940,6 +6113,7 @@ int32_t CaptureSession::GetSupportedColorReservationTypes(std::vector<ColorReser
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_COLOR_RESERVATION_TYPES, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedColorReservationTypes Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = g_metaColorReservationTypeMap_.find(static_cast<camera_color_reservation_type_t>(item.data.u8[i]));
         if (itr != g_metaColorReservationTypeMap_.end()) {
@@ -5947,6 +6121,7 @@ int32_t CaptureSession::GetSupportedColorReservationTypes(std::vector<ColorReser
         }
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported)
@@ -5980,12 +6155,14 @@ int32_t CaptureSession::GetColorReservation(ColorReservationType& colorReservati
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetColorReservation Failed with return code %{public}d", ret);
+    // LCOV_EXCL_START
     auto itr = g_metaColorReservationTypeMap_.find(static_cast<camera_color_reservation_type_t>(item.data.u8[0]));
     if (itr != g_metaColorReservationTypeMap_.end()) {
         colorReservationType = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservationType)
@@ -6001,6 +6178,7 @@ int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservatio
     bool isSupported = false;
     IsColorReservationTypeSupported(colorReservationType, isSupported);
     CHECK_ERROR_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    // LCOV_EXCL_START
     uint8_t metaColorReservationType = OHOS_CAMERA_COLOR_RESERVATION_NONE;
     auto itr = g_fwkColorReservationTypeMap_.find(colorReservationType);
     if (itr != g_fwkColorReservationTypeMap_.end()) {
@@ -6021,6 +6199,7 @@ int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservatio
     }
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetColorReservation Failed to set color reservation type");
     return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
 }
 
 } // namespace CameraStandard

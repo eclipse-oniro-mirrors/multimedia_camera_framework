@@ -67,9 +67,8 @@ void TimerCoreFuzzer::TimerCoreFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<TimerCore>();
-    }
+    fuzz_ = std::make_shared<TimerCore>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
     uint64_t timestampMs = 0;
     std::function<void()> timerCallback;

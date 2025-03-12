@@ -67,12 +67,7 @@ ohos_fuzztest("VideoJobRepositoryFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/deferred_video_job.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_queue.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/schedule/video_processor/video_job_repository/video_job_repository.cpp",
-    "video_job_repository_fuzzer.cpp",
-  ]
+  sources = [ "video_job_repository_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",

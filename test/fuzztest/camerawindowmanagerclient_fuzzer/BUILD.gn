@@ -75,15 +75,7 @@ ohos_fuzztest("CameraWindowManagerClientFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/window_manager_service_proxy_impl/hcamera_mock_session_manager_interface_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/window_manager_service_proxy_impl/hcamera_scene_session_manager_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/client/src/window_manager_service_proxy_impl/hcamera_window_session_manager_service_proxy.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/window_manager_service_callback_stub_impl/hcamera_window_manager_callback_stub.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/window_manager_utils/camera_window_manager_agent.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/window_manager_utils/camera_window_manager_client.cpp",
-    "camera_window_manager_client_fuzzer.cpp",
-  ]
+  sources = [ "camera_window_manager_client_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,14 +34,14 @@
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 36;
+static constexpr int32_t NUM_1 = 1;
 static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 
-HStreamOperator *HStreamOperatorFuzzer::fuzz_ = nullptr;
-HStreamOperator *HStreamOperatorFuzzer::manager_ = nullptr;
+sptr<HStreamOperator> HStreamOperatorFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -78,13 +78,8 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HStreamOperator> session;
-    sptr<HStreamOperator> hStreamOperator;
-    if (fuzz_ == nullptr) {
-        hStreamOperator = HStreamOperator::NewInstance(0, 0);
-        fuzz_ = hStreamOperator;
-    }
+    fuzz_ = HStreamOperator::NewInstance(0, 0);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "NewInstance Error");
     int32_t streamId = GetData<int32_t>();
     fuzz_->GetStreamByStreamID(streamId);
     int32_t rotation = GetData<int32_t>();
@@ -97,7 +92,8 @@ void HStreamOperatorFuzzer::HStreamOperatorFuzzTest()
     fuzz_->EnableMovingPhotoMirror(GetData<bool>(), GetData<bool>());
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
-    ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
+    constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
+    ColorSpace colorSpace = static_cast<ColorSpace>(GetData<uint8_t>() % executionModeCount);
     fuzz_->SetColorSpace(colorSpace, GetData<bool>());
     fuzz_->GetStreamOperator();
     std::vector<int32_t> results = {GetData<uint32_t>()};
@@ -172,4 +168,4 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 
     OHOS::CameraStandard::FuzzTest(data, size);
     return 0;
-}
+}

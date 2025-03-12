@@ -47,7 +47,7 @@ const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 
-HStreamRepeat *HStreamRepeatFuzzer::fuzz_ = nullptr;
+std::shared_ptr<HStreamRepeat> HStreamRepeatFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -86,10 +86,9 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest1()
     }
     sptr<Surface> photoSurface;
     photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
-    if (fuzz_ == nullptr) {
-        fuzz_ = new (std::nothrow) HStreamRepeat(nullptr,
-            PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
-    }
+    fuzz_ = std::make_shared<HStreamRepeat>(nullptr,
+        PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
     fuzz_->LinkInput(streamOperator, cameraAbility);
@@ -126,7 +125,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest2()
     sptr<Surface> photoSurface;
     photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     if (fuzz_ == nullptr) {
-        fuzz_ = new (std::nothrow) HStreamRepeat(nullptr,
+        fuzz_ = std::make_shared<HStreamRepeat>(nullptr,
             PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
@@ -169,7 +168,7 @@ void HStreamRepeatFuzzer::HStreamRepeatFuzzTest3()
     sptr<Surface> photoSurface;
     photoSurface = Surface::CreateSurfaceAsConsumer("hstreamrepeat");
     if (fuzz_ == nullptr) {
-        fuzz_ = new (std::nothrow) HStreamRepeat(nullptr,
+        fuzz_ = std::make_shared<HStreamRepeat>(nullptr,
             PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();

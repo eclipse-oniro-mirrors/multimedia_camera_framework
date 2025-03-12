@@ -72,33 +72,15 @@ ohos_fuzztest("AvcodecTaskManagerFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_capturer_session.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_deferred_process.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_encoder.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/audio_video_muxer.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/avcodec_task_manager.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/common/frame_record.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/sample_callback.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/avcodec/video_encoder.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/moving_photo/moving_photo_surface_wrapper.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/demuxer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/media_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/muxer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/reader.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track_factory.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/writer.cpp",
-    "../../../services/deferred_processing_service/src/base/buffer_info.cpp",
-    "../../../services/deferred_processing_service/src/base/buffer_manager/shared_buffer.cpp",
-    "avcodec_task_manager_fuzzer.cpp",
-  ]
+  sources = [ "avcodec_task_manager_fuzzer.cpp" ]
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
   ]
+
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

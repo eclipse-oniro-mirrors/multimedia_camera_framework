@@ -33,7 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 bool CubicBezierFuzzer::hasPermission = false;
-CubicBezier *CubicBezierFuzzer::fuzz_ = nullptr;
+std::shared_ptr<CubicBezier> CubicBezierFuzzer::fuzz_{nullptr};
 
 void CubicBezierFuzzer::CheckPermission()
 {
@@ -58,9 +58,8 @@ void CubicBezierFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = new CubicBezier();
-    }
+    fuzz_ = std::make_shared<CubicBezier>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
 

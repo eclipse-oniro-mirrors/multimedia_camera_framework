@@ -65,19 +65,18 @@ void AudioCapturerSessionFuzzer::AudioCapturerSessionFuzzerTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (audioCapturerSession == nullptr) {
-        audioCapturerSession = std::make_shared<AudioCapturerSession>();
-    }
-    audioCapturerSession->ProcessAudioBuffer();
+    audioCapturerSession_ = std::make_shared<AudioCapturerSession>();
+    CHECK_ERROR_RETURN_LOG(!audioCapturerSession_, "Create audioCapturerSession_ Error");
+    audioCapturerSession_->ProcessAudioBuffer();
 
     int64_t startTime = GetData<int64_t>();
     int64_t endTime = GetData<int64_t>();
     std::vector<sptr<AudioRecord>> audioRecords{};
-    audioCapturerSession->GetAudioRecords(startTime, endTime, audioRecords);
-    audioCapturerSession->getMicNum();
-    audioCapturerSession->Release();
-    audioCapturerSession->Stop();
-    audioCapturerSession->StartAudioCapture();
+    audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
+    audioCapturerSession_->getMicNum();
+    audioCapturerSession_->Release();
+    audioCapturerSession_->Stop();
+    audioCapturerSession_->StartAudioCapture();
 }
 
 void Test()

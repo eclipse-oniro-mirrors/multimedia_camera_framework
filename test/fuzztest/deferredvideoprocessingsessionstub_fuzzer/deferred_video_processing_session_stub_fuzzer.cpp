@@ -71,9 +71,8 @@ void DeferredVideoProcessingSessionStubFuzzer::OnRemoteRequest(int32_t code)
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<DeferredVideoProcessingSessionStubFuzz>();
-    }
+    fuzz_ = std::make_shared<DeferredVideoProcessingSessionStubFuzz>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(DeferredVideoProcessingSessionStubFuzz::GetDescriptor());
     dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));

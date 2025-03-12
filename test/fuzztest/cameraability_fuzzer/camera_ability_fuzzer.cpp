@@ -94,9 +94,8 @@ void CameraAbilityFuzzer::CameraAbilityFuzzTest()
     }
 
     GetPermission();
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraAbility>();
-    }
+    fuzz_ = std::make_shared<CameraAbility>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->HasFlash();
     FlashMode flashMode = static_cast<FlashMode>(
         GetData<int32_t>() % (FlashMode::FLASH_MODE_ALWAYS_OPEN + NUM_TWO));

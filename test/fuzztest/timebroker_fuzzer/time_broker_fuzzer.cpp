@@ -67,9 +67,8 @@ void TimeBrokerFuzzer::TimeBrokerFuzzTest()
         return;
     }
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = TimeBroker::Create("camera_deferred_base");
-    }
+    fuzz_ = TimeBroker::Create("camera_deferred_base");
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
     uint32_t handle = fuzz_->GenerateHandle();
     std::function<void(uint32_t handle)> timerCallback = fuzz_->GetExpiredFunc(handle);

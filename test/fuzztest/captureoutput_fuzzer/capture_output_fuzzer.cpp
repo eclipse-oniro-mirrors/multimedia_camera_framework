@@ -78,16 +78,15 @@ void CaptureOutputFuzzer::CaptureOutputFuzzTest()
         return;
     }
     int32_t randomInt = GetData<int32_t>();
-    if (fuzz_ == nullptr) {
-        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        CHECK_ERROR_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
-        sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
-        CHECK_ERROR_RETURN_LOG(bufferProducer, "GetProducer Error");
-        sptr<IStreamCommon> stream;
-        CaptureOutputType randomOutputType = static_cast<CaptureOutputType>(
-        (randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
-        fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
-    }
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN_LOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
+    sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
+    CHECK_ERROR_RETURN_LOG(bufferProducer, "GetProducer Error");
+    sptr<IStreamCommon> stream;
+    CaptureOutputType randomOutputType = static_cast<CaptureOutputType>(
+    (randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
+    fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetBufferProducer();
     int32_t pid = GetData<int32_t>();
     fuzz_->OnCameraServerDied(pid);

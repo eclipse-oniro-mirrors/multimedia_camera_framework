@@ -26,7 +26,6 @@
 #include "iconsumer_surface.h"
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include <memory>
 #include "hstream_capture_callback_proxy.h"
 
 namespace OHOS {
@@ -37,7 +36,6 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-static constexpr int32_t MAX_CODE_NUM = 17;
 std::shared_ptr<HStreamCaptureStubFuzz> HStreamCaptureStubFuzzer::fuzz_{nullptr};
 
 /*
@@ -70,49 +68,92 @@ uint32_t GetArrLength(T& arr)
     return sizeof(arr) / sizeof(arr[0]);
 }
 
-void HStreamCaptureStubFuzzer::OnRemoteRequest(int32_t code)
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HStreamCaptureStubFuzz>();
-    }
-    MessageParcel data;
-    MessageOption option;
-    MessageParcel reply;
-    data.WriteInterfaceToken(HStreamCaptureStubFuzz::GetDescriptor());
-    data.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
-    data.RewindRead(0);
-    fuzz_->OnRemoteRequest(code, data, reply, option);
-}
-
 void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest1()
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-    auto fuzz = std::make_shared<HStreamCaptureStubFuzz>();
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    data.WriteBool(1);
+    auto value = GetData<bool>();
+    data.WriteBool(value);
     data.WriteRemoteObject(producer->AsObject());
-    fuzz->HandleSetBufferProducerInfo(data);
-    fuzz->HandleSetThumbnail(data);
+    fuzz_->HandleSetBufferProducerInfo(data);
 }
 
 void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest2()
 {
-    auto fuzz = std::make_shared<HStreamCaptureStubFuzz>();
     MessageParcel data;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    static const int32_t audioPolicyServiceId = 3009;
-    auto object = samgr->GetSystemAbility(audioPolicyServiceId);
-    auto proxy = std::make_shared<HStreamCaptureCallbackProxy>(object);
-    data.WriteRemoteObject(proxy->AsObject());
-    fuzz->HandleSetCallback(data);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_ERROR_RETURN(photoSurface == nullptr);
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    auto value = GetData<bool>();
+    data.WriteBool(value);
+    data.WriteRemoteObject(producer->AsObject());
+    fuzz_->HandleSetThumbnail(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest3()
+{
+    MessageParcel data;
+    auto value = GetData<int32_t>();
+    data.WriteInt32(value);
+    fuzz_->HandleAcquireBufferToPrepareProxy(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest4()
+{
+    MessageParcel data;
+    auto value = GetData<int32_t>();
+    data.WriteInt32(value);
+    fuzz_->HandleEnableDeferredType(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest5()
+{
+    MessageParcel data;
+    auto value = GetData<int32_t>();
+    data.WriteInt32(value);
+    fuzz_->HandleSetMovingPhotoVideoCodecType(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest6()
+{
+    MessageParcel data;
+    auto value = GetData<int32_t>();
+    data.WriteInt32(value);
+    fuzz_->HandleConfirmCapture(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest7()
+{
+    MessageParcel data;
+    auto value = GetData<bool>();
+    data.WriteBool(value);
+    fuzz_->HandleEnableRawDelivery(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest8()
+{
+    MessageParcel data;
+    auto value = GetData<bool>();
+    data.WriteBool(value);
+    fuzz_->HandleEnableMovingPhoto(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest9()
+{
+    MessageParcel data;
+    auto value = GetData<bool>();
+    data.WriteBool(value);
+    fuzz_->HandleSetCameraPhotoRotation(data);
+}
+
+void HStreamCaptureStubFuzzer::HStreamCaptureStubFuzzTest10()
+{
+    MessageParcel data;
+    auto value = GetData<bool>();
+    data.WriteBool(value);
+    fuzz_->HandleEnableOfflinePhoto(data);
 }
 
 void Test()
@@ -122,11 +163,21 @@ void Test()
         MEDIA_INFO_LOG("hstreamCaptureStub is null");
         return;
     }
-    for (uint32_t i = 0; i <= MAX_CODE_NUM; i++) {
-        hstreamCaptureStub->OnRemoteRequest(i);
+    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+        return;
     }
+    HStreamCaptureStubFuzzer::fuzz_ = std::make_shared<HStreamCaptureStubFuzz>();
+    CHECK_ERROR_RETURN_LOG(!HStreamCaptureStubFuzzer::fuzz_, "create fuzz_ Error");
     hstreamCaptureStub->HStreamCaptureStubFuzzTest1();
     hstreamCaptureStub->HStreamCaptureStubFuzzTest2();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest3();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest4();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest5();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest6();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest7();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest8();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest9();
+    hstreamCaptureStub->HStreamCaptureStubFuzzTest10();
 }
 
 typedef void (*TestFuncs[1])();

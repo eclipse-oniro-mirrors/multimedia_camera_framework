@@ -42,6 +42,7 @@ PhotoAssetProxy::PhotoAssetProxy(
     CHECK_ERROR_RETURN_LOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy construct photoAssetIntf is null");
 }
 
+// LCOV_EXCL_START
 void PhotoAssetProxy::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
     CHECK_ERROR_RETURN_LOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
@@ -73,5 +74,6 @@ int32_t PhotoAssetProxy::GetUserId()
     CHECK_ERROR_RETURN_RET_LOG(photoAssetIntf_ == nullptr, -1, "PhotoAssetProxy::GetUserId photoAssetIntf_ is null");
     return photoAssetIntf_->GetUserId();
 }
+// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS

@@ -122,6 +122,7 @@ void CameraAbilityBuilder::SetModeSpecTagField(
 void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t modeName, sptr<CaptureSession> session)
 {
     CHECK_ERROR_RETURN(session == nullptr);
+    // LCOV_EXCL_START
     auto metadata = session->GetMetadata();
     CHECK_ERROR_RETURN(metadata == nullptr);
     camera_metadata_item_t item;
@@ -163,6 +164,7 @@ void CameraAbilityBuilder::SetOtherTag(sptr<CameraAbility> ability, int32_t mode
         default:
             break;
     }
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -14,6 +14,7 @@
  */
 
 #include "camera_listener_stub_fuzzer.h"
+#include "camera_log.h"
 #include "hcamera_listener_proxy.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -54,9 +55,8 @@ void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
     }
     CheckPermission();
 
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraListenerStub>();
-    }
+    fuzz_ = std::make_shared<CameraListenerStub>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
     MessageParcel data;
     data.WriteRawData(rawData, size);

@@ -66,9 +66,8 @@ void CameraReportDfxUtilsFuzzer::CameraReportDfxUtilsFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraReportDfxUtils>();
-    }
+    fuzz_ = std::make_shared<CameraReportDfxUtils>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t captureId = GetData<int32_t>();
     fuzz_->SetFirstBufferEndInfo(captureId);
     fuzz_->SetPrepareProxyStartInfo(captureId);

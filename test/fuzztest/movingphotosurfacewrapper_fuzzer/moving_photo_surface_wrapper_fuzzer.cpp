@@ -80,9 +80,8 @@ void MovingPhotoSurfaceWrapperFuzzer::MovingPhotoSurfaceWrapperFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<MovingPhotoSurfaceWrapper>();
-    }
+    fuzz_ = std::make_shared<MovingPhotoSurfaceWrapper>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetProducer();
     int32_t width = GetData<int32_t>();
     int32_t height = GetData<int32_t>();

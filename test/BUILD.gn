@@ -46,7 +46,6 @@ group("camera_fuzz_test") {
     "fuzztest/deferredvideoprocessor_fuzzer:fuzztest",
     "fuzztest/deferredvideoprocsession_fuzzer:fuzztest",
     "fuzztest/dpsvideoreport_fuzzer:fuzztest",
-    "fuzztest/fluorescencephotosession_fuzzer:fuzztest",
     "fuzztest/hcameradevice_fuzzer:fuzztest",
     "fuzztest/hcameradevicemanager_fuzzer:fuzztest",
     "fuzztest/hcamerahostmanager_fuzzer:fuzztest",

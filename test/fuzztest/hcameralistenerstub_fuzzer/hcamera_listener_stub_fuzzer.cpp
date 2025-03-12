@@ -66,9 +66,8 @@ void CameraListenerStubFuzzer::CameraListenerStubFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<CameraListenerStubFuzz>();
-    }
+    fuzz_ = std::make_shared<CameraListenerStubFuzz>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 }
 
 void Test()

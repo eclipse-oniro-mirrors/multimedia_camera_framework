@@ -60,16 +60,12 @@ ohos_fuzztest("HCameraServiceCallbackStubFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/binder/server/src/hcamera_service_callback_stub.cpp",
-    "hcamera_service_callback_stub_fuzzer.cpp",
-  ]
+  sources = [ "hcamera_service_callback_stub_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
-    "../../../frameworks/native/camera:camera_framework",
-    "../../../services/camera_service:camera_service",
   ]
   public_external_deps = [
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",

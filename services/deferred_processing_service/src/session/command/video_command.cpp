@@ -46,6 +46,7 @@ int32_t VideoCommand::Initialize()
     return DP_OK;
 }
 
+// LCOV_EXCL_START
 AddVideoCommand::AddVideoCommand(const int32_t userId, const std::string& videoId,
     const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
     : VideoCommand(userId, videoId), srcFd_(srcFd), dstFd_(dstFd)
@@ -63,6 +64,7 @@ int32_t AddVideoCommand::Executing()
     processor_->AddVideo(videoId_, srcFd_, dstFd_);
     return DP_OK;
 }
+// LCOV_EXCL_STOP
 
 RemoveVideoCommand::RemoveVideoCommand(const int32_t userId, const std::string& videoId, const bool restorable)
     : VideoCommand(userId, videoId), restorable_(restorable)

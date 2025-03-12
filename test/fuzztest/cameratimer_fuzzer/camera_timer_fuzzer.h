@@ -24,7 +24,7 @@ namespace CameraStandard {
 class CameraTimerFuzzer {
 public:
 static bool hasPermission;
-static CameraTimer *fuzz_;
+static std::shared_ptr<CameraTimer> fuzz_;
 
 static void Test(uint8_t *rawData, size_t size);
 static void CheckPermission();

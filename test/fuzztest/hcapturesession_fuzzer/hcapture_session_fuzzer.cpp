@@ -39,6 +39,7 @@ static constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
 static constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
 static constexpr int32_t MAX_CODE_LEN = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t NUM_1 = 1;
 static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 const int NUM_10 = 10;
@@ -85,13 +86,13 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = GetData<int32_t>();
+    sptr<HCaptureSession> session;
     sptr<HStreamOperator> hStreamOperator;
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
-        fuzz_->NewInstance(0, 0, session);
-        hStreamOperator = HStreamOperator::NewInstance(0, 0);
-        fuzz_->SetStreamOperator(hStreamOperator);
-    }
+    fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
+    fuzz_->NewInstance(0, 0, session);
+    hStreamOperator = HStreamOperator::NewInstance(0, 0);
+    fuzz_->SetStreamOperator(hStreamOperator);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();
     int32_t featureMode = GetData<int32_t>();
@@ -105,7 +106,8 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     fuzz_->EnableMovingPhotoMirror(GetData<bool>(), GetData<bool>());
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
-    ColorSpace colorSpace = static_cast<ColorSpace>(callerToken % 23);
+    constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
+    ColorSpace colorSpace = static_cast<ColorSpace>(GetData<uint8_t>() % executionModeCount);
     fuzz_->SetColorSpace(colorSpace, GetData<bool>());
     fuzz_->GetPid();
     fuzz_->GetopMode();
@@ -125,10 +127,9 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = GetData<int32_t>();
     sptr<HCaptureSession> session;
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
-        fuzz_->NewInstance(0, 0, session);
-    }
+    fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
+    fuzz_->NewInstance(0, 0, session);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     StreamType streamType = StreamType::CAPTURE;
     fuzz_->AddOutput(streamType, nullptr);
     fuzz_->RemoveOutput(streamType, nullptr);
@@ -162,10 +163,9 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = GetData<int32_t>();
     sptr<HCaptureSession> session;
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
-        fuzz_->NewInstance(0, 0, session);
-    }
+    fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
+    fuzz_->NewInstance(0, 0, session);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t targetRangeId = TELE_CAMERA_ZOOM_RANGE;
     int32_t currentRangeId = WIDE_CAMERA_ZOOM_RANGE;
     int32_t waitCount = 4;
@@ -210,10 +210,9 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = GetData<int32_t>();
     sptr<HCaptureSession> session;
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
-        fuzz_->NewInstance(0, 0, session);
-    }
+    fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
+    fuzz_->NewInstance(0, 0, session);
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     pid_t pid = 0;
     fuzz_->DestroyStubObjectForPid(pid);
     sptr<ICaptureSessionCallback> callback;

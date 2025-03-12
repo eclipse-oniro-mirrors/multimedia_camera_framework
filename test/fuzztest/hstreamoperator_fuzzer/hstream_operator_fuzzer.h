@@ -23,11 +23,10 @@ namespace CameraStandard {
 
 class HStreamOperatorFuzzer {
 public:
-static HStreamOperator *fuzz_;
-static HStreamOperator *manager_;
+static sptr<HStreamOperator> fuzz_;
 static void HStreamOperatorFuzzTest();
 };
 
 } //CameraStandard
 } //CameraStandard
-#endif //HSTREAM_OPERATOR_FUZZER_H
+#endif //HSTREAM_OPERATOR_FUZZER_H

@@ -89,13 +89,6 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    IDeferredPhotoProcessingSessionCallbackFuzz callback;
-    auto object = callback.AsObject();
-    sptr<IStreamMetadata> streamMetadata = iface_cast<IStreamMetadata>(object);
-    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<MetadataOutput>(surface, streamMetadata);
-    }
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "MetadataOutputFuzzer: GetCameraDeviceListFromServer Error");
@@ -147,9 +140,6 @@ void MetadataOutputFuzzer::MetadataOutputFuzzTest1()
     auto object = callback.AsObject();
     sptr<IStreamMetadata> streamMetadata = iface_cast<IStreamMetadata>(object);
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<MetadataOutput>(surface, streamMetadata);
-    }
     sptr<MetadataObjectFactory> factoryPtr = MetadataObjectFactory::GetInstance();
     sptr<MetadataObjectFactory> factoryPtr_2 = MetadataObjectFactory::GetInstance();
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
@@ -179,6 +169,12 @@ void Test()
         MEDIA_INFO_LOG("metadataOutput is null");
         return;
     }
+    IDeferredPhotoProcessingSessionCallbackFuzz callback;
+    auto object = callback.AsObject();
+    sptr<IStreamMetadata> streamMetadata = iface_cast<IStreamMetadata>(object);
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    MetadataOutputFuzzer::fuzz_ = std::make_shared<MetadataOutput>(surface, streamMetadata);
+    CHECK_ERROR_RETURN_LOG(!MetadataOutputFuzzer::fuzz_, "Create fuzz_ Error");
     metadataOutput->MetadataOutputFuzzTest();
     metadataOutput->MetadataOutputFuzzTest1();
 }

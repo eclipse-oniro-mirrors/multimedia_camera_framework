@@ -67,9 +67,8 @@ void ReaderFuzzer::ReaderFuzzTest()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    if (fuzz_ == nullptr) {
-        fuzz_ = std::make_shared<Reader>();
-    }
+    fuzz_ = std::make_shared<Reader>();
+    CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t inputFd = GetData<int32_t>();
     fuzz_->Create(inputFd);
     fuzz_->GetSourceFormat();

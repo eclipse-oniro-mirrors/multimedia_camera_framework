@@ -42,12 +42,10 @@ ohos_fuzztest("CameraFwkMetadataUtilsFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/camera_service/src/camera_fwk_metadata_utils.cpp",
-    "camera_fwk_metadata_utils_fuzzer.cpp",
-  ]
+  sources = [ "camera_fwk_metadata_utils_fuzzer.cpp" ]
 
-  deps = [ "../../../services/camera_service:camera_service" ]
+  deps = [ "${multimedia_camera_framework_path}/services/camera_service:camera_service" ]
+
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

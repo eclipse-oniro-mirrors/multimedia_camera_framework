@@ -72,17 +72,7 @@ ohos_fuzztest("ReaderFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/demuxer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/media_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/mpeg_manager.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/muxer.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/reader.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/track_factory.cpp",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/src/media_manager/writer.cpp",
-    "reader_fuzzer.cpp",
-  ]
+  sources = [ "reader_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
