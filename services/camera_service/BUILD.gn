@@ -210,7 +210,6 @@ ohos_shared_library("camera_service") {
   public_external_deps = [
     "audio_framework:offline_audio_effect",
     "e2fsprogs:libext2_uuid",
-    "libxml2:libxml2",
   ]
   defines = []
   if (use_sensor) {
