@@ -2414,7 +2414,10 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
         int32_t smoothZoomType;
         napi_get_value_double(env, argv[PARAM0], &targetZoomRatio);
         napi_get_value_int32(env, argv[PARAM1], &smoothZoomType);
-        cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
     } else {
         MEDIA_ERR_LOG("SetSmoothZoom call Failed!");
     }
