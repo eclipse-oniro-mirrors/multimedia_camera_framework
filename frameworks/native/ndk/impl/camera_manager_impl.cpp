@@ -916,7 +916,7 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
             break;
         }
     }
-    
+
     if (cameraInfo == nullptr) {
         MEDIA_ERR_LOG("Camera_Manager::GetCameraDevice cameraInfo is null!");
         return CAMERA_SERVICE_FATAL_ERROR;
