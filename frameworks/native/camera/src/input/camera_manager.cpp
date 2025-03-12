@@ -1309,7 +1309,7 @@ void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
     cameraDevNow->limtedCapabilitySave_.stabilizationmodes.mode.clear();
     cameraDevNow->limtedCapabilitySave_.colorspaces.modeCount = 0;
     cameraDevNow->limtedCapabilitySave_.colorspaces.modeInfo.clear();
-    for (int32_t i = 0; i < count;) {
+    for (int32_t i = 0; i < static_cast<int32_t>(count);) {
         if (static_cast<camera_device_metadata_tag>(originInfo[i]) == OHOS_ABILITY_FLASH_MODES) {
             std::vector<int32_t>vec;
             int length = static_cast<int32_t>(originInfo[i + STEP_ONE]);

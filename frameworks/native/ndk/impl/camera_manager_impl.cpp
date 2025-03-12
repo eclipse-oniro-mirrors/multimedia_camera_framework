@@ -921,6 +921,8 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         MEDIA_ERR_LOG("Camera_Manager::GetCameraDevice cameraInfo is null!");
         return CAMERA_SERVICE_FATAL_ERROR;
     }
+    CHECK_ERROR_RETURN_RET_LOG(
+        cameraInfo == nullptr, CAMERA_SERVICE_FATAL_ERROR, "cameraInfo is null.");
     outCameras->cameraId = cameraInfo->GetID().data();
     outCameras->cameraPosition = position;
     outCameras->cameraType = type;
