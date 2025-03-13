@@ -408,6 +408,9 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+#ifdef MEMMGR_OVERRID
+        RequireMemory(Memory::CAMERA_END);
+#endif
         HandlePrivacyWhenOpenDeviceFail();
         return CAMERA_UNKNOWN_ERROR;
     } else {
