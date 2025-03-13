@@ -365,7 +365,7 @@ bool CaptureSession::CheckLightStatus()
     camera_metadata_item_t item;
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LIGHT_STATUS, &item);
-    if (retCode != CAM_META_SUCCESS || item.data.u8[0] == 0) {
+    if (retCode != CAM_META_SUCCESS || item.count == 0 || item.data.u8[0] == 0) {
         MEDIA_ERR_LOG("lightStatus is not support");
         return false;
     }

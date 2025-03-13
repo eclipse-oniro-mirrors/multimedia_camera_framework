@@ -4485,7 +4485,7 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "focusTrackingInfoAvailable", {
         &CameraSessionNapi::RegisterFocusTrackingInfoCallbackListener,
         &CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener } },
-    { "lightStatus", {
+    { "lightStatusChange", {
         &CameraSessionNapi::RegisterLightStatusCallbackListener,
         &CameraSessionNapi::UnregisterLightStatusCallbackListener } },
 };
