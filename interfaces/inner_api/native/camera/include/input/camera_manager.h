@@ -1059,14 +1059,6 @@ class FoldStatusListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<FoldListener> {
 public:
     int32_t OnFoldStatusChanged(const FoldStatus status) override;
-
-    inline FoldStatusInfo GetCachedFoldStatus()
-    {
-        return cachedStatus_;
-    }
-
-private:
-    FoldStatusInfo cachedStatus_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS
