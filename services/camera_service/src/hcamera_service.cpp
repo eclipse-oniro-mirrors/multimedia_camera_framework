@@ -54,18 +54,16 @@
 namespace OHOS {
 namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
-#ifdef CAMERA_USE_SENSOR
-constexpr int32_t SENSOR_SUCCESS = 0;
-constexpr int32_t POSTURE_INTERVAL = 1000000;
-#endif
 constexpr uint8_t POSITION_FOLD_INNER = 3;
 constexpr uint32_t ROOT_UID = 0;
 constexpr uint32_t FACE_CLIENT_UID = 1088;
 constexpr uint32_t RSS_UID = 1096;
+static const uint32_t DEVICE_DROP_INTERVAL = 600000;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
+static int64_t g_lastDeviceDropTime = 0;
 
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
@@ -535,6 +533,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
     }
 #ifdef CAMERA_USE_SENSOR
+    g_lastDeviceDropTime = 0;
     RegisterSensorCallback();
 #endif
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
@@ -1691,40 +1690,30 @@ void HCameraService::RegisterSensorCallback()
         MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback isRegisterSensorSuccess return");
         return;
     }
-    MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback start");
-    user.callback = DropDetectionDataCallbackImpl;
-    int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
-    MEDIA_INFO_LOG("RegisterSensorCallback, subscribeRet: %{public}d", subscribeRet);
-    int32_t setBatchRet = SetBatch(SENSOR_TYPE_ID_DROP_DETECTION, &user, POSTURE_INTERVAL, POSTURE_INTERVAL);
-    MEDIA_INFO_LOG("RegisterSensorCallback, setBatchRet: %{public}d", setBatchRet);
-    int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
-    MEDIA_INFO_LOG("RegisterSensorCallback, activateRet: %{public}d", activateRet);
-    if (subscribeRet != SENSOR_SUCCESS || setBatchRet != SENSOR_SUCCESS || activateRet != SENSOR_SUCCESS) {
-        isRegisterSensorSuccess = false;
-        MEDIA_INFO_LOG("RegisterSensorCallback failed.");
-    }  else {
-        isRegisterSensorSuccess = true;
-    }
+    isRegisterSensorSuccess = false;
+    MEDIA_INFO_LOG("HCameraService::RegisterDropDetectionListener start");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::LoadMotionSensor(), "RegisterDropDetectionListener LoadMotionSensor fail");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::SubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION,
+        DropDetectionDataCallbackImpl), "RegisterDropDetectionListener SubscribeCallback fail");
+    isRegisterSensorSuccess = true;
 }
 
 void HCameraService::UnRegisterSensorCallback()
 {
-    int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
-    int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
-    if (deactivateRet == SENSOR_SUCCESS && unsubscribeRet == SENSOR_SUCCESS) {
-        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
-    }
+    CHECK_ERROR_RETURN_LOG(!UnsubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
+        "UnRegisterDropDetectionListener fail");
+    OHOS::Rosen::UnloadMotionSensor();
 }
 
-void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
+void HCameraService::DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData)
 {
-    MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl prepare execute");
-    CHECK_ERROR_RETURN_LOG(event == nullptr, "SensorEvent is nullptr.");
-    CHECK_ERROR_RETURN_LOG(event[0].data == nullptr, "SensorEvent[0].data is nullptr.");
-    CHECK_ERROR_RETURN_LOG(event[0].dataLen < sizeof(DropDetectionData),
-        "less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
+    MEDIA_INFO_LOG("HCameraService::DropDetectionCallback type = %{public}d, status = %{public}d",
+        motionData.type, motionData.status);
     {
         std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
+        if (GetTimestamp() - g_lastDeviceDropTime < DEVICE_DROP_INTERVAL) {
+            return;
+        }
         g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(
             DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
     }
@@ -2029,6 +2018,12 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     }
     #endif
     return CAMERA_UNKNOWN_ERROR;
+}
+
+int32_t HCameraService::SetDeviceRetryTime()
+{
+    g_lastDeviceDropTime = GetTimestamp();
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

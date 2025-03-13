@@ -155,6 +155,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_REQUIRE_MEMORY_SIZE):
             errCode = HCameraServiceStub::HandleRequireMemorySize(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME):
+            errCode = HCameraServiceStub::HandleSetDeviceRetryTime(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -748,6 +751,11 @@ int HCameraServiceStub::HandleRequireMemorySize(MessageParcel& data, MessageParc
     int ret = RequireMemorySize(memSize);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_NONE, ret, "RequireMemorySize failed : %{public}d", ret);
     return ret;
+}
+
+int HCameraServiceStub::HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply)
+{
+    return SetDeviceRetryTime();
 }
 } // namespace CameraStandard
 } // namespace OHOS

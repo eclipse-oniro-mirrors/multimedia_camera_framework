@@ -480,5 +480,12 @@ std::vector<std::string> SplitString(const std::string& input, char delimiter)
     }
     return result;
 }
+
+int64_t GetTimestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    return duration.count();
+}
 } // namespace CameraStandard
 } // namespace OHOS

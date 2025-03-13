@@ -98,6 +98,7 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value UsedAsPosition(napi_env env, napi_callback_info info);
+    static napi_value ControlAuxiliary(napi_env env, napi_callback_info info);
 
     const EmitterFunctions& GetEmitterFunctions() override;
 

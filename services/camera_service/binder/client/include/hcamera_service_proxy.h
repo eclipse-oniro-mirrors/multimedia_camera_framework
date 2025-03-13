@@ -122,6 +122,8 @@ public:
     int32_t GetCameraOutputStatus(int32_t pid, int32_t &status) override;
 
     int32_t RequireMemorySize(int32_t memSize) override;
+
+    int32_t SetDeviceRetryTime() override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };

@@ -226,7 +226,8 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
-        DECLARE_NAPI_FUNCTION("usedAsPosition", UsedAsPosition)
+        DECLARE_NAPI_FUNCTION("usedAsPosition", UsedAsPosition),
+        DECLARE_NAPI_FUNCTION("controlAuxiliary", ControlAuxiliary)
     };
 
     status = napi_define_class(env, CAMERA_INPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -553,6 +554,26 @@ napi_value CameraInputNapi::UsedAsPosition(napi_env env, napi_callback_info info
     }
     MEDIA_INFO_LOG("CameraInputNapi::UsedAsPosition params: %{public}d", cameraPosition);
     cameraInputNapi->cameraInput_->SetInputUsedAsPosition(static_cast<const CameraPosition>(cameraPosition));
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraInputNapi::ControlAuxiliary(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraInputNapi::ControlAuxiliary is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi ControlAuxiliary is called!");
+        return nullptr;
+    }
+    CameraInputNapi* cameraInputNapi = nullptr;
+    int32_t auxiliaryType;
+    int32_t auxiliaryStatus;
+    CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, auxiliaryType, auxiliaryStatus);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "input controlAuxiliary with invalid arguments!")) {
+        MEDIA_ERR_LOG("CameraInputNapi::ControlAuxiliary invalid arguments");
+        return nullptr;
+    }
+    cameraInputNapi->cameraInput_->ControlAuxiliary(static_cast<const AuxiliaryType>(auxiliaryType),
+        static_cast<const AuxiliaryStatus>(auxiliaryStatus));
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 } // namespace CameraStandard
