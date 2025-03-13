@@ -17,7 +17,6 @@
 #include "camera_log.h"
 #include "iconsumer_surface.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

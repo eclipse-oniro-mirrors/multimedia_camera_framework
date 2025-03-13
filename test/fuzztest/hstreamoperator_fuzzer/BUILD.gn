@@ -66,6 +66,7 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-fno-access-control",
   ]
 
   sources = [ "hstream_operator_fuzzer.cpp" ]

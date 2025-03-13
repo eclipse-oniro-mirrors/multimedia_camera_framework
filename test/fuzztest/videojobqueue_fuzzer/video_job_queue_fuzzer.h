@@ -18,7 +18,6 @@
 
 #include "video_job_repository.h"
 #include "video_job_queue.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

@@ -18,7 +18,6 @@
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
-#include <memory>
 
 using namespace std;
 
@@ -26,11 +25,11 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
-std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor{nullptr};
-std::shared_ptr<DeferredVideoWork> VideoPostProcessorFuzzer::work{nullptr};
-std::shared_ptr<VideoPostProcessor::VideoProcessListener> VideoPostProcessorFuzzer::listener{nullptr};
+std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
+std::shared_ptr<DeferredVideoWork> VideoPostProcessorFuzzer::work_{nullptr};
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int NUM_1 = 1;
 static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
@@ -68,35 +67,27 @@ uint32_t GetArrLength(T& arr)
 
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-    int32_t userId = GetData<int32_t>();
-    processor = std::make_shared<VideoPostProcessor>(userId);
-    if (processor == nullptr) {
-        return;
-    }
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
-    processor->SetExecutionMode(selectedExecutionMode);
-    processor->SetDefaultExecutionMode();
+    processor_->SetExecutionMode(selectedExecutionMode);
+    processor_->SetDefaultExecutionMode();
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    auto srcFd = GetData<int>();
-    auto dstFd = GetData<int>();
-    processor->copyFileByFd(srcFd, dstFd);
+    auto srcFd = NUM_1;
+    auto dstFd = NUM_1;
+    processor_->copyFileByFd(srcFd, dstFd);
     auto isAutoSuspend = GetData<bool>();
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd_, dstFd_);
-    std::shared_ptr<DeferredVideoWork> work =
+    std::shared_ptr<DeferredVideoWork> work_ =
         make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);
-    processor->StartTimer(videoId, work);
-    processor->StopTimer(work);
-    processor->ProcessRequest(work);
-    processor->RemoveRequest(videoId);
+    processor_->StartTimer(videoId, work_);
+    processor_->StopTimer(work_);
+    processor_->ProcessRequest(work_);
+    processor_->RemoveRequest(videoId);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
     ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
@@ -105,38 +96,30 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     MediaResult selectedMediaResult = static_cast<MediaResult>(GetData<uint8_t>() % executionModeCount4);
     constexpr int32_t executionModeCount5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
     HdiStatus selectedHdiStatus = static_cast<HdiStatus>(GetData<uint8_t>() % executionModeCount5);
-    processor->PauseRequest(videoId, selectedScheduleType);
+    processor_->PauseRequest(videoId, selectedScheduleType);
     sptr<IPCFileDescriptor> inputFd_ = nullptr;
-    processor->StartMpeg(videoId, inputFd_);
-    processor->StopMpeg(selectedMediaResult, work);
-    processor->OnSessionDied();
-    processor->OnProcessDone(videoId);
-    processor->OnError(videoId, selectedDpsError);
-    processor->OnStateChanged(selectedHdiStatus);
-    processor->OnTimerOut(videoId);
+    processor_->StartMpeg(videoId, inputFd_);
+    processor_->StopMpeg(selectedMediaResult, work_);
+    processor_->OnSessionDied();
+    processor_->OnProcessDone(videoId);
+    processor_->OnError(videoId, selectedDpsError);
+    processor_->OnStateChanged(selectedHdiStatus);
+    processor_->OnTimerOut(videoId);
 }
 
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2()
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-    int32_t userId = GetData<int32_t>();
-    processor = std::make_shared<VideoPostProcessor>(userId);
-    if (processor == nullptr) {
-        return;
-    }
     std::vector<std::string> pendingVideos;
-    processor->GetPendingVideos(pendingVideos);
+    processor_->GetPendingVideos(pendingVideos);
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto inputFd = GetData<int>();
-    processor->PrepareStreams(videoId, inputFd);
+    processor_->PrepareStreams(videoId, inputFd);
     StreamDescription stream;
     sptr<BufferProducerSequenceable> producer;
-    processor->SetStreamInfo(stream, producer);
-    processor->GetRunningWork(videoId);
+    processor_->SetStreamInfo(stream, producer);
+    processor_->GetRunningWork(videoId);
 }
 
 void Test()
@@ -144,6 +127,14 @@ void Test()
     auto videoPostProcessor = std::make_unique<VideoPostProcessorFuzzer>();
     if (videoPostProcessor == nullptr) {
         MEDIA_INFO_LOG("videoPostProcessor is null");
+        return;
+    }
+    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+        return;
+    }
+    int32_t userId = GetData<int32_t>();
+    VideoPostProcessorFuzzer::processor_ = std::make_shared<VideoPostProcessor>(userId);
+    if (VideoPostProcessorFuzzer::processor_ == nullptr) {
         return;
     }
     videoPostProcessor->VideoPostProcessorFuzzTest1();

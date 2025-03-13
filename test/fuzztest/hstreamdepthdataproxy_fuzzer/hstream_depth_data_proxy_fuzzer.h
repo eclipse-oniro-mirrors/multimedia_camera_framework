@@ -20,7 +20,6 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "token_setproc.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

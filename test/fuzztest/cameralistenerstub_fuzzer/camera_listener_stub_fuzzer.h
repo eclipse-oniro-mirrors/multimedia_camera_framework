@@ -16,7 +16,6 @@
 #ifndef CAMERA_LISTENER_STUB_FUZZER_H
 #define CAMERA_LISTENER_STUB_FUZZER_H
 
-#include <memory>
 #include "hcamera_listener_stub.h"
 
 namespace OHOS {

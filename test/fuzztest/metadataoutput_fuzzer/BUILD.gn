@@ -76,7 +76,11 @@ ohos_fuzztest("MetadataOutputFuzzTest") {
 
   sources = [ "metadata_output_fuzzer.cpp" ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

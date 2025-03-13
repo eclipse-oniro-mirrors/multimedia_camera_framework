@@ -24,7 +24,6 @@
 #include "iconsumer_surface.h"
 #include "camera_service_ipc_interface_code.h"
 #include "securec.h"
-#include <memory>
 #include "hstream_depth_data_callback_proxy.h"
 
 namespace OHOS {

@@ -17,7 +17,6 @@
 #define HSTREAM_METADATA_CALLBACK_PROXY_FUZZER_H
 
 #include "hstream_metadata_callback_proxy.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

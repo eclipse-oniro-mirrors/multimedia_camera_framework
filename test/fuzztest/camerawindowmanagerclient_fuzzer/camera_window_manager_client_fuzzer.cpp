@@ -16,7 +16,6 @@
 #include "camera_window_manager_client_fuzzer.h"
 #include "camera_log.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

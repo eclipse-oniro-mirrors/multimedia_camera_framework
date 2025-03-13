@@ -17,7 +17,6 @@
 #define MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H
 
 #include "moving_photo_surface_wrapper.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

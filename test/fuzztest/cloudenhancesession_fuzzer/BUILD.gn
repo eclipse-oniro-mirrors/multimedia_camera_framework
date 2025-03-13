@@ -22,6 +22,7 @@ ohos_fuzztest("CloudEnhanceSessionFuzzTest") {
   include_dirs = [
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/output/",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
@@ -35,9 +36,15 @@ ohos_fuzztest("CloudEnhanceSessionFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [ "cloud_enhance_session_fuzzer.cpp" ]
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "cloud_enhance_session_fuzzer.cpp",
+  ]
 
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

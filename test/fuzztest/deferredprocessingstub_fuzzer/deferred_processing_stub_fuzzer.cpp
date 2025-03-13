@@ -55,7 +55,7 @@ void DeferredProcessingPhotoFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    DeferredProcessingService::GetInstance().Initialize();
+    DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
     sptr<IDeferredPhotoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz =
         sptr<IDeferredPhotoProcessingSessionCallbackFuzz>::MakeSptr();
     sptr<IDeferredPhotoProcessingSession> session =
@@ -78,7 +78,7 @@ void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
 
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    DeferredProcessingService::GetInstance().Initialize();
+    DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
     sptr<IDeferredVideoProcessingSessionCallbackFuzz> IDPSessionCallbackFuzz =
         sptr<IDeferredVideoProcessingSessionCallbackFuzz>::MakeSptr();
     sptr<IDeferredVideoProcessingSession> session =

@@ -16,7 +16,6 @@
 #ifndef BMS_ADAPTER_FUZZER_H
 #define BMS_ADAPTER_FUZZER_H
 
-#include <memory>
 #include "bms_adapter.h"
 
 namespace OHOS {

@@ -16,7 +16,6 @@
 #ifndef COMMAND_SERVER_IMPL_FUZZER_H
 #define COMMAND_SERVER_IMPL_FUZZER_H
 
-#include <memory>
 #include "command_server_impl.h"
 
 namespace OHOS {
