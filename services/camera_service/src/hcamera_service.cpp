@@ -1275,7 +1275,7 @@ int32_t HCameraService::PrelaunchCamera()
             int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
             CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, CAMERA_OK, "HCameraService::PrelaunchCamera exit");
             int8_t camIdx = ChooseFisrtBootFoldCamIdx(curFoldStatus, cameraAbilityList);
-            CHECK_ERROR_RETURN_RET_LOG(camIdx != -1, CAMERA_OK, "HCameraService::PrelaunchCamera exit");
+            CHECK_ERROR_RETURN_RET_LOG(camIdx == -1, CAMERA_OK, "HCameraService::PrelaunchCamera exit");
             preCameraId_ = cameraIds[camIdx];
         } else {
             // unfoldable devices
