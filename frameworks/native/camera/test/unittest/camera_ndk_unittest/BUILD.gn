@@ -91,6 +91,7 @@ ohos_unittest("camera_ndk_test") {
     "media_foundation:media_foundation",
     "media_foundation:native_media_core",
     "media_library:media_library",
+    "media_library:media_library_asset_manager",
     "media_library:media_library_manager",
     "media_library:native_media_asset_manager",
     "napi:ace_napi",
