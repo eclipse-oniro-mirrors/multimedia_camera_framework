@@ -712,6 +712,8 @@ public:
         return serviceProxyPrivate_;
     }
     std::vector<sptr<CameraDevice>> GetSupportedCamerasWithFoldStatus();
+    std::string GetFoldScreenType();
+    bool CheckWhiteList();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -788,7 +790,6 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
-
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
