@@ -855,5 +855,26 @@ int32_t HCameraServiceProxy::RequireMemorySize(int32_t memSize)
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error, "RequireMemorySize, error: %{public}d", error);
     return error;
 }
+
+int32_t HCameraServiceProxy::CheckWhiteList(bool &isInWhiteList)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    (void)data.WriteBool(isInWhiteList);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CHECK_WHITE_LIST), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::CheckWhiteList failed, error: %{public}d", error);
+        return error;
+    }
+
+    isInWhiteList = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy CheckWhiteList Read muteMode is %{public}d", isInWhiteList);
+
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
