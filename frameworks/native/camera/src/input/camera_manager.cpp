@@ -1086,8 +1086,6 @@ void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
         sptr<IFoldServiceCallback> callback = foldStatusListenerManager_;
         int32_t errCode = SetFoldServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
-    } else {
-        listener->OnFoldStatusChanged(foldStatusListenerManager_->GetCachedFoldStatus());
     }
 }
 
@@ -2478,7 +2476,6 @@ int32_t FoldStatusListenerManager::OnFoldStatusChanged(const FoldStatus status)
     auto listenerManager = cameraManager->GetFoldStatusListenerManager();
     MEDIA_DEBUG_LOG("FoldListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFoldStatusChanged(foldStatusInfo); });
-    listenerManager->cachedStatus_ = foldStatusInfo;
     return CAMERA_OK;
 }
 

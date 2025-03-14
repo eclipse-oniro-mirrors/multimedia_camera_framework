@@ -855,7 +855,6 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         curFoldStatus = FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
-    cachedFoldStatus_ = curFoldStatus;
     CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged(curFoldStatus));
     CHECK_ERROR_RETURN_LOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
@@ -982,7 +981,6 @@ int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callba
             callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetFoldStatusCallback callback is null");
         foldServiceCallbacks_.insert(make_pair(pid, callback));
     }
-    callback->OnFoldStatusChanged(cachedFoldStatus_);
     return CAMERA_OK;
 }
 
