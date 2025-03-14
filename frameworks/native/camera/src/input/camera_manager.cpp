@@ -1784,6 +1784,16 @@ FoldStatus CameraManager::GetFoldStatus()
     return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
 }
 
+bool CameraManager::CheckWhiteList()
+{
+    bool isInWhiteList = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, isInWhiteList, "CameraManager::CheckWhitelist serviceProxy is null");
+    serviceProxy->CheckWhiteList(isInWhiteList);
+    return isInWhiteList;
+}
+
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
@@ -1806,7 +1816,8 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
             (deviceInfo->GetPosition() == CAMERA_POSITION_BACK ||
             deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && curFoldStatus == FoldStatus::EXPAND) {
+            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !CheckWhiteList() &&
+            curFoldStatus == FoldStatus::EXPAND) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }

@@ -166,6 +166,8 @@ public:
 
     virtual int32_t SetDeviceRetryTime() = 0;
 
+    virtual int32_t CheckWhiteList(bool &isInWhiteList) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard
