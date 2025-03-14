@@ -894,7 +894,7 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
-
+    bool CheckWhiteList();
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
