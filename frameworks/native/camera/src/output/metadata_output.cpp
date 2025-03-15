@@ -258,7 +258,8 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadat
             cameraMetadataCallback_ = new HStreamMetadataCallbackImpl(this);
         }
     }
-    auto itemStream = static_cast<IStreamMetadata *>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamMetadata> itemStream = static_cast<IStreamMetadata*>(stream.GetRefPtr());
     int32_t errorCode = CAMERA_OK;
     if (itemStream) {
         errorCode = itemStream->SetCallback(cameraMetadataCallback_);

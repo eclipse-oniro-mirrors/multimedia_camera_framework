@@ -104,7 +104,8 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
         }
         CHECK_ERROR_RETURN_LOG(GetStream() == nullptr, "VideoOutput Failed to SetCallback!, GetStream is nullptr");
         int32_t errorCode = CAMERA_OK;
-        auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+        auto stream = GetStream();
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
         if (itemStream) {
             errorCode = itemStream->SetCallback(svcCallback_);
         } else {
@@ -132,7 +133,8 @@ int32_t VideoOutput::Start()
         MEDIA_INFO_LOG("EnableFaceDetection is call");
         session->EnableFaceDetection(false);
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -150,7 +152,8 @@ int32_t VideoOutput::Stop()
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Stop");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "VideoOutput Failed to Stop!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -175,7 +178,8 @@ int32_t VideoOutput::Resume()
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Resume");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "VideoOutput Failed to Resume!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -192,7 +196,8 @@ int32_t VideoOutput::Pause()
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Pause");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "VideoOutput Failed to Pause!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -234,7 +239,8 @@ int32_t VideoOutput::Release()
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "VideoOutput Failed to Release!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -282,7 +288,8 @@ int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     CHECK_ERROR_RETURN_RET(result != CameraErrorCode::SUCCESS, result);
     CHECK_ERROR_RETURN_RET_LOG(minFrameRate == videoFrameRateRange_[0] && maxFrameRate == videoFrameRateRange_[1],
         CameraErrorCode::INVALID_ARGUMENT, "VideoOutput::SetFrameRate The frame rate does not need to be set.");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
@@ -328,7 +335,8 @@ int32_t VideoOutput::enableMirror(bool enabled)
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
         "Can not enable mirror, session is not config");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     CHECK_ERROR_RETURN_RET_LOG(!itemStream || !IsMirrorSupported(), CameraErrorCode::INVALID_ARGUMENT,
         "VideoOutput::enableMirror not supported mirror or stream is null");
     int32_t retCode = itemStream->SetMirror(enabled);
@@ -399,7 +407,8 @@ bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
 
 void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType)
 {
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->AttachMetaSurface(surface->GetProducer(), videoMetaType);
@@ -468,7 +477,8 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     }
     bool isMirrorEnabled = false;
     if (result != ImageRotation::ROTATION_0 && result != ImageRotation::ROTATION_180 && IsMirrorSupported()) {
-        auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+        auto stream = GetStream();
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
         if (itemStream != nullptr) {
             int32_t ret = itemStream->GetMirror(isMirrorEnabled);
             CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret), "VideoOutput::getMirror failed");
@@ -648,7 +658,8 @@ int32_t VideoOutput::EnableAutoVideoFrameRate(bool enable)
     bool isSupportedAutoVideoFps = IsAutoVideoFrameRateSupported();
     CHECK_ERROR_RETURN_RET_LOG(!isSupportedAutoVideoFps, CameraErrorCode::INVALID_ARGUMENT,
         "VideoOutput::EnableAutoVideoFrameRate does not supported.");
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream-> ToggleAutoVideoFrameRate(enable);
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),

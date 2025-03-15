@@ -91,7 +91,7 @@ int32_t PreviewOutput::Release()
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PreviewOutput Failed to Release!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -179,7 +179,7 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
     CHECK_ERROR_RETURN_LOG(surface == nullptr, "PreviewOutput::AddDeferredSurface surface is null");
     auto stream = GetStream();
     CHECK_ERROR_RETURN_LOG(!stream, "PreviewOutput::AddDeferredSurface itemStream is null");
-    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     itemStream->AddDeferredSurface(surface->GetProducer());
 }
 
@@ -193,7 +193,7 @@ int32_t PreviewOutput::Start()
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(
         stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Start, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -211,7 +211,7 @@ int32_t PreviewOutput::Stop()
     auto stream = GetStream();
     CHECK_ERROR_RETURN_RET_LOG(
         stream == nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "PreviewOutput Failed to Stop, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -383,7 +383,7 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         CameraErrorCode::INVALID_ARGUMENT, "PreviewOutput::SetFrameRate The frame rate does not need to be set.");
     std::vector<int32_t> frameRateRange = {minFrameRate, maxFrameRate};
     auto stream = GetStream();
-    auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
         CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
@@ -521,7 +521,8 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     CHECK_ERROR_RETURN(!isSuccess);
     if (previewOutputListenerManager_->GetListenerCount() == 1) {
         sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
-        auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        auto stream = GetStream();
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
         int32_t errCode = itemStream->SetCallback(ipcCallback);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("PreviewOutput::SetCallback fail");
@@ -704,7 +705,8 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     result = isDisplayLocked ? ImageRotation(sensorOrientation) : ImageRotation(imageRotation);
     MEDIA_INFO_LOG("PreviewOutput SetPreviewRotation :result %{public}d, sensorOrientation:%{public}d",
         result, sensorOrientation);
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->SetCameraRotation(true, result);

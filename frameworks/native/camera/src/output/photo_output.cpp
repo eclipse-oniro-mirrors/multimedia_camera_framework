@@ -617,7 +617,8 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
 {
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
     if (itemStream) {
         itemStream->AcquireBufferToPrepareProxy(captureId);
     } else {
