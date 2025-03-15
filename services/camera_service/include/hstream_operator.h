@@ -209,6 +209,7 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     int32_t UnlinkInputAndOutputs();
+    int32_t UnlinkOfflineInputAndOutputs();
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void ClearSketchRepeatStream();
@@ -217,6 +218,10 @@ public:
     void ClearMovingPhotoRepeatStream();
     void GetStreamOperator();
     bool IsOfflineCapture();
+    inline int32_t GetPid()
+    {
+        return static_cast<int32_t>(pid_);
+    }
     inline void ResetHdiStreamId()
     {
         hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
