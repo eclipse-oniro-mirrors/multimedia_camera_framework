@@ -940,15 +940,6 @@ void HStreamCapture::SwitchToOffline()
     mSwitchToOfflinePhoto_ = true;
 }
 
-int32_t HStreamCapture::UnlinkInput()
-{
-    if (mSwitchToOfflinePhoto_) {
-        MEDIA_INFO_LOG("HStreamCapture::UnlinkInput, current is offline capture, cancel unlink");
-        return CAMERA_OK;
-    }
-    return HStreamCommon::UnlinkInput();
-}
-
 bool HStreamCapture::IsHasSwitchToOffline()
 {
     return mSwitchToOfflinePhoto_;

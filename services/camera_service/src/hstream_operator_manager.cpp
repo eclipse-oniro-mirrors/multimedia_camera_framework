@@ -95,5 +95,20 @@ int32_t HStreamOperatorManager::GetOfflineOutputSize()
     }
     return offlineOutputCount;
 }
+
+std::vector<sptr<HStreamOperator>> HStreamOperatorManager::GetStreamOperatorByPid(pid_t pidRequest)
+{
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    std::vector<sptr<HStreamOperator>> streamOperatorVec = {};
+    for (auto streamOperator : streamOperatorManagerMap_) {
+        if (pidRequest == (streamOperator.second)->GetPid()) {
+            streamOperatorVec.push_back(streamOperator.second);
+            MEDIA_INFO_LOG("HStreamOperatorManager::GetCameraByPid find");
+        }
+    }
+    MEDIA_INFO_LOG("HStreamOperatorManager::GetStreamOperatorByPid pid is %{public}d size is %{public}zu", pidRequest,
+        streamOperatorVec.size());
+    return streamOperatorVec;
+}
 } // namespace CameraStandard
 } // namespace OHOS
