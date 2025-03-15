@@ -818,7 +818,7 @@ public:
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
-
+    bool CheckWhiteList();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -894,7 +894,6 @@ private:
     vector<CameraFormat> GetSupportPhotoFormat(const int32_t modeName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void FillSupportPhotoFormats(std::vector<Profile>& profiles);
-    bool CheckWhiteList();
     inline void SetServiceProxy(sptr<ICameraService> proxy)
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
