@@ -71,7 +71,6 @@ private:
     int HandleRequireMemorySize(MessageParcel& data, MessageParcel& reply);
     int HandleGetIdforCameraConcurrentType(MessageParcel& data, MessageParcel& reply);
     int HandleGetConcurrentCameraAbility(MessageParcel& data, MessageParcel& reply);
-    int HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply);
     int DestroyStubObj() override;
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);

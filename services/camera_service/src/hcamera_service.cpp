@@ -58,12 +58,8 @@ constexpr uint8_t POSITION_FOLD_INNER = 3;
 constexpr uint32_t ROOT_UID = 0;
 constexpr uint32_t FACE_CLIENT_UID = 1088;
 constexpr uint32_t RSS_UID = 1096;
-static const uint32_t DEVICE_DROP_INTERVAL = 600000;
-static std::mutex g_cameraServiceInstanceMutex;
-static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
-static int64_t g_lastDeviceDropTime = 0;
 
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
@@ -89,14 +85,10 @@ mutex g_dmDeviceInfoMutex;
 thread_local uint32_t g_dumpDepth = 0;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false), isRegisterSensorSuccess(false)
+    : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false)
 {
     MEDIA_INFO_LOG("HCameraService Construct begin");
     g_cameraServiceHolder = this;
-    {
-        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
-        g_cameraServiceInstance = this;
-    }
     unique_ptr<CameraRotateStrategyParser> cameraRotateStrategyParser = make_unique<CameraRotateStrategyParser>();
     cameraRotateStrategyParser->LoadConfiguration();
     cameraRotateStrategyInfos_ = cameraRotateStrategyParser->GetCameraRotateStrategyInfos();
@@ -110,7 +102,7 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
 }
 
 HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
-    : cameraHostManager_(cameraHostManager), muteModeStored_(false), isRegisterSensorSuccess(false)
+    : cameraHostManager_(cameraHostManager), muteModeStored_(false)
 {}
 
 HCameraService::~HCameraService() {}
@@ -134,10 +126,6 @@ void HCameraService::OnStart()
     // initialize deferred processing service.
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
     DeferredProcessing::DeferredProcessingService::GetInstance().Start();
-
-#ifdef CAMERA_USE_SENSOR
-    RegisterSensorCallback();
-#endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef NOTIFICATION_ENABLE
@@ -161,9 +149,6 @@ void HCameraService::OnStop()
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
-#ifdef CAMERA_USE_SENSOR
-    UnregisterSensorCallback();
-#endif
     DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
 
@@ -512,10 +497,6 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         device = cameraDevice;
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
     }
-#ifdef CAMERA_USE_SENSOR
-    g_lastDeviceDropTime = 0;
-    RegisterSensorCallback();
-#endif
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
@@ -1913,43 +1894,6 @@ int32_t HCameraService::Dump(int fd, const vector<u16string> &args)
     return OHOS::NO_ERROR;
 }
 
-#ifdef CAMERA_USE_SENSOR
-void HCameraService::RegisterSensorCallback()
-{
-    if (isRegisterSensorSuccess) {
-        MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback isRegisterSensorSuccess return");
-        return;
-    }
-    isRegisterSensorSuccess = false;
-    MEDIA_INFO_LOG("HCameraService::RegisterDropDetectionListener start");
-    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::LoadMotionSensor(), "RegisterDropDetectionListener LoadMotionSensor fail");
-    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::SubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION,
-        DropDetectionDataCallbackImpl), "RegisterDropDetectionListener SubscribeCallback fail");
-    isRegisterSensorSuccess = true;
-}
-
-void HCameraService::UnregisterSensorCallback()
-{
-    CHECK_ERROR_RETURN_LOG(!UnsubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
-        "UnRegisterDropDetectionListener fail");
-    OHOS::Rosen::UnloadMotionSensor();
-}
-
-void HCameraService::DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData)
-{
-    MEDIA_INFO_LOG("HCameraService::DropDetectionCallback type = %{public}d, status = %{public}d",
-        motionData.type, motionData.status);
-    {
-        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
-        if (GetTimestamp() - g_lastDeviceDropTime < DEVICE_DROP_INTERVAL) {
-            return;
-        }
-        g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(
-            DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
-    }
-}
-#endif
-
 int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
     int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
 {
@@ -2266,12 +2210,6 @@ int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
 {
     MEDIA_DEBUG_LOG("HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
     return cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
-}
-
-int32_t HCameraService::SetDeviceRetryTime()
-{
-    g_lastDeviceDropTime = GetTimestamp();
-    return CAMERA_OK;
 }
 
 int32_t HCameraService::CheckWhiteList(bool &isInWhiteList)
