@@ -243,9 +243,13 @@ CameraPosition CameraDevice::GetPosition()
 {
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     auto foldType = CameraManager::GetInstance()->GetFoldScreenType();
+    if (!foldType.empty() && foldType[0] == '4' && cameraPosition_ == CAMERA_POSITION_FRONT &&
+        foldStatus_ == OHOS_CAMERA_FOLD_STATUS_EXPANDED && !(CameraManager::GetInstance()->CheckWhiteList())) {
+        cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
+        return cameraPosition_;
+    }
     if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN && cameraPosition_ == CAMERA_POSITION_FRONT &&
-        (foldScreenType_ == CAMERA_FOLDSCREEN_INNER || foldStatus_ == OHOS_CAMERA_FOLD_STATUS_EXPANDED) &&
-        !foldType.empty() && (foldType[0] == '1' || foldType[0] == '4')) {
+        foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
         cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
     }
     return cameraPosition_;
