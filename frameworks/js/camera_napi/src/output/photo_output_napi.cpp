@@ -350,6 +350,7 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
         "captureId = %{public}d", allocErrorCode, surfaceName_.c_str(), captureId);
     CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
     MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer memcpy end surfaceName=%{public}s captureId = %{public}d",
         surfaceName_.c_str(), captureId);
 }
@@ -917,6 +918,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
         "captureId = %{public}d", allocErrorCode, "main", captureId);
     CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
     MEDIA_DEBUG_LOG("PhotoListener::DeepCopyBuffer memcpy_s end surfaceName=%{public}s captureId = %{public}d",
         "main", captureId);
 }
