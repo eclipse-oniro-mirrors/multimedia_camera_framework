@@ -36,7 +36,7 @@ struct CameraRotateStrategyInfo {
 
 class CameraRotateStrategyParser : public Parser {
 public:
-    static constexpr char DEVICE_CONFIG_FILE[] = "/system/etc/camera/camera_rotate_strategy.xml";
+    static constexpr char DEVICE_CONFIG_FILE[] = "/sys_prod/etc/camera/camera_rotate_strategy.xml";
 
     bool LoadConfiguration() final;
     void Destroy() final;
