@@ -1024,12 +1024,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_026, TestSize.Level0)
     int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
     int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
     uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
+    uint32_t firstTokenIdOfRequestProc = IPCSkeleton::GetFirstTokenID();
     sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(
         pidOfRequestProcess, uidOfRequestProcess, 0,
-        1, camDevice, accessTokenIdOfRequestProc, cost, conflicting);
+        1, camDevice, accessTokenIdOfRequestProc, cost, conflicting, firstTokenIdOfRequestProc);
     sptr<HCameraDeviceHolder> cameraHolder_1 = new HCameraDeviceHolder(
         pidOfRequestProcess, uidOfRequestProcess, 0,
-        1, camDevice, accessTokenIdOfRequestProc, cost, conflicting);
+        1, camDevice, accessTokenIdOfRequestProc, cost, conflicting, firstTokenIdOfRequestProc);
     cameraHolder_1->device_ = nullptr;
     deviceManager->activeCameras_.push_back(cameraHolder_1);
     deviceManager->activeCameras_.push_back(cameraHolder);
