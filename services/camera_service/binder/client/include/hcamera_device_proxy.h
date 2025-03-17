@@ -56,8 +56,6 @@ public:
 
     int32_t DisableResult(std::vector<int32_t> &results) override;
 
-    int32_t SetDeviceRetryTime() override;
-
 private:
     static inline BrokerDelegator<HCameraDeviceProxy> delegator_;
 };

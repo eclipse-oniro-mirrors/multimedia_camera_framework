@@ -254,19 +254,5 @@ int32_t HCameraDeviceProxy::DisableResult(std::vector<int32_t> &results)
 
     return error;
 }
-
-int32_t HCameraDeviceProxy::SetDeviceRetryTime()
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    data.WriteInterfaceToken(GetDescriptor());
-
-    int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_DEVICE_RETRY_TIME),
-        data, reply, option);
-    return error;
-}
 } // namespace CameraStandard
 } // namespace OHOS

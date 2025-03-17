@@ -1360,6 +1360,32 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_035, TestSize.Level0)
 
 /*
  * Feature: CameraService
+ * Function: Test RegisterSensorCallback and UnregisterSensorCallback in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterSensorCallback and UnregisterSensorCallback in a various order
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_036, TestSize.Level0) {
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    cameraService_->RegisterSensorCallback();
+    cameraService_->UnregisterSensorCallback();
+    cameraService_->UnregisterSensorCallback();
+    cameraService_->RegisterSensorCallback();
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
  * Function: Test UpdateSkinSmoothSetting in class HCameraService
  * SubFunction: NA
  * FunctionPoints: NA
