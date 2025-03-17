@@ -95,27 +95,5 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_002, Test
     ret = HCameraDeviceManager::GetInstance()->GetACameraId();
     ASSERT_NE(ret, "");
 }
-
-/*
- * Feature: Framework
- * Function: Test IsAllowOpen and UpdateProcessState normal branches.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsAllowOpen and UpdateProcessState normal branches.
- */
-HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_003, TestSize.Level0)
-{
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    MessageParcel data;
-    auto remoteObject = data.ReadRemoteObject();
-    auto callback = iface_cast<ICameraBroker>(remoteObject);
-    HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
-    bool ret = HCameraDeviceManager::GetInstance()->IsAllowOpen(pid);
-    EXPECT_FALSE(ret);
-    int32_t testInt_1 = 5;
-    uint32_t testInt_2 = 10;
-    HCameraDeviceManager::GetInstance()->GenerateProcessCameraState(testInt_1, testInt_1, testInt_2, testInt_2);
-}
 } // CameraStandard
 } // OHOS

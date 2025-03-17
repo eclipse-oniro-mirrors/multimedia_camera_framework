@@ -1371,9 +1371,11 @@ bool HCameraDevice::CanOpenCamera()
         int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
         int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
         uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
+        uint32_t firstTokenIdOfRequestProcess = IPCSkeleton::GetFirstTokenID();
 
         sptr<HCameraDeviceHolder> cameraRequestOpen = new HCameraDeviceHolder(
-            pidOfRequestProcess, uidOfRequestProcess, 0, 0, this, accessTokenIdOfRequestProc, cost, conflicting);
+            pidOfRequestProcess, uidOfRequestProcess, 0, 0, this, accessTokenIdOfRequestProc, cost, conflicting,
+            firstTokenIdOfRequestProcess);
 
         std::vector<sptr<HCameraDeviceHolder>> evictedClients;
         bool ret = HCameraDeviceManager::GetInstance()->HandleCameraEvictions(evictedClients, cameraRequestOpen);
