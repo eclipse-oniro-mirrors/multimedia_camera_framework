@@ -43,10 +43,12 @@
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t HDI_STREAM_ID_INIT = 1;
+static std::mutex dropDetectionMutex_;
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
+
 class IHCameraCloseListener : public virtual RefBase {
 public:
     virtual void BeforeDeviceClose() = 0;
@@ -73,7 +75,6 @@ public:
     int32_t GetEnabledResults(std::vector<int32_t>& results) override;
     int32_t EnableResult(std::vector<int32_t>& results) override;
     int32_t DisableResult(std::vector<int32_t>& results) override;
-    int32_t SetDeviceRetryTime() override;
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
     int32_t UnSetCallback() override;
@@ -212,7 +213,7 @@ private:
     int32_t lastDeviceProtectionStatus_ = -1;
     std::mutex deviceProtectionStatusMutex_;
     int64_t lastDeviceEjectTime_ = 0;
-    std::atomic<uint32_t> deviceEjectTimes_ = 1;
+    std::atomic<int> deviceEjectTimes_ = 1;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
@@ -255,10 +256,7 @@ private:
     bool CanReportDeviceProtectionStatus(int32_t status);
     bool ShowDeviceProtectionDialog(DeviceProtectionStatus status);
     std::string BuildDeviceProtectionDialogCommand(DeviceProtectionStatus status);
-    void RegisterSensorCallback();
-    void UnRegisterSensorCallback();
-    static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
-    std::mutex sensorLock_;
+
     std::mutex cameraCloseListenerMutex_;
     wptr<IHCameraCloseListener> cameraCloseListener_;
 };

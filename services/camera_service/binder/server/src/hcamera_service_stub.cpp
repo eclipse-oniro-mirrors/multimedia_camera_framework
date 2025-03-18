@@ -180,6 +180,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CONCURRENT_CAMERA_ABILITY):
             errCode = HCameraServiceStub::HandleGetConcurrentCameraAbility(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME):
+            errCode = HCameraServiceStub::HandleSetDeviceRetryTime(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CHECK_WHITE_LIST):
             errCode = HCameraServiceStub::HandleCheckWhiteList(data, reply);
             break;
@@ -824,6 +827,11 @@ int HCameraServiceStub::HandleGetConcurrentCameraAbility(MessageParcel& data, Me
         "HCameraServiceStub HandleGetConcurrentCameraAbility write ability failed");
     
     return ret;
+}
+
+int HCameraServiceStub::HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply)
+{
+    return SetDeviceRetryTime();
 }
 
 int HCameraServiceStub::HandleCheckWhiteList(MessageParcel& data, MessageParcel& reply)
