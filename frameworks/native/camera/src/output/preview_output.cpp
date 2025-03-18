@@ -521,7 +521,6 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     CHECK_ERROR_RETURN(!isSuccess);
     if (previewOutputListenerManager_->GetListenerCount() == 1) {
         sptr<IStreamRepeatCallback> ipcCallback = previewOutputListenerManager_;
-        auto stream = GetStream();
         sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
         int32_t errCode = itemStream->SetCallback(ipcCallback);
         if (errCode != CAMERA_OK) {
@@ -537,7 +536,7 @@ void PreviewOutput::RemoveCallback(std::shared_ptr<PreviewStateCallback> callbac
     if (previewOutputListenerManager_->GetListenerCount() == 0) {
         auto stream = GetStream();
         CHECK_ERROR_RETURN(stream == nullptr);
-        auto itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+        sptr<IStreamRepeat> itemStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
         itemStream->UnSetCallback();
     }
 }
