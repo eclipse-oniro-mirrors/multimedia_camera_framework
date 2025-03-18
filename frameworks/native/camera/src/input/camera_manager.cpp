@@ -1971,7 +1971,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN &&
+    if ((apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN || foldScreenType_[0] == '4') &&
         (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
         camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
