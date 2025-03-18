@@ -2062,5 +2062,13 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     #endif
     return CAMERA_UNKNOWN_ERROR;
 }
+
+int32_t HCameraService::CheckWhiteList(bool &isInWhiteList)
+{
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    isInWhiteList = (uid == ROOT_UID || uid == FACE_CLIENT_UID || uid == RSS_UID ||
+        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID()));
+    return CAMERA_OK;
+}
 } // namespace CameraStandard
 } // namespace OHOS

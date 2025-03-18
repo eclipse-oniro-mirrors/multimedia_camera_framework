@@ -1231,6 +1231,11 @@ bool CameraManager::GetIsFoldable()
     return !foldScreenType_.empty();
 }
 
+std::string CameraManager::GetFoldScreenType()
+{
+    return foldScreenType_;
+}
+
 FoldStatus CameraManager::GetFoldStatus()
 {
     return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
@@ -1256,6 +1261,16 @@ void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
     }
 }
 
+bool CameraManager::CheckWhiteList()
+{
+    bool isInWhiteList = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, isInWhiteList, "CameraManager::CheckWhitelist serviceProxy is null");
+    serviceProxy->CheckWhiteList(isInWhiteList);
+    return isInWhiteList;
+}
+
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
@@ -1275,13 +1290,22 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
+        if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
+            (deviceInfo->GetPosition() == CAMERA_POSITION_BACK ||
+            deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
+            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !CheckWhiteList() &&
+            curFoldStatus == FoldStatus::EXPAND) {
+            supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
+
         // Check for API compatibility
         if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN) {
             bool isBackCamera = deviceInfo->GetPosition() == CAMERA_POSITION_BACK;
             bool isInnerOrFrontCamera = (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
                 deviceInfo->GetPosition() == CAMERA_POSITION_FRONT);
-            bool isUnsupportedFoldScreenType = (foldScreenType_[0] != '2' && foldScreenType_[0] != '4');
-
+            bool isUnsupportedFoldScreenType = (!foldScreenType_.empty() &&
+                foldScreenType_[0] != '2' && foldScreenType_[0] != '4');
             if ((isBackCamera || isInnerOrFrontCamera) && isUnsupportedFoldScreenType) {
                 supportedCameraDeviceList.emplace_back(deviceInfo);
                 continue;
@@ -1417,9 +1441,9 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN &&
+    if ((apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN || foldScreenType_[0] == '4') &&
         (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
-        camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT && foldScreenType_[0] != '4') {
+        camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
         sptr<CameraDevice> cameraInfo;
         for (const auto& cameraDevice : cameraObjList) {

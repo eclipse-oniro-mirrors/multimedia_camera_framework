@@ -159,6 +159,7 @@ public:
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
+    int32_t CheckWhiteList(bool &isInWhiteList) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
