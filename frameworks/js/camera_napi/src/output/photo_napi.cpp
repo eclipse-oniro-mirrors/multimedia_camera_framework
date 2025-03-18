@@ -239,7 +239,6 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);
-                delete context->objectInfo;
                 delete context;
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
