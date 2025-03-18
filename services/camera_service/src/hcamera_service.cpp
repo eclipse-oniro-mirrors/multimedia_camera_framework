@@ -2100,11 +2100,6 @@ int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std
 int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
 {
-    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    string permissionName = OHOS_PERMISSION_CAMERA;
-    int32_t ret = CheckPermission(permissionName, callerToken);
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
-        "HCameraService::GetConcurrentCameraAbility failed permission is: %{public}s", permissionName.c_str());
     MEDIA_DEBUG_LOG("HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
     return cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
 }
