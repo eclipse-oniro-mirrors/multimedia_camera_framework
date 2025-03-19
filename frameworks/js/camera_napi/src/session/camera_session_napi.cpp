@@ -4251,6 +4251,7 @@ void CameraSessionNapi::UnregisterSessionErrorCallbackListener(
 void CameraSessionNapi::RegisterEffectSuggestionCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi on effectSuggestionChange is called!");
     if (effectSuggestionCallback_ == nullptr) {
         auto effectSuggestionCallback = std::make_shared<EffectSuggestionCallbackListener>(env);
         effectSuggestionCallback_ = effectSuggestionCallback;
@@ -4262,6 +4263,7 @@ void CameraSessionNapi::RegisterEffectSuggestionCallbackListener(
 void CameraSessionNapi::UnregisterEffectSuggestionCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
+    CHECK_ERROR_RETURN_LOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi off effectSuggestionChange is called!");
     if (effectSuggestionCallback_ == nullptr) {
         MEDIA_ERR_LOG("effectSuggestionCallback is null");
     } else {
@@ -4485,7 +4487,7 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "focusTrackingInfoAvailable", {
         &CameraSessionNapi::RegisterFocusTrackingInfoCallbackListener,
         &CameraSessionNapi::UnregisterFocusTrackingInfoCallbackListener } },
-    { "lightStatus", {
+    { "lightStatusChange", {
         &CameraSessionNapi::RegisterLightStatusCallbackListener,
         &CameraSessionNapi::UnregisterLightStatusCallbackListener } },
 };

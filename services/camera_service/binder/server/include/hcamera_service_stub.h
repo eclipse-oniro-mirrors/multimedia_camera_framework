@@ -78,6 +78,7 @@ private:
     void ClearCameraListenerByPid(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
+    int HandleCheckWhiteList(MessageParcel& data, MessageParcel& reply);
     virtual int32_t UnSetAllCallback(pid_t pid);
     virtual int32_t CloseCameraForDestory(pid_t pid);
 

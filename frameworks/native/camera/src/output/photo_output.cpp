@@ -277,10 +277,13 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
         DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
         (photoOutput->captureIdToCaptureInfoMap_).erase(captureId);
         if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
-            MEDIA_INFO_LOG("OnCaptureReady notify offline delivery finished with capture ID: %{public}d", captureId);
+            MEDIA_INFO_LOG("OnCaptureEnded notify offline delivery finished with capture ID: %{public}d", captureId);
             auto callback = photoOutput->GetApplicationCallback();
-            CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
-                "HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
+            if (callback == nullptr) {
+                MEDIA_INFO_LOG("HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+                photoOutput->Release();
+                return CAMERA_OK;
+            }
             callback->OnOfflineDeliveryFinished(captureId);
         }
     }
@@ -617,7 +620,8 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 void PhotoOutput::AcquireBufferToPrepareProxy(int32_t captureId)
 {
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
     if (itemStream) {
         itemStream->AcquireBufferToPrepareProxy(captureId);
     } else {

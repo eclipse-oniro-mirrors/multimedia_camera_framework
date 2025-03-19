@@ -350,6 +350,7 @@ void AuxiliaryPhotoListener::DeepCopyBuffer(
         "captureId = %{public}d", allocErrorCode, surfaceName_.c_str(), captureId);
     CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
     MEDIA_DEBUG_LOG("AuxiliaryPhotoListener::DeepCopyBuffer memcpy end surfaceName=%{public}s captureId = %{public}d",
         surfaceName_.c_str(), captureId);
 }
@@ -917,6 +918,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
         "captureId = %{public}d", allocErrorCode, "main", captureId);
     CHECK_ERROR_PRINT_LOG(memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
         surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK, "PhotoListener memcpy_s failed");
+    CopyMetaData(surfaceBuffer, newSurfaceBuffer);
     MEDIA_DEBUG_LOG("PhotoListener::DeepCopyBuffer memcpy_s end surfaceName=%{public}s captureId = %{public}d",
         "main", captureId);
 }
@@ -1672,9 +1674,10 @@ unique_ptr<Media::PixelMap> ThumbnailListener::CreatePixelMapFromSurfaceBuffer(s
         width, height, isHdr, surfaceBuffer->GetFormat());
     Media::InitializationOptions options {
         .size = { .width = width, .height = height } };
-    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
-    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
+    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
+    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
     options.useDMA = true;
+    options.editable = isHdr; // 10bit支持滤镜可编辑
     int32_t colorLength = width * height * PIXEL_SIZE_HDR_YUV;
     colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
     std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);

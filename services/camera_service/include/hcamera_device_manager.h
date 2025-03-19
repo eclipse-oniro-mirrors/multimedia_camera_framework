@@ -89,6 +89,11 @@ public:
         focusState_ = focusState;
     }
 
+    inline void SetProcessUid(int32_t uid)
+    {
+        processUid_ = uid;
+    }
+
     inline int32_t GetUid() const{ return processUid_; }
 
     inline int32_t GetState() const { return processState_; }
@@ -105,9 +110,10 @@ private:
 class HCameraDeviceHolder : public RefBase {
 public:
     HCameraDeviceHolder(int32_t pid, int32_t uid, int32_t state, int32_t focusState,
-        sptr<HCameraDevice> device, uint32_t accessTokenId, int32_t cost, const std::set<std::string> &conflicting)
-        :pid_(pid), uid_(uid), state_(state), focusState_(focusState), accessTokenId_(accessTokenId), device_(device),
-        cost_(cost), conflicting_(conflicting)
+        sptr<HCameraDevice> device, uint32_t accessTokenId, int32_t cost, const std::set<std::string> &conflicting,
+        int32_t firstTokenId)
+        :pid_(pid), uid_(uid), accessTokenId_(accessTokenId), device_(device), cost_(cost), conflicting_(conflicting),
+        firstTokenId_(firstTokenId)
     {
         processPriority_ = new CameraProcessPriority(uid, state, focusState);
     }
@@ -116,21 +122,24 @@ public:
     inline void SetState(int32_t state)
     {
         processPriority_->SetProcessState(state);
-        state_ = state;
     }
     inline void SetFocusState(int32_t focusState)
     {
         processPriority_->SetProcessFocusState(focusState);
-        focusState_ = focusState;
+    }
+
+    inline void SetPriorityUid(int32_t uid)
+    {
+        processPriority_->SetProcessUid(uid);
     }
 
     inline int32_t GetPid() const {return pid_;}
 
     inline int32_t GetUid() const{ return uid_; }
 
-    inline int32_t GetState() const { return state_; }
+    inline int32_t GetState() const { return processPriority_->GetState(); }
 
-    inline int32_t GetFocusState() const { return focusState_; }
+    inline int32_t GetFocusState() const { return processPriority_->GetFocusState(); }
 
     inline uint32_t GetAccessTokenId() const { return accessTokenId_; }
 
@@ -154,18 +163,19 @@ public:
         return false;
     }
 
+    inline uint32_t GetFirstTokenID() const { return firstTokenId_; }
+
     inline std::set<std::string> GetConflicting() const { return conflicting_; }
 
 private:
     int32_t pid_;
     int32_t uid_;
-    int32_t state_;
-    int32_t focusState_;
     uint32_t accessTokenId_;
     sptr<CameraProcessPriority> processPriority_;
     sptr<HCameraDevice> device_;
     int32_t cost_;
     std::set<std::string> conflicting_;
+    int32_t firstTokenId_;
 };
 
 class CameraConcurrentSelector : public RefBase {
@@ -321,13 +331,12 @@ private:
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
-    void GenerateProcessCameraState(int32_t& activeState, int32_t& requestState,
-        uint32_t activeAccessTokenId, uint32_t requestAccessTokenId);
     void GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);
     sptr<HCameraDeviceHolder> GenerateCameraHolder(sptr<HCameraDevice> device, pid_t pid, int32_t uid,
-                                                   uint32_t accessTokenId);
+        uint32_t accessTokenId, uint32_t firstTokenId);
     std::vector<sptr<HCameraDeviceHolder>> SortDeviceByPriority();
+    void RefreshCameraDeviceHolderState(sptr<HCameraDeviceHolder> requestCameraHolder);
 };
 } // namespace CameraStandard
 } // namespace OHOS

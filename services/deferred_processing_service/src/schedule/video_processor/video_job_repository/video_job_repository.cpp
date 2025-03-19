@@ -63,8 +63,7 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
         DP_INFO_LOG("DPS_VIDEO: Remove video job size: %{public}d, videoId: %{public}s",
             static_cast<int>(jobQueue_->GetSize()), videoId.c_str());
     }
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::DELETED);
-    UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
+    UpdateRunningCountUnLocked(false, jobPtrFind);
     return isNeedStop;
     // LCOV_EXCL_STOP
 }

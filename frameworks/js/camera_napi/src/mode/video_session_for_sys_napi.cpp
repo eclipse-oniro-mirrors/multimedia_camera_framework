@@ -240,7 +240,7 @@ void LightStatusCallbackListener::OnLightStatusChangedCallbackAsync(LightStatus 
 void LightStatusCallbackListener::OnLightStatusChangedCallback(LightStatus &status) const
 {
     MEDIA_DEBUG_LOG("OnLightStatusChangedCallback is called, light status is %{public}d", status.status);
-    ExecuteCallbackScopeSafe("lightStatus", [&]() {
+    ExecuteCallbackScopeSafe("lightStatusChange", [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value result;
         napi_create_uint32(env_, status.status, &result);

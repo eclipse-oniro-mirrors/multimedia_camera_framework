@@ -937,5 +937,26 @@ int32_t HCameraServiceProxy::SetDeviceRetryTime()
         data, reply, option);
     return error;
 }
+
+int32_t HCameraServiceProxy::CheckWhiteList(bool &isInWhiteList)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    (void)data.WriteBool(isInWhiteList);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CHECK_WHITE_LIST), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::CheckWhiteList failed, error: %{public}d", error);
+        return error;
+    }
+
+    isInWhiteList = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy CheckWhiteList Read muteMode is %{public}d", isInWhiteList);
+
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

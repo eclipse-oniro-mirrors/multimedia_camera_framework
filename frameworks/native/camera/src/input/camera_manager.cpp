@@ -1086,8 +1086,6 @@ void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
         sptr<IFoldServiceCallback> callback = foldStatusListenerManager_;
         int32_t errCode = SetFoldServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
-    } else {
-        listener->OnFoldStatusChanged(foldStatusListenerManager_->GetCachedFoldStatus());
     }
 }
 
@@ -1784,6 +1782,16 @@ FoldStatus CameraManager::GetFoldStatus()
     return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
 }
 
+bool CameraManager::CheckWhiteList()
+{
+    bool isInWhiteList = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(
+        serviceProxy == nullptr, isInWhiteList, "CameraManager::CheckWhitelist serviceProxy is null");
+    serviceProxy->CheckWhiteList(isInWhiteList);
+    return isInWhiteList;
+}
+
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
@@ -1806,7 +1814,8 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
             (deviceInfo->GetPosition() == CAMERA_POSITION_BACK ||
             deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && curFoldStatus == FoldStatus::EXPAND) {
+            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !CheckWhiteList() &&
+            curFoldStatus == FoldStatus::EXPAND) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
@@ -1840,7 +1849,7 @@ std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& came
 {
     CHECK_ERROR_RETURN_RET(camera == nullptr, {});
     std::vector<SceneMode> supportedSceneModes = camera->GetSupportedModes();
-    MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedSceneModes.size());
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedSceneModes.size());
     return supportedSceneModes;
 }
 
@@ -1962,7 +1971,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN &&
+    if ((apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN || foldScreenType_[0] == '4') &&
         (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
         camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
@@ -2022,7 +2031,7 @@ bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metad
     bool isSupport = true;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
     if (retCode != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
+        MEDIA_DEBUG_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
             metadataTag, retCode, item.count);
         isSupport = false;
     }
@@ -2179,7 +2188,7 @@ void CameraManager::ParseProfileLevel(ProfilesWrapper& profilesWrapper, const in
     CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
     specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
     for (SpecInfo& specInfo : specInfos) {
-        MEDIA_INFO_LOG("modeName: %{public}d specId: %{public}d", modeName, specInfo.specId);
+        MEDIA_DEBUG_LOG("modeName: %{public}d specId: %{public}d", modeName, specInfo.specId);
         for (StreamInfo& streamInfo : specInfo.streamInfos) {
             CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
         }
@@ -2252,9 +2261,6 @@ void CameraManager::ParseCapability(ProfilesWrapper& profilesWrapper, sptr<Camer
         MEDIA_INFO_LOG("Depth g_isCapabilitySupported by device = %{public}s, mode = %{public}d, tag = %{public}d",
             camera->GetID().c_str(), mode, OHOS_ABILITY_DEPTH_DATA_PROFILES);
         ParseDepthCapability(mode, item);
-    } else {
-        MEDIA_INFO_LOG("Depth GetSupportedOutputCapability is not supported by device = %{public}s,"
-            "tag = %{public}d", camera->GetID().c_str(), OHOS_ABILITY_DEPTH_DATA_PROFILES);
     }
 }
 
@@ -2467,7 +2473,6 @@ int32_t FoldStatusListenerManager::OnFoldStatusChanged(const FoldStatus status)
     auto listenerManager = cameraManager->GetFoldStatusListenerManager();
     MEDIA_DEBUG_LOG("FoldListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnFoldStatusChanged(foldStatusInfo); });
-    listenerManager->cachedStatus_ = foldStatusInfo;
     return CAMERA_OK;
 }
 

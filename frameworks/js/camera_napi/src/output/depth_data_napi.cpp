@@ -31,7 +31,6 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     napi_get_undefined(env, &result);
     napi_resolve_deferred(env, context->deferred, result);
     napi_delete_async_work(env, context->work);
-    delete context->objectInfo;
     delete context;
 }
 } // namespace

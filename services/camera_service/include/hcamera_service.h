@@ -170,6 +170,7 @@ public:
     int32_t GetConcurrentCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t SetDeviceRetryTime() override;
+    int32_t CheckWhiteList(bool &isInWhiteList) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -186,6 +187,11 @@ private:
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
+
+#ifdef MEMMGR_OVERRID
+    void RequireMemory();
+#endif
+
 #ifdef DEVICE_MANAGER
     class DeviceInitCallBack;
 #endif
@@ -277,7 +283,6 @@ private:
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
-    FoldStatus cachedFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;

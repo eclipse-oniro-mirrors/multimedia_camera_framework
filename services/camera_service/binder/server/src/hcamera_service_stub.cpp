@@ -183,6 +183,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_DEVICE_RETRY_TIME):
             errCode = HCameraServiceStub::HandleSetDeviceRetryTime(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CHECK_WHITE_LIST):
+            errCode = HCameraServiceStub::HandleCheckWhiteList(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -829,6 +832,17 @@ int HCameraServiceStub::HandleGetConcurrentCameraAbility(MessageParcel& data, Me
 int HCameraServiceStub::HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply)
 {
     return SetDeviceRetryTime();
+}
+
+int HCameraServiceStub::HandleCheckWhiteList(MessageParcel& data, MessageParcel& reply)
+{
+    bool isInWhiteList = false;
+    int32_t ret = CheckWhiteList(isInWhiteList);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleCheckWhiteList result: %{public}d, isMuted: %{public}d",
+        ret, isInWhiteList);
+    CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isInWhiteList), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleCheckWhiteList Write isInWhiteList failed");
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

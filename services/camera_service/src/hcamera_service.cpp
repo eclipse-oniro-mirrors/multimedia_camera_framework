@@ -50,6 +50,10 @@
 #include "system_ability_definition.h"
 #include "tokenid_kit.h"
 #include "uri.h"
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#include "mem_mgr_constant.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -135,9 +139,6 @@ void HCameraService::OnStart()
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
     DeferredProcessing::DeferredProcessingService::GetInstance().Start();
 
-#ifdef CAMERA_USE_SENSOR
-    RegisterSensorCallback();
-#endif
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef NOTIFICATION_ENABLE
@@ -161,9 +162,6 @@ void HCameraService::OnStop()
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
-#ifdef CAMERA_USE_SENSOR
-    UnregisterSensorCallback();
-#endif
     DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
 
@@ -512,10 +510,6 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         device = cameraDevice;
         cameraDevice->SetDeviceMuteMode(muteModeStored_);
     }
-#ifdef CAMERA_USE_SENSOR
-    g_lastDeviceDropTime = 0;
-    RegisterSensorCallback();
-#endif
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
@@ -855,7 +849,6 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         curFoldStatus = FoldStatus::EXPAND;
     }
     lock_guard<recursive_mutex> lock(foldCbMutex_);
-    cachedFoldStatus_ = curFoldStatus;
     CHECK_EXECUTE(innerFoldCallback_, innerFoldCallback_->OnFoldStatusChanged(curFoldStatus));
     CHECK_ERROR_RETURN_LOG(foldServiceCallbacks_.empty(), "OnFoldStatusChanged foldServiceCallbacks is empty");
     MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
@@ -879,6 +872,12 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     std::vector<sptr<HCameraDevice>> devicesNeedClose = deviceManager->GetCamerasByPid(pid);
     for (auto device : devicesNeedClose) {
         device->Close();
+    }
+
+    std::vector<sptr<HStreamOperator>> streamOperatorToRelease =
+        HStreamOperatorManager::GetInstance()->GetStreamOperatorByPid(pid);
+    for (auto streamoperator : streamOperatorToRelease) {
+        streamoperator->Release();
     }
     return CAMERA_OK;
 }
@@ -982,7 +981,6 @@ int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callba
             callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetFoldStatusCallback callback is null");
         foldServiceCallbacks_.insert(make_pair(pid, callback));
     }
-    callback->OnFoldStatusChanged(cachedFoldStatus_);
     return CAMERA_OK;
 }
 
@@ -1291,6 +1289,9 @@ int32_t HCameraService::PrelaunchCamera()
     CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId_.c_str(), CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HCameraService::Prelaunch failed");
+#ifdef MEMMGR_OVERRID
+    RequireMemory();
+#endif
     return ret;
 }
 
@@ -2255,6 +2256,16 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     return CAMERA_UNKNOWN_ERROR;
 }
 
+#ifdef MEMMGR_OVERRID
+void HCameraService::RequireMemory()
+{
+    CAMERA_SYNC_TRACE;
+    int32_t pid = getpid();
+    int32_t requiredMemSizeKB = 0;
+    Memory::MemMgrClient::GetInstance().RequireBigMem(pid, Memory::CAMERA_PRELAUNCH, requiredMemSizeKB, SYSTEM_CAMERA);
+}
+#endif
+
 int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId)
 {
     std::string cameraIdnow;
@@ -2266,6 +2277,11 @@ int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std
 int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
 {
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    string permissionName = OHOS_PERMISSION_CAMERA;
+    int32_t ret = CheckPermission(permissionName, callerToken);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
+        "HCameraService::GetConcurrentCameraAbility failed permission is: %{public}s", permissionName.c_str());
     MEDIA_DEBUG_LOG("HCameraService::GetConcurrentCameraAbility cameraId: %{public}s", cameraId.c_str());
     return cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
 }
@@ -2273,6 +2289,15 @@ int32_t HCameraService::GetConcurrentCameraAbility(std::string& cameraId,
 int32_t HCameraService::SetDeviceRetryTime()
 {
     g_lastDeviceDropTime = GetTimestamp();
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::CheckWhiteList(bool &isInWhiteList)
+{
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    MEDIA_INFO_LOG("CheckWhitelist uid: %{public}d", uid);
+    isInWhiteList = (uid == ROOT_UID || uid == FACE_CLIENT_UID || uid == RSS_UID ||
+        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID()));
     return CAMERA_OK;
 }
 } // namespace CameraStandard

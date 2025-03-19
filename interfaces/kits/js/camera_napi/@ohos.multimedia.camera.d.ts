@@ -5246,7 +5246,8 @@ function getCameraManager(context: Context): CameraManager;
      * Subscribes to effect suggestion event callback.
      *
      * @param { 'effectSuggestionChange' } type - Event type.
-     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to get the effect suggestion change info.
+     * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 18
@@ -5257,7 +5258,8 @@ function getCameraManager(context: Context): CameraManager;
      * Unsubscribes from effect suggestion event callback.
      *
      * @param { 'effectSuggestionChange' } type - Event type.
-     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to get the effect suggestion change info.
+     * @throws { BusinessError } 202 - Not System Application.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 18

@@ -43,8 +43,6 @@ uint32_t GetApiVersion()
         g_apiCompatibleVersion = bundleInfo.targetVersion % API_DEFAULT_VERSION;
         MEDIA_INFO_LOG("targetVersion: [%{public}u], apiCompatibleVersion: [%{public}u]", bundleInfo.targetVersion,
             g_apiCompatibleVersion);
-    } else {
-        MEDIA_ERR_LOG("Call for GetApiCompatibleVersion failed");
     }
     return g_apiCompatibleVersion;
 }
