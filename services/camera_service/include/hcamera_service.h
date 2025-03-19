@@ -187,6 +187,11 @@ private:
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif
+
+#ifdef MEMMGR_OVERRID
+    void RequireMemory();
+#endif
+
 #ifdef DEVICE_MANAGER
     class DeviceInitCallBack;
 #endif

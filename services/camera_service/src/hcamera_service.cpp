@@ -50,6 +50,10 @@
 #include "system_ability_definition.h"
 #include "tokenid_kit.h"
 #include "uri.h"
+#ifdef MEMMGR_OVERRID
+#include "mem_mgr_client.h"
+#include "mem_mgr_constant.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -1285,6 +1289,9 @@ int32_t HCameraService::PrelaunchCamera()
     CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId_.c_str(), CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     CHECK_ERROR_PRINT_LOG(ret != CAMERA_OK, "HCameraService::Prelaunch failed");
+#ifdef MEMMGR_OVERRID
+    RequireMemory();
+#endif
     return ret;
 }
 
@@ -2248,6 +2255,16 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     #endif
     return CAMERA_UNKNOWN_ERROR;
 }
+
+#ifdef MEMMGR_OVERRID
+void HCameraService::RequireMemory()
+{
+    CAMERA_SYNC_TRACE;
+    int32_t pid = getpid();
+    int32_t requiredMemSizeKB = 0;
+    Memory::MemMgrClient::GetInstance().RequireBigMem(pid, Memory::CAMERA_PRELAUNCH, requiredMemSizeKB, SYSTEM_CAMERA);
+}
+#endif
 
 int32_t HCameraService::GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId)
 {
