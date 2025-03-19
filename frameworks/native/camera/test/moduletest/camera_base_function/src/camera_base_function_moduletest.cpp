@@ -987,8 +987,8 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
         sptr<CameraDevice> device = cameraDevices_[deviceBackIndex];
         ASSERT_NE(device, nullptr);
         if (device->GetPosition() == CAMERA_POSITION_BACK) {
-            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), OPERATION_NOT_ALLOWED);
-            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_OFF), OPERATION_NOT_ALLOWED);
+            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), CONFLICT_CAMERA);
+            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_OFF), CONFLICT_CAMERA);
             EXPECT_EQ(cameraManager_->GetTorchMode(), currentTorchMode);
         } else if (device->GetPosition() == CAMERA_POSITION_FRONT) {
             EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), SUCCESS);

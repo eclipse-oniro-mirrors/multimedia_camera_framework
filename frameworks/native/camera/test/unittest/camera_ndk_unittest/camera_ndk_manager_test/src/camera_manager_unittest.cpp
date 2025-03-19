@@ -1024,7 +1024,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_028, TestSize.Level0)
             if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_FRONT) {
                 EXPECT_EQ(ret, CAMERA_OK);
             } else if (cameraDevice[CAMERA_DEVICE_INDEX].cameraPosition == Camera_Position::CAMERA_POSITION_BACK) {
-                EXPECT_EQ(ret, Camera_ErrorCode::CAMERA_OPERATION_NOT_ALLOWED);
+                EXPECT_EQ(ret, Camera_ErrorCode::CAMERA_CONFLICT_CAMERA);
             }
         } else {
             MEDIA_INFO_LOG("The device does not support specific torch modes");
