@@ -2295,7 +2295,7 @@ int32_t HCameraService::SetDeviceRetryTime()
 int32_t HCameraService::CheckWhiteList(bool &isInWhiteList)
 {
     int32_t uid = IPCSkeleton::GetCallingUid();
-    MEDIA_INFO_LOG("CheckWhitelist uid: %{public}d", uid);
+    MEDIA_DEBUG_LOG("CheckWhitelist uid: %{public}d", uid);
     isInWhiteList = (uid == ROOT_UID || uid == FACE_CLIENT_UID || uid == RSS_UID ||
         OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID()));
     return CAMERA_OK;

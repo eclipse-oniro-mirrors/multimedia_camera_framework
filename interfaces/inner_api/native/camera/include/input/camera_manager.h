@@ -160,7 +160,7 @@ public:
      * @param Camera device for which extend capability need to be fetched.
      * @return Returns vector the ability of the mode of cameraDevice of available camera from cameraDevice.
      */
-    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0);
+    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& cameraDevice, int32_t modeName = 0);
 
     /**
      * @brief Create camera input instance with provided camera position and type.
@@ -818,7 +818,7 @@ public:
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
-    bool CheckWhiteList();
+    bool GetIsInWhiteList();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -932,7 +932,21 @@ private:
         return true;
     }
 
+    inline sptr<CameraDevice> GetInnerCamera()
+    {
+        std::lock_guard<std::mutex> lock(innerCameraMutex_);
+        return innerCamera_;
+    }
+
+    inline void SetInnerCamera(sptr<CameraDevice> cameraDevice)
+    {
+        std::lock_guard<std::mutex> lock(innerCameraMutex_);
+        innerCamera_ = cameraDevice;
+    }
+
+    void CheckWhiteList();
     std::mutex cameraDeviceListMutex_;
+    std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
 
     std::mutex cameraDeviceAbilitySupportMapMutex_;
@@ -964,6 +978,8 @@ private:
     sptr<IRemoteBroker> saListener_ = nullptr;
     std::string foldScreenType_;
     bool isSystemApp_ = false;
+    bool isInWhiteList_ = false;
+    sptr<CameraDevice> innerCamera_ = nullptr;
 };
 
 class CameraManagerGetter {
