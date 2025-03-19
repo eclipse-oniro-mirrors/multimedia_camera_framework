@@ -51,7 +51,7 @@ void VideoJobQueue::Push(DeferredVideoJobPtr obj)
 DeferredVideoJobPtr VideoJobQueue::Pop()
 {
     DP_CHECK_RETURN_RET(size_ == DEFAULT, nullptr);
-    DeferredVideoJobPtr ans = heap_.front();
+    DeferredVideoJobPtr ans = heap_.back();
     Swap(DEFAULT, size_ - 1);
     indexMap_.erase(ans);
     heap_.pop_back();

@@ -102,6 +102,12 @@ MpegManager::~MpegManager()
             DP_INFO_LOG("Rename %{public}s to %{public}s success.", outPath_.c_str(), tempPath_.c_str());
         }
     }
+    if (outputFd_) {
+        close(outputFd_->GetFd());
+    }
+    if (tempFd_) {
+        close(tempFd_->GetFd());
+    }
 }
 
 MediaManagerError MpegManager::Init(const std::string& requestId, const sptr<IPCFileDescriptor>& inputFd)
