@@ -18,7 +18,6 @@
 
 #include "video_strategy_center.h"
 #include "video_job_repository.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

@@ -109,12 +109,12 @@ void Test(uint8_t *rawData, size_t size)
     data.WriteRawData(rawData, size);
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    std::vector<sptr<CameraDevice>> camera = manager_->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_LOG(camera.empty(), "GetCameraDeviceListFromServer Error");
-    sptr<CaptureInput> input = manager_->CreateCameraInput(camera[0]);
+    std::vector<sptr<CameraDevice>> cameras = manager_->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
+    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
     CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     input->Open();
-    auto outputCapability = manager_->GetSupportedOutputCapability(camera[0], 0);
+    auto outputCapability = manager_->GetSupportedOutputCapability(cameras[0], 0);
     CHECK_ERROR_RETURN_LOG(!outputCapability, "GetSupportedOutputCapability Error");
     previewProfile_ = outputCapability->GetPreviewProfiles();
     CHECK_ERROR_RETURN_LOG(previewProfile_.empty(), "GetPreviewProfiles Error");
@@ -125,9 +125,9 @@ void Test(uint8_t *rawData, size_t size)
     session->AddOutput(preview);
     session->CommitConfig();
     sptr<ICameraDeviceService> deviceObj = nullptr;
-    manager_->CreateCameraDevice(camera[0]->GetID(), &deviceObj);
+    manager_->CreateCameraDevice(cameras[0]->GetID(), &deviceObj);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    camInput->SwitchCameraDevice(deviceObj, camera[0]);
+    camInput->SwitchCameraDevice(deviceObj, cameras[0]);
     input->GetCameraDeviceInfo();
     session->SetInputDevice(input);
     session->GetInputDevice()->GetCameraDeviceInfo();
@@ -591,8 +591,6 @@ void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetUsage(UsageType::BOKEH, data.ReadBool());
     session->IsAutoDeviceSwitchSupported();
     session->EnableAutoDeviceSwitch(data.ReadBool());
-    pid_t pid = data.ReadInt32();
-    session->CameraServerDied(pid);
     session->CreateCameraAbilityContainer();
 }
 

@@ -16,7 +16,6 @@
 #ifndef HCAPTURE_SEESION_FUZZER_H
 #define HCAPTURE_SEESION_FUZZER_H
 
-#include <memory>
 #include "hcapture_session.h"
 
 namespace OHOS {

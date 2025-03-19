@@ -72,6 +72,7 @@ ohos_fuzztest("DeferredProcessingStubFuzzTest") {
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
   ]

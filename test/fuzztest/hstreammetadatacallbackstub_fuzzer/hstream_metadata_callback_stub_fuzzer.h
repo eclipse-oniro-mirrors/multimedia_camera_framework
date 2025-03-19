@@ -17,7 +17,6 @@
 #define HSTREAM_METADATA_CALLBACK_STUB_FUZZER_H
 
 #include "hstream_metadata_callback_stub.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

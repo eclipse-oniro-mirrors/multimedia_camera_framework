@@ -17,7 +17,6 @@
 #define MEDIA_MANAGER_FUZZER_H
 
 #include "media_manager.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

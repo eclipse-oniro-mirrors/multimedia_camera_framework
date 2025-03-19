@@ -17,7 +17,6 @@
 #define CAMERA_REPORT_FUZZER_H
 
 #include <mutex>
-#include <memory>
 #include "camera_report_dfx_uitls.h"
 
 namespace OHOS {

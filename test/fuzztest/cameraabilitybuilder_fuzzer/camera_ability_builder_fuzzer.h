@@ -16,7 +16,6 @@
 #ifndef CAMERA_ABILITY_BUILDER_FUZZER_H
 #define CAMERA_ABILITY_BUILDER_FUZZER_H
 
-#include <memory>
 #include "camera_ability_builder.h"
 
 namespace OHOS {

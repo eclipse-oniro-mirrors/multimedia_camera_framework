@@ -18,7 +18,6 @@
 #include "ipc_file_descriptor.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

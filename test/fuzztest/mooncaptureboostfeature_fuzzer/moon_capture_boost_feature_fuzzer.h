@@ -17,7 +17,6 @@
 #define MOON_CAPTURE_BOOST_FEATURE_FUZZER_H
 
 #include "moon_capture_boost_feature.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

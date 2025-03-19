@@ -17,7 +17,6 @@
 #include "message_parcel.h"
 #include "camera_log.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

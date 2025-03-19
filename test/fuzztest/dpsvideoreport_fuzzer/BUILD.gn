@@ -43,7 +43,8 @@ ohos_fuzztest("DpsVideoReportFuzzTest") {
   sources = [ "dps_video_report_fuzzer.cpp" ]
 
   deps = [
-    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
   ]
 

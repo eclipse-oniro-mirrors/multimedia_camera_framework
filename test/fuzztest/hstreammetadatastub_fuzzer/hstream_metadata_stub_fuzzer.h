@@ -17,7 +17,6 @@
 #define HSTREAM_METADATA_STUB_FUZZER_H
 
 #include "hstream_metadata_stub.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

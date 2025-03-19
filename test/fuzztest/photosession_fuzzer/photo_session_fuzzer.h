@@ -16,6 +16,7 @@
 #ifndef PHOTO_SESSION_FUZZER_H
 #define PHOTO_SESSION_FUZZER_H
 
+#include "fluorescence_photo_session.h"
 #include "photo_session.h"
 
 namespace OHOS {
