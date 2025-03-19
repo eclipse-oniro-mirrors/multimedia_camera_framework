@@ -19,6 +19,7 @@
 
 #include "dp_log.h"
 #include "sync_fence.h"
+#include "media_format.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -180,6 +181,19 @@ sptr<IPCFileDescriptor> MpegManager::GetResultFd()
     return outputFd_;
 }
 
+void MpegManager::AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)
+{
+    DP_INFO_LOG("SetUserMeta entered.");
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    if (userInfo->scalingFactor != DEFAULT_SCALING_FACTOR) {
+        userMeta->SetData(SCALING_FACTOR_KEY, userInfo->scalingFactor);
+    }
+    if (userInfo->interpolationFramePts != DEFAULT_INTERPOLATION_FRAME_PTS) {
+        userMeta->SetData(INTERPOLATION_FRAME_PTS_KEY, userInfo->interpolationFramePts);
+    }
+    mediaManager_->AddUserMeta(userMeta);
+}
+
 MediaManagerError MpegManager::InitVideoCodec()
 {
     DP_INFO_LOG("DPS_VIDEO: Create video codec.");
@@ -284,6 +298,10 @@ void MpegManager::OnMakerBufferAvailable()
     int64_t timestamp;
     auto buffer = AcquireMakerBuffer(timestamp);
     DP_CHECK_ERROR_RETURN_LOG(buffer == nullptr, "MakerBuffer is nullptr.");
+    if (timestamp < 0) {
+        ReleaseMakerBuffer(buffer);
+        return;
+    }
 
     std::lock_guard<std::mutex> lock(makerMutex_);
     auto makerBuffer = AVBuffer::CreateAVBuffer(buffer);

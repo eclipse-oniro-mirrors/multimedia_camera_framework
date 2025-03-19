@@ -33,14 +33,15 @@ protected:
 
     const int32_t userId_;
     std::atomic<bool> initialized_ {false};
-    std::shared_ptr<VideoPostProcessor> videdPostProcess_ {nullptr};
+    std::shared_ptr<VideoPostProcessor> videoPostProcess_ {nullptr};
 };
 
 class VideoProcessSuccessCommand : public VideoProcessCommand {
     DECLARE_CMD_CLASS(VideoProcessSuccessCommand);
 public:
-    VideoProcessSuccessCommand(const int32_t userId, const std::string& videoId)
-        : VideoProcessCommand(userId), videoId_(videoId)
+    VideoProcessSuccessCommand(const int32_t userId, const std::string& videoId,
+        std::unique_ptr<MediaUserInfo> userInfo = nullptr)
+        : VideoProcessCommand(userId), videoId_(videoId), userInfo_(std::move(userInfo))
     {
         DP_DEBUG_LOG("entered.");
     }
@@ -50,6 +51,7 @@ protected:
     int32_t Executing() override;
 
     const std::string videoId_;
+    std::unique_ptr<MediaUserInfo> userInfo_;
 };
 
 class VideoProcessFailedCommand : public VideoProcessCommand {

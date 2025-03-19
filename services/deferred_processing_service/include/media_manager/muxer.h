@@ -36,16 +36,22 @@ public:
     MediaManagerError Start();
     MediaManagerError Stop();
     MediaManagerError AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInfo);
+    MediaManagerError AddUserMeta(const std::shared_ptr<Meta>& userMeta);
 
 private:
     int32_t GetTrackId(Media::Plugins::MediaType trackType);
-    MediaManagerError CheckAndAddMetaTrack();
+    MediaManagerError CheckAndAddMetaTrack(const std::shared_ptr<Track>& track);
 
     std::shared_ptr<AVMuxer> muxer_ {nullptr};
-    std::map<Media::Plugins::MediaType, int32_t> trackIds_ = {
+    std::unordered_map<Media::Plugins::MediaType, int32_t> trackIds_ = {
         {Media::Plugins::MediaType::AUDIO, INVALID_TRACK_ID},
         {Media::Plugins::MediaType::VIDEO, INVALID_TRACK_ID},
         {Media::Plugins::MediaType::TIMEDMETA, INVALID_TRACK_ID}
+    };
+    std::vector<Media::Plugins::MediaType> trackList_ = {
+        Media::Plugins::MediaType::VIDEO,
+        Media::Plugins::MediaType::TIMEDMETA,
+        Media::Plugins::MediaType::AUDIO
     };
 };
 

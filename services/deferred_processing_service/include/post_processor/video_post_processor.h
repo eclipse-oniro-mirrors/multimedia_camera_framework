@@ -21,11 +21,8 @@
 #include "iservstat_listener_hdi.h"
 #include "ivideo_process_callbacks.h"
 #include "mpeg_manager.h"
-#include "v1_0/types.h"
-#include "v1_3/ivideo_process_service.h"
-#include "v1_3/ivideo_process_session.h"
-#include "v1_3/ivideo_process_callback.h"
-#include "v1_3/types.h"
+#include "v1_4/ivideo_process_service.h"
+#include "v1_4/ivideo_process_callback.h"
 #include "video_process_result.h"
 
 namespace OHOS {
@@ -48,7 +45,7 @@ public:
     void RemoveRequest(const std::string& videoId);
     void PauseRequest(const std::string& videoId, const ScheduleType& type);
     DeferredVideoWorkPtr GetRunningWork(const std::string& videoId);
-    void OnProcessDone(const std::string& videoId);
+    void OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo);
     void OnError(const std::string& videoId, DpsError errorCode);
     void OnStateChanged(HdiStatus hdiStatus);
     void OnSessionDied();

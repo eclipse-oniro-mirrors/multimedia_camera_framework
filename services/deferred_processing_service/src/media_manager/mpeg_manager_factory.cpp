@@ -65,7 +65,7 @@ void MpegManagerFactory::Release(std::shared_ptr<MpegManager>& mpegManager)
     DP_CHECK_ERROR_RETURN_LOG(mpegManager != mpegManager_, "MpegManager does not match, release failed.");
 
     if (--refCount_ == 0) {
-        DP_INFO_LOG("Destroying mpegManager.");
+        DP_DEBUG_LOG("Destroying mpegManager.");
         if (mpegManager_ != nullptr) {
             mpegManager_->UnInit(MediaResult::FAIL);
         }

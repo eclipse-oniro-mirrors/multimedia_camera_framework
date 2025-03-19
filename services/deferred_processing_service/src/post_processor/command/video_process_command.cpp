@@ -31,8 +31,8 @@ int32_t VideoProcessCommand::Initialize()
     auto schedulerManager = DPS_GetSchedulerManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
 
-    videdPostProcess_ = schedulerManager->GetVideoPostProcessor(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(videdPostProcess_ == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
+    videoPostProcess_ = schedulerManager->GetVideoPostProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(videoPostProcess_ == nullptr, DP_NULL_POINTER, "VideoPostProcessor is nullptr.");
 
     initialized_.store(true);
     return DP_OK;
@@ -44,7 +44,7 @@ int32_t VideoProcessSuccessCommand::Executing()
         return ret;
     }
 
-    videdPostProcess_->OnProcessDone(videoId_);
+    videoPostProcess_->OnProcessDone(videoId_, std::move(userInfo_));
     return DP_OK;
 }
 
@@ -54,7 +54,7 @@ int32_t VideoProcessFailedCommand::Executing()
         return ret;
     }
 
-    videdPostProcess_->OnError(videoId_, error_);
+    videoPostProcess_->OnError(videoId_, error_);
     return DP_OK;
 }
 

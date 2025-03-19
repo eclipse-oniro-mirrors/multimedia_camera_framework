@@ -60,8 +60,6 @@ private:
         } else if constexpr (std::is_same_v<T, std::string>) {
             ret = format->GetStringValue(key, value);
         }
-
-        DP_CHECK_WARNING_PRINT_LOG(!ret, "Cannot get %{public}s tag.", key.data());
         return ret;
     }
 

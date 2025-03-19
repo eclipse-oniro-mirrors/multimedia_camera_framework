@@ -50,8 +50,8 @@ MediaManagerError Writer::Write(Media::Plugins::MediaType type, const std::share
         DP_DEBUG_LOG("sample size: %{public}d", sample->memory_->GetSize());
     }
     
-    DP_CHECK_RETURN_RET_LOG(sample->pts_ < lastPause_ && type == Media::Plugins::MediaType::VIDEO, OK,
-        "Drop feame pts: %{public}" PRId64, sample->pts_);
+    DP_CHECK_RETURN_RET_LOG(type == Media::Plugins::MediaType::VIDEO && sample->pts_ < lastPause_, OK,
+        "MediaType: %{public}d, drop feame pts: %{public}" PRId64, type, sample->pts_);
 
     auto ret = outputMuxer_->WriteStream(type, sample);
     DP_CHECK_RETURN_RET_LOG(ret != OK, ERROR_FAIL,
@@ -87,6 +87,14 @@ MediaManagerError Writer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaIn
     DP_DEBUG_LOG("entered.");
     auto ret = outputMuxer_->AddMediaInfo(mediaInfo);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Add media info failed.");
+    return OK;
+}
+
+MediaManagerError Writer::AddUserMeta(const std::shared_ptr<Meta>& userMeta)
+{
+    DP_DEBUG_LOG("entered.");
+    auto ret = outputMuxer_->AddUserMeta(userMeta);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Add user meta info failed.");
     return OK;
 }
 } // namespace DeferredProcessing

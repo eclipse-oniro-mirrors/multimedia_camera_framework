@@ -42,6 +42,14 @@ void VideoProcessResult::OnProcessDone(const std::string& videoId)
         "process success videoId: %{public}s failed. ret: %{public}d", videoId.c_str(), ret);
 }
 
+void VideoProcessResult::OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo)
+{
+    DP_DEBUG_LOG("DPS_VIDEO: OnProcessDone videoId: %{public}s", videoId.c_str());
+    auto ret = DPS_SendCommand<VideoProcessSuccessCommand>(userId_, videoId, std::move(userInfo));
+    DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
+        "process success videoId: %{public}s failed. ret: %{public}d", videoId.c_str(), ret);
+}
+
 void VideoProcessResult::OnError(const std::string& videoId, DpsError errorCode)
 {
     DP_DEBUG_LOG("DPS_VIDEO: OnError videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
@@ -61,6 +69,31 @@ void VideoProcessResult::OnVideoSessionDied()
     DP_DEBUG_LOG("DPS_VIDEO: OnVideoSessionDied");
     auto ret = DPS_SendCommand<VideoDiedCommand>(userId_);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "process video session deied failed, ret: %{public}d", ret);
+}
+
+int32_t VideoProcessResult::ProcessVideoInfo(const std::string& videoId,
+    const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData)
+{
+    if (metaData == nullptr) {
+        OnProcessDone(videoId);
+        return DP_OK;
+    }
+
+    auto userInfo = std::make_unique<MediaUserInfo>();
+    double scalingFactor;
+    std::string interpolationFramePts;
+    bool ret = GetMetadataValue(metaData, VideoMetadataKeys::SCALING_FACTOR, scalingFactor);
+    if (ret) {
+        userInfo->scalingFactor = static_cast<float>(scalingFactor);
+    }
+    ret =  GetMetadataValue(metaData, VideoMetadataKeys::INTERPOLATION_FRAME_PTS, interpolationFramePts);
+    if (ret) {
+        userInfo->interpolationFramePts = interpolationFramePts;
+    }
+    DP_INFO_LOG("DPS_VIDEO: param, scalingFactor: %{public}f, interpolationFramePts: %{public}s",
+        userInfo->scalingFactor, userInfo->interpolationFramePts.c_str());
+    OnProcessDone(videoId, std::move(userInfo));
+    return DP_OK;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

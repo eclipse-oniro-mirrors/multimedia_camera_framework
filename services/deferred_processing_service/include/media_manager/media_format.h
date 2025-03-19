@@ -26,7 +26,11 @@ namespace DeferredProcessing {
 const std::string MIME_VIDEO_AVC = Media::Plugins::MimeType::VIDEO_AVC;
 const std::string MIME_VIDEO_HEVC = Media::Plugins::MimeType::VIDEO_HEVC;
 const std::string MIME_TIMED_META = Media::Plugins::MimeType::TIMED_METADATA;
-const std::string TIMED_METADATA_KEY = "com.openharmony.timed_metadata.vid_maker_info";
+const std::string TIMED_METADATA_VALUE = "com.openharmony.timed_metadata.vid_maker_info";
+const std::string SCALING_FACTOR_KEY = "com.openharmony.scaling_factor";
+const std::string INTERPOLATION_FRAME_PTS_KEY = "com.openharmony.interp_frame_pts";
+const double DEFAULT_SCALING_FACTOR = -1.0;
+const std::string DEFAULT_INTERPOLATION_FRAME_PTS = "";
 
 enum class MediaInfoKey : uint32_t {
     META_VALUE_TYPE_NONE,
@@ -69,6 +73,11 @@ struct MediaInfo {
     float latitude;
     float longitude;
     CodecInfo codecInfo {};
+};
+
+struct MediaUserInfo {
+    float scalingFactor{DEFAULT_SCALING_FACTOR};
+    std::string interpolationFramePts{DEFAULT_INTERPOLATION_FRAME_PTS};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
