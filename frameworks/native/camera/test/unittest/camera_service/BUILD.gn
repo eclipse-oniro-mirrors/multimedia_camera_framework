@@ -14,7 +14,7 @@
 import("//build/test.gni")
 import("./../../../../../../multimedia_camera_framework.gni")
 
-module_output_path = "camera_framework/camera_service_unittest"
+module_output_path = "camera_framework/camera_framework/camera_service_unittest"
 
 ohos_unittest("camera_service_unittest") {
   module_out_path = module_output_path
