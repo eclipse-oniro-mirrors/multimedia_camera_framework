@@ -38,6 +38,8 @@ public:
 
     int32_t GetOfflineOutputSize();
 
+    std::vector<sptr<HStreamOperator>> GetStreamOperatorByPid(pid_t pidRequest);
+
 private:
     HStreamOperatorManager();
     std::mutex mapMutex_;

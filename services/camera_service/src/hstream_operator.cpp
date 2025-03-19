@@ -412,7 +412,9 @@ void  HStreamOperator::GetStreamOperator()
 
 bool HStreamOperator::IsOfflineCapture()
 {
-    auto allStream = streamContainer_.GetAllStreams();
+    std::list<sptr<HStreamCommon>> allStream = streamContainer_.GetAllStreams();
+    std::list<sptr<HStreamCommon>> allOfflineStreams = streamContainerOffline_.GetAllStreams();
+    allStream.insert(allStream.end(), allOfflineStreams.begin(), allOfflineStreams.end());
     for (auto& stream : allStream) {
         if (stream->GetStreamType() != StreamType::CAPTURE) {
             continue;
@@ -471,6 +473,27 @@ int32_t HStreamOperator::UnlinkInputAndOutputs()
     ReleaseStreams(hdiStreamIds);
     std::vector<StreamInfo_V1_1> emptyStreams;
     UpdateStreams(emptyStreams);
+    ResetHdiStreamId();
+    return rc;
+}
+
+int32_t HStreamOperator::UnlinkOfflineInputAndOutputs()
+{
+    CAMERA_SYNC_TRACE;
+    int32_t rc = CAMERA_UNKNOWN_ERROR;
+    std::vector<int32_t> fwkStreamIds;
+    std::vector<int32_t> hdiStreamIds;
+    auto allStream = streamContainerOffline_.GetAllStreams();
+    for (auto& stream : allStream) {
+        fwkStreamIds.emplace_back(stream->GetFwkStreamId());
+        hdiStreamIds.emplace_back(stream->GetHdiStreamId());
+        stream->UnlinkInput();
+    }
+    MEDIA_INFO_LOG("HStreamOperator::UnlinkOfflineInputAndOutputs() streamIds size() = %{public}zu,"
+        "streamIds:%{public}s, hdiStreamIds:%{public}s",
+        fwkStreamIds.size(), Container2String(fwkStreamIds.begin(), fwkStreamIds.end()).c_str(),
+        Container2String(hdiStreamIds.begin(), hdiStreamIds.end()).c_str());
+    ReleaseStreams(hdiStreamIds);
     ResetHdiStreamId();
     return rc;
 }
@@ -1022,6 +1045,7 @@ int32_t HStreamOperator::Release()
     #ifdef CAMERA_USE_SENSOR
     if (isSetMotionPhoto_) {
         UnRegisterSensorCallback();
+        isSetMotionPhoto_ = false;
     }
     #endif
     if (displayListener_) {
@@ -1029,13 +1053,14 @@ int32_t HStreamOperator::Release()
         displayListener_ = nullptr;
     }
     if (streamOperator_) {
+        UnlinkOfflineInputAndOutputs();
         streamOperator_ = nullptr;
         MEDIA_INFO_LOG("HStreamOperator::Release streamOperator_ is nullptr");
     }
     HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-    livephotoListener_ = nullptr;
-    videoCache_ = nullptr;
+    CHECK_EXECUTE(livephotoListener_, livephotoListener_ = nullptr);
+    CHECK_EXECUTE(videoCache_, videoCache_ = nullptr);
     if (taskManager_) {
         taskManager_->ClearTaskResource();
         taskManager_ = nullptr;
@@ -1646,24 +1671,24 @@ int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos
 {
     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
     CHECK_ERROR_RETURN_RET_LOG(streamOperator_ == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamOperator::UpdateStreamInfos GetStreamOperator is null!");
+        "HStreamOperator::UpdateStreams GetStreamOperator is null!");
     uint32_t major;
     uint32_t minor;
     streamOperator_->GetVersion(major, minor);
-    MEDIA_INFO_LOG("UpdateStreamInfos: streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+    MEDIA_INFO_LOG("UpdateStreams::UpdateStreams GetVersion major:%{public}d, minor:%{public}d", major, minor);
     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
         streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator_);
         if (streamOperatorV1_2 == nullptr) {
-            MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos IStreamOperator cast to V1_2 error");
+            MEDIA_ERR_LOG("HStreamOperator::UpdateStreams IStreamOperator cast to V1_2 error");
             streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator_.GetRefPtr());
         }
     }
     CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
     if (streamOperatorV1_2 != nullptr) {
-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos streamOperator V1_2");
+        MEDIA_DEBUG_LOG("HStreamOperator::UpdateStreams streamOperator V1_2");
         hdiRc = (CamRetCode)(streamOperatorV1_2->UpdateStreams(streamInfos));
     } else {
-        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos failed, streamOperator V1_2 is null.");
+        MEDIA_DEBUG_LOG("HStreamOperator::UpdateStreams failed, streamOperator V1_2 is null.");
         return CAMERA_UNKNOWN_ERROR;
     }
     return HdiToServiceError(hdiRc);
@@ -1706,9 +1731,6 @@ int32_t HStreamOperator::OnCaptureEnded(int32_t captureId, const std::vector<Cap
             CastStream<HStreamRepeat>(curStream)->OnFrameEnded(captureInfo.frameCount_);
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             CastStream<HStreamCapture>(curStream)->OnCaptureEnded(captureId, captureInfo.frameCount_);
-            if (mlastCaptureId == captureId && streamContainerOffline_.Size() > 0) {
-                HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
-            }
         }
     }
     return CAMERA_OK;

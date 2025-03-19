@@ -879,6 +879,12 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     for (auto device : devicesNeedClose) {
         device->Close();
     }
+
+    std::vector<sptr<HStreamOperator>> streamOperatorToRelease =
+        HStreamOperatorManager::GetInstance()->GetStreamOperatorByPid(pid);
+    for (auto streamoperator : streamOperatorToRelease) {
+        streamoperator->Release();
+    }
     return CAMERA_OK;
 }
 
