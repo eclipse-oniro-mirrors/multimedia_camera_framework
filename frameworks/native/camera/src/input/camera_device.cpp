@@ -180,7 +180,7 @@ CameraPosition CameraDevice::GetPosition()
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     auto foldType = CameraManager::GetInstance()->GetFoldScreenType();
     if (!foldType.empty() && foldType[0] == '4' && cameraPosition_ == CAMERA_POSITION_FRONT &&
-        foldStatus_ == OHOS_CAMERA_FOLD_STATUS_EXPANDED && !(CameraManager::GetInstance()->CheckWhiteList())) {
+        foldStatus_ == OHOS_CAMERA_FOLD_STATUS_EXPANDED && !(CameraManager::GetInstance()->GetIsInWhiteList())) {
         cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
         return cameraPosition_;
     }
