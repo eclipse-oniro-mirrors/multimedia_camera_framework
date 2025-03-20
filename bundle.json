@@ -114,6 +114,22 @@
               }
             },
             {
+              "type": "so",
+              "name": "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_ffi",
+              "header": {
+                "header_base": "//foundation/multimedia/camera_framework/frameworks/cj/camera/include",
+                "header_files": []
+              }
+            },
+            {
+              "type": "so",
+              "name": "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_picker_ffi",
+              "header": {
+                "header_base": "//foundation/multimedia/camera_framework/frameworks/cj/camera_picker/include",
+                "header_files": []
+              }
+            },
+            {
               "type": "none",
               "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
               "header": {
