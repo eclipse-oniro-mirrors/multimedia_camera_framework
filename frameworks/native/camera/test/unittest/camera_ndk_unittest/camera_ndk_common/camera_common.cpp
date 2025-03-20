@@ -62,6 +62,31 @@ void CameraNdkCommon::ReleaseImageReceiver(void)
     }
 }
 
+void CameraNdkCommon::ObtainAvailableFrameRate(Camera_FrameRateRange activeframeRateRange,
+                                               Camera_FrameRateRange*& frameRateRange, uint32_t size,
+                                               int32_t &minFps, int32_t &maxFps)
+{
+    minFps = activeframeRateRange.min;
+    maxFps = activeframeRateRange.max;
+    CHECK_ERROR_RETURN_LOG(frameRateRange == nullptr, "frameRateRange is nullptr");
+    bool flag = false;
+    for (uint32_t i = 0; i < size; i++) {
+        if (frameRateRange[i].min != activeframeRateRange.min ||
+            frameRateRange[i].max != activeframeRateRange.max) {
+            minFps = frameRateRange[i].min;
+            maxFps = frameRateRange[i].max;
+            flag = true;
+            break;
+        }
+    }
+    if (!flag) {
+        if (maxFps > minFps + 1) {
+            minFps++;
+        }
+    }
+    return;
+}
+
 Camera_PhotoOutput* CameraNdkCommon::CreatePhotoOutput(int32_t width, int32_t height)
 {
     uint32_t photo_width = width;

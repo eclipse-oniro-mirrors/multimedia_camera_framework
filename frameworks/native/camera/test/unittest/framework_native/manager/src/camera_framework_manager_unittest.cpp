@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1416,17 +1416,32 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, Test
 
 /*
  * Feature: Framework
- * Function: Test GetFoldListener
+ * Function: Test RegisterFoldStatusListener
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetFoldListener
+ * CaseDescription: Test RegisterFoldStatusListener
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, TestSize.Level0)
 {
     std::shared_ptr<FoldListener> listener = std::make_shared<FoldListenerTest>();
-    cameraManager_->GetFoldStatusListenerManager()->AddListener(listener);
-    EXPECT_TRUE(cameraManager_->GetFoldStatusListenerManager()->IsListenerExist(listener));
+    cameraManager_->RegisterFoldListener(listener);
+    EXPECT_GT(cameraManager_->GetFoldStatusListenerManager()->GetListenerCount(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetTorchListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTorchListener
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, TestSize.Level0)
+{
+    std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerTest>();
+    cameraManager_->RegisterTorchListener(listener);
+    EXPECT_GT(cameraManager_->GetTorchServiceListenerManager()->GetListenerCount(), 0);
 }
 
 /*
@@ -1440,8 +1455,8 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, Test
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, TestSize.Level0)
 {
     std::shared_ptr<CameraMuteListener> listener = std::make_shared<CameraMuteListenerTest>();
-    cameraManager_->GetCameraMuteListenerManager()->AddListener(listener);
-    EXPECT_TRUE(cameraManager_->GetCameraMuteListenerManager()->IsListenerExist(listener));
+    cameraManager_->RegisterCameraMuteListener(listener);
+    EXPECT_GT(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
 }
 
 /*
@@ -1454,6 +1469,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, TestSize.Level0)
 {
+    cameraManager_->serviceProxyPrivate_ = nullptr;
     cameraManager_->torchMode_ = TorchMode::TORCH_MODE_AUTO;
     TorchMode ret = cameraManager_->GetTorchMode();
     EXPECT_EQ(ret, TorchMode::TORCH_MODE_AUTO);
@@ -1534,18 +1550,22 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, Test
 
 /*
  * Feature: Framework
- * Function: Test TorchServiceCallback and FoldServiceCallback
+ * Function: Test UnregisterFoldListener and UnregisterCameraMuteListener
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test TorchServiceCallback and FoldServiceCallback
+ * CaseDescription: Test UnregisterFoldListener and UnregisterCameraMuteListener for abnormal branch
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, TestSize.Level0)
 {
-    sptr<ITorchServiceCallback> torchServiceCallback = cameraManager_->GetTorchServiceListenerManager();
-    ASSERT_NE(torchServiceCallback, nullptr);
-    sptr<IFoldServiceCallback> foldServiceCallback = cameraManager_->GetFoldStatusListenerManager();
-    ASSERT_NE(foldServiceCallback, nullptr);
+    std::shared_ptr<FoldListener> listener1 = std::make_shared<FoldListenerTest>();
+    cameraManager_->RegisterFoldListener(listener1);
+    cameraManager_->UnregisterFoldListener(listener1);
+    EXPECT_GT(cameraManager_->GetFoldStatusListenerManager()->GetListenerCount(), 0);
+    std::shared_ptr<CameraMuteListener> listener2 = std::make_shared<CameraMuteListenerTest>();
+    cameraManager_->RegisterCameraMuteListener(listener2);
+    cameraManager_->UnregisterCameraMuteListener(listener2);
+    EXPECT_GT(cameraManager_->GetCameraMuteListenerManager()->GetListenerCount(), 0);
 }
 
 /*

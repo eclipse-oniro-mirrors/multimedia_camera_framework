@@ -53,6 +53,8 @@ public:
     void InitCamera(void);
     void ReleaseCamera(void);
     void ReleaseImageReceiver(void);
+    void ObtainAvailableFrameRate(Camera_FrameRateRange activeframeRateRange, Camera_FrameRateRange*& frameRateRange,
+                                  uint32_t size, int32_t &minFps, int32_t &maxFps);
     void SessionCommit(Camera_CaptureSession *captureSession);
     void SessionControlParams(Camera_CaptureSession *captureSession);
     Camera_PhotoOutput* CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);

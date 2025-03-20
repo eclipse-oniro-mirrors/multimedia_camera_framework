@@ -425,7 +425,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level0)
     cameraService_->DumpCameraSummary(cameraIds, infoDumper);
     std::string msgString = infoDumper.dumperString_;
     auto ret = [msgString]()->bool {
-        return (msgString.find("Number of Camera clients") != std::string::npos);
+        return (msgString.find("Number of Camera sessions") != std::string::npos);
     }();
     EXPECT_TRUE(ret);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -134,6 +134,14 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_002, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
     ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_VideoOutput_GetSupportedFrameRates(nullptr, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, nullptr, &size);
@@ -142,21 +150,14 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_002, TestSize.L
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
-        ret = OH_VideoOutput_SetFrameRate(videoOutput, minFps, maxFps);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_VideoOutput_GetActiveFrameRate(videoOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
+    if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
+        ret = OH_VideoOutput_SetFrameRate(videoOutput, minFps, maxFps);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_VideoOutput_DeleteFrameRates(videoOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -216,25 +217,26 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_004, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
     ASSERT_NE(videoOutput, nullptr);
-    ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, &frameRateRange, &size);
-    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, &frameRateRange, &size);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_FrameRateRange activeframeRateRange;
+    ret = OH_VideoOutput_GetActiveFrameRate(videoOutput, &activeframeRateRange);
+    EXPECT_EQ(ret, CAMERA_OK);
     if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
         ret = OH_VideoOutput_SetFrameRate(nullptr, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
         ret = OH_VideoOutput_SetFrameRate(videoOutput, minFps, maxFps);
         EXPECT_EQ(ret, CAMERA_OK);
     }
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_FrameRateRange activeframeRateRange;
-    ret = OH_VideoOutput_GetActiveFrameRate(videoOutput, &activeframeRateRange);
-    EXPECT_EQ(ret, CAMERA_OK);
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_VideoOutput_DeleteFrameRates(videoOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
@@ -272,19 +274,15 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_005, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
     ASSERT_NE(videoOutput, nullptr);
-    ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, &frameRateRange, &size);
-    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
-    if (size != 0 && frameRateRange != nullptr) {
-        ret = OH_VideoOutput_SetFrameRate(videoOutput, minFps, maxFps);
-        EXPECT_EQ(ret, CAMERA_OK);
-    }
     ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_VideoOutput_GetSupportedFrameRates(videoOutput, &frameRateRange, &size);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_FrameRateRange activeframeRateRange;
     ret = OH_VideoOutput_GetActiveFrameRate(nullptr, &activeframeRateRange);
@@ -293,6 +291,11 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_005, TestSize.L
     EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
     ret = OH_VideoOutput_GetActiveFrameRate(videoOutput, &activeframeRateRange);
     EXPECT_EQ(ret, CAMERA_OK);
+    if (size != 0 && frameRateRange != nullptr) {
+        ObtainAvailableFrameRate(activeframeRateRange, frameRateRange, size, minFps, maxFps);
+        ret = OH_VideoOutput_SetFrameRate(videoOutput, minFps, maxFps);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
     if (size != 0 && frameRateRange != nullptr) {
         ret = OH_VideoOutput_DeleteFrameRates(videoOutput, frameRateRange);
         EXPECT_EQ(ret, CAMERA_OK);
