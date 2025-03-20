@@ -1232,7 +1232,7 @@ void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOri
 {
     MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
         rotationValue, sensorOrientation);
-    // 获取当前传感器角度，isMovingPhotoMirror_为true表示前置，isMovingPhotoMirror_为false表示后置
+    // 获取当前重力传感器角度，isMovingPhotoMirror_为true表示前置，isMovingPhotoMirror_为false表示后置
     if (!isMovingPhotoMirror_) {
         sensorRotation_ = rotationValue - sensorOrientation;
     } else {
