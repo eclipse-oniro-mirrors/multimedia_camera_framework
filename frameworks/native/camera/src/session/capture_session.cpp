@@ -621,16 +621,18 @@ void CaptureSession::FindTagId()
         int32_t ret = camInput->GetCameraAllVendorTags(vendorTagInfos);
         CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Failed to GetCameraAllVendorTags");
         for (auto info : vendorTagInfos) {
-            std::string tagName = info.tagName;
-            if (tagName == "hwSensorName") {
+            if (info.tagName == nullptr) {
+                continue;
+            }
+            if (strcmp(info.tagName, "hwSensorName") == 0) {
                 HAL_CUSTOM_SENSOR_MODULE_TYPE = info.tagId;
-            } else if (tagName == "lensFocusDistance") {
+            } else if (strcmp(info.tagName, "lensFocusDistance") == 0) {
                 HAL_CUSTOM_LENS_FOCUS_DISTANCE = info.tagId;
-            } else if (tagName == "sensorSensitivity") {
+            } else if (strcmp(info.tagName, "sensorSensitivity") == 0) {
                 HAL_CUSTOM_SENSOR_SENSITIVITY = info.tagId;
-            } else if (tagName == "cameraLaserData") {
+            } else if (strcmp(info.tagName, "cameraLaserData") == 0) {
                 HAL_CUSTOM_LASER_DATA = info.tagId;
-            } else if (tagName == "cameraArMode") {
+            } else if (strcmp(info.tagName, "cameraArMode") == 0) {
                 HAL_CUSTOM_AR_MODE = info.tagId;
             }
         }
