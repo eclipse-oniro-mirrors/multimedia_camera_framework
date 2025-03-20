@@ -677,6 +677,9 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
             rotation = rotation - CAPTURE_ROTATE_360;
         }
     }
+    MEDIA_DEBUG_LOG("set current sensor rotationValue: %{public}d", rotation);
+    auto hStreamOperator = hStreamOperator_.promote();
+    hStreamOperator->SetSensorRotation(rotation, sensorOrientation);
     {
         uint8_t connectType = 0;
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -691,7 +694,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         }
         MEDIA_INFO_LOG("set rotation camera real rotation %{public}d", rotation);
     }
-
     bool status = false;
     if (result == CAM_META_ITEM_NOT_FOUND) {
         status = captureMetadataSetting_->addEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);

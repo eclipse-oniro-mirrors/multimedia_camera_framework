@@ -1228,14 +1228,26 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
+void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation)
+{
+    MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
+        rotationValue, sensorOrientation);
+    // 获取当前传感器角度，isMovingPhotoMirror_为true表示前置，isMovingPhotoMirror_为false表示后置
+    if (!isMovingPhotoMirror_) {
+        sensorRotation_ = rotationValue - sensorOrientation;
+    } else {
+        sensorRotation_ = sensorOrientation - rotationValue;
+    }
+}
+
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
     if (!isSetMotionPhoto_) {
         return;
     }
     int32_t addMirrorRotation = 0;
-    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
-    if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+    MEDIA_INFO_LOG("sensorRotation is : %{public}d", sensorRotation_);
+    if ((sensorRotation_ == STREAM_ROTATE_0 || sensorRotation_ == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
         addMirrorRotation = STREAM_ROTATE_180;
     }
     int32_t realRotation = rotation + addMirrorRotation;
