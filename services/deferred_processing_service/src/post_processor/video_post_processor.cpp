@@ -26,7 +26,6 @@
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "mpeg_manager_factory.h"
-#include "v1_3/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,6 +33,8 @@ namespace DeferredProcessing {
 namespace {
     const std::string VIDEO_SERVICE_NAME = "camera_video_process_service";
     constexpr uint32_t MAX_PROC_TIME_MS = 20 * 60 * 1000;
+    constexpr int32_t VIDEO_VERSION_1 = 1;
+    constexpr int32_t VIDEO_VERSION_4 = 4;
 }
 
 // LCOV_EXCL_START
@@ -101,7 +102,7 @@ private:
     std::weak_ptr<VideoProcessResult> processResult_;
 };
 
-class VideoPostProcessor::VideoProcessListener : public OHOS::HDI::Camera::V1_3::IVideoProcessCallback {
+class VideoPostProcessor::VideoProcessListener : public HDI::Camera::V1_4::IVideoProcessCallback {
 public:
     explicit VideoProcessListener(const std::weak_ptr<VideoProcessResult>& processResult)
         : processResult_(processResult)
@@ -117,6 +118,21 @@ public:
         DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
 
         processResult->OnProcessDone(videoId);
+        return DP_OK;
+    }
+
+    int32_t OnProcessDone(const std::string& videoId,
+        const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData) override
+    {
+        DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
+        auto processResult = processResult_.lock();
+        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+        auto ret = processResult->ProcessVideoInfo(videoId, metaData);
+        if (ret != DP_OK) {
+            DP_ERR_LOG("process done failed videoId: %{public}s.", videoId.c_str());
+            processResult->OnError(videoId, DPS_ERROR_IMAGE_PROC_FAILED);
+        }
         return DP_OK;
     }
 
@@ -238,16 +254,16 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
     allStreamInfo_.clear();
     std::vector<StreamDescription> streamDescs;
     auto ret = session->Prepare(videoId, inputFd, streamDescs);
-    DP_INFO_LOG("DPS_VIDEO: Prepare videoId: %{public}s, stream size: %{public}d, ret: %{public}d",
-        videoId.c_str(), static_cast<int32_t>(streamDescs.size()), ret);
+    DP_INFO_LOG("DPS_VIDEO: Prepare videoId: %{public}s, stream size: %{public}zu, ret: %{public}d",
+        videoId.c_str(), streamDescs.size(), ret);
 
     for (const auto& stream : streamDescs) {
         DP_LOOP_ERROR_RETURN_RET_LOG(!ProcessStream(stream), false,
             "ProcessStream failed streamType: %{public}d", stream.type);
     }
 
-    DP_INFO_LOG("DPS_VIDEO: Prepare videoId: %{public}s, create stream size: %{public}d", videoId.c_str(),
-        static_cast<int32_t>(allStreamInfo_.size()));
+    DP_DEBUG_LOG("DPS_VIDEO: Prepare videoId: %{public}s, create stream size: %{public}zu", videoId.c_str(),
+        allStreamInfo_.size());
     DP_CHECK_ERROR_RETURN_RET_LOG(allStreamInfo_.empty(), false, "allStreamInfo is null.");
 
     ret = session->CreateStreams(allStreamInfo_);
@@ -315,7 +331,7 @@ bool VideoPostProcessor::StartMpeg(const std::string& videoId, const sptr<IPCFil
 {
     mpegManager_ = MpegManagerFactory::GetInstance().Acquire(videoId, inputFd);
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, false, "mpeg manager is nullptr.");
-    DP_INFO_LOG("DPS_VIDEO: Acquire MpegManager.");
+    DP_DEBUG_LOG("DPS_VIDEO: Acquire MpegManager.");
     return true;
 }
 
@@ -332,22 +348,16 @@ bool VideoPostProcessor::StopMpeg(const MediaResult result, const DeferredVideoW
 
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
     auto resultFd = mpegManager_->GetResultFd();
-    if (resultFd == nullptr) {
-        DP_ERR_LOG("get video fd failed, videoId: %{public}s", videoId.c_str());
-        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
-        return false;
-    }
+    DP_CHECK_ERROR_RETURN_RET_LOG(resultFd == nullptr, false,
+        "Get video fd failed, videoId: %{public}s", videoId.c_str());
 
     auto tempFd = resultFd->GetFd();
     auto outFd = work->GetDeferredVideoJob()->GetOutputFd()->GetFd();
     DP_INFO_LOG("DPS_VIDEO: Video process done, videoId: %{public}s, tempFd: %{public}d, outFd: %{public}d",
-                videoId.c_str(), tempFd, outFd);
+        videoId.c_str(), tempFd, outFd);
     copyFileByFd(tempFd, outFd);
-    if (IsFileEmpty(outFd)) {
-        DP_ERR_LOG("muxer video size is empty, videoId: %{public}s", videoId.c_str());
-        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
-        return false;
-    }
+    DP_CHECK_ERROR_RETURN_RET_LOG(IsFileEmpty(outFd), false,
+        "Video size is empty, videoId: %{public}s", videoId.c_str());
 
     ReleaseMpeg();
     return true;
@@ -412,12 +422,19 @@ void VideoPostProcessor::OnSessionDied()
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
 }
 
-void VideoPostProcessor::OnProcessDone(const std::string& videoId)
+void VideoPostProcessor::OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo)
 {
     auto work = GetRunningWork(videoId);
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
-    DP_CHECK_ERROR_RETURN_LOG(!StopMpeg(MediaResult::SUCCESS, work), "success: mpeg stop failed.");
     // LCOV_EXCL_START
+    if (userInfo) {
+        mpegManager_->AddUserMeta(std::move(userInfo));
+    }
+    auto ret = StopMpeg(MediaResult::SUCCESS, work);
+    if (!ret) {
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
+        return;
+    }
 
     DP_INFO_LOG("DPS_VIDEO: video process done, videoId: %{public}s", videoId.c_str());
     StopTimer(work);
@@ -433,11 +450,8 @@ void VideoPostProcessor::OnError(const std::string& videoId, DpsError errorCode)
 {
     auto work = GetRunningWork(videoId);
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
-    if (errorCode == DPS_ERROR_VIDEO_PROC_INTERRUPTED) {
-        DP_CHECK_ERROR_PRINT_LOG(!StopMpeg(MediaResult::PAUSE, work), "pause: mpeg stop failed.");
-    } else {
-        DP_CHECK_ERROR_PRINT_LOG(!StopMpeg(MediaResult::FAIL, work), "error or outtime: mpeg stop failed.");
-    }
+    MediaResult resule = errorCode == DPS_ERROR_VIDEO_PROC_INTERRUPTED ? MediaResult::PAUSE : MediaResult::FAIL;
+    StopMpeg(resule, work);
 
     DP_INFO_LOG("DPS_VIDEO: video process error, videoId: %{public}s, error: %{public}d",
         work->GetDeferredVideoJob()->GetVideoId().c_str(), errorCode);
@@ -494,15 +508,28 @@ void VideoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
         "video service state: %{public}d", status.status);
     DP_CHECK_RETURN(GetVideoSession() != nullptr);
     
-    sptr<HDI::Camera::V1_3::IVideoProcessService> proxy =
-        HDI::Camera::V1_3::IVideoProcessService::Get(status.serviceName);
-    DP_CHECK_ERROR_RETURN_LOG(proxy == nullptr, "get VideoProcessService failed.");
+    auto proxyV1_3 = HDI::Camera::V1_3::IVideoProcessService::Get(status.serviceName);
+    DP_CHECK_ERROR_RETURN_LOG(proxyV1_3 == nullptr, "get VideoProcessService failed.");
 
-    sptr<IVideoProcessSession> session;
-    proxy->CreateVideoProcessSession(userId_, processListener_, session);
+    uint32_t majorVer = 0;
+    uint32_t minorVer = 0;
+    proxyV1_3->GetVersion(majorVer, minorVer);
+    int32_t versionId = GetVersionId(majorVer, minorVer);
+    sptr<IVideoProcessSession> session = nullptr;
+    sptr<HDI::Camera::V1_4::IVideoProcessService> proxyV1_4 = nullptr;
+    if (versionId >= GetVersionId(VIDEO_VERSION_1, VIDEO_VERSION_4)) {
+        proxyV1_4 = HDI::Camera::V1_4::IVideoProcessService::CastFrom(proxyV1_3);
+    }
+    if (proxyV1_4 != nullptr) {
+        DP_INFO_LOG("CreateVideoProcessSession_V1_4 version=%{public}d_%{public}d", majorVer, minorVer);
+        proxyV1_4->CreateVideoProcessSession_V1_4(userId_, processListener_, session);
+    } else if (proxyV1_3 != nullptr) {
+        DP_INFO_LOG("CreateVideoProcessSession version=%{public}d_%{public}d", majorVer, minorVer);
+        proxyV1_3->CreateVideoProcessSession(userId_, processListener_, session);
+    }
     DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "get VideoProcessSession failed.");
 
-    const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<IVideoProcessSession>(session);
+    const sptr<IRemoteObject>& remote = HDI::hdi_objcast<IVideoProcessSession>(session);
     bool result = remote->AddDeathRecipient(sessionDeathRecipient_);
     DP_CHECK_ERROR_RETURN_LOG(!result, "add DeathRecipient for VideoProcessSession failed.");
     

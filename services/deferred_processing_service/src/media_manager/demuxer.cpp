@@ -34,7 +34,7 @@ MediaManagerError Demuxer::Create(const std::shared_ptr<AVSource>& source,
     demuxer_ = AVDemuxerFactory::CreateWithSource(source);
     DP_CHECK_ERROR_RETURN_RET_LOG(demuxer_ == nullptr, ERROR_FAIL, "Create demuxer failed.");
 
-    DP_INFO_LOG("tracks size: %{public}d", static_cast<int32_t>(tracks.size()));
+    DP_DEBUG_LOG("tracks size: %{public}d", static_cast<int32_t>(tracks.size()));
     for (const auto& [mediaType, trackPtr] : tracks) {
         auto trackFormat = trackPtr->GetFormat();
         SetTrackId(mediaType, trackFormat.trackId);
@@ -48,7 +48,6 @@ MediaManagerError Demuxer::Create(const std::shared_ptr<AVSource>& source,
 
 MediaManagerError Demuxer::ReadStream(Media::Plugins::MediaType trackType, std::shared_ptr<AVBuffer>& sample)
 {
-    DP_DEBUG_LOG("entered.");
     int32_t trackId = GetTrackId(trackType);
     DP_CHECK_ERROR_RETURN_RET_LOG(trackId == INVALID_TRACK_ID, ERROR_FAIL,
         "TrackType = %{public}d is not supported.", trackType);
