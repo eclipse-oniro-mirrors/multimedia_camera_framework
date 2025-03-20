@@ -677,7 +677,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
             rotation = rotation - CAPTURE_ROTATE_360;
         }
     }
-    MEDIA_DEBUG_LOG("set current sensor rotationValue: %{public}d", rotation);
     auto hStreamOperator = hStreamOperator_.promote();
     hStreamOperator->SetSensorRotation(rotation, sensorOrientation);
     {
