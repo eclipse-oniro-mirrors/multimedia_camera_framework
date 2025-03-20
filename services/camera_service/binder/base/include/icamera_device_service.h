@@ -53,6 +53,8 @@ public:
 
     virtual int32_t DisableResult(std::vector<int32_t> &results) = 0;
 
+    virtual int32_t SetDeviceRetryTime() = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraDeviceService");
 };
 } // namespace CameraStandard

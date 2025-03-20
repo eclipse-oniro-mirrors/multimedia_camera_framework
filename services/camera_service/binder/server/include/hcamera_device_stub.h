@@ -36,6 +36,7 @@ private:
     int32_t HandleDisableResult(MessageParcel& data);
     int32_t HandleOpenSecureCameraResults(MessageParcel& data, MessageParcel& reply);
     int32_t HandleOpenConcurrent(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

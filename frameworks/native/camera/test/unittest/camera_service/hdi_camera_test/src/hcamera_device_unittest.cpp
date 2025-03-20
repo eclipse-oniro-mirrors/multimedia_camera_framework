@@ -741,5 +741,24 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level0)
     metadata->addEntry(OHOS_DEVICE_PROTECTION_STATE, &status, count);
     camDevice->ReportDeviceProtectionStatus(metadata);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test RegisterSensor
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterSensor
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_027, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    camDevice->RegisterSensorCallback();
+    camDevice->UnRegisterSensorCallback();
+}
 }
 }
