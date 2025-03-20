@@ -828,6 +828,7 @@ void CameraManager::InitCameraManager()
     CHECK_ERROR_RETURN_LOG(retCode != CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", retCode);
     foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
     isSystemApp_ = CameraSecurity::CheckSystemApp();
+    CheckWhiteList();
     MEDIA_DEBUG_LOG("IsSystemApp = %{public}d", isSystemApp_);
 }
 
@@ -1221,6 +1222,15 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
         }
     } else {
         MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
+    }
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' && !GetIsInWhiteList() &&
+        (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
+        for (const auto& deviceInfo : deviceInfoList) {
+            if (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
+                SetInnerCamera(deviceInfo);
+                break;
+            }
+        }
     }
     AlignVideoFpsProfile(deviceInfoList);
     return deviceInfoList;
@@ -1779,17 +1789,25 @@ std::string CameraManager::GetFoldScreenType()
 
 FoldStatus CameraManager::GetFoldStatus()
 {
-    return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::EXPAND;
+    }
+    return curFoldStatus;
 }
 
-bool CameraManager::CheckWhiteList()
+void CameraManager::CheckWhiteList()
 {
-    bool isInWhiteList = false;
     auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(
-        serviceProxy == nullptr, isInWhiteList, "CameraManager::CheckWhitelist serviceProxy is null");
-    serviceProxy->CheckWhiteList(isInWhiteList);
-    return isInWhiteList;
+    CHECK_ERROR_RETURN_LOG(
+        serviceProxy == nullptr, "CameraManager::CheckWhitelist serviceProxy is null");
+    serviceProxy->CheckWhiteList(isInWhiteList_);
+}
+
+bool CameraManager::GetIsInWhiteList()
+{
+    MEDIA_DEBUG_LOG("isInWhiteList: %{public}d", isInWhiteList_);
+    return isInWhiteList_;
 }
 
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
@@ -1799,10 +1817,9 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     bool isFoldable = GetIsFoldable();
     CHECK_ERROR_RETURN_RET(!isFoldable, cameraDeviceList);
     auto curFoldStatus = GetFoldStatus();
-    if (curFoldStatus == FoldStatus::HALF_FOLD) {
-        curFoldStatus = FoldStatus::EXPAND;
-    }
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
+    CHECK_ERROR_RETURN_RET(curFoldStatus == FoldStatus::UNKNOWN_FOLD &&
+        !foldScreenType_.empty() && foldScreenType_[0] == '4', cameraDeviceList);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     for (const auto& deviceInfo : cameraDeviceList) {
@@ -1814,7 +1831,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
             (deviceInfo->GetPosition() == CAMERA_POSITION_BACK ||
             deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
-            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !CheckWhiteList() &&
+            deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !GetIsInWhiteList() &&
             curFoldStatus == FoldStatus::EXPAND) {
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
@@ -1971,9 +1988,12 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     MEDIA_INFO_LOG("CreateCameraInput curFoldStatus:%{public}d, position:%{public}d", curFoldStatus,
         camera->GetPosition());
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
-    if ((apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN || foldScreenType_[0] == '4') &&
-        (curFoldStatus == FoldStatus::EXPAND || curFoldStatus == FoldStatus::HALF_FOLD) &&
-        camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT) {
+    bool isFoldV4 = (!foldScreenType_.empty() && foldScreenType_[0] == '4');
+    bool isApiCompatRequired = (apiCompatibleVersion < CameraApiVersion::APIVersion::API_FOURTEEN || isFoldV4);
+    bool isFoldStatusValid = (curFoldStatus == FoldStatus::EXPAND) || (curFoldStatus == FoldStatus::HALF_FOLD) ||
+        (isFoldV4 && curFoldStatus == FoldStatus::UNKNOWN_FOLD);
+    bool isFrontCamera = (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT);
+    if (isApiCompatRequired && isFoldStatusValid && isFrontCamera) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
         sptr<CameraDevice> cameraInfo;
         for (const auto& cameraDevice : cameraObjList) {
@@ -2264,9 +2284,18 @@ void CameraManager::ParseCapability(ProfilesWrapper& profilesWrapper, sptr<Camer
     }
 }
 
-sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName)
-    __attribute__((no_sanitize("cfi")))
+sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& cameraDevice,
+    int32_t modeName) __attribute__((no_sanitize("cfi")))
 {
+    MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
+    auto camera = cameraDevice;
+    auto innerCamera = GetInnerCamera();
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
+        camera->GetPosition() == CAMERA_POSITION_FRONT && innerCamera && !GetIsInWhiteList() &&
+        (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
+        MEDIA_DEBUG_LOG("GetSupportedOutputCapability innerCamera Position = %{public}d", innerCamera->GetPosition());
+        camera = innerCamera;
+    }
     CHECK_ERROR_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_ERROR_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
@@ -2815,9 +2844,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasWithFoldStatus
     bool isFoldable = GetIsFoldable();
     CHECK_ERROR_RETURN_RET(!isFoldable, cameraDeviceList);
     auto curFoldStatus = GetFoldStatus();
-    if (curFoldStatus == FoldStatus::HALF_FOLD) {
-        curFoldStatus = FoldStatus::EXPAND;
-    }
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     for (const auto& deviceInfo : cameraDeviceList) {
