@@ -154,7 +154,7 @@ CArrI32 CJCameraManager::GetSupportedSceneModes(std::string cameraId, int32_t *e
 
     for (int64_t i = 0; i < size; i++) {
         if (modeObjList[i] == CAPTURE || modeObjList[i] == VIDEO || modeObjList[i] == PROFESSIONAL_VIDEO) {
-            sceneModes[size] = modeObjList[i];
+            sceneModes[i] = modeObjList[i];
         }
     }
     result.head = sceneModes;
