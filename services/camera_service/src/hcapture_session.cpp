@@ -2320,7 +2320,7 @@ std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyIn
 void HCaptureSession::UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
     std::vector<int32_t> &frameRateRange)
 {
-    int index = -1;
+    size_t index = -1;
     int uid = IPCSkeleton::GetCallingUid();
     std::string bundleName = GetClientBundle(uid);
     for (size_t i = 0; i < infos.size(); i++) {
