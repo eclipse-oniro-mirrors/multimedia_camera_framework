@@ -339,7 +339,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, c
                     photoOutput->Release();
                 }
         });
-        photoOutput->captureIdToCaptureInfoMap_[captureId].CaptureHandle = startCaptureHandle;
+        photoOutput->captureIdToCaptureInfoMap_[captureId].CaptureHandle = static_cast<int32_t>(startCaptureHandle);
         photoOutput->captureIdToCaptureInfoMap_[captureId].timeStart = std::chrono::steady_clock::now();
     }
     return CAMERA_OK;

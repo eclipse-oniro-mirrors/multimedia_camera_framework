@@ -1018,7 +1018,7 @@ int32_t HStreamOperator::GetOfflineOutptSize()
 
 int32_t HStreamOperator::GetAllOutptSize()
 {
-    int32_t outputCount = streamContainerOffline_.Size() + streamContainer_.Size();
+    int32_t outputCount = static_cast<int32_t>(streamContainerOffline_.Size() + streamContainer_.Size());
     return outputCount;
 }
 
