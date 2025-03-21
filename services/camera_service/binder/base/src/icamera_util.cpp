@@ -73,7 +73,7 @@ int32_t ServiceToCameraError(int32_t ret)
             err = CameraErrorCode::OPERATION_NOT_ALLOWED;
             break;
         case CAMERA_DEVICE_CONFLICT:
-            err = CameraErrorCode::CONFLICT_CAMERA;
+            err = CameraErrorCode::OPERATION_NOT_ALLOWED;
             break;
         case IPC_PROXY_ERR:
         case IPC_PROXY_DEAD_OBJECT_ERR:
