@@ -86,6 +86,9 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
         case DpsStatus::DPS_SESSION_STATE_SUSPENDED:
             code = StatusCode::SESSION_STATE_SUSPENDED;
             break;
+        case DpsStatus::DPS_SESSION_STATE_PREEMPTED:
+            code = StatusCode::SESSION_STATE_PREEMPTED;
+            break;
         default:
             DP_WARNING_LOG("unexpected error code: %{public}d.", statusCode);
             break;
@@ -109,18 +112,18 @@ public:
     {
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
         int32_t dataSize = bufferInfo->GetDataSize();
-        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
         if (coordinator_) {
-            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
+            coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
         }
     }
 
     void OnProcessDoneExt(int userId, const std::string& imageId,
         std::shared_ptr<BufferInfoExt> bufferInfo) override
     {
-        bool isCloudImageEnhanceSupported = bufferInfo->IsCloudImageEnhanceSupported();
+        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
         if (coordinator_ && bufferInfo) {
-            coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture(), isCloudImageEnhanceSupported);
+            coordinator_->OnProcessDoneExt(userId, imageId, bufferInfo->GetPicture(), cloudImageEnhanceFlag);
         }
     }
 
@@ -217,28 +220,28 @@ std::shared_ptr<IVideoProcessCallbacks> SessionCoordinator::GetVideoProcCallback
 }
 
 void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
-    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, bool isCloudImageEnhanceSupported)
+    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag)
 {
     sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
     if (spCallback != nullptr) {
         DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
-        spCallback->OnProcessImageDone(imageId, ipcFd, dataSize, isCloudImageEnhanceSupported);
+        spCallback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
     } else {
         DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
         std::lock_guard<std::mutex> lock(pendingImageResultsMutex_);
         pendingImageResults_.push_back({ CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
-            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, isCloudImageEnhanceSupported });
+            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, cloudImageEnhanceFlag });
     }
     return;
 }
 
 void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
-    std::shared_ptr<Media::Picture> picture, bool isCloudImageEnhanceSupported)
+    std::shared_ptr<Media::Picture> picture, uint32_t cloudImageEnhanceFlag)
 {
     sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
     if (spCallback != nullptr) {
         DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
-        spCallback->OnProcessImageDone(imageId, picture, isCloudImageEnhanceSupported);
+        spCallback->OnProcessImageDone(imageId, picture, cloudImageEnhanceFlag);
     } else {
         DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
     }
@@ -296,7 +299,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
         auto result = pendingImageResults_.front();
         if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
             callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize,
-                result.isCloudImageEnhanceSupported);
+                result.cloudImageEnhanceFlag);
             uint64_t endTime = SteadyClock::GetTimestampMilli();
             DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
         }

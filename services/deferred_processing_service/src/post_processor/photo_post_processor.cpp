@@ -163,15 +163,15 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     int32_t size = bufferHandle->size;
     int32_t isDegradedImage = 0;
     int32_t dataSize = size;
-    int32_t isCloudImageEnhanceSupported = 0;
+    uint32_t cloudImageEnhanceFlag = 0;
     if (buffer.metadata) {
         int32_t retImageQuality = buffer.metadata->Get("isDegradedImage", isDegradedImage);
         int32_t retDataSize = buffer.metadata->Get("dataSize", dataSize);
-        int32_t retCloudImageEnhanceSupported = buffer.metadata->Get("isCloudImageEnhanceSupported",
-            isCloudImageEnhanceSupported);
-        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retCloudImageEnhanceSupported: %{public}d",
+        int32_t retCloudImageEnhanceFlag = buffer.metadata->Get("cloudImageEnhanceFlag",
+            cloudImageEnhanceFlag);
+        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retCloudImageEnhanceFlag: %{public}d",
             static_cast<int>(retImageQuality), static_cast<int>(retDataSize),
-            static_cast<int>(retCloudImageEnhanceSupported));
+            static_cast<int>(retCloudImageEnhanceFlag));
     }
     DP_INFO_LOG("bufferHandle param, size: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d",
         size, static_cast<int>(dataSize), isDegradedImage);
@@ -183,9 +183,10 @@ int32_t PhotoPostProcessor::PhotoProcessListener::processBufferInfo(const std::s
     DP_CHECK_ERROR_RETURN_RET_LOG(addr == MAP_FAILED, DPS_ERROR_IMAGE_PROC_FAILED, "failed to mmap shared buffer.");
 
     if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
-        DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
+        DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d, cloudImageEnhanceFlag: %{public}u",
+            bufferHandle->fd, bufferPtr->GetFd(), cloudImageEnhanceFlag);
         std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
-            isDegradedImage == 0, isCloudImageEnhanceSupported);
+            isDegradedImage == 0, cloudImageEnhanceFlag);
         ReportEvent(imageId);
         photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
     }
@@ -408,24 +409,24 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
     int32_t isDegradedImage = 0;
     int32_t dataSize = size;
     int32_t deferredImageFormat = 0;
-    int32_t isCloudImageEnhanceSupported = 0;
+    uint32_t cloudImageEnhanceFlag = 0;
     if (buffer.metadata) {
         int32_t retImageQuality = buffer.metadata->Get("isDegradedImage", isDegradedImage);
         int32_t retDataSize = buffer.metadata->Get("dataSize", dataSize);
         int32_t retFormat = buffer.metadata->Get("deferredImageFormat", deferredImageFormat);
-        int32_t retCloudImageEnhanceSupported = buffer.metadata->Get("isCloudImageEnhanceSupported",
-            isCloudImageEnhanceSupported);
-        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retFormat: %{public}d,"
-            "retCloudImageEnhanceSupported %{public}d", retImageQuality, retDataSize, retFormat,
-            retCloudImageEnhanceSupported);
+        int32_t retCloudImageEnhanceFlag = buffer.metadata->Get("cloudImageEnhanceFlag",
+            cloudImageEnhanceFlag);
+        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d, retFormat: %{public}d, "
+            "retCloudImageEnhanceFlag: %{public}d", retImageQuality, retDataSize, retFormat,
+            retCloudImageEnhanceFlag);
     }
     DP_INFO_LOG("bufferHandle param, bufferHandleSize: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d, "
-        "deferredImageFormat: %{public}d, isCloudImageEnhanceSupported: %{public}d",
-        size, dataSize, isDegradedImage, deferredImageFormat, isCloudImageEnhanceSupported);
+        "deferredImageFormat: %{public}d, cloudImageEnhanceFlag: %{public}u",
+        size, dataSize, isDegradedImage, deferredImageFormat, cloudImageEnhanceFlag);
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
         std::shared_ptr<Media::Picture> picture = AssemblePicture(buffer);
         std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
-            isDegradedImage == 0, isCloudImageEnhanceSupported);
+            isDegradedImage == 0, cloudImageEnhanceFlag);
         photoPostProcessor_->OnProcessDoneExt(imageId, bufferInfo);
     } else {
         auto bufferPtr = std::make_shared<SharedBuffer>(dataSize);
@@ -439,7 +440,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDoneExt(
         if (bufferPtr->CopyFrom(static_cast<uint8_t*>(addr), dataSize) == DP_OK) {
             DP_INFO_LOG("bufferPtr fd: %{public}d, fd: %{public}d", imageBufferHandle->fd, bufferPtr->GetFd());
             std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
-                isDegradedImage == 0, isCloudImageEnhanceSupported);
+                isDegradedImage == 0, cloudImageEnhanceFlag);
             photoPostProcessor_->OnProcessDone(imageId, bufferInfo);
         }
         munmap(addr, dataSize);

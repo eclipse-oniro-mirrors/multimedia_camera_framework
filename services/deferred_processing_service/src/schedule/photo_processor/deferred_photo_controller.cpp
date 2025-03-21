@@ -204,6 +204,8 @@ void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus stat
     backgroundStrategy_->NotifyCameraStatusChanged(status);
     if (status == CameraSessionStatus::SYSTEM_CAMERA_OPEN || status == CameraSessionStatus::NORMAL_CAMERA_OPEN) {
         photoProcessor_->Interrupt();
+        scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+        photoProcessor_->NotifyScheduleState(scheduleState_);
     }
     if (status == CameraSessionStatus::SYSTEM_CAMERA_CLOSED || status == CameraSessionStatus::NORMAL_CAMERA_CLOSED) {
         TryDoSchedule();
@@ -251,15 +253,15 @@ void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
     DP_INFO_LOG("entered, workAvailable: %{public}d", workAvailable);
     DpsStatus scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
     if (workAvailable || photoJobRepository_->GetRunningJobCounts() > 0) {
-        scheduleState =  DpsStatus::DPS_SESSION_STATE_RUNNING;
+        scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNING;
     } else {
-        if (photoJobRepository_->GetOfflineJobSize() == 0) {
-            scheduleState =  DpsStatus::DPS_SESSION_STATE_IDLE;
+        if (photoJobRepository_->GetOfflineIdleJobSize() == 0) {
+            scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
         } else {
             if (backgroundStrategy_->GetHdiStatus() != HdiStatus::HDI_READY) {
-                scheduleState =  DpsStatus::DPS_SESSION_STATE_SUSPENDED;
+                scheduleState = DpsStatus::DPS_SESSION_STATE_SUSPENDED;
             } else {
-                scheduleState =  DpsStatus::DPS_SESSION_STATE_RUNNALBE;
+                scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNALBE;
             }
         }
     }

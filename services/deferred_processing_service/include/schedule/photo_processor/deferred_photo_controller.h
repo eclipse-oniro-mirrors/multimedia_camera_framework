@@ -47,7 +47,7 @@ private:
     void OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr);
     void StartWaitForUser();
     void StopWaitForUser();
-    void NotifyScheduleState(bool scheduling);
+    void NotifyScheduleState(bool workAvailable);
 
     std::recursive_mutex mutex_;
     const int32_t userId_;
