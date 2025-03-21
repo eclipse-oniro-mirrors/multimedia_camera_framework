@@ -64,6 +64,10 @@ constexpr int32_t DEFAULT_USER_ID = -1;
 static const uint32_t DEVICE_EJECT_LIMIT = 5;
 static const uint32_t DEVICE_EJECT_INTERVAL = 1000;
 static const uint32_t SYSDIALOG_ZORDER_UPPER = 2;
+static const uint32_t DEVICE_DROP_INTERVAL = 600000;
+static std::mutex g_cameraHostManagerMutex;
+static sptr<HCameraHostManager> g_cameraHostManager = nullptr;
+static int64_t g_lastDeviceDropTime = 0;
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 CallerInfo caller_;
 
@@ -143,6 +147,11 @@ HCameraDevice::HCameraDevice(
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
     cameraPid_ = IPCSkeleton::GetCallingPid();
+
+    {
+        std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
+        g_cameraHostManager = cameraHostManager;
+    }
 }
 
 HCameraDevice::~HCameraDevice()
@@ -417,6 +426,8 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     } else {
         isOpenedCameraDevice_.store(true);
         HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+        g_lastDeviceDropTime = 0;
+        RegisterSensorCallback();
     }
     CHECK_ERROR_RETURN_RET_LOG(errorCode != CAMERA_OK, errorCode,
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
@@ -652,6 +663,36 @@ std::string HCameraDevice::BuildDeviceProtectionDialogCommand(DeviceProtectionSt
     return commandStr;
 }
 
+void HCameraDevice::RegisterSensorCallback()
+{
+    std::lock_guard<std::mutex> lock(sensorLock_);
+    MEDIA_INFO_LOG("HCameraDevice::RegisterDropDetectionListener start");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::LoadMotionSensor(), "RegisterDropDetectionListener LoadMotionSensor fail");
+    CHECK_ERROR_RETURN_LOG(!OHOS::Rosen::SubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION,
+        DropDetectionDataCallbackImpl), "RegisterDropDetectionListener SubscribeCallback fail");
+}
+
+void HCameraDevice::UnRegisterSensorCallback()
+{
+    std::lock_guard<std::mutex> lock(sensorLock_);
+    CHECK_ERROR_RETURN_LOG(!UnsubscribeCallback(OHOS::Rosen::MOTION_TYPE_DROP_DETECTION, DropDetectionDataCallbackImpl),
+        "UnRegisterDropDetectionListener fail");
+}
+
+void HCameraDevice::DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData)
+{
+    MEDIA_INFO_LOG("HCameraDevice::DropDetectionCallback type = %{public}d, status = %{public}d",
+        motionData.type, motionData.status);
+    {
+        if ((GetTimestamp() - g_lastDeviceDropTime < DEVICE_DROP_INTERVAL) ||
+            (g_cameraHostManager == nullptr)) {
+            return;
+        }
+        g_cameraHostManager->NotifyDeviceStateChangeInfo(
+            DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
+    }
+}
+
 void HCameraDevice::HandleFoldableDevice()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
@@ -705,6 +746,7 @@ int32_t HCameraDevice::CloseDevice()
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);
 #endif
+    UnRegisterSensorCallback();
     return CAMERA_OK;
 }
 
@@ -1054,6 +1096,13 @@ int32_t HCameraDevice::EnableResult(std::vector<int32_t> &results)
     CamRetCode rc = (CamRetCode)(hdiCameraDevice_->EnableResult(results));
     CHECK_ERROR_RETURN_RET_LOG(rc != HDI::Camera::V1_0::NO_ERROR, HdiToServiceError(rc),
         "HCameraDevice::EnableResult failed with error Code:%{public}d", rc);
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::SetDeviceRetryTime()
+{
+    MEDIA_INFO_LOG("HCameraDevice::SetDeviceRetryTime");
+    g_lastDeviceDropTime = GetTimestamp();
     return CAMERA_OK;
 }
 
