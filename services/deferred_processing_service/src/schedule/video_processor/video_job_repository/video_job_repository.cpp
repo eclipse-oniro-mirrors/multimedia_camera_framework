@@ -153,6 +153,7 @@ void VideoJobRepository::SetJobError(const std::string& videoId)
     // LCOV_EXCL_START
     bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::ERROR);
     UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
+    NotifyJobChangedUnLocked(statusChanged, jobPtrFind);
     // LCOV_EXCL_STOP
 }
 
