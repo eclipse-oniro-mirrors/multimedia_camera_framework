@@ -1434,6 +1434,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     std::string& uri)
 {
+    MEDIA_INFO_LOG("enter ProcessPhotoProxy");
     CAMERA_SYNC_TRACE;
     CHECK_ERROR_RETURN_RET_LOG(picturePtr == nullptr, nullptr, "picturePtr is null");
     sptr<HStreamCapture> captureStream = nullptr;
@@ -1462,21 +1463,21 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     }
     bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
     if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
-        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy E");
+        MEDIA_INFO_LOG("CreateMediaLibrary AddPhotoProxy E");
         string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
         CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
         photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
-        MEDIA_DEBUG_LOG("CreateMediaLibrary AddPhotoProxy X");
+        MEDIA_INFO_LOG("CreateMediaLibrary AddPhotoProxy X");
     }
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && taskThread.joinable()) {
         taskThread.join();
         MEDIA_DEBUG_LOG("CreateMediaLibrary RotatePicture X");
     }
-    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage E");
+    MEDIA_INFO_LOG("CreateMediaLibrary NotifyLowQualityImage E");
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(
         photoAssetProxy->GetUserId(), uri, picturePtr);
-    MEDIA_DEBUG_LOG("CreateMediaLibrary NotifyLowQualityImage X");
+    MEDIA_INFO_LOG("CreateMediaLibrary NotifyLowQualityImage X");
     return photoAssetProxy;
 }
 

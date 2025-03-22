@@ -42,6 +42,7 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid)
     CHECK_ERROR_PRINT_LOG(uid <= INVALID_UID, "Get INVALID_UID UID %{public}d", uid);
     userId_ = uid / BASE_USER_RANGE;
     MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d.", uid, userId_);
+    MEDIA_INFO_LOG("start mediaLibray CreatePhotoAssetProxy");
     photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
         static_cast<Media::CameraShotType>(cameraShotType), uid, userId_);
 }
