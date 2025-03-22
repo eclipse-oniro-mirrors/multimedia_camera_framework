@@ -366,5 +366,21 @@ int32_t HCaptureSessionProxy::SetCommitConfigFlag(bool isNeedCommitting)
         "HCaptureSessionProxy SetCommitConfigFlag failed, error: %{public}d", error);
     return error;
 }
+
+int32_t HCaptureSessionProxy::SetHasFitedRotation(bool isHasFitedRotation)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isHasFitedRotation);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_HAS_FITED_ROTATION),
+        data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE,
+        "HCaptureSessionProxy SetHasFitedRotation failed, error: %{public}d", error);
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -238,6 +238,11 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
     return stringStream.str();
 }
 bool IsVerticalDevice();
+std::string GetFileStream(const std::string &filepath);
+std::vector<std::string> SplitStringWithPattern(const std::string &str, const char& pattern);
+void TrimString(std::string &inputStr);
+bool RemoveFile(const std::string& path);
+bool CheckPathExist(const char *path);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

@@ -106,6 +106,11 @@ int HCaptureSessionStub::OnRemoteRequest(
                 errCode = SetCommitConfigFlag(isNeedCommiting);
             }
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_HAS_FITED_ROTATION):
+            {
+                errCode = SetHasFitedRotation(data.ReadBool());
+            }
+            break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);

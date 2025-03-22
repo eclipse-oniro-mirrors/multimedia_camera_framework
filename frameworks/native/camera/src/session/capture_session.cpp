@@ -6203,5 +6203,16 @@ int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservatio
     // LCOV_EXCL_STOP
 }
 
+int32_t CaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
+{
+    CAMERA_SYNC_TRACE;
+    auto captureSession = GetCaptureSession();
+    CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::SetHasFitedRotation captureSession is nullptr");
+    int32_t errCode = captureSession->SetHasFitedRotation(isHasFitedRotation);
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to SetHasFitedRotation!, %{public}d", errCode);
+    return errCode;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -70,6 +70,8 @@ public:
     int32_t SetPreviewRotation(std::string &deviceClass) override;
 
     int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
+
+    int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

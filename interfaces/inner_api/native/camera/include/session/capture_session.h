@@ -1471,6 +1471,13 @@ public:
     std::shared_ptr<ARCallback> GetARCallback();
 
     /**
+     * @brief Set roate camera flag that been fited.
+     * @param isHasFitedRotation switch to control ar mode.
+     * @return errCode
+     */
+    int32_t SetHasFitedRotation(bool isHasFitedRotation);
+
+    /**
      * @brief Get Session Functions.
      *
      * @param previewProfiles to be searched.

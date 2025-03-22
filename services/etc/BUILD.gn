@@ -19,3 +19,17 @@ ohos_prebuilt_etc("camera_service.rc") {
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
+
+ohos_prebuilt_etc("version.txt") {
+  source = "version.txt"
+  relative_install_dir = "camera"
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+ohos_prebuilt_etc("hwkey_param_upgrade_v1.pem") {
+  source = "hwkey_param_upgrade_v1.pem"
+  relative_install_dir = "camera"
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

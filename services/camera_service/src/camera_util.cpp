@@ -14,7 +14,10 @@
  */
 #include "camera_util.h"
 #include <cstdint>
+#include <fstream>
 #include <securec.h>
+#include <sys/stat.h>
+#include <exception>
 #include <parameter.h>
 #include <parameters.h>
 #include "camera_log.h"
@@ -521,6 +524,62 @@ int64_t GetTimestamp()
     auto now = std::chrono::system_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     return duration.count();
+}
+
+std::string GetFileStream(const std::string &filepath)
+{
+    std::ifstream file(filepath, std::ios::in | std::ios::binary);
+    // 文件流的异常处理，不能用try catch的形式
+    if (!file) {
+        MEDIA_INFO_LOG("Failed to open the file!");
+        return NULL;
+    }
+    std::stringstream infile;
+    infile << file.rdbuf();
+    const std::string fileString = infile.str();
+    if (fileString.empty()) {
+        return NULL;
+    }
+    return fileString;
+}
+ 
+std::vector<std::string> SplitStringWithPattern(const std::string &str, const char& pattern)
+{
+    std::stringstream iss(str);
+    std::vector<std::string> result;
+    std::string token;
+    while (getline(iss, token, pattern)) {
+        result.emplace_back(token);
+    }
+    return result;
+}
+ 
+void TrimString(std::string &inputStr)
+{
+    inputStr.erase(inputStr.begin(),
+        std::find_if(inputStr.begin(), inputStr.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+    inputStr.erase(
+        std::find_if(inputStr.rbegin(), inputStr.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+        inputStr.end());
+}
+ 
+bool RemoveFile(const std::string& path)
+{
+    if (std::filesystem::remove(path)) {
+        MEDIA_INFO_LOG("File removed successfully.");
+        return true;
+    }
+    return false;
+}
+
+bool CheckPathExist(const char *path)
+{
+    if (path == nullptr) {
+        MEDIA_ERR_LOG("CheckPathExist path is nullptr");
+        return false;
+    }
+    std::ifstream profileStream(path);
+    return profileStream.good();
 }
 } // namespace CameraStandard
 } // namespace OHOS

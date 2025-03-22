@@ -694,6 +694,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, session is nullptr");
+    session->SetHasFitedRotation(true);
     auto inputDevice = session->GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PreviewOutput SetPreviewRotation error!, inputDevice is nullptr");
