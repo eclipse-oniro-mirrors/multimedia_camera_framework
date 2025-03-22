@@ -1,52 +1,5 @@
-From b309a143422a6fe561318113c4d9236ffe4d8767 Mon Sep 17 00:00:00 2001
-From: fengkerong 00880772 <fengkerong@huawei.com>
-Date: Sat, 22 Mar 2025 18:20:57 +0800
-Subject: [PATCH] TicketNo: DTS2025031736196 Description:update parm Team:EMUI
- Feature or Bugfix:Bugfix Binary Source: sync from gitee
- PrivateCode(Yes/No):No
-
-Change-Id: I0522b3e5905046f33b748a63e59d264f14433ec1
----
- bundle.json                                   |   1 +
- .../camera/src/output/preview_output.cpp      |   1 +
- .../camera/src/session/capture_session.cpp    |  11 +
- .../camera/include/session/capture_session.h  |   7 +
- multimedia_camera_framework.gni               |   6 +
- services/camera_service/BUILD.gn              |   9 +
- .../camera_service_ipc_interface_code.h       |   1 +
- .../binder/base/include/icapture_session.h    |   2 +
- .../client/include/hcapture_session_proxy.h   |   2 +
- .../client/src/hcapture_session_proxy.cpp     |  16 +
- .../server/src/hcapture_session_stub.cpp      |   5 +
- .../include/camera_rotate_strategy_parser.h   |   6 -
- services/camera_service/include/camera_util.h |   5 +
- .../camera_service/include/hcapture_session.h |   2 +
- .../camera_rotate_param_manager.h             |  92 +++++
- .../param_update/camera_rotate_param_reader.h |  55 +++
- .../camera_rotate_param_sign_tools.h          |  45 +++
- services/camera_service/include/parser.h      |   6 +
- services/camera_service/src/camera_util.cpp   |  59 +++
- .../camera_service/src/hcamera_service.cpp    |   9 +-
- .../camera_service/src/hcapture_session.cpp   |  11 +-
- .../camera_rotate_param_manager.cpp           | 372 ++++++++++++++++++
- .../camera_rotate_param_reader.cpp            | 202 ++++++++++
- .../camera_rotate_param_sign_tools.cpp        | 154 ++++++++
- services/etc/BUILD.gn                         |  14 +
- services/etc/camera_service.cfg               |   3 +-
- services/etc/hwkey_param_upgrade_v1.pem       |  11 +
- services/etc/version.txt                      |   6 +
- 28 files changed, 1099 insertions(+), 14 deletions(-)
- create mode 100644 services/camera_service/include/param_update/camera_rotate_param_manager.h
- create mode 100644 services/camera_service/include/param_update/camera_rotate_param_reader.h
- create mode 100644 services/camera_service/include/param_update/camera_rotate_param_sign_tools.h
- create mode 100644 services/camera_service/src/param_update/camera_rotate_param_manager.cpp
- create mode 100644 services/camera_service/src/param_update/camera_rotate_param_reader.cpp
- create mode 100644 services/camera_service/src/param_update/camera_rotate_param_sign_tools.cpp
- create mode 100644 services/etc/hwkey_param_upgrade_v1.pem
- create mode 100644 services/etc/version.txt
-
 diff --git a/bundle.json b/bundle.json
-index 1ac3c2d3f..f9cb15739 100644
+index 1ac3c2d3..f9cb1573 100644
 --- a/bundle.json
 +++ b/bundle.json
 @@ -29,6 +29,7 @@
@@ -58,7 +11,7 @@ index 1ac3c2d3f..f9cb15739 100644
                "device_manager",
                "distributed_notification_service",
 diff --git a/frameworks/native/camera/src/output/preview_output.cpp b/frameworks/native/camera/src/output/preview_output.cpp
-index 2394c7f3f..e6c2a54a7 100644
+index 2394c7f3..e6c2a54a 100644
 --- a/frameworks/native/camera/src/output/preview_output.cpp
 +++ b/frameworks/native/camera/src/output/preview_output.cpp
 @@ -706,6 +706,7 @@ int32_t PreviewOutput::SetPreviewRotation(int32_t imageRotation, bool isDisplayL
@@ -70,7 +23,7 @@ index 2394c7f3f..e6c2a54a7 100644
      CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
          "PreviewOutput SetPreviewRotation error!, inputDevice is nullptr");
 diff --git a/frameworks/native/camera/src/session/capture_session.cpp b/frameworks/native/camera/src/session/capture_session.cpp
-index 11c55a90a..d50aa7896 100644
+index 11c55a90..d50aa789 100644
 --- a/frameworks/native/camera/src/session/capture_session.cpp
 +++ b/frameworks/native/camera/src/session/capture_session.cpp
 @@ -7050,5 +7050,16 @@ int32_t CaptureSession::SetColorStyleSetting(ColorStyleSetting setting)
@@ -91,7 +44,7 @@ index 11c55a90a..d50aa7896 100644
  } // namespace CameraStandard
  } // namespace OHOS
 diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
-index f6863bea8..a20ecb846 100644
+index f6863bea..a20ecb84 100644
 --- a/interfaces/inner_api/native/camera/include/session/capture_session.h
 +++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
 @@ -1556,6 +1556,13 @@ public:
@@ -109,7 +62,7 @@ index f6863bea8..a20ecb846 100644
       * @brief Get Session Functions.
       *
 diff --git a/multimedia_camera_framework.gni b/multimedia_camera_framework.gni
-index 1b8bf0b6d..4a5864eb9 100644
+index 1b8bf0b6..4a5864eb 100644
 --- a/multimedia_camera_framework.gni
 +++ b/multimedia_camera_framework.gni
 @@ -46,5 +46,11 @@ if (defined(global_parts_info) &&
@@ -125,7 +78,7 @@ index 1b8bf0b6d..4a5864eb9 100644
  gen_camera_picker = true
  hicollie_enable = true
 diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
-index dd93f521a..a30614993 100644
+index dd93f521..a3061499 100644
 --- a/services/camera_service/BUILD.gn
 +++ b/services/camera_service/BUILD.gn
 @@ -93,6 +93,9 @@ ohos_shared_library("camera_service") {
@@ -159,7 +112,7 @@ index dd93f521a..a30614993 100644
  
    include_dirs += [
 diff --git a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
-index 35255bc26..c6965b2f4 100644
+index 35255bc2..c6965b2f 100644
 --- a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
 +++ b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
 @@ -176,6 +176,7 @@ enum CaptureSessionInterfaceCode {
@@ -171,7 +124,7 @@ index 35255bc26..c6965b2f4 100644
  
  /**
 diff --git a/services/camera_service/binder/base/include/icapture_session.h b/services/camera_service/binder/base/include/icapture_session.h
-index 8ee8d85e7..746ff13ba 100644
+index 8ee8d85e..746ff13b 100644
 --- a/services/camera_service/binder/base/include/icapture_session.h
 +++ b/services/camera_service/binder/base/include/icapture_session.h
 @@ -81,6 +81,8 @@ public:
@@ -184,7 +137,7 @@ index 8ee8d85e7..746ff13ba 100644
  };
  } // namespace CameraStandard
 diff --git a/services/camera_service/binder/client/include/hcapture_session_proxy.h b/services/camera_service/binder/client/include/hcapture_session_proxy.h
-index 222ae7b2c..aec9aeba7 100644
+index 222ae7b2..aec9aeba 100644
 --- a/services/camera_service/binder/client/include/hcapture_session_proxy.h
 +++ b/services/camera_service/binder/client/include/hcapture_session_proxy.h
 @@ -70,6 +70,8 @@ public:
@@ -197,7 +150,7 @@ index 222ae7b2c..aec9aeba7 100644
      static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
  };
 diff --git a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
-index 5590a8d6f..add3f1367 100644
+index 5590a8d6..add3f136 100644
 --- a/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
 +++ b/services/camera_service/binder/client/src/hcapture_session_proxy.cpp
 @@ -404,5 +404,21 @@ int32_t HCaptureSessionProxy::SetCommitConfigFlag(bool isNeedCommitting)
@@ -223,7 +176,7 @@ index 5590a8d6f..add3f1367 100644
  } // namespace CameraStandard
  } // namespace OHOS
 diff --git a/services/camera_service/binder/server/src/hcapture_session_stub.cpp b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
-index b572245ad..5dea53106 100644
+index b572245a..5dea5310 100644
 --- a/services/camera_service/binder/server/src/hcapture_session_stub.cpp
 +++ b/services/camera_service/binder/server/src/hcapture_session_stub.cpp
 @@ -108,6 +108,11 @@ int HCaptureSessionStub::OnRemoteRequest(
@@ -239,7 +192,7 @@ index b572245ad..5dea53106 100644
              MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
              errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
 diff --git a/services/camera_service/include/camera_rotate_strategy_parser.h b/services/camera_service/include/camera_rotate_strategy_parser.h
-index 9e3894c4f..ec39591b2 100644
+index 9e3894c4..ec39591b 100644
 --- a/services/camera_service/include/camera_rotate_strategy_parser.h
 +++ b/services/camera_service/include/camera_rotate_strategy_parser.h
 @@ -27,12 +27,6 @@
@@ -256,7 +209,7 @@ index 9e3894c4f..ec39591b2 100644
  class CameraRotateStrategyParser : public Parser {
  public:
 diff --git a/services/camera_service/include/camera_util.h b/services/camera_service/include/camera_util.h
-index d05a8a5c7..6719688a2 100644
+index d05a8a5c..6719688a 100644
 --- a/services/camera_service/include/camera_util.h
 +++ b/services/camera_service/include/camera_util.h
 @@ -240,6 +240,11 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
@@ -272,7 +225,7 @@ index d05a8a5c7..6719688a2 100644
  } // namespace OHOS
  #endif // OHOS_CAMERA_UTIL_H
 diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
-index f3c9da331..69a2062b1 100644
+index f3c9da33..69a2062b 100644
 --- a/services/camera_service/include/hcapture_session.h
 +++ b/services/camera_service/include/hcapture_session.h
 @@ -200,6 +200,7 @@ private:
@@ -293,7 +246,7 @@ index f3c9da331..69a2062b1 100644
  } // namespace OHOS
 diff --git a/services/camera_service/include/param_update/camera_rotate_param_manager.h b/services/camera_service/include/param_update/camera_rotate_param_manager.h
 new file mode 100644
-index 000000000..fc9a49225
+index 00000000..fc9a4922
 --- /dev/null
 +++ b/services/camera_service/include/param_update/camera_rotate_param_manager.h
 @@ -0,0 +1,92 @@
@@ -391,7 +344,7 @@ index 000000000..fc9a49225
 +#endif // OHOS_CAMERA_ROTATE_SERVICE_SERVICES_INCLUDE_CAMERA_ROTATE_PARAM_MANAGER_H
 diff --git a/services/camera_service/include/param_update/camera_rotate_param_reader.h b/services/camera_service/include/param_update/camera_rotate_param_reader.h
 new file mode 100644
-index 000000000..52f2705c8
+index 00000000..52f2705c
 --- /dev/null
 +++ b/services/camera_service/include/param_update/camera_rotate_param_reader.h
 @@ -0,0 +1,55 @@
@@ -420,9 +373,9 @@ index 000000000..52f2705c8
 +namespace CameraStandard {
 +
 +namespace {
-+const std::string ABS_CONTENT_FILE_PATH = "/system/etc/camera/"; // 鏈湴閰嶇疆璺緞閫氳繃鏈嶅姟閰嶇疆
-+const std::string CAMERA_SERVICE_ABS_PATH = "/data/service/el1/public/camera_service/";  // 鏈湴娌欑璺緞
-+const std::string PARAM_UPDATE_ABS_PATH = "/data/service/el1/public/update/param_service/install/";  // 浜戞帹涓嬭浇璺緞
++const std::string ABS_CONTENT_FILE_PATH = "/system/etc/camera/"; // 本地配置路径通过服务配置
++const std::string CAMERA_SERVICE_ABS_PATH = "/data/service/el1/public/camera_service/";  // 本地沙箱路径
++const std::string PARAM_UPDATE_ABS_PATH = "/data/service/el1/public/update/param_service/install/";  // 云推下载路径
 +const std::string PARAM_SERVICE_INSTALL_PATH = "/data/service/el1/public/update/param_service/install/system";
 +const std::string CAMERA_ROTATE_CFG_DIR = "/etc/camera/";
 +const std::string PUB_KEY_NAME = "hwkey_param_upgrade_v1.pem";
@@ -453,7 +406,7 @@ index 000000000..52f2705c8
 \ No newline at end of file
 diff --git a/services/camera_service/include/param_update/camera_rotate_param_sign_tools.h b/services/camera_service/include/param_update/camera_rotate_param_sign_tools.h
 new file mode 100644
-index 000000000..1c0c1c399
+index 00000000..1c0c1c39
 --- /dev/null
 +++ b/services/camera_service/include/param_update/camera_rotate_param_sign_tools.h
 @@ -0,0 +1,45 @@
@@ -504,7 +457,7 @@ index 000000000..1c0c1c399
 +#endif // OHOS_CAMERA_ROTATE_SERVICE_PARAM_INCLUDE_CAMERA_ROTATE_PARAM_SIGN_TOOL_H
 \ No newline at end of file
 diff --git a/services/camera_service/include/parser.h b/services/camera_service/include/parser.h
-index b8fe70b07..d1a507e2c 100644
+index b8fe70b0..d1a507e2 100644
 --- a/services/camera_service/include/parser.h
 +++ b/services/camera_service/include/parser.h
 @@ -18,6 +18,12 @@
@@ -521,7 +474,7 @@ index b8fe70b07..d1a507e2c 100644
  public:
      virtual ~Parser() {}
 diff --git a/services/camera_service/src/camera_util.cpp b/services/camera_service/src/camera_util.cpp
-index 39d2f5c4d..56d2842e7 100644
+index 39d2f5c4..56d2842e 100644
 --- a/services/camera_service/src/camera_util.cpp
 +++ b/services/camera_service/src/camera_util.cpp
 @@ -14,7 +14,10 @@
@@ -543,7 +496,8 @@ index 39d2f5c4d..56d2842e7 100644
 +std::string GetFileStream(const std::string &filepath)
 +{
 +    std::ifstream file(filepath, std::ios::in | std::ios::binary);
-+    // 鏂囦欢娴佺殑寮傚父澶勭悊锛屼笉鑳界敤try catch鐨勫舰寮?+    if (!file) {
++    // 文件流的异常处理，不能用try catch的形式
++    if (!file) {
 +        MEDIA_INFO_LOG("Failed to open the file!");
 +        return NULL;
 +    }
@@ -597,7 +551,7 @@ index 39d2f5c4d..56d2842e7 100644
  } // namespace CameraStandard
  } // namespace OHOS
 diff --git a/services/camera_service/src/hcamera_service.cpp b/services/camera_service/src/hcamera_service.cpp
-index 76ba7fda1..93ad2ff28 100644
+index 76ba7fda..93ad2ff2 100644
 --- a/services/camera_service/src/hcamera_service.cpp
 +++ b/services/camera_service/src/hcamera_service.cpp
 @@ -53,6 +53,7 @@
@@ -623,7 +577,8 @@ index 76ba7fda1..93ad2ff28 100644
      } else {
          MEDIA_INFO_LOG("HCameraService publish OnStart failed");
      }
-+    CameraRoateParamManager::GetInstance().InitParam(); // 鍏堝垵濮嬪寲鍐嶇洃鍚?+    CameraRoateParamManager::GetInstance().SubscriberEvent();
++    CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
++    CameraRoateParamManager::GetInstance().SubscriberEvent();
      MEDIA_INFO_LOG("HCameraService OnStart end");
  }
  
@@ -637,7 +592,7 @@ index 76ba7fda1..93ad2ff28 100644
      pid_t pid = IPCSkeleton::GetCallingPid();
      captureSessionsManager_.EnsureInsert(pid, captureSession);
 diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
-index 9a53f5cd7..8ac6bd4a0 100644
+index 9a53f5cd..8ac6bd4a 100644
 --- a/services/camera_service/src/hcapture_session.cpp
 +++ b/services/camera_service/src/hcapture_session.cpp
 @@ -185,6 +185,12 @@ bool HCaptureSession::IsNeedDynamicConfig()
@@ -663,12 +618,13 @@ index 9a53f5cd7..8ac6bd4a0 100644
              auto infos = GetCameraRotateStrategyInfos();
              auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
 -            UpdateCameraRotateAngleAndZoom(infos, frameRateRange);
-+            UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 鏅€氳澶囨棤姝ゅ弬鏁?         }
++            UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 普通设备无此参数
+         }
          errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
          if (errorCode == CAMERA_OK) {
 diff --git a/services/camera_service/src/param_update/camera_rotate_param_manager.cpp b/services/camera_service/src/param_update/camera_rotate_param_manager.cpp
 new file mode 100644
-index 000000000..aea7b89a0
+index 00000000..aea7b89a
 --- /dev/null
 +++ b/services/camera_service/src/param_update/camera_rotate_param_manager.cpp
 @@ -0,0 +1,372 @@
@@ -734,12 +690,13 @@ index 000000000..aea7b89a0
 +        paramReader = std::make_shared<CameraRoateParamReader>();
 +    }
 +    if (paramReader != nullptr) {
-+        std::string cloudVersion = paramReader->GetPathVersion(); // 浜戞帹鐗堟湰鍙?+        std::vector<std::string> cloudVersionNum;
++        std::string cloudVersion = paramReader->GetPathVersion(); // 云推版本号
++        std::vector<std::string> cloudVersionNum;
 +        if (!paramReader->VersionStrToNumber(cloudVersion, cloudVersionNum)) {
 +            MEDIA_ERR_LOG("VersionStrToNumber error , pathVersion is invalid");
 +            return;
 +        }
-+        std::string localVersion = LoadVersion(); // 鏈湴鍙傛暟鐗堟湰鍙?system/etc/camera/version.txt
++        std::string localVersion = LoadVersion(); // 本地参数版本号/system/etc/camera/version.txt
 +        std::vector<std::string> localVersionNum;
 +        if (!paramReader->VersionStrToNumber(localVersion, localVersionNum)) {
 +            MEDIA_ERR_LOG("VersionStrToNumber error , currentVersion is invalid");
@@ -751,7 +708,7 @@ index 000000000..aea7b89a0
 +            ReloadParam();
 +        }
 +    }
-+    LoadParamStr(); // 璇诲彇鏈湴閰嶇疆
++    LoadParamStr(); // 读取本地配置
 +};
 +
 +void CameraRoateParamManager::ReloadParam()
@@ -763,7 +720,8 @@ index 000000000..aea7b89a0
 +    }
 +    std::string path = paramReader->GetConfigFilePath();
 +    MEDIA_INFO_LOG("GetConfigFilePath, path: %{public}s ", path.c_str());
-+    // 鍒ゆ柇鏄矾寰勬槸鍚﹀湪涓嬭浇璺緞, 涓嬭浇璺緞闇€瑕佸鍔犲畨鍏ㄦ牎楠?+    if (NEED_PARAM_VERIFY && path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos) {
++    // 判断是路径是否在下载路径, 下载路径需要增加安全校验
++    if (NEED_PARAM_VERIFY && path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos) {
 +        VerifyCloudFile(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR);
 +    }
 +};
@@ -774,17 +732,17 @@ index 000000000..aea7b89a0
 +        MEDIA_ERR_LOG("paramReader is nullptr");
 +        return;
 +    }
-+    // 鏍￠獙鍙傛暟绛惧悕鏄惁鍚堟硶
-+    std::string certFile = prePath + "/CERT.ENC"; // 鑾峰彇绛惧悕鏂囦欢
-+    std::string verifyFile = prePath + "/CERT.SF"; // 鑾峰彇寰呴獙璇佺殑鏂囦欢
-+    std::string manifestFile = prePath + "/MANIFEST.MF"; // 鏂囦欢鍒楄〃鏂囦欢
++    // 校验参数签名是否合法
++    std::string certFile = prePath + "/CERT.ENC"; // 获取签名文件
++    std::string verifyFile = prePath + "/CERT.SF"; // 获取待验证的文件
++    std::string manifestFile = prePath + "/MANIFEST.MF"; // 文件列表文件
 +    std::lock_guard<std::mutex> lock(mutxVerify);
 +    if (!paramReader->VerifyCertSfFile(certFile, verifyFile, manifestFile)) {
 +        MEDIA_ERR_LOG(" VerifyCertSfFile  error , param is invalid");
 +        return;
 +    }
 +    std::string cfgDir = PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR;
-+    // 鏍￠獙鍙傛暟鏂囦欢鏄惁鍚堟硶
++    // 校验参数文件是否合法
 +    if (!paramReader->VerifyParamFile(cfgDir, VERSION_FILE_NAME)) {
 +        MEDIA_ERR_LOG("verify version file error , param is invalid");
 +        return;
@@ -793,7 +751,8 @@ index 000000000..aea7b89a0
 +        MEDIA_ERR_LOG("verify param file error , param is invalid");
 +        return;
 +    }
-+    // 鎷疯礉鍙傛暟鍒版湰鍦?+    CopyFileToLocal();
++    // 拷贝参数到本地
++    CopyFileToLocal();
 +}
 +
 +void CameraRoateParamManager::CopyFileToLocal()
@@ -846,9 +805,10 @@ index 000000000..aea7b89a0
 +        MEDIA_ERR_LOG("paramReader is nullptr");
 +        return "";
 +    }
-+    std::string filePath = CAMERA_SERVICE_ABS_PATH + VERSION_FILE_NAME; // 浼樺厛娌欑鎵?+    std::ifstream file(filePath);
++    std::string filePath = CAMERA_SERVICE_ABS_PATH + VERSION_FILE_NAME; // 优先沙箱找
++    std::ifstream file(filePath);
 +    if (!file.good()) {
-+        return paramReader->GetVersionInfoStr(ABS_CONTENT_FILE_PATH + VERSION_FILE_NAME); // 鏈嶅姟閰嶇疆璺緞
++        return paramReader->GetVersionInfoStr(ABS_CONTENT_FILE_PATH + VERSION_FILE_NAME); // 服务配置路径
 +    }
 +    return paramReader->GetVersionInfoStr(filePath);
 +}
@@ -964,7 +924,7 @@ index 000000000..aea7b89a0
 +void CameraRoateParamManager::SubscriberEvent()
 +{
 +    MEDIA_INFO_LOG("SubscriberEvent start.");
-+    // 鍙互娣诲姞澶氫釜浜嬩欢鐩戝惉
++    // 可以添加多个事件监听
 +    handleEventFunc_["usual.event.DUE_SA_CFG_UPDATED"] = &CameraRoateParamManager::HandleParamUpdate;
 +    for (auto it = handleEventFunc_.begin(); it != handleEventFunc_.end(); ++it) {
 +        MEDIA_INFO_LOG("Add event: %{public}s", it->first.c_str());
@@ -1043,7 +1003,7 @@ index 000000000..aea7b89a0
 \ No newline at end of file
 diff --git a/services/camera_service/src/param_update/camera_rotate_param_reader.cpp b/services/camera_service/src/param_update/camera_rotate_param_reader.cpp
 new file mode 100644
-index 000000000..95e05f757
+index 00000000..95e05f75
 --- /dev/null
 +++ b/services/camera_service/src/param_update/camera_rotate_param_reader.cpp
 @@ -0,0 +1,202 @@
@@ -1083,14 +1043,15 @@ index 000000000..95e05f757
 +constexpr int DEC = 10;
 +}
 +
-+// 鑾峰彇楂樼増鏈厤缃矾寰?+std::string CameraRoateParamReader::GetConfigFilePath()
++// 获取高版本配置路径
++std::string CameraRoateParamReader::GetConfigFilePath()
 +{
 +#ifdef CONFIG_POLICY_EXT_ENABLE
 +    std::lock_guard<std::mutex> lock(custMethodLock);
 +    ::HwCustSetDataSourceType(HW_CUST_TYPE_SYSTEM);
 +    std::string cfgDir = CAMERA_ROTATE_CFG_DIR;
-+    //鏈熸湜data/service/el1/public/update/param_service/install/system/etc/camera/version.txt
-+    //瀹為檯鎷垮埌/system/etc/camera/version.txt
++    //期望data/service/el1/public/update/param_service/install/system/etc/camera/version.txt
++    //实际拿到/system/etc/camera/version.txt
 +    ParamVersionFileInfo *paramVersionFileInfo = ::GetDownloadCfgFile(cfgDir.c_str(), cfgDir.c_str());
 +    if (paramVersionFileInfo == NULL) {
 +        MEDIA_ERR_LOG("NULL ptr, can not found txt in path : %{public}s", cfgDir.c_str());
@@ -1110,20 +1071,22 @@ index 000000000..95e05f757
 +#endif
 +};
 +
-+// 鑾峰彇璺緞涓嬬増鏈俊鎭?+std::string CameraRoateParamReader::GetPathVersion()
++// 获取路径下版本信息
++std::string CameraRoateParamReader::GetPathVersion()
 +{
 +    std::string path = GetConfigFilePath();
 +    MEDIA_INFO_LOG("GetPathVersion:%{public}s", path.c_str());
 +    if (path.find(PARAM_UPDATE_ABS_PATH) != std::string::npos) {
 +        return GetVersionInfoStr(PARAM_SERVICE_INSTALL_PATH + CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME);
 +    }
-+    return GetVersionInfoStr(CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME); // 杩斿洖鏈湴鐨勯粯璁よ矾寰剆ystem/etc/camera/
++    return GetVersionInfoStr(CAMERA_ROTATE_CFG_DIR + VERSION_FILE_NAME); // 返回本地的默认路径system/etc/camera/
 +};
 +
-+// 鏍￠獙涓嬭浇鐨勫弬鏁版枃浠舵槸鍚﹀悎娉?+bool CameraRoateParamReader::VerifyCertSfFile(
++// 校验下载的参数文件是否合法
++bool CameraRoateParamReader::VerifyCertSfFile(
 +    const std::string &certFile, const std::string &verifyFile, const std::string &manifestFile)
 +{
-+    // 楠岃瘉CERT.SF鏂囦欢鏄惁鍚堟硶
++    // 验证CERT.SF文件是否合法
 +    if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, verifyFile)) {
 +        MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
 +            certFile.c_str(), verifyFile.c_str());
@@ -1148,7 +1111,8 @@ index 000000000..95e05f757
 +    return false;
 +};
 +
-+// 鏍￠獙涓嬭浇鐨勫弬鏁版枃浠剁殑瀹屾暣鎬?+bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, const std::string &filePathStr)
++// 校验下载的参数文件的完整性
++bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, const std::string &filePathStr)
 +{
 +    char canonicalPath[PATH_MAX + 1] = {0x00};
 +    if (realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr) {
@@ -1200,7 +1164,8 @@ index 000000000..95e05f757
 +    }
 +};
 +
-+// 璇诲彇version.txt 鐨勭涓€琛屻€備緥锛歷ersion=1.2.2.21 锛岄渶瑕乿ersion.txt 绗竴琛屼负version銆?+std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
++// 读取version.txt 的第一行。例：version=1.2.2.21 ，需要version.txt 第一行为version。
++std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
 +{
 +    char canonicalPath[PATH_MAX + 1] = {0x00};
 +    if (realpath(filePathStr.c_str(), canonicalPath) == nullptr) {
@@ -1247,7 +1212,7 @@ index 000000000..95e05f757
 \ No newline at end of file
 diff --git a/services/camera_service/src/param_update/camera_rotate_param_sign_tools.cpp b/services/camera_service/src/param_update/camera_rotate_param_sign_tools.cpp
 new file mode 100644
-index 000000000..70cdc6ff5
+index 00000000..70cdc6ff
 --- /dev/null
 +++ b/services/camera_service/src/param_update/camera_rotate_param_sign_tools.cpp
 @@ -0,0 +1,154 @@
@@ -1268,7 +1233,7 @@ index 000000000..70cdc6ff5
 +
 +#include "camera_rotate_param_sign_tools.h"
 +
-+#include <fstream> // ifstream鎵€闇€
++#include <fstream> // ifstream所需
 +#include <iostream>
 +#include <sstream> // stringstream
 +#include "camera_log.h"
@@ -1330,7 +1295,7 @@ index 000000000..70cdc6ff5
 +        EVP_PKEY_free(evpKey);
 +        return false;
 +    }
-+    // warnning锛氶渶瑕佷笌绛惧悕鐨刪ash绠楁硶涓€鑷达紝褰撳墠浣跨敤鐨勬槸 sha256withrsa 锛岄渶瑕侀€夋嫨 EVP_sha256()
++    // warnning：需要与签名的hash算法一致，当前使用的是 sha256withrsa ，需要选择 EVP_sha256()
 +    if (EVP_VerifyInit_ex(ctx, EVP_sha256(), NULL) != 1) {
 +        MEDIA_ERR_LOG("EVP_VerifyInit_ex(ctx, EVP_sha256(), NULL) != 1");
 +        EVP_PKEY_free(evpKey);
@@ -1407,7 +1372,7 @@ index 000000000..70cdc6ff5
 +} // namespace OHOS
 \ No newline at end of file
 diff --git a/services/etc/BUILD.gn b/services/etc/BUILD.gn
-index 5bc16cbae..998aee132 100644
+index 5bc16cba..998aee13 100644
 --- a/services/etc/BUILD.gn
 +++ b/services/etc/BUILD.gn
 @@ -19,3 +19,17 @@ ohos_prebuilt_etc("camera_service.rc") {
@@ -1430,7 +1395,7 @@ index 5bc16cbae..998aee132 100644
 +}
 \ No newline at end of file
 diff --git a/services/etc/camera_service.cfg b/services/etc/camera_service.cfg
-index 7178d49c7..6c2d7dbac 100644
+index 7178d49c..6c2d7dba 100644
 --- a/services/etc/camera_service.cfg
 +++ b/services/etc/camera_service.cfg
 @@ -25,7 +25,8 @@
@@ -1445,7 +1410,7 @@ index 7178d49c7..6c2d7dbac 100644
                  "ohos.permission.GET_SENSITIVE_PERMISSIONS",
 diff --git a/services/etc/hwkey_param_upgrade_v1.pem b/services/etc/hwkey_param_upgrade_v1.pem
 new file mode 100644
-index 000000000..7478ba84f
+index 00000000..7478ba84
 --- /dev/null
 +++ b/services/etc/hwkey_param_upgrade_v1.pem
 @@ -0,0 +1,11 @@
@@ -1463,7 +1428,7 @@ index 000000000..7478ba84f
 \ No newline at end of file
 diff --git a/services/etc/version.txt b/services/etc/version.txt
 new file mode 100644
-index 000000000..6879ba333
+index 00000000..6879ba33
 --- /dev/null
 +++ b/services/etc/version.txt
 @@ -0,0 +1,6 @@
@@ -1474,6 +1439,3 @@ index 000000000..6879ba333
 +classify=1
 +displayVersion=TZ.GENC.11.10.20.100
 \ No newline at end of file
--- 
-2.45.2.huawei.7
-
