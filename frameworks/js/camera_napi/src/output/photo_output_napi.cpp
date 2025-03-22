@@ -1295,7 +1295,7 @@ void PhotoOutputCallback::OnFrameShutterEnd(const int32_t captureId, const uint6
 void PhotoOutputCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG(
+    MEDIA_INFO_LOG(
         "OnCaptureReady is called, captureID: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;
