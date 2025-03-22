@@ -211,8 +211,6 @@ public:
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     int32_t UnlinkInputAndOutputs();
     int32_t UnlinkOfflineInputAndOutputs();
-    void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
-    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
@@ -248,6 +246,8 @@ public:
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
+    void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
+    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
@@ -317,6 +317,7 @@ private:
     bool isDynamicConfiged_ = false;
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
+    std::mutex releaseOperatorLock_;
     sptr<MovingPhotoListener> livephotoListener_;
     sptr<MovingPhotoMetaListener> livephotoMetaListener_;
     sptr<AudioCapturerSession> audioCapturerSession_;

@@ -1040,22 +1040,25 @@ int32_t HStreamOperator::Release()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    #ifdef CAMERA_USE_SENSOR
-    if (isSetMotionPhoto_) {
-        UnRegisterSensorCallback();
-        isSetMotionPhoto_ = false;
+    {
+        std::lock_guard<std::mutex> lock(releaseOperatorLock_);
+        #ifdef CAMERA_USE_SENSOR
+        if (isSetMotionPhoto_) {
+            UnRegisterSensorCallback();
+            isSetMotionPhoto_ = false;
+        }
+        #endif
+        if (displayListener_) {
+            OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+            displayListener_ = nullptr;
+        }
+        if (streamOperator_) {
+            UnlinkOfflineInputAndOutputs();
+            streamOperator_ = nullptr;
+            MEDIA_INFO_LOG("HStreamOperator::Release streamOperator_ is nullptr");
+        }
+        HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
     }
-    #endif
-    if (displayListener_) {
-        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
-        displayListener_ = nullptr;
-    }
-    if (streamOperator_) {
-        UnlinkOfflineInputAndOutputs();
-        streamOperator_ = nullptr;
-        MEDIA_INFO_LOG("HStreamOperator::Release streamOperator_ is nullptr");
-    }
-    HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     CHECK_EXECUTE(livephotoListener_, livephotoListener_ = nullptr);
     CHECK_EXECUTE(videoCache_, videoCache_ = nullptr);
