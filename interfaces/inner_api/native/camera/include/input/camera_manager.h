@@ -880,6 +880,7 @@ private:
     bool isSystemApp_ = false;
     bool isInWhiteList_ = false;
     sptr<CameraDevice> innerCamera_ = nullptr;
+    FoldStatus preFoldStatus = FoldStatus::UNKNOWN_FOLD;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
