@@ -44,14 +44,14 @@ public:
     static constexpr int32_t ONE_THOUSAND = 1000;
     static constexpr int32_t DURATION_EACH_AUDIO_FRAME = 32;
     static constexpr int32_t PROCESS_BATCH_SIZE = 5;
+    static constexpr int32_t MAX_UNPROCESSED_SIZE = 12288;
+    static constexpr int32_t MAX_PROCESSED_SIZE = 2048;
 
 private:
     std::string chainName_ = "offline_record_algo";
     std::mutex mutex_;
     std::unique_ptr<OfflineAudioEffectManager> offlineAudioEffectManager_ = nullptr;
     std::unique_ptr<OfflineAudioEffectChain> offlineEffectChain_ = nullptr;
-    uint32_t maxUnprocessedBufferSize_ = 0;
-    uint32_t maxProcessedBufferSize_ = 0;
     AudioStreamInfo inputOptions_;
     AudioStreamInfo outputOptions_;
     uint32_t oneUnprocessedSize_ = 0;
