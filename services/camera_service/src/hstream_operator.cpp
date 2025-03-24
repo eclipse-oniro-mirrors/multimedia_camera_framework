@@ -769,8 +769,6 @@ int32_t HStreamOperator::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
         if (!curStream) {
             continue;
         }
-        MEDIA_INFO_LOG("HCaptureSession::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStream->format_);
         if (curStream->GetStreamType() == StreamType::CAPTURE) {
             if (!(curStream->format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP ||
                 curStream->format_ == OHOS_CAMERA_FORMAT_JPEG ||
