@@ -70,7 +70,8 @@ int32_t DepthDataOutput::Start()
         CameraErrorCode::SESSION_NOT_CONFIG, "DepthDataOutput Failed to Start!, session not config");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Start!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamDepthData*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -87,7 +88,8 @@ int32_t DepthDataOutput::Stop()
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::Stop");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Stop!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamDepthData*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -105,7 +107,8 @@ int32_t DepthDataOutput::SetDataAccuracy(int32_t dataAccuracy)
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::SetDataAccuracy");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to SetDataAccuracy!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamDepthData*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->SetDataAccuracy(dataAccuracy);
@@ -134,7 +137,8 @@ int32_t DepthDataOutput::Release()
     MEDIA_DEBUG_LOG("Enter Into DepthDataOutput::Release");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "DepthDataOutput Failed to Release!, GetStream is nullptr");
-    auto itemStream = static_cast<IStreamDepthData*>(GetStream().GetRefPtr());
+    auto stream = GetStream();
+    sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -163,7 +167,8 @@ void DepthDataOutput::SetCallback(std::shared_ptr<DepthDataStateCallback> callba
             MEDIA_ERR_LOG("DepthDataOutput Failed to SetCallback!, GetStream is nullptr");
             return;
         }
-        auto itemStream = static_cast<IStreamDepthData*>(GetStream().GetRefPtr());
+        auto stream = GetStream();
+        sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
         int32_t errorCode = CAMERA_OK;
         if (itemStream) {
             errorCode = itemStream->SetCallback(svcCallback_);

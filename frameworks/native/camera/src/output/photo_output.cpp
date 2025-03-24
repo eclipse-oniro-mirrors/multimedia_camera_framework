@@ -514,7 +514,8 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
                 return;
             }
         }
-        auto itemStream = CastStream<IStreamCapture>(GetStream());
+        auto stream = GetStream();
+        sptr<IStreamCapture> itemStream = static_cast<IStreamCapture*>(stream.GetRefPtr());
         int32_t errorCode = CAMERA_OK;
         if (itemStream) {
             errorCode = itemStream->SetCallback(cameraSvcCallback_);
