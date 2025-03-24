@@ -42,6 +42,7 @@ public:
 
 private:
     MediaManagerError GetSourceFormat();
+    MediaManagerError GetUserMeta();
     void GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const;
     MediaManagerError GetTrackMediaInfo(const TrackFormat& trackFormat, std::shared_ptr<MediaInfo>& mediaInfo) const;
     MediaManagerError InitTracksAndDemuxer();
@@ -53,6 +54,8 @@ private:
         bool ret = false;
         if constexpr (std::is_same_v<T, int32_t>) {
             ret = format->GetIntValue(key, value);
+        } else if constexpr (std::is_same_v<T, float>) {
+            ret = format->GetFloatValue(key, value);
         } else if constexpr (std::is_same_v<T, double>) {
             ret = format->GetDoubleValue(key, value);
         } else if constexpr (std::is_same_v<T, int64_t>) {
@@ -66,6 +69,7 @@ private:
 private:
     std::shared_ptr<AVSource> source_ {nullptr};
     std::shared_ptr<Format> sourceFormat_ {nullptr};
+    std::shared_ptr<Format> userFormat_ {nullptr};
     std::shared_ptr<Demuxer> inputDemuxer_ {nullptr};
     int32_t trackCount_ {0};
     std::map<Media::Plugins::MediaType, std::shared_ptr<Track>> tracks_ {};

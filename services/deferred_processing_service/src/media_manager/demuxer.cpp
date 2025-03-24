@@ -39,8 +39,9 @@ MediaManagerError Demuxer::Create(const std::shared_ptr<AVSource>& source,
         auto trackFormat = trackPtr->GetFormat();
         SetTrackId(mediaType, trackFormat.trackId);
         auto ret = SeletctTrackByID(trackFormat.trackId);
-        DP_CHECK_ERROR_BREAK_LOG(ret != OK,
-            "Select track by id failed, track type: %{public}d, ret: %{public}d.", mediaType, ret);
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL,
+            "Select track by %{public}d failed, track type: %{public}d, ret: %{public}d.",
+            trackFormat.trackId, mediaType, ret);
     }
     
     return OK;
