@@ -61,8 +61,8 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
         jobMap_.erase(videoId);
         jobQueue_->Remove(jobPtrFind);
     }
-    bool statusChanged = jobPtrFind->SetJobStatus(VideoJobStatus::DELETED);
-    UpdateRunningCountUnLocked(statusChanged, jobPtrFind);
+    jobPtrFind->SetJobStatus(VideoJobStatus::DELETED);
+    UpdateRunningCountUnLocked(false, jobPtrFind);
     return isNeedStop;
 }
 
