@@ -141,10 +141,8 @@ void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LATITUDE, mediaInfo->latitude);
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
     CheckAndGetValue(userFormat_, LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
-    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", latitude: %{public}f, "
-        "longitude: %{public}f, livePhotoCovertime: %{public}f",
-        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->latitude,
-        mediaInfo->longitude, mediaInfo->livePhotoCovertime);
+    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f",
+        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime);
 }
 
 MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
