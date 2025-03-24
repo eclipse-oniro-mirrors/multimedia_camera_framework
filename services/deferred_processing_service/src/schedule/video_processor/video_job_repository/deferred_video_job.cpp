@@ -48,6 +48,12 @@ DeferredVideoJob::DeferredVideoJob(const std::string& videoId, const sptr<IPCFil
 DeferredVideoJob::~DeferredVideoJob()
 {
     DP_DEBUG_LOG("entered");
+    if (srcFd_) {
+        close(srcFd_->GetFd());
+    }
+    if (dstFd_) {
+        close(dstFd_->GetFd());
+    }
 }
 
 bool DeferredVideoJob::SetJobStatus(VideoJobStatus status)
