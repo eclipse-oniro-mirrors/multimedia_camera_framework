@@ -309,5 +309,38 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level0
     input->Close();
 }
 
+/*
+ * Feature: Framework
+ * Function: Test VideoSession callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession callback normal branches while metadata have ability
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(session, nullptr);
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(session.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_LIGHT_STATUS);
+    uint8_t lightStart = 1;
+    videoSession->LockForControl();
+    metadata->addEntry(OHOS_STATUS_LIGHT_STATUS, &lightStart, 1);
+    videoSession->UnlockForControl();
+    videoSession->ProcessLightStatusChange(metadata);
+    input->Close();
+}
+
 }
 }
