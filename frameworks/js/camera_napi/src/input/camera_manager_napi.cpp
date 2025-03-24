@@ -1200,9 +1200,12 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         return nullptr;
     }
     std::string cameraId = cameraInfo->GetID();
-    napi_value cachedResult = GetCachedSupportedOutputCapability(env, cameraId, jsSceneMode);
-    if (cachedResult != nullptr) {
-        return cachedResult;
+    auto foldType = cameraManagerNapi->cameraManager_->GetFoldScreenType();
+    if (!(!foldType.empty() && foldType[0] == '4')) {
+        napi_value cachedResult = GetCachedSupportedOutputCapability(env, cameraId, jsSceneMode);
+        if (cachedResult != nullptr) {
+            return cachedResult;
+        }
     }
     SceneMode fwkMode = SceneMode::NORMAL;
     std::unordered_map<JsSceneMode, SceneMode> jsToFwModeMap = g_jsToFwMode_;

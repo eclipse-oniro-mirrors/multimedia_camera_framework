@@ -1222,8 +1222,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
     } else {
         MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
     }
-    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' && !GetIsInWhiteList() &&
-        (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' && !GetIsInWhiteList()) {
         for (const auto& deviceInfo : deviceInfoList) {
             if (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
                 SetInnerCamera(deviceInfo);
@@ -1292,10 +1291,18 @@ bool CameraManager::GetIsInWhiteList()
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
-    auto cameraDeviceList = GetCameraDeviceList();
+    auto curFoldStatus = GetFoldStatus();
+    std::vector<sptr<CameraDevice>> cameraDeviceList;
+    if (curFoldStatus != preFoldStatus && !foldScreenType_.empty() && foldScreenType_[0] == '4') {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        cameraDeviceList = GetCameraDeviceListFromServer();
+        cameraDeviceList_ = cameraDeviceList;
+        preFoldStatus = curFoldStatus;
+    } else {
+        cameraDeviceList = GetCameraDeviceList();
+    }
     bool isFoldable = GetIsFoldable();
     CHECK_ERROR_RETURN_RET(!isFoldable, cameraDeviceList);
-    auto curFoldStatus = GetFoldStatus();
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     CHECK_ERROR_RETURN_RET(curFoldStatus == FoldStatus::UNKNOWN_FOLD &&
         !foldScreenType_.empty() && foldScreenType_[0] == '4', cameraDeviceList);
