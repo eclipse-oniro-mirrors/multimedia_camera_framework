@@ -210,6 +210,12 @@ bool HCaptureSession::IsNeedDynamicConfig()
     return isDynamicConfiged_;
 }
 
+int32_t HCaptureSession::SetHasFitedRotation(bool isHasFitedRotation)
+{
+    isHasFitedRotation_ = isHasFitedRotation;
+    return CAMERA_OK;
+}
+
 int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -1076,7 +1082,8 @@ int32_t HCaptureSession::Start()
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
         auto hStreamOperatorSptr = hStreamOperator_.promote();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
-        if (OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus() == OHOS::Rosen::FoldStatus::FOLDED) {
+        if (OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus() == OHOS::Rosen::FoldStatus::FOLDED &&
+            !isHasFitedRotation_) {
             auto infos = GetCameraRotateStrategyInfos();
             auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
             UpdateCameraRotateAngleAndZoom(infos, frameRateRange);

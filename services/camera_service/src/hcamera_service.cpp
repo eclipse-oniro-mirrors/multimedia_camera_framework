@@ -54,6 +54,7 @@
 #include "mem_mgr_client.h"
 #include "mem_mgr_constant.h"
 #endif
+#include "camera_rotate_param_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -93,10 +94,6 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
 {
     MEDIA_INFO_LOG("HCameraService Construct begin");
     g_cameraServiceHolder = this;
-    unique_ptr<CameraRotateStrategyParser> cameraRotateStrategyParser = make_unique<CameraRotateStrategyParser>();
-    cameraRotateStrategyParser->LoadConfiguration();
-    cameraRotateStrategyInfos_ = cameraRotateStrategyParser->GetCameraRotateStrategyInfos();
-    cameraRotateStrategyParser->Destroy();
     statusCallback_ = std::make_shared<ServiceHostStatus>(this);
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_ERROR_RETURN_LOG(
@@ -140,6 +137,8 @@ void HCameraService::OnStart()
     } else {
         MEDIA_INFO_LOG("HCameraService publish OnStart failed");
     }
+    CameraRoateParamManager::GetInstance().InitParam(); // 先初始化再监听
+    CameraRoateParamManager::GetInstance().SubscriberEvent();
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -522,7 +521,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
             "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
-    captureSession->SetCameraRotateStrategyInfos(cameraRotateStrategyInfos_);
+    captureSession->SetCameraRotateStrategyInfos(CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);

@@ -209,6 +209,7 @@ private:
 
     void DynamicConfigStream();
     bool IsNeedDynamicConfig();
+    int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
 
@@ -245,6 +246,7 @@ private:
     wptr<HStreamOperator> hStreamOperator_;
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
+    bool isHasFitedRotation_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

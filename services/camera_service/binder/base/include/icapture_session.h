@@ -80,6 +80,8 @@ public:
 
     virtual int32_t SetCommitConfigFlag(bool isNeedCommitting) = 0;
 
+    virtual int32_t SetHasFitedRotation(bool isHasFitedRotation) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };
 } // namespace CameraStandard

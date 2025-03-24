@@ -93,6 +93,9 @@ ohos_shared_library("camera_service") {
     "src/hstream_operator_manager.cpp",
     "src/hstream_repeat.cpp",
     "src/moving_photo/moving_photo_surface_wrapper.cpp",
+    "src/param_update/camera_rotate_param_manager.cpp",
+    "src/param_update/camera_rotate_param_reader.cpp",
+    "src/param_update/camera_rotate_param_sign_tools.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
     "src/smooth_zoom/smooth_zoom.cpp",
     "src/window_manager_utils/camera_window_manager_agent.cpp",
@@ -139,6 +142,7 @@ ohos_shared_library("camera_service") {
     "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec",
+    "${multimedia_camera_framework_path}/services/camera_service/include/param_update",
     "${multimedia_camera_framework_path}/services/camera_service/include/avcodec/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/window_manager_utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
@@ -280,6 +284,11 @@ ohos_shared_library("camera_service") {
     external_deps += [ "distributed_notification_service:ans_innerkits" ]
     defines += [ "NOTIFICATION_ENABLE" ]
     sources += [ "src/camera_beauty_notification.cpp" ]
+  }
+
+  if (config_policy_ext_enable) {
+    external_deps += [ "config_policy_ext:config_policy_ext_utils" ]
+    defines += [ "CONFIG_POLICY_EXT_ENABLE" ]
   }
 
   defines += [ "MOVING_PHOTO_ADD_AUDIO" ]
