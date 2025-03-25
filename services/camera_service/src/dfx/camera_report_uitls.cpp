@@ -218,7 +218,7 @@ void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflinCa
             auto dfxCaptureInfo = iter->second;
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
             dfxCaptureInfo.isOfflinCapture = isOfflinCapture;
-            dfxCaptureInfo.offlineOutputCnt = offlineOutputCnt;
+            dfxCaptureInfo.offlineOutputCnt = static_cast<uint32_t>(offlineOutputCnt);
             ReportCapturePerf(dfxCaptureInfo);
             ReportImagingInfo(dfxCaptureInfo);
             captureList_.erase(captureId);
