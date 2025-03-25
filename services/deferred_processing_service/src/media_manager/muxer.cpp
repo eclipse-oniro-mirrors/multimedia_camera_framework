@@ -48,7 +48,7 @@ MediaManagerError Muxer::AddTracks(const std::map<Media::Plugins::MediaType, std
         DP_CHECK_ERROR_RETURN_RET_LOG(it == trackMap.end() && trackType != Media::Plugins::MediaType::TIMEDMETA,
             ERROR_FAIL, "Not find trackType: %{public}d.", trackType);
 
-        const auto track = it->second;
+        const auto track = it != trackMap.end() ? it->second : nullptr;
         if (trackType == Media::Plugins::MediaType::TIMEDMETA) {
             auto ret = CheckAndAddMetaTrack(track);
             DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
