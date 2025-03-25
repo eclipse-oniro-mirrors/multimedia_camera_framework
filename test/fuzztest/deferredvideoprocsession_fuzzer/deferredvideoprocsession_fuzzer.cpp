@@ -15,7 +15,6 @@
 
 #include "deferredvideoprocsession_fuzzer.h"
 #include "camera_log.h"
-#include "deferred_processing_service.h"
 #include "message_parcel.h"
 #include <cstddef>
 #include <cstdint>

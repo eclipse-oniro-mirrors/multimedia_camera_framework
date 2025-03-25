@@ -25,7 +25,6 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

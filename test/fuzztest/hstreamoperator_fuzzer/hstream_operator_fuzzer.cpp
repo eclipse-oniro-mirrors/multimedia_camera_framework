@@ -17,7 +17,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include "camera_log.h"
 #include "message_parcel.h"
 #include "token_setproc.h"

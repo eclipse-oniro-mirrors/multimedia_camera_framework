@@ -19,7 +19,6 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
-#include <memory>
 
 namespace {
     const int32_t LIMITSIZE = 2;

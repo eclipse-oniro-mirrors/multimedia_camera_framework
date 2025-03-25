@@ -17,7 +17,6 @@
 #define MPEG_MANAGER_FUZZER_H
 
 #include "mpeg_manager.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

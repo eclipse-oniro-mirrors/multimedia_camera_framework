@@ -35,7 +35,6 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
@@ -60,6 +59,7 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
   sources = [ "camera_device_fuzzer.cpp" ]
 
   deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
   ]

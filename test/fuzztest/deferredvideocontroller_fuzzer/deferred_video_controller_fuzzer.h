@@ -16,7 +16,6 @@
 #ifndef DEFERREDPROCESSING_FUZZER_H
 #define DEFERREDPROCESSING_FUZZER_H
 
-#include <memory>
 #include "deferred_video_controller.h"
 #include "video_job_repository.h"
 #include "video_strategy_center.h"

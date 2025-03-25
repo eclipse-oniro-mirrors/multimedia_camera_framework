@@ -130,14 +130,14 @@ ohos_fuzztest("SessionCoordinatorFuzzTest") {
     "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
 
-  if (use_battery_manager) {
-    external_deps += [ "battery_manager:batterysrv_client" ]
-    defines += [ "CAMERA_USE_BATTERY" ]
-  }
-
   if (use_power_manager) {
     external_deps += [ "power_manager:powermgr_client" ]
     defines += [ "CAMERA_USE_POWER" ]
+  }
+
+  if (use_battery_manager) {
+    external_deps += [ "battery_manager:batterysrv_client" ]
+    defines += [ "CAMERA_USE_BATTERY" ]
   }
 }
 

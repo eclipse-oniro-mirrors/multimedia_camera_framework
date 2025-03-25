@@ -16,7 +16,6 @@
 #ifndef CAPTURE_OUTPUT_FUZZER_H
 #define CAPTURE_OUTPUT_FUZZER_H
 
-#include <memory>
 #include "capture_output.h"
 
 namespace OHOS {

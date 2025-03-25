@@ -16,7 +16,6 @@
 #ifndef CAMERA_DEMUXER_FUZZER_H
 #define CAMERA_DEMUXER_FUZZER_H
 
-#include <memory>
 #include "demuxer.h"
 
 namespace OHOS {

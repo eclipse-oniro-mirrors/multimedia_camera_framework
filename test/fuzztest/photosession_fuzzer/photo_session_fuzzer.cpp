@@ -80,6 +80,10 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest()
         return;
     }
     fuzz_->CanAddOutput(photoOutput_);
+    sptr<FluorescencePhotoSession> fluorescencePhotoSession =
+        static_cast<FluorescencePhotoSession*>(captureSession.GetRefPtr());
+    sptr<CaptureOutput> output = nullptr;
+    fluorescencePhotoSession->CanAddOutput(output);
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<PreconfigType> preconfigTypeVec = {
         PRECONFIG_720P,

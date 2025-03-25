@@ -18,7 +18,6 @@
 
 #include "hstream_depth_data_callback_proxy.h"
 #include "istream_depth_data_callback.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
