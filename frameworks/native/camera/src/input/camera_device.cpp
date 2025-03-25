@@ -14,6 +14,7 @@
  */
 
 #include <mutex>
+#include <malloc.h>
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
@@ -95,8 +96,7 @@ bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
     int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
     if (ret == CAM_META_SUCCESS) {
         for (auto info : infos) {
-            std::string tagName = info.tagName;
-            if (tagName == "hwSensorName") {
+            if (info.tagName != nullptr && strcmp(info.tagName, "hwSensorName") == 0) {
                 tagId = info.tagId;
                 return true;
             }
