@@ -173,7 +173,7 @@ public:
     int32_t LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, int32_t opMode);
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId);
-    void SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation);
+    void SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition);
     void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId);
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);

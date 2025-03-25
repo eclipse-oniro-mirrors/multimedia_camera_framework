@@ -79,6 +79,7 @@
 #include "hstream_operator_manager.h"
 #include "res_type.h"
 #include "res_sched_client.h"
+#include "camera_device_ability_items.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -850,13 +851,6 @@ int32_t HStreamOperator::EnableMovingPhoto(const std::shared_ptr<OHOS::Camera::C
     MEDIA_INFO_LOG("HStreamOperator::EnableMovingPhoto is %{public}d", isEnable);
     isSetMotionPhoto_ = isEnable;
     deviceSensorOritation_ = sensorOritation;
-    #ifdef CAMERA_USE_SENSOR
-    if (isSetMotionPhoto_) {
-        RegisterSensorCallback();
-    } else {
-        UnRegisterSensorCallback();
-    }
-    #endif
     StartMovingPhotoStream(settings);
     CHECK_EXECUTE(cameraDevice_ != nullptr, cameraDevice_->EnableMovingPhoto(isEnable));
     GetMovingPhotoBufferDuration();
@@ -1042,12 +1036,6 @@ int32_t HStreamOperator::Release()
     int32_t errorCode = CAMERA_OK;
     {
         std::lock_guard<std::mutex> lock(releaseOperatorLock_);
-        #ifdef CAMERA_USE_SENSOR
-        if (isSetMotionPhoto_) {
-            UnRegisterSensorCallback();
-            isSetMotionPhoto_ = false;
-        }
-        #endif
         if (displayListener_) {
             OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
             displayListener_ = nullptr;
@@ -1254,14 +1242,14 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
-void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation)
+void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition)
 {
     MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
         rotationValue, sensorOrientation);
-    // 获取当前重力传感器角度，isMovingPhotoMirror_为true表示前置，isMovingPhotoMirror_为false表示后置
-    if (!isMovingPhotoMirror_) {
+    // 获取当前重力传感器角度
+    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         sensorRotation_ = rotationValue - sensorOrientation;
-    } else {
+    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         sensorRotation_ = sensorOrientation - rotationValue;
     }
 }
