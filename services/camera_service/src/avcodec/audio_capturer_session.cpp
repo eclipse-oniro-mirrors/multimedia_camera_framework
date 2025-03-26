@@ -33,6 +33,18 @@ namespace CameraStandard {
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
+    streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamInfo.channels = getMicNum();
+    deferredInputOptions_ = streamInfo;
+    AudioStreamInfo outputOptions;
+    outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
+    outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
+    outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
+    outputOptions.channels = AudioChannel::MONO;
+    deferredOutputOptions_ = outputOptions;
 }
 
 AudioChannel AudioCapturerSession::getMicNum()
@@ -72,27 +84,14 @@ bool AudioCapturerSession::CreateAudioCapturer()
     auto callingTokenID = IPCSkeleton::GetCallingTokenID();
     SetFirstCallerTokenID(callingTokenID);
     AudioCapturerOptions capturerOptions;
-    capturerOptions.streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
-    capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
-    capturerOptions.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
-    capturerOptions.streamInfo.channels = getMicNum();
+    capturerOptions.streamInfo = deferredOutputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
-    if (audioCapturer_ == nullptr) {
-        MEDIA_ERR_LOG("AudioCapturerSession::Create AudioCapturer failed");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(audioThread_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
-    AudioStreamInfo outputOptions;
-    outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
-    outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
-    outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
-    outputOptions.channels = AudioChannel::MONO;
-    deferredInputOptions_ = capturerOptions.streamInfo;
-    deferredOutputOptions_ = outputOptions;
     return true;
 }
 
@@ -107,6 +106,7 @@ AudioCapturerSession::~AudioCapturerSession()
 bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
+    CHECK_ERROR_RETURN_RET_LOG(startAudioCapture_, true, "AudioCapture is already started.");
     if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
         MEDIA_INFO_LOG("audioCapturer is not create");
         return false;
@@ -114,6 +114,7 @@ bool AudioCapturerSession::StartAudioCapture()
     if (!audioCapturer_->Start()) {
         MEDIA_INFO_LOG("Start stream failed");
         audioCapturer_->Release();
+        startAudioCapture_ = false;
         return false;
     }
     if (audioThread_ && audioThread_->joinable()) {
