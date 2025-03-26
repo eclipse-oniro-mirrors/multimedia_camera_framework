@@ -31,10 +31,6 @@ namespace {
 
 Reader::~Reader()
 {
-    source_ = nullptr;
-    sourceFormat_ = nullptr;
-    userFormat_ = nullptr;
-    inputDemuxer_ = nullptr;
     tracks_.clear();
 }
 
@@ -140,12 +136,15 @@ void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
     DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_LATITUDE);
     ret = sourceFormat_->GetFloatValue(Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
     DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MEDIA_LONGITUDE);
+    ret = userFormat_->GetFloatValue(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+    DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", LIVE_PHOTO_COVERTIME.c_str());
+    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f",
+        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime);
 }
 
 MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
     std::shared_ptr<MediaInfo>& mediaInfo) const
 {
-    DP_DEBUG_LOG("entered.");
     auto& format = trackFormat.format;
     auto ret = format->GetStringValue(Tag::MIME_TYPE, mediaInfo->codecInfo.mimeType);
     DP_CHECK_ERROR_PRINT_LOG(!ret, "cannot get %{public}s", Tag::MIME_TYPE);
@@ -195,7 +194,7 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
         mediaInfo->codecInfo.fps = FixFPS(doubleVal);
     }
 
-    DP_DEBUG_LOG("colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
+    DP_INFO_LOG("TrackMediaInfo colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}lld, "
         "fps: %{public}d, rotation: %{public}d, frame count: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
