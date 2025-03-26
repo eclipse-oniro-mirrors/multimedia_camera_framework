@@ -123,12 +123,24 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
     int32_t rotation = mediaInfo->codecInfo.rotation == -1 ? 0 : mediaInfo->codecInfo.rotation;
     param->Set<Tag::VIDEO_ROTATION>(static_cast<Plugins::VideoRotation>(rotation));
     param->Set<Tag::MEDIA_CREATION_TIME>(mediaInfo->creationTime);
-    param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
-    param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
     param->Set<Tag::VIDEO_IS_HDR_VIVID>(mediaInfo->codecInfo.isHdrvivid);
+    if (mediaInfo->latitude > 0) {
+        param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
+    }
+    if (mediaInfo->longitude > 0) {
+        param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
+    }
     auto ret = muxer_->SetParameter(param);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "Add param failed, ret: %{public}d", ret);
+
+    if (mediaInfo->livePhotoCovertime > 0) {
+        auto userMeta = std::make_shared<Meta>();
+        userMeta->SetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+        ret = muxer_->SetUserMeta(userMeta);
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
+            "Add userMeta failed, ret: %{public}d", ret);
+    }
 
     return OK;
 }

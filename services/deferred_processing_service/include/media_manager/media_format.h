@@ -26,6 +26,7 @@ namespace DeferredProcessing {
 const std::string MIME_VIDEO_AVC = Media::Plugins::MimeType::VIDEO_AVC;
 const std::string MIME_VIDEO_HEVC = Media::Plugins::MimeType::VIDEO_HEVC;
 const std::string MIME_TIMED_META = Media::Plugins::MimeType::TIMED_METADATA;
+const std::string LIVE_PHOTO_COVERTIME = "com.openharmony.covertime";
 const std::string TIMED_METADATA_KEY = "com.openharmony.timed_metadata.vid_maker_info";
 
 enum class MediaInfoKey : uint32_t {
@@ -66,8 +67,9 @@ struct MediaInfo {
     int64_t recoverTime;
     int32_t streamCount;
     std::string creationTime;
-    float latitude;
-    float longitude;
+    float latitude {-1.0};
+    float longitude {-1.0};
+    float livePhotoCovertime {-1.0};
     CodecInfo codecInfo {};
 };
 } // namespace DeferredProcessing

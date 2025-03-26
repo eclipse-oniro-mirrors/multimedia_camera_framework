@@ -30,9 +30,6 @@ namespace {
 
 Reader::~Reader()
 {
-    source_ = nullptr;
-    sourceFormat_ = nullptr;
-    inputDemuxer_ = nullptr;
     tracks_.clear();
 }
 
@@ -49,6 +46,9 @@ MediaManagerError Reader::Create(int32_t inputFd)
     auto ret = GetSourceFormat();
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Get avsource format failed.");
 
+    ret = GetUserMeta();
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Get user format failed.");
+
     ret = InitTracksAndDemuxer();
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Init tracks and demuxer failed.");
     return OK;
@@ -63,6 +63,18 @@ MediaManagerError Reader::GetSourceFormat()
     auto ret = source_->GetSourceFormat(sourceFormat);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get avsource format failed.");
     sourceFormat_ = std::make_shared<Format>(sourceFormat);
+    return OK;
+}
+
+MediaManagerError Reader::GetUserMeta()
+{
+    DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(source_ == nullptr, ERROR_FAIL, "AVSource is nullptr.");
+
+    Format userFormat;
+    auto ret = source_->GetUserMeta(userFormat);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL, "Get user format failed.");
+    userFormat_ = std::make_shared<Format>(userFormat);
     return OK;
 }
 
@@ -125,12 +137,14 @@ void Reader::GetSourceMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_DURATION, mediaInfo->codecInfo.duration);
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LATITUDE, mediaInfo->latitude);
     CheckAndGetValue(sourceFormat_, Tag::MEDIA_LONGITUDE, mediaInfo->longitude);
+    CheckAndGetValue(userFormat_, LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+    DP_INFO_LOG("MediaInfo creationTime: %{public}s, duration: %{public}" PRId64 ", livePhotoCovertime: %{public}f",
+        mediaInfo->creationTime.c_str(), mediaInfo->codecInfo.duration, mediaInfo->livePhotoCovertime);
 }
 
 MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
     std::shared_ptr<MediaInfo>& mediaInfo) const
 {
-    DP_DEBUG_LOG("entered.");
     auto& format = trackFormat.format;
     CheckAndGetValue(format, Tag::MIME_TYPE, mediaInfo->codecInfo.mimeType);
     CheckAndGetValue(format, Tag::MEDIA_PROFILE, mediaInfo->codecInfo.profile);
@@ -163,7 +177,7 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
         mediaInfo->codecInfo.fps = FixFPS(doubleVal);
     }
 
-    DP_INFO_LOG("colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
+    DP_INFO_LOG("TrackMediaInfo colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
         "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
