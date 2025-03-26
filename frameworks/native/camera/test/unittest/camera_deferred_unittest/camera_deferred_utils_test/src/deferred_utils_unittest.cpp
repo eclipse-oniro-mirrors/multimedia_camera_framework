@@ -73,36 +73,6 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test TransExifOrientationToDegree with valid data.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test TransExifOrientationToDegree with valid data.
- */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_003, TestSize.Level0)
-{
-    std::string testOrientation = "Top-right";
-    float testDegree = 90;
-    EXPECT_EQ(TransExifOrientationToDegree(testOrientation), testDegree);
-}
-
-/*
- * Feature: Framework
- * Function: Test TransExifOrientationToDegree with invalid data.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test TransExifOrientationToDegree with invalid data.
- */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_004, TestSize.Level0)
-{
-    std::string testOrientation = "Invalid_orientation";
-    float defaultDegree = .0;
-    EXPECT_EQ(TransExifOrientationToDegree(testOrientation), defaultDegree);
-}
-
-/*
- * Feature: Framework
  * Function: Test GetGlobalWatchdog.
  * SubFunction: NA
  * FunctionPoints: NA

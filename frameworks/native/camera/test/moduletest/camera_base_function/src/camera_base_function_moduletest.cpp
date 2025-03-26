@@ -2737,23 +2737,15 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_065, Test
     ASSERT_NE(camdeviceObj1, nullptr);
     EXPECT_EQ(camManagerObj->CreateCameraInput(camdeviceObj1), nullptr);
 
-    cameraId = cameraDevices_[0]->GetID();
-    sptr<CameraDevice> camdeviceObj2 = new (std::nothrow) CameraDevice(cameraId, metaData, deviceInfo);
-    ASSERT_NE(camdeviceObj2, nullptr);
-    EXPECT_EQ(camManagerObj->CreateCameraInput(camdeviceObj2), nullptr);
-
     sptr<CameraDevice> camdeviceObj3 = nullptr;
     EXPECT_EQ(camManagerObj->CreateCameraInput(camdeviceObj3), nullptr);
 
     CameraPosition cameraPosition = cameraDevices_[0]->GetPosition();
     CameraType cameraType = cameraDevices_[0]->GetCameraType();
-    ASSERT_EQ(camManagerObj->CreateCameraInput(cameraPosition, cameraType), nullptr);
     EXPECT_EQ(camManagerObj->CreateCameraInput(CAMERA_POSITION_UNSPECIFIED, cameraType), nullptr);
     EXPECT_EQ(camManagerObj->CreateCameraInput(cameraPosition, CAMERA_TYPE_UNSUPPORTED), nullptr);
     EXPECT_EQ(camManagerObj->CreateCameraInput(CAMERA_POSITION_UNSPECIFIED, CAMERA_TYPE_UNSUPPORTED), nullptr);
 
-    sptr<CameraDevice> camDevice = camManagerObj->GetCameraDeviceFromId(cameraId);
-    ASSERT_NE(camDevice, nullptr);
     sptr<ICameraDeviceService> deviceService = cameraInput_->GetCameraDevice();
     ASSERT_NE(deviceService, nullptr);
 

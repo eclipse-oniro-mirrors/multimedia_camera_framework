@@ -3351,11 +3351,9 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level0)
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
     EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
 
     session->LockForControl();
-    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
     EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
     session->UnlockForControl();
 

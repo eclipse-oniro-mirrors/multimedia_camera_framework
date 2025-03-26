@@ -1454,6 +1454,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, Test
  */
 HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, TestSize.Level0)
 {
+    cameraManager_->serviceProxyPrivate_ = nullptr;
     cameraManager_->torchMode_ = TorchMode::TORCH_MODE_AUTO;
     TorchMode ret = cameraManager_->GetTorchMode();
     EXPECT_EQ(ret, TorchMode::TORCH_MODE_AUTO);
