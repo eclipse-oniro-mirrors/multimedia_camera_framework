@@ -35,6 +35,10 @@ public:
     {
         return 0;
     }
+    int32_t UnSetCallback() override
+    {
+        return 0;
+    }
     int32_t Release() override
     {
         return 0;

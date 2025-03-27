@@ -99,7 +99,7 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     fuzz_->AcquireBufferToPrepareProxy(captureId);
     StreamInfo_V1_1 streamInfo;
     fuzz_->SetStreamInfo(streamInfo);
-    fuzz_->FullfillPictureExtendStreamInfos(streamInfo, GetData<int32_t>());
+    fuzz_->FillingPictureExtendStreamInfos(streamInfo, GetData<int32_t>());
     fuzz_->SetThumbnail(isEnabled, producer);
     fuzz_->EnableRawDelivery(enabled);
     std::vector<std::string> bufferNames = {"rawImage",
@@ -122,8 +122,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1()
     fuzz_->SetMovingPhotoVideoCodecType(videoCodecType);
     fuzz_->GetMovingPhotoVideoCodecType();
     fuzz_->SetCameraPhotoRotation(GetData<bool>());
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    fuzz_->SetCameraPhotoProxyInfo(cameraPhotoProxy);
 }
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2()

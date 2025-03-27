@@ -36,7 +36,6 @@ ohos_fuzztest("MetadataOutputFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",

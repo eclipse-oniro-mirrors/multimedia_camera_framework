@@ -82,14 +82,14 @@ void GetPermission()
 sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    auto manager_ = CameraManager::GetInstance();
-    auto cameras = manager_->GetSupportedCameras();
+    auto manager = CameraManager::GetInstance();
+    auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     camera = cameras[data.ReadUint32() % cameras.size()];
     CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
-    return manager_->CreateCameraInput(camera);
+    return manager->CreateCameraInput(camera);
 }
 
 sptr<CaptureOutput> CreatePreviewOutput(Profile previewProfile)
@@ -155,12 +155,12 @@ void Test(uint8_t *rawData, size_t size)
 sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    auto manager_ = CameraManager::GetInstance();
-    CHECK_ERROR_RETURN_RET_LOG(!manager_, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
+    auto manager = CameraManager::GetInstance();
+    CHECK_ERROR_RETURN_RET_LOG(!manager, nullptr, "CaptureSessionFuzzer: CameraManager::GetInstance Error");
     MessageParcel data;
     data.WriteRawData(rawData, size);
     CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
-    auto capability = manager_->GetSupportedOutputCapability(camera, g_sceneMode);
+    auto capability = manager->GetSupportedOutputCapability(camera, g_sceneMode);
     CHECK_ERROR_RETURN_RET_LOG(!capability, nullptr, "CaptureSessionFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
     CHECK_ERROR_RETURN_RET_LOG(profiles.empty(), nullptr, "CaptureSessionFuzzer: GetPhotoProfiles empty");
@@ -169,7 +169,7 @@ sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_RET_LOG(!photoSurface, nullptr, "CaptureSessionFuzzer: create photoSurface Error");
     surface = photoSurface->GetProducer();
     CHECK_ERROR_RETURN_RET_LOG(!surface, nullptr, "CaptureSessionFuzzer: surface GetProducer Error");
-    return manager_->CreatePhotoOutput(profile, surface);
+    return manager->CreatePhotoOutput(profile, surface);
 }
 
 void TestWhiteBalance(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
@@ -329,19 +329,6 @@ void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->GetFlashMode();
     session->GetFlashMode(flashMode);
     session->SetFlashMode(flashMode);
-}
-
-void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
-{
-    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
-    string burstKey = data.ReadString();
-    int64_t timestamp = data.ReadInt64();
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 
 void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
@@ -508,12 +495,6 @@ void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetVirtualAperture(aperture);
     session->GetPhysicalAperture(aperture);
     session->SetPhysicalAperture(aperture);
-    bool isSupported = data.ReadBool();
-    session->isColorStyleSupported(isSupported);
-    std::vector<ColorStyleSetting> defaultColorStyles;
-    session->GetDefaultColorStyleSettings(defaultColorStyles);
-    ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
-    session->SetColorStyleSetting(styleSetting);
     session->UnlockForControl();
 }
 

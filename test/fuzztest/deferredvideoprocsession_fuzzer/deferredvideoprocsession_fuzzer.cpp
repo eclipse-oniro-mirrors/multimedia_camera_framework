@@ -15,7 +15,6 @@
 
 #include "deferredvideoprocsession_fuzzer.h"
 #include "camera_log.h"
-#include "deferred_processing_service.h"
 #include "message_parcel.h"
 #include <cstddef>
 #include <cstdint>
@@ -35,12 +34,12 @@ const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
 int g_userId = 0;
-std::shared_ptr<DeferredVideoProcessingSessionCallback> callback =
+std::shared_ptr<DeferredVideoProcessingSessionCallback> callback_ =
     std::make_shared<DeferredVideoProcessingSessionCallback>();
-std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> sessionCallback =
+std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> sessionCallback_ =
     std::make_shared<IDeferredVideoProcSessionCallbackFuzz>();
-std::shared_ptr<DeferredVideoProcSession> deferredVideoProcSession =
-    std::make_shared<DeferredVideoProcSession>(g_userId, sessionCallback);
+std::shared_ptr<DeferredVideoProcSession> deferredVideoProcSession_ =
+    std::make_shared<DeferredVideoProcSession>(g_userId, sessionCallback_);
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
@@ -126,30 +125,30 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest()
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
-    callback->OnProcessVideoDone(videoId, ipcFileDescriptor);
-    callback->OnError(videoId, DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
+    callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);
+    callback_->OnError(videoId, DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
     int32_t status = GetData<int32_t>();
-    callback->OnStateChanged(status);
+    callback_->OnStateChanged(status);
 
-    deferredVideoProcSession->BeginSynchronize();
-    deferredVideoProcSession->EndSynchronize();
+    deferredVideoProcSession_->BeginSynchronize();
+    deferredVideoProcSession_->EndSynchronize();
     sptr<IPCFileDescriptor> srcFd = nullptr;
     sptr<IPCFileDescriptor> dstFd = nullptr;
-    deferredVideoProcSession->AddVideo(videoId, srcFd, dstFd);
+    deferredVideoProcSession_->AddVideo(videoId, srcFd, dstFd);
     bool restorable = GetData<bool>();
-    deferredVideoProcSession->RemoveVideo(videoId, restorable);
-    deferredVideoProcSession->RestoreVideo(videoId);
+    deferredVideoProcSession_->RemoveVideo(videoId, restorable);
+    deferredVideoProcSession_->RestoreVideo(videoId);
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
-    createSession(g_userId, sessionCallback, session);
+    createSession(g_userId, sessionCallback_, session);
     CHECK_ERROR_RETURN_LOG(session == nullptr, "session is null!");
-    deferredVideoProcSession->SetDeferredVideoSession(session);
+    deferredVideoProcSession_->SetDeferredVideoSession(session);
     int32_t pid = GetData<int32_t>();
-    deferredVideoProcSession->ReconnectDeferredProcessingSession();
-    deferredVideoProcSession->ConnectDeferredProcessingSession();
-    deferredVideoProcSession->GetCallback();
-    deferredVideoProcSession->remoteSession_ = nullptr;
-    deferredVideoProcSession->callback_ = nullptr;
-    deferredVideoProcSession->CameraServerDied(pid);
+    deferredVideoProcSession_->ReconnectDeferredProcessingSession();
+    deferredVideoProcSession_->ConnectDeferredProcessingSession();
+    deferredVideoProcSession_->GetCallback();
+    deferredVideoProcSession_->remoteSession_ = nullptr;
+    deferredVideoProcSession_->callback_ = nullptr;
+    deferredVideoProcSession_->CameraServerDied(pid);
 }
 
 void Test()

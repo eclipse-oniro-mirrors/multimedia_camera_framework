@@ -181,14 +181,14 @@ void Test()
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
     ProfessionSessionFuzzer::fuzz_ = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
     CHECK_ERROR_RETURN_LOG(!ProfessionSessionFuzzer::fuzz_, "Create fuzz_ Error");
-    SceneMode sceneMode_ = SceneMode::PROFESSIONAL_VIDEO;
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     std::vector<sptr<CameraDevice>> cameras;
     cameras = manager_->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
     CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     sptr<CameraOutputCapability> modeAbility =
-        manager_->GetSupportedOutputCapability(cameras[0], sceneMode_);
+        manager_->GetSupportedOutputCapability(cameras[0], sceneMode);
     captureSession->BeginConfig();
     captureSession->AddInput(input);
     input->Open();

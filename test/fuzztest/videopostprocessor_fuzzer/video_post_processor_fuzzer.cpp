@@ -26,7 +26,6 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
-std::shared_ptr<DeferredVideoWork> VideoPostProcessorFuzzer::work_{nullptr};
 static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static constexpr int NUM_1 = 1;
@@ -78,15 +77,15 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     auto dstFd = NUM_1;
     processor_->copyFileByFd(srcFd, dstFd);
     auto isAutoSuspend = GetData<bool>();
-    std::string videoId_(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd_, dstFd_);
-    std::shared_ptr<DeferredVideoWork> work_ =
+    std::string videoId1(testStrings[randomNum % testStrings.size()]);
+    sptr<IPCFileDescriptor> srcFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+    sptr<IPCFileDescriptor> dstFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId1, srcFd1, dstFd1);
+    std::shared_ptr<DeferredVideoWork> work =
         make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);
-    processor_->StartTimer(videoId, work_);
-    processor_->StopTimer(work_);
-    processor_->ProcessRequest(work_);
+    processor_->StartTimer(videoId, work);
+    processor_->StopTimer(work);
+    processor_->ProcessRequest(work);
     processor_->RemoveRequest(videoId);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
     ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % executionModeCount2);
@@ -97,11 +96,11 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     constexpr int32_t executionModeCount5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
     HdiStatus selectedHdiStatus = static_cast<HdiStatus>(GetData<uint8_t>() % executionModeCount5);
     processor_->PauseRequest(videoId, selectedScheduleType);
-    sptr<IPCFileDescriptor> inputFd_ = nullptr;
-    processor_->StartMpeg(videoId, inputFd_);
-    processor_->StopMpeg(selectedMediaResult, work_);
+    sptr<IPCFileDescriptor> inputFd = nullptr;
+    processor_->StartMpeg(videoId, inputFd);
+    processor_->StopMpeg(selectedMediaResult, work);
     processor_->OnSessionDied();
-    processor_->OnProcessDone(videoId);
+    processor_->OnProcessDone(videoId, nullptr);
     processor_->OnError(videoId, selectedDpsError);
     processor_->OnStateChanged(selectedHdiStatus);
     processor_->OnTimerOut(videoId);
