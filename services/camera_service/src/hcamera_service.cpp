@@ -207,6 +207,14 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         CameraBeautyNotification::GetInstance()->PublishNotification(false);
     }
 #endif
+    if (action == COMMON_EVENT_SCREEN_LOCKED) {
+        MEDIA_DEBUG_LOG("on receive usual.event.SCREEN_LOCKED.");
+        CameraCommonEventManager::GetInstance()->SetScreenLocked(true);
+    }
+    if (action == COMMON_EVENT_SCREEN_UNLOCKED) {
+        MEDIA_DEBUG_LOG("on receive usual.event.SCREEN_UNLOCKED.");
+        CameraCommonEventManager::GetInstance()->SetScreenLocked(false);
+    }
 }
 
 #ifdef NOTIFICATION_ENABLE
@@ -278,13 +286,18 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CHECK_EXECUTE(cameraDataShareHelper_->IsDataShareReady(), SetMuteModeFromDataShareHelper());
             break;
-#ifdef NOTIFICATION_ENABLE
         case COMMON_EVENT_SERVICE_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility COMMON_EVENT_SERVICE");
+#ifdef NOTIFICATION_ENABLE
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(EVENT_CAMERA_BEAUTY_NOTIFICATION,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
-            break;
 #endif
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_UNLOCKED,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            break;
+
         default:
             MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
             break;

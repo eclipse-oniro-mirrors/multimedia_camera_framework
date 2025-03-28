@@ -71,6 +71,16 @@ void CameraCommonEventManager::UnSubscribeCommonEvent(const std::string &eventNa
     commonEventSubscriberMap_.erase(subscriber);
 }
 
+bool CameraCommonEventManager::IsScreenLocked()
+{
+    return isScreenLocked_;
+}
+
+void CameraCommonEventManager::SetScreenLocked(bool status)
+{
+    isScreenLocked_ = status;
+}
+
 CameraCommonEventManager::CameraCommonEventSubscriber::CameraCommonEventSubscriber(
     const EventFwk::CommonEventSubscribeInfo &subscribeInfo, EventReceiver receiver)
     : EventFwk::CommonEventSubscriber(subscribeInfo), eventReceiver_(receiver) {}

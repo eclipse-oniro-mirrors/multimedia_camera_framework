@@ -61,6 +61,8 @@ static const std::string CLIENT_NAME = "clientName";
 // event
 static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
 static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
+static const std::string COMMON_EVENT_SCREEN_LOCKED = "usual.event.SCREEN_LOCKED";
+static const std::string COMMON_EVENT_SCREEN_UNLOCKED = "usual.event.SCREEN_UNLOCKED";
 #ifdef NOTIFICATION_ENABLE
 // beauty notification
 static const std::string EVENT_CAMERA_BEAUTY_NOTIFICATION = "CAMERA_BEAUTY_NOTIFICATION";
