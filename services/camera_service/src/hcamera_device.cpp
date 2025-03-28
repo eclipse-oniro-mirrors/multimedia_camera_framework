@@ -21,6 +21,7 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
+#include "camera_common_event_manager.h"
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
 #include "camera_fwk_metadata_utils.h"
@@ -543,6 +544,9 @@ void HCameraDevice::ReportDeviceProtectionStatus(const std::shared_ptr<OHOS::Cam
         if (itr != g_deviceProtectionToServiceError_.end()) {
             callback->OnError(itr->second, 0);
         }
+    }
+    if (CameraCommonEventManager::GetInstance()->IsScreenLocked()) {
+        return;
     }
     ShowDeviceProtectionDialog(static_cast<DeviceProtectionStatus>(status));
 }
