@@ -108,7 +108,7 @@ private:
     int32_t ProcessBufferInfo(const std::string& imageId, const OHOS::HDI::Camera::V1_2::ImageBufferInfo& buffer);
     int32_t ProcessBufferInfoExt(const std::string& imageId,
         const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
-    std::shared_ptr<Media::Picture> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
+    std::shared_ptr<PictureIntf> AssemblePicture(const OHOS::HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
 
     const int32_t userId_;
     std::weak_ptr<PhotoProcessResult> processResult_;

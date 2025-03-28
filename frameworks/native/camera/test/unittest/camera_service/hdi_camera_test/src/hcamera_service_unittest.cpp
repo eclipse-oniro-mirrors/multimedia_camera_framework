@@ -409,7 +409,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_010, TestSize.Level0)
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: After executing DumpCameraSummary, the argument infoDumper will be changed,
- *                  "Number of Camera clients" can be found in dumperString_
+ *                  "Number of Camera sessions" can be found in dumperString_
  */
 HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level0)
 {
@@ -425,7 +425,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_011, TestSize.Level0)
     cameraService_->DumpCameraSummary(cameraIds, infoDumper);
     std::string msgString = infoDumper.dumperString_;
     auto ret = [msgString]()->bool {
-        return (msgString.find("Number of Camera clients") != std::string::npos);
+        return (msgString.find("Number of Camera sessions") != std::string::npos);
     }();
     EXPECT_TRUE(ret);
 }
