@@ -61,6 +61,8 @@ int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId,
 {
     auto infd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd->GetFd()));
     auto outFd = sptr<IPCFileDescriptor>::MakeSptr(dup(dstFd->GetFd()));
+    fdsan_exchange_owner_tag(infd->GetFd(), 0, LOG_DOMAIN);
+    fdsan_exchange_owner_tag(outFd->GetFd(), 0, LOG_DOMAIN);
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
         DP_INFO_LOG("AddVideo error, inSync!");
