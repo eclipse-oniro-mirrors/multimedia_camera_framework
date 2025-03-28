@@ -103,6 +103,7 @@ static const std::unordered_map<std::string, int32_t> mapConnectionType = {
 static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_YUV_420_SP", CameraFormat::CAMERA_FORMAT_YUV_420_SP},
     {"CAMERA_FORMAT_JPEG", CameraFormat::CAMERA_FORMAT_JPEG},
+    {"CAMERA_FORMAT_YUV_422_UYVY", CameraFormat::CAMERA_FORMAT_YUV_422_UYVY},
     {"CAMERA_FORMAT_RGBA_8888", CameraFormat::CAMERA_FORMAT_RGBA_8888},
     {"CAMERA_FORMAT_DNG", CameraFormat::CAMERA_FORMAT_DNG},
     {"CAMERA_FORMAT_DNG_XDRAW", CameraFormat::CAMERA_FORMAT_DNG_XDRAW},
