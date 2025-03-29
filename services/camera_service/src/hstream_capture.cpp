@@ -535,7 +535,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         rotation = rotation - CAPTURE_ROTATE_360;
     }
     int32_t sensorRotationValue = SetSensorRotation(rotation, sensorOrientation, cameraPosition);
-    sensorRotationMap_.EnsureInsert(captureId, sensorRotationValue); // 获取重力传感角度
+    sensorRotationMap_.EnsureInsert(captureId, sensorRotationValue); // 获取重力传感器角度
     {
         uint8_t connectType = 0;
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
