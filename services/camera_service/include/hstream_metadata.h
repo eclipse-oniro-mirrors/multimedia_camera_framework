@@ -32,7 +32,7 @@ public:
     HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format, std::vector<int32_t> metadataTypes);
     ~HStreamMetadata();
 
-    int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+    int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     int32_t ReleaseStream(bool isDelay) override;
