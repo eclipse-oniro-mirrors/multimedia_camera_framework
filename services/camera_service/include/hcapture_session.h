@@ -154,7 +154,8 @@ public:
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
-    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) = 0;
+    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId,
+        int32_t sensorRotationVaule) = 0;
 
 private:
     std::mutex cbMutex_;
@@ -270,7 +271,8 @@ public:
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
-    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId) override;
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId,
+        int32_t sensorRotationValue) override;
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
     void GetOutputStatus(int32_t &status);
     int32_t SetPreviewRotation(std::string &deviceClass) override;

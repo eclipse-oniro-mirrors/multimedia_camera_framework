@@ -77,6 +77,8 @@ public:
     void SetBurstImages(int32_t captureId, std::string imageId);
     void CheckResetBurstKey(int32_t captureId);
     int32_t AcquireBufferToPrepareProxy(int32_t captureId) override;
+    int32_t SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition);
+    SafeMap<int32_t, int32_t> sensorRotationMap_ = {};
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
