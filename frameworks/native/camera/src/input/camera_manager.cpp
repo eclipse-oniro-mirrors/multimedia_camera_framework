@@ -1849,7 +1849,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             bool isInnerOrFrontCamera = (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
                 deviceInfo->GetPosition() == CAMERA_POSITION_FRONT);
             bool isUnsupportedFoldScreenType = (!foldScreenType_.empty() &&
-                foldScreenType_[0] != '2' && foldScreenType_[0] != '4');
+                foldScreenType_[0] != '2' && foldScreenType_[0] != '4' && foldScreenType_[0] != '5');
             if ((isBackCamera || isInnerOrFrontCamera) && isUnsupportedFoldScreenType) {
                 supportedCameraDeviceList.emplace_back(deviceInfo);
                 continue;
