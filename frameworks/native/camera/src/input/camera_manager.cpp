@@ -1031,8 +1031,6 @@ void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListene
         sptr<ICameraMuteServiceCallback> callback = cameraMuteListenerManager_;
         int32_t errCode = SetCameraMuteServiceCallback(callback);
         CHECK_ERROR_RETURN(errCode != CAMERA_OK);
-    } else {
-        listener->OnCameraMute(cameraMuteListenerManager_->GetCachedMuteMode());
     }
 }
 
@@ -2608,7 +2606,6 @@ int32_t CameraMuteListenerManager::OnCameraMute(bool muteMode)
     auto listenerManager = cameraManager->GetCameraMuteListenerManager();
     MEDIA_DEBUG_LOG("CameraMuteListeners size %{public}zu", listenerManager->GetListenerCount());
     listenerManager->TriggerListener([&](auto listener) { listener->OnCameraMute(muteMode); });
-    listenerManager->cachedMuteMode_ = muteMode;
     return CAMERA_OK;
 }
 
