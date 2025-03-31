@@ -244,38 +244,24 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
 size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime,
     int32_t captureId)
 {
-    bool isDeblurStartTime = false;
     std::unique_lock<mutex> startTimeLock(startTimeMutex_);
     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
     if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime
         && mPStartTimeMap_[captureId] > clearVideoStartTime) {
         MEDIA_INFO_LOG("set deblur start time is %{public}" PRIu64, mPStartTimeMap_[captureId]);
         clearVideoStartTime = mPStartTimeMap_[captureId];
-        isDeblurStartTime = true;
     }
     mPStartTimeMap_.erase(captureId);
     startTimeLock.unlock();
     MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRIu64,
         captureId, clearVideoStartTime);
-    size_t idrIndex = frameRecords.size();
-    if (isDeblurStartTime) {
-        for (size_t index = 0; index < frameRecords.size(); ++index) {
-            auto frame = frameRecords[index];
-            if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
-                MEDIA_INFO_LOG("FindIdrFrameIndex before start time");
-                idrIndex = index;
-            }
-        }
-    }
-    if (idrIndex == frameRecords.size()) {
-        for (size_t index = 0; index < frameRecords.size(); ++index) {
-            auto frame = frameRecords[index];
-            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
-                MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
-                idrIndex = index;
-                break;
-            }
-            idrIndex = 0;
+    size_t idrIndex = 0;
+    for (size_t index = 0; index < frameRecords.size(); ++index) {
+        auto frame = frameRecords[index];
+        if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
+            MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
+            idrIndex = index;
+            break;
         }
     }
     return idrIndex;
