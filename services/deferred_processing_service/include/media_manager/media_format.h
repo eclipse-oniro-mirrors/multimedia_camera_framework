@@ -26,6 +26,7 @@ const std::string MINE_VIDEO_AVC = Media::Plugins::MimeType::VIDEO_AVC;
 const std::string MINE_VIDEO_HEVC = Media::Plugins::MimeType::VIDEO_HEVC;
 const std::string VIDEO_FRAME_COUNT = "com.openharmony.frame_num";
 const std::string RECORD_SYSTEM_TIMESTAMP = "com.openharmony.recorder.timestamp";
+const std::string LIVE_PHOTO_COVERTIME = "com.openharmony.covertime";
 
 enum class MediaInfoKey : uint32_t {
     META_VALUE_TYPE_NONE,
@@ -94,8 +95,9 @@ struct MediaInfo {
     int64_t recoverTime;
     int32_t streamCount;
     std::string creationTime;
-    float latitude;
-    float longitude;
+    float latitude {-1.0};
+    float longitude {-1.0};
+    float livePhotoCovertime {-1.0};
     CodecInfo codecInfo {};
     std::string recorderTime;
 };

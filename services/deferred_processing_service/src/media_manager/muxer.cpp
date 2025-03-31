@@ -102,16 +102,25 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
     int32_t rotation = mediaInfo->codecInfo.rotation == -1 ? 0 : mediaInfo->codecInfo.rotation;
     param->Set<Tag::VIDEO_ROTATION>(static_cast<Plugins::VideoRotation>(rotation));
     param->Set<Tag::MEDIA_CREATION_TIME>(mediaInfo->creationTime);
-    param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
-    param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
     param->Set<Tag::VIDEO_IS_HDR_VIVID>(mediaInfo->codecInfo.isHdrvivid);
+    if (mediaInfo->latitude > 0) {
+        param->Set<Tag::MEDIA_LATITUDE>(mediaInfo->latitude);
+    }
+    if (mediaInfo->longitude > 0) {
+        param->Set<Tag::MEDIA_LONGITUDE>(mediaInfo->longitude);
+    }
     auto ret = muxer_->SetParameter(param);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "add param failed, ret: %{public}d", ret);
 
     auto userMeta = std::make_shared<Meta>();
     userMeta->SetData(VIDEO_FRAME_COUNT, mediaInfo->codecInfo.numFrames);
-    userMeta->SetData(RECORD_SYSTEM_TIMESTAMP, mediaInfo->recorderTime);
+    if (mediaInfo->livePhotoCovertime > 0) {
+        userMeta->SetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+    }
+    if (!mediaInfo->recorderTime.empty()) {
+        userMeta->SetData(RECORD_SYSTEM_TIMESTAMP, mediaInfo->recorderTime);
+    }
     ret = muxer_->SetUserMeta(userMeta);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "add userMeta failed, ret: %{public}d", ret);
