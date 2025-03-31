@@ -57,7 +57,7 @@ HStreamRepeat::~HStreamRepeat()
 #endif
 }
 
-int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamRepeat::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     MEDIA_INFO_LOG(
@@ -448,7 +448,6 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     } else {
         SetStreamTransform();
     }
-
     auto streamOperator = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
         "HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
@@ -538,7 +537,6 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
-
     auto streamOperator = GetStreamOperator();
 
     CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;

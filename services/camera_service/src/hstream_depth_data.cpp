@@ -47,7 +47,7 @@ HStreamDepthData::~HStreamDepthData()
         format_, width_, height_, GetFwkStreamId(), GetHdiStreamId());
 }
 
-int32_t HStreamDepthData::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamDepthData::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     MEDIA_INFO_LOG("HStreamDepthData::LinkInput streamId:%{public}d", GetFwkStreamId());

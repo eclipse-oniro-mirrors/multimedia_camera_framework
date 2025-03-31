@@ -80,7 +80,7 @@ HStreamCapture::~HStreamCapture()
         format_, width_, height_, GetFwkStreamId());
 }
 
-int32_t HStreamCapture::LinkInput(sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamCapture::LinkInput(wptr<HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     MEDIA_INFO_LOG("HStreamCapture::LinkInput streamId:%{public}d", GetFwkStreamId());
@@ -803,6 +803,7 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_ && mSwitchToOfflinePhoto_) {
         hStreamOperatorSptr_->Release();
+        streamOperatorOffline_ = nullptr;
     }
     mSwitchToOfflinePhoto_ = false;
     return errorCode;
@@ -942,6 +943,7 @@ bool HStreamCapture::IsHasEnableOfflinePhoto()
 void HStreamCapture::SwitchToOffline()
 {
     mSwitchToOfflinePhoto_ = true;
+    streamOperatorOffline_ = GetStreamOperator();
 }
 
 bool HStreamCapture::IsHasSwitchToOffline()
