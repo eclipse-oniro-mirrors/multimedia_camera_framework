@@ -257,25 +257,12 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
     startTimeLock.unlock();
     MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRIu64,
         captureId, clearVideoStartTime);
-    size_t idrIndex = frameRecords.size();
-    if (isDeblurStartTime) {
-        for (size_t index = 0; index < frameRecords.size(); ++index) {
-            auto frame = frameRecords[index];
-            if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
-                MEDIA_INFO_LOG("FindIdrFrameIndex before start time");
-                idrIndex = index;
-            }
-        }
-    }
-    if (idrIndex == frameRecords.size()) {
-        for (size_t index = 0; index < frameRecords.size(); ++index) {
-            auto frame = frameRecords[index];
-            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
-                MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
-                idrIndex = index;
-                break;
-            }
-            idrIndex = 0;
+    size_t idrIndex = 0;
+    for (size_t index = 0; index<frameRecords.size(); ++index) {
+        auto frame = frameRecords[index];
+        if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
+            MEDIA_INFO_LOG("FindldrFraaameIndex after start time");
+            idrIndex = index;
         }
     }
     return idrIndex;
