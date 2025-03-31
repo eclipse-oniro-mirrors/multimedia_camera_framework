@@ -22,6 +22,7 @@
 #include <mutex>
 #include <vector>
 
+#include "camera_thread_utils.h"
 #include "refbase.h"
 
 namespace OHOS {
@@ -81,6 +82,14 @@ public:
             AddListenerNoLock(listener, listeners_);
         }
         isTriggering_ = false;
+    }
+
+    void TriggerTargetListenerAsync(std::shared_ptr<T>& listener, const std::function<void(std::shared_ptr<T>)> fun)
+    {
+        if (listener == nullptr || !IsListenerExist(listener)) {
+            return;
+        }
+        CameraThreadUtils::StartAsyncTask([listener, fun]() { fun(listener); });
     }
 
     size_t GetListenerCount()
