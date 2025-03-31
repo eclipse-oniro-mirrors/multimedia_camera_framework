@@ -62,6 +62,7 @@ private:
     void DisconnectService();
     bool PrepareStreams(const std::string& videoId, const int inputFd);
     bool ProcessStream(const StreamDescription& stream);
+    void ReleaseStreams();
     void SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer);
     HDI::Camera::V1_0::StreamIntent GetIntent(HDI::Camera::V1_3::MediaStreamType type);
     bool StartMpeg(const std::string& videoId, const sptr<IPCFileDescriptor>& inputFd);

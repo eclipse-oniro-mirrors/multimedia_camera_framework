@@ -296,6 +296,18 @@ bool VideoPostProcessor::ProcessStream(const StreamDescription& stream)
 }
 // LCOV_EXCL_STOP
 
+void VideoPostProcessor::ReleaseStreams()
+{
+    DP_CHECK_RETURN(allStreamInfo_.empty());
+
+    auto session = GetVideoSession();
+    DP_CHECK_ERROR_RETURN_LOG(session == nullptr, "Release streams failed, video session is nullptr.");
+
+    auto ret = session->ReleaseStreams(allStreamInfo_);
+    allStreamInfo_.clear();
+    DP_INFO_LOG("DPS_VIDEO: ReleaseStreams ret: %{public}d", ret);
+}
+
 void VideoPostProcessor::SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer)
 {
     StreamInfo_V1_1 streamInfo;
@@ -389,14 +401,6 @@ void VideoPostProcessor::StopTimer(const DeferredVideoWorkPtr& work)
     auto timeId = work->GetTimeId();
     DP_INFO_LOG("DpsTimer stop, videoId: %{public}s, timeId: %{public}u", videoId.c_str(), timeId);
     DpsTimer::GetInstance().StopTimer(timeId);
-
-    auto session = GetVideoSession();
-    DP_CHECK_ERROR_RETURN_LOG(session == nullptr,
-        "release videoId: %{public}s failed, video session is nullptr.", videoId.c_str());
-
-    auto ret = session->ReleaseStreams(allStreamInfo_);
-    allStreamInfo_.clear();
-    DP_INFO_LOG("DPS_VIDEO: ReleaseStreams videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }
 
 DeferredVideoWorkPtr VideoPostProcessor::GetRunningWork(const std::string& videoId)
@@ -424,6 +428,7 @@ void VideoPostProcessor::OnSessionDied()
 
 void VideoPostProcessor::OnProcessDone(const std::string& videoId, std::unique_ptr<MediaUserInfo> userInfo)
 {
+    ReleaseStreams();
     auto work = GetRunningWork(videoId);
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
     // LCOV_EXCL_START
@@ -448,6 +453,7 @@ void VideoPostProcessor::OnProcessDone(const std::string& videoId, std::unique_p
 
 void VideoPostProcessor::OnError(const std::string& videoId, DpsError errorCode)
 {
+    ReleaseStreams();
     auto work = GetRunningWork(videoId);
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "video work is nullptr.");
     MediaResult resule = errorCode == DPS_ERROR_VIDEO_PROC_INTERRUPTED ? MediaResult::PAUSE : MediaResult::FAIL;

@@ -353,7 +353,7 @@ sptr<IPCFileDescriptor> MpegManager::GetFileFd(const std::string& requestId, int
     }
     int fd = open(path.c_str(), flags, S_IRUSR | S_IWUSR);
     fdsan_exchange_owner_tag(fd, 0, LOG_DOMAIN);
-    DP_DEBUG_LOG("GetFileFd path: %{public}s", path.c_str());
+    DP_DEBUG_LOG("GetFileFd path: %{public}s, fd: %{public}d", path.c_str(), fd);
     return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 } // namespace DeferredProcessing
