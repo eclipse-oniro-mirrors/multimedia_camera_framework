@@ -79,6 +79,7 @@
 #include "hstream_operator_manager.h"
 #include "res_type.h"
 #include "res_sched_client.h"
+#include "camera_device_ability_items.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -850,13 +851,6 @@ int32_t HStreamOperator::EnableMovingPhoto(const std::shared_ptr<OHOS::Camera::C
     MEDIA_INFO_LOG("HStreamOperator::EnableMovingPhoto is %{public}d", isEnable);
     isSetMotionPhoto_ = isEnable;
     deviceSensorOritation_ = sensorOritation;
-    #ifdef CAMERA_USE_SENSOR
-    if (isSetMotionPhoto_) {
-        RegisterSensorCallback();
-    } else {
-        UnRegisterSensorCallback();
-    }
-    #endif
     StartMovingPhotoStream(settings);
     CHECK_EXECUTE(cameraDevice_ != nullptr, cameraDevice_->EnableMovingPhoto(isEnable));
     GetMovingPhotoBufferDuration();
@@ -1040,12 +1034,6 @@ int32_t HStreamOperator::Release()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
-    #ifdef CAMERA_USE_SENSOR
-    if (isSetMotionPhoto_) {
-        UnRegisterSensorCallback();
-        isSetMotionPhoto_ = false;
-    }
-    #endif
     if (displayListener_) {
         OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
         displayListener_ = nullptr;
@@ -1251,14 +1239,26 @@ int32_t HStreamOperator::CalcRotationDegree(GravityData data)
 }
 #endif
 
+void HStreamOperator::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition)
+{
+    MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
+        rotationValue, sensorOrientation);
+    // 获取当前重力传感器角度
+    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
+        sensorRotation_ = rotationValue - sensorOrientation;
+    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        sensorRotation_ = sensorOrientation - rotationValue;
+    }
+}
+
 void HStreamOperator::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
 {
     if (!isSetMotionPhoto_) {
         return;
     }
     int32_t addMirrorRotation = 0;
-    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
-    if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation_);
+    if ((sensorRotation_ == STREAM_ROTATE_0 || sensorRotation_ == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
         addMirrorRotation = STREAM_ROTATE_180;
     }
     int32_t realRotation = rotation + addMirrorRotation;
