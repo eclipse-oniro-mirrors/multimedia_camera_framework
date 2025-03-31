@@ -35,6 +35,7 @@
 #include "listener_base.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
+#include "napi/native_node_api.h"
 #include "preview_output.h"
 #include "refbase.h"
 #include "surface_utils.h"
@@ -136,33 +137,16 @@ void PreviewOutputCallback::OnError(const int32_t errorCode) const
 void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData statusData) const
 {
     MEDIA_DEBUG_LOG("OnSketchStatusChangedAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    CHECK_ERROR_RETURN_LOG(!loop, "failed to get event loop");
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    CHECK_ERROR_RETURN_LOG(!work, "failed to allocate work");
-    std::unique_ptr<SketchStatusCallbackInfo> callbackInfo =
-        std::make_unique<SketchStatusCallbackInfo>(statusData, shared_from_this(), env_);
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {},
-        [](uv_work_t* work, int status) {
-            SketchStatusCallbackInfo* callbackInfo = reinterpret_cast<SketchStatusCallbackInfo*>(work->data);
-            if (callbackInfo) {
-                auto listener = callbackInfo->listener_.lock();
-                if (listener) {
-                    listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
-                }
-                delete callbackInfo;
-            }
-            delete work;
-        },
-        uv_qos_user_initiated);
-    if (ret) {
-        MEDIA_ERR_LOG("failed to execute work");
-        delete work;
-    } else {
-        callbackInfo.release();
+    std::shared_ptr<SketchStatusCallbackInfo> callbackInfo =
+        std::make_shared<SketchStatusCallbackInfo>(statusData, shared_from_this(), env_);
+    auto task = [callbackInfo]() {
+        auto listener = callbackInfo->listener_.lock();
+        if (listener) {
+            listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
+        }
+    };
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate)) {
+        MEDIA_ERR_LOG("PreviewOutputCallback::OnSketchStatusDataChangedAsync failed to execute work");
     }
 }
 
