@@ -91,13 +91,14 @@ int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
     int imgFd = open(path, O_RDWR | O_CREAT, FILE_PERMISSIONS_FLAG);
     CHECK_ERROR_RETURN_RET_LOG(imgFd == -1, -1,
         "%s, open file failed, errno = %{public}s.", __FUNCTION__, strerror(errno));
+    fdsan_exchange_owner_tag(imgFd, 0, LOG_DOMAIN);
     int ret = write(imgFd, buffer, size);
     if (ret == -1) {
         MEDIA_ERR_LOG("%s, write file failed, error = %{public}s", __FUNCTION__, strerror(errno));
-        close(imgFd);
+        fdsan_close_with_tag(imgFd, LOG_DOMAIN);
         return -1;
     }
-    close(imgFd);
+    fdsan_close_with_tag(imgFd, LOG_DOMAIN);
     return 0;
 }
 
@@ -126,17 +127,18 @@ int32_t TestUtils::SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode
             std::cout << "open file failed, errno = " << strerror(errno) << std::endl;
             return -1;
         }
+        fdsan_exchange_owner_tag(fd, 0, LOG_DOMAIN);
     } else if (operationMode == VideoSaveMode::APPEND && fd != -1) {
         int32_t ret = write(fd, buffer, size);
         if (ret == -1) {
             std::cout << "write file failed, error = " << strerror(errno) << std::endl;
-            close(fd);
+            fdsan_close_with_tag(fd, LOG_DOMAIN);
             fd = -1;
             return fd;
         }
     } else { // VideoSaveMode::CLOSE
         if (fd != -1) {
-            close(fd);
+            fdsan_close_with_tag(fd, LOG_DOMAIN);
             fd = -1;
         }
     }
