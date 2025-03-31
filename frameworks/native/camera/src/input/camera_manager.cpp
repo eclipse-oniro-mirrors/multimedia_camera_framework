@@ -15,6 +15,7 @@
 
 #include "input/camera_manager.h"
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -23,10 +24,9 @@
 #include <nlohmann/json.hpp>
 #include <ostream>
 #include <parameters.h>
+#include <regex>
 #include <sstream>
 #include <unordered_map>
-#include <climits>
-#include <regex>
 
 #include "ability/camera_ability_parse_util.h"
 #include "aperture_video_session.h"
@@ -989,23 +989,30 @@ void CameraManager::RegisterCameraStatusCallback(shared_ptr<CameraManagerCallbac
     CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = cameraStatusListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
+
+    // First register, set callback to service, service trigger callback.
     if (cameraStatusListenerManager_->GetListenerCount() == 1) {
         sptr<ICameraServiceCallback> callback = cameraStatusListenerManager_;
-        int32_t errCode = SetCameraServiceCallback(callback);
-        CHECK_ERROR_RETURN(errCode != CAMERA_OK);
-    } else {
-        auto cachedStatus = cameraStatusListenerManager_->GetCachedCameraStatus();
-        for (auto& status : cachedStatus) {
-            if (status == nullptr) {
-                continue;
-            }
-            listener->OnCameraStatusChanged(*status);
-        }
-        auto cachedFlashStatus = cameraStatusListenerManager_->GetCachedFlashStatus();
-        for (auto& status : cachedFlashStatus) {
-            listener->OnFlashlightStatusChanged(status.first, status.second);
-        }
+        SetCameraServiceCallback(callback);
+        return;
     }
+
+    // Non-First register, async callback by cache data.
+    auto cachedStatus = cameraStatusListenerManager_->GetCachedCameraStatus();
+    auto cachedFlashStatus = cameraStatusListenerManager_->GetCachedFlashStatus();
+    cameraStatusListenerManager_->TriggerTargetListenerAsync(
+        listener, [cachedStatus, cachedFlashStatus](auto listener) {
+            MEDIA_INFO_LOG("CameraManager::RegisterCameraStatusCallback async trigger status");
+            for (auto& status : cachedStatus) {
+                if (status == nullptr) {
+                    continue;
+                }
+                listener->OnCameraStatusChanged(*status);
+            }
+            for (auto& status : cachedFlashStatus) {
+                listener->OnFlashlightStatusChanged(status.first, status.second);
+            }
+        });
 }
 
 void CameraManager::UnregisterCameraStatusCallback(std::shared_ptr<CameraManagerCallback> listener)
@@ -1053,13 +1060,22 @@ void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
     CHECK_ERROR_RETURN(listener == nullptr);
     bool isSuccess = torchServiceListenerManager_->AddListener(listener);
     CHECK_ERROR_RETURN(!isSuccess);
+
+    // First register, set callback to service, service trigger callback.
     if (torchServiceListenerManager_->GetListenerCount() == 1) {
         sptr<ITorchServiceCallback> callback = torchServiceListenerManager_;
-        int32_t errCode = SetTorchServiceCallback(callback);
-        CHECK_ERROR_RETURN(errCode != CAMERA_OK);
-    } else {
-        listener->OnTorchStatusChange(torchServiceListenerManager_->GetCachedTorchStatus());
+        SetTorchServiceCallback(callback);
+        return;
     }
+
+    // Non-First register, async callback by cache data.
+    auto torchStatus = torchServiceListenerManager_->GetCachedTorchStatus();
+    torchServiceListenerManager_->TriggerTargetListenerAsync(listener, [torchStatus](auto listener) {
+        MEDIA_INFO_LOG(
+            "CameraManager::RegisterTorchListener async trigger status change %{public}d %{public}d %{public}f",
+            torchStatus.isTorchActive, torchStatus.isTorchAvailable, torchStatus.torchLevel);
+        listener->OnTorchStatusChange(torchStatus);
+    });
 }
 
 void CameraManager::UnregisterTorchListener(std::shared_ptr<TorchListener> listener)
