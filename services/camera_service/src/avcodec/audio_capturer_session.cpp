@@ -33,6 +33,18 @@ namespace CameraStandard {
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
+    AudioStreamInfo streamInfo;
+    streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
+    streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
+    streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
+    streamInfo.channels = getMicNum();
+    deferredInputOptions_ = streamInfo;
+    AudioStreamInfo outputOptions;
+    outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
+    outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
+    outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
+    outputOptions.channels = AudioChannel::MONO;
+    deferredOutputOptions_ = outputOptions;
 }
 
 AudioChannel AudioCapturerSession::getMicNum()
@@ -72,10 +84,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     auto callingTokenID = IPCSkeleton::GetCallingTokenID();
     SetFirstCallerTokenID(callingTokenID);
     AudioCapturerOptions capturerOptions;
-    capturerOptions.streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
-    capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
-    capturerOptions.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
-    capturerOptions.streamInfo.channels = getMicNum();
+    capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
@@ -86,13 +95,6 @@ bool AudioCapturerSession::CreateAudioCapturer()
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
-    AudioStreamInfo outputOptions;
-    outputOptions.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_32000);
-    outputOptions.encoding = AudioEncodingType::ENCODING_PCM;
-    outputOptions.format = AudioSampleFormat::SAMPLE_S16LE;
-    outputOptions.channels = AudioChannel::MONO;
-    deferredInputOptions_ = capturerOptions.streamInfo;
-    deferredOutputOptions_ = outputOptions;
     return true;
 }
 
