@@ -52,6 +52,10 @@ private:
     bool CheckAndGetValue(const std::shared_ptr<Format>& format, const std::string_view& key, T& value) const
     {
         bool ret = false;
+        if (format == nullptr) {
+            return ret;
+        }
+
         if constexpr (std::is_same_v<T, int32_t>) {
             ret = format->GetIntValue(key, value);
         } else if constexpr (std::is_same_v<T, float>) {
