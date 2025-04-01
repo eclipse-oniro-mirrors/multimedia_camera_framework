@@ -62,6 +62,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 HStreamCapture::~HStreamCapture()
 {
     rotationMap_.Clear();
+    sensorRotationMap_.Clear();
     MEDIA_INFO_LOG(
         "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
         format_, width_, height_, GetFwkStreamId());
@@ -501,6 +502,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     int32_t sensorOrientation = 0;
     int result;
     camera_metadata_item_t item;
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         if (cameraAbility_ == nullptr) {
@@ -512,7 +514,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         }
         MEDIA_INFO_LOG("set rotation sensor orientation %{public}d", sensorOrientation);
 
-        camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
         result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
         if (result == CAM_META_SUCCESS && item.count > 0) {
             cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
@@ -533,6 +534,8 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (rotation >= CAPTURE_ROTATE_360) {
         rotation = rotation - CAPTURE_ROTATE_360;
     }
+    int32_t sensorRotationValue = SetSensorRotation(rotation, sensorOrientation, cameraPosition);
+    sensorRotationMap_.EnsureInsert(captureId, sensorRotationValue); // 获取重力传感器角度
     {
         uint8_t connectType = 0;
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -561,6 +564,20 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         MEDIA_ERR_LOG("set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     }
     CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
+}
+
+int32_t HStreamCapture::SetSensorRotation(int32_t rotationValue, int32_t sensorOrientation, int32_t cameraPosition)
+{
+    MEDIA_INFO_LOG("SetSensorRotation rotationValue : %{public}d, sensorOrientation : %{public}d",
+        rotationValue, sensorOrientation);
+    int32_t sensorRotation = 0;
+    // 通过应用下发角度，计算当前重力传感器角度
+    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
+        sensorRotation = rotationValue - sensorOrientation;
+    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        sensorRotation = sensorOrientation - rotationValue;
+    }
+    return sensorRotation;
 }
 
 int32_t HStreamCapture::CancelCapture()
