@@ -283,12 +283,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
 Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &previewProfiles)
 {
+    outCapability->previewProfilesSize = previewProfiles.size();
     if (previewProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid preview profiles size.");
         outCapability->previewProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->previewProfilesSize = previewProfiles.size();
     outCapability->previewProfiles = new Camera_Profile* [previewProfiles.size()];
     CHECK_ERROR_PRINT_LOG(!outCapability->previewProfiles, "Failed to allocate memory for preview profiles");
     MEDIA_DEBUG_LOG("GetSupportedCameraOutputCapability previewOutput size enter");
@@ -309,12 +309,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapabi
 Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &photoProfiles)
 {
+    outCapability->photoProfilesSize = photoProfiles.size();
     if (photoProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid photo profiles size.");
         outCapability->photoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->photoProfilesSize = photoProfiles.size();
     outCapability->photoProfiles = new Camera_Profile* [photoProfiles.size()];
     CHECK_ERROR_PRINT_LOG(!outCapability->photoProfiles, "Failed to allocate memory for photo profiles");
     for (size_t index = 0; index < photoProfiles.size(); index++) {
@@ -333,12 +333,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
 Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapability* outCapability,
     std::vector<VideoProfile> &videoProfiles)
 {
+    outCapability->videoProfilesSize = videoProfiles.size();
     if (videoProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid video profiles size.");
         outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->videoProfilesSize = videoProfiles.size();
     outCapability->videoProfiles = new Camera_VideoProfile* [videoProfiles.size()];
     CHECK_ERROR_PRINT_LOG(!outCapability->videoProfiles, "Failed to allocate memory for video profiles");
     for (size_t index = 0; index < videoProfiles.size(); index++) {
@@ -359,12 +359,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
 Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
     std::vector<MetadataObjectType> &metadataTypeList)
 {
+    outCapability->metadataProfilesSize = metadataTypeList.size();
     if (metadataTypeList.size() == 0) {
         MEDIA_ERR_LOG("Invalid metadata type size.");
         outCapability->supportedMetadataObjectTypes = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->metadataProfilesSize = metadataTypeList.size();
     outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataTypeList.size()];
     CHECK_ERROR_PRINT_LOG(!outCapability->supportedMetadataObjectTypes,
         "Failed to allocate memory for supportedMetadataObjectTypes");
