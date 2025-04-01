@@ -29,6 +29,12 @@ namespace CameraStandard {
 using namespace AudioStandard;
 class AudioDeferredProcess : public RefBase {
 public:
+    static constexpr int32_t ONE_THOUSAND = 1000;
+    static constexpr int32_t DURATION_EACH_AUDIO_FRAME = 32;
+    static constexpr int32_t PROCESS_BATCH_SIZE = 5;
+    static constexpr int32_t MAX_UNPROCESSED_SIZE = 12288;
+    static constexpr int32_t MAX_PROCESSED_SIZE = 2048;
+
     explicit AudioDeferredProcess();
     ~AudioDeferredProcess();
 
@@ -38,14 +44,13 @@ public:
     int32_t GetMaxBufferSize(const AudioStreamInfo& inputOption, const AudioStreamInfo& outputOption);
     int32_t GetOfflineEffectChain();
     uint32_t GetOneUnprocessedSize();
+    void FadeOneBatch(std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr);
+    void EffectChainProcess(std::array<uint8_t, MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE>& rawArr,
+        std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr);
+    void ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr,
+        vector<sptr<AudioRecord>>& processedRecords, uint32_t i, uint32_t batchSize);
     int32_t Process(vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedRecords);
     void Release();
-    
-    static constexpr int32_t ONE_THOUSAND = 1000;
-    static constexpr int32_t DURATION_EACH_AUDIO_FRAME = 32;
-    static constexpr int32_t PROCESS_BATCH_SIZE = 5;
-    static constexpr int32_t MAX_UNPROCESSED_SIZE = 12288;
-    static constexpr int32_t MAX_PROCESSED_SIZE = 2048;
 
 private:
     std::string chainName_ = "offline_record_algo";

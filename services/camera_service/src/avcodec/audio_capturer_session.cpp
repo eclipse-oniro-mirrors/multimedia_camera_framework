@@ -84,7 +84,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     auto callingTokenID = IPCSkeleton::GetCallingTokenID();
     SetFirstCallerTokenID(callingTokenID);
     AudioCapturerOptions capturerOptions;
-    capturerOptions.streamInfo = deferredOutputOptions_;
+    capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);

@@ -106,17 +106,39 @@ uint32_t AudioDeferredProcess::GetOneUnprocessedSize()
     return oneUnprocessedSize_;
 }
 
-void FadeOneBatch(uint8_t* processedArr)
+void AudioDeferredProcess::FadeOneBatch(std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr)
 {
     float rate;
-    int16_t *data = (int16_t *)processedArr;
+    int16_t* data = reinterpret_cast<int16_t*>(processedArr.data());
     int32_t temp;
-    constexpr int32_t oneSize = 32 * 32;
+    int32_t oneSize = outputOptions_.samplingRate / ONE_THOUSAND * DURATION_EACH_AUDIO_FRAME;
+    CHECK_ERROR_RETURN_LOG(oneSize >= MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
+        "AudioDeferredProcess::FadeOneBatch arrSize overSize");
     for (int k = 0; k < oneSize; k++) {
         temp = static_cast<int32_t>(data[k]);
         rate = static_cast<float>(k) / oneSize;
         temp = temp - static_cast<int32_t>(temp * rate);
         data[k] = static_cast<int16_t>(temp);
+    }
+}
+
+void AudioDeferredProcess::EffectChainProcess(std::array<uint8_t, MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE>& rawArr,
+    std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr)
+{
+    int32_t ret = offlineEffectChain_->Process(rawArr.data(), oneUnprocessedSize_ * PROCESS_BATCH_SIZE,
+        processedArr.data(), oneProcessedSize_ * PROCESS_BATCH_SIZE);
+    CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process err");
+}
+
+void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr,
+    vector<sptr<AudioRecord>>& processedRecords, uint32_t i, uint32_t batchSize)
+{
+    for (uint32_t j = 0; j < batchSize; ++ j) {
+        uint8_t* temp = new uint8_t[oneProcessedSize_];
+        int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
+        CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
+        CHECK_ERROR_RETURN_LOG(i + 1 + j - batchSize < 0, "ReturnToRecords unexpected error occured");
+        processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp);
     }
 }
 
@@ -136,43 +158,31 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
     }
     MEDIA_INFO_LOG("AudioDeferredProcess::Process Enter");
     uint32_t audioRecordsLen = audioRecords.size();
-    uint8_t rawArr[MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE] = {0};
-    uint8_t processedArr[MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE] = {0};
+    CHECK_ERROR_RETURN_RET_LOG(0 == audioRecordsLen, CAMERA_OK, "audioRecords.size == 0");
+    std::array<uint8_t, MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE> rawArr{};
+    std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE> processedArr{};
     uint32_t count = 0;
     lock_guard<std::mutex> lock(mutex_);
-    auto EffectChainProcess = [this, &rawArr, &processedArr]()->void {
-        int32_t ret = offlineEffectChain_->Process(rawArr, oneUnprocessedSize_ * PROCESS_BATCH_SIZE,
-            processedArr, oneProcessedSize_ * PROCESS_BATCH_SIZE);
-        CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process err");
-    };
-    auto ReturnToRecords = [this, &processedRecords, &processedArr](uint32_t i, uint32_t batchSize)->void {
-        for (uint32_t j = 0; j < batchSize; ++ j) {
-            uint8_t* temp = new uint8_t[oneProcessedSize_];
-            int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr + j * oneProcessedSize_, oneProcessedSize_);
-            CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
-            processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp);
-        }
-    };
     for (uint32_t i = 0; i < audioRecordsLen; i ++) {
-        int32_t ret = memcpy_s(rawArr + count * oneUnprocessedSize_, oneUnprocessedSize_,
+        int32_t ret = memcpy_s(rawArr.data() + count * oneUnprocessedSize_, oneUnprocessedSize_,
             audioRecords[i]->GetAudioBuffer(), oneUnprocessedSize_);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err");
         if (audioRecordsLen - 1 == i) {
-            MemsetAndCheck(rawArr, MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE,
+            MemsetAndCheck(rawArr.data(), MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, PROCESS_BATCH_SIZE * oneUnprocessedSize_);
-            EffectChainProcess();
-            MemsetAndCheck(processedArr, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
+            EffectChainProcess(rawArr, processedArr);
+            MemsetAndCheck(processedArr.data(), MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, PROCESS_BATCH_SIZE * oneProcessedSize_);
-            ReturnToRecords(i, count + 1);
+            ReturnToRecords(processedArr, processedRecords, i, count + 1);
         } else if (i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1 && count == PROCESS_BATCH_SIZE - 1) {
-            EffectChainProcess();
+            EffectChainProcess(rawArr, processedArr);
             FadeOneBatch(processedArr);
-            MemsetAndCheck(processedArr + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
+            MemsetAndCheck(processedArr.data() + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, (PROCESS_BATCH_SIZE - 1) * oneProcessedSize_);
-            ReturnToRecords(i, PROCESS_BATCH_SIZE);
+            ReturnToRecords(processedArr, processedRecords, i, PROCESS_BATCH_SIZE);
         } else if (count == PROCESS_BATCH_SIZE - 1) {
-            EffectChainProcess();
-            ReturnToRecords(i, PROCESS_BATCH_SIZE);
+            EffectChainProcess(rawArr, processedArr);
+            ReturnToRecords(processedArr, processedRecords, i, PROCESS_BATCH_SIZE);
         }
         count = (count + 1) % PROCESS_BATCH_SIZE;
     }
