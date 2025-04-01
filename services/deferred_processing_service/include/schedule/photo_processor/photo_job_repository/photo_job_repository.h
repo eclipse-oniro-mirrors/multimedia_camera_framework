@@ -18,6 +18,7 @@
 
 #include <deque>
 #include <list>
+#include <unordered_set>
 
 #include "deferred_photo_job.h"
 #include "iphoto_job_repository_listener.h"
@@ -54,6 +55,7 @@ public:
     int GetOfflineIdleJobSize();
     bool IsOfflineJob(std::string imageId);
     bool HasUnCompletedBackgroundJob();
+    bool CheckCacheBackgroundJob(const std::string& imageId);
 
 private:
     void NotifyJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr);
@@ -67,6 +69,7 @@ private:
     int32_t runningNum_ {0};
     std::unordered_map<std::string, DeferredPhotoJobPtr> offlineJobMap_ {};
     std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_ {};
+    std::unordered_set<std::string> backgroundCache_ {};
     std::list<DeferredPhotoJobPtr> offlineJobList_ {};
     std::deque<DeferredPhotoJobPtr> jobQueue_ {};
     std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_ {};

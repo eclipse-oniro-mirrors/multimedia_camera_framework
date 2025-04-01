@@ -42,6 +42,8 @@ PhotoJobRepository::~PhotoJobRepository()
 
 void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata)
 {
+    DP_CHECK_RETURN(CheckCacheBackgroundJob(imageId));
+
     DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, discardable: %{public}d", imageId.c_str(), discardable);
     DeferredPhotoJobPtr jobPtrFind = GetJobUnLocked(imageId);
     if (jobPtrFind != nullptr) {
@@ -178,7 +180,11 @@ void PhotoJobRepository::SetJobCompleted(const std::string& imageId)
 {
     DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s", imageId.c_str());
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
-    DP_CHECK_ERROR_RETURN_LOG(jobPtr == nullptr, "Does not existed, imageId: %{public}s", imageId.c_str());
+    if (jobPtr == nullptr) {
+        backgroundCache_.emplace(imageId);
+        DP_INFO_LOG("Cache background job.");
+        return;
+    }
 
     UpdateJobQueueUnLocked(false, jobPtr);
     bool priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
@@ -405,6 +411,17 @@ bool PhotoJobRepository::HasUnCompletedBackgroundJob()
         return ptr.second->GetCurStatus() == PhotoJobStatus::PENDING;
     });
     return it != backgroundJobMap_.end();
+}
+
+bool PhotoJobRepository::CheckCacheBackgroundJob(const std::string& imageId)
+{
+    auto it = backgroundCache_.find(imageId);
+    if (it != backgroundCache_.end()) {
+        backgroundCache_.erase(it);
+        DP_INFO_LOG("backgroundCache imageId: %{public}s", imageId.c_str());
+        return true;
+    }
+    return false;
 }
 
 void PhotoJobRepository::RecordPriotyNum(bool priorityChanged, const DeferredPhotoJobPtr& jobPtr)
