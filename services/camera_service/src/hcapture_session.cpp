@@ -73,6 +73,7 @@
 #include "camera_timer.h"
 #include "fixed_size_list.h"
 #include "camera_report_dfx_uitls.h"
+#include "camera_device_ability_items.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1361,13 +1362,6 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 {
     isSetMotionPhoto_ = isEnable;
     StartMovingPhotoStream();
-    #ifdef CAMERA_USE_SENSOR
-    if (isSetMotionPhoto_) {
-        RegisterSensorCallback();
-    } else {
-        UnRegisterSensorCallback();
-    }
-    #endif
     auto device = GetCameraDevice();
     if (device != nullptr) {
         device->EnableMovingPhoto(isEnable);
@@ -1633,11 +1627,6 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
 
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
-        #ifdef CAMERA_USE_SENSOR
-        if (isSetMotionPhoto_) {
-            UnRegisterSensorCallback();
-        }
-        #endif
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
         if (displayListener_) {
@@ -1870,14 +1859,15 @@ int32_t HCaptureSession::CalcRotationDegree(GravityData data)
 }
 #endif
 
-void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId)
+void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp, int32_t format, int32_t captureId,
+    int32_t sensorRotationValue)
 {
     if (!isSetMotionPhoto_) {
         return;
     }
     int32_t addMirrorRotation = 0;
-    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotation);
-    if ((sensorRotation == STREAM_ROTATE_0 || sensorRotation == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
+    MEDIA_INFO_LOG("sensorRotation is %{public}d", sensorRotationValue);
+    if ((sensorRotationValue == STREAM_ROTATE_0 || sensorRotationValue == STREAM_ROTATE_180) && isMovingPhotoMirror_) {
         addMirrorRotation = STREAM_ROTATE_180;
     }
     int32_t realRotation = GetSensorOritation() + rotation + addMirrorRotation;
@@ -2309,6 +2299,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             auto captureStream = CastStream<HStreamCapture>(curStream);
             captureStream->rotationMap_.Erase(captureId);
+            captureStream->sensorRotationMap_.Erase(captureId);
             captureStream->OnCaptureError(captureId, errInfo.error_);
         }
     }
@@ -2325,8 +2316,10 @@ int32_t StreamOperatorCallback::OnFrameShutter(
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             auto captureStream = CastStream<HStreamCapture>(curStream);
             int32_t rotation = 0;
+            int32_t sensorRotationVaule = 0;
             captureStream->rotationMap_.Find(captureId, rotation);
-            StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId);
+            captureStream->sensorRotationMap_.Find(captureId, sensorRotationVaule);
+            StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId, sensorRotationVaule);
             captureStream->OnFrameShutter(captureId, timestamp);
         } else {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutter StreamId: %{public}d not found", streamId);
@@ -2346,6 +2339,7 @@ int32_t StreamOperatorCallback::OnFrameShutterEnd(
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             auto captureStream = CastStream<HStreamCapture>(curStream);
             captureStream->rotationMap_.Erase(captureId);
+            captureStream->sensorRotationMap_.Erase(captureId);
             captureStream->OnFrameShutterEnd(captureId, timestamp);
         } else {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
