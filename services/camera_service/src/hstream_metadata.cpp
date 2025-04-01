@@ -51,7 +51,7 @@ HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer,
 HStreamMetadata::~HStreamMetadata()
 {}
 
-int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamMetadata::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,

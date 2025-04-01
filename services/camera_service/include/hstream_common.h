@@ -45,7 +45,7 @@ public:
     explicit HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
-    virtual int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+    virtual int32_t LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
     virtual int32_t UnlinkInput();
     virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
@@ -97,10 +97,10 @@ protected:
     inline sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator()
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        return streamOperator_;
+        return streamOperator_.promote();
     }
 
-    inline void SetStreamOperator(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator)
+    inline void SetStreamOperator(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator)
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
         streamOperator_ = streamOperator;
@@ -111,7 +111,7 @@ protected:
     uint32_t callerToken_;
 
     std::mutex streamOperatorLock_;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
+    wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
 
     int32_t captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
 

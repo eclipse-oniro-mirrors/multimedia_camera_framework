@@ -95,6 +95,7 @@ HStreamCommon::~HStreamCommon()
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::~HStreamCommon streamId is:%{public}d, streamType is:%{public}d",
         fwkStreamId_, streamType_);
+    streamOperator_ = nullptr;
 }
 
 void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
@@ -107,7 +108,7 @@ void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
     }
 }
 
-int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
+int32_t HStreamCommon::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr || cameraAbility == nullptr, CAMERA_INVALID_ARG,
