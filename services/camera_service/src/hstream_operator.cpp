@@ -606,8 +606,9 @@ const sptr<HStreamCommon> HStreamOperator::GetHdiStreamByStreamID(int32_t stream
 {
     auto stream = streamContainer_.GetHdiStream(streamId) != nullptr ? streamContainer_.GetHdiStream(streamId) :
         streamContainerOffline_.GetHdiStream(streamId);
-    CHECK_ERROR_PRINT_LOG(stream == nullptr,
-        "HStreamOperator::GetHdiStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
+    if (stream == nullptr) {
+        MEDIA_DEBUG_LOG("HStreamOperator::GetHdiStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
+    }
     return stream;
 }
 
@@ -1768,7 +1769,7 @@ int32_t HStreamOperator::OnCaptureEndedExt(int32_t captureId,
 
 int32_t HStreamOperator::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
-    MEDIA_INFO_LOG("HStreamOperator::OnCaptureError");
+    MEDIA_DEBUG_LOG("HStreamOperator::OnCaptureError");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& errInfo : infos) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(errInfo.streamId_);

@@ -1942,7 +1942,7 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
 
 SceneMode CameraManager::GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper)
 {
-    MEDIA_INFO_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
+    MEDIA_DEBUG_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
     if (profilesWrapper.photoProfiles.empty() && profilesWrapper.previewProfiles.empty() &&
         profilesWrapper.vidProfiles.empty()) {
         switch (profileMode) {
@@ -2371,7 +2371,7 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
         "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
         profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
         profilesWrapper.vidProfiles.size(), depthProfiles_.size());
