@@ -352,7 +352,8 @@ int HCameraServiceStub::HandleIsCameraMuted(MessageParcel& data, MessageParcel& 
 {
     bool isMuted = false;
     int32_t ret = IsCameraMuted(isMuted);
-    MEDIA_INFO_LOG("HCameraServiceStub HandleIsCameraMuted result: %{public}d, isMuted: %{public}d", ret, isMuted);
+    CHECK_ERROR_PRINT_LOG(ret != ERR_NONE,
+        "HCameraServiceStub HandleIsCameraMuted result: %{public}d, isMuted: %{public}d", ret, isMuted);
     CHECK_ERROR_RETURN_RET_LOG(!reply.WriteBool(isMuted), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleIsCameraMuted Write isMuted failed");
 
