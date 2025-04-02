@@ -414,7 +414,9 @@ void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetI
     std::lock_guard<std::mutex> lock(map_mutex_);
     map_[key] = value;
     step_[key] = 1;
-    cv_[key].notify_all();
+    if (cv_.count(key)) {
+        cv_[key].notify_all();
+    }
 }
  
 std::shared_ptr<PhotoAssetIntf> ConcurrentMap::Get(const int32_t& key)
@@ -452,7 +454,9 @@ void ConcurrentMap::IncreaseCaptureStep(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
     step_[key] = step_[key] + 1;
-    cv_[key].notify_all();
+    if (cv_.count(key)) {
+        cv_[key].notify_all();
+    }
 }
 // LCOV_EXCL_STOP
 
