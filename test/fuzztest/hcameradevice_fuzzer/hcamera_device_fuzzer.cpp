@@ -179,7 +179,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest4()
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
-        MEDIA_INFO_LOG("Start: %ld, End: %ld\n", start, end);
+        MEDIA_INFO_LOG("Start: %lld, End: %lld\n", start, end);
     };
     fuzz_->SetMovingPhotoStartTimeCallback(callback);
     fuzz_->SetMovingPhotoEndTimeCallback(callback);

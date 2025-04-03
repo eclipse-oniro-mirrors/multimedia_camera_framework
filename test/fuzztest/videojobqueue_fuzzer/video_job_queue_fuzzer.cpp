@@ -74,10 +74,10 @@ void DeferredVideoWorkFuzzer::Initialization()
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     
-    DeferredVideoJobPtr jobPtr_ = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd, dstFd);
     auto isAutoSuspend = GetData<bool>();
     fuzz_ = std::make_shared<DeferredProcessing::
-        DeferredVideoWork>(jobPtr_, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
+        DeferredVideoWork>(jobPtr, ExecutionMode::HIGH_PERFORMANCE, isAutoSuspend);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 }
 

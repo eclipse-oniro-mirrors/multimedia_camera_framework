@@ -82,14 +82,14 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest1()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    auto cameraManager_ = CameraManager::GetInstance();
+    auto cameraManager = CameraManager::GetInstance();
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
     Size previewSize;
     previewSize.width = PREVIEW_WIDTH_1;
     previewSize.height = PREVIEW_HEIGHT_1;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
     Size sketchSize;
     sketchSize.width = PREVIEW_WIDTH_2;
     sketchSize.height = PREVIEW_HEIGHT_2;
@@ -123,14 +123,14 @@ void SketchWrapperFuzzer::SketchWrapperFuzzTest2()
     if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
         return;
     }
-    auto cameraManager_ = CameraManager::GetInstance();
+    auto cameraManager = CameraManager::GetInstance();
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
     Size previewSize;
     previewSize.width = PREVIEW_WIDTH_1;
     previewSize.height = PREVIEW_HEIGHT_1;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> previewOutput = cameraManager_->CreatePreviewOutput(previewProfile, surface);
+    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
     Size sketchSize;
     sketchSize.width = PREVIEW_WIDTH_2;
     sketchSize.height = PREVIEW_HEIGHT_2;

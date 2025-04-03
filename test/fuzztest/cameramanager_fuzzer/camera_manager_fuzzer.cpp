@@ -38,14 +38,14 @@ const int32_t NUM_100 = 100;
 static const uint8_t* RAW_DATA = nullptr;
 static size_t g_dataSize = 0;
 static size_t g_pos;
-std::shared_ptr<IDeferredPhotoProcSessionCallbackFuzz> photoSessionCallback =
+std::shared_ptr<IDeferredPhotoProcSessionCallbackFuzz> photoSessionCallback_ =
     std::make_shared<IDeferredPhotoProcSessionCallbackFuzz>();
-std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> videoSessionCallback =
+std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> videoSessionCallback_ =
     std::make_shared<IDeferredVideoProcSessionCallbackFuzz>();
-std::shared_ptr<CameraManagerCallbackFuzz> managerCallback = std::make_shared<CameraManagerCallbackFuzz>();
-std::shared_ptr<CameraMuteListenerFuzz> muteListenerCallback = std::make_shared<CameraMuteListenerFuzz>();
-std::shared_ptr<FoldListenerFuzz> foldListenerCallback = std::make_shared<FoldListenerFuzz>();
-std::shared_ptr<TorchListenerFuzz> torchListenerCallback = std::make_shared<TorchListenerFuzz>();
+std::shared_ptr<CameraManagerCallbackFuzz> managerCallback_ = std::make_shared<CameraManagerCallbackFuzz>();
+std::shared_ptr<CameraMuteListenerFuzz> muteListenerCallback_ = std::make_shared<CameraMuteListenerFuzz>();
+std::shared_ptr<FoldListenerFuzz> foldListenerCallback_ = std::make_shared<FoldListenerFuzz>();
+std::shared_ptr<TorchListenerFuzz> torchListenerCallback_ = std::make_shared<TorchListenerFuzz>();
 
 template<class T>
 T GetData()
@@ -83,10 +83,10 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1()
     auto session = manager->CreateCaptureSession();
     manager->CreateCaptureSession(&session);
     int userId = GetData<int>();
-    auto deferedPhotoSession = manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback);
-    manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback, &deferedPhotoSession);
-    auto deferedVideoSession = manager->CreateDeferredVideoProcessingSession(userId, videoSessionCallback);
-    manager->CreateDeferredVideoProcessingSession(userId, videoSessionCallback, &deferedVideoSession);
+    auto deferedPhotoSession = manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback_);
+    manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback_, &deferedPhotoSession);
+    auto deferedVideoSession = manager->CreateDeferredVideoProcessingSession(userId, videoSessionCallback_);
+    manager->CreateDeferredVideoProcessingSession(userId, videoSessionCallback_, &deferedVideoSession);
     sptr<IBufferProducer> bufferProducer;
     auto photoOutput = manager->CreatePhotoOutput(bufferProducer);
     manager->CreatePhotoOutputWithoutProfile(bufferProducer, &photoOutput);
@@ -114,10 +114,10 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1()
     manager->CreateVideoOutputWithoutProfile(surface, &videoOutput);
     manager->DestroyStubObj();
     manager->CameraServerDied(0);
-    manager->SetCallback(managerCallback);
-    manager->RegisterCameraMuteListener(muteListenerCallback);
-    manager->RegisterTorchListener(torchListenerCallback);
-    manager->RegisterFoldListener(foldListenerCallback);
+    manager->SetCallback(managerCallback_);
+    manager->RegisterCameraMuteListener(muteListenerCallback_);
+    manager->RegisterTorchListener(torchListenerCallback_);
+    manager->RegisterFoldListener(foldListenerCallback_);
 }
 
 void CameraManagerFuzzer::CameraManagerFuzzTest2()

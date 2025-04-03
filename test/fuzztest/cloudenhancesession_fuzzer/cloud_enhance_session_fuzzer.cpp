@@ -138,20 +138,6 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->ValidateOutputProfile(profile, outputType);
 }
 
-void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
-{
-    MEDIA_INFO_LOG("CloudEnhanceSessionFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
-    string burstKey = data.ReadString();
-    int64_t timestamp = data.ReadInt64();
-    session->CreateMediaLibrary(Media::Picture::Create(surfaceBuffer), photoProxy, uri, cameraShotType,
-        burstKey, timestamp);
-}
-
 void Test(uint8_t *rawData, size_t size)
 {
     CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);

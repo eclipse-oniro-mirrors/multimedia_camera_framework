@@ -23,7 +23,6 @@ namespace CameraStandard {
 class SessionCoordinatorFuzzer {
 public:
 static std::shared_ptr<DeferredProcessing::SessionCoordinator> fuzz_;
-std::shared_ptr<Media::Picture> picture_;
 static void SessionCoordinatorFuzzTest();
 };
 } //CameraStandard

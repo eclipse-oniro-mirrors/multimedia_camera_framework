@@ -40,13 +40,13 @@ public:
     {
         return 0;
     }
-    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<Media::Picture> picture,
+    inline int32_t OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         uint32_t cloudImageEnhanceFlag) override
     {
         return 0;
     }
     inline int32_t OnDeliveryLowQualityImage(const std::string &imageId,
-        std::shared_ptr<Media::Picture> picture) override
+        std::shared_ptr<PictureIntf> picture) override
     {
         return 0;
     }

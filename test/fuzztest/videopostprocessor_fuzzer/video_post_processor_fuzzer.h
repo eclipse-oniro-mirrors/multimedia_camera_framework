@@ -24,7 +24,6 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 class VideoPostProcessorFuzzer {
 public:
 static std::shared_ptr<VideoPostProcessor> processor_;
-static std::shared_ptr<DeferredVideoWork> work_;
 static void VideoPostProcessorFuzzTest1();
 static void VideoPostProcessorFuzzTest2();
 };

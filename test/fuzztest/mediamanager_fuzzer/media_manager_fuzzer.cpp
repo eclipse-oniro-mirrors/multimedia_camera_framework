@@ -96,15 +96,15 @@ void MediaManagerFuzzer::MediaManagerFuzzTest()
     std::shared_ptr<AVBuffer> buffer = AVBuffer::CreateAVBuffer(avAllocator, capacity);
     fuzz_->WriteSample(selectedMediaType, buffer);
     fuzz_->ReadSample(selectedMediaType, buffer);
-    auto size_ = GetData<int64_t>();
-    fuzz_->Recover(size_);
+    auto configSize = GetData<int64_t>();
+    fuzz_->Recover(configSize);
     fuzz_->CopyAudioTrack();
     fuzz_->InitReader();
     fuzz_->InitWriter();
     auto duration = GetData<int64_t>();
     auto bitRate = GetData<int64_t>();
-    fuzz_->InitRecoverReader(size_, duration, bitRate);
-    fuzz_->GetRecoverInfo(size_);
+    fuzz_->InitRecoverReader(configSize, duration, bitRate);
+    fuzz_->GetRecoverInfo(configSize);
 }
 
 void MediaManagerFuzzer::ReaderFuzzTest()
