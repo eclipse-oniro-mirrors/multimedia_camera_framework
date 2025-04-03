@@ -1044,14 +1044,6 @@ class CameraMuteListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<CameraMuteListener> {
 public:
     int32_t OnCameraMute(bool muteMode) override;
-
-    inline bool GetCachedMuteMode()
-    {
-        return cachedMuteMode_;
-    }
-
-private:
-    bool cachedMuteMode_ = true;
 };
 
 class FoldStatusListenerManager : public CameraManagerGetter,
