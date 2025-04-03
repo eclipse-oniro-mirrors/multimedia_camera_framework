@@ -2314,26 +2314,22 @@ std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyIn
 void HCaptureSession::UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStrategyInfo> &infos,
     std::vector<int32_t> &frameRateRange)
 {
-    size_t index = -1;
     int uid = IPCSkeleton::GetCallingUid();
     std::string bundleName = GetClientBundle(uid);
-    for (size_t i = 0; i < infos.size(); i++) {
-        if (infos[i].bundleName == bundleName) {
-            index = i;
-            break;
-        }
-    }
-    CHECK_ERROR_RETURN_LOG(index == -1, "Update roteta angle not supported");
+    auto it = std::find_if(infos.begin(), infos.end(), [&bundleName](const auto &info) {
+        return info.bundleName == bundleName;
+    });
+    CHECK_ERROR_RETURN_LOG(it == infos.end(), "Update roteta angle not supported");
     auto flag = false;
-    CHECK_EXECUTE(infos[index].fps <= 0, flag = true);
-    CHECK_EXECUTE(infos[index].fps > 0 && frameRateRange.size() > 1 &&
-        infos[index].fps == frameRateRange[1], flag = true);
+    CHECK_EXECUTE(it->fps <= 0, flag = true);
+    CHECK_EXECUTE(it->fps > 0 && frameRateRange.size() > 1 &&
+        it->fps == frameRateRange[1], flag = true);
     CHECK_ERROR_RETURN(!flag);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-    int16_t rotateDegree = infos[index].rotateDegree;
+    int32_t rotateDegree = it->rotateDegree;
     MEDIA_DEBUG_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom rotateDegree: %{public}d.", rotateDegree);
     CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
-    float zoom = infos[index].wideValue;
+    float zoom = it->wideValue;
     MEDIA_DEBUG_LOG("HCaptureSession::UpdateCameraRotateAngleAndZoom zoom: %{public}f.", zoom);
     CHECK_EXECUTE(zoom >= 0, settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoom, 1));
     auto cameraDevive = GetCameraDevice();
