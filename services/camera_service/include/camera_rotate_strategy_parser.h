@@ -30,7 +30,7 @@ using namespace std;
 struct CameraRotateStrategyInfo {
     std::string bundleName;
     float wideValue;
-    int16_t rotateDegree;
+    int32_t rotateDegree;
     int16_t fps;
 };
 

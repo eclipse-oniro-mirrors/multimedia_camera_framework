@@ -77,7 +77,7 @@ void CameraRotateStrategyParser::ParserStrategyInfo(std::shared_ptr<CameraXmlNod
         info.wideValue = wideValue;
         endPtr = nullptr;
 
-        int16_t rotateDegree = -1;
+        int32_t rotateDegree = -1;
         curNode->GetProp("rotateDegree", pValue);
         long result = strtol(pValue.c_str(), &endPtr, DECIMAL);
 
@@ -85,7 +85,7 @@ void CameraRotateStrategyParser::ParserStrategyInfo(std::shared_ptr<CameraXmlNod
             MEDIA_ERR_LOG("The rotateDegree parameter is invalid.");
             rotateDegree = -1;
         } else {
-            rotateDegree = static_cast<int16_t>(result);
+            rotateDegree = static_cast<int32_t>(result);
         }
         info.rotateDegree = rotateDegree;
 
