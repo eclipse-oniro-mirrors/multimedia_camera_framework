@@ -63,7 +63,7 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     audioEncoder_ = make_unique<AudioEncoder>();
     #endif
     // Create Task Manager
-    videoEncoder_ = make_unique<VideoEncoder>(type);
+    videoEncoder_ = make_shared<VideoEncoder>(type);
 }
 
 shared_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
@@ -100,6 +100,9 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
         isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         if (isEncodeSuccess) {
             thisPtr->videoEncoder_->ReleaseSurfaceBuffer(frameRecord);
+        } else {
+            sptr<SurfaceBuffer> releaseBuffer;
+            thisPtr->videoEncoder_->DetachCodecBuffer(releaseBuffer, frameRecord);
         }
         frameRecord->SetEncodedResult(isEncodeSuccess);
         frameRecord->SetFinishStatus();
@@ -218,22 +221,19 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
-            int32_t ret = AV_ERR_OK;
-            OH_AVBuffer* buffer = choosedBuffer[index]->encodedBuffer;
+            shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->encodedBuffer;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
                 OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
                 CHECK_AND_CONTINUE_LOG(buffer != nullptr, "video encodedBuffer is null");
-                OH_AVBuffer_GetBufferAttr(buffer, &attr);
-                attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+                buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
                 MEDIA_DEBUG_LOG("choosed buffer pts: %{public}" PRIu64, attr.pts);
-                OH_AVBuffer_SetBufferAttr(buffer, &attr);
-                ret = muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
+                muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
             }
             sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
             if (metaSurfaceBuffer && ret == AV_ERR_OK) {
                 shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
-                metaAvBuffer->pts_ = buffer->buffer_->pts_;
+                metaAvBuffer->pts_ = buffer->pts_;
                 MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
                     (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
                 muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);

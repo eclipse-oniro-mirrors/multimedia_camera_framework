@@ -80,7 +80,7 @@ private:
     void IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime);
     void Release();
-    unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
+    shared_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
     shared_ptr<TaskManager> taskManager_ = nullptr;
     shared_ptr<TaskManager> videoEncoderManager_ = nullptr;
