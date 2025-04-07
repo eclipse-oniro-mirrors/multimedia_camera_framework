@@ -265,27 +265,9 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
     callback->OnCaptureEnded(captureId, frameCount);
-    auto timeStartIter = (photoOutput->captureIdToCaptureInfoMap_).find(captureId);
-    if (timeStartIter != (photoOutput->captureIdToCaptureInfoMap_).end()) {
-        auto timeEnd = std::chrono::steady_clock::now();
-        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
-            (timeStartIter->second).timeStart).count());
-        if (timeCost > CAPTURE_TIMEOUT) {
-            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
-                captureId, timeCost);
-        }
+    auto timeStartIter = photoOutput->captureIdToCaptureInfoMap_.find(captureId);
+    if (timeStartIter != photoOutput->captureIdToCaptureInfoMap_.end()) {
         DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
-        (photoOutput->captureIdToCaptureInfoMap_).erase(captureId);
-        if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
-            MEDIA_INFO_LOG("OnCaptureEnded notify offline delivery finished with capture ID: %{public}d", captureId);
-            auto callback = photoOutput->GetApplicationCallback();
-            if (callback == nullptr) {
-                MEDIA_INFO_LOG("HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
-                photoOutput->Release();
-                return CAMERA_OK;
-            }
-            callback->OnOfflineDeliveryFinished(captureId);
-        }
     }
     return CAMERA_OK;
 }
@@ -1287,6 +1269,30 @@ bool PhotoOutput::IsHasSwitchOfflinePhoto()
 {
     std::lock_guard<std::mutex> lock(offlineStatusMutex_);
     return isHasSwitched_;
+}
+
+void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
+{
+    auto timeStartIter = captureIdToCaptureInfoMap_.find(captureId);
+    if (timeStartIter != captureIdToCaptureInfoMap_.end()) {
+        auto timeEnd = std::chrono::steady_clock::now();
+        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
+            (timeStartIter->second).timeStart).count());
+        if (timeCost > CAPTURE_TIMEOUT) {
+            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
+                captureId, timeCost);
+        }
+        captureIdToCaptureInfoMap_.erase(captureId);
+        if (IsHasSwitchOfflinePhoto() && captureIdToCaptureInfoMap_.size() == 0) {
+            MEDIA_INFO_LOG("OnCaptureEnded notify offline delivery finished with capture ID: %{public}d", captureId);
+            auto callback = GetApplicationCallback();
+            if (callback == nullptr) {
+                MEDIA_INFO_LOG("PhotoOutput::NotifyOfflinePhotoOutput callback is nullptr");
+                Release();
+            }
+            callback->OnOfflineDeliveryFinished(captureId);
+        }
+    }
 }
 
 void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
