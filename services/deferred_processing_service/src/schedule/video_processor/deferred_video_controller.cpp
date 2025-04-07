@@ -112,7 +112,8 @@ void DeferredVideoController::HandleSuccess(const DeferredVideoWorkPtr& work)
     DP_CHECK_ERROR_RETURN_LOG(work == nullptr, "Video work is nullptr.");
 
     auto videoId = work->GetDeferredVideoJob()->GetVideoId();
-    auto out = work->GetDeferredVideoJob()->GetOutputFd();
+    int dupFd = dup(work->GetDeferredVideoJob()->GetOutputFd()->GetFd());
+    auto out = sptr<IPCFileDescriptor>::MakeSptr(dupFd);
     DP_INFO_LOG("DPS_VIDEO: HandleSuccess videoId: %{public}s, outFd: %{public}d", videoId.c_str(), out->GetFd());
     HandleNormalSchedule(work);
     DP_CHECK_ERROR_RETURN_LOG(videoProcessor_ == nullptr, "DeferredVideoProcessor is nullptr.");
