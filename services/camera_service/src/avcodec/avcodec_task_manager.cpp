@@ -218,6 +218,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
+            int32_t ret = AV_ERR_OK;
             OH_AVBuffer* buffer = choosedBuffer[index]->encodedBuffer;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
@@ -227,19 +228,19 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
                 attr.pts = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
                 MEDIA_DEBUG_LOG("choosed buffer pts: %{public}" PRIu64, attr.pts);
                 OH_AVBuffer_SetBufferAttr(buffer, &attr);
-                muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
+                ret = muxer->WriteSampleBuffer(buffer->buffer_, VIDEO_TRACK);
             }
-            sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
-            if (metaSurfaceBuffer) {
+            sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
+            if (metaSurfaceBuffer && ret == AV_ERR_OK) {
                 shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
                 metaAvBuffer->pts_ = buffer->buffer_->pts_;
                 MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
                     (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
                 muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
             } else {
-                MEDIA_ERR_LOG("metaSurfaceBuffer is nullptr");
+                MEDIA_ERR_LOG("metaSurfaceBuffer ret %{public}d", ret);
             }
-            frameRecords[index]->UnLockMetaBuffer();
+            choosedBuffer[index]->UnLockMetaBuffer();
         }
         #ifdef MOVING_PHOTO_ADD_AUDIO
         // CollectAudioBuffer
