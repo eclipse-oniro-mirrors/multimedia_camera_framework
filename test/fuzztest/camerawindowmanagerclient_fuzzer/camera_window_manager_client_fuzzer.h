@@ -16,7 +16,6 @@
 #ifndef CAMERA_WINDOW_FUZZER_H
 #define CAMERA_WINDOW_FUZZER_H
 
-#include <memory>
 #include "camera_window_manager_client.h"
 
 namespace OHOS {

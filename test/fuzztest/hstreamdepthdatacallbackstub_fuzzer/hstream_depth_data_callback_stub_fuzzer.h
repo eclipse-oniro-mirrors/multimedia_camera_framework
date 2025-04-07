@@ -17,7 +17,6 @@
 #define HSTREAM_DEPTH_CALLBACK_STUB_FUZZER_H
 
 #include "hstream_depth_data_callback_stub.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

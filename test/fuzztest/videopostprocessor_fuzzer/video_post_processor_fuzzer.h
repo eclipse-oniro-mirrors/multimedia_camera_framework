@@ -17,17 +17,14 @@
 #define VIDEOPOSTPROCESSOR_FUZZER_H
 
 #include "video_post_processor.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::CameraStandard::DeferredProcessing;
 class VideoPostProcessorFuzzer {
 public:
-static bool hasPermission;
-static std::shared_ptr<VideoPostProcessor> processor;
-static std::shared_ptr<VideoPostProcessor::VideoProcessListener> listener;
-static std::shared_ptr<DeferredVideoWork> work;
+static std::shared_ptr<VideoPostProcessor> processor_;
+static std::shared_ptr<DeferredVideoWork> work_;
 static void VideoPostProcessorFuzzTest1();
 static void VideoPostProcessorFuzzTest2();
 };

@@ -17,7 +17,6 @@
 #define DEFERREDPROCESSING_SESSION_STUB_FUZZER_H
 
 #include <iostream>
-#include <memory>
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_photo_processing_session_stub.h"

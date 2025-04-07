@@ -109,12 +109,12 @@ void Test(uint8_t *rawData, size_t size)
     data.WriteRawData(rawData, size);
     manager_ = CameraManager::GetInstance();
     sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::CAPTURE);
-    std::vector<sptr<CameraDevice>> camera = manager_->GetCameraDeviceListFromServer();
-    CHECK_ERROR_RETURN_LOG(camera.empty(), "GetCameraDeviceListFromServer Error");
-    sptr<CaptureInput> input = manager_->CreateCameraInput(camera[0]);
+    std::vector<sptr<CameraDevice>> cameras = manager_->GetCameraDeviceListFromServer();
+    CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetCameraDeviceListFromServer Error");
+    sptr<CaptureInput> input = manager_->CreateCameraInput(cameras[0]);
     CHECK_ERROR_RETURN_LOG(!input, "CreateCameraInput Error");
     input->Open();
-    auto outputCapability = manager_->GetSupportedOutputCapability(camera[0], 0);
+    auto outputCapability = manager_->GetSupportedOutputCapability(cameras[0], 0);
     CHECK_ERROR_RETURN_LOG(!outputCapability, "GetSupportedOutputCapability Error");
     previewProfile_ = outputCapability->GetPreviewProfiles();
     CHECK_ERROR_RETURN_LOG(previewProfile_.empty(), "GetPreviewProfiles Error");
@@ -125,9 +125,9 @@ void Test(uint8_t *rawData, size_t size)
     session->AddOutput(preview);
     session->CommitConfig();
     sptr<ICameraDeviceService> deviceObj = nullptr;
-    manager_->CreateCameraDevice(camera[0]->GetID(), &deviceObj);
+    manager_->CreateCameraDevice(cameras[0]->GetID(), &deviceObj);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
-    camInput->SwitchCameraDevice(deviceObj, camera[0]);
+    camInput->SwitchCameraDevice(deviceObj, cameras[0]);
     input->GetCameraDeviceInfo();
     session->SetInputDevice(input);
     session->GetInputDevice()->GetCameraDeviceInfo();
@@ -331,19 +331,6 @@ void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetFlashMode(flashMode);
 }
 
-void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
-{
-    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
-    std::string uri;
-    int32_t cameraShotType;
-    string burstKey = data.ReadString();
-    int64_t timestamp = data.ReadInt64();
-    session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
-}
-
 void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
@@ -508,12 +495,6 @@ void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetVirtualAperture(aperture);
     session->GetPhysicalAperture(aperture);
     session->SetPhysicalAperture(aperture);
-    bool isSupported = data.ReadBool();
-    session->isColorStyleSupported(isSupported);
-    std::vector<ColorStyleSetting> defaultColorStyles;
-    session->GetDefaultColorStyleSettings(defaultColorStyles);
-    ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
-    session->SetColorStyleSetting(styleSetting);
     session->UnlockForControl();
 }
 
@@ -591,8 +572,6 @@ void TestAdd(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetUsage(UsageType::BOKEH, data.ReadBool());
     session->IsAutoDeviceSwitchSupported();
     session->EnableAutoDeviceSwitch(data.ReadBool());
-    pid_t pid = data.ReadInt32();
-    session->CameraServerDied(pid);
     session->CreateCameraAbilityContainer();
 }
 

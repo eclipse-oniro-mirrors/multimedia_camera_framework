@@ -18,7 +18,6 @@
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

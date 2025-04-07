@@ -17,7 +17,6 @@
 #define VIDEO_JOB_REPOSITORY_FUZZER_H
 
 #include "video_job_repository.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

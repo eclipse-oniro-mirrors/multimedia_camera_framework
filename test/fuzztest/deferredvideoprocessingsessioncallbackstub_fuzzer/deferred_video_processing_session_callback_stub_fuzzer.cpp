@@ -20,7 +20,6 @@
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "securec.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

@@ -17,7 +17,6 @@
 #define MPEG_MANAGER_FUZZER_H
 
 #include "hcamera_listener_stub.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {

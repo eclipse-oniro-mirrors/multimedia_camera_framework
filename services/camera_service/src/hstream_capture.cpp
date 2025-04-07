@@ -428,7 +428,7 @@ std::condition_variable& ConcurrentMap::GetCv(const int32_t& key)
     std::lock_guard<std::mutex> lock(map_mutex_);
     return cv_[key];
 }
- 
+
 std::mutex& ConcurrentMap::GetMutex(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
@@ -446,8 +446,8 @@ bool ConcurrentMap::ReadyToUnlock(const int32_t& key, const int32_t& step, const
         return map_.count(key) > 0;
     }
 }
- 
- // LCOV_EXCL_START
+
+// LCOV_EXCL_START
 void ConcurrentMap::IncreaseCaptureStep(const int32_t& key)
 {
     std::lock_guard<std::mutex> lock(map_mutex_);
@@ -464,7 +464,7 @@ void ConcurrentMap::Erase(const int32_t& key)
     cv_.erase(key);
     step_.erase(key);
 }
- 
+
 void ConcurrentMap::Release()
 {
     std::lock_guard<std::mutex> lock(map_mutex_);

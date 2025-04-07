@@ -103,7 +103,7 @@ ohos_shared_library("deferred_processing_service") {
     "-fPIE",
   ]
 
-  if (!use_clang_coverage) {
+  if (!use_clang_coverage && !use_libfuzzer) {
     cflags += [ "-fvisibility=hidden" ]
   }
 

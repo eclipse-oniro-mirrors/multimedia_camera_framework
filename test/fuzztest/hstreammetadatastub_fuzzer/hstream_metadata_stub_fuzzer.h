@@ -17,7 +17,6 @@
 #define HSTREAM_METADATA_STUB_FUZZER_H
 
 #include "hstream_metadata_stub.h"
-#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,6 +32,10 @@ public:
         return 0;
     }
     int32_t SetCallback(sptr<IStreamMetadataCallback>& callback) override
+    {
+        return 0;
+    }
+    int32_t UnSetCallback() override
     {
         return 0;
     }
