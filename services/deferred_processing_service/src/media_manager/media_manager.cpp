@@ -121,12 +121,6 @@ MediaManagerError MediaManager::WriteSample(Media::Plugins::MediaType type, cons
     DP_DEBUG_LOG("entered, track type: %{public}d", type);
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_ == nullptr, ERROR_FAIL, "Writer is nullptr.");
 
-    if (!started_) {
-        auto ret = outputWriter_->Start();
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Start writer failed.");
-        started_ = true;
-    }
-
     auto ret = outputWriter_->Write(type, sample);
     if (type == Media::Plugins::MediaType::VIDEO) {
         finalPtsToDrop_ = sample->pts_;
@@ -154,10 +148,6 @@ MediaManagerError MediaManager::Recover(const int64_t size)
     DP_CHECK_ERROR_RETURN_RET_LOG(recoverReader_ == nullptr, ERROR_FAIL, "Recover reader is nullptr.");
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_ == nullptr, ERROR_FAIL, "Recover writer is nullptr.");
 
-    auto ret = outputWriter_->Start();
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Start recovering failed.");
-
-    started_ = true;
     int32_t frameNum = 0;
     AVBufferConfig config;
     config.size = size;
@@ -167,7 +157,7 @@ MediaManagerError MediaManager::Recover(const int64_t size)
 
     int64_t curPts = 0;
     for (;;) {
-        ret = recoverReader_->Read(Media::Plugins::MediaType::VIDEO, sample);
+        auto ret = recoverReader_->Read(Media::Plugins::MediaType::VIDEO, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Read temp data failed.");
 
         curPts = sample->pts_;
@@ -273,6 +263,12 @@ MediaManagerError MediaManager::InitWriter()
 
     ret = outputWriter_->AddMediaInfo(mediaInfo_);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Add metadata to writer failed.");
+
+    if (!started_) {
+        ret = outputWriter_->Start();
+        DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Start writer failed.");
+        started_ = true;
+    }
     return OK;
 }
 
