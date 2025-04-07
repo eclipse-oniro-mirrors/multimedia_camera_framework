@@ -138,7 +138,7 @@ void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZ
         int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
         CHECK_ERROR_RETURN_LOG(i + 1 + j - batchSize < 0, "ReturnToRecords unexpected error occured");
-        processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp);
+        processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp, oneProcessedSize_);
     }
 }
 
@@ -174,7 +174,8 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
             MemsetAndCheck(processedArr.data(), MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
                 0, PROCESS_BATCH_SIZE * oneProcessedSize_);
             ReturnToRecords(processedArr, processedRecords, i, count + 1);
-        } else if (i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1 && count == PROCESS_BATCH_SIZE - 1) {
+        } else if (audioRecordsLen >= PROCESS_BATCH_SIZE + 1 && i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1 &&
+            count == PROCESS_BATCH_SIZE - 1) {
             EffectChainProcess(rawArr, processedArr);
             FadeOneBatch(processedArr);
             MemsetAndCheck(processedArr.data() + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
