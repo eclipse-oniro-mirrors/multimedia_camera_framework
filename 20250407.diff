@@ -1,0 +1,211 @@
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index 94db07d3..d11ed13e 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -864,6 +864,8 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
+         MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
+         MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+         UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
++        photoOutput->NotifyOfflinePhotoOutput(captureId);
++        MEDIA_INFO_LOG("NotifyOfflinePhotoOutput end");
+         CleanAfterTransPicture(photoOutput, captureId);
+     }
+ }
+diff --git a/frameworks/native/camera/src/output/photo_output.cpp b/frameworks/native/camera/src/output/photo_output.cpp
+index 1baa4fda..34321d02 100644
+--- a/frameworks/native/camera/src/output/photo_output.cpp
++++ b/frameworks/native/camera/src/output/photo_output.cpp
+@@ -270,27 +270,9 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
+     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_OK,
+         "HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+     callback->OnCaptureEnded(captureId, frameCount);
+-    auto timeStartIter = (photoOutput->captureIdToCaptureInfoMap_).find(captureId);
+-    if (timeStartIter != (photoOutput->captureIdToCaptureInfoMap_).end()) {
+-        auto timeEnd = std::chrono::steady_clock::now();
+-        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
+-            (timeStartIter->second).timeStart).count());
+-        if (timeCost > CAPTURE_TIMEOUT) {
+-            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
+-                captureId, timeCost);
+-        }
++    auto timeStartIter = photoOutput->captureIdToCaptureInfoMap_.find(captureId);
++    if (timeStartIter != photoOutput->captureIdToCaptureInfoMap_.end()) {
+         DeferredProcessing::GetGlobalWatchdog().StopMonitor((timeStartIter->second).CaptureHandle);
+-        (photoOutput->captureIdToCaptureInfoMap_).erase(captureId);
+-        if (photoOutput->IsHasSwitchOfflinePhoto() && (photoOutput->captureIdToCaptureInfoMap_).size() == 0) {
+-            MEDIA_INFO_LOG("OnCaptureEnded notify offline delivery finished with capture ID: %{public}d", captureId);
+-            auto callback = photoOutput->GetApplicationCallback();
+-            if (callback == nullptr) {
+-                MEDIA_INFO_LOG("HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+-                photoOutput->Release();
+-                return CAMERA_OK;
+-            }
+-            callback->OnOfflineDeliveryFinished(captureId);
+-        }
+     }
+     return CAMERA_OK;
+ }
+@@ -1318,6 +1300,31 @@ bool PhotoOutput::IsHasSwitchOfflinePhoto()
+     return isHasSwitched_;
+ }
+ 
++void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
++{
++    auto timeStartIter = captureIdToCaptureInfoMap_.find(captureId);
++    if (timeStartIter != captureIdToCaptureInfoMap_.end()) {
++        auto timeEnd = std::chrono::steady_clock::now();
++        uint32_t timeCost = static_cast<uint32_t>(std::chrono::duration<double>(timeEnd -
++            (timeStartIter->second).timeStart).count());
++        if (timeCost > CAPTURE_TIMEOUT) {
++            MEDIA_INFO_LOG("OnCaptureEnded: capture ID: %{public}d timeCost is %{public}d)",
++                captureId, timeCost);
++        }
++        MEDIA_INFO_LOG("PhotoOutput::NotifyOfflinePhotoOutput callback is nullptr");
++        captureIdToCaptureInfoMap_.erase(captureId);
++        if (IsHasSwitchOfflinePhoto() && captureIdToCaptureInfoMap_.size() == 0) {
++            MEDIA_INFO_LOG("OnCaptureEnded notify offline delivery finished with capture ID: %{public}d", captureId);
++            auto callback = GetApplicationCallback();
++            if (callback == nullptr) {
++                MEDIA_INFO_LOG("PhotoOutput::NotifyOfflinePhotoOutput callback is nullptr");
++                Release();
++            }
++            callback->OnOfflineDeliveryFinished(captureId);
++        }
++    }
++}
++
+ void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+     std::string &burstKey, int64_t timestamp)
+ {
+diff --git a/interfaces/inner_api/native/camera/include/output/photo_output.h b/interfaces/inner_api/native/camera/include/output/photo_output.h
+index f3b894a7..f4fc4cb9 100644
+--- a/interfaces/inner_api/native/camera/include/output/photo_output.h
++++ b/interfaces/inner_api/native/camera/include/output/photo_output.h
+@@ -504,6 +504,8 @@ public:
+ 
+     bool IsHasSwitchOfflinePhoto();
+ 
++    void NotifyOfflinePhotoOutput(int32_t captureId);
++
+     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+         std::string &burstKey, int64_t timestamp);
+ 
+diff --git a/services/camera_service/include/hstream_operator.h b/services/camera_service/include/hstream_operator.h
+index 5080050a..9771856b 100644
+--- a/services/camera_service/include/hstream_operator.h
++++ b/services/camera_service/include/hstream_operator.h
+@@ -238,6 +238,19 @@ public:
+     {
+         streamOperatorId_ = streamOperatorId;
+     }
++
++    inline sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetHDIStreamOperator()
++    {
++        std::lock_guard<std::mutex> lock(streamOperatorLock_);
++        return streamOperator_;
++    }
++
++    inline void ResetHDIStreamOperator()
++    {
++        std::lock_guard<std::mutex> lock(streamOperatorLock_);
++        streamOperator_ = nullptr;
++    }
++
+     void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+     int32_t GetOfflineOutptSize();
+     int32_t GetAllOutptSize();
+@@ -259,6 +272,7 @@ private:
+     volatile bool isSetMotionPhoto_ = false;
+     std::mutex livePhotoStreamLock_; // Guard livePhotoStreamRepeat_
+     std::mutex releaseOperatorLock_;
++    std::mutex streamOperatorLock_;
+     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice
+     sptr<HStreamRepeat> livePhotoStreamRepeat_;
+     std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 92acbffa..41cc6961 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -414,6 +414,7 @@ void  HStreamOperator::GetStreamOperator()
+         MEDIA_INFO_LOG("HStreamOperator::GetStreamOperator cameraDevice_ is nullptr");
+         return;
+     }
++    std::lock_guard<std::mutex> lock(streamOperatorLock_);
+     cameraDevice_->GetStreamOperator(this, streamOperator_);
+ }
+ 
+@@ -1033,10 +1034,11 @@ int32_t HStreamOperator::GetAllOutptSize()
+ int32_t HStreamOperator::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
+ {
+     CAMERA_SYNC_TRACE;
+-    if (streamOperator_ != nullptr && !releaseStreamIds.empty()) {
++    auto streamOperator = GetHDIStreamOperator();
++    if (streamOperator != nullptr && !releaseStreamIds.empty()) {
+         MEDIA_INFO_LOG("HStreamOperator::ReleaseStreams %{public}s",
+             Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
+-        int32_t rc = streamOperator_->ReleaseStreams(releaseStreamIds);
++        int32_t rc = streamOperator->ReleaseStreams(releaseStreamIds);
+         if (rc != HDI::Camera::V1_0::NO_ERROR) {
+             MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
+             CameraReportUtils::ReportCameraError(
+@@ -1056,10 +1058,11 @@ int32_t HStreamOperator::Release()
+             OHOS::Rosen::DisplayManagerLite::GetInstance().UnregisterDisplayListener(displayListener_);
+             displayListener_ = nullptr;
+         }
+-        if (streamOperator_) {
++        auto streamOperator = GetHDIStreamOperator();
++        if (streamOperator != nullptr) {
+             UnlinkOfflineInputAndOutputs();
+-            streamOperator_ = nullptr;
+-            MEDIA_INFO_LOG("HStreamOperator::Release streamOperator_ is nullptr");
++            ResetHDIStreamOperator();
++            MEDIA_INFO_LOG("HStreamOperator::Release streamOperator is nullptr");
+         }
+         HStreamOperatorManager::GetInstance()->RemoveStreamOperator(streamOperatorId_);
+     }
+@@ -1091,7 +1094,7 @@ int32_t HStreamOperator::CommitStreams(
+     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
+     std::lock_guard<std::mutex> lock(opMutex_);
+-    streamOperator = streamOperator_;
++    streamOperator = GetHDIStreamOperator();
+     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+         "HStreamOperator::CommitStreams GetStreamOperator is null!");
+     // get higher streamOperator version
+@@ -1617,11 +1620,11 @@ int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo
+     CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
+     std::lock_guard<std::mutex> lock(opMutex_);
+     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
+-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = streamOperator_;
++    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = GetHDIStreamOperator();
+     CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+         "HStreamOperator::CreateStreams GetStreamOperator is null!");
+     // get higher streamOperator version
+-    streamOperator_->GetVersion(major, minor);
++    streamOperator->GetVersion(major, minor);
+     MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
+         streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
+@@ -1671,17 +1674,18 @@ int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo
+ int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
+ {
+     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
+-    CHECK_ERROR_RETURN_RET_LOG(streamOperator_ == nullptr, CAMERA_UNKNOWN_ERROR,
++    auto streamOperator = GetHDIStreamOperator();
++    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
+         "HStreamOperator::UpdateStreams GetStreamOperator is null!");
+     uint32_t major;
+     uint32_t minor;
+-    streamOperator_->GetVersion(major, minor);
++    streamOperator->GetVersion(major, minor);
+     MEDIA_INFO_LOG("UpdateStreams::UpdateStreams GetVersion major:%{public}d, minor:%{public}d", major, minor);
+     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
+-        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator_);
++        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
+         if (streamOperatorV1_2 == nullptr) {
+             MEDIA_ERR_LOG("HStreamOperator::UpdateStreams IStreamOperator cast to V1_2 error");
+-            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator_.GetRefPtr());
++            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator*>(streamOperator.GetRefPtr());
+         }
+     }
+     CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
