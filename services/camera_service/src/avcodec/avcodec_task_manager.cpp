@@ -211,23 +211,23 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
             MEDIA_DEBUG_LOG("write sample index %{public}zu", index);
             shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->encodedBuffer;
+            int32_t ret = AV_ERR_OK;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
-                OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
                 CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "video encodedBuffer is null");
                 buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
-                muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
+                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, choosedBuffer[index]->GetTimeStamp());
+                ret = muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
             }
-            sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
-            if (metaSurfaceBuffer) {
+            sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
+            if (metaSurfaceBuffer && ret == AV_ERR_OK) {
                 shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
                  metaAvBuffer->pts_ = buffer->pts_;
                 MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
                     (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
                 muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
             } else {
-                MEDIA_ERR_LOG("metaSurfaceBuffer is nullptr");
+                MEDIA_ERR_LOG("metaSurfaceBuffer ret %{public}d", ret);
             }
         }
         #ifdef MOVING_PHOTO_ADD_AUDIO
