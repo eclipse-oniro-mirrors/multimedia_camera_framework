@@ -144,9 +144,10 @@ public:
         return audioBuffer_;
     }
 
-    void SetAudioBuffer(uint8_t* audioBuffer)
+    void SetAudioBuffer(uint8_t* audioBuffer, uint32_t inputSize)
     {
         std::unique_lock<std::mutex> lock(mutex_);
+        MEDIA_DEBUG_LOG("SetAudioBuffer size:%{public}u", inputSize);
         audioBuffer_ = audioBuffer;
     }
 
