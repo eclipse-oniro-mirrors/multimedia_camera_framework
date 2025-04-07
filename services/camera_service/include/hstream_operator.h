@@ -210,7 +210,6 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t OnResult(int32_t streamId, const std::vector<uint8_t>& result) override;
     int32_t UnlinkInputAndOutputs();
-    int32_t UnlinkOfflineInputAndOutputs();
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
@@ -235,6 +234,19 @@ public:
     {
         streamOperatorId_ = streamOperatorId;
     }
+
+    inline sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetHDIStreamOperator()
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        return streamOperator_;
+    }
+
+    inline void ResetHDIStreamOperator()
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        streamOperator_ = nullptr;
+    }
+
     void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t GetOfflineOutptSize();
     int32_t GetAllOutptSize();
@@ -318,6 +330,7 @@ private:
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
     std::mutex releaseOperatorLock_;
+    std::mutex streamOperatorLock_;
     sptr<MovingPhotoListener> livephotoListener_;
     sptr<MovingPhotoMetaListener> livephotoMetaListener_;
     sptr<AudioCapturerSession> audioCapturerSession_;

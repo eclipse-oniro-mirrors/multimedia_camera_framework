@@ -810,6 +810,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
         MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
         MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
         UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
+        photoOutput->NotifyOfflinePhotoOutput(captureId);
         CleanAfterTransPicture(photoOutput, captureId);
     }
 }
