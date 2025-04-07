@@ -2990,8 +2990,6 @@ napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info 
 
 napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr,
-        "SystemApi IsMacroSupported is called!");
     MEDIA_DEBUG_LOG("CameraSessionNapi::IsMacroSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
@@ -3011,7 +3009,6 @@ napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info 
 
 napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
 {
-    CHECK_ERROR_RETURN_RET_LOG(!CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi EnableMacro is called!");
     MEDIA_DEBUG_LOG("CameraSessionNapi::EnableMacro is called");
     bool isEnableMacro;
     CameraSessionNapi* cameraSessionNapi = nullptr;

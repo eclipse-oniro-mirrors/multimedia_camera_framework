@@ -14,8 +14,10 @@
  */
 
 #include "camera_capture_session_unittest.h"
+#include "camera/capture_session.h"
 #include "camera_log.h"
 #include "access_token.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
 #include "accesstoken_kit.h"
 #include "token_setproc.h"
@@ -2904,6 +2906,404 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_077, Test
     EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test photo session IsMacroSupported interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_001, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
 
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session IsMacroSupported interface
+ * SubFunction: Test error code CAMERA_SESSION_NOT_CONFIG
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_002, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session EnableMacro interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_003, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    OH_CaptureSession_CommitConfig(captureSession);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupportedMacro) {
+        ret = OH_CaptureSession_EnableMacro(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_OK);
+
+        ret = OH_CaptureSession_EnableMacro(captureSession, false);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session EnableMacro interface
+ * SubFunction: Test error code CAMERA_SESSION_NOT_CONFIG
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_004, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupportedMacro) {
+        ret = OH_CaptureSession_EnableMacro(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    }
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session EnableMacro interface
+ * SubFunction: Test error code CAMERA_OPERATION_NOT_ALLOWED
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_photo_session_unittest_macro_005, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CaptureSession_EnableMacro(captureSession, true);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session IsMacroSupported interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_001, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session IsMacroSupported interface
+ * SubFunction: Test error code CAMERA_SESSION_NOT_CONFIG
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_002, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session EnableMacro interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_003, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    OH_CaptureSession_CommitConfig(captureSession);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupportedMacro) {
+        ret = OH_CaptureSession_EnableMacro(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_OK);
+
+        ret = OH_CaptureSession_EnableMacro(captureSession, false);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session EnableMacro interface
+ * SubFunction: Test error code CAMERA_SESSION_NOT_CONFIG
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_004, TestSize.Level0)
+{
+    Camera_Input* cameraInput = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    OH_CaptureSession_BeginConfig(captureSession);
+    OH_CaptureSession_AddInput(captureSession, cameraInput);
+    OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupportedMacro) {
+        ret = OH_CaptureSession_EnableMacro(captureSession, true);
+        EXPECT_EQ(ret, CAMERA_SESSION_NOT_CONFIG);
+    }
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session EnableMacro interface
+ * SubFunction: Test error code CAMERA_OPERATION_NOT_ALLOWED
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_video_session_unittest_macro_005, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_CaptureSession_EnableMacro(captureSession, true);
+    EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session IsMacroSupported interface
+ * SubFunction: Test error code CAMERA_INVALID_ARGUMENT
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_macro_001, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    bool isSupportedMacro = false;
+    Camera_ErrorCode ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session IsMacroSupported interface
+ * SubFunction: Test error code CAMERA_INVALID_ARGUMENT
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session IsMacroSupported interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_macro_002, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::SECURE_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupportedMacro = false;
+    ret = OH_CaptureSession_IsMacroSupported(captureSession, &isSupportedMacro);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    OH_CaptureSession_Release(captureSession);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session EnableMacro interface
+ * SubFunction: Test error code CAMERA_INVALID_ARGUMENT
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_macro_003, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CaptureSession_EnableMacro(captureSession, true);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session EnableMacro interface
+ * SubFunction: Test error code CAMERA_INVALID_ARGUMENT
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo session EnableMacro interface
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_macro_004, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, Camera_SceneMode::SECURE_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_EnableMacro(captureSession, true);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    OH_CaptureSession_Release(captureSession);
+}
 } // CameraStandard
 } // OHOS

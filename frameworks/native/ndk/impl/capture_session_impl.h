@@ -162,6 +162,10 @@ public:
 
     Camera_ErrorCode EnableAutoDeviceSwitch(bool enabled);
 
+    Camera_ErrorCode IsMacroSupported(bool* isSupported);
+
+    Camera_ErrorCode EnableMacro(bool enabled);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };
