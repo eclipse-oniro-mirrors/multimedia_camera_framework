@@ -49,10 +49,10 @@ DeferredVideoJob::~DeferredVideoJob()
 {
     DP_DEBUG_LOG("entered");
     if (srcFd_) {
-        close(srcFd_->GetFd());
+        fdsan_close_with_tag(srcFd_->GetFd(), LOG_DOMAIN);
     }
     if (dstFd_) {
-        close(dstFd_->GetFd());
+        fdsan_close_with_tag(dstFd_->GetFd(), LOG_DOMAIN);
     }
 }
 
