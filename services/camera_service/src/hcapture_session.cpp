@@ -125,21 +125,14 @@ CamServiceError HCaptureSession::NewInstance(
                     "session:(%{public}zu), current pid(%{public}d).",
         sessionManager.GetTotalSessionSize(),
         session->pid_);
-    errCode = sessionManager.AddSession(session);  // Do not move this AddSession after RemoveSession
-    if (errCode == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED) {
-        auto previousSession = sessionManager.GetGroupDefaultSession(session->pid_);
-        auto disconnectDevice = previousSession->GetCameraDevice();
-        CHECK_EXECUTE(disconnectDevice != nullptr,
-            disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
-
-        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession maximum session limit reached. "
-            "Releasing the earliest session.");
-        previousSession->Release();
-        sessionManager.RemoveSession(previousSession);
-        errCode = CAMERA_OK; // If there is no error to throw, return CAMERA_OK.
+    if (sessionManager.AddSession(session) == CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED) {
+        MEDIA_WARNING_LOG("HCaptureSession::HCaptureSession maximum session limit reached. ");
     }
+    // Avoid multithread leak session, PreemptOverflowSessions need to call after AddSession, ignore
+    // CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED.
+    sessionManager.PreemptOverflowSessions(IPCSkeleton::GetCallingPid());
     outSession = session;
-    MEDIA_INFO_LOG("HCaptureSession::NewInstance end,sessionId: %{public}d, "
+    MEDIA_INFO_LOG("HCaptureSession::NewInstance end, sessionId: %{public}d, "
                    "total session:(%{public}zu). current opMode_= %{public}d "
                    "errorCode:%{public}d",
         outSession->sessionId_,
@@ -147,6 +140,15 @@ CamServiceError HCaptureSession::NewInstance(
         opMode,
         errCode);
     return errCode;
+}
+
+void HCaptureSession::OnSessionPreempt()
+{
+    auto disconnectDevice = GetCameraDevice();
+    CHECK_EXECUTE(disconnectDevice != nullptr, disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0));
+    MEDIA_ERR_LOG("HCaptureSession::HCaptureSession maximum session limit reached. "
+                  "Releasing the earliest session.");
+    Release();
 }
 
 HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
@@ -1154,6 +1156,12 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             MEDIA_ERR_LOG("HCaptureSession::Release error, this session is already released!");
             errorCode = CAMERA_INVALID_STATE;
             return;
+        }
+        // Clear current session
+        if (type != CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED) {
+            HCameraSessionManager::GetInstance().RemoveSession(this);
+            MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
+                HCameraSessionManager::GetInstance().GetTotalSessionSize());
         }
         auto hStreamOperatorSptr = hStreamOperator_.promote();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");

@@ -304,6 +304,8 @@ public:
     bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
 
+    bool IsProcessHasConcurrentDevice(pid_t pid);
+
     std::mutex mapMutex_;
 private:
     HCameraDeviceManager();

@@ -690,6 +690,7 @@ int32_t HCameraDevice::CloseDevice()
             MEDIA_INFO_LOG("hdiCameraDevice is null");
         }
         SetStreamOperatorCallback(nullptr);
+        EnableDeviceOpenedByConcurrent(false);
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
@@ -1438,15 +1439,17 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
 }
 
-int32_t HCameraDevice::Open(int32_t concurrentTypeofcamera)
+int32_t HCameraDevice::Open(int32_t concurrentType)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     CHECK_ERROR_PRINT_LOG(isOpenedCameraDevice_.load(), "HCameraDevice::Open failed, camera is busy");
     CHECK_ERROR_RETURN_RET_LOG(!IsInForeGround(callerToken_), CAMERA_ALLOC_ERROR,
         "HCameraDevice::Open IsAllowedUsingPermission failed");
-    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s]", cameraID_.c_str());
-    SetCameraConcurrentType(concurrentTypeofcamera);
+    MEDIA_INFO_LOG(
+        "HCameraDevice::Open Camera width concurrent:[%{public}s, %{public}d]", cameraID_.c_str(), concurrentType);
+    SetCameraConcurrentType(concurrentType);
+    EnableDeviceOpenedByConcurrent(true);
     int32_t result = OpenDevice();
     return result;
 }

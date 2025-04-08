@@ -175,6 +175,8 @@ public:
 
     void BeforeDeviceClose() override;
 
+    void OnSessionPreempt();
+
 private:
     void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
