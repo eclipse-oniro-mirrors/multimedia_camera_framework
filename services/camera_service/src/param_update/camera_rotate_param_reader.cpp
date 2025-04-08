@@ -78,6 +78,10 @@ std::string CameraRoateParamReader::GetPathVersion()
 bool CameraRoateParamReader::VerifyCertSfFile(
     const std::string &certFile, const std::string &verifyFile, const std::string &manifestFile)
 {
+    char *canonicalPath = realpath(verifyFile.c_str(), nullptr);
+    if (canonicalPath == nullptr) {
+        return false;
+    }
     // 验证CERT.SF文件是否合法
     if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, verifyFile)) {
         MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
@@ -108,13 +112,16 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
     if (realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr) {
-        MEDIA_ERR_LOG("VerifyParamFile filePathStr is irregular");
         return false;
     }
     MEDIA_INFO_LOG("VerifyParamFile ,filePathStr:%{public}s", filePathStr.c_str());
     std::string absFilePath = std::string(canonicalPath);
     std::string manifestFile = cfgDirPath + "/MANIFEST.MF";
-    std::ifstream file(manifestFile);
+    char *canonicalPathManifest = realpath(manifestFile.c_str(), nullptr);
+    if (canonicalPathManifest == nullptr) {
+        return false;
+    }
+    std::ifstream file(canonicalPathManifest);
     std::string line;
     std::string sha256Digest;
 
@@ -149,12 +156,9 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
     if (sha256Digest == std::get<1>(ret)) {
         return true;
     } else {
-        MEDIA_DEBUG_LOG("VerifyParamFile failed ,sha256Digest: %{public}s, fileShaDigest:%{public}s ",
-            sha256Digest.c_str(),
-            std::get<1>(ret).c_str());
         return false;
     }
-};
+}
 
 std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
 {
@@ -163,7 +167,7 @@ std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePat
         MEDIA_ERR_LOG("GetVersionInfoStr filepath is irregular");
         return DEFAULT_VERSION;
     }
-    std::ifstream file(filePathStr);
+    std::ifstream file(canonicalPath);
     if (!file.good()) {
         MEDIA_ERR_LOG("VersionFilePath is not good,FilePath:%{public}s", filePathStr.c_str());
         return DEFAULT_VERSION;
