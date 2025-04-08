@@ -1000,8 +1000,6 @@ Camera_ErrorCode Camera_Manager::SetCameraConcurrentInfothis(const Camera_Device
         }
         CameraConcurrentInfothis[i].outputCapabilities = newOutputCapability;
     }
-    *CameraConcurrentInfo = CameraConcurrentInfothis;
-    *infoSize = deviceSize;
     return CAMERA_OK;
 }
 
