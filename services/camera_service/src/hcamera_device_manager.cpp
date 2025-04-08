@@ -546,6 +546,25 @@ sptr<HCameraDeviceHolder> HCameraDeviceManager::GenerateCameraHolder(sptr<HCamer
     return requestCameraHolder;
 }
 
+bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
+{
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    auto mapIt = pidToCameras_.find(pid);
+    if (mapIt == pidToCameras_.end()) {
+        return false;
+    }
+    for (auto& holder : mapIt->second) {
+        auto device = holder->GetDevice();
+        if (device == nullptr) {
+            continue;
+        }
+        if (device->IsDeviceOpenedByConcurrent()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
     requestCameraHolder_ = requestCameraHolder;

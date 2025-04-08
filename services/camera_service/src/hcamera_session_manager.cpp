@@ -20,14 +20,25 @@
 #include <mutex>
 #include <sched.h>
 
-#include "camera_util.h"
-#include "hcapture_session.h"
 #include "camera_dynamic_loader.h"
+#include "camera_util.h"
+#include "hcamera_device_manager.h"
+#include "hcapture_session.h"
 #include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static const int32_t GROUP_SIZE_LIMIT = 10; // Default session max size is 10
+static const int32_t GROUP_SIZE_MIN_LIMIT = 1; // Default session min size is 1
+static const int32_t GROUP_SIZE_MAX_LIMIT = 10; // Default session max size is 10
+
+static size_t GetGroupSizeLimit(pid_t pid)
+{
+    if (HCameraDeviceManager::GetInstance()->IsProcessHasConcurrentDevice(pid)) {
+        return GROUP_SIZE_MAX_LIMIT;
+    }
+    return GROUP_SIZE_MIN_LIMIT;
+}
+
 size_t HCameraSessionManager::GetTotalSessionSize()
 {
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
@@ -103,7 +114,7 @@ CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
     auto& list = totalSessionMap_[pid];
     list.emplace_back(session);
 
-    if (list.size() > GROUP_SIZE_LIMIT) {
+    if (list.size() > GetGroupSizeLimit(pid)) {
         return CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED;
     }
     return CAMERA_OK;
@@ -128,6 +139,36 @@ void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
     }
     if (list.empty()) {
         RemoveGroupNoLock(mapIt);
+    }
+}
+
+void HCameraSessionManager::PreemptOverflowSessions(pid_t pid)
+{
+    size_t limitSize = GetGroupSizeLimit(pid);
+    std::vector<sptr<HCaptureSession>> overflowSessions = {};
+    {
+        std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
+        auto mapIt = totalSessionMap_.find(pid);
+        if (mapIt == totalSessionMap_.end()) {
+            return;
+        }
+        auto& list = mapIt->second;
+        size_t currentListSize = list.size();
+        if (currentListSize <= limitSize) {
+            return;
+        }
+        size_t overflowSize = currentListSize - limitSize;
+        for (size_t i = 0; i < overflowSize; i++) {
+            auto previousSession = list.front();
+            overflowSessions.emplace_back(previousSession);
+            list.pop_front();
+        }
+        if (list.empty()) {
+            RemoveGroupNoLock(mapIt);
+        }
+    }
+    for (auto& session : overflowSessions) {
+        session->OnSessionPreempt();
     }
 }
 
