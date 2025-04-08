@@ -124,7 +124,7 @@ int CameraRoateParamSignTool::ForEachFileSegment(const std::string &fpath, std::
         MEDIA_ERR_LOG("ForEachFileSegment filepath is irregular");
         return errno;
     }
-    std::unique_ptr<FILE, decltype(&fclose)> filp = { fopen(fpath.c_str(), "r"), fclose };
+    std::unique_ptr<FILE, decltype(&fclose)> filp = { fopen(canonicalPath, "r"), fclose };
     if (!filp) {
         return errno;
     }
@@ -143,10 +143,13 @@ int CameraRoateParamSignTool::ForEachFileSegment(const std::string &fpath, std::
 
 void CameraRoateParamSignTool::CalcBase64(uint8_t *input, uint32_t inputLen, std::string &encodedStr)
 {
-    size_t expectedLength = 4 * ((inputLen + 2) / 3);
+    size_t expectedLength = 4 * ((inputLen + 2) / 3); // 4 3 is Fixed algorithm
     encodedStr.resize(expectedLength);
-    size_t actualLength = static_cast<uint32_t>(EVP_EncodeBlock(reinterpret_cast<uint8_t *>(&encodedStr[0]),
-        input, inputLen));
+    int lengthTemp = EVP_EncodeBlock(reinterpret_cast<uint8_t *>(&encodedStr[0]), input, inputLen);
+    if (lengthTemp < 0) {
+        return;
+    }
+    size_t actualLength = static_cast<size_t>(lengthTemp);
     encodedStr.resize(actualLength);
     MEDIA_INFO_LOG("expectedLength = %{public}zu, actualLength = %{public}zu", expectedLength, actualLength);
 }

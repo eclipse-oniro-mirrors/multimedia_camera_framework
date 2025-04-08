@@ -529,7 +529,11 @@ int64_t GetTimestamp()
 
 std::string GetFileStream(const std::string &filepath)
 {
-    std::ifstream file(filepath, std::ios::in | std::ios::binary);
+    char *canonicalPath = realpath(filepath.c_str(), nullptr);
+    if (canonicalPath == nullptr) {
+        return NULL;
+    }
+    std::ifstream file(canonicalPath, std::ios::in | std::ios::binary);
     // 文件流的异常处理，不能用try catch的形式
     if (!file) {
         MEDIA_INFO_LOG("Failed to open the file!");
@@ -566,7 +570,11 @@ void TrimString(std::string &inputStr)
  
 bool RemoveFile(const std::string& path)
 {
-    if (std::filesystem::remove(path)) {
+    char *canonicalPath = realpath(path.c_str(), nullptr);
+    if (canonicalPath == nullptr) {
+        return false;
+    }
+    if (std::filesystem::remove(canonicalPath)) {
         MEDIA_INFO_LOG("File removed successfully.");
         return true;
     }
@@ -575,11 +583,15 @@ bool RemoveFile(const std::string& path)
 
 bool CheckPathExist(const char *path)
 {
-    if (path == nullptr) {
+    char *canonicalPath = realpath(path, nullptr);
+    if (canonicalPath == nullptr) {
+        return false;
+    }
+    if (canonicalPath == nullptr) {
         MEDIA_ERR_LOG("CheckPathExist path is nullptr");
         return false;
     }
-    std::ifstream profileStream(path);
+    std::ifstream profileStream(canonicalPath);
     return profileStream.good();
 }
 } // namespace CameraStandard
