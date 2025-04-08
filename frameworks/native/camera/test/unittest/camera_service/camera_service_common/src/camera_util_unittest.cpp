@@ -61,7 +61,7 @@ void CameraUtilUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test HdiToServiceError normal branches with different parameters.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_001, TestSize.Level0)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_001, TestSize.Level1)
 {
     OHOS::HDI::Camera::V1_0::CamRetCode testRet = OHOS::HDI::Camera::V1_0::NO_ERROR;
     int32_t ret = HdiToServiceError(testRet);
@@ -92,7 +92,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HdiToCameraErrorType normal branches with different parameters.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_002, TestSize.Level0)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_002, TestSize.Level1)
 {
     OHOS::HDI::Camera::V1_3::ErrorType type = OHOS::HDI::Camera::V1_3::FATAL_ERROR;
     int32_t ret = HdiToCameraErrorType(type);
@@ -144,7 +144,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HdiToServiceErrorV1_2 normal branches with different parameters.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level0)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level1)
 {
     OHOS::HDI::Camera::V1_2::CamRetCode testRet = OHOS::HDI::Camera::V1_2::NO_ERROR;
     int32_t ret = HdiToServiceErrorV1_2(testRet);
@@ -187,7 +187,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test JudgmentPriority and IsSameClient function.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level0)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level1)
 {
     pid_t pid = IPCSkeleton::GetCallingPid();
     int32_t ret = JudgmentPriority(pid, pid);
@@ -204,7 +204,7 @@ HWTEST_F(CameraUtilUnitTest, camera_util_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetStreamRotation normal branches with different parameters.
  */
-HWTEST_F(CameraUtilUnitTest, camera_util_unittest_005, TestSize.Level0)
+HWTEST_F(CameraUtilUnitTest, camera_util_unittest_005, TestSize.Level1)
 {
     int32_t sensorOrientation = DISPALY_ROTATE_0;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;

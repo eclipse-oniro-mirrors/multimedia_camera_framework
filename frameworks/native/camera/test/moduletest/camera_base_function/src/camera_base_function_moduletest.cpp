@@ -574,7 +574,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * then remove videoOutput and add photoOutput for taking photos. The flow distribution is normal, and both recording
  * and taking photos are normal.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_006, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_006, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -616,7 +616,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test captureSession adding captureOutput is successful when session state is In-progress,
  * and adding captureOutput fail when session state is Init or Committed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_007, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_007, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -646,7 +646,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Testing captureSession only adds previewOutput without adding cameraInput,
  * and the session fails when committing config.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_008, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_008, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -673,7 +673,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Testing captureSession only adds cameraInput without adding captureOutput,
  * and the session fails when committing config.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_009, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_009, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -699,7 +699,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test the captureSession and add two previewoutputs. Both previewoutputs can be added normally,
  * and the camera preview is normal when two preview streams are enabled.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_010, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_010, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput1 = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput1, nullptr);
@@ -730,7 +730,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test the captureSession by adding previewOutput and two photoOutput streams.
  * Service fatl error during session commit config.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_011, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_011, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -764,7 +764,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test the captureSession by adding previewOutput and two videoOutput streams.
  * Service fatl error during session commit config.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_012, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_012, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -887,7 +887,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
  * CaseDescription: Test the CameraMnager camera status callback function, register CameraMnagerCallback,
  * and print CameraStatus information correctly when the camera is turned on or off.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, TestSize.Level1)
 {
     std::shared_ptr<TestCameraMngerCallback> callback = std::make_shared<TestCameraMngerCallback>("");
     ASSERT_NE(callback, nullptr);
@@ -904,7 +904,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test the camera manager mute function, check if the device supports mute, register
  * the mute status callback and set the mute status when supported, the camera can be muted normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_016, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_016, TestSize.Level1)
 {
     cameraManager_->ClearCameraDeviceListCache();
     if (cameraManager_->IsCameraMuteSupported()) {
@@ -1110,7 +1110,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test captureSession set and query metering points after completing the default
  * allocation. Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_022, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_022, TestSize.Level1)
 {
     Point point = captureSession_->GetMeteringPoint();
     EXPECT_EQ(point.x, 0);
@@ -1263,7 +1263,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test cpatuseSession set and query the focus point and focal length after completing
  * the default allocation. Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_025, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_025, TestSize.Level1)
 {
     Point point = captureSession_->GetFocusPoint();
     EXPECT_EQ(point.x, 0);
@@ -1313,7 +1313,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * if supported after completing the default allocation. Ensure that the camera function is normal
  * after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_026, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_026, TestSize.Level1)
 {
     bool hasFlash = false;
     EXPECT_EQ(captureSession_->HasFlash(), false);
@@ -1441,7 +1441,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * query the filter types after completing the default allocation. Ensure that the camera function
  * is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_028, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_028, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1476,7 +1476,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * beauty levels supported by each type, and set and query the beauty level after completing the default
  * allocation. Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_029, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_029, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1595,7 +1595,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * and set and query the autofocus distance after completing the default allocation. Ensure that the
  * camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_032, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_032, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1641,7 +1641,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * function and set macro status callback if supported after completing the default allocation.
  * Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_033, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_033, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1674,7 +1674,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * the depth fusion function and query the zoom ratio range if supported after completing the default
  * allocation. Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_034, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_034, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1706,7 +1706,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * Enable and set the status callback if supported after completing the default allocation. Ensure
  * that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_035, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_035, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1739,7 +1739,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * Enable low light enhancement and detection function after completing the default allocation.
  * Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_036, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_036, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1768,7 +1768,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * Enable and set the target function detection callback after completing the default allocation.
  * Ensure that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_037, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_037, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1803,7 +1803,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test captureSession set the AR mode and AR callback after completing the default
  * allocation, and the camera function will function normally after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_038, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_038, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1852,7 +1852,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * set the corresponding state for the scene mode type after completing the default allocation. Ensure
  * that the camera function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_039, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_039, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1897,7 +1897,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test the captureSession check the supported virtual aperture settings and set the
  * virtual aperture. After the settings are completed, the camera function is normal.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_040, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_040, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1927,7 +1927,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test the captureSession check the supported physical aperture settings and set the
  * physical aperture. After the settings are completed, the camera function is normal.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_041, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_041, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -1960,7 +1960,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * settings and make the necessary adjustments. Ensure that the camera function is normal
  * after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_042, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_042, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -2012,7 +2012,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * status callback and turn it on before turning it off if supported. Ensure that the photography
  * function is normal after the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_043, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_043, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -2046,7 +2046,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * detection and stabilization if supported. Ensure that the camera function is normal after
  * the settings are completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_044, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_044, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -2105,7 +2105,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * function is set and queried normally. OnFrameStarted is called at the beginning of the preview frame,
  * and OnFrameEnded is called at the end of the preview frame.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_046, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_046, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2133,7 +2133,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test previewOutput to set the preview rotation angle, and after setting it, the
  * camera will preview normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_047, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_047, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2160,7 +2160,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test whether previewOutput supports sketches. If supported, register sketch status
  * data callback and enable sketch function, query zoom ratio threshold. After setting, preview function is normal.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_048, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_048, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2189,7 +2189,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * is set and queried normally, and the callback function responds normally before and after taking photos
  * and pressing the shutter button.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_049, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_049, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2269,7 +2269,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test setting the rotation information when capturing the camera stream, and the
  * camera function will be normal after the setting is completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_051, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_051, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2300,7 +2300,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test setting the mirror information when capturing the camera stream, and the
  * camera function will be normal after the setting is completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_052, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_052, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2336,7 +2336,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test setting the quality information when capturing the camera stream, and the
  * camera function will be normal after the setting is completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_053, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_053, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2367,7 +2367,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test setting the burst capture state when capturing the camera stream, and the
  * camera function will be normal after the setting is completed.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_054, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_054, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2440,7 +2440,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test whether photoOutput supports original raw delivery. If supported, enable raw
  * delivery function. After setting it up, the photo function will work normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_056, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_056, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2475,7 +2475,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * enable the automatic cloud image enhancement function. After setting it up, the camera function will
  * work normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_057, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_057, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2509,7 +2509,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test whether photoOutput supports depth data delivery. If supported, enable the
  * depth data delivery function. After setting it up, the camera function will work normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_058, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_058, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2542,7 +2542,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * queried normally. OnFrameStarted is called at the beginning of the video frame, and OnFrameEnded
  * is called at the end of the video frame.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_059, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_059, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2576,7 +2576,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test whether videoOutput supports mirror function. If supported, enable the
  * mirror function. After setting it up, the camera function will work normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_060, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_060, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2609,7 +2609,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * CaseDescription: Test whether videoOutput supports rotation function. If supported, set the rotation.
  * After setting it up, the camera function will work normally.
  */
- HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_061, TestSize.Level0)
+ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_061, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2648,7 +2648,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
  * EnvConditions: NA
  * CaseDescription: Test get distributed camera hostname
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_062, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_062, TestSize.Level1)
 {
     std::string hostName;
     for (size_t i = 0; i < cameraDevices_.size(); i++) {
@@ -2671,7 +2671,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_062, Test
  * EnvConditions: NA
  * CaseDescription: Test get DeviceType
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_063, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_063, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     auto judgeDeviceType = [&cameras]() -> bool {
@@ -2705,7 +2705,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_063, Test
  * EnvConditions: NA
  * CaseDescription: Test input error and result callback
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_064, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_064, TestSize.Level1)
 {
     auto errorCallback = std::make_shared<TestDeviceCallback>("");
     auto resultCallback = std::make_shared<TestOnResultCallback>("");
@@ -2807,7 +2807,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_066, Test
  * EnvConditions: NA
  * CaseDescription: test submit device control setting with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_067, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_067, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->Release(), SUCCESS);
     EXPECT_EQ(captureSession_->UnlockForControl(), SERVICE_FATL_ERROR);
@@ -2822,7 +2822,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_067, Test
  * EnvConditions: NA
  * CaseDescription: test session with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, TestSize.Level1)
 {
     cameraInput_->Close();
     cameraInput_->SetMetadataResultProcessor(captureSession_->GetMetadataResultProcessor());
@@ -2846,7 +2846,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_068, Test
  * EnvConditions: NA
  * CaseDescription: Test capture session with commit config multiple times
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_069, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_069, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -2867,7 +2867,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_069, Test
  * EnvConditions: NA
  * CaseDescription: Test capture session add input or output with invalid value
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_070, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_070, TestSize.Level1)
 {
     sptr<CaptureInput> input = nullptr;
     EXPECT_EQ(captureSession_->AddInput(input), OPERATION_NOT_ALLOWED);
@@ -2888,7 +2888,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_070, Test
  * EnvConditions: NA
  * CaseDescription: Test capture session remove input or output with null
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_071, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_071, TestSize.Level1)
 {
     sptr<CaptureInput> input = nullptr;
     EXPECT_EQ(captureSession_->RemoveInput(input), OPERATION_NOT_ALLOWED);
@@ -2912,7 +2912,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_071, Test
  * EnvConditions: NA
  * CaseDescription: Test dynamic add and remove preview output
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_072, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_072, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput1 = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput1, nullptr);
@@ -2950,7 +2950,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_072, Test
  * EnvConditions: NA
  * CaseDescription: test create preview output with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_073, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_073, TestSize.Level1)
 {
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
@@ -3015,7 +3015,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_073, Test
  * EnvConditions: NA
  * CaseDescription: test create photo output with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_074, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_074, TestSize.Level1)
 {
     sptr<IConsumerSurface> photosurface = IConsumerSurface::Create();
     sptr<IBufferProducer> surfaceProducer_1 = photosurface->GetProducer();
@@ -3060,7 +3060,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_074, Test
  * EnvConditions: NA
  * CaseDescription: test create video output with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_075, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_075, TestSize.Level1)
 {
     sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
@@ -3110,7 +3110,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_075, Test
  * EnvConditions: NA
  * CaseDescription: Test the capture session with Video Stabilization Mode.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, TestSize.Level1)
 {
     VideoStabilizationMode stabilizationMode = OFF;
     EXPECT_EQ(captureSession_->GetActiveVideoStabilizationMode(), OFF);
@@ -3155,7 +3155,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, Test
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with empty inputDevice
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_077, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_077, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -3205,7 +3205,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_077, Test
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with empty innerInputDevice_
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_078, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_078, TestSize.Level1)
 {
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
@@ -3256,7 +3256,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_078, Test
  * EnvConditions: NA
  * CaseDescription: test stream_ null with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -3298,7 +3298,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_079, Test
  * EnvConditions: NA
  * CaseDescription: test stream_ null with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_080, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_080, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -3325,7 +3325,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_080, Test
  * EnvConditions: NA
  * CaseDescription: test cameraObj null with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_081, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_081, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -3355,7 +3355,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_081, Test
  * EnvConditions: NA
  * CaseDescription: Test PreviewOutput/PhotoOutput/VideoOutput Getstream branch with CaptureOutput nullptr.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, TestSize.Level1)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     auto previewOutputCallback = std::make_shared<TestPreviewOutputCallback>("");
@@ -3410,7 +3410,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_082, Test
  * EnvConditions: NA
  * CaseDescription: Test IsSessionCommited branch with capturesession object null.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_083, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_083, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->Start(), SESSION_NOT_CONFIG);
 
@@ -3459,7 +3459,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_083, Test
  * EnvConditions: NA
  * CaseDescription: Test IsSessionCommited branch with capturesession object null.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_084, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_084, TestSize.Level1)
 {
     float exposureValue;
     EXPECT_EQ(captureSession_->GetExposureValue(), 0);
@@ -3582,7 +3582,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_086, Test
  * EnvConditions: NA
  * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches in CaptureSession
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_087, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_087, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
     EXPECT_EQ(captureSession_->GetFilter(), FilterType::NONE);
@@ -3612,7 +3612,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_087, Test
  * EnvConditions: NA
  * CaseDescription: test Commited() || Configed() with abnormal branches in CaptureSession in CaptureSession
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_088, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_088, TestSize.Level1)
 {
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
     EXPECT_EQ(captureSession_->GetSupportedFilters().empty(), true);
@@ -3643,7 +3643,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_088, Test
  * EnvConditions: NA
  * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches in CaptureSession
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_089, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_089, TestSize.Level1)
 {
     ColorSpace colorSpace = COLOR_SPACE_UNKNOWN;
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
@@ -3675,7 +3675,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_089, Test
  * EnvConditions: NA
  * CaseDescription: test !IsSessionCommited() && !IsSessionConfiged() with abnormal branches in CaptureSession
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_090, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_090, TestSize.Level1)
 {
     BeautyType beautyType = AUTO_TYPE;
     EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
@@ -3744,7 +3744,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_091, Test
  * EnvConditions: NA
  * CaseDescription: Test GetMetaSetting with existing metaTag.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_092, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_092, TestSize.Level1)
 {
     sptr<CameraInput> camInput = (sptr<CameraInput>&)cameraInput_;
 
@@ -3783,7 +3783,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_092, Test
  * EnvConditions: NA
  * CaseDescription: Test Torch with anomalous branch.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_093, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_093, TestSize.Level1)
 {
     EXPECT_EQ(cameraInput_->Close(), SUCCESS);
     cameraInput_ = nullptr;
@@ -3820,7 +3820,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_093, Test
  * EnvConditions: NA
  * CaseDescription: Test Metadata
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->BeginConfig(), 0);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -3860,7 +3860,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, Test
  * EnvConditions: NA
  * CaseDescription: Test Metadata
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -3891,7 +3891,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, Test
  * EnvConditions: NA
  * CaseDescription: Test the capture session with HighQualityPhoto.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_096, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_096, TestSize.Level1)
 {
     EXPECT_EQ(captureSession_->EnableAutoHighQualityPhoto(false), SUCCESS);
 
@@ -3962,7 +3962,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_097, Test
  * EnvConditions: NA
  * CaseDescription: Test snapshot.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -3996,7 +3996,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_098, Test
  * EnvConditions: NA
  * CaseDescription: Test snapshot with location setting.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -4038,7 +4038,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, Test
  * EnvConditions: NA
  * CaseDescription: Test snapshot with mirror setting.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -4124,7 +4124,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
 * EnvConditions: NA
 * CaseDescription: test SetExposureBias && GetFeaturesMode && SetBeautyValue && GetSubFeatureMods
 */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_101, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_101, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -4182,7 +4182,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_101, Test
  * EnvConditions: NA
  * CaseDescription: test service callback with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, TestSize.Level1)
 {
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
@@ -4237,7 +4237,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_102, Test
  * EnvConditions: NA
  * CaseDescription: test capture session callback error with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_103, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_103, TestSize.Level1)
 {
     sptr<CaptureSessionCallback> capSessionCallback = new (std::nothrow) CaptureSessionCallback();
     ASSERT_NE(capSessionCallback, nullptr);
@@ -4267,7 +4267,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_103, Test
  * EnvConditions: NA
  * CaseDescription: test PreviewOutputCallbackImpl:OnSketchStatusChanged with abnormal branches
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, TestSize.Level1)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
@@ -4290,7 +4290,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_104, Test
  * EnvConditions: NA
  * CaseDescription: Test captureCallback with anomalous branch.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_105, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_105, TestSize.Level1)
 {
     auto captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
 
@@ -4336,7 +4336,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_105, Test
  * EnvConditions: NA
  * CaseDescription: test video output repeat callback with anomalous branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, TestSize.Level1)
 {
     auto repeatCallback = std::make_shared<VideoOutputCallbackImpl>();
 
@@ -4379,7 +4379,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_106, Test
  * EnvConditions: NA
  * CaseDescription: test focus distance the camera vwith abnormal setting branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_107, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_107, TestSize.Level1)
 {
     float recnum = 0.0f;
     EXPECT_EQ(captureSession_->GetFocusDistance(recnum), 7400103);
@@ -4416,7 +4416,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_107, Test
  * EnvConditions: NA
  * CaseDescription: test CaptureSession GetZoomPointInfos with abnormal setting branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_108, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_108, TestSize.Level1)
 {
     std::vector<ZoomPointInfo> zoomPointInfolist = {};
     EXPECT_EQ(captureSession_->GetZoomPointInfos(zoomPointInfolist), 7400103);
@@ -4442,7 +4442,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_108, Test
  * EnvConditions: NA
  * CaseDescription: test CaptureSession GetSensorExposureTime with abnormal setting branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, TestSize.Level1)
 {
     std::vector<uint32_t> exposureTimeRange = {};
     EXPECT_EQ(captureSession_->GetSensorExposureTimeRange(exposureTimeRange), 7400103);
@@ -4489,7 +4489,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, Test
  * EnvConditions: NA
  * CaseDescription: test focus distance the camera with abnormal setting branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_110, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_110, TestSize.Level1)
 {
     std::vector<WhiteBalanceMode> supportedWhiteBalanceModes = {};
     int32_t intResult = captureSession_->GetSupportedWhiteBalanceModes(supportedWhiteBalanceModes);
@@ -4552,7 +4552,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_110, Test
  * EnvConditions: NA
  * CaseDescription: test manaul WhiteBalance the cammera with abnormal setting branch
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_111, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_111, TestSize.Level1)
 {
     std::vector<int32_t> manualWhiteBalanceRange = {};
     int32_t intResult = captureSession_->GetManualWhiteBalanceRange(manualWhiteBalanceRange);
@@ -4612,7 +4612,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_111, Test
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with empty inputDevice and empty metadata
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, TestSize.Level1)
 {
     std::vector<std::vector<float>> supportedPhysicalApertures;
     int32_t intResult = captureSession_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
@@ -4663,7 +4663,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, Test
  * EnvConditions: NA
  * CaseDescription: test AutoAigcPhoto enable
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_113, TestSize.Level0)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_113, TestSize.Level1)
 {
     bool isEnabled = false;
     bool isAutoAigcPhotoSupported = false;

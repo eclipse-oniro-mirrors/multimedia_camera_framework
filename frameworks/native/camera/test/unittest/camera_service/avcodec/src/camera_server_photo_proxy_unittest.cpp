@@ -58,7 +58,7 @@ void CameraServerPhotoProxyUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test GetFormat normal branches.
  */
-HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_001, TestSize.Level0)
+HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_001, TestSize.Level1)
 {
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
@@ -86,7 +86,7 @@ HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_001,
  * EnvConditions: NA
  * CaseDescription: Test GetDeferredProcType normal branches.
  */
-HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_002, TestSize.Level0)
+HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_002, TestSize.Level1)
 {
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->deferredProcType_ = 0;
@@ -106,7 +106,7 @@ HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_002,
  * EnvConditions: NA
  * CaseDescription: Test GetShootingMode normal branches.
  */
-HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_003, TestSize.Level0)
+HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_003, TestSize.Level1)
 {
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->mode_ = 100;

@@ -59,7 +59,7 @@ void AudioVideoMuxerUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test WriteSampleBuffer abnormal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_001, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_001, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -90,7 +90,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_001, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test AddTrack abnormal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_002, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_002, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     int trackId = -1;
@@ -118,7 +118,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_002, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test WriteSampleBuffer normal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_003, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_003, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -149,7 +149,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_003, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test Create and Release normal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_004, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_004, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -167,7 +167,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_004, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test WriteSampleBuffer abnormal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_005, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_005, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
@@ -191,7 +191,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_005, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test AddTrack abnormal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     int trackId = -1;
@@ -220,7 +220,7 @@ HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_006, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test Release abnormal branches.
  */
-HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_007, TestSize.Level0)
+HWTEST_F(AudioVideoMuxerUnitTest, audio_video_muxer_unittest_007, TestSize.Level1)
 {
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
     std::shared_ptr<AVMuxerImpl> impl = std::make_shared<AVMuxerImpl>();

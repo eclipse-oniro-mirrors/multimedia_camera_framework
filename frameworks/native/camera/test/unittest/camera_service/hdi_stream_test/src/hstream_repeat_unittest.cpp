@@ -169,7 +169,7 @@ sptr<CaptureOutput> HStreamRepeatUnit::CreatePhotoOutput(int32_t width, int32_t 
  * CaseDescription: Test the SetStreamInfo function when mEnableSecure is true.
  *    The extendedStreamInfos should not be empty after setting stream info.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -189,7 +189,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_001, TestSize.Level0)
  * CaseDescription: Test the SetStreamInfo function when mEnableSecure is false.
  *    The extendedStreamInfos should be empty after setting stream info.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -209,7 +209,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_002, TestSize.Level0)
  * CaseDescription: Test the UpdateSketchStatus function. When the sketch status is updated to STOPED,
  *    the parentStreamRepeat should remain unchanged.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -230,7 +230,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_003, TestSize.Level0)
  * CaseDescription: Test the Start function. When the stream is not in a valid state,
  *    the expected return value is CAMERA_INVALID_STATE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -249,7 +249,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_004, TestSize.Level0)
  * CaseDescription: Test the ReleaseStream function.
  *    When the stream is released without delay, the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -268,7 +268,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_005, TestSize.Level0)
  * When the deferred video enhancement info is received,
  *    the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -287,7 +287,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_006, TestSize.Level0)
  * CaseDescription: Test the OnFrameError function. When a frame error of type HIGH_TEMPERATURE_ERROR is reported,
  *    the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -305,7 +305,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_007, TestSize.Level0)
  * CaseDescription: Test SetMirrorForLivePhoto when the mirror mode is supported.
  *    The expected return value is CAM_META_SUCCESS.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -334,7 +334,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_008, TestSize.Level0)
  * CaseDescription: Test SetMirrorForLivePhoto when the mirror mode is not supported.
  *    The expected return value is CAM_META_ITEM_NOT_FOUND.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -361,7 +361,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_009, TestSize.Level0)
  * CaseDescription: Test SetStreamTransform for front camera.
  *    The expected camera position remains OHOS_CAMERA_POSITION_FRONT.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -384,7 +384,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level0)
  * CaseDescription: Test ProcessCameraSetRotation for front camera with 180-degree sensor orientation.
  *    The expected sensor orientation is 0.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -404,7 +404,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_011, TestSize.Level0)
  * CaseDescription: Test ProcessCameraSetRotation for back camera with 90-degree sensor orientation.
  *    The expected sensor orientation is 270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -424,7 +424,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_012, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 90-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -444,7 +444,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_013, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 180-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -464,7 +464,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_014, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for front camera with 360-degree sensor orientation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -484,7 +484,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_015, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 360-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -504,7 +504,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_016, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 270-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -524,7 +524,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_017, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 180-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -544,7 +544,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_018, TestSize.Level0)
  * CaseDescription: Test ProcessVerticalCameraPosition for back camera with 0-degree sensor orientation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -564,7 +564,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_019, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for front camera with 0-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -584,7 +584,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_020, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for front camera with 90-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -604,7 +604,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_021, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for front camera with 180-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -624,7 +624,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_022, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for front camera with 270-degree stream rotation.
  *    The expected transform is GRAPHIC_FLIP_H_ROT270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -644,7 +644,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_023, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for front camera with 360-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -664,7 +664,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_024, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for back camera with 0-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -684,7 +684,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_025, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for back camera with 90-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_90.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -704,7 +704,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_026, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for back camera with 180-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_180.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -724,7 +724,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_027, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for back camera with 270-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_270.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -744,7 +744,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_028, TestSize.Level0)
  * CaseDescription: Test ProcessCameraPosition for back camera with 360-degree stream rotation.
  *    The expected transform is GRAPHIC_ROTATE_NONE.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -764,7 +764,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_029, TestSize.Level0)
  * CaseDescription: Test OperatePermissionCheck for an unauthorized caller token.
  *    The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -783,7 +783,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_030, TestSize.Level0)
  * CaseDescription: Test OpenVideoDfxSwitch to ensure the debug switch is set correctly in camera ability metadata.
  *    The expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level1)
 {
     auto streamRepeat = CreateHStreamRepeat();
     ASSERT_NE(streamRepeat, nullptr);
@@ -807,7 +807,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_031, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat with no static capability.
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -873,7 +873,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat & HStreamCommon
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level1)
 {
     int32_t format = 0;
     int32_t width = 0;
@@ -914,7 +914,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_033, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -942,7 +942,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_034, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when status is STARTED
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -965,7 +965,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_035, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when sketchStream is nullptr
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -990,7 +990,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_036, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when sketchStreamRepeat_ is nullptr
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1015,7 +1015,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_037, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1038,7 +1038,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_038, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamRepeat when repeatStreamType_ is SKETCH
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level1)
 {
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
@@ -1062,7 +1062,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_039, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_REPEAT_ON_ERROR
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level1)
 {
     MockHStreamRepeatCallbackStub stub;
     MessageParcel data;
@@ -1085,7 +1085,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_040, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_STREAM_MIRROR
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level1)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;
@@ -1108,7 +1108,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_041, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_SECURE_STREAM
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level1)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;
@@ -1131,7 +1131,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_042, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_FRAME_RANGE_SET
  */
-HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level0)
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level1)
 {
     MockHStreamRepeatStub stub;
     MessageParcel data;

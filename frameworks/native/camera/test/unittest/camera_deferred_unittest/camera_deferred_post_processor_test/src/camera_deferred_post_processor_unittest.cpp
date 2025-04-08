@@ -122,7 +122,7 @@ private:
  * EnvConditions: NA
  * CaseDescription: Test the exception branch of the Photo Post Processor when the session is nulptr
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_001, TestSize.Level1)
 {
     auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -145,7 +145,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_001, Te
  * EnvConditions: NA
  * CaseDescription: Test OnError with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, TestSize.Level1)
 {
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -182,7 +182,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, Te
  * EnvConditions: NA
  * CaseDescription: Test GetIntent with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_003, TestSize.Level1)
 {
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -203,7 +203,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_003, Te
  * EnvConditions: NA
  * CaseDescription: Test ProcessStream with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_004, TestSize.Level1)
 {
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -225,7 +225,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_004, Te
  * EnvConditions: NA
  * CaseDescription: Test PhotoPostProcessor with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_005, TestSize.Level1)
 {
     auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -249,7 +249,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_005, Te
  * EnvConditions: NA
  * CaseDescription: Test PhotoProcessListener with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_006, TestSize.Level1)
 {
     int32_t userId = 1;
     OHOS::HDI::Camera::V1_2::ErrorCode errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
@@ -304,7 +304,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_006, Te
  * EnvConditions: NA
  * CaseDescription: Test AssemblePicture with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, TestSize.Level1)
 {
     int32_t userId = 1;
     std::string imageId = "testImageId";
@@ -341,7 +341,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, Te
  * EnvConditions: NA
  * CaseDescription: Test OnError OnStatusChanged with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_008, TestSize.Level1)
 {
     auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -380,7 +380,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_008, Te
  * EnvConditions: NA
  * CaseDescription: Test StopMpeg with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_009, TestSize.Level1)
 {
     auto postProcessor = CreateShared<VideoPostProcessor>(userId_);
     ASSERT_NE(postProcessor, nullptr);
@@ -396,7 +396,7 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_009, Te
  * EnvConditions: NA
  * CaseDescription: Test Executing with abnormal branch
  */
-HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, TestSize.Level0)
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, TestSize.Level1)
 {
     std::string imageId = "testImageId";
     auto successCommand = CreateShared<PhotoProcessSuccessCommand>(userId_, imageId, nullptr);

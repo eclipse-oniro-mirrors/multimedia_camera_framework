@@ -90,7 +90,7 @@ void DeferredPhotoProxyUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy when destruction and isMmaped is false
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_001, TestSize.Level1)
 {
     auto proxy = std::make_shared<DeferredPhotoProxy>();
     ASSERT_NE(proxy, nullptr);
@@ -105,7 +105,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_001, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy when destruction and isMmaped is true
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_002, TestSize.Level1)
 {
     auto proxy = std::make_shared<DeferredPhotoProxy>();
     ASSERT_NE(proxy, nullptr);
@@ -121,7 +121,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_002, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy with GetDeferredProcType when deferredProcType_ is 0 or 1
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_003, TestSize.Level1)
 {
     auto proxy = std::make_shared<DeferredPhotoProxy>();
     ASSERT_NE(proxy, nullptr);
@@ -141,7 +141,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_003, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy with GetFileDataAddr when isMmaped_ is true
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_004, TestSize.Level1)
 {
     auto proxy = std::make_shared<DeferredPhotoProxy>();
     ASSERT_NE(proxy, nullptr);
@@ -158,7 +158,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_004, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy when different construction parameters and Some Get interfaces
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_005, TestSize.Level1)
 {
     std::string imageId = "0";
     std::vector<uint8_t> data;
@@ -201,7 +201,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_005, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy with WriteToParcel and ReadFromParcel
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_006, TestSize.Level1)
 {
     auto proxy = std::make_shared<DeferredPhotoProxy>();
     ASSERT_NE(proxy, nullptr);
@@ -234,7 +234,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_006, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy with Different construction parameters
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_007, TestSize.Level1)
 {
     std::string imageId = "0";
     std::shared_ptr<DeferredPhotoProxy> proxy = std::make_shared<DeferredPhotoProxy>(nullptr, imageId,
@@ -252,7 +252,7 @@ HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_007, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProxy with Different construction parameters
  */
-HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredPhotoProxyUnit, deferred_photo_proxy_unittest_008, TestSize.Level1)
 {
     std::string imageId = "0";
     std::shared_ptr<DeferredPhotoProxy> proxy = std::make_shared<DeferredPhotoProxy>(nullptr, imageId, 0, 0, 0);

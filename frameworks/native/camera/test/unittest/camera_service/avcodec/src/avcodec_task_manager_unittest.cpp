@@ -60,7 +60,7 @@ void AvcodecTaskManagerUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test WriteSampleBuffer abnormal branches.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -92,7 +92,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test HdiToServiceError normal branches with different parameters.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -117,7 +117,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CollectAudioBuffer abnormal branches.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -144,7 +144,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while videoEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -165,7 +165,7 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Stop abnormal branches while audioEncoder_ is nullptr.
  */
-HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level0)
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;

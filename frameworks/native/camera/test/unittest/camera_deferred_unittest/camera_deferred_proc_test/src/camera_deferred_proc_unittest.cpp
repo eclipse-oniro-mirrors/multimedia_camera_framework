@@ -107,7 +107,7 @@ void DeferredProcUnitTest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test is that the class calls the function function correctly and functions properly.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -149,7 +149,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test exception constructs the function that calls the function properly.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_002, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession =
         new(std::nothrow) DeferredPhotoProcSession(userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
@@ -188,7 +188,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_002, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the construction class calls the listener function, and the function functions normally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -234,7 +234,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: When the callback is not implemented, the callback function is called normally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -277,7 +277,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: When the test does not implement the callback, the function call is normal.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -317,7 +317,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: The test function is returned abnormally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
@@ -357,7 +357,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test is that the class calls the function function correctly and functions properly.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_007, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
@@ -394,7 +394,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_007, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test exception constructs the function that calls the function properly.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_008, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession =
         new(std::nothrow) DeferredVideoProcSession(userId_, std::make_shared<TestDeferredVideoProcSessionCallback>());
@@ -427,7 +427,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_008, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the construction class calls the listener function, and the function functions normally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_009, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
@@ -461,7 +461,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_009, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: When the callback is not implemented, the callback function is called normally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_010, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_010, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
@@ -495,7 +495,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_010, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: When the test does not implement the callback, the function call is normal.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_011, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_011, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
@@ -529,7 +529,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_011, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: The test function is returned abnormally.
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_012, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_012, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredProcSession = {nullptr};
     deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredVideoProcessingSession(
@@ -563,7 +563,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test DeferredPhotoProcessingSessionCallback
  */
-HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_013, TestSize.Level0)
+HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_013, TestSize.Level1)
 {
     std::shared_ptr<DeferredPhotoProcessingSessionCallback> deferredPhotoSessionCb1 =
         std::make_shared<DeferredPhotoProcessingSessionCallback>();

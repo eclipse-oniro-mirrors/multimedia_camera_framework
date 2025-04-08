@@ -94,7 +94,7 @@ void CameraSketchWrapperOutputUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test sketchwrapper with OnSketchStatusChanged and SetPreviewStateCallback
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -150,7 +150,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_001, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test Destroy StartSketchStream StopSketchStream while sketchStream_ is nullptr
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_002, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -200,7 +200,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_002, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test AutoStream while currentZoomRatio_ < 0
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_003, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -244,7 +244,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_003, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test OnSketchStatusChanged while status != sketchStatus
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_FALSE(cameras.empty());
@@ -294,7 +294,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test GetSketchReferenceFovRatio, UpdateSketchReferenceFovRatio
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     Size previewSize = { .width = 1440, .height = 1080 };
@@ -359,7 +359,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test sketchwrapper
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_006, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -414,7 +414,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_006, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test sketchwrapper
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_007, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -469,7 +469,7 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_007, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test sketchwrapper with different tag
  */
-HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Level0)
+HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 

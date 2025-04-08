@@ -54,7 +54,7 @@ void CameraAbilityUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test get support flash mode
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_001, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_001, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
@@ -74,7 +74,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test get support exposure mode
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_002, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_002, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
@@ -95,7 +95,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test whether deep integration is supported
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_003, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_003, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
@@ -112,7 +112,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test function supported or not
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_004, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_004, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
@@ -130,7 +130,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test focus range function supported or not
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_005, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_005, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);
@@ -145,7 +145,7 @@ HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test focus driven function supported or not
  */
-HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_006, TestSize.Level0)
+HWTEST_F(CameraAbilityUnitTest, camera_ability_unittest_006, TestSize.Level1)
 {
     sptr<CameraAbility> cameraAbility = new CameraAbility();
     ASSERT_NE(cameraAbility, nullptr);

@@ -90,7 +90,7 @@ void DeferredPhotoProcessorUnittest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test after initialize eventsListener, backgroundStrategy status can be set by OnEventChange.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -127,7 +127,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, 
  * EnvConditions: NA
  * CaseDescription: Test the backgroundStrategy mediaLibraryStatus can be set by NotifyMediaLibStatusChanged.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -156,7 +156,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, 
  * EnvConditions: NA
  * CaseDescription: Test the backgroundStrategy cameraSessionStatus can be set by NotifyCameraStatusChanged.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -189,7 +189,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, 
  * EnvConditions: NA
  * CaseDescription: Test the deferredPhotoController isWaitForUser status can be set by OnPhotoJobChanged.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -239,7 +239,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, 
  * EnvConditions: NA
  * CaseDescription: Test the deferredPhotoController scheduleState status can be set by NotifyScheduleState.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -273,7 +273,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, 
  * EnvConditions: NA
  * CaseDescription: Test the deferredPhotoController scheduleState status can be set by TryDoSchedule.
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -309,7 +309,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, 
  * EnvConditions: NA
  * CaseDescription: Test IsFatalError for different errorCode
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -335,7 +335,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, 
  * EnvConditions: NA
  * CaseDescription: Test NotifyMediaLibStatusChanged
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -363,7 +363,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, 
  * EnvConditions: NA
  * CaseDescription: Test process image and cancel process image
  */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);

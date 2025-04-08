@@ -175,7 +175,7 @@ void CameraScanSessionUnitTest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test ScanSession when output is nullptr
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;
@@ -230,7 +230,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ScanSession when innerInputDevice_ is nullptr
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;
@@ -288,7 +288,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ScanSession
  */
-HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = SCAN;

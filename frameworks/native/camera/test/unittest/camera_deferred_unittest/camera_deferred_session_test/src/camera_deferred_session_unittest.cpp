@@ -84,7 +84,7 @@ sptr<IDeferredVideoProcessingSession> CameraDeferredSessionUnitTest::GetDeferred
  * EnvConditions: NA
  * CaseDescription: Test the normal process of Class DeferredPhotoProcessingSession.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_001, TestSize.Level1)
 {
     sptr<DeferredPhotoProcessingSession> deferredPhotoSession;
     sptr<IDeferredPhotoProcessingSession> deferredPhotoSessionTemp = GetDeferredPhotoProcessingSession();
@@ -132,7 +132,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_001, Te
  * EnvConditions: NA
  * CaseDescription: Test fuctions of Class DeferredPhotoProcessingSession during sync process.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_002, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_002, TestSize.Level1)
 {
     sptr<IDeferredPhotoProcessingSession> deferredPhotoSessionTemp = GetDeferredPhotoProcessingSession();
     sptr<DeferredPhotoProcessingSession> deferredPhotoSession;
@@ -179,7 +179,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_002, Te
  * EnvConditions: NA
  * CaseDescription: Test AddVideo after sync process.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, TestSize.Level1)
 {
     sptr<DeferredVideoProcessingSession> deferredVideoSession;
     sptr<IDeferredVideoProcessingSession> deferredVideoSessionTemp = GetDeferredVideoProcessingSession();
@@ -211,7 +211,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, Te
  * EnvConditions: NA
  * CaseDescription: Test fuctions of Class DeferredVideoProcessingSession during sync process.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, TestSize.Level1)
 {
     sptr<DeferredVideoProcessingSession> deferredVideoSession;
     sptr<IDeferredVideoProcessingSession> deferredVideoSessionTemp = GetDeferredVideoProcessingSession();
@@ -250,7 +250,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, Te
  * EnvConditions: NA
  * CaseDescription: Test the normal process of Class SessionCoordinator.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_005, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_005, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -292,7 +292,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_005, Te
  * EnvConditions: NA
  * CaseDescription: Test ProcessVideoResults when callbackType is ON_PROCESS_DONE/ON_ERROR/ON_STATE_CHANGED.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_006, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_006, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -342,7 +342,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_006, Te
  * EnvConditions: NA
  * CaseDescription: Test ProcessPendingResults when callbackType is ON_PROCESS_DONE/ON_ERROR/ON_STATE_CHANGED.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_007, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_007, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -381,7 +381,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_007, Te
  * EnvConditions: NA
  * CaseDescription: Test the different branch of OnError.
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_008, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_008, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -419,7 +419,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_008, Te
  * EnvConditions: NA
  * CaseDescription: Test the different branch of OnStateChanged
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_009, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_009, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -450,7 +450,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_009, Te
  * EnvConditions: NA
  * CaseDescription: Test video process with abnormal branch
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_010, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_010, TestSize.Level1)
 {
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
@@ -477,7 +477,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_010, Te
  * EnvConditions: NA
  * CaseDescription: Test GetCallback when photoSessionInfos_ is empty
  */
-HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_011, TestSize.Level0)
+HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_011, TestSize.Level1)
 {
     sessionManagerPtr_->photoSessionInfos_.clear();
     sptr<IDeferredPhotoProcessingSessionCallback> photoSessionCb = sessionManagerPtr_->GetCallback(userId_);

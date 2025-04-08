@@ -89,7 +89,7 @@ void CameraPanoramaSessionUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test PanoramaSession preview
  */
-HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     for (sptr<CameraDevice> camDevice : cameras) {
@@ -143,7 +143,7 @@ HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_001, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test PanoramaSession set white balance lock
  */
-HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPanoramaSessionUnit, camera_panorama_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     for (sptr<CameraDevice> camDevice : cameras) {

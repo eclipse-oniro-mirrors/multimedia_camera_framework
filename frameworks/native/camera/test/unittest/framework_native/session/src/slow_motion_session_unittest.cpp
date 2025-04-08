@@ -167,7 +167,7 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
 * @tc.desc    : Test IsSlowMotionDetectionSupported interface, when session is not committed.
 * @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
 */
-HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
     ASSERT_NE(session, nullptr);
@@ -182,7 +182,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_001, Test
 * @tc.desc    : Test IsSlowMotionDetectionSupported interface, when camera device is null.
 * @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
 */
-HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, TestSize.Level0)
+HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -243,7 +243,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
 *               Test IsSlowMotionDetectionSupported interface, when metadata item data is 1.
 * @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
 */
-HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -326,7 +326,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
  * EnvConditions: NA
  * CaseDescription: Test ProcessCallbacks, OnSlowMotionStateChange, NormalizeRect, EnableMotionDetection for just call.
  */
-HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
     ASSERT_NE(captureSession, nullptr);

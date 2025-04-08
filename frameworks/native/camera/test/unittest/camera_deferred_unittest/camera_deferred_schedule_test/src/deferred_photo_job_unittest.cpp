@@ -70,7 +70,7 @@ void DeferredPhotoJobUnitTest::TestRegisterJobListener(
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class DeferredPhotoJob with test data to ensure the correctness.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_001, TestSize.Level1)
 {
     bool testDiscardable = false;
     int32_t testSetDpsMetadataVal = 5;
@@ -121,7 +121,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_001, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class DeferredPhotoWork with test data to ensure the correctness.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_002, TestSize.Level1)
 {
     bool testDiscardable = false;
 
@@ -149,7 +149,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_002, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Register a listener to the job queue.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_003, TestSize.Level1)
 {
     TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
 
@@ -177,7 +177,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_003, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test functions in class PhotoJobRepository in abnormal condition, no deferred job added.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_004, TestSize.Level1)
 {
     std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
     ASSERT_NE(photoJR, nullptr);
@@ -206,7 +206,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_004, TestSize.Lev
  * CaseDescription: Validate AddDeferredJob and RemoveDeferredJob with test data,
  *                  DeferredProcessingType is DPS_OFFLINE, to ensure the correctness.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_005, TestSize.Level1)
 {
     TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
     std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
@@ -250,7 +250,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_005, TestSize.Lev
  * CaseDescription: Validate RestoreJob, RequestJob and CancelJob with test data,
  *                  DeferredProcessingType is DPS_OFFLINE, to ensure the correctness.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_006, TestSize.Level1)
 {
     TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
     std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
@@ -315,7 +315,7 @@ HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_006, TestSize.Lev
  * CaseDescription: Validate AddDeferredJob and RemoveDeferredJob with test data,
  *                  DeferredProcessingType is DPS_BACKGROUND, to ensure the correctness.
  */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_007, TestSize.Level1)
 {
     TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_BACKGROUND);
 

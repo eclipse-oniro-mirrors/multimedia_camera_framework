@@ -285,7 +285,7 @@ void CameraPortraitSessionUnitTest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test cameraManager_ and portrait session with beauty/filter/portrait effects
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -360,7 +360,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test cameraManager to CreateCaptureSession
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -432,7 +432,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetPortraitEffect and SetPortraitEffect with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -506,7 +506,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetFilter and SetFilter with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -579,7 +579,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test GetBeauty and SetBeauty with value
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -653,7 +653,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test PortraitSession when output is nullptr
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -734,7 +734,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test PortraitSession without CommitConfig
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;
@@ -810,7 +810,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.
  * EnvConditions: NA
  * CaseDescription: Test PortraitSession when innerInputDevice_ is nullptr
  */
-HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.Level0)
+HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = PORTRAIT;

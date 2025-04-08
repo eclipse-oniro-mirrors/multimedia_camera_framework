@@ -44,7 +44,7 @@ void CameraBeautyNotificationUnit::TearDown() {}
  *CameraBeautyNotification when the instance is set to itself and then re-obtained. The expected result is that the
  *instance should remain valid and not be nullptr.
  */
-HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_001, TestSize.Level0)
+HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_001, TestSize.Level1)
 {
     sptr<CameraBeautyNotification> test = CameraBeautyNotification::GetInstance();
     ASSERT_NE(test, nullptr);
@@ -64,7 +64,7 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_001, 
  * EnvConditions: NA
  * CaseDescription: Test InitResourceManager abnormal branches
  */
-HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_002, TestSize.Level0)
+HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_002, TestSize.Level1)
 {
     sptr<CameraBeautyNotification> test = CameraBeautyNotification::GetInstance();
     ASSERT_NE(test, nullptr);
@@ -109,7 +109,7 @@ HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_002, 
  * EnvConditions: NA
  * CaseDescription: Test GetBeautyTimesFromDataShareHelper abnormal branches
  */
-HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_003, TestSize.Level0)
+HWTEST_F(CameraBeautyNotificationUnit, camera_beauty_notification_unittest_003, TestSize.Level1)
 {
     sptr<CameraBeautyNotification> test = CameraBeautyNotification::GetInstance();
     ASSERT_NE(test, nullptr);

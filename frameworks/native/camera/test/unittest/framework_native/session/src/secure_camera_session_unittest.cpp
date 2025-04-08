@@ -121,7 +121,7 @@ void SecureCameraSessionUnitTest::NativeAuthorization()
 * EnvConditions: NA
 * CaseDescription: Test normal branch that is add secure output flag
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize.Level0)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -174,7 +174,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize
 * EnvConditions: NA
 * CaseDescription: Test abnormal branch that is add secure output flag twice
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize.Level0)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -233,7 +233,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize
 * EnvConditions: NA
 * CaseDescription: Test abnormal branch that is add secure output flag twice
 */
-HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_003, TestSize.Level0)
+HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -289,7 +289,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test AddSecureOutput for just call.
  */
-HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(SecureCameraSessionUnitTest, secure_camera_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SECURE);
     ASSERT_NE(captureSession, nullptr);

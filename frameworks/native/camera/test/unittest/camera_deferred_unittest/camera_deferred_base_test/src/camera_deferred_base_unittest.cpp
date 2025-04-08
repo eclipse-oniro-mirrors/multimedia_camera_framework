@@ -73,7 +73,7 @@ void DeferredBaseUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test gets the size and fd of sharebuffer
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level1)
 {
     int32_t dataSize = 1;
     std::shared_ptr<SharedBuffer> sharedBuffer = std::make_shared<SharedBuffer>(dataSize);
@@ -97,7 +97,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_001, TestSize.Level
  * CaseDescription: Test create delayed task group, when taskRegistry is empty,
  * the task group is deregistered, tasks are submitted, and all tasks are canceled
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level1)
 {
     int32_t numThreads = 1;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager =
@@ -128,7 +128,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_002, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test get task group
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level1)
 {
     int32_t numThreads = 1;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager =
@@ -150,7 +150,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_003, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Tests creating a thread pool when numThreads is 0
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level1)
 {
     uint32_t numThreads = 0;
     std::shared_ptr<ThreadPool> threadPool = std::make_shared<ThreadPool>("camera_deferred_base", numThreads);
@@ -168,7 +168,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_004, TestSize.Level
  * CaseDescription: Test the creation of the time broker and test
  * the registration and deregistration callbacks of the time broker
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level1)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -196,7 +196,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_005, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test timer expiration and restart timer
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level1)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -226,7 +226,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_006, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * and succeeds when valid parameters are entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level1)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -249,7 +249,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_007, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * registration failed when invalid parameters were entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level1)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -272,7 +272,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_008, TestSize.Level
  * CaseDescription: Test registration and deregistration timer core callbacks,
  * and failed when invalid parameters were entered
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level1)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -294,7 +294,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_009, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test DoTimeout and GetNextExpirationTimeUnlocked hooks When the timerTime is null
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level1)
 {
     std::shared_ptr<TimerCore> timerCore = std::make_shared<TimerCore>();
     ASSERT_NE(timerCore, nullptr);
@@ -311,7 +311,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_010, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test repeated initialization
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level1)
 {
     DeferredProcessing::DPS_Destroy();
     DeferredProcessing::DPS_GetCommandServer();
@@ -329,7 +329,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_011, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test different branches of GetElapsedTimeMs
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level1)
 {
     uint64_t startMs = 1;
     uint64_t diff = DeferredProcessing::SteadyClock::GetElapsedTimeMs(startMs);
@@ -347,7 +347,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the abnormal branch of DeregisterCallback
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level1)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -370,7 +370,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_013, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test TimerExpired when timeline is empty
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level1)
 {
     std::shared_ptr<TimeBroker> timeBroker = TimeBroker::Create("camera_deferred_base");
     ASSERT_NE(timeBroker, nullptr);
@@ -388,7 +388,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_014, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the branch when the active of timer is true
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level1)
 {
     uint64_t timestampMs = 0;
     std::function<void()> timerCallback;
@@ -407,7 +407,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_015, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test TimerExpired
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level1)
 {
     std::function<void()> timerCallback;
     const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::ONCE, 0, timerCallback);
@@ -427,7 +427,7 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_016, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test the different branches of TimerExpired
  */
-HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level0)
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_017, TestSize.Level1)
 {
     std::function<void()> timerCallback;
     const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base", TimerType::PERIODIC, 0, timerCallback);

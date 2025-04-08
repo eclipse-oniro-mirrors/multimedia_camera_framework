@@ -63,7 +63,7 @@ void CameraUtilsUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test the Set/Get/WriteToParcel/ReadFromParcel function of DpsMetadata class
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level1)
 {
     DpsMetadata metadata;
     std::string int32Key = "int32_t";
@@ -101,7 +101,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test the GetSupportedPreviewSizeRange function camera support stream available basic configurations.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -129,7 +129,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with CAPTURE mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -154,7 +154,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with VIDEO mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -179,7 +179,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera available profile level with NIGHT mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -204,7 +204,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with CAPTURE mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -229,7 +229,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with VIDEO mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -255,7 +255,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedPreviewSizeRange when camera support extend configurations with NIGHT mode.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level1)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -280,7 +280,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test the GetSupportedPreviewSizeRange function when when metadata is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level1)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
     auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(SceneMode::CAPTURE,
@@ -297,7 +297,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level1)
 {
     BufferHandle *testBufferHandle = CameraCloneBufferHandle(nullptr);
     EXPECT_EQ(testBufferHandle, nullptr);
@@ -311,7 +311,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_010, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveFds and reserveInts is out of range.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level1)
 {
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(sizeof(BufferHandle)));
     handle->reserveFds = BUFFER_HANDLE_RESERVE_MAX_SIZE + 1;
@@ -329,7 +329,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_011, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveInts is 0.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level1)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
@@ -355,7 +355,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_012, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraCloneBufferHandle when reserveInts is not 0.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level1)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
@@ -381,7 +381,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level1)
 {
     int32_t ret = CameraFreeBufferHandle(nullptr);
     EXPECT_EQ(ret, 0);
@@ -395,7 +395,7 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_014, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraFreeBufferHandle when param is nullptr.
  */
-HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level0)
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level1)
 {
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));

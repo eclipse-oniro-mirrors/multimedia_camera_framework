@@ -72,7 +72,7 @@ void DeferredPhotoProcessorStratetyUnittest::NativeAuthorization()
  * CaseDescription: Test after initialize backgroundStrategy, strategy is not nullptr,
  *                  execution mode is LOAD_BALANCE, hdi status is HDI_READY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_001, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -100,7 +100,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while execution mode is DUMMY, work is nullptr.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_002, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -122,7 +122,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is SYSTEM_CAMERA_OPEN, execution mode is DUMMY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_003, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -144,7 +144,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is NORMAL_CAMERA_OPEN, execution mode is DUMMY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_004, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -166,7 +166,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while hdi status is not HDI_READY or HDI_READY_SPACE_LIMIT_REACHED, execution mode is DUMMY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_005, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -194,7 +194,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while media library status is MEDIA_LIBRARY_DISCONNECTED, execution mode is DUMMY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_006, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -216,7 +216,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while strategy is in trailing, execution mode is LOAD_BALANCE.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_007, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -243,7 +243,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while system pressure level is not NOMINAL, execution mode is DUMMY.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_008, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -265,7 +265,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is SYSTEM_CAMERA_OPEN, strategy is not in trailing.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_009, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -284,7 +284,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is NORMAL_CAMERA_OPEN, strategy is not in trailing.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_010, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_010, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -303,7 +303,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is SYSTEM_CAMERA_CLOSED, strategy is in trailing.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_011, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_011, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -322,7 +322,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while session status is NORMAL_CAMERA_CLOSED, strategy is not in trailing.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_012, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_012, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -342,7 +342,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * CaseDescription: Test while strategy is in trailing, after the remain trailing time,
  *                  the trailing status can be changed from true to false by FlashTrailingState.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_013, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_013, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -370,7 +370,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  *                  the trailing status can be changed from false to true by StartTrailing.
  *                  After the remain trailing time, the trailing status can not be changed automatically.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_014, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_014, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -405,7 +405,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * CaseDescription: Test while strategy is in trailing, no matter whether it is after the remain trailing time,
  *                  the trailing status can be changed from true to false by StopTrailing.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_015, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_015, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -434,7 +434,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
  * CaseDescription: Test after initialize userInitiatedStrategy, strategy is not nullptr,
  *                  execution mode is HIGH_PERFORMANCE.
  */
-HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_016, TestSize.Level0)
+HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_016, TestSize.Level1)
 {
     auto repository = std::make_shared<PhotoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);

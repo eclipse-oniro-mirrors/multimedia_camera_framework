@@ -89,7 +89,7 @@ void CameraOutputCapabilityUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test CameraOutputCapability with GetTargetRatio when sizeRatio is different
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_001, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_001, TestSize.Level1)
 {
     ProfileSizeRatio sizeRatio = UNSPECIFIED;
     float unspecifiedValue = 2.0f;
@@ -108,7 +108,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_001, Test
  * CaseDescription: Test Profile with IsContains
  * when frameratres_ is null or profile.framerates_ is null
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_002, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_002, TestSize.Level1)
 {
     std::vector<int32_t> framerates = {};
     Size size = {.width = 1920, .height = 1080};
@@ -129,7 +129,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_002, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraOutputCapability with IsMatchPhotoProfiles if no match occurs
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_003, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_003, TestSize.Level1)
 {
     CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
     Size photoSize = {480, 640};
@@ -154,7 +154,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_003, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraOutputCapability with IsMatchPreviewProfiles if no match occurs
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_004, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_004, TestSize.Level1)
 {
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
     Size previewSize = {480, 640};
@@ -179,7 +179,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_004, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraOutputCapability with RemoveDuplicatesProfiles for normal branches
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_005, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_005, TestSize.Level1)
 {
     CameraFormat format = CAMERA_FORMAT_YUV_420_SP;
     Size size = {480, 640};
@@ -220,7 +220,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_005, Test
  * EnvConditions: NA
  * CaseDescription: Test Profile with GetFps
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_006, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_006, TestSize.Level1)
 {
     CameraFormat format = CAMERA_FORMAT_YUV_420_SP;
     Size size = {480, 640};
@@ -243,7 +243,7 @@ HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_006, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraOutputCapability with GetDepthProfiles
  */
-HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_007, TestSize.Level0)
+HWTEST_F(CameraOutputCapabilityUnit, camera_output_capability_unittest_007, TestSize.Level1)
 {
     std::shared_ptr<CameraOutputCapability> capability = std::make_shared<CameraOutputCapability>();
     ASSERT_NE(capability, nullptr);

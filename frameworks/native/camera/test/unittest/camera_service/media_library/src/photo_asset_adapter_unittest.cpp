@@ -44,7 +44,7 @@ void PhotoAssetAdapterUnit::TearDown() {}
  *-GetVideoFd should return -1.
  *-NotifyVideoSaveFinished should set photoAssetProxy_ to nullptr.
  */
-HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level0)
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level1)
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
@@ -76,7 +76,7 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
  *-GetVideoFd should return -1.
  *-NotifyVideoSaveFinished should not change the state of photoAssetProxy_.
  */
-HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level0)
+HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level1)
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;

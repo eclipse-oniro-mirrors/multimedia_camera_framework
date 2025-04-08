@@ -122,7 +122,7 @@ public:
  * EnvConditions: NA
  * CaseDescription: Test current stream infos are not empty after config normal streams
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_001 start");
 
@@ -182,7 +182,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_001, TestSize.Level
  * CaseDescription: Test multiple add camera device, CanAddInput interface is not supported,
  * and commit comfig return camera invalid session cfg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_002 start");
 
@@ -229,7 +229,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_002, TestSize.Level
  * CaseDescription: Test need set preview rotation, preview stream can register display listener and
  * enable preview rotation when add output
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_003 start");
 
@@ -291,7 +291,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_003, TestSize.Level
  * CaseDescription: Test delete camera device after config normal stream, commit config return
  * camera invalid session cfg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_004 start");
     std::vector<string> cameraIds;
@@ -317,7 +317,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_004, TestSize.Level
  * CaseDescription: Test secure camera when mode is secure but seqId is different, commit config return
  * camera operator not allowed
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_005 start");
 
@@ -388,7 +388,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
  * Function: Test set color space interface, when color space format not match and need update,
  * result return camera operator not allowed
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_006 start");
 
@@ -438,7 +438,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_006, TestSize.Level
  * CaseDescription: Test cancel stream and get stream infos with capture session configure preview stream,
  * metadata stream and capture stream in the context of session start and session stop
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_007 start");
 
@@ -504,7 +504,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_007, TestSize.Level
  * CaseDescription: Test in the case of EnableMovingPhoto, live photo stream can start,
  * preview and null streams can not
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_008 start");
 
@@ -575,7 +575,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_008, TestSize.Level
  * Function: Test operate permission check, when interfaceCode unequal calling token id,
  * return camera operator not allowed
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_009 start");
 
@@ -602,7 +602,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_009, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test capture session get pid and destory stub object by pid
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_010 start");
 
@@ -627,7 +627,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_010, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test dump session info with capture session configure preview stream and photo stream
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_011 start");
 
@@ -686,7 +686,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_011, TestSize.Level
  * CaseDescription: Test get output status with capture session configure null capture stream,
  * normal preview stream and video stream
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_012 start");
 
@@ -752,7 +752,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test create media library with CameraPhotoProxy object for moving photo callback
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_013 start");
 
@@ -784,7 +784,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_013, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test create media library with Picture and CameraPhotoProxy object for moving photo callback
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_014 start");
 
@@ -822,7 +822,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_014, TestSize.Level
  * CaseDescription: Test onCaptureStarted and OnCaptureStarted_V1_2 when GetHdiStreamByStreamID is null,
  * return camera invalid arg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_015 start");
 
@@ -886,7 +886,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_015, TestSize.Level
  * CaseDescription: Test OnCaptureEnded and OnCaptureEndedExt when GetHdiStreamByStreamID is null,
  * return camera invalid arg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_016 start");
 
@@ -938,7 +938,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_016, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnCaptureError when stream type is repeat or capture
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_017 start");
 
@@ -1002,7 +1002,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_017, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnResult when stream type is not metadata, session return camera invalid arg
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_018 start");
 
@@ -1060,7 +1060,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_018, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test AddStream when stream exists already, add same stream fail
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_019 start");
 
@@ -1109,7 +1109,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_019, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test add input output, when session state is not in-progress, return camera invalid state
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_020 start");
 
@@ -1156,7 +1156,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_020, TestSize.Level
  * CaseDescription: Test AddOutputStream and RemoveOutput when stream type is metadata or depthdata,
  * various situations covering parameters
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_021 start");
 
@@ -1213,7 +1213,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_021, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test UpdateStreamInfos when camera device in null, return camera unknown error
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_022 start");
 
@@ -1244,7 +1244,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_022, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test session stop, when other undefined stream exists, other types of streams cannot be stopped
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_023 start");
 
@@ -1297,7 +1297,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_023, TestSize.Level
  * Function: Test get session state, when another capture session state exists,
  * other state cannot be found in SESSION_STATE_STRING_MAP
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_024 start");
 
@@ -1328,7 +1328,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_024, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test EnableMovingPhotoMirror with preview stream and livephoto stream, interface call is normal
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_025 start");
 
@@ -1385,7 +1385,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_025, TestSize.Level
  * Function: Test ExpandSketchRepeatStream and ClearSketchRepeatStream with sketch stream,
  * when it exists, it is normally added to output streams
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_026 start");
 
@@ -1438,7 +1438,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_026, TestSize.Level
  * Function: Test ExpandMovingPhotoRepeatStream, CreateMovingPhotoSurfaceWrapper when width or height is invalid,
  * and livePhotoStreamRepeat_ needs to be released and recreated when it is not null
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level1)
 {
     MEDIA_INFO_LOG("hcapture_session_unit_test_027 start");
 
@@ -1494,7 +1494,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_027, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level1)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1550,7 +1550,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_028, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level1)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1613,7 +1613,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_029, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level1)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1675,7 +1675,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_030, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level1)
 {
     std::vector<string> cameraIds;
     cameraService_->GetCameraIds(cameraIds);
@@ -1732,7 +1732,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_032, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when stream is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1757,7 +1757,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_033, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when cameraDevice_ is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1780,7 +1780,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_034, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with SetColorSpace
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1805,7 +1805,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_035, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1843,7 +1843,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_036, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1863,7 +1863,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_037, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when isSessionStarted_ is true
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1897,7 +1897,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_038, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession when cameraDevice is nullptr
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = nullptr;
@@ -1928,7 +1928,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_039, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test opMode PORTRAIT fuzz test
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = PORTRAIT;
@@ -1946,7 +1946,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_040, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test CreateBurstDisplayName
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level1)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode opMode = CAPTURE;
@@ -1972,7 +1972,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_041, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_CAPTURE_SESSION_ON_ERROR
  */
-HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level0)
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level1)
 {
     MockHCaptureSessionCallbackStub stub;
     MessageParcel data;

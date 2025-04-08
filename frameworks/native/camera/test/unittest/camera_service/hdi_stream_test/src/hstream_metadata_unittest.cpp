@@ -53,7 +53,7 @@ public:
  * CaseDescription: Test OperatePermissionCheck for an unauthorized caller token when starting a stream metadata
  *                  operation. The expected return value is CAMERA_OPERATION_NOT_ALLOWED.
  */
-HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level0)
+HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -75,7 +75,7 @@ HWTEST_F(HStreamMetadataUnit, hstream_metadata_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamMetadata & HStreamCommon
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level0)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level1)
 {
     int32_t format = 0;
     CameraInfoDumper infoDumper(0);
@@ -108,7 +108,7 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_027, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamMetadata & HStreamCommon
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level0)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level1)
 {
     int32_t format = 0;
     std::string  dumpString ="HStreamMetadata";
@@ -133,7 +133,7 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_028, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for switch of CAMERA_META_OPERATOR_ON_RESULT
  */
-HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level0)
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level1)
 {
     MockHStreamMetadataCallbackStub stub;
     MessageParcel data;

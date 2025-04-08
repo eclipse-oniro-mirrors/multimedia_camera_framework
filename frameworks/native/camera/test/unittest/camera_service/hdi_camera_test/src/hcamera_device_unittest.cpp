@@ -89,7 +89,7 @@ void HCameraDeviceUnit::TearDown()
  *  this situation and return CAMERA_OK, indicating that the secure camera sequence
  *  has been successfully obtained, and no exceptions or errors will occur during the operation.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_001, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -119,7 +119,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_001, TestSize.Level0)
  *  ensuring that when the device open fails, the relevant privacy settings are properly reset or cleared,
  *  and no exceptions or errors will occur during the operation.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_002, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -153,7 +153,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_002, TestSize.Level0)
  *  the expected result is that the method can correctly handle these situations and will not cause any
  *  exceptions or errors during the operation.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_003, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -191,7 +191,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_003, TestSize.Level0)
  *  The expected result is that the method can handle this correctly and will not cause any
  *  exceptions or errors during the operation.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_004, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -223,7 +223,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_004, TestSize.Level0)
  *  call the GetCameraType method to retrieve the camera type.
  *  The expected result is that the GetCameraType method returns the SYSTEM type.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_005, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -247,7 +247,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_005, TestSize.Level0)
  *  member to 1 and call the method. The expected result is that the DispatchDefaultSettingToHdi method returns 10,
  *  indicating that the default settings have been successfully dispatched to the HDI.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_006, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -272,7 +272,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_006, TestSize.Level0)
  *  The expected result is that the CheckPermissionBeforeOpenDevice method returns 13,
  *  and no exceptions or errors will occur during the operation.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_007, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -300,7 +300,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_007, TestSize.Level0)
  *  method can correctly execute privacy permission processing, ensuring that privacy is properly managed after
  *  the device is closed.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_008, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -332,7 +332,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_008, TestSize.Level0)
  *  that hdiCameraDevice_ remains nullptr. Set the cameraHostManager_ member to nullptr and
  *  call the method again to verify that the return result is CAMERA_OK.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_009, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_009, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -358,7 +358,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice with anomalous branch
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -403,7 +403,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice with anomalous branch.
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_011, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_011, TestSize.Level1)
 {
     std::vector<int32_t> result;
     result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
@@ -449,7 +449,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_011, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_012, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_012, TestSize.Level1)
 {
     std::vector<int32_t> result;
     result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
@@ -491,7 +491,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_012, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice when settings is nullptr
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_013, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_013, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -511,7 +511,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_014, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_014, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::string cameraId = cameras[0]->GetID();
@@ -537,7 +537,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_014, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_015, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_015, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -571,7 +571,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_015, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraDevice when hdiCameraDevice_ is nullptr
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_016, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_016, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -594,7 +594,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_016, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HCameraService with anomalous branch
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -658,7 +658,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test BuildDeviceProtectionDialogCommand
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_023, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_023, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
  
@@ -681,7 +681,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_023, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ShowDeviceProtectionDialog
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
  
@@ -704,7 +704,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_024, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test DeviceEjectCallBack
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_025, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_025, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
  
@@ -723,7 +723,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_025, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportDeviceProtectionStatus
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
  
@@ -750,7 +750,7 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_026, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test RegisterSensor
  */
-HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_027, TestSize.Level0)
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_027, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     std::string cameraId = cameras[0]->GetID();

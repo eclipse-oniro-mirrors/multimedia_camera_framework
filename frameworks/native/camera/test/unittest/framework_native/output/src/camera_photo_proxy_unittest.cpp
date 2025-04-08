@@ -84,7 +84,7 @@ void CameraPhotoProxyUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with SetDeferredAttrs and SetLocation
  */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_001, TestSize.Level1)
 {
     std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
     std::shared_ptr<CameraPhotoProxy> proxy_1 = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0, 0);
@@ -108,7 +108,7 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with CameraFreeBufferHandle of abnormal branches
  */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_002, TestSize.Level1)
 {
     std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
 
@@ -133,7 +133,7 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with CameraFreeBufferHandle of normal branches
  */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_003, TestSize.Level0)
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_003, TestSize.Level1)
 {
     std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
 
@@ -158,7 +158,7 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with WriteToParcel when bufferHandle is nullptr
  */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_005, TestSize.Level0)
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_005, TestSize.Level1)
 {
     std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
 
@@ -178,7 +178,7 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraPhotoProxy with WriteToParcel when bufferHandle is not nullptr
  */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_006, TestSize.Level0)
+HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_006, TestSize.Level1)
 {
     std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
 

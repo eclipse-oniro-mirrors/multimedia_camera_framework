@@ -86,7 +86,7 @@ void TimeLapsePhotoSessionUnitTest::NativeAuthorization()
  * CaseDescription: Test ProcessCallbacks, StartTryAE, StopTryAE, IsWhiteBalanceModeSupported,
  * SetWhiteBalanceMode, GetWhiteBalanceMode for just call.
  */
-HWTEST_F(TimeLapsePhotoSessionUnitTest, time_lapse_photo_function_unittest_001, TestSize.Level0)
+HWTEST_F(TimeLapsePhotoSessionUnitTest, time_lapse_photo_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::TIMELAPSE_PHOTO);
     ASSERT_NE(captureSession, nullptr);

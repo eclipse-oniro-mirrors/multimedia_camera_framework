@@ -159,7 +159,7 @@ void CameraNightSessionUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test NightSession about exposure
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -222,7 +222,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test NightSession when innerInputDevice_ and output is nullptr
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level0)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -285,7 +285,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test NightSession with SetExposure
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;
@@ -348,7 +348,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test NightSession with SetExposure normal branches
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;

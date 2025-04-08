@@ -524,7 +524,7 @@ void CameraServiceClientUnit::TearDown()
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -557,7 +557,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -609,7 +609,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -685,7 +685,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -734,7 +734,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -775,7 +775,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -830,7 +830,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -872,7 +872,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -915,7 +915,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamMetadataProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -944,7 +944,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HStreamRepeatProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -996,7 +996,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test CallbackProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1029,7 +1029,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test prelaunch the camera with serviceProxy_ null anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1080,7 +1080,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1128,7 +1128,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with muteCamera anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1161,7 +1161,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1200,7 +1200,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1230,7 +1230,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1261,7 +1261,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1289,7 +1289,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1318,7 +1318,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1344,7 +1344,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1366,7 +1366,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1401,7 +1401,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1432,7 +1432,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1461,7 +1461,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;
@@ -1487,7 +1487,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test errorCode with abnormal branches
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.Level0)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
         return;

@@ -56,7 +56,7 @@ void DfxVideoReportUnittest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test ReportAddVideoEvent with existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent001, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent001, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     DpsCallerInfo callerInfo;
@@ -77,7 +77,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportAddVideoEvent with not existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent002, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent002, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     const std::string videoIdSec = VIDEO_SECOND_ID;
@@ -99,7 +99,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportAddVideoEvent002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportRemoveVideoEvent with existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent001, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent001, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     DpsCallerInfo callerInfo;
@@ -120,7 +120,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportRemoveVideoEvent with not existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent002, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent002, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     const std::string videoIdSec = VIDEO_SECOND_ID;
@@ -142,7 +142,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportRemoveVideoEvent002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportPauseVideoEvent with existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent001, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent001, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     int32_t pauseReason = 0;
@@ -164,7 +164,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportPauseVideoEvent with not existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent002, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent002, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     const std::string videoIdSec = VIDEO_SECOND_ID;
@@ -187,7 +187,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportPauseVideoEvent002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportResumeVideoEvent with not existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent001, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent001, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     const std::string videoIdSec = VIDEO_SECOND_ID;
@@ -209,7 +209,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportResumeVideoEvent with not existent videoId and processTime = 0.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent002, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent002, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     DpsCallerInfo callerInfo;
@@ -231,7 +231,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportResumeVideoEvent with not existent videoId and processTime != 0.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent003, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent003, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     DpsCallerInfo callerInfo;
@@ -253,7 +253,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportResumeVideoEvent003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportCompleteVideoEvent with not existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportCompleteVideoEvent001, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportCompleteVideoEvent001, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     const std::string videoIdSec = VIDEO_SECOND_ID;
@@ -275,7 +275,7 @@ HWTEST_F(DfxVideoReportUnittest, ReportCompleteVideoEvent001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReportCompleteVideoEvent with existent videoId.
  */
-HWTEST_F(DfxVideoReportUnittest, ReportCompleteVideoEvent002, TestSize.Level0)
+HWTEST_F(DfxVideoReportUnittest, ReportCompleteVideoEvent002, TestSize.Level1)
 {
     const std::string videoId = VIDEO_ID;
     DpsCallerInfo callerInfo;
