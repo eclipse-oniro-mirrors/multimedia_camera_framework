@@ -696,7 +696,7 @@ int32_t HStreamOperator::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
             return result;
         }
     }
-    CHECK_EXECUTE(!isNeedUpdate, SetColorSpaceForStreams());
+    SetColorSpaceForStreams();
     MEDIA_INFO_LOG("HStreamOperator::SetColorSpace() colorSpace: %{public}d, isNeedUpdate: %{public}d",
         currColorSpace_, isNeedUpdate);
     return result;
