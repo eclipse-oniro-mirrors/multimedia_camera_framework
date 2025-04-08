@@ -953,6 +953,18 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
     CameraManager::GetInstance()->GetCameraConcurrentInfos(cameraDeviceArrray,
         cameraConcurrentType, modes, outputCapabilities);
     Camera_ConcurrentInfo *CameraConcurrentInfothis =  new Camera_ConcurrentInfo[deviceSize];
+    SetCameraConcurrentInfothis(camera, deviceSize, CameraConcurrentInfothis, cameraConcurrentType, modes,
+        outputCapabilities);
+    *CameraConcurrentInfo = CameraConcurrentInfothis;
+    *infoSize = deviceSize;
+    return CAMERA_OK;
+}
+ 
+Camera_ErrorCode Camera_Manager::SetCameraConcurrentInfothis(const Camera_Device *camera, uint32_t deviceSize,
+    Camera_ConcurrentInfo *CameraConcurrentInfothis,
+    std::vector<bool> &cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> &modes,
+    std::vector<std::vector<OHOS::sptr<OHOS::CameraStandard::CameraOutputCapability>>> &outputCapabilities)
+{
     for (int i = 0; i < deviceSize; i++) {
         CameraConcurrentInfothis[i].camera = camera[i];
         if (cameraConcurrentType[i] == false) {
@@ -966,6 +978,7 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
             newmodes[j] = itr->second;
         }
         CameraConcurrentInfothis[i].sceneModes = newmodes;
+        CameraConcurrentInfothis[i].modeAndCapabilitySize = outputCapabilities[i].size();
         Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()];
         for (uint32_t j = 0; j < outputCapabilities[i].size(); j++) {
             std::vector<Profile> previewProfiles = outputCapabilities[i][j]->GetPreviewProfiles();
