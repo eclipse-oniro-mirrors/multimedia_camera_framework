@@ -128,6 +128,11 @@ private:
 
     Camera_ErrorCode GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
         std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
+    
+    Camera_ErrorCode SetCameraConcurrentInfothis(const Camera_Device *camera, uint32_t deviceSize,
+        Camera_ConcurrentInfo *CameraConcurrentInfothis,
+        std::vector<bool> &cameraConcurrentType, std::vector<std::vector<OHOS::CameraStandard::SceneMode>> &modes,
+        std::vector<std::vector<OHOS::sptr<OHOS::CameraStandard::CameraOutputCapability>>> &outputCapabilities);
 
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
 
