@@ -134,6 +134,7 @@ int32_t VideoEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
     CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Set avbuffer attr failed, ret: %{public}d", ret);
     ret = encoder_->QueueInputBuffer(info->bufferIndex);
     CHECK_ERROR_RETURN_RET_LOG(ret != AV_ERR_OK, 1, "Push input data failed, ret: %{public}d", ret);
+    return 0;
 }
 
 int32_t VideoEncoder::NotifyEndOfStream()
