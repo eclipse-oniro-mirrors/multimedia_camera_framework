@@ -17,15 +17,17 @@
 #define AVCODEC_SAMPLE_VIDEO_ENCODER_H
 
 #include "frame_record.h"
-#include "native_avcodec_videoencoder.h"
+#include "avcodec_video_encoder.h"
 #include "output/camera_output_capability.h"
 #include "sample_info.h"
 #include "camera_util.h"
+#include "surface_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-class VideoEncoder {
+using namespace OHOS::MediaAVCodec;
+class VideoEncoder : public std::enable_shared_from_this<VideoEncoder> {
 public:
     VideoEncoder() = default;
     explicit VideoEncoder(VideoCodecType type);
@@ -42,17 +44,28 @@ public:
     int32_t Release();
     int32_t GetSurface();
     int32_t ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord);
+    int32_t DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr<FrameRecord> frameRecord);
+    struct CallBack : public MediaCodecCallback {
+        explicit CallBack(std::weak_ptr<VideoEncoder> encoder) : videoEncoder_(encoder) {}
+        ~CallBack() override = default;
+        void OnError(AVCodecErrorType errorType, int32_t errorCode) override;
+        void OnOutputFormatChanged(const Format &format) override;
+        void OnInputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
+        void OnOutputBufferAvailable(uint32_t index, std::shared_ptr<AVBuffer> buffer) override;
+    private:
+        std::weak_ptr<VideoEncoder> videoEncoder_;
+    };
 
 private:
-    int32_t SetCallback(CodecUserData *codecUserData);
+    int32_t SetCallback();
     int32_t Configure();
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
     bool EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
-    OH_AVCodec *encoder_ = nullptr;
+    shared_ptr<AVCodecVideoEncoder> encoder_ = nullptr;
     std::mutex contextMutex_;
-    CodecUserData *context_ = nullptr;
+    sptr<VideoCodecUserData> context_ = nullptr;
     shared_ptr<Size> size_;
     int32_t rotation_;
     std::mutex surfaceMutex_; // guard codecSurface_

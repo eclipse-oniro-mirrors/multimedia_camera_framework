@@ -2092,9 +2092,8 @@ int32_t HCaptureSession::CreateMediaLibrary(std::unique_ptr<Media::Picture> pict
     }
     DeferredProcessing::DeferredProcessingService::GetInstance().
         NotifyLowQualityImage(photoAssetProxy->GetUserId(), uri, picturePtr);
-    if (!isBursting && isSetMotionPhoto_) {
-        int32_t videoFd = photoAssetProxy->GetVideoFd();
-        MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
+    if (!isBursting && isSetMotionPhoto_ && taskManager_) {
+        MEDIA_INFO_LOG("CreateMediaLibrary captureId :%{public}d", captureId);
         if (taskManager_) {
             taskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
         }

@@ -35,9 +35,6 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
 FrameRecord::~FrameRecord()
 {
     MEDIA_DEBUG_LOG("FrameRecord::~FrameRecord");
-    if (encodedBuffer) {
-        OH_AVBuffer_Destroy(encodedBuffer);
-    }
     encodedBuffer = nullptr;
 }
 
