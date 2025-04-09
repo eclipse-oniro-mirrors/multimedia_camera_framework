@@ -116,7 +116,7 @@ sptr<CaptureOutput> CameraVedioOutputUnit::CreateVideoOutput()
  * EnvConditions: NA
  * CaseDescription: Test videooutput when videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -165,7 +165,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test start in videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_002, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -221,7 +221,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test stop in videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_003, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -279,7 +279,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsMirrorSupported in videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_004, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -316,7 +316,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedVideoMetaTypes in videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_005, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -354,7 +354,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test CameraServerDied in videoOutput
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_006, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -393,7 +393,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with cameraserverdied when stream_ is nullptr
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_007, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_007, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -423,7 +423,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with OnSketchStatusChanged
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_008, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_008, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -451,7 +451,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with enableMirror
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_009, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_009, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -478,7 +478,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with AutoDeferredVideoEnhancement
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_010, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_010, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -511,7 +511,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_010, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with IsVideoStarted
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_011, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_011, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -538,7 +538,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_011, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test videooutput with Rotation
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -576,7 +576,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_unittest_012, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test IsAutoVideoFrameRateSupported, EnableAutoVideoFrameRate for just call.
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_001, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -607,7 +607,7 @@ HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_001, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test Constructor and Destructors for just call.
  */
-HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_002, TestSize.Level0)
+HWTEST_F(CameraVedioOutputUnit, video_output_function_unittest_002, TestSize.Level1)
 {
     std::shared_ptr<VideoOutputCallbackImpl> videoOutputCallbackImpl1 = std::make_shared<VideoOutputCallbackImpl>();
     EXPECT_EQ(videoOutputCallbackImpl1->videoOutput_, nullptr);

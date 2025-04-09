@@ -54,7 +54,7 @@ void AudioCapturerSessionUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test GetAudioRecords normal branches.
  */
-HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_001, TestSize.Level0)
+HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_001, TestSize.Level1)
 {
     int64_t startTime = 1;
     int64_t endTime = 10;

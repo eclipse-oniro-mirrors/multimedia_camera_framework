@@ -128,7 +128,7 @@ MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is oppsite
  *          and session is start
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -171,7 +171,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_001, TestSize.Level0)
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is oppsite
  *          and session is commit
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -213,7 +213,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetNativeSurface and SeteCallbackFlag when isEnableDeeferred is not oppsite
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -240,7 +240,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsYuvOrHeifPhoto when photoProfile_ is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -265,7 +265,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with Set and Get AuxiliaryPhotoHandle
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -288,7 +288,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel and EnableRawDelivery when stream is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -339,7 +339,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel when stream is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -391,7 +391,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with CreateMultiChannel when surface is not nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -446,7 +446,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetThumbnailListener
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -477,7 +477,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetThumbnail EnableAutoHighQualityPhoto and EnableMirror
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -529,7 +529,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_010, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsQuickThumbnailSupported and IsRawDeliverySupported
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -574,7 +574,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_011, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with DeferredImageDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -616,7 +616,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_012, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with DeferredImageDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -669,7 +669,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with ProcessSnapshotDurationUpdates
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -698,7 +698,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_014, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with ProcessSnapshotDurationUpdates
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -721,7 +721,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_015, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with SetMovingPhotoVideoCodecType
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -743,7 +743,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_016, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with DepthDataDelivery
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -766,7 +766,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_017, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with GetPhotoRotation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -887,7 +887,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test HStreamCaptureCallbackImpl
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -941,7 +941,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_020, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput when destruction
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -975,7 +975,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_021, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with IsQuickThumbnailSupported when Mode is different
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1034,7 +1034,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_022, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with cameraserverdied when stream_ is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1055,7 +1055,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_023, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with GetLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level1)
 {
     std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
     std::shared_ptr<Location> location;
@@ -1071,7 +1071,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_024, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with SetMirror and GetMirror
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1106,7 +1106,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_025, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with UpdateMediaLibraryPhotoAssetProxy
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1132,7 +1132,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_026, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with GetLocation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1171,7 +1171,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_027, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photooutput with EnableMovingPhoto when stream_ is nullptr
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level0)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 

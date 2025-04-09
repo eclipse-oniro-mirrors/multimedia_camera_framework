@@ -43,7 +43,7 @@ void DeferredUtilsUnitTest::TearDown(void) {}
  * EnvConditions: NA
  * CaseDescription: Validate the functions of class DpsTimer in normal condition.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_001, TestSize.Level1)
 {
     uint32_t testTimeId = 1;
     EXPECT_NE(DpsTimer::GetInstance().StartTimer([]() -> void {}, 0), 0);
@@ -59,7 +59,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Validate the functions of class DpsTimer in abnormal condition, timer_ is null.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level1)
 {
     uint32_t invalidTimeId = 0;
     uint32_t testTimeId = 1;
@@ -79,7 +79,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test TransExifOrientationToDegree with valid data.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_003, TestSize.Level1)
 {
     std::string testOrientation = "Top-right";
     float testDegree = 90;
@@ -94,7 +94,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test TransExifOrientationToDegree with invalid data.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_004, TestSize.Level1)
 {
     std::string testOrientation = "Invalid_orientation";
     float defaultDegree = .0;
@@ -109,7 +109,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Validate the correctness of GetGlobalWatchdog.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level1)
 {
     EXPECT_EQ(GetGlobalWatchdog().name_, "DPSGlobalWatchdog");
 }
@@ -122,7 +122,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Validate the correctness of GetDpsCallerInfo.
  */
-HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_006, TestSize.Level1)
 {
     DpsCallerInfo info = GetDpsCallerInfo();
     EXPECT_EQ(info.pid, IPCSkeleton::GetCallingPid());

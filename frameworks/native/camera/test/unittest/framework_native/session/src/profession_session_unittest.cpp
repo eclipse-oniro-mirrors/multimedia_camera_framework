@@ -204,7 +204,7 @@ void ProfessionSessionUnitTest::Init()
  * EnvConditions: NA
  * CaseDescription: Testing multiple calls to set interface function returns normal.
  */
-HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, TestSize.Level0)
+HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, TestSize.Level1)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();
@@ -278,7 +278,7 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_001, Test
  * EnvConditions: NA
  * CaseDescription: Test setting callback interface returns normal.
  */
-HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, TestSize.Level0)
+HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, TestSize.Level1)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();
@@ -306,7 +306,7 @@ HWTEST_F(ProfessionSessionUnitTest, camera_profession_session_unittest_002, Test
  * CaseDescription: Test SetExposureInfoCallback, SetIsoInfoCallback, SetApertureInfoCallback,
  * SetLuminationInfoCallback for just call.
  */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> session = manager_->CreateCaptureSession(SceneMode::PROFESSIONAL_VIDEO);
     ASSERT_NE(session, nullptr);
@@ -338,7 +338,7 @@ HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_001, Te
  * EnvConditions: NA
  * CaseDescription: with SetISO normal branches
  */
-HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, TestSize.Level0)
+HWTEST_F(ProfessionSessionUnitTest, profession_session_function_unittest_002, TestSize.Level1)
 {
     if (IsSupportMode(sceneMode_)) {
         Init();

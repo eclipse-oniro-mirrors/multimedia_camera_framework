@@ -78,7 +78,7 @@ void DeferredVideoProcessorStratetyUnittest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test after initialize videoStrategyCenter, eventsListener is not nullptr.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_001, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -97,7 +97,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the event schedule state value can be set by HandleEventChanged.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_002, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -119,7 +119,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the default execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_003, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -139,7 +139,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while strategy center is ready, execution mode is LOAD_BALANCE.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_004, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -162,7 +162,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while charging status is DISCHARGING, execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_005, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -188,7 +188,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * CaseDescription: Test while charging status is DISCHARGING, strategy center and time is ready,
  *                  execution mode is LOAD_BALANCE.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_006, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -215,7 +215,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while charging status is DISCHARGING, but time is not ready, execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_007, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_007, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -243,7 +243,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while execution mode is DUMMY, work is nullptr.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_008, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_008, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -279,7 +279,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the time ready status can be set by UpdateSingleTime.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_009, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_009, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -305,7 +305,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the available time status can be set by UpdateAvailableTime.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_010, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_010, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -334,7 +334,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while GetScheduleInfo type is not supported, default schedule info will be returned.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_011, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_011, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -356,7 +356,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * CaseDescription: Test while camera schedule info isNeedStop is ture, and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_012, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_012, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -381,7 +381,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * CaseDescription: Test while hdi schedule info isNeedStop is ture, and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_013, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_013, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -407,7 +407,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  *                  and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_014, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_014, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -432,7 +432,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * CaseDescription: Test while screen schedule info isNeedStop is ture, and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_015, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_015, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -458,7 +458,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  *                  and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_016, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_016, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -484,7 +484,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  *                  and charging schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_017, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_017, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -512,7 +512,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  *                  charging schedule info does not exist, and battery schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default battery schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_018, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_018, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
@@ -550,7 +550,7 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  *                  charging schedule info isCharging is true, and battery level schedule info does not exist,
  *                  the ReevaluateSchedulerInfo will return default battery level schedule info as {ture, false}.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_019, TestSize.Level0)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_019, TestSize.Level1)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);

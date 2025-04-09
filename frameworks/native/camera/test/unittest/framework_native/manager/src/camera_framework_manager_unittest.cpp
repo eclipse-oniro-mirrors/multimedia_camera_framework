@@ -100,7 +100,7 @@ void CameraFrameWorkManagerUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test CreatePhotoOutputWithoutProfile for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_001, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_001, TestSize.Level1)
 {
     int ret = 0;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -120,7 +120,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_001, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateVideoOutputWithoutProfile for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_002, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_002, TestSize.Level1)
 {
     int ret = 0;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -139,7 +139,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_002, Test
  * EnvConditions: NA
  * CaseDescription: Test CreatePreviewOutputWithoutProfile for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_003, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_003, TestSize.Level1)
 {
     int ret = 0;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -158,7 +158,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_003, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateDeferredPreviewOutput for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_004, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_004, TestSize.Level1)
 {
     int ret = 0;
     int32_t width = PREVIEW_DEFAULT_WIDTH;
@@ -182,7 +182,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_004, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateMetadataOutput for Normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_005, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_005, TestSize.Level1)
 {
     sptr<MetadataOutput> metadataOutput = nullptr;
     int ret = cameraManager_->CreateMetadataOutput(metadataOutput);
@@ -198,7 +198,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_005, Test
  * EnvConditions: NA
  * CaseDescription: Test IsCameraMuted and MuteCamera for Normal branches & abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_006, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_006, TestSize.Level1)
 {
     sptr<CameraManager> manager = cameraManager_;
     bool ret = [&manager]() {
@@ -232,7 +232,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_006, Test
  * EnvConditions: NA
  * CaseDescription: Test PrelaunchCamera and IsPrelaunchSupported for Normal branches & abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_007, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -257,7 +257,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_007, Test
  * EnvConditions: NA
  * CaseDescription: Test FillSupportPhotoFormats for (photoFormats_.size() == 0 || photoProfiles.size() == 0)
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_008, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_008, TestSize.Level1)
 {
     cameraManager_->photoFormats_.clear();
     std::vector<Profile> photoProfiles = {};
@@ -288,7 +288,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_008, Test
  * EnvConditions: NA
  * CaseDescription: Test OnCameraStatusChanged for Normal branches & abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_009, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_009, TestSize.Level1)
 {
     auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
     std::string cameraId;
@@ -316,7 +316,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_009, Test
  * EnvConditions: NA
  * CaseDescription: Test OnFlashlightStatusChanged for cameraMngrCallbackMap_ is nullptr & not nullptr
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_010, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_010, TestSize.Level1)
 {
     auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
     std::string cameraId;
@@ -339,7 +339,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_010, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateCaptureSessionImpl for tow branches of switch
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_011, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_011, TestSize.Level1)
 {
     sptr<ICaptureSession> session = nullptr;
     OperationMode opMode = OperationMode::NORMAL;
@@ -360,7 +360,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_011, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateCaptureSession for ConvertFwkToMetaMode
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_012, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_012, TestSize.Level1)
 {
     SceneMode mode = PROFESSIONAL;
     EXPECT_NE(cameraManager_->CreateCaptureSession(mode), nullptr);
@@ -380,7 +380,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_012, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateDepthDataOutput which two parameter for abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_013, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_013, TestSize.Level1)
 {
     DepthProfile depthProfile;
     sptr<IBufferProducer> surface = nullptr;
@@ -397,7 +397,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_013, Test
  * CaseDescription: Test CreateDepthDataOutput which three parameter
  * for branches of (serviceProxy == nullptr) || (surface == nullptr)
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_014, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_014, TestSize.Level1)
 {
     DepthProfile depthProfile;
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
@@ -428,7 +428,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_014, Test
  * for branches of (depthProfile.GetCameraFormat() == CAMERA_FORMAT_INVALID)
  * ||(depthProfile.GetSize().width == 0) ||(depthProfile.GetSize().height == 0)
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_015, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_015, TestSize.Level1)
 {
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
@@ -468,7 +468,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_015, Test
  * EnvConditions: NA
  * CaseDescription: Test DestroyStubObj for normal branches & abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_016, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_016, TestSize.Level1)
 {
     EXPECT_NE(cameraManager_->GetServiceProxy(), nullptr);
     EXPECT_EQ(cameraManager_->DestroyStubObj(), CAMERA_OK);
@@ -485,7 +485,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_016, Test
  * EnvConditions: NA
  * CaseDescription: Test CameraServerDied and AddServiceProxyDeathRecipient for abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_017, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_017, TestSize.Level1)
 {
     sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
@@ -504,7 +504,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_017, Test
  * EnvConditions: NA
  * CaseDescription: Test GetCameraDeviceListFromServer for normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_018, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_018, TestSize.Level1)
 {
     EXPECT_NE(cameraManager_->GetServiceProxy(), nullptr);
     std::vector<std::string> cameraIds;
@@ -521,7 +521,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_018, Test
  * EnvConditions: NA
  * CaseDescription: Test GetFallbackConfigMode for branches of switch
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_019, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_019, TestSize.Level1)
 {
     SceneMode profileMode = CAPTURE_MACRO;
     CameraManager::ProfilesWrapper profilesWrapper = {};
@@ -542,7 +542,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_019, Test
  * EnvConditions: NA
  * CaseDescription: Test ParseBasicCapability for normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_020, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_020, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
@@ -568,7 +568,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_020, Test
  * EnvConditions: NA
  * CaseDescription: Test ParseExtendCapability for normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_021, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_021, TestSize.Level1)
 {
     CameraManager::ProfilesWrapper profilesWrapper = {};
     int32_t modeNameRet1 = SceneMode::VIDEO;
@@ -591,7 +591,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_021, Test
  * EnvConditions: NA
  * CaseDescription: Test ParseProfileLevel for normal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_022, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_022, TestSize.Level1)
 {
     cameraManager_->isSystemApp_ = true;
     CameraManager::ProfilesWrapper profilesWrapper = {};
@@ -621,7 +621,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_022, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateProfileLevel4StreamType for abnormal branches
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_023, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_023, TestSize.Level1)
 {
     CameraManager::ProfilesWrapper profilesWrapper = {};
     int32_t specId = 0;
@@ -659,7 +659,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_023, Test
  * EnvConditions: NA
  * CaseDescription: Test GetSupportPhotoFormat for metadata == nullptr
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_024, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_024, TestSize.Level1)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
     int32_t modeName = SceneMode::NORMAL;
@@ -676,7 +676,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_024, Test
  * EnvConditions: NA
  * CaseDescription: Test OnTorchStatusChange for status is TORCH_STATUS_UNAVAILABLE and TORCH_STATUS_ON
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, TestSize.Level1)
 {
     auto listenerManager = cameraManager_->GetTorchServiceListenerManager();
     TorchStatus status1 = TorchStatus::TORCH_STATUS_UNAVAILABLE;
@@ -703,7 +703,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_025, Test
  * EnvConditions: NA
  * CaseDescription: Test OnFoldStatusChanged for listenerMap is empty and not empty
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_026, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_026, TestSize.Level1)
 {
     auto listenerManager = cameraManager_->GetTorchServiceListenerManager();
     listenerManager->ClearListeners();
@@ -730,7 +730,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_026, Test
  * EnvConditions: NA
  * CaseDescription: Test get HostName
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_027, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_027, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(static_cast<int>(cameras.size()), 0);
@@ -746,7 +746,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_027, Test
  * EnvConditions: NA
  * CaseDescription: Test get DeviceType
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_028, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_028, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(static_cast<int>(cameras.size()), 0);
@@ -776,7 +776,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_028, Test
  * EnvConditions: NA
  * CaseDescription: Test get cameras
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_029, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_029, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_TRUE(cameras.size() != 0);
@@ -790,7 +790,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_029, Test
  * EnvConditions: NA
  * CaseDescription: Test create input
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_030, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_030, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_TRUE(cameras.size() != 0);
@@ -810,7 +810,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_030, Test
  * EnvConditions: NA
  * CaseDescription: Test create session
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_031, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_031, TestSize.Level1)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -825,7 +825,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_031, Test
  * EnvConditions: NA
  * CaseDescription: Test create preview output
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_032, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_032, TestSize.Level1)
 {
     int32_t width = PREVIEW_DEFAULT_WIDTH;
     int32_t height = PREVIEW_DEFAULT_HEIGHT;
@@ -848,7 +848,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_032, Test
  * EnvConditions: NA
  * CaseDescription: Test create preview output with surface as null
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_033, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_033, TestSize.Level1)
 {
     int32_t width = PREVIEW_DEFAULT_WIDTH;
     int32_t height = PREVIEW_DEFAULT_HEIGHT;
@@ -870,7 +870,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_033, Test
  * EnvConditions: NA
  * CaseDescription: Test create photo output
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_034, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_034, TestSize.Level1)
 {
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
@@ -894,7 +894,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_034, Test
  * EnvConditions: NA
  * CaseDescription: Test create photo output with surface as null
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_035, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_035, TestSize.Level1)
 {
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
@@ -916,7 +916,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_035, Test
  * EnvConditions: NA
  * CaseDescription: Test create video output
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_036, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_036, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -940,7 +940,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_036, Test
  * EnvConditions: NA
  * CaseDescription: Test create video output with surface as null
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_037, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_037, TestSize.Level1)
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
@@ -963,7 +963,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_037, Test
  * EnvConditions: NA
  * CaseDescription: Test manager callback
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_038, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_038, TestSize.Level1)
 {
     std::shared_ptr<TestCameraMngerCallback> setCallback = std::make_shared<TestCameraMngerCallback>("MgrCallback");
     cameraManager_->RegisterCameraStatusCallback(setCallback);
@@ -979,7 +979,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_038, Test
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedModes to get modes
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_039, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_039, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -997,7 +997,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_039, Test
  * EnvConditions: NA
  * CaseDescription: Test GetSupportedOutputCapability to get capability
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_040, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_040, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -1019,7 +1019,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_040, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with updatetorchmode
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_041, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_041, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -1047,7 +1047,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_041, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with parsebasiccapability
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(cameras.size(), 0);
@@ -1074,7 +1074,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_042, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with no cameraid and cameraobjlist
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_043, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_043, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
@@ -1106,7 +1106,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_043, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with serviceProxy_ is nullptr
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_044, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_044, TestSize.Level1)
 {
     sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
@@ -1135,7 +1135,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_044, Test
  * EnvConditions: NA
  * CaseDescription: Test cameramanager with preswitchcamera
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_045, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_045, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CameraOutputCapability> ability = cameraManager_->GetSupportedOutputCapability(cameras[0], 0);
@@ -1155,7 +1155,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_045, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateDeferredPhotoProcessingSession
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_046, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_046, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession;
     deferredProcSession = cameraManager_->CreateDeferredPhotoProcessingSession(userId_,
@@ -1171,7 +1171,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_046, Test
  * EnvConditions: NA
  * CaseDescription: Test cameraManager GetSupportedOutputCapability with yuv photo
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_047, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_047, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1199,7 +1199,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_047, Test
  * EnvConditions: NA
  * CaseDescription: Verify that the method returns the correct list of cameras when the device is not foldable.
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_048, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_048, TestSize.Level1)
 {
     cameraManager_->foldScreenType_ = "0";
     EXPECT_TRUE(cameraManager_->GetIsFoldable());
@@ -1226,7 +1226,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_048, Test
  * CaseDescription: The goal is to verify that the method correctly returns the list of supported cameras when the
                device is collapsible and in the "expand" state
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_049, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_049, TestSize.Level1)
 {
     cameraManager_->foldScreenType_ = "0";
     EXPECT_TRUE(cameraManager_->GetIsFoldable());
@@ -1263,7 +1263,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_049, Test
  * CaseDescription: In the scenario where the device is foldable and in a folded state, the goal is to ensure that the
               method correctly returns the list of cameras that support the current folded state.
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_050, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_050, TestSize.Level1)
 {
     sptr<MockCameraManager> mockCameraManager = new MockCameraManager();
     EXPECT_CALL(*mockCameraManager, GetIsFoldable())
@@ -1305,7 +1305,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_050, Test
  * CaseDescription: The unit test get_supported_cameras_foldable_half_fold checks the behavior of the
              CameraManager::GetSupportedCameras method when the device is foldable and in a half-folded state.
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_051, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_051, TestSize.Level1)
 {
     cameraManager_->foldScreenType_ = "0";
     EXPECT_TRUE(cameraManager_->GetIsFoldable());
@@ -1340,7 +1340,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_051, Test
  * EnvConditions: NA
  * CaseDescription: Test cameraManager with GetInstance
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_052, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_052, TestSize.Level1)
 {
     sptr<CameraManager>& manager = cameraManager_->GetInstance();
     ASSERT_NE(manager, nullptr);
@@ -1354,7 +1354,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_052, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateDeferredVideoProcessingSession
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_053, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_053, TestSize.Level1)
 {
     sptr<DeferredVideoProcSession> deferredVideoProcSession;
     deferredVideoProcSession = cameraManager_->CreateDeferredVideoProcessingSession(userId_,
@@ -1370,7 +1370,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_053, Test
  * EnvConditions: NA
  * CaseDescription: Test GetCameras and GetCameraOutputStatus
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_054, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_054, TestSize.Level1)
 {
     int32_t status = 0;
     cameraManager_->serviceProxyPrivate_ = nullptr;
@@ -1388,7 +1388,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_054, Test
  * EnvConditions: NA
  * CaseDescription: Test SetCameraManagerNull and SetFoldServiceCallback
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_055, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_055, TestSize.Level1)
 {
     cameraManager_->serviceProxyPrivate_ = nullptr;
     sptr<IFoldServiceCallback> foldSvcCallback = cameraManager_->GetFoldStatusListenerManager();
@@ -1405,7 +1405,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_055, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateMetadataOutput
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, TestSize.Level1)
 {
     sptr<MetadataOutput> pMetadataOutput = nullptr;
     std::vector<MetadataObjectType> metadataObjectTypes;
@@ -1422,7 +1422,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_056, Test
  * EnvConditions: NA
  * CaseDescription: Test RegisterFoldStatusListener
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, TestSize.Level1)
 {
     std::shared_ptr<FoldListener> listener = std::make_shared<FoldListenerTest>();
     cameraManager_->RegisterFoldListener(listener);
@@ -1437,7 +1437,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_057, Test
  * EnvConditions: NA
  * CaseDescription: Test GetTorchListener
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, TestSize.Level1)
 {
     std::shared_ptr<TorchListener> listener = std::make_shared<TorchListenerTest>();
     cameraManager_->RegisterTorchListener(listener);
@@ -1452,7 +1452,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_058, Test
  * EnvConditions: NA
  * CaseDescription: Test GetCameraMuteListener
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, TestSize.Level1)
 {
     std::shared_ptr<CameraMuteListener> listener = std::make_shared<CameraMuteListenerTest>();
     cameraManager_->RegisterCameraMuteListener(listener);
@@ -1467,7 +1467,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_059, Test
  * EnvConditions: NA
  * CaseDescription: Test GetTorchMode
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, TestSize.Level1)
 {
     cameraManager_->serviceProxyPrivate_ = nullptr;
     cameraManager_->torchMode_ = TorchMode::TORCH_MODE_AUTO;
@@ -1483,7 +1483,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_060, Test
  * EnvConditions: NA
  * CaseDescription: Test MuteCameraPersist
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_061, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_061, TestSize.Level1)
 {
     cameraManager_->serviceProxyPrivate_ = nullptr;
     PolicyType type = PolicyType::PRIVACY;
@@ -1500,7 +1500,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_061, Test
  * EnvConditions: NA
  * CaseDescription: Test RequireMemorySize
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_062, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_062, TestSize.Level1)
 {
     cameraManager_->serviceProxyPrivate_ = nullptr;
     int32_t size = 16;
@@ -1516,7 +1516,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_062, Test
  * EnvConditions: NA
  * CaseDescription: Test CreateProfile4StreamType
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_063, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_063, TestSize.Level1)
 {
     StreamRelatedInfo info_1;
     info_1.detailInfoCount = 0;
@@ -1538,7 +1538,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_063, Test
  * EnvConditions: NA
  * CaseDescription: Test SetTorchMode for abnormal branch
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_TRUE(cameras.size() != 0);
@@ -1556,7 +1556,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_064, Test
  * EnvConditions: NA
  * CaseDescription: Test UnregisterFoldListener and UnregisterCameraMuteListener for abnormal branch
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, TestSize.Level1)
 {
     std::shared_ptr<FoldListener> listener1 = std::make_shared<FoldListenerTest>();
     cameraManager_->RegisterFoldListener(listener1);
@@ -1576,7 +1576,7 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_065, Test
  * EnvConditions: NA
  * CaseDescription: Test cameraManager get camera concurrent infos
  */
-HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, TestSize.Level0)
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, TestSize.Level1)
 {
     cameraManager_->cameraDeviceList_.clear();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();

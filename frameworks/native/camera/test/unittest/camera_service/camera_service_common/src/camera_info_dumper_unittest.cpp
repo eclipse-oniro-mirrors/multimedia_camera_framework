@@ -52,7 +52,7 @@ void CameraInfoDumperUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test CameraInfoDumper functional function with different parameter.
  */
-HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Level0)
+HWTEST_F(CameraInfoDumperUnitTest, camera_info_dumper_unittest_001, TestSize.Level1)
 {
     CameraInfoDumper infoDumper(0);
     char msg_1[] = "testMsg_1";

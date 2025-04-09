@@ -66,7 +66,7 @@ void MovingPhotoVideoCacheUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test DoMuxerVideo normal branches.
  */
-HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_001, TestSize.Level0)
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_001, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
@@ -94,7 +94,7 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_001, T
  * EnvConditions: NA
  * CaseDescription: Test Release normal branches.
  */
-HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_002, TestSize.Level0)
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<FrameRecord>> frameRecords;
     uint64_t taskName = 1;
@@ -115,7 +115,7 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_002, T
  * EnvConditions: NA
  * CaseDescription: Test OnCacheFrameFinish normal branches while isAbort_ is true
  */
-HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_003, TestSize.Level0)
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_003, TestSize.Level1)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;

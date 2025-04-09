@@ -120,7 +120,7 @@ sptr<CaptureOutput> CameraPreviewOutputUnit::CreatePreviewOutput()
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with with Start Stop and Release
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -160,7 +160,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with Set and GetPreviewRotation
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_002, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -205,7 +205,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with GetObserverControlTags
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_003, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -229,7 +229,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with FrameRate SetOutputFormat and SetSize
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_004, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -283,7 +283,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_004, TestSize.Level0)
  * CaseDescription: Test previewoutput with StartSketch StopSketch EnableSketch AddDeferredSurface
  *          and AttachSketchSurface
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_005, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -349,7 +349,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: GetHdiFormat From CameraFormat
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_006, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -410,7 +410,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test PreviewOutputCallbackImpl
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -438,7 +438,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with StartSketch StopSketch when sketchWrapper_ is nullptr and not config
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_008, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -485,7 +485,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with CameraServerDied when appCallback_ is nullptr
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_009, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_009, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -529,7 +529,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with CameraServerDied when previewStateCallback is not nullptr
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -559,7 +559,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_010, TestSize.Level0)
  * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in
  *          OnNativeRegisterCallback, OnNativeUnregisterCallback, FindSketchSize
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level1)
 {
     InSequence s;
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
@@ -624,7 +624,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with OnSketchStatusChanged IsSketchSupported and CreateSketchWrapper
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_012, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_012, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -651,7 +651,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_012, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with callback and cameraserverdied
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_013, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_013, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -678,7 +678,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with OnDeferredVideoEnhancementInfo
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -702,7 +702,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_014, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with OnResultMetadataChanged
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_015, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_015, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -742,7 +742,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_015, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with JudegRotationFunc
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -774,7 +774,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_016, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test previewoutput with RemoveCallback while callback is not null
  */
-HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_017, TestSize.Level0)
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_017, TestSize.Level1)
 {
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);

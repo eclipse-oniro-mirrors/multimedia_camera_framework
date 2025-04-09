@@ -53,7 +53,7 @@ public:
  * CaseDescription: Test the LinkInput function. When invalid input parameters are provided,
  * the expected return value is CAMERA_INVALID_ARG.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_001, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_001, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -84,7 +84,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_001, TestSize.Lev
  * CaseDescription: Test the SetDataAccuracy function. When a valid accuracy value is provided,
  *    the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_002, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_002, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -114,7 +114,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_002, TestSize.Lev
  * CaseDescription: Test the Start function. When the depth data stream is not ready,
  *    the expected return value is CAMERA_INVALID_STATE.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_003, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_003, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -143,7 +143,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_003, TestSize.Lev
  * CaseDescription: Test the Stop function. When the depth data stream is not ready,
  *    the expected return value is CAMERA_INVALID_STATE.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_004, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_004, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -173,7 +173,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_004, TestSize.Lev
  * CaseDescription: Test the SetCallback function. When an invalid callback object is provided,
  *    the expected return value is CAMERA_INVALID_ARG.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_005, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_005, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -204,7 +204,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_005, TestSize.Lev
  * When checking the permission for the start and stop interface,
  * the expected return value is CAMERA_OK.
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_006, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_006, TestSize.Level1)
 {
     sptr<OHOS::IConsumerSurface> cSurface = IConsumerSurface::Create();
     sptr<OHOS::IBufferProducer> producer = cSurface->GetProducer();
@@ -234,7 +234,7 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_006, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test OnRemoteRequest for branches of switch
  */
-HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_007, TestSize.Level0)
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_007, TestSize.Level1)
 {
     MockHStreamDepthDataCallbackStub stub;
     MessageParcel data;

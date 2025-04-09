@@ -172,7 +172,7 @@ void CameraVideoSessionUnitTest::TestVideoSessionPreconfig(
  * EnvConditions: NA
  * CaseDescription: Test preconfig VideoSession all config.
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -214,7 +214,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test VideoSession callback normal branches
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level0)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -236,7 +236,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test VideoSession callback while metadata is nullptr
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level0)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -270,7 +270,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_003, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test VideoSession callback normal branches while metadata have ability
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level0)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -317,7 +317,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_004, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test VideoSession callback normal branches while metadata have ability
  */
-HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level0)
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);

@@ -57,7 +57,7 @@ void DeferredManagerUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test SetTrackId  for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize.Level1)
 {
     auto demuxer = std::make_shared<Demuxer>();
     ASSERT_NE(demuxer, nullptr);
@@ -78,7 +78,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Pause, Stop for abnormal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_002, TestSize.Level1)
 {
     auto mediaManager = std::make_shared<MediaManager>();
     ASSERT_NE(mediaManager, nullptr);
@@ -99,7 +99,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test WriteSample for abnormal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize.Level1)
 {
     auto mediaManager = std::make_shared<MediaManager>();
     ASSERT_NE(mediaManager, nullptr);
@@ -131,7 +131,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test Acquire for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize.Level1)
 {
     auto mpegManagerFactory = std::make_shared<MpegManagerFactory>();
     ASSERT_NE(mpegManagerFactory, nullptr);
@@ -152,7 +152,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test UnInit, UnInitVideoCodec, GetFileFd for abnormal branch and normal branch
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize.Level1)
 {
     auto mpegManager = std::make_shared<MpegManager>();
     ASSERT_NE(mpegManager, nullptr);
@@ -178,7 +178,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize
  * EnvConditions: NA
  * CaseDescription: Test SetFormat, GetFormat for just call
  */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_006, TestSize.Level1)
 {
     auto track1 = std::make_shared<Track>();
     ASSERT_NE(track1, nullptr);

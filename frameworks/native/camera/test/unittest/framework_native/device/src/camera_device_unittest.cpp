@@ -82,7 +82,7 @@ void CameraDeviceUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test GetPosition for invoke and GetZoomRatioRange for zoomRatioRange_ not empty
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_001, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -99,7 +99,7 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetProfile for capability is nullptr
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_002, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -119,7 +119,7 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test cameradevice with position and zoomratiorange
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_003, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
@@ -137,7 +137,7 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetCameraDeviceUsedAsPosition for invoke and GetSupportedFoldStatus for invoke
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_004, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -156,7 +156,7 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetCameraFoldScreenType
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_005, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
@@ -172,7 +172,7 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetPosition abnormal branches
  */
-HWTEST_F(CameraDeviceUnit, camera_device_unittest_006, TestSize.Level0)
+HWTEST_F(CameraDeviceUnit, camera_device_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 

@@ -80,7 +80,7 @@ void CameraAppManagerUtilsUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: testcase of the CameraAppManagerUtilsUnit
  */
-HWTEST_F(CameraAppManagerUtilsUnit, camera_app_manager_utils_unittest, TestSize.Level0)
+HWTEST_F(CameraAppManagerUtilsUnit, camera_app_manager_utils_unittest, TestSize.Level1)
 {
     sptr<OHOS::AppExecFwk::IAppMgr> manager = CameraAppManagerUtils::GetAppManagerInstance();
     ASSERT_NE(manager, nullptr);

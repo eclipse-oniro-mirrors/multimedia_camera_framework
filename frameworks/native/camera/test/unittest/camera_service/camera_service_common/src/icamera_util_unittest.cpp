@@ -41,7 +41,7 @@ void IcameraUtilUnit::TearDown() {}
  * EnvConditions: NA
  * CaseDescription: Test ServiceToCameraError to map various camera error codes to corresponding CameraErrorCode values.
  */
-HWTEST_F(IcameraUtilUnit, icamera_util_unittest_001, TestSize.Level0)
+HWTEST_F(IcameraUtilUnit, icamera_util_unittest_001, TestSize.Level1)
 {
     int32_t ret = CAMERA_ALLOC_ERROR;
     int32_t err = CameraErrorCode::SERVICE_FATL_ERROR;

@@ -104,7 +104,7 @@ void CameraMetadataOutputUnit::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput when ObjectTypes is not empty
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -149,7 +149,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_001, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput when ObjectTypes is not empty
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -194,7 +194,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_002, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput when ObjectTypes is empty
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -236,7 +236,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_003, TestSize.Level0
  * CaseDescription: Test metadataoutput with Get and Set AppObjectCallback when appStateCallback_ is
  *          nullptr or is not nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_004, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_004, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -264,7 +264,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_004, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with checkValidType when ret is true
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_005, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_005, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -296,7 +296,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_005, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with checkValidType when ret is false
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_006, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_006, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -328,7 +328,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_006, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with CreateStream for normal branches
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_007, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_007, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -349,7 +349,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_007, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with ReleaseSurface when surface_ is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_008, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_008, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -371,7 +371,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_008, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput  when surface_ is not nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -395,7 +395,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_009, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with ProcessMetadata when result is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -426,7 +426,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_010, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with ProcessMetadata when result is not nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -479,7 +479,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_011, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with appObjectCallback_ is nullptr or cameraMetadataCallback_ is not nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -532,7 +532,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_012, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with GenerateObjects when is not supported and ProcessRectBox
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -581,7 +581,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_013, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with ProcessExternInfo when MetadataObjectType is different
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -641,7 +641,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_014, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObjectFactory with OnMetadataResult when inputDevice is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -685,7 +685,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_015, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObjectFactory with createMetadataObject when MetadataObjectType is different
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level1)
 {
     std::shared_ptr<MetadataObjectFactory> factory = std::make_shared<MetadataObjectFactory>();
     ASSERT_NE(factory, nullptr);
@@ -737,7 +737,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_016, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with cameraserverdied and stop
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_017, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_017, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureOutput> output = cameraManager_->CreateMetadataOutput();
@@ -757,7 +757,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_017, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with stream_ is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_018, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_018, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -780,7 +780,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_018, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with start when session_ is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_019, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_019, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -800,7 +800,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_019, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with start when not commit
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_020, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_020, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -839,7 +839,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_020, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with start when stream_ is nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_021, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_021, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -880,7 +880,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_021, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput with start
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_022, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_022, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -923,7 +923,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_022, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test metadataoutput when destruction
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_023, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_023, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -943,7 +943,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_023, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObject when multiple construction parameters
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_024, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_024, TestSize.Level1)
 {
     MetadataObjectType type = MetadataObjectType::FACE;
     int32_t timestamp = 0;
@@ -963,7 +963,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_024, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObject with GetAppStateCallback and convert
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_025, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_025, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -997,7 +997,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_025, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObjectListener with ProcessMetadataBuffer
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1027,7 +1027,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_026, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataOutput with AddMetadataObjectTypes and RemoveMetadataObjectTypes
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1078,7 +1078,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_027, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObjectListener with OnBufferAvailable
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_028, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_028, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
 
@@ -1115,7 +1115,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_028, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test MetadataObjectFactory with OnMetadataResult when inputDevice is not nullptr
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_029, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_029, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());
@@ -1169,7 +1169,7 @@ HWTEST_F(CameraMetadataOutputUnit, metadata_output_unittest_029, TestSize.Level0
  * EnvConditions: NA
  * CaseDescription: Test Constructor for just call.
  */
-HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraMetadataOutputUnit, metadata_output_function_unittest_001, TestSize.Level1)
 {
     std::shared_ptr<HStreamMetadataCallbackImpl> hStreamMetadataCallbackImpl =
         std::make_shared<HStreamMetadataCallbackImpl>(nullptr);

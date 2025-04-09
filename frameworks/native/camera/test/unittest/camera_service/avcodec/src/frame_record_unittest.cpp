@@ -39,7 +39,7 @@ void FrameRecordtUnit::TearDown() {}
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a null wrapper. Verify videoBuffer is set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -62,7 +62,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a valid wrapper. Verify videoBuffer is set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -89,7 +89,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseSurfaceBuffer with a null videoBuffer. Verify videoBuffer remains nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -112,7 +112,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseMetaBuffer with reuse set to true. Verify metaBuffer is not set to nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -141,7 +141,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ReleaseMetaBuffer with reuse set to false. Verify metaBuffer remains nullptr.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);
@@ -170,7 +170,7 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_005, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test DeepCopyBuffer with the same buffer. Verify newSurfaceBuffer width matches original.
  */
-HWTEST_F(FrameRecordtUnit, frame_record_unittest_006, TestSize.Level0)
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_006, TestSize.Level1)
 {
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     ASSERT_NE(videoBuffer, nullptr);

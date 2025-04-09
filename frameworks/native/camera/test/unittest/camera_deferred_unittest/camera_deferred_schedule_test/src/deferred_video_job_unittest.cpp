@@ -70,7 +70,7 @@ DeferredVideoJobPtr DeferredVideoJobUnitTest::CreateTestDeferredVideoJobPtr(
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class DeferredVideoJob with test data to ensure the correctness.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Level0)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Level1)
 {
     std::string videoId1 = "videoTest1";
     std::string videoId2 = "videoTest2";
@@ -103,7 +103,7 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Validate the functions in class DeferredVideoJob with test data to ensure the correctness.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_002, TestSize.Level0)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_002, TestSize.Level1)
 {
     std::string videoId = "video_test";
     uint32_t timeId = 1;
@@ -131,7 +131,7 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_002, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Validate functions of class VideoJobQueue in abnormal conditions, no DeferredVideoJobPtr added.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_003, TestSize.Level0)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_003, TestSize.Level1)
 {
     VideoJobQueue::Comparator comp = [](DeferredVideoJobPtr videoJbPtr1, DeferredVideoJobPtr videoJbPtr2) {
         return *videoJbPtr1 > *videoJbPtr2;
@@ -231,7 +231,7 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_004, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test functions in class VideoJobRepository in abnormal condition, no job added.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_005, TestSize.Level0)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_005, TestSize.Level1)
 {
     std::string videoId = "videoTest";
     std::shared_ptr<VideoJobRepository> videoJR = std::make_shared<VideoJobRepository>(USER_ID);
@@ -266,7 +266,7 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_005, TestSize.Lev
  * EnvConditions: NA
  * CaseDescription: Test functions in class VideoJobRepository in abnormal condition, one test job added.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_006, TestSize.Level0)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_006, TestSize.Level1)
 {
     std::string videoId = "videoTest";
     std::shared_ptr<VideoJobRepository> videoJR = std::make_shared<VideoJobRepository>(USER_ID);

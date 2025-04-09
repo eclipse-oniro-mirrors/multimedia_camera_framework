@@ -60,7 +60,7 @@ void VideoEncoderUnitTest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test RestartVideoCodec normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level0)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level1)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
@@ -88,7 +88,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test EncodeSurfaceBuffer normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level0)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level1)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
@@ -128,7 +128,7 @@ HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test Release normal branches.
  */
-HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level0)
+HWTEST_F(VideoEncoderUnitTest, video_encoder_unittest_003, TestSize.Level1)
 {
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
     ColorSpace colorSpace = ColorSpace::DISPLAY_P3;

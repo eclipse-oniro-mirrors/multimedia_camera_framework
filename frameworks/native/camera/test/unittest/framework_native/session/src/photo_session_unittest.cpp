@@ -145,7 +145,7 @@ void CameraPhotoSessionUnitTest::TestPhotoSessionPreconfig(
  * EnvConditions: NA
  * CaseDescription: Test preconfig PhotoSession all config.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize.Level1)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
@@ -188,7 +188,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, camera_photo_session_unittest_001, TestSize
  * EnvConditions: NA
  * CaseDescription: Test CanAddOutput for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::FLUORESCENCE_PHOTO);
     ASSERT_NE(captureSession, nullptr);
@@ -207,7 +207,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, fluorescence_photo_session_function_unittes
  * EnvConditions: NA
  * CaseDescription: Test CanSetFrameRateRange for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> photoSession = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
     ASSERT_NE(photoSession, nullptr);
@@ -233,7 +233,7 @@ HWTEST_F(CameraPhotoSessionUnitTest, photo_session_function_unittest_001, TestSi
  * EnvConditions: NA
  * CaseDescription: Test CanAddOutput for just call.
  */
-HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_001, TestSize.Level0)
+HWTEST_F(CameraPhotoSessionUnitTest, quick_shot_photo_session_function_unittest_001, TestSize.Level1)
 {
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
     ASSERT_NE(captureSession, nullptr);
