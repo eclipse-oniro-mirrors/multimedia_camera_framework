@@ -42,6 +42,7 @@ public:
     CamServiceError AddSession(sptr<HCaptureSession> session);
     void RemoveSession(sptr<HCaptureSession> session);
     void RemoveGroup(pid_t pid);
+    void PreemptOverflowSessions(pid_t pid);
 
 private:
     void RemoveGroupNoLock(std::unordered_map<pid_t, SessionGroup>::iterator mapIt);
