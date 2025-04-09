@@ -252,7 +252,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        td::lock_guard<std::mutex> encodeLock(encoderMutex_);
+        std::lock_guard<std::mutex> encodeLock(encoderMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "EncodeSurfaceBuffer when encoder stop!");
         if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
