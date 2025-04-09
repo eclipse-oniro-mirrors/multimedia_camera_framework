@@ -3686,20 +3686,12 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     auto itr = g_fwkColorSpaceMap_.find(colorSpace);
     CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkColorSpaceMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::SetColorSpace() map failed, %{public}d", static_cast<int32_t>(colorSpace));
-    CM_ColorSpaceType fwkColorSpace = itr->second;
-
-    ColorSpaceInfo colorSpaceInfo = GetSupportedColorSpaceInfo();
-    for (uint32_t i = 0; i < colorSpaceInfo.modeCount; i++) {
-        if (GetMode() != colorSpaceInfo.modeInfo[i].modeType) {
-            continue;
-        }
-        std::vector<int32_t> supportedColorSpaces = colorSpaceInfo.modeInfo[i].streamInfo[0].colorSpaces;
-        auto curColorSpace = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
-            static_cast<int32_t>(fwkColorSpace));
-        if (curColorSpace == supportedColorSpaces.end()) {
-            MEDIA_ERR_LOG("CaptureSession::SetColorSpace input colorSpace not found in supportedList.");
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
+    std::vector<ColorSpace> supportedColorSpaces = GetSupportedColorSpaces();
+    auto curColorSpace = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
+        colorSpace);
+    if (curColorSpace == supportedColorSpaces.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorSpace input colorSpace not found in supportedList.");
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
     if (IsSessionConfiged()) {
         isColorSpaceSetted_ = true;
