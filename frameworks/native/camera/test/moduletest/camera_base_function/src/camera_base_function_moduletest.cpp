@@ -4038,7 +4038,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_099, Test
  * EnvConditions: NA
  * CaseDescription: Test snapshot with mirror setting.
  */
-HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, TestSize.Level1)
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, TestSize.Level0)
 {
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);

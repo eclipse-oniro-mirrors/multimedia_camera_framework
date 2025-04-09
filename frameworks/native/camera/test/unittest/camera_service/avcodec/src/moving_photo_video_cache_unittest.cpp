@@ -151,7 +151,7 @@ HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_003, T
  * EnvConditions: NA
  * CaseDescription: Test OnCacheFrameFinish normal branches while find frameRecord successfully
  */
-HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_004, TestSize.Level1)
+HWTEST_F(MovingPhotoVideoCacheUnitTest, moving_photo_video_cache_unittest_004, TestSize.Level0)
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;

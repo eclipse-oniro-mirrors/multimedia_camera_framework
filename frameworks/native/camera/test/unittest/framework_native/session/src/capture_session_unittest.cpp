@@ -3714,7 +3714,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_040, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test captureSession founction while metadata have ability
  */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level1)
+HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_041, TestSize.Level0)
 {
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);

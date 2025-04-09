@@ -814,7 +814,7 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_018, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test PhotoCaptureSetting with Quality and Rotation
  */
-HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level1)
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_019, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     ASSERT_FALSE(cameras.empty());

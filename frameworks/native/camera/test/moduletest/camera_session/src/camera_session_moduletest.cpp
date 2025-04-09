@@ -1372,7 +1372,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_002, TestSiz
  * EnvConditions: NA
  * CaseDescription: Test can get light painting type from light painting session
  */
-HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
         return;
@@ -1439,7 +1439,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSiz
  * EnvConditions: NA
  * CaseDescription: Test can set light painting type into light painting session
  */
-HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
         return;
@@ -1517,7 +1517,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSiz
  * EnvConditions: NA
  * CaseDescription: Test can add photo output into macro photo session
  */
-HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE_MACRO)) {
         return;
@@ -1665,7 +1665,7 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_003, TestSize.L
  * EnvConditions: NA
  * CaseDescription: Test can add photo output into macro video session
  */
-HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO_MACRO)) {
         return;
@@ -1746,7 +1746,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.L
  * EnvConditions: NA
  * CaseDescription: Test can add video output into macro video session
  */
-HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO_MACRO)) {
         return;
@@ -3348,7 +3348,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can set exposure into night session
  */
-HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::NIGHT)) {
         return;
@@ -3583,7 +3583,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_002, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set metering mode into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -3662,7 +3662,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set iso range into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -3739,7 +3739,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set focus mode into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -3819,7 +3819,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set exposure hint mode into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -3894,7 +3894,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set focus assist flash mode into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -3974,7 +3974,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set flash mode into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -4059,7 +4059,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set color effect into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -4134,7 +4134,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test can set callbacks into profession session
  */
-HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_010, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_010, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
         return;
@@ -4285,7 +4285,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_001, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session metering mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_002, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_002, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4374,7 +4374,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_002, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session focus assist flash mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_003, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4463,7 +4463,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_003, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session exposure hint mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_004, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4548,7 +4548,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_004, TestS
  * EnvConditions: NA
  * CaseDescription: test profession video session manual_iso_props && auto_awb_props && manual_awb_props
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4661,7 +4661,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session focus mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4750,7 +4750,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session flash mode
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -4833,7 +4833,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestS
  * EnvConditions: NA
  * CaseDescription: Test profession video session color effect
  */
-HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5021,7 +5021,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_002, TestS
  * EnvConditions: NA
  * CaseDescription: Test can start and stop try AE in time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5154,7 +5154,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set time lapse interval into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5287,7 +5287,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set exposure into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5433,7 +5433,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set exposure metering mode into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5590,7 +5590,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set iso range into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5741,7 +5741,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set white balance mode into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -5892,7 +5892,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestS
  * EnvConditions: NA
  * CaseDescription: Test can set white balance range into time lapse photo session
  */
-HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestSize.Level0)
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
@@ -6141,7 +6141,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can set frame rate range into photo session
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
         return;
@@ -7203,7 +7203,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_019, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session ability function
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_020, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_020, TestSize.Level0)
 {
     SceneMode photoMode = SceneMode::CAPTURE;
     if (!IsSceneModeSupported(photoMode)) {
@@ -7329,7 +7329,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_022, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session with VirtualAperture
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
 {
     SceneMode captureMode = SceneMode::CAPTURE;
     if (!IsSceneModeSupported(captureMode)) {
@@ -7728,7 +7728,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_029, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session sketch functions callback
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_030, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_030, TestSize.Level0)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
@@ -7885,7 +7885,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_031, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session sketch functions auto start sketch while zoom set
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
@@ -7985,7 +7985,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test photo session smooth zoom and sketch functions callback
  */
-HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
@@ -8387,7 +8387,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can set frame rate range into video session
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8469,7 +8469,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8543,7 +8543,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, RATIO_1_1 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8617,7 +8617,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, RATIO_4_3 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8691,7 +8691,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_720P, RATIO_16_9 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8765,7 +8765,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_1080P, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8839,7 +8839,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_1080P, RATIO_1_1 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8913,7 +8913,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_1080P, RATIO_4_3 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -8987,7 +8987,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_1080P, RATIO_16_9 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9061,7 +9061,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_4K, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9135,7 +9135,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_4K, RATIO_1_1 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9209,7 +9209,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_4K, RATIO_4_3 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9283,7 +9283,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_4K, RATIO_16_9 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9357,7 +9357,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_HIGH_QUALITY, UNSPECIFIED while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9431,7 +9431,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_HIGH_QUALITY, RATIO_1_1 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9505,7 +9505,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_HIGH_QUALITY, RATIO_4_3 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9579,7 +9579,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test can preconfig video session with PRECONFIG_HIGH_QUALITY, RATIO_16_9 while supported
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_019, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_019, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
         return;
@@ -9730,7 +9730,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_021, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test video session macro and sketch function
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_022, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_022, TestSize.Level0)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
@@ -9925,7 +9925,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_024, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test set video support HDR_VIVID with 60FPS
  */
-HWTEST_F(CameraSessionModuleTest, video_session_moduletest_025, TestSize.Level1)
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_025, TestSize.Level0)
 {
     SceneMode videoMode = SceneMode::VIDEO;
     if (!IsSceneModeSupported(videoMode)) {

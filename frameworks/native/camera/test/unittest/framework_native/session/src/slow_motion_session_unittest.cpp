@@ -243,7 +243,7 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
 *               Test IsSlowMotionDetectionSupported interface, when metadata item data is 1.
 * @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
 */
-HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, TestSize.Level1)
+HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);

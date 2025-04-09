@@ -348,7 +348,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test NightSession with SetExposure normal branches
  */
-HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level1)
+HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
     SceneMode mode = NIGHT;

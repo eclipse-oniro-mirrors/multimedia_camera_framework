@@ -609,7 +609,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.Level1)
+HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
         return;

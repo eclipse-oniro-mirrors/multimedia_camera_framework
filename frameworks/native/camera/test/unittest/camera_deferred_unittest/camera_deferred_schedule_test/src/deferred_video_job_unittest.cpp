@@ -158,7 +158,7 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_003, TestSize.Lev
  * CaseDescription: Validate functions of class VideoJobQueue in normal conditions,
  *                  four DeferredVideoJobPtr to be added.
  */
-HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_004, TestSize.Level0)
 {
     std::string videoId1 = "videoTest1";
     std::string videoId2 = "videoTest2";
