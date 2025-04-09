@@ -165,7 +165,7 @@ public:
     inline void SetCameraCloseListener(wptr<IHCameraCloseListener> listener)
     {
         std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        cameraCloseListener_ = listener;
+        cameraCloseListenerVec_.push_back(listener);
     }
 
 private:
@@ -243,6 +243,7 @@ private:
                      uint32_t tag, std::string tagName, DFX_UB_NAME dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
+    void ReleaseSessionBeforeCloseDevice();
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
@@ -258,7 +259,7 @@ private:
     std::string BuildDeviceProtectionDialogCommand(DeviceProtectionStatus status);
 
     std::mutex cameraCloseListenerMutex_;
-    wptr<IHCameraCloseListener> cameraCloseListener_;
+    std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -97,6 +97,9 @@ protected:
     inline sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator()
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperatorOffline_ != nullptr) {
+            return streamOperatorOffline_;
+        }
         return streamOperator_.promote();
     }
 
@@ -112,6 +115,7 @@ protected:
 
     std::mutex streamOperatorLock_;
     wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperatorOffline_ = nullptr;
 
     int32_t captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
 

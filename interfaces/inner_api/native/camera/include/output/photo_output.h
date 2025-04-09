@@ -26,6 +26,7 @@
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
 #include "camera_photo_proxy.h"
+#include "safe_map.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -501,6 +502,8 @@ public:
 
     bool IsHasSwitchOfflinePhoto();
 
+    void NotifyOfflinePhotoOutput(int32_t captureId);
+
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
         std::string &burstKey, int64_t timestamp);
 
@@ -549,7 +552,7 @@ public:
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
     std::shared_ptr<DeferredProcessing::TaskManager> taskManager_;
-    std::map<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
+    SafeMap<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
 private:
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;

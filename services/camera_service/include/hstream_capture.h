@@ -161,7 +161,6 @@ private:
     int32_t mlastCaptureId = 0;
     wptr<HStreamOperator> hStreamOperator_;
     std::map<int32_t, std::unique_ptr<std::mutex>> mutexMap;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperatorOffline_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS
