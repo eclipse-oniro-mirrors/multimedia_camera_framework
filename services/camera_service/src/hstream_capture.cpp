@@ -803,6 +803,9 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
     if (hStreamOperatorSptr_ && mSwitchToOfflinePhoto_) {
         hStreamOperatorSptr_->Release();
+    }
+    std::lock_guard<std::mutex> lock(streamOperatorLock_);
+    if (streamOperatorOffline_ != nullptr) {
         streamOperatorOffline_ = nullptr;
     }
     mSwitchToOfflinePhoto_ = false;
