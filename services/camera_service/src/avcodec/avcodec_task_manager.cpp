@@ -221,6 +221,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         CHECK_ERROR_RETURN_LOG(choosedBuffer.empty(), "choosed empty buffer!");
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
         for (size_t index = 0; index < choosedBuffer.size(); index++) {
+            int32_t ret = AV_ERR_OK;
             shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->encodedBuffer;
             {
                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
