@@ -119,7 +119,7 @@ int32_t VideoSyncCommand::Executing()
     }
 
     std::set<std::string> hdiVideoIds(pendingVidoes.begin(), pendingVidoes.end());
-    for (auto& videoId : hdiVideoIds) {
+    for (const auto& videoId : hdiVideoIds) {
         // LCOV_EXCL_START
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
