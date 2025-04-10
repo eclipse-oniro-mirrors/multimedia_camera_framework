@@ -220,6 +220,12 @@ private:
     int64_t lastDeviceEjectTime_ = 0;
     std::atomic<uint32_t> deviceEjectTimes_ = 1;
 
+    inline sptr<IHCameraCloseListener> GetCameraCloseListener()
+    {
+        std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
+        return cameraCloseListener_.promote();
+    }
+
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
