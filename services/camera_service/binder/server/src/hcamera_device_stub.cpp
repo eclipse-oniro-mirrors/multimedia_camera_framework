@@ -77,6 +77,9 @@ int HCameraDeviceStub::OnRemoteRequest(
                 errCode = closeDelayed();
             }
             break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_DEVICE_RETRY_TIME):
+            errCode = HCameraDeviceStub::HandleSetDeviceRetryTime(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraDeviceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -197,6 +200,11 @@ int32_t HCameraDeviceStub::HandleOpenConcurrent(MessageParcel &data, MessageParc
     CHECK_ERROR_RETURN_RET_LOG(errorCode != ERR_NONE, errorCode,
         "HCameraDeviceStub::openSecureCamera failed : %{public}d", errorCode);
     return errorCode;
+}
+
+int32_t HCameraDeviceStub::HandleSetDeviceRetryTime(MessageParcel& data, MessageParcel& reply)
+{
+    return SetDeviceRetryTime();
 }
 } // namespace CameraStandard
 } // namespace OHOS

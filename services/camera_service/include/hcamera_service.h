@@ -28,7 +28,6 @@
 
 #include "camera_datashare_helper.h"
 #include "camera_rotate_strategy_parser.h"
-#include "camera_sensor_plugin.h"
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
@@ -169,7 +168,6 @@ public:
     int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
     int32_t GetConcurrentCameraAbility(std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
-    int32_t SetDeviceRetryTime() override;
     int32_t CheckWhiteList(bool &isInWhiteList) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
@@ -262,11 +260,6 @@ private:
     int32_t UnSetCameraCallback(pid_t pid);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
-#ifdef CAMERA_USE_SENSOR
-    void RegisterSensorCallback();
-    void UnregisterSensorCallback();
-    static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
-#endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
 
@@ -300,7 +293,6 @@ private:
     bool isFoldableInit = false;
     string preCameraId_;
     string preCameraClient_;
-    bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_ = CameraServiceStatus::SERVICE_READY;
 

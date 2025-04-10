@@ -451,9 +451,7 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
         auto deviceObj = GetCameraDevice();
         CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
         deviceObj->UpdateSetting(metadata);
-        auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
-        CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr, "ControlAuxiliary serviceProxy is null");
-        serviceProxy->SetDeviceRetryTime();
+        deviceObj->SetDeviceRetryTime();
     }
 }
 // LCOV_EXCL_STOP
