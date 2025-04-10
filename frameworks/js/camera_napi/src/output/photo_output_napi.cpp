@@ -1673,9 +1673,10 @@ unique_ptr<Media::PixelMap> ThumbnailListener::CreatePixelMapFromSurfaceBuffer(s
         width, height, isHdr, surfaceBuffer->GetFormat());
     Media::InitializationOptions options {
         .size = { .width = width, .height = height } };
-    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
-    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV21;
+    options.srcPixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
+    options.pixelFormat = isHdr ? Media::PixelFormat::YCRCB_P010 : Media::PixelFormat::NV12;
     options.useDMA = true;
+    options.editable = isHdr;
     int32_t colorLength = width * height * PIXEL_SIZE_HDR_YUV;
     colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
     std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
