@@ -150,10 +150,14 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         bufferInfo->attr.pts = audioRecord->GetTimeStamp();
         bufferInfo->attr.size = DEFAULT_MAX_INPUT_SIZE;
         bufferInfo->attr.flags = AVCODEC_BUFFER_FLAGS_NONE;
-        auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
-        int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
-        errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
-        CHECK_ERROR_RETURN_RET_LOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
+        {
+            std::lock_guard<std::mutex> encoderLock(encoderMutex_);
+            CHECK_ERROR_RETURN_RET_LOG(!isStarted_, false, "EnqueueBuffer while encoder is not started");
+            auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
+            int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
+            errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
+            CHECK_ERROR_RETURN_RET_LOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
+        }
         int32_t ret = PushInputData(bufferInfo);
         CHECK_ERROR_RETURN_RET_LOG(ret != 0, false, "Push data failed");
         MEDIA_DEBUG_LOG("Success frame id is : %{public}s", audioRecord->GetFrameId().c_str());
