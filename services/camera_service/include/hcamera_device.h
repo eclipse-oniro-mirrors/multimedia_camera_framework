@@ -63,7 +63,7 @@ public:
 
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
-    int32_t Open(int32_t concurrentTypeofcamera) override;
+    int32_t Open(int32_t concurrentType) override;
     int32_t Close() override;
     int32_t closeDelayed() override;
     int32_t Release() override;
@@ -148,11 +148,6 @@ public:
         cameraConcurrentType_ = cameraConcurrentTypenum;
     }
 
-    inline int32_t GetCameraConcurrentType()
-    {
-        return cameraConcurrentType_;
-    }
-
     std::vector<std::vector<std::int32_t>> GetConcurrentDevicesTable();
 
     inline int32_t GetTargetConcurrencyType()
@@ -168,6 +163,16 @@ public:
         cameraCloseListenerVec_.push_back(listener);
     }
 
+    inline bool IsDeviceOpenedByConcurrent()
+    {
+        return isDeviceOpenedByConcurrent_;
+    }
+
+    inline void EnableDeviceOpenedByConcurrent(bool enable)
+    {
+        isDeviceOpenedByConcurrent_ = enable;
+    }
+
 private:
     class FoldScreenListener;
     static const std::vector<std::tuple<uint32_t, std::string, DFX_UB_NAME>> reportTagInfos_;
@@ -177,6 +182,7 @@ private:
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
     int32_t cameraConcurrentType_ = 0;
+    std::atomic<bool> isDeviceOpenedByConcurrent_ = false;
 
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
