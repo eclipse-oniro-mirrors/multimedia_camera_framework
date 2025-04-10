@@ -83,7 +83,6 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
     bool statusChanged = false;
     if (restorable) {
         priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::LOW);
-        statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
     } else {
         priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::DELETED);
         statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::DELETED);
