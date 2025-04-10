@@ -41,17 +41,15 @@ TrackFactory::~TrackFactory()
 
 std::shared_ptr<Track> TrackFactory::CreateTrack(const std::shared_ptr<AVSource>& source, int32_t trackIndex)
 {
-    DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "AVSource is nullptr.");
     Format trackFormat;
     int32_t trackType = -1;
-    DP_CHECK_ERROR_RETURN_RET_LOG(source == nullptr, nullptr, "source is nullptr.");
     auto ret = source->GetTrackFormat(trackFormat, trackIndex);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), nullptr, "Get track format failed.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!trackFormat.GetIntValue(Media::Tag::MEDIA_TYPE, trackType),
         nullptr, "Get track type failed.");
 
-    DP_INFO_LOG("CreateTrack type: %{public}d", trackType);
+    DP_INFO_LOG("CreateTrack data: %{public}s", trackFormat.Stringify().c_str());
     auto type = static_cast<Media::Plugins::MediaType>(trackType);
     DP_CHECK_ERROR_RETURN_RET_LOG(!CheckTrackFormat(type), nullptr, "Track type: %{public}d is not supported.", type);
 

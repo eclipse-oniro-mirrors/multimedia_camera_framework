@@ -34,6 +34,7 @@ public:
     MediaManagerError Stop();
     MediaManagerError ReadSample(Media::Plugins::MediaType type, std::shared_ptr<AVBuffer>& sample);
     MediaManagerError WriteSample(Media::Plugins::MediaType type, const std::shared_ptr<AVBuffer>& sample);
+    void AddUserMeta(const std::shared_ptr<Meta>& userMeta);
 
     inline void GetMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo)
     {
@@ -52,7 +53,7 @@ private:
     int32_t inputFileFd_ {-1};
     int32_t outputFileFd_ {-1};
     int32_t tempFileFd_ {-1};
-    int64_t resumePts_ {-1};
+    int64_t recoverPts_ {-1};
     int64_t pausePts_ {-1};
     int64_t curIFramePts_ {-1};
     int64_t finalPtsToDrop_ {-1};

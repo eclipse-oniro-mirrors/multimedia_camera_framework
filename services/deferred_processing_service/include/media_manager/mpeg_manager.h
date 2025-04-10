@@ -39,6 +39,7 @@ public:
     uint64_t GetProcessTimeStamp();
     MediaManagerError NotifyEnd();
     sptr<IPCFileDescriptor> GetResultFd();
+    void AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo);
 
 private:
     class VideoCodecCallback;

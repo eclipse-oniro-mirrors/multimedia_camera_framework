@@ -28,7 +28,6 @@ namespace {
     constexpr int32_t DEFAULT_CHANNEL_COUNT = 1;
     constexpr int32_t DEFAULT_AUDIO_INPUT_SIZE = 1024 * DEFAULT_CHANNEL_COUNT * sizeof(short);
     constexpr int32_t DEFAULT_MARK_INPUT_SIZE = 1024 * 20;
-    constexpr uint32_t DPS_FLAG_SYNC_FRAME = 10;
 }
 
 MediaManagerError MediaManager::Create(int32_t inFd, int32_t outFd, int32_t tempFd)
@@ -77,12 +76,11 @@ MediaManagerError MediaManager::Pause()
     }
 
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_->Stop() == ERROR_FAIL, ERROR_FAIL, "Stop writer failed.");
-    DP_CHECK_ERROR_RETURN_RET_LOG(resumePts_ < pausePts_, PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
-
     if (curIFramePts_ == -1) {
         curIFramePts_ = pausePts_;
     }
-    
+    DP_CHECK_ERROR_RETURN_RET_LOG(curIFramePts_ < pausePts_, PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
+
     std::string lastPts = TEMP_PTS_TAG + std::to_string(curIFramePts_);
     DP_INFO_LOG("pausePts: %{public}s", lastPts.c_str());
     auto off = lseek(outputFileFd_, 0, SEEK_END);
@@ -94,11 +92,10 @@ MediaManagerError MediaManager::Pause()
 
 MediaManagerError MediaManager::Stop()
 {
-    DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_RET_LOG(!started_, ERROR_FAIL, "Stop failed, state is not started.");
 
     if (hasAudio_) {
-        DP_INFO_LOG("Start copy audio track.");
+        DP_DEBUG_LOG("Start copy audio track.");
         DP_CHECK_ERROR_RETURN_RET_LOG(CopyAudioTrack() == ERROR_FAIL, ERROR_FAIL, "Read audio track failed.");
     }
 
@@ -130,19 +127,24 @@ MediaManagerError MediaManager::WriteSample(Media::Plugins::MediaType type, cons
     }
 
     auto ret = outputWriter_->Write(type, sample);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Writer sample failed.");
-
     if (type == Media::Plugins::MediaType::VIDEO) {
         finalPtsToDrop_ = sample->pts_;
         // Update I-frame timestamp only for key frames.
-        if (sample->flag_ == AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
+        if (sample->flag_ & AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
             curIFramePts_ = finalPtsToDrop_;
         }
     }
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Writer sample type: %{public}d failed.", type);
 
     DP_DEBUG_LOG("ProcessPts: %{public}" PRId64 ", ProcessSyncPts: %{public}" PRId64,
         sample->pts_, curIFramePts_);
     return OK;
+}
+
+void MediaManager::AddUserMeta(const std::shared_ptr<Meta>& userMeta)
+{
+    DP_CHECK_ERROR_RETURN_LOG(outputWriter_ == nullptr, "Writer is nullptr.");
+    outputWriter_->AddUserMeta(userMeta);
 }
 
 MediaManagerError MediaManager::Recover(const int64_t size)
@@ -168,20 +170,21 @@ MediaManagerError MediaManager::Recover(const int64_t size)
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Read temp data failed.");
 
         curPts = sample->pts_;
-        if (sample->flag_ == AVCODEC_BUFFER_FLAG_SYNC_FRAME || sample->flag_ == DPS_FLAG_SYNC_FRAME) {
-            resumePts_ = sample->pts_;
+        if (sample->flag_ & AVCODEC_BUFFER_FLAG_SYNC_FRAME) {
+            recoverPts_ = curPts;
         }
-        DP_LOOP_BREAK_LOG(sample->pts_ == pausePts_ || ret == EOS, "Recovering finished.");
+        DP_LOOP_BREAK_LOG(curPts == pausePts_ || ret == EOS, "Recovering finished.");
 
         ret = outputWriter_->Write(Media::Plugins::MediaType::VIDEO, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Write temp data failed.");
 
-        DP_DEBUG_LOG("VideoInfo pts: %{public}" PRId64 ", frame-num(%{public}d), resume pts: %{public}" PRId64,
-             sample->pts_, frameNum, resumePts_);
+        DP_DEBUG_LOG("VideoInfo frame-num(%{public}d), curPts: %{public}" PRId64 ", recoverPts: %{public}" PRId64,
+            frameNum, curPts, recoverPts_);
         ++frameNum;
     }
-    DP_INFO_LOG("Recover end, process total num: %{public}d, resumePts: %{public}" PRId64", curPts: %{public}" PRId64,
-        frameNum, resumePts_, curPts);
+    DP_INFO_LOG("Recover end, process total num: %{public}d, recoverPts: %{public}" PRId64
+        ", pausePts: %{public}" PRId64" , curPts: %{public}" PRId64,
+        frameNum, recoverPts_, pausePts_, curPts);
     outputWriter_->SetLastPause(pausePts_);
     return OK;
 }
@@ -190,7 +193,6 @@ MediaManagerError MediaManager::RecoverDebugInfo()
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(recoverReader_ == nullptr, ERROR_FAIL, "Recover reader is nullptr.");
     DP_CHECK_ERROR_RETURN_RET_LOG(outputWriter_ == nullptr, ERROR_FAIL, "Recover writer is nullptr.");
-
     DP_CHECK_ERROR_RETURN_RET_LOG(!started_, ERROR_FAIL, "Recovering debug data failed.");
 
     int32_t frameNum = 0;
@@ -207,7 +209,7 @@ MediaManagerError MediaManager::RecoverDebugInfo()
         ret = outputWriter_->Write(Media::Plugins::MediaType::TIMEDMETA, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_DEBUG_INFO, "Write debug data failed.");
 
-        DP_DEBUG_LOG("DebugInfo pts: %{public}" PRId64 ", frame-num(%{public}d)", sample->pts_, frameNum);
+        DP_DEBUG_LOG("DebugInfo frame-num(%{public}d), curPts: %{public}" PRId64, frameNum, sample->pts_);
         ++frameNum;
     }
     DP_INFO_LOG("Recover debug end, process total num: %{public}d", frameNum);
@@ -238,9 +240,10 @@ MediaManagerError MediaManager::CopyAudioTrack()
         ret = outputWriter_->Write(Media::Plugins::MediaType::AUDIO, sample);
         DP_LOOP_ERROR_RETURN_RET_LOG(ret == ERROR_FAIL, ERROR_FAIL, "Write audio data failed.");
 
-        DP_DEBUG_LOG("AudioInfo pts: %{public}" PRId64 ", frame-num(%{public}d)", sample->pts_, frameNum);
+        DP_DEBUG_LOG("AudioInfo frame-num(%{public}d), pts: %{public}" PRId64, frameNum, sample->pts_);
         ++frameNum;
     }
+    DP_INFO_LOG("CopyAudio end, process total num: %{public}d", frameNum);
     return OK;
 }
 

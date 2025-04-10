@@ -33,6 +33,7 @@ public:
     MediaManagerError Start();
     MediaManagerError Stop();
     MediaManagerError AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInfo);
+    MediaManagerError AddUserMeta(const std::shared_ptr<Meta>& userMeta);
 
     inline void SetLastPause(int64_t lastPause)
     {
