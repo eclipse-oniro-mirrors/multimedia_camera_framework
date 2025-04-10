@@ -38,6 +38,34 @@ namespace {
 }
 
 // LCOV_EXCL_START
+HdiStatus MapHdiVideoStatus(OHOS::HDI::Camera::V1_2::SessionStatus statusCode)
+{
+    HdiStatus code = HdiStatus::HDI_DISCONNECTED;
+    switch (statusCode) {
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY:
+            code = HdiStatus::HDI_READY;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY_SPACE_LIMIT_REACHED:
+            code = HdiStatus::HDI_READY_SPACE_LIMIT_REACHED;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSSON_STATUS_NOT_READY_TEMPORARILY:
+            code = HdiStatus::HDI_NOT_READY_TEMPORARILY;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_OVERHEAT:
+            code = HdiStatus::HDI_NOT_READY_OVERHEAT;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_PREEMPTED:
+            code = HdiStatus::HDI_NOT_READY_PREEMPTED;
+            break;
+        default:
+            DP_ERR_LOG("unexpected error code: %{public}d.", statusCode);
+            break;
+    }
+    return code;
+}
+// LCOV_EXCL_STOP
+
+// LCOV_EXCL_START
 DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
     DpsError code = DPS_ERROR_UNKNOW;
@@ -148,7 +176,11 @@ public:
 
     int32_t OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status) override
     {
-        DP_DEBUG_LOG("entered.");
+        DP_INFO_LOG("DPS_VIDEO: HdiStatus: %{public}d", status);
+        auto processResult = processResult_.lock();
+        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+        processResult->OnStateChanged(MapHdiVideoStatus(status));
         return DP_OK;
     }
     // LCOV_EXCL_STOP
