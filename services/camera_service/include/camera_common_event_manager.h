@@ -38,6 +38,8 @@ public:
     static sptr<CameraCommonEventManager> GetInstance();
     void SubscribeCommonEvent(const std::string &eventName, EventReceiver receiver);
     void UnSubscribeCommonEvent(const std::string &eventName);
+    bool IsScreenLocked();
+    void SetScreenLocked(bool status);
 
     class CameraCommonEventSubscriber : public EventFwk::CommonEventSubscriber {
     public:
@@ -53,6 +55,7 @@ private:
     std::map<std::string, std::shared_ptr<CameraCommonEventSubscriber>> commonEventSubscriberMap_;
     static std::mutex instanceMutex_;
     static std::mutex mapMutex_;
+    bool isScreenLocked_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
