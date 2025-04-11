@@ -731,6 +731,28 @@ Camera_ErrorCode OH_CaptureSession_SetQualityPrioritization(
     return session->SetQualityPrioritization(qualityPrioritization);
 }
 
+/**
+ * @since 17
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_IsMacroSupported(Camera_CaptureSession* session, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsMacroSupported is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->IsMacroSupported(isSupported);
+}
+
+/**
+ * @since 17
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CaptureSession_EnableMacro(Camera_CaptureSession* session, bool enabled)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_EnableMacro is called");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->EnableMacro(enabled);
+}
+
 #ifdef __cplusplus
 }
 #endif

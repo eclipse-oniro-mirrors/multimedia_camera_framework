@@ -14,6 +14,7 @@
  */
 
 #include "capture_session_impl.h"
+#include <vector>
 #include "camera_log.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
@@ -21,7 +22,7 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
-const int32_t ARGS_TWO = 2;
+namespace {
 const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
     {Camera_SceneMode::NORMAL_PHOTO, SceneMode::CAPTURE},
     {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
@@ -142,6 +143,22 @@ private:
     Camera_CaptureSession* captureSession_;
     OH_CaptureSession_OnAutoDeviceSwitchStatusChange autoDeviceSwitchStatusCallback_ = nullptr;
 };
+
+bool IsCurrentModeInList(OHOS::sptr<CaptureSession> innerCaptureSession, const std::vector<SceneMode> modes)
+{
+    if (innerCaptureSession == nullptr) {
+        return false;
+    }
+    SceneMode currentMode = innerCaptureSession->GetMode();
+    for (auto& mode : modes) {
+        if (currentMode == mode) {
+            return true;
+        }
+    }
+    MEDIA_ERR_LOG("IsCurrentModeInList check fail, current mode is:%{public}d", currentMode);
+    return false;
+}
+}
 
 Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureSession)
     : innerCaptureSession_(innerCaptureSession)
@@ -514,6 +531,7 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureBiasRange(float* minExposureB
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBiasRange is called");
 
     std::vector<float> vecExposureBiasList = innerCaptureSession_->GetExposureBiasRange();
+    constexpr int32_t ARGS_TWO = 2;
     if (!vecExposureBiasList.empty() && vecExposureBiasList.size() >= ARGS_TWO) {
         *minExposureBias = vecExposureBiasList[0];
         *maxExposureBias = vecExposureBiasList[1];
@@ -793,6 +811,32 @@ Camera_ErrorCode Camera_CaptureSession::SetQualityPrioritization(Camera_QualityP
     QualityPrioritization innerQualityPrioritization = static_cast<QualityPrioritization>(qualityPrioritization);
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetQualityPrioritization(innerQualityPrioritization);
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::IsMacroSupported(bool* isSupported)
+{
+    *isSupported = false;
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::IsMacroSupported is called");
+
+    CHECK_ERROR_RETURN_RET_LOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
+        CAMERA_INVALID_ARGUMENT, "Camera_CaptureSession::IsMacroSupported Session is not supported");
+
+    CHECK_ERROR_RETURN_RET_LOG(
+        !(innerCaptureSession_->IsSessionCommited() || innerCaptureSession_->IsSessionConfiged()),
+        CAMERA_SESSION_NOT_CONFIG, "Camera_CaptureSession::IsMacroSupported Session is not config");
+    *isSupported = innerCaptureSession_->IsMacroSupported();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::EnableMacro(bool enabled)
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::EnableMacro is called %{public}d", enabled);
+    CHECK_ERROR_RETURN_RET_LOG(!IsCurrentModeInList(innerCaptureSession_, { SceneMode::CAPTURE, SceneMode::VIDEO }),
+        CAMERA_INVALID_ARGUMENT, "Camera_CaptureSession::IsMacroSupported Session is not supported");
+    innerCaptureSession_->LockForControl();
+    int32_t ret = innerCaptureSession_->EnableMacro(enabled);
     innerCaptureSession_->UnlockForControl();
     return FrameworkToNdkCameraError(ret);
 }
