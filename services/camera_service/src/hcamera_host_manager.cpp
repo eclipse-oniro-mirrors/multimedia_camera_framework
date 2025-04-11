@@ -908,7 +908,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         "HCameraHostManager::Prelaunch failed with invalid device info");
     sptr<HCameraRestoreParam> cameraRestoreParam = GetRestoreParam(clientName, cameraId);
     CHECK_ERROR_RETURN_RET_LOG(cameraRestoreParam == nullptr, CAMERA_INVALID_ARG,
-        "HCameraHostManager::Prelaunch cameraRestoreParam is null");   
+        "HCameraHostManager::Prelaunch cameraRestoreParam is null");
     int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
     int restoreFoldStatus = cameraRestoreParam->GetFlodStatus();
     MEDIA_DEBUG_LOG("HCameraHostManager::Prelaunch foldStatus:%{public}d, restoreFoldStatus:%{public}d",
