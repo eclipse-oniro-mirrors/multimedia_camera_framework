@@ -152,6 +152,13 @@ ohos_unittest("camera_service_unittest") {
     external_deps += [ "distributed_notification_service:ans_innerkits" ]
   }
 
+  if (defined(global_parts_info) &&
+      defined(
+          global_parts_info.notification_distributed_notification_service)) {
+    external_deps += [ "distributed_notification_service:ans_innerkits" ]
+    defines += [ "NOTIFICATION_ENABLE" ]
+  }
+
   cflags = [
     "-fPIC",
     "-Werror=unused",

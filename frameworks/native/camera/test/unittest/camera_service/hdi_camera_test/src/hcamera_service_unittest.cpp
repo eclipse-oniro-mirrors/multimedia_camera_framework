@@ -19,6 +19,7 @@
 #include <vector>
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "camera_common_event_manager.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_util.h"
@@ -1904,6 +1905,119 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_052, TestSize.Level1)
         .WillOnce(Return(0));
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is "CAMERA_BEAUTY_NOTIFICATION"
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_053, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    const std::string EVENT_CAMERA_BEAUTY_NOTIFICATION = "CAMERA_BEAUTY_NOTIFICATION";
+    want.SetAction(EVENT_CAMERA_BEAUTY_NOTIFICATION);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), EVENT_CAMERA_BEAUTY_NOTIFICATION);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is "usual.event.SCREEN_LOCKED"
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_054, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(COMMON_EVENT_SCREEN_LOCKED);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_SCREEN_LOCKED);
+    EXPECT_EQ(CameraCommonEventManager::GetInstance()->IsScreenLocked(), true);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test OnReceiveEvent in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnReceiveEvent when want.GetAction is "usual.event.SCREEN_UNLOCKED"
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_055, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(COMMON_EVENT_SCREEN_UNLOCKED);
+    EventFwk::CommonEventData CommonEventData { want };
+    cameraService_->OnReceiveEvent(CommonEventData);
+    EXPECT_EQ(CommonEventData.GetWant().GetAction(), COMMON_EVENT_SCREEN_UNLOCKED);
+    EXPECT_EQ(CameraCommonEventManager::GetInstance()->IsScreenLocked(), false);
+    device->Release();
+    device->Close();
+}
+
+/*
+ * Feature: CameraService
+ * Function: Test SetBeauty in class HCameraService
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetBeauty in class HCameraService
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_056, TestSize.Level0)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+    const int32_t BEAUTY_STATUS_OFF = 0;
+    const int32_t BEAUTY_STATUS_ON = 1;
+    cameraService_->SetBeauty(BEAUTY_STATUS_ON);
+    cameraService_->SetBeauty(BEAUTY_STATUS_OFF);
+    device->Release();
+    device->Close();
 }
 }
 }
