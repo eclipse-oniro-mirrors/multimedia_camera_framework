@@ -1317,6 +1317,8 @@ void CameraManager::ParsingCameraConcurrentLimted(camera_metadata_item_t &item,
     MEDIA_INFO_LOG("CameraManager::ParsingCameraConcurrentLimted start");
     double* originInfo = item.data.d;
     uint32_t count = item.count;
+    CHECK_ERROR_RETURN_LOG(
+        cameraDevNow == nullptr, "CameraManager::ParsingCameraConcurrentLimted cameraDevNow is null");
     cameraDevNow->limtedCapabilitySave_.flashmodes.count = 0;
     cameraDevNow->limtedCapabilitySave_.flashmodes.mode.clear();
     cameraDevNow->limtedCapabilitySave_.exposuremodes.count = 0;
@@ -1479,6 +1481,8 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
     if (IsSystemApp()) {
         FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     }
+    CHECK_ERROR_RETURN_LOG(
+        cameraOutputCapability == nullptr, "cameraOutputCapability is null");
     cameraOutputCapability->SetPhotoProfiles(profilesWrapper.photoProfiles);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", profilesWrapper.photoProfiles.size());
     cameraOutputCapability->SetPreviewProfiles(profilesWrapper.previewProfiles);

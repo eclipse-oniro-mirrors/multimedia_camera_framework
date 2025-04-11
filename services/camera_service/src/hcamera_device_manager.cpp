@@ -567,6 +567,8 @@ bool HCameraDeviceManager::IsProcessHasConcurrentDevice(pid_t pid)
 
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
+    CHECK_ERROR_RETURN_LOG(
+        cameraDevNow == nullptr, "requestCameraHolder is null");
     requestCameraHolder_ = requestCameraHolder;
     concurrentCameraTable_ = requestCameraHolder->GetDevice()->GetConcurrentDevicesTable();
     listOfCameraRetainable_ = {};
