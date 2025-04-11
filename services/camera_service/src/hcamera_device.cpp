@@ -709,11 +709,9 @@ int32_t HCameraDevice::CloseDevice()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
-    {
-        std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        if (cameraCloseListener_ != nullptr) {
-            cameraCloseListener_->BeforeDeviceClose();
-        }
+    auto cameraCloseListener = GetCameraCloseListener();
+    if (cameraCloseListener != nullptr) {
+        cameraCloseListener->BeforeDeviceClose();
     }
     {
         std::lock_guard<std::mutex> lock(opMutex_);
