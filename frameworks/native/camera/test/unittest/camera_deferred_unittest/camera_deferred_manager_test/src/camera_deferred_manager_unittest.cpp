@@ -105,6 +105,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_003, TestSize
     ASSERT_NE(mediaManager, nullptr);
     mediaManager->outputWriter_ = std::make_shared<Writer>();
     ASSERT_NE(mediaManager->outputWriter_, nullptr);
+    mediaManager->outputWriter_->outputMuxer_ = std::make_shared<Muxer>();
     std::vector<uint8_t> memoryFlags = {
         static_cast<uint8_t>(MemoryFlag::MEMORY_READ_ONLY),
         static_cast<uint8_t>(MemoryFlag::MEMORY_WRITE_ONLY),
