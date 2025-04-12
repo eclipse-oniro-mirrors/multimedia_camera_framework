@@ -158,6 +158,7 @@ HStreamOperator::HStreamOperator()
 HStreamOperator::HStreamOperator(const uint32_t callingTokenId, int32_t opMode)
 {
     Initialize(callingTokenId, opMode);
+    ResetHdiStreamId();
 }
 
 HStreamOperator::~HStreamOperator()
@@ -409,7 +410,9 @@ void  HStreamOperator::GetStreamOperator()
         return;
     }
     std::lock_guard<std::mutex> lock(streamOperatorLock_);
-    cameraDevice_->GetStreamOperator(this, streamOperator_);
+    if (streamOperator_ == nullptr) {
+        cameraDevice_->GetStreamOperator(this, streamOperator_);
+    }
 }
 
 bool HStreamOperator::IsOfflineCapture()
@@ -967,9 +970,6 @@ void HStreamOperator::ReleaseStreams()
     if (!hdiStreamIds.empty()) {
         ReleaseStreams(hdiStreamIds);
     }
-    if (GetAllOutptSize() == 0) {
-        Release();
-    }
 }
 
 int32_t HStreamOperator::GetOfflineOutptSize()
@@ -991,7 +991,7 @@ int32_t HStreamOperator::GetOfflineOutptSize()
 
 int32_t HStreamOperator::GetAllOutptSize()
 {
-    int32_t outputCount = static_cast<int32_t>(streamContainerOffline_.Size() + streamContainer_.Size());
+    int32_t outputCount = static_cast<int32_t>(streamContainer_.Size());
     return outputCount;
 }
 
@@ -1115,6 +1115,7 @@ int32_t HStreamOperator::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
                 isMovingPhotoMirror_ = isMirror;
                 // set clear cache flag
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+                CHECK_ERROR_RETURN_RET_LOG(livephotoListener_ == nullptr, CAMERA_OK, "livephotoListener_ is null");
                 livephotoListener_->SetClearFlag();
             }
             break;
