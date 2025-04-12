@@ -159,7 +159,7 @@ public:
     inline void SetCameraCloseListener(wptr<IHCameraCloseListener> listener)
     {
         std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        cameraCloseListener_ = listener;
+        cameraCloseListenerVec_.push_back(listener);
     }
 
     inline bool IsDeviceOpenedByConcurrent()
@@ -272,7 +272,7 @@ private:
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
-    wptr<IHCameraCloseListener> cameraCloseListener_;
+    std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
