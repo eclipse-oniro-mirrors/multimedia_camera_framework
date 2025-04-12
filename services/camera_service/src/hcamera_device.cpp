@@ -1078,7 +1078,7 @@ void HCameraDevice::RegisterFoldStatusListener()
 {
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
-        int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus());
+        int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
         if (foldStatus == FoldStatus::HALF_FOLD) {
             foldStatus = FoldStatus::EXPAND;
         }
