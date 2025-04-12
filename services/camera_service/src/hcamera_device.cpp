@@ -705,14 +705,23 @@ void HCameraDevice::HandleFoldableDevice()
     CHECK_EXECUTE(isFoldable, RegisterFoldStatusListener());
 }
 
+void HCameraDevice::ReleaseSessionBeforeCloseDevice()
+{
+    std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
+    for (wptr<IHCameraCloseListener> cameraCloseListener : cameraCloseListenerVec_) {
+        auto cameraCloseListenerTemp = cameraCloseListener.promote();
+        if (cameraCloseListenerTemp == nullptr) {
+            continue;
+        }
+        cameraCloseListenerTemp->BeforeDeviceClose();
+    }
+}
+
 int32_t HCameraDevice::CloseDevice()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
-    auto cameraCloseListener = GetCameraCloseListener();
-    if (cameraCloseListener != nullptr) {
-        cameraCloseListener->BeforeDeviceClose();
-    }
+    ReleaseSessionBeforeCloseDevice();
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
