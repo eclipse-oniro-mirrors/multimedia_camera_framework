@@ -159,7 +159,7 @@ public:
     inline void SetCameraCloseListener(wptr<IHCameraCloseListener> listener)
     {
         std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        cameraCloseListener_ = listener;
+        cameraCloseListenerVec_.push_back(listener);
     }
 
     inline bool IsDeviceOpenedByConcurrent()
@@ -220,12 +220,6 @@ private:
     int64_t lastDeviceEjectTime_ = 0;
     std::atomic<uint32_t> deviceEjectTimes_ = 1;
 
-    inline sptr<IHCameraCloseListener> GetCameraCloseListener()
-    {
-        std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
-        return cameraCloseListener_.promote();
-    }
-
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
@@ -254,6 +248,7 @@ private:
                      uint32_t tag, std::string tagName, DFX_UB_NAME dfxUbStr);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
+    void ReleaseSessionBeforeCloseDevice();
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
@@ -272,7 +267,7 @@ private:
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
-    wptr<IHCameraCloseListener> cameraCloseListener_;
+    std::vector<wptr<IHCameraCloseListener>> cameraCloseListenerVec_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

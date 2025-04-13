@@ -117,8 +117,8 @@ public:
     virtual ~FoldScreenListener() = default;
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override
     {
-        FoldStatus currentFoldStatus = FoldStatus::UNKNOWN_FOLD;
-        if (foldStatus == OHOS::Rosen::FoldStatus::HALF_FOLD) {
+        FoldStatus currentFoldStatus = static_cast<FoldStatus>(foldStatus);
+        if (currentFoldStatus == FoldStatus::HALF_FOLD) {
             currentFoldStatus = FoldStatus::EXPAND;
         }
         if (cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus) {
@@ -705,14 +705,23 @@ void HCameraDevice::HandleFoldableDevice()
     CHECK_EXECUTE(isFoldable, RegisterFoldStatusListener());
 }
 
+void HCameraDevice::ReleaseSessionBeforeCloseDevice()
+{
+    std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
+    for (wptr<IHCameraCloseListener> cameraCloseListener : cameraCloseListenerVec_) {
+        auto cameraCloseListenerTemp = cameraCloseListener.promote();
+        if (cameraCloseListenerTemp == nullptr) {
+            continue;
+        }
+        cameraCloseListenerTemp->BeforeDeviceClose();
+    }
+}
+
 int32_t HCameraDevice::CloseDevice()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
-    auto cameraCloseListener = GetCameraCloseListener();
-    if (cameraCloseListener != nullptr) {
-        cameraCloseListener->BeforeDeviceClose();
-    }
+    ReleaseSessionBeforeCloseDevice();
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isOpenedCameraDevice_.load(), CAMERA_OK,
@@ -1069,7 +1078,10 @@ void HCameraDevice::RegisterFoldStatusListener()
 {
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
-        int foldStatus = (int)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+        int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+        if (foldStatus == FoldStatus::HALF_FOLD) {
+            foldStatus = FoldStatus::EXPAND;
+        }
         cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, foldStatus);
     }
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
