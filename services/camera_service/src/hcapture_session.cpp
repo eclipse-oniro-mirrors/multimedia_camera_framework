@@ -72,6 +72,7 @@
 #include "surface.h"
 #include "surface_buffer.h"
 #include "v1_0/types.h"
+#include "hstream_operator_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -158,6 +159,7 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
     sessionId_ = GenerateSessionId();
     callerToken_ = callingTokenId;
     opMode_ = opMode;
+    InitialHStreamOperator();
 }
 
 HCaptureSession::~HCaptureSession()
@@ -184,7 +186,7 @@ int32_t HCaptureSession::GetopMode()
 
 int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
         "hStreamOperator_ is null");
     return hStreamOperatorSptr->GetCurrentStreamInfos(streamInfos);
@@ -217,6 +219,7 @@ int32_t HCaptureSession::BeginConfig()
     CAMERA_SYNC_TRACE;
     int32_t errCode;
     MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute, sessionID: %{public}d", GetSessionId());
+    InitialHStreamOperator();
     stateMachine_.StateGuard([&errCode, this](const CaptureSessionState state) {
         DynamicConfigStream();
         bool isStateValid = stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_INPROGRESS);
@@ -229,7 +232,7 @@ int32_t HCaptureSession::BeginConfig()
             isDynamicConfiged_ = false;
             return;
         }
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
         if (!IsNeedDynamicConfig() && (hStreamOperatorSptr->GetOfflineOutptSize() == 0)) {
             UnlinkInputAndOutputs();
@@ -311,9 +314,6 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         sptr<HCameraDevice> hCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
         MEDIA_INFO_LOG("HCaptureSession::AddInput device:%{public}s", hCameraDevice->GetCameraId().c_str());
         SetCameraDevice(hCameraDevice);
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
-        CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
-        hStreamOperatorSptr->ResetHdiStreamId();
         hCameraDevice->DispatchDefaultSettingToHdi();
     });
     if (errorCode == CAMERA_OK) {
@@ -330,7 +330,7 @@ void HCaptureSession::BeforeDeviceClose()
 {
     MEDIA_INFO_LOG("HCaptureSession::BeforeDeviceClose UnlinkInputAndOutputs");
     UnlinkInputAndOutputs();
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(
         hStreamOperatorSptr == nullptr, "HCaptureSession::BeforeDeviceClose hStreamOperatorSptr is null");
     if (!hStreamOperatorSptr->IsOfflineCapture()) {
@@ -383,11 +383,21 @@ public:
 
 int32_t HCaptureSession::SetPreviewRotation(std::string &deviceClass)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
         "hStreamOperator_ is null");
     hStreamOperatorSptr->SetPreviewRotation(deviceClass);
     return CAMERA_OK;
+}
+
+void HCaptureSession::InitialHStreamOperator()
+{
+    auto hStreamOperatorTemp = GetStreamOperator();
+    if (hStreamOperatorTemp == nullptr) {
+        sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken_, opMode_);
+        SetStreamOperator(hStreamOperator);
+        HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 鍗曚緥绠＄悊streamoperator 寰呮壘鍞竴key
+    }
 }
 
 int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
@@ -400,7 +410,8 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
         return errorCode;
     }
     stateMachine_.StateGuard([this, &errorCode, streamType, &stream](const CaptureSessionState currentState) {
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        InitialHStreamOperator();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator_ is null");
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
             MEDIA_ERR_LOG("HCaptureSession::AddOutput Need to call BeginConfig "
@@ -484,7 +495,7 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
         stream == nullptr, CAMERA_INVALID_ARG, "HCaptureSession::RemoveOutputStream stream is null");
     MEDIA_INFO_LOG("HCaptureSession::RemoveOutputStream,streamType:%{public}d, streamId:%{public}d",
         stream->GetStreamType(), stream->GetFwkStreamId());
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG,
         "hStreamOperatorSptr is null");
     int32_t errorCode = hStreamOperatorSptr->RemoveOutputStream(stream);
@@ -511,7 +522,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
         errorCode = hStreamOperatorSptr->RemoveOutput(streamType, stream);
     });
@@ -538,7 +549,7 @@ int32_t HCaptureSession::ValidateSessionInputs()
 
 int32_t HCaptureSession::ValidateSessionOutputs()
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG((hStreamOperatorSptr == nullptr || hStreamOperatorSptr->GetStreamsSize() == 0),
         CAMERA_INVALID_SESSION_CFG, "HCaptureSession::ValidateSessionOutputs No outputs present");
     return CAMERA_OK;
@@ -547,7 +558,7 @@ int32_t HCaptureSession::ValidateSessionOutputs()
 int32_t HCaptureSession::LinkInputAndOutputs()
 {
     int32_t rc;
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_SESSION_CFG,
         "HCaptureSession::ValidateSessionOutputs No outputs present");
     auto device = GetCameraDevice();
@@ -567,7 +578,7 @@ int32_t HCaptureSession::UnlinkInputAndOutputs()
 {
     CAMERA_SYNC_TRACE;
     int32_t rc = CAMERA_UNKNOWN_ERROR;
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr,  rc,
         "HCaptureSession::ValidateSessionOutputs No outputs present");
     rc = hStreamOperatorSptr->UnlinkInputAndOutputs();
@@ -579,7 +590,7 @@ void HCaptureSession::ExpandSketchRepeatStream()
 {
     MEDIA_DEBUG_LOG("Enter HCaptureSession::ExpandSketchRepeatStream(), "
         "sessionID: %{public}d", GetSessionId());
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr,
         "HCaptureSession::ValidateSessionOutputs No outputs present");
     hStreamOperatorSptr->ExpandSketchRepeatStream();
@@ -594,7 +605,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
         MEDIA_DEBUG_LOG("movingPhoto is not supported, sessionID: %{public}d", GetSessionId());
         return;
     }
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr,
         "HCaptureSession::ValidateSessionOutputs No outputs present");
     hStreamOperatorSptr->ExpandMovingPhotoRepeatStream();
@@ -605,7 +616,7 @@ void HCaptureSession::ClearSketchRepeatStream()
 {
     MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream(), sessionID: %{public}d", GetSessionId());
 
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
     return hStreamOperatorSptr->ClearSketchRepeatStream();
 }
@@ -617,7 +628,7 @@ void HCaptureSession::ClearMovingPhotoRepeatStream()
                     "sessionID: %{public}d",
         GetSessionId());
     // Already added session lock in BeginConfig()
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
     return hStreamOperatorSptr->ClearMovingPhotoRepeatStream();
 }
@@ -650,7 +661,7 @@ int32_t HCaptureSession::CommitConfig()
             stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
             return;
         }
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
         hStreamOperatorSptr->GetStreamOperator();
         errorCode = ValidateSession();
@@ -691,7 +702,7 @@ int32_t HCaptureSession::CommitConfig()
 
 int32_t HCaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperator is nullptr");
     hStreamOperatorSptr->GetActiveColorSpace(colorSpace);
     return CAMERA_OK;
@@ -713,7 +724,7 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, bool isNeedUpdate)
                 return;
             }
 
-            auto hStreamOperatorSptr = hStreamOperator_.promote();
+            auto hStreamOperatorSptr = GetStreamOperator();
             CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperator is nullptr");
             result = hStreamOperatorSptr->SetColorSpace(colorSpace, isNeedUpdate);
             if (isNeedUpdate &&  result != CAMERA_OK) {
@@ -1038,7 +1049,7 @@ void HCaptureSession::ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArr
 
 int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperatorSptr is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
     auto cameraDevice = GetCameraDevice();
@@ -1076,7 +1087,7 @@ int32_t HCaptureSession::Start()
             UpdateMuteSetting(cameraDevice->GetDeviceMuteMode(), settings);
         }
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
         if (OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus() == OHOS::Rosen::FoldStatus::FOLDED) {
             auto infos = GetCameraRotateStrategyInfos();
@@ -1121,7 +1132,7 @@ int32_t HCaptureSession::Stop()
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         if (hStreamOperatorSptr == nullptr) {
             MEDIA_ERR_LOG("hStreamOperatorSptr is null");
             errorCode = CAMERA_INVALID_STATE;
@@ -1163,7 +1174,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
                 HCameraSessionManager::GetInstance().GetTotalSessionSize());
         }
-        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
         // stop movingPhoto
         hStreamOperatorSptr->StopMovingPhoto();
@@ -1176,6 +1187,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         if (cameraDevice != nullptr) {
             cameraDevice->Release();
             SetCameraDevice(nullptr);
+        }
+
+        if ((hStreamOperatorSptr->GetAllOutptSize()) == 0) {
+            hStreamOperatorSptr->Release();
         }
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
@@ -1269,7 +1284,7 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
 {
     infoDumper.Msg("Client pid:[" + std::to_string(pid_) + "]    Client uid:[" + std::to_string(uid_) + "]");
     infoDumper.Msg("session state:[" + GetSessionState() + "]");
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
     for (auto& stream : hStreamOperatorSptr->GetAllStreams()) {
         infoDumper.Push();
@@ -1280,7 +1295,7 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
 
 int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_RET_LOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperatorSptr is null");
     hStreamOperatorSptr->EnableMovingPhotoMirror(isMirror, isConfig);
     return CAMERA_OK;
@@ -1288,7 +1303,7 @@ int32_t HCaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 
 void HCaptureSession::GetOutputStatus(int32_t& status)
 {
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
     hStreamOperatorSptr->GetOutputStatus(status);
 }
@@ -1304,7 +1319,7 @@ void HCaptureSession::SetCameraDevice(sptr<HCameraDevice> device)
     }
     cameraDevice_ = device;
 
-    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    auto hStreamOperatorSptr = GetStreamOperator();
     if (hStreamOperatorSptr != nullptr) {
         hStreamOperatorSptr->SetCameraDevice(device);
     }

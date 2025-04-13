@@ -338,7 +338,7 @@ private:
     sptr<MovingPhotoVideoCache> videoCache_;
     std::mutex displayListenerLock_;
     sptr<DisplayRotationListener> displayListener_;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
     bool isOfflineStreamOperator_ =  false;
     int32_t mlastCaptureId = 0;
     int32_t sensorRotation_ = 0;

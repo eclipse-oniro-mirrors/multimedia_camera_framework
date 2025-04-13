@@ -535,10 +535,6 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
-
-    sptr<HStreamOperator> hStreamOperator = HStreamOperator::NewInstance(callerToken, opMode);
-    captureSession->SetStreamOperator(hStreamOperator);
-    HStreamOperatorManager::GetInstance()->AddStreamOperator(hStreamOperator); // 单例管理streamoperator 待找唯一key
     return rc;
 }
 
