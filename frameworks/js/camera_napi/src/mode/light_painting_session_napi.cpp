@@ -45,7 +45,7 @@ void LightPaintingSessionNapi::LightPaintingSessionNapiDestructor(napi_env env, 
 }
 napi_value LightPaintingSessionNapi::Init(napi_env env, napi_value exports)
 {
-    MEDIA_INFO_LOG("Init is called");
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     std::vector<napi_property_descriptor> light_painting_props = {

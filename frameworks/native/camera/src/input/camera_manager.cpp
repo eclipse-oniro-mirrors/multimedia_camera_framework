@@ -1863,7 +1863,7 @@ std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& came
 {
     CHECK_ERROR_RETURN_RET(camera == nullptr, {});
     std::vector<SceneMode> supportedSceneModes = camera->GetSupportedModes();
-    MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedSceneModes.size());
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedSceneModes.size());
     return supportedSceneModes;
 }
 
@@ -1916,7 +1916,7 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
 
 SceneMode CameraManager::GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper)
 {
-    MEDIA_INFO_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
+    MEDIA_DEBUG_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
     if (profilesWrapper.photoProfiles.empty() && profilesWrapper.previewProfiles.empty() &&
         profilesWrapper.vidProfiles.empty()) {
         switch (profileMode) {
@@ -2045,7 +2045,7 @@ bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metad
     bool isSupport = true;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
     if (retCode != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
+        MEDIA_DEBUG_LOG("Failed get metadata info tag = %{public}d, retCode = %{public}d, count = %{public}d",
             metadataTag, retCode, item.count);
         isSupport = false;
     }
@@ -2202,7 +2202,7 @@ void CameraManager::ParseProfileLevel(ProfilesWrapper& profilesWrapper, const in
     CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
     specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
     for (SpecInfo& specInfo : specInfos) {
-        MEDIA_INFO_LOG("modeName: %{public}d specId: %{public}d", modeName, specInfo.specId);
+        MEDIA_DEBUG_LOG("modeName: %{public}d specId: %{public}d", modeName, specInfo.specId);
         for (StreamInfo& streamInfo : specInfo.streamInfos) {
             CreateProfileLevel4StreamType(profilesWrapper, specInfo.specId, streamInfo);
         }
@@ -2275,9 +2275,6 @@ void CameraManager::ParseCapability(ProfilesWrapper& profilesWrapper, sptr<Camer
         MEDIA_INFO_LOG("Depth g_isCapabilitySupported by device = %{public}s, mode = %{public}d, tag = %{public}d",
             camera->GetID().c_str(), mode, OHOS_ABILITY_DEPTH_DATA_PROFILES);
         ParseDepthCapability(mode, item);
-    } else {
-        MEDIA_INFO_LOG("Depth GetSupportedOutputCapability is not supported by device = %{public}s,"
-            "tag = %{public}d", camera->GetID().c_str(), OHOS_ABILITY_DEPTH_DATA_PROFILES);
     }
 }
 
@@ -2336,7 +2333,7 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
         "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
         profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
         profilesWrapper.vidProfiles.size(), depthProfiles_.size());
