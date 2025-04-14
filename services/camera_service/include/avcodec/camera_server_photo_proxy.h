@@ -85,6 +85,8 @@ public:
     int32_t GetCaptureId();
     int32_t GetBurstSeqId();
     uint32_t GetCloudImageEnhanceFlag() override;
+    void SetStageVideoTaskStatus(uint8_t status);
+    int32_t GetStageVideoTaskStatus() override;
 
 private:
     uint32_t cloudImageEnhanceFlag_;
@@ -110,6 +112,7 @@ private:
     std::string burstKey_;
     bool isCoverPhoto_;
     int32_t imageFormat_;
+    uint8_t stageVideoTaskStatus_;
     int32_t CameraFreeBufferHandle(BufferHandle *handle);
 };
 } // namespace CameraStandard

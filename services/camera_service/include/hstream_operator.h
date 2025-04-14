@@ -218,6 +218,7 @@ public:
     void ClearMovingPhotoRepeatStream();
     void GetStreamOperator();
     bool IsOfflineCapture();
+    bool GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem);
     inline int32_t GetPid()
     {
         return static_cast<int32_t>(pid_);
