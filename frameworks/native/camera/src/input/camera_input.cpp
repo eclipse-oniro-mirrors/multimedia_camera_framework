@@ -235,6 +235,7 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     }
 
     sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
+    CHECK_ERROR_RETURN_RET_LOG(cameraObjnow == nullptr, CAMERA_UNKNOWN_ERROR, "CameraInput::Open cameraObjnow is null");
     if (cameraConcurrentType == 0) {
         cameraObjnow->isConcurrentLimted_ = 1;
         auto itr = CameraManager::GetInstance()->cameraConLimCapMap_.find(cameraObjnow->GetID());
