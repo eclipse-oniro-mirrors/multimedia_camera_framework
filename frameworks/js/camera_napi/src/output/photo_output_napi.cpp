@@ -237,20 +237,13 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wpt
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(photoSurface);
     }
-    if (taskManager_ == nullptr) {
-        constexpr int32_t numThreads = 1;
-        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener",
-            numThreads, false);
-    }
 }
+
 PhotoListener::~PhotoListener()
 {
-    if (taskManager_) {
-        taskManager_->CancelAllTasks();
-        taskManager_.reset();
-        taskManager_ = nullptr;
-    }
+    ClearTaskManager();
 }
+
 RawPhotoListener::RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface)
     : ListenerBase(env), rawPhotoSurface_(rawPhotoSurface)
 {
@@ -326,6 +319,25 @@ void PictureListener::InitPictureListeners(napi_env env, wptr<PhotoOutput> photo
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;
     }
     CHECK_ERROR_PRINT_LOG(retStr != "", "register surface consumer listener failed! type = %{public}s", retStr.c_str());
+}
+
+void PhotoListener::ClearTaskManager()
+{
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ != nullptr) {
+        taskManager_->CancelAllTasks();
+        taskManager_ = nullptr;
+    }
+}
+
+std::shared_ptr<DeferredProcessing::TaskManager> PhotoListener::GetDefaultTaskManager()
+{
+    constexpr int32_t numThreads = 1;
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
+    if (taskManager_ == nullptr) {
+        taskManager_ = std::make_shared<DeferredProcessing::TaskManager>("PhotoListener", numThreads, false);
+    }
+    return taskManager_;
 }
 
 void AuxiliaryPhotoListener::DeepCopyBuffer(
@@ -630,9 +642,10 @@ void PhotoListener::OnBufferAvailable()
         MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is end");
         return;
     }
-    if (taskManager_) {
+    auto taskManager = GetDefaultTaskManager();
+    if (taskManager != nullptr) {
         wptr<PhotoListener> thisPtr(this);
-        taskManager_->SubmitTask([thisPtr]() {
+        taskManager->SubmitTask([thisPtr]() {
             auto listener = thisPtr.promote();
             CHECK_EXECUTE(listener, listener->ExecuteDeepCopySurfaceBuffer());
         });
@@ -2751,7 +2764,12 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
 void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_EXECUTE(photoListener_ != nullptr, photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callback));
+    if (photoListener_ != nullptr) {
+        photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
+        if (photoListener_->IsEmpty(CONST_CAPTURE_PHOTO_AVAILABLE)) {
+            photoListener_->ClearTaskManager();
+        }
+    }
     CHECK_EXECUTE(rawPhotoListener_ != nullptr,
         rawPhotoListener_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_AVAILABLE, callback));
 }
@@ -2798,10 +2816,8 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
 {
     if (photoListener_ != nullptr) {
         photoListener_->RemoveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
-        if (photoListener_->taskManager_) {
-            photoListener_->taskManager_->CancelAllTasks();
-            photoListener_->taskManager_.reset();
-            photoListener_->taskManager_ = nullptr;
+        if (photoListener_->IsEmpty(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE)) {
+            photoListener_->ClearTaskManager();
         }
     }
     if (photoOutput_) {

@@ -144,11 +144,12 @@ public:
     void SaveCallback(const std::string eventName, napi_value callback);
     void RemoveCallback(const std::string eventName, napi_value callback);
     void ExecuteDeepCopySurfaceBuffer();
-    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
+
+    void ClearTaskManager();
+    std::shared_ptr<DeferredProcessing::TaskManager> GetDefaultTaskManager();
+
 private:
-    sptr<Surface> photoSurface_;
-    wptr<PhotoOutput> photoOutput_;
-    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
     void UpdatePictureJSCallback(int32_t captureId, const string uri, int32_t cameraShotType,
@@ -163,7 +164,12 @@ private:
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
     void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
+    sptr<Surface> photoSurface_;
+    wptr<PhotoOutput> photoOutput_;
+    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     uint8_t callbackFlag_ = 0;
+    std::mutex taskManagerMutex_;
+    std::shared_ptr<DeferredProcessing::TaskManager> taskManager_ = nullptr;
 };
 
 class RawPhotoListener : public IBufferConsumerListener, public ListenerBase,
