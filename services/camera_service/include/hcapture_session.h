@@ -71,6 +71,7 @@ using namespace AudioStandard;
 using namespace std::chrono;
 using namespace DeferredProcessing;
 using namespace Media;
+constexpr uint32_t OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER = 1;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 class DisplayRotationListener;
@@ -186,6 +187,7 @@ private:
     std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
     uint64_t postCacheFrameCount_;
+    shared_ptr<TaskManager> bufferTaskManager_ = nullptr;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
