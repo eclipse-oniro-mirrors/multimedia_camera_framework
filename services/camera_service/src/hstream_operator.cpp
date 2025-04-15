@@ -1593,6 +1593,10 @@ void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
     MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+    if (!livephotoListener_) {
+        MEDIA_ERR_LOG("HCaptureSession::StartOnceRecord livephotoListener_ is null");
+        return;
+    }
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation, captureId);
@@ -1965,6 +1969,7 @@ MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surface
       postCacheFrameCount_(postCacheFrameCount)
 {
     shutterTime_ = 0;
+    bufferTaskManager_ = make_shared<TaskManager>("BufferTaskManager", OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER, true);
 }
 
 MovingPhotoListener::~MovingPhotoListener()
@@ -2019,49 +2024,52 @@ void MovingPhotoListener::StopDrainOut()
 void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform)
 {
     MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
-    if (recorderBufferQueue_.Full()) {
-        MEDIA_DEBUG_LOG("surface_ release surface buffer");
-        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
-        popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
-        popFrame->ReleaseMetaBuffer(metaSurface_, true);
-        MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
-            popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
-    }
-    MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
-        buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
-    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
-    CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
-    if (isNeededClear_ && isNeededPop_) {
-        if (timestamp < shutterTime_) {
-            frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
-            MEDIA_INFO_LOG("Drop this frame in cache");
-            return;
-        } else {
-            isNeededClear_ = false;
-            isNeededPop_ = false;
-            MEDIA_INFO_LOG("ClearCache end");
+    auto thisPtr = sptr<MovingPhotoListener>(this);
+    bufferTaskManager_->SubmitTask([thisPtr, buffer, timestamp, transform]() {
+        if (thisPtr->recorderBufferQueue_.Full()) {
+            MEDIA_DEBUG_LOG("surface_ release surface buffer");
+            sptr<FrameRecord> popFrame = thisPtr->recorderBufferQueue_.Pop();
+            popFrame->ReleaseSurfaceBuffer(thisPtr->movingPhotoSurfaceWrapper_);
+            popFrame->ReleaseMetaBuffer(thisPtr->metaSurface_, true);
+            MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
+                popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
         }
-    }
-    recorderBufferQueue_.Push(frameRecord);
-    auto metaPair = metaCache_->find_if([timestamp](const MetaElementType& value) {
-        return value.first == timestamp;
-    });
-    if (metaPair.has_value()) {
-        MEDIA_DEBUG_LOG("frame has meta");
-        frameRecord->SetMetaBuffer(metaPair.value().second);
-    }
-    vector<sptr<SessionDrainImageCallback>> callbacks;
-    callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
-        sptr<DrainImageManager> manager) {
-        callbacks.push_back(callback);
-    });
-    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
-        sptr<DrainImageManager> drainImageManager;
-        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
-            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
-            drainImageManager->DrainImage(frameRecord);
+        MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
+            buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
+        sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
+        CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+        if (thisPtr->isNeededClear_ && thisPtr->isNeededPop_) {
+            if (timestamp < thisPtr->shutterTime_) {
+                frameRecord->ReleaseSurfaceBuffer(thisPtr->movingPhotoSurfaceWrapper_);
+                MEDIA_INFO_LOG("Drop this frame in cache");
+                return;
+            } else {
+                thisPtr->isNeededClear_ = false;
+                thisPtr->isNeededPop_ = false;
+                MEDIA_INFO_LOG("ClearCache end");
+            }
         }
-    }
+        thisPtr->recorderBufferQueue_.Push(frameRecord);
+        auto metaPair = thisPtr->metaCache_->find_if([timestamp](const MetaElementType& value) {
+            return value.first == timestamp;
+        });
+        if (metaPair.has_value()) {
+            MEDIA_DEBUG_LOG("frame has meta");
+            frameRecord->SetMetaBuffer(metaPair.value().second);
+        }
+        vector<sptr<SessionDrainImageCallback>> callbacks;
+        thisPtr->callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
+            sptr<DrainImageManager> manager) {
+            callbacks.push_back(callback);
+        });
+        for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
+            sptr<DrainImageManager> drainImageManager;
+            if (thisPtr->callbackMap_.Find(drainImageCallback, drainImageManager)) {
+                std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
+                drainImageManager->DrainImage(frameRecord);
+            }
+        }
+    });
 }
 
 void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
