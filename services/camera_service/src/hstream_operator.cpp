@@ -2037,7 +2037,8 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
             buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
         sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
-        CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+        CHECK_ERROR_RETURN_LOG(frameRecord == nullptr,
+            "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
         if (thisPtr->isNeededClear_ && thisPtr->isNeededPop_) {
             if (timestamp < thisPtr->shutterTime_) {
                 frameRecord->ReleaseSurfaceBuffer(thisPtr->movingPhotoSurfaceWrapper_);
