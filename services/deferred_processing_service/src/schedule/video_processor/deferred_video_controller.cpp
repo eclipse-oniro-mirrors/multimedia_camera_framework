@@ -155,7 +155,8 @@ void DeferredVideoController::OnSchedulerChanged(const ScheduleType& type, const
 
 void DeferredVideoController::TryDoSchedule()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr || repository_->GetRunningJobCounts() > 0, "Not schedule job.");
+
     auto work = videoStrategyCenter_->GetWork();
     DP_INFO_LOG("DPS_VIDEO: strategy get work: %{public}d", work != nullptr);
     if (work == nullptr) {
