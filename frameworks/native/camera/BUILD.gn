@@ -161,7 +161,6 @@ ohos_shared_library("camera_framework") {
   ]
 
   public_external_deps = [
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
   ]
@@ -175,6 +174,7 @@ ohos_shared_library("camera_framework") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
