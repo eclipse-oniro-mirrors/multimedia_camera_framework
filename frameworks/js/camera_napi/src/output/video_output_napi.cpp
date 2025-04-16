@@ -1032,13 +1032,13 @@ napi_value VideoOutputNapi::EnableAutoVideoFrameRate(napi_env env, napi_callback
     VideoOutputNapi* videoOutputNapi = nullptr;
     bool isEnable;
     CameraNapiParamParser jsParamParser(env, info, videoOutputNapi, isEnable);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
         MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate parse parameter occur error");
         return result;
     }
     if (videoOutputNapi->videoOutput_ == nullptr) {
         MEDIA_ERR_LOG("VideoOutputNapi::EnableAutoVideoFrameRate get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
         return result;
     }
  

@@ -569,7 +569,7 @@ napi_value CameraInputNapi::ControlAuxiliary(napi_env env, napi_callback_info in
     int32_t auxiliaryType;
     int32_t auxiliaryStatus;
     CameraNapiParamParser jsParamParser(env, info, cameraInputNapi, auxiliaryType, auxiliaryStatus);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "input controlAuxiliary with invalid arguments!")) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "input controlAuxiliary with invalid arguments!")) {
         MEDIA_ERR_LOG("CameraInputNapi::ControlAuxiliary invalid arguments");
         return nullptr;
     }
