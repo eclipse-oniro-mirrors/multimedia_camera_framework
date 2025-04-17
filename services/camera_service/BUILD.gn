@@ -204,6 +204,7 @@ ohos_shared_library("camera_service") {
     "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
     "av_codec:av_codec_client",
     "av_codec:native_media_acodec",
     "av_codec:native_media_aenc",
@@ -222,6 +223,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:libcamera_proxy_1.4",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.2",
     "graphic_2d:librender_service_client",
@@ -249,9 +251,7 @@ ohos_shared_library("camera_service") {
   ]
 
   public_external_deps = [
-    "audio_framework:offline_audio_effect",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "e2fsprogs:libext2_uuid",
   ]
