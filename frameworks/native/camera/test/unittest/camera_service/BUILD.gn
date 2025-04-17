@@ -98,6 +98,7 @@ ohos_unittest("camera_service_unittest") {
     "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
     "av_codec:av_codec_client",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",

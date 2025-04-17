@@ -90,6 +90,7 @@ ohos_unittest("camera_framework_native_unittest") {
     "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
+    "audio_framework:offline_audio_effect",
     "av_codec:av_codec_client",
     "c_utils:utils",
     "data_share:datashare_common",
