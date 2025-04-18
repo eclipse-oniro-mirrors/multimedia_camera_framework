@@ -30,8 +30,9 @@ const std::string LIVE_PHOTO_COVERTIME = "com.openharmony.covertime";
 const std::string TIMED_METADATA_VALUE = "com.openharmony.timed_metadata.vid_maker_info";
 const std::string SCALING_FACTOR_KEY = "com.openharmony.scaling_factor";
 const std::string INTERPOLATION_FRAME_PTS_KEY = "com.openharmony.interp_frame_pts";
-const double DEFAULT_SCALING_FACTOR = -1.0;
-const std::string DEFAULT_INTERPOLATION_FRAME_PTS = "";
+const std::string STAGE_VID_KEY = "com.openharmony.stage_vid";
+
+constexpr double DEFAULT_SCALING_FACTOR = -1.0;
 
 enum class MediaInfoKey : uint32_t {
     META_VALUE_TYPE_NONE,
@@ -78,8 +79,9 @@ struct MediaInfo {
 };
 
 struct MediaUserInfo {
-    float scalingFactor{DEFAULT_SCALING_FACTOR};
-    std::string interpolationFramePts{DEFAULT_INTERPOLATION_FRAME_PTS};
+    float scalingFactor {DEFAULT_SCALING_FACTOR};
+    std::string interpolationFramePts;
+    std::string stageVid;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

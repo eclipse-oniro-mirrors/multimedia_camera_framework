@@ -81,17 +81,19 @@ int32_t VideoProcessResult::ProcessVideoInfo(const std::string& videoId,
 
     auto userInfo = std::make_unique<MediaUserInfo>();
     double scalingFactor;
-    std::string interpolationFramePts;
-    bool ret = GetMetadataValue(metaData, VideoMetadataKeys::SCALING_FACTOR, scalingFactor);
-    if (ret) {
+    if (GetMetadataValue(metaData, VideoMetadataKeys::SCALING_FACTOR, scalingFactor)) {
         userInfo->scalingFactor = static_cast<float>(scalingFactor);
     }
-    ret =  GetMetadataValue(metaData, VideoMetadataKeys::INTERPOLATION_FRAME_PTS, interpolationFramePts);
-    if (ret) {
-        userInfo->interpolationFramePts = interpolationFramePts;
+    std::string stringValue;
+    if (GetMetadataValue(metaData, VideoMetadataKeys::INTERPOLATION_FRAME_PTS, stringValue)) {
+        userInfo->interpolationFramePts = stringValue;
     }
-    DP_INFO_LOG("DPS_VIDEO: param, scalingFactor: %{public}f, interpolationFramePts: %{public}s",
-        userInfo->scalingFactor, userInfo->interpolationFramePts.c_str());
+    if (GetMetadataValue(metaData, VideoMetadataKeys::STAGE_VID, stringValue)) {
+        userInfo->stageVid = stringValue;
+    }
+
+    DP_INFO_LOG("DPS_VIDEO: scalingFactor: %{public}f, interpolationFramePts: %{public}s, stageVid: %{public}s",
+        userInfo->scalingFactor, userInfo->interpolationFramePts.c_str(), userInfo->stageVid.c_str());
     OnProcessDone(videoId, std::move(userInfo));
     return DP_OK;
 }

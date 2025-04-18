@@ -188,8 +188,11 @@ void MpegManager::AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)
     if (userInfo->scalingFactor != DEFAULT_SCALING_FACTOR) {
         userMeta->SetData(SCALING_FACTOR_KEY, userInfo->scalingFactor);
     }
-    if (userInfo->interpolationFramePts != DEFAULT_INTERPOLATION_FRAME_PTS) {
+    if (!userInfo->interpolationFramePts.empty()) {
         userMeta->SetData(INTERPOLATION_FRAME_PTS_KEY, userInfo->interpolationFramePts);
+    }
+    if (!userInfo->stageVid.empty()) {
+        userMeta->SetData(STAGE_VID_KEY, userInfo->stageVid);
     }
     mediaManager_->AddUserMeta(userMeta);
 }
