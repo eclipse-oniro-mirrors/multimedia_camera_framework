@@ -118,7 +118,7 @@ ohos_fuzztest("SessionCoordinatorFuzzTest") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
   ]
----------------------------------------
+
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",
