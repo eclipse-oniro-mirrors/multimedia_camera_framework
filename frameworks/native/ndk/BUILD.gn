@@ -78,6 +78,7 @@ ohos_shared_library("ohcamera") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:metadata",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -95,8 +96,6 @@ ohos_shared_library("ohcamera") {
     "resource_management:librawfile",
     "samgr:samgr_proxy",
   ]
-
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
 
   innerapi_tags = [ "ndk" ]
 
