@@ -97,8 +97,6 @@ ohos_shared_library("ohcamera") {
     "samgr:samgr_proxy",
   ]
 
-  public_external_deps = [ "drivers_interface_camera:metadata" ]
-
   innerapi_tags = [ "ndk" ]
 
   output_extension = "so"
