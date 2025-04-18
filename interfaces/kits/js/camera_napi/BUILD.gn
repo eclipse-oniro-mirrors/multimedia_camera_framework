@@ -96,8 +96,10 @@ ohos_shared_library("camera_napi") {
     "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:color_manager",
     "graphic_surface:surface",
@@ -114,11 +116,7 @@ ohos_shared_library("camera_napi") {
     "samgr:samgr_proxy",
   ]
 
-  public_external_deps = [
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
-    "drivers_interface_camera:libmap_data_sequenceable_1.0",
-    "drivers_interface_camera:metadata",
-  ]
+  public_external_deps = [ "drivers_interface_camera:metadata" ]
 
   defines = []
 
@@ -189,17 +187,15 @@ if (gen_camera_picker) {
       "ability_runtime:ui_extension",  # ui_extension_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
+      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+      "drivers_interface_camera:libmap_data_sequenceable_1.0",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "hitrace:hitrace_meter",
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
       "samgr:samgr_proxy",
     ]
-    public_external_deps = [
-      "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
-      "drivers_interface_camera:libmap_data_sequenceable_1.0",
-      "drivers_interface_camera:metadata",
-    ]
+    public_external_deps = [ "drivers_interface_camera:metadata" ]
     sanitize = {
       cfi = true
       cfi_cross_dso = true
