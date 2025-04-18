@@ -116,9 +116,7 @@ ohos_shared_library("camera_napi") {
     "samgr:samgr_proxy",
   ]
 
-  public_external_deps = [
-    "drivers_interface_camera:metadata",
-  ]
+  public_external_deps = [ "drivers_interface_camera:metadata", ]
 
   defines = []
 
@@ -197,9 +195,7 @@ if (gen_camera_picker) {
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
       "samgr:samgr_proxy",
     ]
-    public_external_deps = [
-      "drivers_interface_camera:metadata",
-    ]
+    public_external_deps = [ "drivers_interface_camera:metadata", ]
     sanitize = {
       cfi = true
       cfi_cross_dso = true
