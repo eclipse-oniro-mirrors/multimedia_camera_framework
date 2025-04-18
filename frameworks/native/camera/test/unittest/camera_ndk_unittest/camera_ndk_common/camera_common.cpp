@@ -293,6 +293,12 @@ void CameraNdkCommon::CameraCaptureSessionOnSmoothZoomInfoCb(Camera_CaptureSessi
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
 
+void CameraNdkCommon::CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
+    Camera_AutoDeviceSwitchStatusInfo* autoDeviceSwitchStatusInfo)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
 void CameraNdkCommon::CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
