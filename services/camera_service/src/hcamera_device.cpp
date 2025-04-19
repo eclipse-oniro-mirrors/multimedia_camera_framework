@@ -719,7 +719,7 @@ void HCameraDevice::ReleaseSessionBeforeCloseDevice()
 
 int32_t HCameraDevice::CloseDevice()
 {
-    MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
+    MEDIA_INFO_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
     ReleaseSessionBeforeCloseDevice();
     {

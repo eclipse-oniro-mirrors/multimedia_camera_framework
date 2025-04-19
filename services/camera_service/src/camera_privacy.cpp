@@ -63,7 +63,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify");
+    MEDIA_INFO_LOG("CameraUseStateChangeCb::StateChangeNotify is called, isShowing: %{public}d", isShowing);
     std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
     for (auto holder : holders) {
         if (holder->GetAccessTokenId() != tokenId) {
@@ -155,6 +155,7 @@ bool CameraPrivacy::StartUsingPermissionCallback()
 
 void CameraPrivacy::StopUsingPermissionCallback()
 {
+    MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback is called, pid_: %{public}d", pid_);
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, pid_);
