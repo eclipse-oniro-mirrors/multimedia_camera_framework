@@ -1042,9 +1042,14 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
         if (closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId)) {
             timeval openTime;
             gettimeofday(&openTime, nullptr);
-            long timeInterval = (openTime.tv_sec - closeTime.tv_sec) * MILLISEC_TIME +
-                (openTime.tv_usec - closeTime.tv_usec) / MILLISEC_TIME;
-            if ((long)(restoreParam->GetStartActiveTime() * 60 * MILLISEC_TIME) < timeInterval) { // 60 is 60 Seconds
+            int64_t sec_diff = openTime.tv_sec - closeTime.tv_sec;
+            int64_t usec_diff = openTime.tv_usec - closeTime.tv_usec;
+            if (usec_diff < 0) {
+                sec_diff -= 1;
+                usec_diff += MILLISEC_TIME * MILLISEC_TIME;
+            }
+            int64_t timeInterval = sec_diff * MILLISEC_TIME + usec_diff / MILLISEC_TIME;
+            if ((restoreParam->GetStartActiveTime() * 60 * MILLISEC_TIME) < timeInterval) { // 60 is 60 Seconds
                 MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get persistent");
                 cameraRestoreParam = restoreParam;
             } else {

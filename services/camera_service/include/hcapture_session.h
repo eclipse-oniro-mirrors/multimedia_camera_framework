@@ -166,6 +166,15 @@ public:
         }
     }
 
+    inline sptr<HStreamOperator> GetStreamOperator()
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (hStreamOperator_ == nullptr) {
+            return nullptr;
+        }
+        return hStreamOperator_.promote();
+    }
+
     void ConfigPayload(uint32_t pid, uint32_t tid, const char *bundleName, int32_t qosLevel,
         std::unordered_map<std::string, std::string> &mapPayload);
     void SetCameraRotateStrategyInfos(std::vector<CameraRotateStrategyInfo> infos);
@@ -211,6 +220,7 @@ private:
 
     void DynamicConfigStream();
     bool IsNeedDynamicConfig();
+    void InitialHStreamOperator();
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
 
@@ -244,7 +254,7 @@ private:
     bool isSessionStarted_ = false;
     bool isDynamicConfiged_ = false;
     std::string deviceClass_ = "phone";
-    wptr<HStreamOperator> hStreamOperator_;
+    wptr<HStreamOperator> hStreamOperator_ = nullptr;
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
 };
