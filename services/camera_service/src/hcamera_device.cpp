@@ -183,6 +183,16 @@ int32_t HCameraDevice::GetCameraType()
     return OTHER;
 }
 
+int32_t HCameraDevice::GetCameraPosition()
+{
+    camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_RET_LOG(deviceAbility_ == nullptr, 0,
+        "HCameraDevice::GetCameraPosition deviceAbility_ is nullptr");
+    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetCameraPosition failed");
+    return static_cast<camera_position_enum_t>(item.data.u8[0]);
+}
+
 bool HCameraDevice::IsOpenedCameraDevice()
 {
     return isOpenedCameraDevice_.load();

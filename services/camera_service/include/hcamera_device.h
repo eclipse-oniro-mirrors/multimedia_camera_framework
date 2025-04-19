@@ -84,6 +84,7 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
     int32_t GetCameraType();
+    int32_t GetCameraPosition();
     bool IsOpenedCameraDevice();
     int32_t GetCallerToken();
 

@@ -27,7 +27,7 @@ HStreamOperatorManager::HStreamOperatorManager() {}
 
 HStreamOperatorManager::~HStreamOperatorManager()
 {
-    HStreamOperatorManager::streamOperatorManager_ = nullptr;
+    MEDIA_INFO_LOG("~HStreamOperatorManager");
 }
 
 sptr<HStreamOperatorManager> &HStreamOperatorManager::GetInstance()

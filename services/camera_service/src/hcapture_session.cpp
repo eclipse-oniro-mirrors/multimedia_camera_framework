@@ -91,6 +91,8 @@ constexpr int32_t WIDE_TELE_ZOOM_PER = 3;
 constexpr int32_t ZOOM_IN_PER = 0;
 constexpr int32_t ZOOM_OUT_PERF = 1;
 constexpr int32_t ZOOM_BEZIER_VALUE_COUNT = 5;
+constexpr int32_t SPECIAL_BUNDLE_FPS = 15;
+constexpr int32_t SPECIAL_BUNDLE_ROTATE = 0;
 static const int32_t SESSIONID_BEGIN = 1;
 static const int32_t SESSIONID_MAX = INT32_MAX - 1000;
 static std::atomic<int32_t> g_currentSessionId = SESSIONID_BEGIN;
@@ -1095,12 +1097,7 @@ int32_t HCaptureSession::Start()
         camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(usedAsPositionU8);
         auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
-        if (OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus() == OHOS::Rosen::FoldStatus::FOLDED &&
-            !isHasFitedRotation_) {
-            auto infos = GetCameraRotateStrategyInfos();
-            auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
-            UpdateCameraRotateAngleAndZoom(infos, frameRateRange);
-        }
+        UpdateSettingForSpecialBundle();
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
         if (errorCode == CAMERA_OK) {
             isSessionStarted_ = true;
@@ -1117,6 +1114,34 @@ int32_t HCaptureSession::Start()
     }
     concurrencyString.append("]");
     return errorCode;
+}
+
+void HCaptureSession::UpdateSettingForSpecialBundle()
+{
+    OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    auto hStreamOperatorSptr = GetStreamOperator();
+    if (hStreamOperatorSptr != nullptr && foldstatus == OHOS::Rosen::FoldStatus::FOLDED && !isHasFitedRotation_) {
+        auto infos = GetCameraRotateStrategyInfos();
+        auto frameRateRange = hStreamOperatorSptr->GetFrameRateRange();
+        UpdateCameraRotateAngleAndZoom(infos, frameRateRange); // 普通设备无此参数
+        auto cameraDevice = GetCameraDevice();
+        if (cameraDevice == nullptr) {
+            return;
+        }
+        int32_t cameraPosition = cameraDevice->GetCameraPosition();
+        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+            return;
+        }
+        std::string specialBundle = system::GetParameter("const.camera.folded_lens_change", "default");
+        if (specialBundle == bundleName_ && !frameRateRange.empty() && frameRateRange[0] == SPECIAL_BUNDLE_FPS) {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> settings =
+                std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+            int32_t rotateDegree = SPECIAL_BUNDLE_ROTATE;
+            MEDIA_INFO_LOG("HCaptureSession::UpdateSettingForSpecialBundle rotateDegree: %{public}d.", rotateDegree);
+            settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1);
+            cameraDevice->UpdateSettingOnce(settings);
+        }
+    }
 }
 
 void HCaptureSession::UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
@@ -1442,7 +1467,8 @@ void HCaptureSession::UpdateCameraRotateAngleAndZoom(std::vector<CameraRotateStr
     std::vector<int32_t> &frameRateRange)
 {
     int uid = IPCSkeleton::GetCallingUid();
-    std::string bundleName = GetClientBundle(uid);
+    CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(uid));
+    std::string bundleName = bundleName_;
     auto it = std::find_if(infos.begin(), infos.end(), [&bundleName](const auto &info) {
         return info.bundleName == bundleName;
     });

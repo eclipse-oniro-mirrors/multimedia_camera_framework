@@ -45,7 +45,7 @@ HCameraDeviceManager::HCameraDeviceManager()
 
 HCameraDeviceManager::~HCameraDeviceManager()
 {
-    HCameraDeviceManager::cameraDeviceManager_ = nullptr;
+    MEDIA_INFO_LOG("~HCameraDeviceManager");
 }
 
 sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
