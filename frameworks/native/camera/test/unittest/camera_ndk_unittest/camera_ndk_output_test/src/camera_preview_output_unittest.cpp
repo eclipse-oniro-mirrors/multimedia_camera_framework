@@ -422,6 +422,104 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_008, TestSi
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
 }
 
+/*
+ * Feature: Framework
+ * Function: RegisterCallback and UnregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterCallback and UnregisterCallback
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_009, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    PreviewOutput_Callbacks setPreviewOutputCallbacks = {
+        .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
+        .onFrameEnd = &CameraPreviewOutptOnFrameEndCb,
+        .onError = &CameraPreviewOutptOnErrorCb
+    };
+
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterCallback with abnormal branch
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_010, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    PreviewOutput_Callbacks setPreviewOutputCallbacks = {
+        .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
+        .onFrameEnd = &CameraPreviewOutptOnFrameEndCb,
+        .onError = &CameraPreviewOutptOnErrorCb
+    };
+
+    ret = OH_PreviewOutput_RegisterCallback(nullptr, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onError = nullptr;
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onFrameEnd = nullptr;
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onFrameStart = nullptr;
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: UnregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCallback with abnormal branch
+ */
+HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_011, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    PreviewOutput_Callbacks setPreviewOutputCallbacks = {
+        .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
+        .onFrameEnd = &CameraPreviewOutptOnFrameEndCb,
+        .onError = &CameraPreviewOutptOnErrorCb
+    };
+
+    ret = OH_PreviewOutput_UnregisterCallback(nullptr, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onError = nullptr;
+    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onFrameEnd = nullptr;
+    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setPreviewOutputCallbacks.onFrameStart = nullptr;
+    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
+}
 
 } // CameraStandard
 } // OHOS

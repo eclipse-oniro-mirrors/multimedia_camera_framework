@@ -418,5 +418,300 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_008, TestSize.L
     ReleaseImageReceiver();
 }
 
+/*
+ * Feature: Framework
+ * Function: RegisterCallback and UnregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterCallback and UnregisterCallback
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_009, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    VideoOutput_Callbacks setVideoOutputCallbacks = {
+        .onFrameStart = &CameraVideoOutptOnFrameStartCb,
+        .onFrameEnd = &CameraVideoOutptOnFrameEndCb,
+        .onError = &CameraVideoOutptOnErrorCb
+    };
+
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: RegisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterCallback with abnormal branch
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_010, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    VideoOutput_Callbacks setVideoOutputCallbacks = {
+        .onFrameStart = &CameraVideoOutptOnFrameStartCb,
+        .onFrameEnd = &CameraVideoOutptOnFrameEndCb,
+        .onError = &CameraVideoOutptOnErrorCb
+    };
+
+    ret = OH_VideoOutput_RegisterCallback(nullptr, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onError = nullptr;
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onFrameEnd = nullptr;
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onFrameStart = nullptr;
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: UnregisterCallback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnregisterCallback with abnormal branch
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_011, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    VideoOutput_Callbacks setVideoOutputCallbacks = {
+        .onFrameStart = &CameraVideoOutptOnFrameStartCb,
+        .onFrameEnd = &CameraVideoOutptOnFrameEndCb,
+        .onError = &CameraVideoOutptOnErrorCb
+    };
+
+    ret = OH_VideoOutput_UnregisterCallback(nullptr, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_VideoOutput_UnregisterCallback(videoOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onError = nullptr;
+    ret = OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onFrameEnd = nullptr;
+    ret = OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    setVideoOutputCallbacks.onFrameStart = nullptr;
+    ret = OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoOutputCallbacks);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsMirrorSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsMirrorSupported with abnormal branch
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_012, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_VideoOutput_IsMirrorSupported(nullptr, &isSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_VideoOutput_IsMirrorSupported(videoOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsMirrorSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsMirrorSupported
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_013, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_VideoOutput_IsMirrorSupported(videoOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableMirror
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test enable mirror
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_014, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_VideoOutput_IsMirrorSupported(videoOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_VideoOutput_EnableMirror(nullptr, true);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_VideoOutput_EnableMirror(videoOutput, true);
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        ret = OH_VideoOutput_EnableMirror(nullptr, true);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    }
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableMirror
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test disable mirror
+ */
+HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_015, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(&cameraInput, nullptr);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_VideoOutput_IsMirrorSupported(videoOutput, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    if (isSupported) {
+        ret = OH_VideoOutput_EnableMirror(nullptr, false);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+        ret = OH_VideoOutput_EnableMirror(videoOutput, false);
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        ret = OH_VideoOutput_EnableMirror(nullptr, false);
+        EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    }
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
 } // CameraStandard
 } // OHOS

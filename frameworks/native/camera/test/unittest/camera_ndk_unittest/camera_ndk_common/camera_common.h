@@ -67,6 +67,8 @@ public:
     static void CameraCaptureSessionOnErrorCb(Camera_CaptureSession* session, Camera_ErrorCode errorCode);
     static void CameraCaptureSessionOnSmoothZoomInfoCb(Camera_CaptureSession* session,
         Camera_SmoothZoomInfo* smoothZoomInfo);
+    static void CameraCaptureSessionAutoDeviceSwitchStatusCb(Camera_CaptureSession* session,
+        Camera_AutoDeviceSwitchStatusInfo* smoothZoomInfo);
     static void CameraManagerOnCameraStatusCb(Camera_Manager* cameraManager, Camera_StatusInfo* status);
     static void CameraManagerOnCameraTorchStatusCb(Camera_Manager* cameraManager, Camera_TorchStatusInfo* status);
     static void CameraManagerOnCameraFoldStatusCb(Camera_Manager* cameraManager, Camera_FoldStatusInfo* status);

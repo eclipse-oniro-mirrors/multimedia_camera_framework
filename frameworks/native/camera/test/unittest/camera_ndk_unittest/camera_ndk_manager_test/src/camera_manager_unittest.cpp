@@ -1112,6 +1112,9 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_031, TestSize.Level0)
     err = CameraErrorCode::CONFLICT_CAMERA;
     ret = FrameworkToNdkCameraError(err);
     EXPECT_EQ(ret, CAMERA_CONFLICT_CAMERA);
+    err = CameraErrorCode::SESSION_NOT_RUNNING;
+    ret = FrameworkToNdkCameraError(err);
+    EXPECT_EQ(ret, CAMERA_SESSION_NOT_RUNNING);
     err = CameraErrorCode::DEVICE_DISABLED;
     ret = FrameworkToNdkCameraError(err);
     EXPECT_EQ(ret, CAMERA_DEVICE_DISABLED);
