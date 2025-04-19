@@ -256,6 +256,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         CHECK_WARNING_CONTINUE_LOG(context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<VideoCodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
+        CHECK_ERROR_RETURN_RET_LOG(bufferInfo->buffer->memory_ == nullptr, false, "memory is alloced failed!");
         MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
             "timestamp:%{public}" PRIu64, context_->outputFrameCount_, bufferInfo->buffer->memory_->GetSize(),
             bufferInfo->buffer->flag_, bufferInfo->buffer->pts_, frameRecord->GetTimeStamp());

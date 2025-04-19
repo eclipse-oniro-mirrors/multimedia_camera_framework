@@ -528,7 +528,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
             }
             auto producer = movingPhotoSurfaceWrapper->GetProducer();
             metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
-            auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(3);
+            auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(6);
             CHECK_WARNING_CONTINUE_LOG(producer == nullptr, "get producer fail.");
             livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper,
                 metaSurface_, metaCache, preCacheFrameCount_, postCacheFrameCount_);
