@@ -26,6 +26,7 @@
 #include "hstream_capture_callback_stub.h"
 #include "istream_capture.h"
 #include "camera_photo_proxy.h"
+#include "safe_map.h"
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -546,7 +547,7 @@ public:
 
     std::map<int32_t, sptr<CameraPhotoProxy>> photoProxyMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdGainmapMap_;
-    std::map<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_;
+    SafeMap<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_ = {};
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
