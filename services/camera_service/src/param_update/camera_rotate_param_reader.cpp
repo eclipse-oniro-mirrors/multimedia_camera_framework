@@ -83,12 +83,13 @@ bool CameraRoateParamReader::VerifyCertSfFile(
         return false;
     }
     // 验证CERT.SF文件是否合法
-    if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, verifyFile)) {
+    if (!CameraRoateParamSignTool::VerifyFileSign(PUBKEY_PATH, certFile, canonicalPath)) {
         MEDIA_ERR_LOG("signToolManager verify failed %{public}s,%{public}s, %{public}s", PUBKEY_PATH.c_str(),
-            certFile.c_str(), verifyFile.c_str());
+            certFile.c_str(), canonicalPath);
         return false;
     }
-    std::ifstream file(verifyFile);
+    std::ifstream file(canonicalPath);
+    free(canonicalPath);
     if (!file.good()) {
         MEDIA_ERR_LOG("Verify is not good,verifyFile:%{public}s", verifyFile.c_str());
         return false;
@@ -122,6 +123,7 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
         return false;
     }
     std::ifstream file(canonicalPathManifest);
+    free(canonicalPathManifest);
     std::string line;
     std::string sha256Digest;
 

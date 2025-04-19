@@ -30,6 +30,7 @@
 
 #include "ability/camera_ability_parse_util.h"
 #include "aperture_video_session.h"
+#include "bundle_mgr_interface.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -831,7 +832,28 @@ void CameraManager::InitCameraManager()
     foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
     isSystemApp_ = CameraSecurity::CheckSystemApp();
     CheckWhiteList();
+    bundleName_ = system::GetParameter("const.camera.folded_lens_change", "default");
+    curBundleName_ = GetBundleName();
     MEDIA_DEBUG_LOG("IsSystemApp = %{public}d", isSystemApp_);
+}
+
+std::string CameraManager::GetBundleName()
+{
+    auto bundleName = "";
+    OHOS::sptr<OHOS::ISystemAbilityManager> samgr =
+            OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, bundleName, "GetClientBundle Get ability manager failed");
+    OHOS::sptr<OHOS::IRemoteObject> remoteObject =
+            samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_ERROR_RETURN_RET_LOG(remoteObject == nullptr, bundleName, "GetClientBundle object is NULL.");
+    sptr<AppExecFwk::IBundleMgr> bms = OHOS::iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_ERROR_RETURN_RET_LOG(bms == nullptr, bundleName, "GetClientBundle bundle manager service is NULL.");
+    AppExecFwk::BundleInfo bundleInfo;
+    auto ret = bms->GetBundleInfoForSelf(0, bundleInfo);
+    CHECK_ERROR_RETURN_RET_LOG(ret != ERR_OK, bundleName, "GetBundleInfoForSelf failed.");
+    bundleName = bundleInfo.name.c_str();
+    MEDIA_INFO_LOG("bundleName: [%{public}s]", bundleName);
+    return bundleName;
 }
 
 int32_t CameraManager::RefreshServiceProxy()
@@ -1860,6 +1882,13 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER ||
             deviceInfo->GetPosition() == CAMERA_POSITION_FRONT) && !GetIsInWhiteList() &&
             curFoldStatus == FoldStatus::EXPAND) {
+            auto it = std::find_if(supportedCameraDeviceList.begin(), supportedCameraDeviceList.end(),
+                [&deviceInfo](sptr<CameraDevice> cameraDevice) {
+                return cameraDevice->GetPosition() == deviceInfo->GetPosition();
+            });
+            if (it != supportedCameraDeviceList.end()) {
+                continue;
+            }
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
@@ -1882,6 +1911,11 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         if (it == g_metaToFwCameraFoldStatus_.end()) {
             MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
             supportedCameraDeviceList.emplace_back(deviceInfo);
+            continue;
+        }
+        if (!foldScreenType_.empty() && foldScreenType_[0] == '4' && curFoldStatus == FoldStatus::FOLDED &&
+            it->second == curFoldStatus && deviceInfo->GetPosition() == CAMERA_POSITION_BACK
+            && bundleName_ != curBundleName_) {
             continue;
         }
         CHECK_EXECUTE(it->second == curFoldStatus, supportedCameraDeviceList.emplace_back(deviceInfo));

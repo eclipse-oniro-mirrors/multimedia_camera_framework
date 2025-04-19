@@ -222,6 +222,7 @@ private:
     bool IsNeedDynamicConfig();
     int32_t SetHasFitedRotation(bool isHasFitedRotation) override;
     void InitialHStreamOperator();
+    void UpdateSettingForSpecialBundle();
     void ClearMovingPhotoRepeatStream();
     StateMachine stateMachine_;
 
@@ -259,6 +260,7 @@ private:
     std::mutex cameraRotateStrategyInfosLock_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     bool isHasFitedRotation_ = false;
+    std::string bundleName_ = "";
 };
 } // namespace CameraStandard
 } // namespace OHOS

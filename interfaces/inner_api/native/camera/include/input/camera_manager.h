@@ -945,6 +945,7 @@ private:
     }
 
     void CheckWhiteList();
+    std::string GetBundleName();
     std::mutex cameraDeviceListMutex_;
     std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
@@ -979,6 +980,8 @@ private:
     std::string foldScreenType_;
     bool isSystemApp_ = false;
     bool isInWhiteList_ = false;
+    std::string bundleName_ = "";
+    std::string curBundleName_ = "";
     sptr<CameraDevice> innerCamera_ = nullptr;
     FoldStatus preFoldStatus = FoldStatus::UNKNOWN_FOLD;
 };

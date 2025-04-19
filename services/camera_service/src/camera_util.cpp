@@ -534,6 +534,7 @@ std::string GetFileStream(const std::string &filepath)
         return NULL;
     }
     std::ifstream file(canonicalPath, std::ios::in | std::ios::binary);
+    free(canonicalPath);
     // 文件流的异常处理，不能用try catch的形式
     if (!file) {
         MEDIA_INFO_LOG("Failed to open the file!");
@@ -574,10 +575,12 @@ bool RemoveFile(const std::string& path)
     if (canonicalPath == nullptr) {
         return false;
     }
-    if (std::filesystem::remove(canonicalPath)) {
+    if (remove(canonicalPath) == 0) {
+        free(canonicalPath);
         MEDIA_INFO_LOG("File removed successfully.");
         return true;
     }
+    free(canonicalPath);
     return false;
 }
 
@@ -585,13 +588,11 @@ bool CheckPathExist(const char *path)
 {
     char *canonicalPath = realpath(path, nullptr);
     if (canonicalPath == nullptr) {
-        return false;
-    }
-    if (canonicalPath == nullptr) {
         MEDIA_ERR_LOG("CheckPathExist path is nullptr");
         return false;
     }
     std::ifstream profileStream(canonicalPath);
+    free(canonicalPath);
     return profileStream.good();
 }
 } // namespace CameraStandard
