@@ -564,6 +564,7 @@ private:
     void CameraServerDied(pid_t pid) override;
     bool mIsHasEnableOfflinePhoto_ = false;
     bool isHasSwitched_ = false;
+    bool isDepthBufferSupported_ = false;
 };
 
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
