@@ -24,6 +24,7 @@
 #include "service_died_command.h"
 #include "token_setproc.h"
 #include "video_process_command.h"
+#include "video_post_processor.h"
 #include "dp_utils.h"
 #include "iimage_process_callbacks.h"
 #include "v1_3/iimage_process_callback.h"
@@ -112,6 +113,24 @@ private:
 
     const int32_t userId_;
     std::weak_ptr<PhotoProcessResult> processResult_;
+};
+
+class VideoPostProcessor::VideoProcessListener : public HDI::Camera::V1_4::IVideoProcessCallback {
+public:
+    explicit VideoProcessListener(const std::weak_ptr<VideoProcessResult>& processResult)
+        : processResult_(processResult)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+
+    int32_t OnProcessDone(const std::string& videoId) override;
+    int32_t OnProcessDone(const std::string& videoId,
+        const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData) override;
+    int32_t OnError(const std::string& videoId, HDI::Camera::V1_2::ErrorCode errorCode) override;
+    int32_t OnStatusChanged(HDI::Camera::V1_2::SessionStatus status) override;
+
+private:
+    std::weak_ptr<VideoProcessResult> processResult_;
 };
 
 /*
@@ -414,6 +433,58 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, Te
     EXPECT_EQ(videoProcessSuccessCommand->Executing(), DP_ERR);
     auto videoProcessFailedCommand = CreateShared<VideoProcessFailedCommand>(userId_, imageId, errorCode);
     EXPECT_EQ(videoProcessFailedCommand->Executing(), DP_ERR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoProcessListener with abnormal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoProcessListener with abnormal branch
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_011, TestSize.Level1)
+{
+    int32_t userId = 1;
+    OHOS::HDI::Camera::V1_2::ErrorCode errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
+    auto sharedResult = std::make_shared<VideoProcessResult>(userId);
+    std::weak_ptr<VideoProcessResult> weakResultPtr = sharedResult;
+    sptr<DeferredProcessing::VideoPostProcessor::VideoProcessListener> listener =
+            new(std::nothrow) DeferredProcessing::VideoPostProcessor::VideoProcessListener(weakResultPtr);
+    ASSERT_NE(listener, nullptr);
+
+    std::string videoId = "test_id";
+    sptr<HDI::Camera::V1_0::MapDataSequenceable> metadata = sptr<HDI::Camera::V1_0::MapDataSequenceable>::MakeSptr();
+    listener->OnProcessDone(videoId);
+    listener->OnProcessDone(videoId, metadata);
+    metadata = nullptr;
+    listener->OnProcessDone(videoId, metadata);
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_PROCESS;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_TIMEOUT;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_HIGH_TEMPERATURE;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABNORMAL;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_ABORT;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+    errorCode = OHOS::HDI::Camera::V1_2::ErrorCode::ERROR_INVALID_ID;
+    EXPECT_EQ(listener->OnError(videoId, errorCode), 0);
+
+    OHOS::HDI::Camera::V1_2::SessionStatus status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY;
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
+    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY_SPACE_LIMIT_REACHED;
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
+    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSSON_STATUS_NOT_READY_TEMPORARILY;
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
+    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_OVERHEAT;
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
+    status = OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_PREEMPTED;
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
+    status = static_cast<OHOS::HDI::Camera::V1_2::SessionStatus>(10);
+    EXPECT_EQ(listener->OnStatusChanged(status), 0);
 }
 } // CameraStandard
 } // OHOS

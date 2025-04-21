@@ -111,7 +111,8 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, 
     EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_AVAILABLE);
     EXPECT_EQ(controller->backgroundStrategy_->systemPressureLevel_, FAIR);
     listener->OnEventChange(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_OPEN);
-    listener->OnEventChange(EventType::HDI_STATUS_EVENT, HDI_DISCONNECTED);
+    listener->OnEventChange(EventType::PHOTO_HDI_STATUS_EVENT, HDI_DISCONNECTED);
+    listener->OnEventChange(EventType::VIDEO_HDI_STATUS_EVENT, HDI_DISCONNECTED);
     listener->OnEventChange(EventType::MEDIA_LIBRARY_STATUS_EVENT, MEDIA_LIBRARY_DISCONNECTED);
     listener->OnEventChange(EventType::SCREEN_STATUS_EVENT, SCREEN_ON);
     EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, SYSTEM_CAMERA_OPEN);
