@@ -151,6 +151,9 @@ void DeferredVideoController::TryDoSchedule()
 {
     DP_DEBUG_LOG("entered.");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    DP_CHECK_ERROR_RETURN_LOG(videoJobRepository_ == nullptr || videoJobRepository_->GetRunningJobCounts() > 0,
+        "Not schedule job.");
+
     auto work = videoStrategyCenter_->GetWork();
     DP_INFO_LOG("strategy get work: %{public}d", work != nullptr);
     if (work == nullptr) {
