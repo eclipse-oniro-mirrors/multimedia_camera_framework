@@ -469,7 +469,7 @@ void PhotoOutput::CreateMultiChannel()
         ret = streamCapturePtr->SetBufferProducerInfo(bufferName, gainmapSurface_->GetProducer());
         retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
     }
-    if (deepSurface_ == nullptr) {
+    if (isDepthBufferSupported_ && deepSurface_ == nullptr) {
         std::string bufferName = "deepImage";
         deepSurface_ = Surface::CreateSurfaceAsConsumer(bufferName);
         ret = streamCapturePtr->SetBufferProducerInfo(bufferName, deepSurface_->GetProducer());
