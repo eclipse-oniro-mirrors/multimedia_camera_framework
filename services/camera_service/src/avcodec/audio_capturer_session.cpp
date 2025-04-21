@@ -88,7 +88,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
-    CHECK_ERROR_RETURN_RET_LOG(audioThread_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
+    CHECK_ERROR_RETURN_RET_LOG(audioCapturer_ == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
     AudioSessionStrategy sessionStrategy;
     sessionStrategy.concurrencyMode = AudioConcurrencyMode::MIX_WITH_OTHERS;
     AudioSessionManager::GetInstance()->ActivateAudioSession(sessionStrategy);
