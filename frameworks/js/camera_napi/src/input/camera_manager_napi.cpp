@@ -1035,15 +1035,14 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
     }
    
     bool issupported = cameraManagerNapi->cameraManager_->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
+    vector<sptr<CameraDevice>> cameraReturnNull = {};
     if (issupported == false) {
-        MEDIA_ERR_LOG("CameraManagerNapi::Camera is not support ConcurrentType");
-        vector<sptr<CameraDevice>> cameraReturnNull = {};
+        MEDIA_ERR_LOG("CameraManagerNapi::Camera is not support ConcurrentType"); 
         return CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities);
     }
     issupported = cameraManagerNapi->cameraManager_->CheckConcurrentExecution(cameraDeviceArrray);
     if (issupported == false) {
         MEDIA_ERR_LOG("CameraManagerNapi::Camera is not support ConcurrentType");
-        vector<sptr<CameraDevice>> cameraReturnNull = {};
         return CreateCameraConcurrentResult(env, cameraReturnNull, cameraConcurrentType, modes, outputCapabilities);
     }
 
