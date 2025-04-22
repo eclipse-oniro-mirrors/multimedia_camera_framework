@@ -141,6 +141,11 @@ public:
     CodecUserData() = default;
     ~CodecUserData()
     {
+        Release();
+    };
+
+    void Release()
+    {
         inputMutex_.lock();
         while (!inputBufferInfoQueue_.empty()) {
             inputBufferInfoQueue_.pop();
@@ -151,7 +156,8 @@ public:
             outputBufferInfoQueue_.pop();
         }
         outputMutex_.unlock();
-    };
+    }
+
     uint32_t inputFrameCount_ = 0;
     std::mutex inputMutex_;
     std::condition_variable inputCond_;
