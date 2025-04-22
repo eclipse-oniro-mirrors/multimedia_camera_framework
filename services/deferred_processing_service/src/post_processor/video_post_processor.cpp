@@ -38,6 +38,34 @@ namespace {
 }
 
 // LCOV_EXCL_START
+HdiStatus MapHdiVideoStatus(OHOS::HDI::Camera::V1_2::SessionStatus statusCode)
+{
+    HdiStatus code = HdiStatus::HDI_DISCONNECTED;
+    switch (statusCode) {
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY:
+            code = HdiStatus::HDI_READY;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_READY_SPACE_LIMIT_REACHED:
+            code = HdiStatus::HDI_READY_SPACE_LIMIT_REACHED;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSSON_STATUS_NOT_READY_TEMPORARILY:
+            code = HdiStatus::HDI_NOT_READY_TEMPORARILY;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_OVERHEAT:
+            code = HdiStatus::HDI_NOT_READY_OVERHEAT;
+            break;
+        case OHOS::HDI::Camera::V1_2::SessionStatus::SESSION_STATUS_NOT_READY_PREEMPTED:
+            code = HdiStatus::HDI_NOT_READY_PREEMPTED;
+            break;
+        default:
+            DP_ERR_LOG("unexpected error code: %{public}d.", statusCode);
+            break;
+    }
+    return code;
+}
+// LCOV_EXCL_STOP
+
+// LCOV_EXCL_START
 DpsError MapHdiVideoError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
     DpsError code = DPS_ERROR_UNKNOW;
@@ -110,52 +138,61 @@ public:
         DP_DEBUG_LOG("entered.");
     }
 
-    // LCOV_EXCL_START
-    int32_t OnProcessDone(const std::string& videoId) override
-    {
-        DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
-        auto processResult = processResult_.lock();
-        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
-
-        processResult->OnProcessDone(videoId);
-        return DP_OK;
-    }
-
+    int32_t OnProcessDone(const std::string& videoId) override;
     int32_t OnProcessDone(const std::string& videoId,
-        const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData) override
-    {
-        DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
-        auto processResult = processResult_.lock();
-        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
-
-        auto ret = processResult->ProcessVideoInfo(videoId, metaData);
-        if (ret != DP_OK) {
-            DP_ERR_LOG("process done failed videoId: %{public}s.", videoId.c_str());
-            processResult->OnError(videoId, DPS_ERROR_IMAGE_PROC_FAILED);
-        }
-        return DP_OK;
-    }
-
-    int32_t OnError(const std::string& videoId, OHOS::HDI::Camera::V1_2::ErrorCode errorCode) override
-    {
-        DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
-        auto processResult = processResult_.lock();
-        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
-
-        processResult->OnError(videoId, MapHdiVideoError(errorCode));
-        return DP_OK;
-    }
-
-    int32_t OnStatusChanged(OHOS::HDI::Camera::V1_2::SessionStatus status) override
-    {
-        DP_DEBUG_LOG("entered.");
-        return DP_OK;
-    }
-    // LCOV_EXCL_STOP
+        const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData) override;
+    int32_t OnError(const std::string& videoId, HDI::Camera::V1_2::ErrorCode errorCode) override;
+    int32_t OnStatusChanged(HDI::Camera::V1_2::SessionStatus status) override;
 
 private:
     std::weak_ptr<VideoProcessResult> processResult_;
 };
+
+int32_t VideoPostProcessor::VideoProcessListener::OnProcessDone(const std::string& videoId)
+{
+    DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
+    auto processResult = processResult_.lock();
+    DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+    processResult->OnProcessDone(videoId);
+    return DP_OK;
+}
+
+int32_t VideoPostProcessor::VideoProcessListener::OnProcessDone(const std::string& videoId,
+    const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metaData)
+{
+    DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s", videoId.c_str());
+    auto processResult = processResult_.lock();
+    DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+    auto ret = processResult->ProcessVideoInfo(videoId, metaData);
+    if (ret != DP_OK) {
+        DP_ERR_LOG("process done failed videoId: %{public}s.", videoId.c_str());
+        processResult->OnError(videoId, DPS_ERROR_IMAGE_PROC_FAILED);
+    }
+    return DP_OK;
+}
+
+int32_t VideoPostProcessor::VideoProcessListener::OnError(const std::string& videoId,
+    HDI::Camera::V1_2::ErrorCode errorCode)
+{
+    DP_INFO_LOG("DPS_VIDEO: videoId: %{public}s, error: %{public}d", videoId.c_str(), errorCode);
+    auto processResult = processResult_.lock();
+    DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+    processResult->OnError(videoId, MapHdiVideoError(errorCode));
+    return DP_OK;
+}
+
+int32_t VideoPostProcessor::VideoProcessListener::OnStatusChanged(HDI::Camera::V1_2::SessionStatus status)
+{
+    DP_INFO_LOG("DPS_VIDEO: HdiStatus: %{public}d", status);
+    auto processResult = processResult_.lock();
+    DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "VideoProcessResult is nullptr.");
+
+    processResult->OnStateChanged(MapHdiVideoStatus(status));
+    return DP_OK;
+}
 
 VideoPostProcessor::VideoPostProcessor(const int32_t userId)
     : userId_(userId), serviceListener_(nullptr), sessionDeathRecipient_(nullptr), processListener_(nullptr)

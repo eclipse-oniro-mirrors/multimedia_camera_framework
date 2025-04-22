@@ -119,7 +119,7 @@ void VideoStrategyCenter::InitScheduleState()
     scheduleStateList_.insert({CAMERA_STATE,
         std::make_shared<VideoCameraState>(CameraSessionStatus::SYSTEM_CAMERA_CLOSED)});
     scheduleStateList_.insert({HDI_STATE,
-        std::make_shared<VideoHalState>(HdiStatus::HDI_READY)});
+        std::make_shared<VideoHalState>(HdiStatus::HDI_DISCONNECTED)});
     scheduleStateList_.insert({MEDIA_LIBRARY_STATE,
         std::make_shared<VideoMediaLibraryState>(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE)});
     scheduleStateList_.insert({SCREEN_STATE,
