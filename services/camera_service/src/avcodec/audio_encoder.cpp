@@ -113,6 +113,7 @@ int32_t AudioEncoder::Release()
             OH_AudioCodec_Destroy(encoder_);
             encoder_ = nullptr;
         }
+        context_->Release();
     }
     isStarted_ = false;
     return 0;
