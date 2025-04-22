@@ -1230,14 +1230,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_049, Test
 {
     cameraManager_->foldScreenType_ = "0";
     EXPECT_TRUE(cameraManager_->GetIsFoldable());
-    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     int32_t cameraPosition = CAMERA_POSITION_BACK;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
     auto camera0 = new CameraDevice("device0", changedMetadata);
 
-    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     cameraPosition = CAMERA_POSITION_FRONT;
     changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
@@ -1272,14 +1272,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_050, Test
     EXPECT_CALL(*mockCameraManager, GetFoldStatus())
         .WillRepeatedly(testing::Return(FoldStatus::FOLDED));
 
-    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     int32_t cameraPosition = CAMERA_POSITION_BACK;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
     auto camera0 = new CameraDevice("device0", changedMetadata);
 
-    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     cameraPosition = CAMERA_POSITION_FRONT;
     changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
@@ -1310,14 +1310,14 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_051, Test
     cameraManager_->foldScreenType_ = "0";
     EXPECT_TRUE(cameraManager_->GetIsFoldable());
 
-    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     int32_t cameraPosition = CAMERA_POSITION_BACK;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     int32_t foldStatus = OHOS_CAMERA_FOLD_STATUS_EXPANDED | OHOS_CAMERA_FOLD_STATUS_FOLDED;
     changedMetadata->addEntry(OHOS_ABILITY_CAMERA_FOLD_STATUS, &foldStatus, 1);
     auto camera0 = new CameraDevice("device0", changedMetadata);
 
-    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    auto changedMetadata1 = std::make_shared<OHOS::Camera::CameraMetadata>(2, 100);
     cameraPosition = CAMERA_POSITION_FRONT;
     changedMetadata1->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
     foldStatus = OHOS_CAMERA_FOLD_STATUS_FOLDED;
