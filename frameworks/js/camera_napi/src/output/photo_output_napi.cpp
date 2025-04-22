@@ -425,7 +425,7 @@ void AuxiliaryPhotoListener::ExecuteDeepCopySurfaceBuffer() __attribute__((no_sa
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener gainmapSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             case SurfaceType::DEEP_SURFACE: {
-                    photoOutput->captureIdDepthMap_[captureId] = newSurfaceBuffer;
+                    photoOutput->captureIdDepthMap_.EnsureInsert(captureId, newSurfaceBuffer);
                     MEDIA_INFO_LOG("AuxiliaryPhotoListener deepSurfaceBuffer_, captureId=%{public}d", captureId);
                 } break;
             case SurfaceType::EXIF_SURFACE: {
@@ -764,7 +764,7 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
     photoOutput->photoProxyMap_.erase(captureId);
     photoOutput->captureIdPictureMap_.erase(captureId);
     photoOutput->captureIdGainmapMap_.erase(captureId);
-    photoOutput->captureIdDepthMap_.erase(captureId);
+    photoOutput->captureIdDepthMap_.Erase(captureId);
     photoOutput->captureIdExifMap_.erase(captureId);
     photoOutput->captureIdDebugMap_.erase(captureId);
     photoOutput->captureIdAuxiliaryCountMap_.erase(captureId);
@@ -796,11 +796,12 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
                 CameraAuxiliaryPictureType::GAINMAP);
             photoOutput->captureIdGainmapMap_[captureId] = nullptr;
         }
-        if (photoOutput->captureIdDepthMap_[captureId] && picture) {
-            LoggingSurfaceBufferInfo(photoOutput->captureIdDepthMap_[captureId], "deepSurfaceBuffer");
-            picture->SetAuxiliaryPicture(photoOutput->captureIdDepthMap_[captureId],
+        sptr<SurfaceBuffer> depthBuffer = nullptr;
+        photoOutput->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
+        if (depthBuffer && picture) {
+            LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
+            picture->SetAuxiliaryPicture(depthBuffer,
                 CameraAuxiliaryPictureType::DEPTH_MAP);
-            photoOutput->captureIdDepthMap_[captureId] = nullptr;
         }
         if (photoOutput->captureIdDebugMap_[captureId] && picture) {
             auto buffer = photoOutput->captureIdDebugMap_[captureId];
