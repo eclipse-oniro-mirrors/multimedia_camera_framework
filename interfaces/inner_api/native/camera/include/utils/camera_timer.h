@@ -17,7 +17,7 @@
 
 #include <memory>
 #include <atomic>
-#include <commonlibrary/c_utils/base/include/timer.h>
+#include <timer.h>
 
 namespace OHOS {
 namespace CameraStandard {
