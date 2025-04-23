@@ -24,6 +24,8 @@
 
 using namespace testing::ext;
 
+static const int64_t VIDEO_FRAMERATE = 1280;
+
 void MyFunction()
 {
     MEDIA_DEBUG_LOG("MyFunction started!");
@@ -177,5 +179,321 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_005, TestSize
     taskManager->Stop();
     EXPECT_FALSE(taskManager->videoEncoder_->isStarted_);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetTaskManager abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetTaskManager abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_006, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    taskManager->isActive_ = false;
+    shared_ptr<TaskManager> manager = taskManager->GetTaskManager();
+    EXPECT_EQ(manager, nullptr);
+    taskManager->SubmitTask(MyFunction);
+
+    taskManager->taskManager_ = make_unique<TaskManager>("AvcodecTaskManager", DEFAULT_THREAD_NUMBER, false);
+    manager = taskManager->GetTaskManager();
+    ASSERT_NE(manager, nullptr);
+    taskManager->SubmitTask(MyFunction);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetEncoderManager abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetEncoderManager abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_007, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    taskManager->isActive_ = false;
+    shared_ptr<TaskManager> manager = taskManager->GetEncoderManager();
+    EXPECT_EQ(manager, nullptr);
+
+    taskManager->videoEncoderManager_ = make_unique<TaskManager>
+        ("VideoTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, true);
+    manager = taskManager->GetEncoderManager();
+    ASSERT_NE(manager, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IgnoreDeblur when frameRecords is empty.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IgnoreDeblur when frameRecords is empty.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_008, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    vector<sptr<FrameRecord>> choosedBuffer;
+    int64_t shutterTime = 100;
+
+    taskManager->IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
+    EXPECT_TRUE(choosedBuffer.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IgnoreDeblur when frameRecords is not empty.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IgnoreDeblur when frameRecords is not empty.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_009, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    vector<sptr<FrameRecord>> choosedBuffer;
+    int64_t shutterTime = 100;
+
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->SetIDRProperty(false);
+
+    frameRecords.push_back(frameRecord);
+    taskManager->IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
+    EXPECT_TRUE(choosedBuffer.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IgnoreDeblur when frameRecords is not empty and has IDR frame.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IgnoreDeblur when frameRecords is not empty and has IDR frame.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_010, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    vector<sptr<FrameRecord>> choosedBuffer;
+    int64_t shutterTime = 100;
+
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->SetIDRProperty(true);
+
+    frameRecords.push_back(frameRecord);
+    taskManager->IgnoreDeblur(frameRecords, choosedBuffer, shutterTime);
+    EXPECT_FALSE(choosedBuffer.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Release abnormal branches when videoEncoder_ is not nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Release abnormal branches when videoEncoder_ is not nullptr.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_011, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    taskManager->videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
+    taskManager->videoEncoder_->encoder_ = nullptr;
+    taskManager->videoEncoder_->isStarted_ = true;
+    taskManager->audioEncoder_ = nullptr;
+    taskManager->audioDeferredProcess_ = nullptr;
+    taskManager->timerId_ = 0;
+
+    taskManager->Release();
+    EXPECT_FALSE(taskManager->videoEncoder_->isStarted_);
+    EXPECT_EQ(taskManager->audioEncoder_, nullptr);
+    EXPECT_EQ(taskManager->audioDeferredProcess_, nullptr);
+    EXPECT_EQ(taskManager->timerId_, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Release abnormal branches when audioEncoder_ is not nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Release abnormal branches when audioEncoder_ is not nullptr.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_012, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    taskManager->videoEncoder_ = nullptr;
+    taskManager->audioEncoder_ = make_unique<AudioEncoder>();
+    taskManager->audioEncoder_->encoder_ = nullptr;
+    taskManager->audioEncoder_->isStarted_ = true;
+    taskManager->audioDeferredProcess_ = nullptr;
+    taskManager->timerId_ = 0;
+
+    taskManager->Release();
+    EXPECT_EQ(taskManager->videoEncoder_, nullptr);
+    EXPECT_FALSE(taskManager->audioEncoder_->isStarted_);
+    EXPECT_EQ(taskManager->audioDeferredProcess_, nullptr);
+    EXPECT_EQ(taskManager->timerId_, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FindIdrFrameIndex normal branches when find IDR frame.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test FindIdrFrameIndex normal branches when find IDR frame.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_013, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
+    sptr<SurfaceBuffer> videoBuffer1 = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer1, nullptr);
+    sptr<FrameRecord> frameRecord1 =
+        new(std::nothrow) FrameRecord(videoBuffer1, timestamp, graphicType);
+    ASSERT_NE(frameRecord1, nullptr);
+    frameRecord1->SetIDRProperty(false);
+    frameRecords.push_back(frameRecord1);
+
+    sptr<SurfaceBuffer> videoBuffer2 = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer2, nullptr);
+    sptr<FrameRecord> frameRecord2 =
+        new(std::nothrow) FrameRecord(videoBuffer2, timestamp, graphicType);
+    ASSERT_NE(frameRecord2, nullptr);
+    frameRecord2->SetIDRProperty(true);
+    frameRecord2->timestamp_ = 1;
+    frameRecords.push_back(frameRecord2);
+
+    taskManager->preBufferDuration_ = 0;
+    int64_t shutterTime = 1;
+    int32_t captureId = 1;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    EXPECT_EQ(ret, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FindIdrFrameIndex normal branches when find IDR frame and timestamp_ less than start time.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test FindIdrFrameIndex normal branches when find IDR frame and timestamp_ less than start time.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_014, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
+    sptr<SurfaceBuffer> videoBuffer1 = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer1, nullptr);
+    sptr<FrameRecord> frameRecord1 =
+        new(std::nothrow) FrameRecord(videoBuffer1, timestamp, graphicType);
+    ASSERT_NE(frameRecord1, nullptr);
+    frameRecord1->SetIDRProperty(false);
+    frameRecords.push_back(frameRecord1);
+
+    sptr<SurfaceBuffer> videoBuffer2 = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer2, nullptr);
+    sptr<FrameRecord> frameRecord2 =
+        new(std::nothrow) FrameRecord(videoBuffer2, timestamp, graphicType);
+    ASSERT_NE(frameRecord2, nullptr);
+    frameRecord2->SetIDRProperty(true);
+    frameRecord2->timestamp_ = 0;
+    frameRecords.push_back(frameRecord2);
+
+    taskManager->preBufferDuration_ = 0;
+    int64_t shutterTime = 1;
+    int32_t captureId = 1;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test FindIdrFrameIndex normal branches when not find IDR frame.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test FindIdrFrameIndex normal branches when not find IDR frame.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_015, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> frameRecords;
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType graphicType = GRAPHIC_ROTATE_90;
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, graphicType);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->SetIDRProperty(false);
+    frameRecords.push_back(frameRecord);
+
+    taskManager->preBufferDuration_ = 0;
+    int64_t shutterTime = 1;
+    int32_t captureId = 1;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    EXPECT_EQ(ret, 0);
+}
+
 } // CameraStandard
 } // OHOS

@@ -74,7 +74,7 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_001, TestSize.Level0)
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_RegisterCallback(cameraInput, &setCameraInputResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_RegisterCallback(nullptr, &setCameraInputResultCallback);
@@ -103,7 +103,7 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_002, TestSize.Level0)
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_UnregisterCallback(cameraInput, &setCameraInputResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_UnregisterCallback(nullptr, &setCameraInputResultCallback);
@@ -140,7 +140,7 @@ HWTEST_F(CameraInputUnitTest, camera_input_unittest_003, TestSize.Level0)
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
 
