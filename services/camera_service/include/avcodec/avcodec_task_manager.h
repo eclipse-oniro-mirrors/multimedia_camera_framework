@@ -48,6 +48,7 @@ constexpr uint32_t GET_FD_EXPIREATION_TIME = 2000;
 constexpr int64_t ONE_BILLION = 1000000000LL;
 constexpr uint32_t MAX_FRAME_COUNT = 90;
 constexpr uint32_t RELEASE_WAIT_TIME = 10000;
+constexpr size_t MIN_FRAME_RECORD_BUFFER_SIZE = 9;
 
 class AvcodecTaskManager : public RefBase, public std::enable_shared_from_this<AvcodecTaskManager> {
 public:
@@ -78,7 +79,8 @@ private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime, int32_t captureId);
-    size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime, int32_t captureId);
+    size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t clearVideoEndTime,
+        int64_t shutterTime, int32_t captureId);
     void IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime);
     void Release();
