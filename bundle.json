@@ -48,6 +48,7 @@
               "media_foundation",
               "media_library",
               "resource_management",
+              "runtime_core",
               "napi",
               "os_account",
               "qos_manager",
@@ -82,7 +83,8 @@
               "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_ffi",
               "//foundation/multimedia/camera_framework/frameworks/cj:cj_camera_picker_ffi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js",
+              "//foundation/multimedia/camera_framework/frameworks/ets/ani:camera_framework_ani"
             ],
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
