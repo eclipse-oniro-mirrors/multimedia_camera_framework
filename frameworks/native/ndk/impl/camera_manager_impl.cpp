@@ -889,7 +889,6 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
 {
     MEDIA_DEBUG_LOG("Camera_Manager::GetCameraDevice is called");
 
-    Camera_Device* outCameras = new Camera_Device;
     CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
     auto itr = g_NdkCameraPositionToFwk_.find(position);
     if (itr != g_NdkCameraPositionToFwk_.end()) {
@@ -921,11 +920,13 @@ Camera_ErrorCode Camera_Manager::GetCameraDevice(Camera_Position position, Camer
         MEDIA_ERR_LOG("Camera_Manager::GetCameraDevice cameraInfo is null!");
         return CAMERA_SERVICE_FATAL_ERROR;
     }
+    Camera_Device* outCameras = new Camera_Device;
     outCameras->cameraId = cameraInfo->GetID().data();
     outCameras->cameraPosition = position;
     outCameras->cameraType = type;
     outCameras->connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
     camera = outCameras;
+    outCameras = nullptr;
 
     return CAMERA_OK;
 }
@@ -947,9 +948,11 @@ Camera_ErrorCode Camera_Manager::GetCameraConcurrentInfos(const Camera_Device *c
         cameraDeviceArrray.push_back(CameraManager::GetInstance()->GetCameraDeviceFromId(cameraidonly));
     }
     bool issupported = CameraManager::GetInstance()->GetConcurrentType(cameraDeviceArrray, cameraConcurrentType);
-    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::GetConcurrentType() error");
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR,
+        "CamagerManager::GetCameraConcurrentInfos GetConcurrentType not supported");
     issupported = CameraManager::GetInstance()->CheckConcurrentExecution(cameraDeviceArrray);
-    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR, "CamagerManager::CheckConcurrentExe error");
+    CHECK_ERROR_RETURN_RET_LOG(!issupported, CAMERA_SERVICE_FATAL_ERROR,
+        "CamagerManager::GetCameraConcurrentInfos CheckConcurrentExe not supported");
     CameraManager::GetInstance()->GetCameraConcurrentInfos(cameraDeviceArrray,
         cameraConcurrentType, modes, outputCapabilities);
     Camera_ConcurrentInfo *CameraConcurrentInfothis =  new Camera_ConcurrentInfo[deviceSize];
