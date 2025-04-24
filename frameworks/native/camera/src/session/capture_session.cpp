@@ -2608,6 +2608,7 @@ int32_t CaptureSession::PrepareZoom()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("CaptureSession::PrepareZoom");
+    isSmoothZooming_ = true;
     CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::PrepareZoom Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
@@ -2631,6 +2632,7 @@ int32_t CaptureSession::UnPrepareZoom()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("CaptureSession::UnPrepareZoom");
+    isSmoothZooming_ = false;
     CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::UnPrepareZoom Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
@@ -2691,6 +2693,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
             if (abilityContainer && supportSpecSearch_) {
                 abilityContainer->FilterByZoomRatio(targetZoomRatio);
             }
+            targetZoomRatio_ = targetZoomRatio;
         }
         std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         CHECK_EXECUTE(smoothZoomCallback_ != nullptr, smoothZoomCallback_->OnSmoothZoom(duration));
@@ -5395,7 +5398,8 @@ int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
     CHECK_ERROR_RETURN_RET_LOG(physicalApertures.size() == 1, CameraErrorCode::SUCCESS,
         "SetPhysicalAperture not support");
     // accurately currentZoomRatio need smoothing zoom done
-    float currentZoomRatio = GetZoomRatio();
+    float currentZoomRatio = targetZoomRatio_;
+    CHECK_EXECUTE(!isSmoothZooming_, currentZoomRatio = GetZoomRatio());
     int zoomMinIndex = 0;
     auto it = std::find_if(physicalApertures.rbegin(), physicalApertures.rend(),
         [&currentZoomRatio, &zoomMinIndex](const std::vector<float> physicalApertureRange) {
