@@ -103,11 +103,11 @@ HWTEST_F(CameraMetadataOutputUnitTest, camera_metadata_output_unittest_002, Test
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);

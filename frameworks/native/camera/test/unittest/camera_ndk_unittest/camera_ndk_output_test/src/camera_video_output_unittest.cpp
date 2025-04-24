@@ -79,7 +79,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_001, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
 
     ret = OH_CaptureSession_BeginConfig(captureSession);
@@ -128,7 +128,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_002, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -211,7 +211,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_004, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -268,7 +268,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_005, TestSize.L
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -377,7 +377,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_007, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
@@ -536,7 +536,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_012, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
@@ -582,7 +582,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_013, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
@@ -626,7 +626,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_014, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
@@ -679,7 +679,7 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_015, TestSize.L
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(&cameraInput, nullptr);
+    ASSERT_NE(cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
