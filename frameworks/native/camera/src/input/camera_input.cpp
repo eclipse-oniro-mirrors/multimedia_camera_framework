@@ -471,7 +471,7 @@ void CameraInput::SetOcclusionDetectCallback(
 std::string CameraInput::GetCameraId()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, nullptr, "CameraInput::GetCameraId cameraObject is null");
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr, "", "CameraInput::GetCameraId cameraObject is null");
     return cameraObject->GetID();
 }
 
