@@ -118,7 +118,7 @@ void AvcodecTaskManager::SetVideoFd(
     int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
 {
     lock_guard<mutex> lock(videoFdMutex_);
-    MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
+    MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64 ", captureId: %{public}d", timestamp, captureId);
     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
     MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
     cvEmpty_.notify_all();
@@ -145,7 +145,8 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->Create(format, photoAssetProxy);
     muxer->SetRotation(captureRotation);
     CHECK_EXECUTE(!choosedBuffer.empty(),
-        muxer->SetCoverTime(NanosecToMillisec(timestamp - choosedBuffer.front()->GetTimeStamp())));
+        muxer->SetCoverTime(NanosecToMillisec(std::min(timestamp, choosedBuffer.back()->GetTimeStamp())
+        - choosedBuffer.front()->GetTimeStamp())));
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
@@ -216,7 +217,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
                 OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
                 CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "video encodedBuffer is null");
                 buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, attr.pts);
+                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRId64, attr.pts);
                 muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
             }
             sptr<SurfaceBuffer> metaSurfaceBuffer = frameRecords[index]->GetMetaBuffer();
@@ -241,27 +242,44 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     });
 }
 
-size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t shutterTime,
-    int32_t captureId)
+size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords, int64_t clearVideoEndTime,
+    int64_t shutterTime, int32_t captureId)
 {
+    bool isDeblurStartTime = false;
     std::unique_lock<mutex> startTimeLock(startTimeMutex_);
     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
     if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime
         && mPStartTimeMap_[captureId] > clearVideoStartTime) {
-        MEDIA_INFO_LOG("set deblur start time is %{public}" PRIu64, mPStartTimeMap_[captureId]);
+        MEDIA_INFO_LOG("set deblur start time is %{public}" PRId64, mPStartTimeMap_[captureId]);
         clearVideoStartTime = mPStartTimeMap_[captureId];
+        MEDIA_INFO_LOG("clearVideoEndTime is %{public}" PRId64, NanosecToMicrosec(clearVideoEndTime));
+        int64_t absoluteValue = abs(clearVideoEndTime - clearVideoStartTime);
+        int64_t deblurThreshold = 264000000L;
+        isDeblurStartTime = absoluteValue < deblurThreshold;
     }
     mPStartTimeMap_.erase(captureId);
     startTimeLock.unlock();
-    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRIu64,
+    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRId64,
         captureId, clearVideoStartTime);
-    size_t idrIndex = 0;
-    for (size_t index = 0; index < frameRecords.size(); ++index) {
-        auto frame = frameRecords[index];
-        if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
-            MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
-            idrIndex = index;
-            break;
+    size_t idrIndex = frameRecords.size();
+    if (isDeblurStartTime) {
+        for (size_t index = 0; index < frameRecords.size(); ++index) {
+            auto frame = frameRecords[index];
+            if (frame->IsIDRFrame() && frame->GetTimeStamp() <= clearVideoStartTime) {
+                MEDIA_INFO_LOG("FindIdrFrameIndex before start time");
+                idrIndex = index;
+            }
+        }
+    }
+    if (idrIndex == frameRecords.size()) {
+        for (size_t index = 0; index < frameRecords.size(); ++index) {
+            auto frame = frameRecords[index];
+            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime) {
+                MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
+                idrIndex = index;
+                break;
+            }
+            idrIndex = 0;
         }
     }
     return idrIndex;
@@ -285,19 +303,20 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
 void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords,
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId)
 {
+    CHECK_ERROR_RETURN_LOG(frameRecords.empty(), "frameRecords is empty!");
     choosedBuffer.clear();
-    size_t idrIndex = FindIdrFrameIndex(frameRecords, shutterTime, captureId);
     std::unique_lock<mutex> endTimeLock(endTimeMutex_);
     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
     if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime
         && mPEndTimeMap_[captureId] < clearVideoEndTime) {
-        MEDIA_INFO_LOG("set deblur end time is %{public}" PRIu64, mPEndTimeMap_[captureId]);
+        MEDIA_INFO_LOG("set deblur end time is %{public}" PRId64, mPEndTimeMap_[captureId]);
         clearVideoEndTime = mPEndTimeMap_[captureId];
     }
     mPEndTimeMap_.erase(captureId);
     endTimeLock.unlock();
-    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
-        "clearVideoEndTime : %{public}" PRIu64, captureId, shutterTime, clearVideoEndTime);
+    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRId64 ", "
+        "clearVideoEndTime : %{public}" PRId64, captureId, shutterTime, clearVideoEndTime);
+    size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     size_t frameCount = 0;
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
@@ -308,7 +327,7 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
         }
     }
 
-    CHECK_EXECUTE(choosedBuffer.empty() || !frameRecords[idrIndex]->IsIDRFrame(),
+    CHECK_EXECUTE(choosedBuffer.size() < MIN_FRAME_RECORD_BUFFER_SIZE || !frameRecords[idrIndex]->IsIDRFrame(),
         IgnoreDeblur(frameRecords, choosedBuffer, shutterTime));
     MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu", choosedBuffer.size());
 }
