@@ -434,6 +434,8 @@ Camera_ErrorCode OH_CameraManager_UnregisterFoldStatusInfoCallback(Camera_Manage
 Camera_ErrorCode OH_CameraManager_GetCameraDevice(Camera_Manager *cameraManager, Camera_Position position,
                                                   Camera_Type type, Camera_Device *camera)
 {
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
     return cameraManager->GetCameraDevice(position, type, camera);
 }
 
@@ -446,6 +448,10 @@ Camera_ErrorCode OH_CameraManager_GetCameraConcurrentInfos(Camera_Manager *camer
                                                            Camera_ConcurrentInfo **CameraConcurrentInfo,
                                                            uint32_t *infoSize)
 {
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraManager is null!");
+    CHECK_ERROR_RETURN_RET_LOG(camera == nullptr, CAMERA_INVALID_ARGUMENT,
+        "lnvalid argument, cameraDevice is null!");
     return cameraManager->GetCameraConcurrentInfos(camera, deviceSize, CameraConcurrentInfo, infoSize);
 }
 #ifdef __cplusplus
