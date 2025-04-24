@@ -137,7 +137,6 @@ void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZ
         uint8_t* temp = new uint8_t[oneProcessedSize_];
         int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
         CHECK_ERROR_PRINT_LOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
-        CHECK_ERROR_RETURN_LOG(i + 1 + j - batchSize < 0, "ReturnToRecords unexpected error occured");
         processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp, oneProcessedSize_);
     }
 }
