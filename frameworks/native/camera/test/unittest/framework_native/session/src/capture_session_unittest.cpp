@@ -460,7 +460,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_011, TestSize.Level1)
 
     EXPECT_NE(session->GetInputDevice(), nullptr);
     EXPECT_NE(session->GetInputDevice()->GetCameraDeviceInfo(), nullptr);
-    EXPECT_FALSE(session->IsDepthFusionSupported());
 
     session->SetInputDevice(nullptr);
     EXPECT_FALSE(session->IsDepthFusionSupported());

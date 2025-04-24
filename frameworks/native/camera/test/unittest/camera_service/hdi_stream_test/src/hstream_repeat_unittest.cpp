@@ -32,6 +32,8 @@ using ::testing::Return;
 using ::testing::_;
 namespace OHOS {
 namespace CameraStandard {
+const uint32_t CONST_0 = 0;
+const uint32_t PHOTO_MODE = 1;
 const uint32_t METADATA_ITEM_SIZE = 20;
 const uint32_t METADATA_DATA_SIZE = 200;
 using namespace OHOS::HDI::Camera::V1_1;
@@ -145,17 +147,12 @@ HStreamRepeat* HStreamRepeatUnit::CreateHStreamRepeat()
     return streamRepeat;
 }
 
-sptr<CaptureOutput> HStreamRepeatUnit::CreatePhotoOutput(int32_t width, int32_t height)
+sptr<CaptureOutput> HStreamRepeatUnit::CreatePhotoOutput(Profile& photoProfile)
 {
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (surface == nullptr) {
         return nullptr;
     }
-    CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
-    Size photoSize;
-    photoSize.width = width;
-    photoSize.height = height;
-    Profile photoProfile = Profile(photoFormat, photoSize);
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
     return CameraManager::GetInstance()->CreatePhotoOutput(photoProfile, surfaceProducer);
 }
@@ -814,7 +811,9 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     int32_t height = PHOTO_DEFAULT_HEIGHT;
 
     sptr<CameraManager> cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
@@ -823,8 +822,12 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_032, TestSize.Level1)
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    sptr<CameraOutputCapability> outputCapability =
+        cameraManager->GetSupportedOutputCapability(cameras[CONST_0], PHOTO_MODE);
+    ASSERT_NE(outputCapability, nullptr);
+    auto photoProfiles = outputCapability->GetPhotoProfiles();
+    ASSERT_FALSE(photoProfiles.empty());
+    sptr<CaptureOutput> photo = CreatePhotoOutput(photoProfiles[CONST_0]);
     ASSERT_NE(photo, nullptr);
 
     sptr<CaptureOutput> metadatOutput = cameraManager->CreateMetadataOutput();

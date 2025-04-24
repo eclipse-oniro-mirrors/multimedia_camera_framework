@@ -563,6 +563,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_011, TestSize.Level1)
 {
     InSequence s;
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);

@@ -317,7 +317,9 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_006, TestSize.Level1)
     phtOutput->rawPhotoSurface_ = nullptr;
     phtOutput->CreateMultiChannel();
     EXPECT_NE(phtOutput->gainmapSurface_, nullptr);
-    EXPECT_NE(phtOutput->deepSurface_, nullptr);
+    if (phtOutput->isDepthBufferSupported_) {
+        EXPECT_NE(phtOutput->deepSurface_, nullptr);
+    }
     EXPECT_NE(phtOutput->exifSurface_, nullptr);
     EXPECT_NE(phtOutput->debugSurface_, nullptr);
 

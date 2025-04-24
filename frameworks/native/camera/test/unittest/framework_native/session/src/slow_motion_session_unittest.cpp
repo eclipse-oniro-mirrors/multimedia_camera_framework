@@ -60,6 +60,8 @@ void CameraSlowMotionSessionUnitTest::SetUp()
 void CameraSlowMotionSessionUnitTest::TearDown()
 {
     cameraManager_ = nullptr;
+    savedPreviewProfile_ = Profile {};
+    savedVideoProfile_ = VideoProfile {};
     MEDIA_DEBUG_LOG("CameraSlowMotionSessionUnitTest TearDown");
 }
 
@@ -119,7 +121,15 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreatePreviewOutput()
         if (surface == nullptr) {
             return nullptr;
         }
-        return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+        if (savedVideoProfile_.GetSize().height == 0) {
+            savedPreviewProfile_ = previewProfile_[0];
+            return cameraManager_->CreatePreviewOutput(previewProfile_[0], surface);
+        }
+        auto [isSameRatio, sameRatioProfile] = FindSameRatioProfile(savedVideoProfile_, previewProfile_);
+        if (!isSameRatio) {
+            return nullptr;
+        }
+        return cameraManager_->CreatePreviewOutput(sameRatioProfile, surface);
     }
     return nullptr;
 }
@@ -156,7 +166,16 @@ sptr<CaptureOutput> CameraSlowMotionSessionUnitTest::CreateVideoOutput()
         if (surface == nullptr) {
             return nullptr;
         }
-        return cameraManager_->CreateVideoOutput(profile_[0], surface);
+
+        if (savedPreviewProfile_.GetSize().height == 0) {
+            savedVideoProfile_ = profile_[0];
+            return cameraManager_->CreateVideoOutput(profile_[0], surface);
+        }
+        auto [isSameRatio, sameRatioProfile] = FindSameRatioProfile(savedPreviewProfile_, profile_);
+        if (!isSameRatio) {
+            return nullptr;
+        }
+        return cameraManager_->CreateVideoOutput(sameRatioProfile, surface);
     }
     return nullptr;
 }
@@ -348,5 +367,12 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_function_unittest_
     bool isEnable = false;
     EXPECT_EQ(slowMotionSession->EnableMotionDetection(isEnable), CameraErrorCode::SESSION_NOT_CONFIG);
 }
+
+bool CameraSlowMotionSessionUnitTest::IsAspectRatioEqual(float a, float b)
+{
+    const float EPSILON = 1e-6f;
+    return fabsf(a - b) <= EPSILON;
+}
+
 }
 }

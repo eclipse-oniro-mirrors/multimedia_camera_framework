@@ -42,7 +42,7 @@ public:
 
     void NativeAuthorization(void);
     HStreamRepeat *CreateHStreamRepeat();
-    sptr<CaptureOutput> CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
+    sptr<CaptureOutput> CreatePhotoOutput(Profile& photoProfile);
 };
 } // CameraStandard
 } // OHOS
