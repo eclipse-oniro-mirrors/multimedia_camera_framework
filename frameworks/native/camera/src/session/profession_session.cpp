@@ -178,10 +178,14 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "ProfessionSession::GetIsoRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
-        CameraErrorCode::SUCCESS, "ProfessionSession::GetIsoRange camera device is null");
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetIsoRange camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetIsoRange camera deviceInfo is null");
+    // Enabling rawImageDelivery implies using raw camera through the YUV profile, Therefore, we need to get raw camera
+    // static metadata rather than get dynamic metadata.
+    auto metadata = isRawImageDelivery_ ? inputDeviceInfo->GetCachedMetadata() : GetMetadata();
     CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, CameraErrorCode::INVALID_ARGUMENT, "GetIsoRange metadata is null");
 
     camera_metadata_item_t item;
