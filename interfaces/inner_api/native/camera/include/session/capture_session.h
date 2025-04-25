@@ -1968,6 +1968,11 @@ protected:
         innerCaptureSession_ = captureSession;
     }
 
+    inline bool IsSupportSpecSearch()
+    {
+        return supportSpecSearch_.load();
+    }
+
     virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
         PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
 

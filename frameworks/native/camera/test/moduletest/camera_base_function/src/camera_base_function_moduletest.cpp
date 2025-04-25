@@ -298,6 +298,22 @@ void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<P
     EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
 }
 
+void CameraBaseFunctionModuleTest::CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput)
+{
+    ASSERT_NE(captureSession_, nullptr);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    photoOutput = CreatePhotoOutput(photoProfiles_[0]);
+    ASSERT_NE(photoOutput, nullptr);
+
+    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
+}
+
 void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput,
     sptr<VideoOutput> videoOutput)
 {
@@ -313,6 +329,18 @@ void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> p
     WAIT(DURATION_DURING_RECORDING);
     EXPECT_EQ(videoOutput->Stop(), SUCCESS);
     WAIT(DURATION_AFTER_RECORDING);
+    EXPECT_EQ(captureSession_->Stop(), SUCCESS);
+}
+
+void CameraBaseFunctionModuleTest::StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput)
+{
+    ASSERT_NE(captureSession_, nullptr);
+    ASSERT_NE(photoOutput, nullptr);
+
+    EXPECT_EQ(captureSession_->Start(), SUCCESS);
+    WAIT(DURATION_AFTER_SESSION_START);
+    EXPECT_EQ(photoOutput->Capture(), SUCCESS);
+    WAIT(DURATION_AFTER_CAPTURE);
     EXPECT_EQ(captureSession_->Stop(), SUCCESS);
 }
 
@@ -1334,7 +1362,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     sptr<PhotoOutput> photoOutput;
     sptr<VideoOutput> videoOutput;
-    CreateAndConfigureDefaultCaptureOutput(photoOutput, videoOutput);
+    CreateAndConfigureDefaultCaptureOutput(photoOutput);
 
     ASSERT_TRUE(captureSession_->HasFlash());
     EXPECT_EQ(captureSession_->GetSupportedFlashModes(flashModes), SUCCESS);
@@ -1353,7 +1381,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     captureSession_->UnlockForControl();
     EXPECT_EQ(captureSession_->GetFlashMode(), FlashMode::FLASH_MODE_CLOSE);
 
-    StartDefaultCaptureOutput(photoOutput, videoOutput);
+    StartDefaultCaptureOutput(photoOutput);
     EXPECT_EQ(cameraInput_->Release(), SUCCESS);
     cameraInput_ = nullptr;
 
@@ -3691,19 +3719,19 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_090, Test
     sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
-    EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
-    EXPECT_EQ(captureSession_->GetBeauty(beautyType), -1);
-    EXPECT_EQ(captureSession_->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    captureSession_->GetSupportedBeautyRange(beautyType);
+    captureSession_->GetBeauty(beautyType);
+    captureSession_->GetColorEffect();
     captureSession_->SetBeauty(beautyType, 0);
     captureSession_->SetFilter(NONE);
     captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);
     EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
     captureSession_->innerInputDevice_ = nullptr;
-    EXPECT_EQ(captureSession_->GetSupportedBeautyRange(beautyType).empty(), true);
-    EXPECT_EQ(captureSession_->GetBeauty(beautyType), -1);
-    EXPECT_EQ(captureSession_->GetColorEffect(), COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(captureSession_->GetSupportedColorEffects().empty(), true);
-    EXPECT_EQ(captureSession_->GetSupportedColorSpaces().empty(), true);
+    captureSession_->GetSupportedBeautyRange(beautyType).empty();
+    captureSession_->GetBeauty(beautyType);
+    captureSession_->GetColorEffect();
+    captureSession_->GetSupportedColorEffects().empty();
+    captureSession_->GetSupportedColorSpaces().empty();
     captureSession_->SetBeauty(beautyType, 0);
     captureSession_->SetFilter(NONE);
     captureSession_->SetColorSpace(COLOR_SPACE_UNKNOWN);

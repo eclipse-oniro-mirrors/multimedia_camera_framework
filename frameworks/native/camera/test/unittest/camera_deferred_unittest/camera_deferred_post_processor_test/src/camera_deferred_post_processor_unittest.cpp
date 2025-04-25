@@ -158,6 +158,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, Te
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto srcFd = 1;
     auto dstFd = 1;
+    fdsan_exchange_owner_tag(srcFd, 0, LOG_DOMAIN);
+    fdsan_exchange_owner_tag(dstFd, 0, LOG_DOMAIN);
     postProcessor->copyFileByFd(srcFd, dstFd);
     auto isAutoSuspend = true;
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
