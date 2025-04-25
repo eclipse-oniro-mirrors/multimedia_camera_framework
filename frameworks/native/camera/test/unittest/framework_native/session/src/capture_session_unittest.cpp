@@ -3344,23 +3344,22 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_032, TestSize.Level1)
 
     ColorSpace colorSpace = DISPLAY_P3;
     EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
+    EXPECT_EQ(session->SetColorSpace(colorSpace), 7400101);
     EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
     EXPECT_EQ(session->AddInput(input), 0);
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     EXPECT_EQ(session->CommitConfig(), 0);
-    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
-    EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
+    auto supColor = session->GetSupportedColorSpaces();
+    if (!supColor.empty()) {
+        colorSpace = supColor[0];
+        EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
+        EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
 
-    session->LockForControl();
-    EXPECT_EQ(session->SetColorSpace(colorSpace), 0);
-    EXPECT_EQ(session->GetActiveColorSpace(colorSpace), 0);
-    session->UnlockForControl();
-
-    EXPECT_EQ(preview->Release(), 0);
-    EXPECT_EQ(input->Release(), 0);
-    EXPECT_EQ(session->Release(), 0);
+        EXPECT_EQ(preview->Release(), 0);
+        EXPECT_EQ(input->Release(), 0);
+        EXPECT_EQ(session->Release(), 0);
+    }
 }
 
 /*

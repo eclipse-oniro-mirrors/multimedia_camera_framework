@@ -173,7 +173,9 @@ public:
     sptr<VideoOutput> CreateVideoOutput(VideoProfile &videoProfile);
 
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);
+    void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput);
     void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput, sptr<VideoOutput> videoOutput);
+    void StartDefaultCaptureOutput(sptr<PhotoOutput> photoOutput);
 
 protected:
     int32_t previewFd_ = -1;
