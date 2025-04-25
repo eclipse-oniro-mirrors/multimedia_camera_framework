@@ -432,6 +432,16 @@ bool HStreamOperator::IsOfflineCapture()
     return false;
 }
 
+bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
+{
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
+    auto ability = cameraDevice_->GetDeviceAbility();
+    CHECK_ERROR_RETURN_RET(ability == nullptr, false);
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
+    return true;
+}
+
 int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings,
     int32_t opMode)
 {
@@ -780,14 +790,9 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
     uint32_t preBufferDuration = 0;
     uint32_t postBufferDuration = 0;
     constexpr int32_t MILLSEC_MULTIPLE = 1000;
-    CHECK_ERROR_RETURN_RET_LOG(
-        cameraDevice_ == nullptr, 0, "HCaptureSession::GetMovingPhotoBufferDuration() cameraDevice is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetDeviceAbility();
-    CHECK_ERROR_RETURN_RET(ability == nullptr, 0);
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_MOVING_PHOTO_BUFFER_DURATION, &item);
-    CHECK_ERROR_RETURN_RET_LOG(
-        ret != CAM_META_SUCCESS, 0, "HCaptureSession::GetMovingPhotoBufferDuration get buffer duration failed");
+    bool ret = GetDeviceAbilityByMeta(OHOS_MOVING_PHOTO_BUFFER_DURATION, &item);
+    CHECK_ERROR_RETURN_RET_LOG(!ret, 0, "HStreamOperator::GetMovingPhotoBufferDuration get buffer duration failed");
     preBufferDuration = item.data.ui32[0];
     postBufferDuration = item.data.ui32[1];
     preCacheFrameCount_ = preBufferDuration == 0

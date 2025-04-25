@@ -292,5 +292,16 @@ uint32_t CameraServerPhotoProxy::GetCloudImageEnhanceFlag()
     return cloudImageEnhanceFlag_;
 }
 
+void CameraServerPhotoProxy::SetStageVideoTaskStatus(uint8_t status)
+{
+    stageVideoTaskStatus_ = static_cast<int32_t>(status);
+    MEDIA_INFO_LOG("StageVideoTaskStatus is %{public}d", stageVideoTaskStatus_);
+}
+
+int32_t CameraServerPhotoProxy::GetStageVideoTaskStatus()
+{
+    MEDIA_DEBUG_LOG("%{public}s get value: %{public}u", __FUNCTION__, stageVideoTaskStatus_);
+    return stageVideoTaskStatus_;
+}
 } // namespace CameraStandard
 } // namespace OHOS

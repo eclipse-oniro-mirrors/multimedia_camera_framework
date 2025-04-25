@@ -1023,6 +1023,14 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
     cameraPhotoProxy->SetShootingMode(GetMode());
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo quality:%{public}d, format:%{public}d",
         cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
+    auto hStreamOperatorSptr_ = hStreamOperator_.promote();
+    CHECK_ERROR_RETURN(hStreamOperatorSptr_ == nullptr);
+
+    camera_metadata_item_t item;
+    if (hStreamOperatorSptr_->GetDeviceAbilityByMeta(OHOS_ABILITY_MOVING_PHOTO_MICRO_VIDEO_ENHANCE, &item)) {
+        uint8_t status = item.data.u8[0];
+        cameraPhotoProxy->SetStageVideoTaskStatus(status);
+    }
 }
 
 // LCOV_EXCL_START
