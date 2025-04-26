@@ -94,7 +94,7 @@ class SessionDrainImageCallback;
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
 public:
-    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
+    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, wptr<Surface> metaSurface,
         shared_ptr<FixedSizeList<MetaElementType>> metaCache, uint32_t preCacheFrameCount,
         uint32_t postCacheFrameCount);
     ~MovingPhotoListener() override;
@@ -107,7 +107,7 @@ public:
 
 private:
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
-    sptr<Surface> metaSurface_;
+    wptr<Surface> metaSurface_;
     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
@@ -115,16 +115,15 @@ private:
     std::atomic<bool> isNeededPop_ { false };
     int64_t shutterTime_;
     uint64_t postCacheFrameCount_;
-    shared_ptr<TaskManager> bufferTaskManager_ = nullptr;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
 public:
-    explicit MovingPhotoMetaListener(sptr<Surface> surface, shared_ptr<FixedSizeList<MetaElementType>> metaCache);
+    explicit MovingPhotoMetaListener(wptr<Surface> surface, shared_ptr<FixedSizeList<MetaElementType>> metaCache);
     ~MovingPhotoMetaListener();
     void OnBufferAvailable() override;
 private:
-    sptr<Surface> surface_;
+    wptr<Surface> surface_;
     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
 };
 
