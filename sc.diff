@@ -1,0 +1,236 @@
+From 2cbc662807905465b481f1b07d9d40f509fc3cf2 Mon Sep 17 00:00:00 2001
+From: s00888898 <s00888898@notesmail.huawei.com/>
+Date: Sat, 26 Apr 2025 16:32:25 +0800
+Subject: [PATCH] TicketNo:NA Description: Team: Feature or Bugfix: Binary
+ Source: PrivateCode(Yes/No):
+
+Change-Id: I6e9ed4a3f15aefe69c1ed5546ba0435771b4de07
+---
+ .../camera_service/include/hstream_operator.h |   9 +-
+ .../src/avcodec/common/frame_record.cpp       |   9 +-
+ .../camera_service/src/hstream_operator.cpp   | 100 +++++++++---------
+ 3 files changed, 54 insertions(+), 64 deletions(-)
+
+diff --git a/services/camera_service/include/hstream_operator.h b/services/camera_service/include/hstream_operator.h
+index 1e7863675..7097ae31a 100644
+--- a/services/camera_service/include/hstream_operator.h
++++ b/services/camera_service/include/hstream_operator.h
+@@ -97,7 +97,7 @@ class SessionDrainImageCallback;
+ using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
+ class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
+ public:
+-    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
++    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, wptr<Surface> metaSurface,
+         shared_ptr<FixedSizeList<MetaElementType>> metaCache, uint32_t preCacheFrameCount,
+         uint32_t postCacheFrameCount);
+     ~MovingPhotoListener() override;
+@@ -110,7 +110,7 @@ public:
+ 
+ private:
+     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
+-    sptr<Surface> metaSurface_;
++    wptr<Surface> metaSurface_;
+     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
+     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
+     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
+@@ -118,16 +118,15 @@ private:
+     std::atomic<bool> isNeededPop_ { false };
+     int64_t shutterTime_;
+     uint64_t postCacheFrameCount_;
+-    shared_ptr<TaskManager> bufferTaskManager_ = nullptr;
+ };
+ 
+ class MovingPhotoMetaListener : public IBufferConsumerListener {
+ public:
+-    explicit MovingPhotoMetaListener(sptr<Surface> surface, shared_ptr<FixedSizeList<MetaElementType>> metaCache);
++    explicit MovingPhotoMetaListener(wptr<Surface> surface, shared_ptr<FixedSizeList<MetaElementType>> metaCache);
+     ~MovingPhotoMetaListener();
+     void OnBufferAvailable() override;
+ private:
+-    sptr<Surface> surface_;
++    wptr<Surface> surface_;
+     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
+ };
+ 
+diff --git a/services/camera_service/src/avcodec/common/frame_record.cpp b/services/camera_service/src/avcodec/common/frame_record.cpp
+index c995548d6..2ac66733b 100644
+--- a/services/camera_service/src/avcodec/common/frame_record.cpp
++++ b/services/camera_service/src/avcodec/common/frame_record.cpp
+@@ -41,14 +41,7 @@ FrameRecord::~FrameRecord()
+ void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper)
+ {
+     std::unique_lock<std::mutex> lock(mutex_);
+-    if (IsReadyConvert()) {
+-        MEDIA_DEBUG_LOG("FrameRecord::ReleaseSurfaceBuffer isReadyConvert");
+-        auto thisPtr = sptr<FrameRecord>(this);
+-        canReleased_.wait_for(lock, std::chrono::milliseconds(BUFFER_RELEASE_EXPIREATION_TIME),
+-            [thisPtr] { return thisPtr->IsFinishCache(); });
+-        MEDIA_DEBUG_LOG("FrameRecord::ReleaseSurfaceBuffer wait end");
+-    }
+-    if (videoBuffer_) {
++    if (videoBuffer_ && !IsReadyConvert()) {
+         if (surfaceWrapper != nullptr) {
+             surfaceWrapper->RecycleBuffer(videoBuffer_);
+         }
+diff --git a/services/camera_service/src/hstream_operator.cpp b/services/camera_service/src/hstream_operator.cpp
+index 305ac32a1..868571d39 100644
+--- a/services/camera_service/src/hstream_operator.cpp
++++ b/services/camera_service/src/hstream_operator.cpp
+@@ -608,7 +608,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream()
+             }
+             auto producer = movingPhotoSurfaceWrapper->GetProducer();
+             metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
+-            auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(6);
++            auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(8);
+             CHECK_WARNING_CONTINUE_LOG(producer == nullptr, "get producer fail.");
+             livephotoListener_ = new (std::nothrow) MovingPhotoListener(movingPhotoSurfaceWrapper,
+                 metaSurface_, metaCache, preCacheFrameCount_, postCacheFrameCount_);
+@@ -1966,7 +1966,7 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
+     return totalOrderedStreams;
+ }
+ 
+-MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, sptr<Surface> metaSurface,
++MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, wptr<Surface> metaSurface,
+     shared_ptr<FixedSizeList<MetaElementType>> metaCache, uint32_t preCacheFrameCount, uint32_t postCacheFrameCount)
+     : movingPhotoSurfaceWrapper_(surfaceWrapper),
+       metaSurface_(metaSurface),
+@@ -1975,7 +1975,6 @@ MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surface
+       postCacheFrameCount_(postCacheFrameCount)
+ {
+     shutterTime_ = 0;
+-    bufferTaskManager_ = make_shared<TaskManager>("BufferTaskManager", OPERATOR_DEFAULT_ENCODER_THREAD_NUMBER, true);
+ }
+ 
+ MovingPhotoListener::~MovingPhotoListener()
+@@ -2031,54 +2030,52 @@ void MovingPhotoListener::StopDrainOut()
+ 
+ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform)
+ {
+-    auto thisPtr = sptr<MovingPhotoListener>(this);
+-    bufferTaskManager_->SubmitTask([thisPtr, buffer, timestamp, transform]() {
+-        MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
+-        if (thisPtr->recorderBufferQueue_.Full()) {
+-            MEDIA_DEBUG_LOG("surface_ release surface buffer");
+-            sptr<FrameRecord> popFrame = thisPtr->recorderBufferQueue_.Pop();
+-            popFrame->ReleaseSurfaceBuffer(thisPtr->movingPhotoSurfaceWrapper_);
+-            popFrame->ReleaseMetaBuffer(thisPtr->metaSurface_, true);
+-            MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
+-                popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
++    MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
++    if (recorderBufferQueue_.Full()) {
++        MEDIA_DEBUG_LOG("surface_ release surface buffer");
++        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
++        popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
++        sptr<Surface> metaSurface = metaSurface_.promote();
++        if (metaSurface) {
++            popFrame->ReleaseMetaBuffer(metaSurface, true);
+         }
+-        MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
+-            buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
+-        sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
+-        CHECK_ERROR_RETURN_LOG(frameRecord == nullptr,
+-            "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+-        if (thisPtr->isNeededClear_ && thisPtr->isNeededPop_) {
+-            if (timestamp < thisPtr->shutterTime_) {
+-                frameRecord->ReleaseSurfaceBuffer(thisPtr->movingPhotoSurfaceWrapper_);
+-                MEDIA_INFO_LOG("Drop this frame in cache");
+-                return;
+-            } else {
+-                thisPtr->isNeededClear_ = false;
+-                thisPtr->isNeededPop_ = false;
+-                MEDIA_INFO_LOG("ClearCache end");
+-            }
++        MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
++                        popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
++    }
++    MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
++                    buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
++    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
++    CHECK_ERROR_RETURN_LOG(frameRecord == nullptr, "MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
++    if (isNeededClear_ && isNeededPop_) {
++        if (timestamp < shutterTime_) {
++            frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
++            MEDIA_INFO_LOG("Drop this frame in cache");
++            return;
++        } else {
++            isNeededClear_ = false;
++            isNeededPop_ = false;
++            MEDIA_INFO_LOG("ClearCache end");
+         }
+-        thisPtr->recorderBufferQueue_.Push(frameRecord);
+-        auto metaPair = thisPtr->metaCache_->find_if([timestamp](const MetaElementType& value) {
+-            return value.first == timestamp;
+-        });
+-        if (metaPair.has_value()) {
+-            MEDIA_DEBUG_LOG("frame has meta");
+-            frameRecord->SetMetaBuffer(metaPair.value().second);
+-        }
+-        vector<sptr<SessionDrainImageCallback>> callbacks;
+-        thisPtr->callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
+-            sptr<DrainImageManager> manager) {
++    }
++    recorderBufferQueue_.Push(frameRecord);
++    auto metaPair =
++        metaCache_->find_if([timestamp](const MetaElementType &value) { return value.first == timestamp; });
++    if (metaPair.has_value()) {
++        MEDIA_DEBUG_LOG("frame has meta");
++        frameRecord->SetMetaBuffer(metaPair.value().second);
++    }
++    vector<sptr<SessionDrainImageCallback>> callbacks;
++    callbackMap_.Iterate(
++        [frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
+             callbacks.push_back(callback);
+         });
+-        for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
+-            sptr<DrainImageManager> drainImageManager;
+-            if (thisPtr->callbackMap_.Find(drainImageCallback, drainImageManager)) {
+-                std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
+-                drainImageManager->DrainImage(frameRecord);
+-            }
++    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
++        sptr<DrainImageManager> drainImageManager;
++        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
++            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
++            drainImageManager->DrainImage(frameRecord);
+         }
+-    });
++    }
+ }
+ 
+ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
+@@ -2103,18 +2100,19 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
+ 
+ void MovingPhotoMetaListener::OnBufferAvailable()
+ {
+-    CHECK_ERROR_RETURN_LOG(!surface_, "streamRepeat surface is null");
+-    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", surface_->GetQueueSize());
++    sptr<Surface> metaSurface = surface_.promote();
++    CHECK_ERROR_RETURN_LOG(!metaSurface, "streamRepeat surface is null");
++    MEDIA_DEBUG_LOG("metaSurface_ OnBufferAvailable %{public}u", metaSurface->GetQueueSize());
+     int64_t timestamp;
+     OHOS::Rect damage;
+     sptr<SurfaceBuffer> buffer;
+     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+-    SurfaceError surfaceRet = surface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
++    SurfaceError surfaceRet = metaSurface->AcquireBuffer(buffer, syncFence, timestamp, damage);
+     if (surfaceRet != SURFACE_ERROR_OK) {
+         MEDIA_ERR_LOG("Failed to acquire meta surface buffer");
+         return;
+     }
+-    surfaceRet = surface_->DetachBufferFromQueue(buffer);
++    surfaceRet = metaSurface->DetachBufferFromQueue(buffer);
+     if (surfaceRet != SURFACE_ERROR_OK) {
+         MEDIA_ERR_LOG("Failed to detach meta buffer. %{public}d", surfaceRet);
+         return;
+@@ -2122,7 +2120,7 @@ void MovingPhotoMetaListener::OnBufferAvailable()
+     metaCache_->add({timestamp, buffer});
+ }
+ 
+-MovingPhotoMetaListener::MovingPhotoMetaListener(sptr<Surface> surface,
++MovingPhotoMetaListener::MovingPhotoMetaListener(wptr<Surface> surface,
+     shared_ptr<FixedSizeList<MetaElementType>> metaCache)
+     : surface_(surface), metaCache_(metaCache)
+ {
+-- 
+2.45.2.huawei.8
+
