@@ -231,6 +231,9 @@ public:
     {
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);
         cameraDevice_ = device;
+        if (device == nullptr && !IsOfflineCapture()) {
+            ResetHDIStreamOperator();
+        }
     }
 
     inline void SetStreamOperatorId(int32_t& streamOperatorId)
