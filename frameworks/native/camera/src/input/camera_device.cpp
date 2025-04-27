@@ -419,5 +419,21 @@ uint32_t CameraDevice::GetSupportedFoldStatus()
 {
     return foldStatus_;
 }
+
+void CameraDevice::SetCameraId(std::string devID)
+{
+    cameraID_ = devID;
+}
+
+bool CameraDevice::isConcurrentDeviceType()
+{
+    return isConcurrentDevice_;
+}
+
+void CameraDevice::SetConcurrentDeviceType(bool changeType)
+{
+    isConcurrentDevice_ = changeType;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

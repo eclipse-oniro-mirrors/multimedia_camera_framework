@@ -305,6 +305,12 @@ public:
     */
     uint32_t GetSupportedFoldStatus();
 
+    void SetCameraId(std::string devID);
+
+    bool isConcurrentDeviceType();
+
+    void SetConcurrentDeviceType(bool changeType);
+
     template<typename T, typename = std::enable_if_t<std::is_same_v<T, Profile> || std::is_same_v<T, VideoProfile>>>
     std::shared_ptr<T> GetMaxSizeProfile(std::vector<T>& profiles, float profileRatioValue, CameraFormat format)
     {
@@ -364,6 +370,7 @@ private:
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
     bool isFindModuleTypeTag(uint32_t &tagId);
+    bool isConcurrentDevice_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
