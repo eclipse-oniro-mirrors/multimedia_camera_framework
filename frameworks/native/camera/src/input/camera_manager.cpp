@@ -291,9 +291,8 @@ int32_t CameraManager::CreateCaptureSession(sptr<CaptureSession>& pCaptureSessio
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::INVALID_ARGUMENT,
         "CreateCaptureSession(pCaptureSession) serviceProxy is nullptr");
     OperationMode opMode = OperationMode::NORMAL;
-    if (!ConvertFwkToMetaMode(mode, opMode)) {
-        MEDIA_ERR_LOG("CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
-    }
+    CHECK_ERROR_PRINT_LOG(!ConvertFwkToMetaMode(mode, opMode),
+        "CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
     int32_t retCode = serviceProxy->CreateCaptureSession(session, opMode);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CreateCaptureSession(pCaptureSession) Failed to get captureSession object from hcamera service! "
@@ -679,10 +678,8 @@ sptr<DepthDataOutput> CameraManager::CreateDepthDataOutput(DepthProfile& depthPr
     CAMERA_SYNC_TRACE;
     sptr<DepthDataOutput> depthDataOutput = nullptr;
     int ret = CreateDepthDataOutput(depthProfile, surface, &depthDataOutput);
-    if (ret != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("Failed to CreateDepthDataOutput with error code:%{public}d", ret);
-        return nullptr;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        ret != CameraErrorCode::SUCCESS, nullptr, "Failed to CreateDepthDataOutput with error code:%{public}d", ret);
     return depthDataOutput;
 }
 
@@ -696,10 +693,8 @@ int CameraManager::CreateDepthDataOutput(DepthProfile& depthProfile, sptr<IBuffe
     camera_format_t metaFormat;
 
     auto serviceProxy = GetServiceProxy();
-    if ((serviceProxy == nullptr) || (surface == nullptr)) {
-        MEDIA_ERR_LOG("serviceProxy is null or DepthDataOutputSurface/profile is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+        "serviceProxy is null or DepthDataOutputSurface/profile is null");
 
     if ((depthProfile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (depthProfile.GetSize().width == 0) ||
@@ -1452,9 +1447,7 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
     std::vector<ProfileLevelInfo> modeInfosum = {};
     int32_t* originInfo = item.data.i32;
     uint32_t count = item.count;
-    if (count == 0 || originInfo == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
     uint32_t i = 0;
     uint32_t j = i + STEP_THREE;
     auto isModeEnd = [](int32_t *originInfo, uint32_t j) {
@@ -1586,9 +1579,7 @@ bool CameraManager::CheckCameraConcurrentId(std::unordered_map<std::string, int3
     std::vector<std::string> &cameraIdv)
 {
     for (uint32_t i = 1; i < cameraIdv.size(); i++) {
-        if (cameraIdv[i].empty()) {
-            MEDIA_ERR_LOG("CameraManager::CheckCameraConcurrentId get invalid cameraId");
-        }
+        CHECK_ERROR_PRINT_LOG(cameraIdv[i].empty(), "CameraManager::CheckCameraConcurrentId get invalid cameraId");
         std::regex regex("\\d+$");
         std::smatch match;
         std::string cameraId;
@@ -1659,9 +1650,7 @@ void CameraManager::GetMetadataInfosfordouble(camera_metadata_item_t &item, doub
     ProfilesWrapper profilesWrapper = {};
     std::vector<ProfileLevelInfo> modeInfosum = {};
     uint32_t count = item.count;
-    if (count == 0 || originInfo == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(count == 0 || originInfo == nullptr);
     uint32_t j = i + STEP_THREE;
     auto isModeEnd = [](double *originInfo, uint32_t j) {
         return static_cast<int32_t>(originInfo[j]) == INT_MAX && static_cast<int32_t>(originInfo[j - 1]) == INT_MAX &&

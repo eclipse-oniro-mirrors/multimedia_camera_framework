@@ -95,9 +95,7 @@ int32_t HStreamRepeatProxy::UnSetCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_UNSET_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy UnSetCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy UnSetCallback failed, error: %{public}d", error);
     return error;
 }
 
@@ -288,9 +286,7 @@ int32_t HStreamRepeatProxy::SetCameraApi(uint32_t apiCompatibleVersion)
  
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_API_VERSION), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraApi failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy SetCameraApi failed, error: %{public}d", error);
     return error;
 }
 

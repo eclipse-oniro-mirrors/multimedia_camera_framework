@@ -217,10 +217,8 @@ int CameraInput::Open(int32_t cameraConcurrentType)
 
     string idOfThis;
     auto iter = fwToMetaCameraPosition_.find(cameraPosition);
-    if (iter == fwToMetaCameraPosition_.end()) {
-        MEDIA_ERR_LOG("CameraInput::Open can not find cameraPosition in fwToMetaCameraPosition_");
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(iter == fwToMetaCameraPosition_.end(), retCode,
+        "CameraInput::Open can not find cameraPosition in fwToMetaCameraPosition_");
 
     cameraServiceOnly->GetIdforCameraConcurrentType(iter->second, idOfThis);
     sptr<ICameraDeviceService> cameraDevicePhysic = nullptr;
@@ -229,10 +227,8 @@ int CameraInput::Open(int32_t cameraConcurrentType)
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     retCode = cameraServiceOnly->GetConcurrentCameraAbility(idOfThis, cameraAbility);
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("CameraInput::Open camera id: %{public}s get concurrent camera ability failed", idOfThis.c_str());
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, retCode,
+        "CameraInput::Open camera id: %{public}s get concurrent camera ability failed", idOfThis.c_str());
 
     sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(idOfThis, cameraAbility);
     CHECK_ERROR_RETURN_RET_LOG(cameraObjnow == nullptr, CAMERA_UNKNOWN_ERROR, "CameraInput::Open cameraObjnow is null");
@@ -422,9 +418,8 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
 
     auto metadata = std::make_shared<Camera::CameraMetadata>(1, 1);
     MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition fr: %{public}u, to: %{public}u", usedAsPosition, translatePos);
-    if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1)) {
-        MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition Failed to set metadata");
-    }
+    CHECK_ERROR_PRINT_LOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_CAMERA_USED_AS_POSITION, &translatePos, 1),
+        "CameraInput::SetInputUsedAsPosition Failed to set metadata");
     auto deviceObj = GetCameraDevice();
     CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
     // LCOV_EXCL_START
@@ -445,10 +440,8 @@ void CameraInput::ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status)
         constexpr int32_t DEFAULT_ITEMS = 1;
         constexpr int32_t DEFAULT_DATA_LENGTH = 1;
         auto metadata = std::make_shared<Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-        if (!AddOrUpdateMetadata(metadata, OHOS_CONTROL_EJECT_RETRY, &value, count)) {
-            MEDIA_ERR_LOG("CameraInput::ControlAuxiliary Failed to set metadata");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(!AddOrUpdateMetadata(metadata, OHOS_CONTROL_EJECT_RETRY, &value, count),
+            "CameraInput::ControlAuxiliary Failed to set metadata");
         auto deviceObj = GetCameraDevice();
         CHECK_ERROR_RETURN_LOG(deviceObj == nullptr, "deviceObj is nullptr");
         deviceObj->UpdateSetting(metadata);

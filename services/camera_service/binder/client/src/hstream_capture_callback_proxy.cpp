@@ -169,9 +169,8 @@ int32_t HStreamCaptureCallbackProxy::OnOfflineDeliveryFinished(int32_t captureId
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(
+        error != ERR_NONE, "HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
     return error;
 }
 } // namespace CameraStandard

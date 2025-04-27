@@ -37,10 +37,7 @@ void PictureProxy::Create(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     MEDIA_INFO_LOG("PictureProxy ctor");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::Create pictureIntf_ is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::Create pictureIntf_ is nullptr");
     pictureIntf->Create(surfaceBuffer);
 }
 
@@ -69,10 +66,7 @@ void PictureProxy::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Camer
 {
     MEDIA_INFO_LOG("PictureProxy::SetAuxiliaryPicture enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::SetAuxiliaryPicture pictureIntf_ is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::SetAuxiliaryPicture pictureIntf_ is nullptr");
     pictureIntf->SetAuxiliaryPicture(surfaceBuffer, type);
 }
 
@@ -80,10 +74,7 @@ bool PictureProxy::Marshalling(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureProxy::Marshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (pictureIntf == nullptr) {
-        MEDIA_ERR_LOG("PictureProxy::Marshalling pictureIntf_ is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(pictureIntf == nullptr, false, "PictureProxy::Marshalling pictureIntf_ is nullptr");
     return pictureIntf->Marshalling(data);
 }
 
@@ -91,10 +82,7 @@ void PictureProxy::Unmarshalling(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureProxy::Unmarshalling enter");
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::Unmarshalling failed! pictureIntf is nullptr");
     pictureIntf->Unmarshalling(data);
 }
 
@@ -103,10 +91,7 @@ int32_t PictureProxy::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     MEDIA_INFO_LOG("PictureProxy::SetExifMetadata enter");
     int32_t retCode = -1;
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::SetExifMetadata pictureIntf is nullptr");
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, retCode, "PictureProxy::SetExifMetadata pictureIntf is nullptr");
     retCode = pictureIntf->SetExifMetadata(surfaceBuffer);
     return retCode;
 }
@@ -115,10 +100,7 @@ bool PictureProxy::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     bool retCode = false;
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::SetMaintenanceData pictureIntf is nullptr");
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, retCode, "PictureProxy::SetMaintenanceData pictureIntf is nullptr");
     retCode = pictureIntf->SetMaintenanceData(surfaceBuffer);
     return retCode;
 }
@@ -126,10 +108,7 @@ bool PictureProxy::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 void PictureProxy::RotatePicture()
 {
     std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
-    if (!pictureIntf) {
-        MEDIA_ERR_LOG("PictureProxy::RotatePicture pictureIntf is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!pictureIntf, "PictureProxy::RotatePicture pictureIntf is nullptr");
     pictureIntf->RotatePicture();
 }
 // LCOV_EXCL_STOP

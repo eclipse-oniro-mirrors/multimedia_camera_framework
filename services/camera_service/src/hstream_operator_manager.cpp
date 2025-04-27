@@ -57,13 +57,9 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
 {
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
     std::lock_guard<std::mutex> lock(mapMutex_);
-    if (hStreamOperatorId < 0) {
-        return;
-    }
+    CHECK_ERROR_RETURN(hStreamOperatorId < 0);
     auto streamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
-    if (streamOperator == streamOperatorManagerMap_.end()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(streamOperator == streamOperatorManagerMap_.end());
     streamOperatorManagerMap_.erase(hStreamOperatorId);
     if (streamOperatorManagerMap_.size() == 0) {
         CameraDynamicLoader::FreeDynamiclib(MEDIA_LIB_SO);
@@ -77,9 +73,7 @@ void HStreamOperatorManager::UpdateStreamOperator(int32_t& hStreamOperatorId)
     std::lock_guard<std::mutex> lock(mapMutex_);
     MEDIA_INFO_LOG("HStreamOperatorManager::UpdateStreamOperator hStreamOperatorId is %{public}d", hStreamOperatorId);
     auto StreamOperator = streamOperatorManagerMap_.find(hStreamOperatorId);
-    if (StreamOperator == streamOperatorManagerMap_.end()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(StreamOperator == streamOperatorManagerMap_.end());
 }
 
 int32_t HStreamOperatorManager::GetOfflineOutputSize()

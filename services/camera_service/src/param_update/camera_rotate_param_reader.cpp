@@ -112,9 +112,8 @@ bool CameraRoateParamReader::VerifyCertSfFile(
 bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, const std::string &filePathStr)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    if (realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr) {
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(realpath((cfgDirPath + filePathStr).c_str(), canonicalPath) == nullptr, false,
+        "VerifyParamFile filePathStr is irregular");
     MEDIA_INFO_LOG("VerifyParamFile ,filePathStr:%{public}s", filePathStr.c_str());
     std::string absFilePath = std::string(canonicalPath);
     std::string manifestFile = cfgDirPath + "/MANIFEST.MF";
@@ -127,15 +126,11 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
     std::string line;
     std::string sha256Digest;
 
-    if (!file.good()) {
-        MEDIA_ERR_LOG("manifestFile is not good,manifestFile:%{public}s", manifestFile.c_str());
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !file.good(), false, "manifestFile is not good,manifestFile:%{public}s", manifestFile.c_str());
     std::ifstream paramFile(absFilePath);
-    if (!paramFile.good()) {
-        MEDIA_ERR_LOG("paramFile is not good,paramFile:%{public}s", absFilePath.c_str());
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !paramFile.good(), false, "paramFile is not good,paramFile:%{public}s", absFilePath.c_str());
 
     while (std::getline(file, line)) {
         std::string nextline;
@@ -146,15 +141,10 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
             break;
         }
     }
-    if (sha256Digest.empty()) {
-        MEDIA_ERR_LOG("VerifyParamFile failed ,sha256Digest is empty");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(sha256Digest.empty(), false, "VerifyParamFile failed ,sha256Digest is empty");
     std::tuple<int, std::string> ret = CameraRoateParamSignTool::CalcFileSha256Digest(absFilePath);
-    if (std::get<0>(ret) != 0) {
-        MEDIA_ERR_LOG("CalcFileSha256Digest failed,error : %{public}d ", std::get<0>(ret));
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        std::get<0>(ret) != 0, false, "CalcFileSha256Digest failed,error : %{public}d ", std::get<0>(ret));
     if (sha256Digest == std::get<1>(ret)) {
         return true;
     } else {
@@ -165,15 +155,11 @@ bool CameraRoateParamReader::VerifyParamFile(const std::string& cfgDirPath, cons
 std::string CameraRoateParamReader::GetVersionInfoStr(const std::string &filePathStr)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    if (realpath(filePathStr.c_str(), canonicalPath) == nullptr) {
-        MEDIA_ERR_LOG("GetVersionInfoStr filepath is irregular");
-        return DEFAULT_VERSION;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(realpath(filePathStr.c_str(), canonicalPath) == nullptr, DEFAULT_VERSION,
+        "GetVersionInfoStr filepath is irregular");
     std::ifstream file(canonicalPath);
-    if (!file.good()) {
-        MEDIA_ERR_LOG("VersionFilePath is not good,FilePath:%{public}s", filePathStr.c_str());
-        return DEFAULT_VERSION;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !file.good(), DEFAULT_VERSION, "VersionFilePath is not good,FilePath:%{public}s", filePathStr.c_str());
     std::string line;
     std::getline(file, line);
     std::string versionStr = SplitStringWithPattern(line, '=')[1];
@@ -191,10 +177,8 @@ bool CameraRoateParamReader::VersionStrToNumber(const std::string &versionStr, s
 bool CameraRoateParamReader::CompareVersion(
     const std::vector<std::string> &localVersion, const std::vector<std::string> &pathVersion)
 {
-    if (localVersion.size() != VERSION_LEN || pathVersion.size() != VERSION_LEN) {
-        MEDIA_ERR_LOG("Version num not valid");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        localVersion.size() != VERSION_LEN || pathVersion.size() != VERSION_LEN, false, "Version num not valid");
     for (int i = 0; i < VERSION_LEN; i++) {
         if (localVersion[i] != pathVersion[i]) {
             int ret = strtol(localVersion[i].c_str(), nullptr, DEC) < strtol(pathVersion[i].c_str(), nullptr, DEC);

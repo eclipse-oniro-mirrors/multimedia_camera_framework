@@ -442,10 +442,8 @@ void PhotoOutput::CreateMultiChannel()
 {
     CAMERA_SYNC_TRACE;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
-    if (streamCapturePtr == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput::CreateMultiChannel Failed!streamCapturePtr is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(
+        streamCapturePtr == nullptr, "PhotoOutput::CreateMultiChannel Failed!streamCapturePtr is nullptr");
     std::string retStr = "";
     int32_t ret = 0;
     if (gainmapSurface_ == nullptr) {

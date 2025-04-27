@@ -542,29 +542,21 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddInput");
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
-    if (input == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AddInput input is null");
-        return ServiceToCameraError(CAMERA_INVALID_ARG);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "CaptureSession::AddInput operation Not allowed!");
+    CHECK_ERROR_RETURN_RET_LOG(
+        input == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::AddInput input is null");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
-    if (captureSession == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession is nullptr");
-        return ServiceToCameraError(errCode);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, ServiceToCameraError(errCode),
+        "CaptureSession::AddInput() captureSession is nullptr");
     auto cameraInput = (sptr<CameraInput>&)input;
     if (!cameraInput->timeQueue_.empty()) {
         cameraInput->UnregisterTime();
     }
     errCode = captureSession->AddInput(((sptr<CameraInput>&)input)->GetCameraDevice());
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);
-        return ServiceToCameraError(errCode);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        errCode != CAMERA_OK, ServiceToCameraError(errCode), "Failed to AddInput!, %{public}d", errCode);
     SetInputDevice(input);
     CheckSpecSearch();
     input->SetMetadataResultProcessor(GetMetadataResultProcessor());
@@ -870,10 +862,8 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         photoOutput_ = output;
     }
     MEDIA_INFO_LOG("CaptureSession::AddOutput StreamType = %{public}d", output->GetStreamType());
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to AddOutput!, %{public}d", errCode);
-        return ServiceToCameraError(errCode);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        errCode != CAMERA_OK, ServiceToCameraError(errCode), "Failed to AddOutput!, %{public}d", errCode);
     InsertOutputIntoSet(output);
     uint32_t apiCompatibleVersion = CameraApiVersion::GetApiVersion();
     sptr<IStreamCommon> stream = output->GetStream();
@@ -993,9 +983,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         if (deviceInfo != nullptr) {
             deviceInfo->ResetMetadata();
         }
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
-        }
+        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to RemoveInput!, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::RemoveInput() captureSession is nullptr");
     }
@@ -3694,10 +3682,8 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     std::vector<ColorSpace> supportedColorSpaces = GetSupportedColorSpaces();
     auto curColorSpace = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
         colorSpace);
-    if (curColorSpace == supportedColorSpaces.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetColorSpace input colorSpace not found in supportedList.");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(curColorSpace == supportedColorSpaces.end(), CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::SetColorSpace input colorSpace not found in supportedList.");
     if (IsSessionConfiged()) {
         isColorSpaceSetted_ = true;
     }
@@ -4298,10 +4284,8 @@ int32_t CaptureSession::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("EnableMovingPhotoMirror enter, isMirror: %{public}d", isMirror);
-    if (!IsMovingPhotoSupported()) {
-        MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        !IsMovingPhotoSupported(), CameraErrorCode::SERVICE_FATL_ERROR, "IsMovingPhotoSupported is false");
     auto captureSession = GetCaptureSession();
     CHECK_ERROR_RETURN_RET_LOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::StartMovingPhotoCapture captureSession is nullptr");

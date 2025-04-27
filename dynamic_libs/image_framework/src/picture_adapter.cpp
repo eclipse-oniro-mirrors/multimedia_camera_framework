@@ -88,10 +88,7 @@ void PictureAdapter::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Cam
 {
     MEDIA_INFO_LOG("PictureAdapter::SetAuxiliaryPicture enter");
     std::shared_ptr<Media::Picture> picture = GetPicture();
-    if (!picture) {
-        MEDIA_ERR_LOG("PictureAdapter::SetAuxiliaryPicture picture is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!picture, "PictureAdapter::SetAuxiliaryPicture picture is nullptr");
     std::unique_ptr<Media::AuxiliaryPicture> uniptr = Media::AuxiliaryPicture::Create(
         surfaceBuffer, static_cast<Media::AuxiliaryPictureType>(type));
     std::shared_ptr<Media::AuxiliaryPicture> picturePtr = std::move(uniptr);
@@ -102,10 +99,7 @@ bool PictureAdapter::Marshalling(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureAdapter::Marshalling enter");
     std::shared_ptr<Media::Picture> picture = GetPicture();
-    if (!picture) {
-        MEDIA_ERR_LOG("PictureAdapter::Marshalling picture is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!picture, false, "PictureAdapter::Marshalling picture is nullptr");
     return picture->Marshalling(data);
 }
 
@@ -120,10 +114,7 @@ int32_t PictureAdapter::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     MEDIA_INFO_LOG("PictureAdapter::SetExifMetadata enter");
     int32_t retCode = -1;
     std::shared_ptr<Media::Picture> picture = GetPicture();
-    if (!picture) {
-        MEDIA_ERR_LOG("PictureAdapter::SetExifMetadata picture is nullptr");
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!picture, retCode, "PictureAdapter::SetExifMetadata picture is nullptr");
     retCode = picture->SetExifMetadata(surfaceBuffer);
     return retCode;
 }
@@ -132,10 +123,7 @@ bool PictureAdapter::SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer)
 {
     bool retCode = false;
     std::shared_ptr<Media::Picture> picture = GetPicture();
-    if (!picture) {
-        MEDIA_ERR_LOG("PictureAdapter::SetMaintenanceData picture is nullptr");
-        return retCode;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!picture, retCode, "PictureAdapter::SetMaintenanceData picture is nullptr");
     retCode = picture->SetMaintenanceData(surfaceBuffer);
     return retCode;
 }
@@ -144,10 +132,7 @@ void PictureAdapter::RotatePicture()
 {
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture E");
     std::shared_ptr<Media::Picture> picture = GetPicture();
-    if (!picture) {
-        MEDIA_ERR_LOG("PictureAdapter::RotatePicture picture is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!picture, "PictureAdapter::RotatePicture picture is nullptr");
     std::string orientation = GetAndSetExifOrientation(
         reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     RotatePixelMap(picture->GetMainPixel(), orientation);

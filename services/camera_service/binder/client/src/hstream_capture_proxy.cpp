@@ -161,9 +161,7 @@ int32_t HStreamCaptureProxy::EnableMovingPhoto(bool enabled)
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_MOVING_PHOTO), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy EnableMovingPhoto failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamCaptureProxy EnableMovingPhoto failed, error: %{public}d", error);
     return error;
 }
 
@@ -262,9 +260,7 @@ int32_t HStreamCaptureProxy::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraPhotoP
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ADD_MEDIA_LIBRARY_PHOTO_PROXY),
         data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy SetCameraRotation failed, error: %{public}d", error);
     return error;
 }
 
@@ -295,9 +291,8 @@ int32_t HStreamCaptureProxy::AcquireBufferToPrepareProxy(int32_t captureId)
     data.WriteInt32(captureId);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_CAPTURE_DFX), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy AcquireBufferToPrepareProxy failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(
+        error != ERR_NONE, "HStreamRepeatProxy AcquireBufferToPrepareProxy failed, error: %{public}d", error);
     return error;
 }
 
@@ -312,9 +307,7 @@ int32_t HStreamCaptureProxy::EnableOfflinePhoto(bool isEnable)
     data.WriteBool(isEnable);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_ENABLE_OFFLINE_PHOTO), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy EnableOfflinePhoto failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HStreamRepeatProxy EnableOfflinePhoto failed, error: %{public}d", error);
     return error;
 }
 
