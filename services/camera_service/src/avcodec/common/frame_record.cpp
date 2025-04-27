@@ -41,14 +41,7 @@ FrameRecord::~FrameRecord()
 void FrameRecord::ReleaseSurfaceBuffer(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (IsReadyConvert()) {
-        MEDIA_DEBUG_LOG("FrameRecord::ReleaseSurfaceBuffer isReadyConvert");
-        auto thisPtr = sptr<FrameRecord>(this);
-        canReleased_.wait_for(lock, std::chrono::milliseconds(BUFFER_RELEASE_EXPIREATION_TIME),
-            [thisPtr] { return thisPtr->IsFinishCache(); });
-        MEDIA_DEBUG_LOG("FrameRecord::ReleaseSurfaceBuffer wait end");
-    }
-    if (videoBuffer_) {
+    if (videoBuffer_ && !IsReadyConvert()) {
         CHECK_EXECUTE(surfaceWrapper != nullptr, surfaceWrapper->RecycleBuffer(videoBuffer_));
         videoBuffer_ = nullptr;
         MEDIA_DEBUG_LOG("release buffer end %{public}s", frameId_.c_str());
