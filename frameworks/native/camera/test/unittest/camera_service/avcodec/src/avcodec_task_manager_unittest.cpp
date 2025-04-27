@@ -416,7 +416,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_013, TestSize
     taskManager->preBufferDuration_ = 0;
     int64_t shutterTime = 1;
     int32_t captureId = 1;
-    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    int64_t clearVideoEndTime = shutterTime + taskManager->preBufferDuration_;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     EXPECT_EQ(ret, 1);
 }
 
@@ -458,7 +459,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_014, TestSize
     taskManager->preBufferDuration_ = 0;
     int64_t shutterTime = 1;
     int32_t captureId = 1;
-    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    int64_t clearVideoEndTime = shutterTime + taskManager->preBufferDuration_;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     EXPECT_EQ(ret, 0);
 }
 
@@ -491,7 +493,8 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_015, TestSize
     taskManager->preBufferDuration_ = 0;
     int64_t shutterTime = 1;
     int32_t captureId = 1;
-    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, shutterTime, captureId);
+    int64_t clearVideoEndTime = shutterTime + taskManager->preBufferDuration_;
+    size_t ret = taskManager->FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     EXPECT_EQ(ret, 0);
 }
 
