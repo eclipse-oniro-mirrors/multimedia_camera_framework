@@ -71,7 +71,6 @@ int32_t AudioEncoder::Start()
 
 int32_t AudioEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 {
-    std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     CHECK_AND_RETURN_RET_LOG(isStarted_, 1, "Encoder is not started");
     int32_t ret = AV_ERR_OK;
@@ -84,7 +83,6 @@ int32_t AudioEncoder::PushInputData(sptr<CodecAVBufferInfo> info)
 
 int32_t AudioEncoder::FreeOutputData(uint32_t bufferIndex)
 {
-    std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_AND_RETURN_RET_LOG(encoder_ != nullptr, 1, "Encoder is null");
     MEDIA_INFO_LOG("FreeOutputData bufferIndex: %{public}u", bufferIndex);
     int32_t ret = OH_AudioCodec_FreeOutputBuffer(encoder_, bufferIndex);
@@ -114,6 +112,7 @@ int32_t AudioEncoder::Release()
             OH_AudioCodec_Destroy(encoder_);
             encoder_ = nullptr;
         }
+        context_->Release();
     }
     isStarted_ = false;
     return 0;
@@ -135,6 +134,7 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
     CHECK_ERROR_RETURN_RET_LOG(buffer == nullptr, false, "Enqueue audio buffer is empty");
     int enqueueRetryCount = 2;
     while (enqueueRetryCount > 0) {
+        std::unique_lock<std::mutex> encoderLock(encoderMutex_);
         enqueueRetryCount--;
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->inputMutex_);
@@ -151,14 +151,11 @@ bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
         bufferInfo->attr.pts = audioRecord->GetTimeStamp();
         bufferInfo->attr.size = DEFAULT_MAX_INPUT_SIZE;
         bufferInfo->attr.flags = AVCODEC_BUFFER_FLAGS_NONE;
-        {
-            std::lock_guard<std::mutex> encoderLock(encoderMutex_);
-            CHECK_ERROR_RETURN_RET_LOG(!isStarted_, false, "EnqueueBuffer while encoder is stopped");
-            auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
-            int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
-            errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
-            CHECK_ERROR_RETURN_RET_LOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
-        }
+        CHECK_ERROR_RETURN_RET_LOG(!isStarted_, false, "EnqueueBuffer while encoder is stopped");
+        auto bufferAddr = OH_AVBuffer_GetAddr(bufferInfo->buffer);
+        int32_t bufferCap = OH_AVBuffer_GetCapacity(bufferInfo->buffer);
+        errno_t cpyRet = memcpy_s(bufferAddr, bufferCap, buffer, DEFAULT_MAX_INPUT_SIZE);
+        CHECK_ERROR_RETURN_RET_LOG(cpyRet != 0, false, "encoder memcpy_s failed. %{public}d", cpyRet);
         lock.unlock();
         int32_t ret = PushInputData(bufferInfo);
         CHECK_AND_RETURN_RET_LOG(ret == 0, false, "Push data failed");
@@ -184,6 +181,7 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
     }
     int retryCount = 3;
     while (retryCount > 0) {
+        std::unique_lock<std::mutex> encoderLock(encoderMutex_);
         retryCount--;
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);

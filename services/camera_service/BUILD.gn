@@ -52,6 +52,7 @@ ohos_shared_library("camera_service") {
     "src/avcodec/avcodec_task_manager.cpp",
     "src/avcodec/camera_server_photo_proxy.cpp",
     "src/avcodec/common/frame_record.cpp",
+    "src/avcodec/common/sample_info.cpp",
     "src/avcodec/moving_photo_video_cache.cpp",
     "src/avcodec/sample_callback.cpp",
     "src/avcodec/video_encoder.cpp",
