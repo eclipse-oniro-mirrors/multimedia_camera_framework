@@ -51,14 +51,8 @@ void UnloadMotionSensor(void)
 
 __attribute__((no_sanitize("cfi"))) bool SubscribeCallback(int32_t motionType, OnMotionChangedPtr callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("callback is nullptr");
-        return false;
-    }
-    if (g_handle == nullptr) {
-        MEDIA_ERR_LOG("g_handle is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, false, "callback is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(g_handle == nullptr, false, "g_handle is nullptr");
     MotionSubscribeCallbackPtr func = (MotionSubscribeCallbackPtr)(dlsym(g_handle, "MotionSubscribeCallback"));
     const char* dlsymError = dlerror();
     if  (dlsymError) {
@@ -70,14 +64,8 @@ __attribute__((no_sanitize("cfi"))) bool SubscribeCallback(int32_t motionType, O
 
 __attribute__((no_sanitize("cfi"))) bool UnsubscribeCallback(int32_t motionType, OnMotionChangedPtr callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("callback is nullptr");
-        return false;
-    }
-    if (g_handle == nullptr) {
-        MEDIA_ERR_LOG("g_handle is nullptr");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, false, "callback is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(g_handle == nullptr, false, "g_handle is nullptr");
     MotionUnsubscribeCallbackPtr func =
         (MotionUnsubscribeCallbackPtr)(dlsym(g_handle, "MotionUnsubscribeCallback"));
     const char* dlsymError = dlerror();

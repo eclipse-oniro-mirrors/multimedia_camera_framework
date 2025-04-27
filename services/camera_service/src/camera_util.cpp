@@ -279,9 +279,7 @@ bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> c
 
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
 {
-    if (cameraSettings == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(cameraSettings == nullptr);
     auto srcHeader = cameraSettings->get();
     CHECK_ERROR_RETURN(srcHeader == nullptr);
     auto srcItemCount = srcHeader->item_count;
@@ -351,18 +349,12 @@ std::string GetClientNameByToken(int tokenIdNum)
     if (tokenType == TOKEN_HAP) {
         HapTokenInfoExt hapTokenInfo = {};
         int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenId, hapTokenInfo);
-        if (ret != 0) {
-            MEDIA_ERR_LOG("GetHapTokenInfoExtension fail, ret %{public}d", ret);
-            return "unknown";
-        }
+        CHECK_ERROR_RETURN_RET_LOG(ret != 0, "unknown", "GetHapTokenInfoExtension fail, ret %{public}d", ret);
         return hapTokenInfo.baseInfo.bundleName;
     } else if (tokenType == TOKEN_NATIVE) {
         NativeTokenInfo nativeTokenInfo = {};
         int ret = AccessTokenKit::GetNativeTokenInfo(tokenId, nativeTokenInfo);
-        if (ret != 0) {
-            MEDIA_ERR_LOG("GetNativeTokenInfo fail, ret %{public}d", ret);
-            return "unknown";
-        }
+        CHECK_ERROR_RETURN_RET_LOG(ret != 0, "unknown", "GetNativeTokenInfo fail, ret %{public}d", ret);
         return nativeTokenInfo.processName;
     } else {
         MEDIA_ERR_LOG("unexpected token type %{public}d", tokenType);

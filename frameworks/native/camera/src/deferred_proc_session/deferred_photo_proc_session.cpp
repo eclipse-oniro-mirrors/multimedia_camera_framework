@@ -186,10 +186,8 @@ void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const st
 
 bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)
 {
-    if (remoteSession_ == nullptr) {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::CancelProcessImage failed due to binder died.");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        remoteSession_ == nullptr, false, "DeferredPhotoProcSession::CancelProcessImage failed due to binder died.");
     MEDIA_INFO_LOG("DeferredPhotoProcSession:CancelProcessImage() enter.");
     remoteSession_->CancelProcessImage(imageId);
     return true;

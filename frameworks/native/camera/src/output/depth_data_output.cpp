@@ -163,10 +163,7 @@ void DepthDataOutput::SetCallback(std::shared_ptr<DepthDataStateCallback> callba
                 return;
             }
         }
-        if (GetStream() == nullptr) {
-            MEDIA_ERR_LOG("DepthDataOutput Failed to SetCallback!, GetStream is nullptr");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(GetStream() == nullptr, "DepthDataOutput Failed to SetCallback!, GetStream is nullptr");
         auto stream = GetStream();
         sptr<IStreamDepthData> itemStream = static_cast<IStreamDepthData*>(stream.GetRefPtr());
         int32_t errorCode = CAMERA_OK;

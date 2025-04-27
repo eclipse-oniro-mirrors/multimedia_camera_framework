@@ -41,10 +41,8 @@ bool CameraRoateParamSignTool::VerifyFileSign(const std::string &pubKeyPath, con
 
     RSA *pubKey = RSA_new();
 
-    if (PEM_read_bio_RSA_PUBKEY(bio, &pubKey, NULL, NULL) == NULL) {
-        MEDIA_ERR_LOG("get pubKey is failed");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        PEM_read_bio_RSA_PUBKEY(bio, &pubKey, NULL, NULL) == NULL, false, "get pubKey is failed");
 
     bool verify = false;
     if (!(pubKey == NULL || signStr.empty() || digeststr.empty())) {
@@ -62,14 +60,8 @@ bool CameraRoateParamSignTool::VerifyRsa(RSA *pubKey, const std::string &digest,
     EVP_PKEY *evpKey = NULL;
     EVP_MD_CTX *ctx = NULL;
     evpKey = EVP_PKEY_new();
-    if (evpKey == nullptr) {
-        MEDIA_ERR_LOG("evpKey == nullptr");
-        return false;
-    }
-    if (EVP_PKEY_set1_RSA(evpKey, pubKey) != 1) {
-        MEDIA_ERR_LOG("EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(evpKey == nullptr, false, "evpKey == nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(EVP_PKEY_set1_RSA(evpKey, pubKey) != 1, false, "EVP_PKEY_set1_RSA(evpKey, pubKey) != 1");
     ctx = EVP_MD_CTX_new();
     EVP_MD_CTX_init(ctx);
     if (ctx == nullptr) {
@@ -120,10 +112,8 @@ std::tuple<int, std::string> CameraRoateParamSignTool::CalcFileSha256Digest(cons
 int CameraRoateParamSignTool::ForEachFileSegment(const std::string &fpath, std::function<void(char *, size_t)> executor)
 {
     char canonicalPath[PATH_MAX + 1] = {0x00};
-    if (realpath(fpath.c_str(), canonicalPath) == nullptr) {
-        MEDIA_ERR_LOG("ForEachFileSegment filepath is irregular");
-        return errno;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        realpath(fpath.c_str(), canonicalPath) == nullptr, errno, "ForEachFileSegment filepath is irregular");
     std::unique_ptr<FILE, decltype(&fclose)> filp = { fopen(canonicalPath, "r"), fclose };
     if (!filp) {
         return errno;

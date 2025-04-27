@@ -223,10 +223,7 @@ static void GetInfoFromCameraDeviceHolder(sptr<HCameraDeviceHolder> requestCamer
 
     HapTokenInfoExt hapTokenInfo = {};
     int32_t getHapInfoRet = AccessTokenKit::GetHapTokenInfoExtension(firstTokenId, hapTokenInfo);
-    if (getHapInfoRet != 0) {
-        MEDIA_ERR_LOG("get hap info fail");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(getHapInfoRet != 0, "get hap info fail");
 
     std::vector<AppExecFwk::AppStateData> appDataList;
     CameraAppManagerUtils::GetForegroundApplications(appDataList);

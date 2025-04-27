@@ -107,9 +107,7 @@ void HCameraRestoreParam::SetSetting(std::shared_ptr<OHOS::Camera::CameraMetadat
 void HCameraRestoreParam::UpdateExposureSetting(long timeInterval)
 {
     std::lock_guard<std::mutex> lock(restoreParamMutex_);
-    if (timeInterval < DELETE_EXPOSURE_TIME || mSettings == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(timeInterval < DELETE_EXPOSURE_TIME || mSettings == nullptr);
     if (mOpMode == SceneMode::PROFESSIONAL_PHOTO || mOpMode == SceneMode::PROFESSIONAL_VIDEO
         || mOpMode == SceneMode::TIMELAPSE_PHOTO) {
         return;

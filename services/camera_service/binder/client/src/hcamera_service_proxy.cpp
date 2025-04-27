@@ -208,9 +208,7 @@ int32_t HCameraServiceProxy::UnSetMuteCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_MUTE_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy UnSetMuteCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy UnSetMuteCallback failed, error: %{public}d", error);
     return error;
 }
 
@@ -238,9 +236,7 @@ int32_t HCameraServiceProxy::UnSetTorchCallback()
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_UNSET_TORCH_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy UnSetTorchCallback failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy UnSetTorchCallback failed, error: %{public}d", error);
     return error;
 }
 
@@ -636,10 +632,8 @@ int32_t HCameraServiceProxy::IsTorchSupported(bool &isTorchSupported)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_TORCH_SUPPORTED), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::IsTorchSupported failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        error != ERR_NONE, error, "HCameraServiceProxy::IsTorchSupported failed, error: %{public}d", error);
 
     isTorchSupported = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsTorchSupported Read isTorchSupported is %{public}d", isTorchSupported);
@@ -655,10 +649,8 @@ int32_t HCameraServiceProxy::IsCameraMuteSupported(bool &isCameraMuteSupported)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_MUTE_SUPPORTED), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuteSupported failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        error != ERR_NONE, error, "HCameraServiceProxy::IsCameraMuteSupported failed, error: %{public}d", error);
 
     isCameraMuteSupported = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuteSupported Read isCameraMuteSupported is %{public}d",
@@ -693,10 +685,8 @@ int32_t HCameraServiceProxy::GetTorchStatus(int32_t &status)
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_TORCH_STATUS), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::GetTorchStatus failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        error != ERR_NONE, error, "HCameraServiceProxy::GetTorchStatus failed, error: %{public}d", error);
 
     status = reply.ReadInt32();
     MEDIA_DEBUG_LOG("HCameraServiceProxy::GetTorchStatus Read status is %{public}d", status);
@@ -934,10 +924,8 @@ int32_t HCameraServiceProxy::CheckWhiteList(bool &isInWhiteList)
     (void)data.WriteBool(isInWhiteList);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CHECK_WHITE_LIST), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::CheckWhiteList failed, error: %{public}d", error);
-        return error;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(
+        error != ERR_NONE, error, "HCameraServiceProxy::CheckWhiteList failed, error: %{public}d", error);
 
     isInWhiteList = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy CheckWhiteList Read muteMode is %{public}d", isInWhiteList);

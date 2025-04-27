@@ -22,10 +22,7 @@ void DeviceProtectionAbilityConnection::OnAbilityConnectDone(const AppExecFwk::E
     const sptr<IRemoteObject> &remoteObject, int32_t resultCode)
 {
     MEDIA_INFO_LOG("OnAbilityConnectDone, resultCode = %{public}d", resultCode);
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("remote object is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(remoteObject == nullptr, "remote object is nullptr");
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;

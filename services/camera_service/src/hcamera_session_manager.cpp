@@ -122,14 +122,10 @@ CamServiceError HCameraSessionManager::AddSession(sptr<HCaptureSession> session)
 
 void HCameraSessionManager::RemoveSession(sptr<HCaptureSession> session)
 {
-    if (session == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(session == nullptr);
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(session->GetPid());
-    if (mapIt == totalSessionMap_.end()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(mapIt == totalSessionMap_.end());
     auto& list = mapIt->second;
     for (auto listIt = list.begin(); listIt != list.end(); listIt++) {
         if (session == *listIt) {
@@ -176,9 +172,7 @@ void HCameraSessionManager::RemoveGroup(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(totalSessionMapMutex_);
     auto mapIt = totalSessionMap_.find(pid);
-    if (mapIt == totalSessionMap_.end()) {
-        return;
-    }
+    CHECK_ERROR_RETURN(mapIt == totalSessionMap_.end());
     RemoveGroupNoLock(mapIt);
 }
 

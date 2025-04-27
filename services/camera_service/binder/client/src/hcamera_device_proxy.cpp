@@ -38,9 +38,7 @@ int32_t HCameraDeviceProxy::closeDelayed()
     data.WriteBool(false);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DELAYED_CLOSE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy closeDelayed failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy closeDelayed failed, error: %{public}d", error);
     return error;
 }
 
@@ -83,9 +81,7 @@ int32_t HCameraDeviceProxy::Open(int32_t concurrentTypeofcamera)
     data.WriteInt32(concurrentTypeofcamera);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN_CONCURRENT), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
-    }
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraDeviceProxy Open failed, error: %{public}d", error);
     return error;
 }
 
