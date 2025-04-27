@@ -2920,5 +2920,45 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasWithFoldStatus
     }
     return supportedCameraDeviceList;
 }
+
+void CameraManager::SaveOldCameraId(std::string realCameraId, std::string oldCameraId)
+{
+    realtoVirtual_[realCameraId] = oldCameraId;
+}
+
+std::string CameraManager::GetOldCameraIdfromReal(std::string realCameraId)
+{
+    string resultstr = "";
+    auto itr = realtoVirtual_.find(realCameraId);
+    if (itr != realtoVirtual_.end()) {
+        resultstr = itr->second;
+    } else {
+        MEDIA_ERR_LOG("Can not GetOldCameraIdfromReal");
+    }
+    return resultstr;
+}
+
+void CameraManager::SaveOldMeta(std::string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    cameraOldCamera_[cameraId] = metadata;
+}
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> CameraManager::GetOldMeta(std::string cameraId)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result_meta = nullptr;
+    auto itr = cameraOldCamera_.find(cameraId);
+    if (itr != cameraOldCamera_.end()) {
+        result_meta = itr->second;
+    } else {
+        MEDIA_ERR_LOG("Can not GetOldMeta");
+    }
+    return result_meta;
+}
+
+void CameraManager::SetOldMetatoInput(sptr<CameraDevice>& cameraObj,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    SetProfile(cameraObj, metadata);
+}
 } // namespace CameraStandard
 } // namespace OHOS

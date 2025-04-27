@@ -181,6 +181,7 @@ CameraInput::~CameraInput()
 int CameraInput::Open()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
+    RecoveryOldDevice();
     UnregisterTime();
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Open");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
@@ -209,6 +210,8 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto deviceObj = GetCameraDevice();
     auto cameraObject = GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObject == nullptr,
+        CAMERA_DEVICE_ERROR, "CameraInput::GetCameraId cameraObject is null");
 
     CameraPosition cameraPosition = cameraObject->GetPosition();
     auto cameraServiceOnly = CameraManager::GetInstance()->GetServiceProxy();
@@ -223,6 +226,15 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     }
 
     cameraServiceOnly->GetIdforCameraConcurrentType(iter->second, idOfThis);
+
+    if (cameraObject->isConcurrentDeviceType() == false) {
+        CameraManager::GetInstance()->SaveOldCameraId(idOfThis, cameraObject->GetID());
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metaData;
+        auto devid = cameraObject->GetID();
+        cameraServiceOnly->GetCameraAbility(devid, metaData);
+        CameraManager::GetInstance()->SaveOldMeta(cameraObject->GetID(), metaData);
+    }
+
     sptr<ICameraDeviceService> cameraDevicePhysic = nullptr;
     CameraManager::GetInstance()->CreateCameraDevice(idOfThis, &cameraDevicePhysic);
     SetCameraDevice(cameraDevicePhysic);
@@ -248,6 +260,7 @@ int CameraInput::Open(int32_t cameraConcurrentType)
     }
     std::lock_guard<std::mutex> lock2(deviceObjMutex_);
     cameraObj_ = cameraObjnow;
+    cameraObj_->SetConcurrentDeviceType(true);
     CameraManager::GetInstance()->SetProfile(cameraObj_, cameraAbility);
 
     if (cameraDevicePhysic) {
@@ -264,6 +277,7 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
     MEDIA_DEBUG_LOG("Enter Into CameraInput::OpenSecureCamera");
+    RecoveryOldDevice();
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     bool isSupportSecCamera = false;
     auto cameraObject = GetCameraDeviceInfo();
@@ -620,6 +634,33 @@ void CameraInput::SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr
     SetCameraDeviceInfo(cameraObj);
     SetCameraDevice(deviceObj);
     InitCameraInput();
+}
+
+void CameraInput::RecoveryOldDevice()
+{
+    auto cameraObject = GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_LOG(cameraObject == nullptr, "GetCameraSettings cameraObject is null");
+    if (cameraObject->isConcurrentLimted_ == 1) {
+        std::string virtualcameraID = CameraManager::GetInstance()->GetOldCameraIdfromReal(cameraObject->GetID());
+        if (virtualcameraID == "") {
+            MEDIA_ERR_LOG("CameraInput::SetOldDevice can not GetOldCameraId,now id = %{public}s",
+                cameraObject->GetID().c_str());
+            virtualcameraID = cameraObject->GetID();
+        } else {
+            cameraObject->SetCameraId(virtualcameraID);
+        }
+        std::shared_ptr<OHOS::Camera::CameraMetadata> result_meta = nullptr;
+        result_meta = CameraManager::GetInstance()->GetOldMeta(virtualcameraID);
+        sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(virtualcameraID, result_meta);
+        if (result_meta == nullptr) {
+            MEDIA_ERR_LOG("CameraInput::SetOldDevice can not GetOldMeta");
+            return;
+        } else {
+            SetCameraDeviceInfo(cameraObjnow);
+            CameraManager::GetInstance()->SetOldMetatoInput(cameraObjnow, result_meta);
+        }
+        cameraObjnow->isConcurrentLimted_ = 0;
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

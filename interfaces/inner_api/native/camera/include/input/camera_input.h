@@ -388,6 +388,7 @@ public:
     void InitCameraInput();
     void GetMetadataFromService(sptr<CameraDevice> &cameraObj);
     void ControlAuxiliary(AuxiliaryType type, AuxiliaryStatus status);
+    void RecoveryOldDevice();
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     int32_t isConcurrentLimted_ = 0;
     std::queue<uint32_t>timeQueue_;

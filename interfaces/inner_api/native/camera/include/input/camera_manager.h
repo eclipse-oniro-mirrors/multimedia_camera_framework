@@ -819,6 +819,11 @@ public:
     friend int CameraInput::Open(int32_t cameraConcurrentType);
     std::string GetFoldScreenType();
     bool GetIsInWhiteList();
+    void SaveOldCameraId(std::string realCameraId, std::string oldCameraId);
+    std::string GetOldCameraIdfromReal(std::string realCameraId);
+    void SaveOldMeta(std::string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> GetOldMeta(std::string cameraId);
+    void SetOldMetatoInput(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -984,6 +989,8 @@ private:
     std::string curBundleName_ = "";
     sptr<CameraDevice> innerCamera_ = nullptr;
     FoldStatus preFoldStatus = FoldStatus::UNKNOWN_FOLD;
+    std::unordered_map<std::string, std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraOldCamera_;
+    std::unordered_map<std::string, std::string>realtoVirtual_;
 };
 
 class CameraManagerGetter {
