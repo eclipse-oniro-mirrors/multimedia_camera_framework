@@ -528,10 +528,19 @@ sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
     MEDIA_INFO_LOG("CreateCameraPhotoProxy deferredImageFormat:%{public}d, isHighQuality = %{public}d, "
         "size:%{public}" PRId64, deferredImageFormat, isHighQuality, size);
 
+    // get cloudImageEnhanceFlag for 100 picture
+    int32_t cloudImageEnhanceFlag = 0;
+    res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::cloudImageEnhanceFlag, cloudImageEnhanceFlag);
+    MEDIA_INFO_LOG("CreateCameraPhotoProxy extraGet cloudImageEnhanceFlag: %{public}d", cloudImageEnhanceFlag);
+    if (res != 0) {
+        MEDIA_INFO_LOG("ExtraGet cloudImageEnhanceFlag error %{public}d", res);
+    }
+
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
         nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
     std::string imageIdStr = std::to_string(imageId);
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
+    photoProxy->SetCloudImageEnhanceFlag(cloudImageEnhanceFlag);
     return photoProxy;
 }
 
