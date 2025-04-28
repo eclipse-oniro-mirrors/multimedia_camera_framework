@@ -401,8 +401,6 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
         napi_create_array(env_, &camerasArray);
 
         const auto& supportedCameras = foldStatusInfo.supportedCameras;
-
-        // 提前返回以减少嵌套
         if (supportedCameras.empty()) {
             MEDIA_ERR_LOG("supportedCameras is empty");
             napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errCode);
