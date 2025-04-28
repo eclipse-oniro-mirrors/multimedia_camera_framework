@@ -208,7 +208,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_003, TestSize.Level
     ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
     EXPECT_EQ(ret, 0);
 
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     EXPECT_NE(ipcFd, nullptr);
     long bytes = sizeof(ipcFd);
     ret = remoteCallback->OnProcessImageDone(imageId, ipcFd, bytes, restorable);
@@ -251,7 +251,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_004, TestSize.Level
     ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
     EXPECT_EQ(ret, 0);
 
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     EXPECT_NE(ipcFd, nullptr);
     long bytes = sizeof(ipcFd);
     ret = remoteCallback->OnProcessImageDone(imageId, ipcFd, bytes, restorable);
@@ -294,7 +294,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_005, TestSize.Level
     ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
     EXPECT_EQ(ret, 0);
 
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     EXPECT_NE(ipcFd, nullptr);
     long bytes = sizeof(ipcFd);
     ret = remoteCallback->OnProcessImageDone(imageId, ipcFd, bytes, restorable);
@@ -334,7 +334,7 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_006, TestSize.Level
     ret = remoteCallback->OnProcessImageDone(imageId, picture_, restorable);
     EXPECT_EQ(ret, 0);
 
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     EXPECT_NE(ipcFd, nullptr);
     long bytes = sizeof(ipcFd);
     ret = remoteCallback->OnProcessImageDone(imageId, ipcFd, bytes, restorable);

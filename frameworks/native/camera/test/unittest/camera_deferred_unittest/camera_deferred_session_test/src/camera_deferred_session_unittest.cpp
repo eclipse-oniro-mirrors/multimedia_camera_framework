@@ -197,8 +197,8 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, Te
     EXPECT_FALSE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_TEMP);
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_TEMP));
     ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
     EXPECT_EQ(deferredVideoSession->videoIds_.size(), 0);
 }
@@ -226,8 +226,8 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, Te
     EXPECT_TRUE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_TEMP);
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_TEMP));
     ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
     EXPECT_EQ(ret, DP_OK);
     EXPECT_NE(deferredVideoSession->videoIds_.size(), 0);
@@ -267,7 +267,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_005, Te
     sptr<PhotoSessionInfo> photoInfo = sptr<PhotoSessionInfo>::MakeSptr(userId_, callback);
     sessionCoordinator->AddPhotoSession(photoInfo);
     std::string imageId = "testImageId";
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     sessionCoordinator->OnProcessDone(userId_, imageId, ipcFd, 1, false);
     sessionCoordinator->OnError(userId_, imageId, DPS_ERROR_UNKNOW);
     sessionCoordinator->OnStateChanged(userId_, DPS_SESSION_STATE_IDLE);
@@ -298,7 +298,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_006, Te
     ASSERT_NE(sessionCoordinator, nullptr);
 
     std::string imageId = "testImageId";
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     sessionCoordinator->OnProcessDone(userId_, imageId, ipcFd, 1, false);
     sessionCoordinator->OnError(userId_, imageId, DPS_ERROR_UNKNOW);
     sessionCoordinator->OnStateChanged(userId_, DPS_SESSION_STATE_IDLE);
@@ -347,7 +347,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_007, Te
     std::shared_ptr<SessionCoordinator> sessionCoordinator = sessionManagerPtr_->GetSessionCoordinator();
     ASSERT_NE(sessionCoordinator, nullptr);
     std::string imageId = "testImageId";
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
 
     sptr<DeferredPhotoProcessingSessionCallback> callback =
         new (std::nothrow) DeferredPhotoProcessingSessionCallback();
@@ -393,7 +393,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_008, Te
     sptr<PhotoSessionInfo> photoInfo = sptr<PhotoSessionInfo>::MakeSptr(userId_, callback);
     sessionCoordinator->AddPhotoSession(photoInfo);
     std::string imageId = "testImageId";
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     sessionCoordinator->OnProcessDone(userId_, imageId, ipcFd, 1, false);
     sessionCoordinator->OnError(userId_, imageId, DpsError::DPS_ERROR_SESSION_SYNC_NEEDED);
     sessionCoordinator->OnError(userId_, imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
@@ -431,7 +431,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_009, Te
     sptr<PhotoSessionInfo> photoInfo = sptr<PhotoSessionInfo>::MakeSptr(userId_, callback);
     sessionCoordinator->AddPhotoSession(photoInfo);
     std::string imageId = "testImageId";
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     sessionCoordinator->OnProcessDone(userId_, imageId, ipcFd, 1, false);
     sessionCoordinator->OnStateChanged(userId_, DpsStatus::DPS_SESSION_STATE_IDLE);
     sessionCoordinator->OnStateChanged(userId_, DpsStatus::DPS_SESSION_STATE_RUNNALBE);
@@ -461,7 +461,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_010, Te
 
     sptr<VideoSessionInfo> sessionInfo = sptr<VideoSessionInfo>::MakeSptr(userId_, videoCallback);
     sessionCoordinator->AddVideoSession(sessionInfo);
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
 
     std::string videoId = "testVideo";
     sessionCoordinator->OnVideoProcessDone(userId_, videoId, ipcFd);

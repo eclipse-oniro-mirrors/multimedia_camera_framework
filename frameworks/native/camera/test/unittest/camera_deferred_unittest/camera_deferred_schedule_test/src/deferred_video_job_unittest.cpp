@@ -36,9 +36,9 @@ void DeferredVideoJobUnitTest::TearDownTestCase(void) {}
 
 void DeferredVideoJobUnitTest::SetUp(void)
 {
-    srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_SOURCE_FD);
+    srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_SOURCE_FD));
     ASSERT_NE(srcFd_, nullptr);
-    dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_DESTINATION_FD);
+    dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_DESTINATION_FD));
     ASSERT_NE(dstFd_, nullptr);
 }
 
