@@ -337,7 +337,8 @@ void CameraBeautyNotification::RefreshResConfig()
         MEDIA_INFO_LOG("resConfig_ is nullptr");
         return;
     }
-    resConfig_->SetLocaleInfo(locale.getLanguage(), locale.getScript(), locale.getCountry());
+    std::string region = Global::I18n::LocaleConfig::GetSystemRegion();
+    resConfig_->SetLocaleInfo(locale.getLanguage(), locale.getScript(), region.c_str());
     if (!resourceManager_) {
         MEDIA_INFO_LOG("resourceManager_ is nullptr");
         return;
