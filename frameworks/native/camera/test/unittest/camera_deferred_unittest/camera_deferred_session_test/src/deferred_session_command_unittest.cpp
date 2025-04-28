@@ -54,9 +54,9 @@ void DeferredSessionCommandUnitTest::TearDown(void)
 
 void DeferredSessionCommandUnitTest::PrepareFd()
 {
-    srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(videoSourceFd_);
+    srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoSourceFd_));
     ASSERT_NE(srcFd_, nullptr);
-    dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(videoDestinationFd_);
+    dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(videoDestinationFd_));
     ASSERT_NE(dstFd_, nullptr);
 }
 

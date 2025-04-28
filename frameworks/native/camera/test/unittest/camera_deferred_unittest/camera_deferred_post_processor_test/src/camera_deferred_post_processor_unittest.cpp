@@ -158,13 +158,11 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_002, Te
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto srcFd = 1;
     auto dstFd = 1;
-    fdsan_exchange_owner_tag(srcFd, 0, LOG_DOMAIN);
-    fdsan_exchange_owner_tag(dstFd, 0, LOG_DOMAIN);
     postProcessor->copyFileByFd(srcFd, dstFd);
     auto isAutoSuspend = true;
     std::string videoId_(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_SOURCE_FD);
-    sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_DESTINATION_FD);
+    sptr<IPCFileDescriptor> srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_SOURCE_FD));
+    sptr<IPCFileDescriptor> dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_DESTINATION_FD));
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId_, srcFd_, dstFd_);
     std::shared_ptr<DeferredVideoWork> work =
         std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, isAutoSuspend);

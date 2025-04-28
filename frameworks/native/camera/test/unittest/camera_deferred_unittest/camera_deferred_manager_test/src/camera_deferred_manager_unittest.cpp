@@ -139,7 +139,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize
     uint8_t randomNum = 1;
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
-    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
+    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
     ASSERT_NE(inputFd, nullptr);
     EXPECT_EQ(mpegManagerFactory->Acquire(requestId, inputFd), nullptr);
     EXPECT_EQ(mpegManagerFactory->refCount_, 0);
