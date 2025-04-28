@@ -393,31 +393,35 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
         napi_create_object(env_, &errCode);
         napi_value resultObj;
         napi_create_object(env_, &resultObj);
-        
+
         napi_value foldStatusVal;
         napi_create_int32(env_, foldStatusInfo.foldStatus, &foldStatusVal);
         napi_set_named_property(env_, resultObj, "foldStatus", foldStatusVal);
         napi_value camerasArray;
         napi_create_array(env_, &camerasArray);
-            
+
         const auto& supportedCameras = foldStatusInfo.supportedCameras;
-        napi_value jsErrCode;
-        if (!supportedCameras.empty()) {
-            for (size_t i = 0; i < supportedCameras.size(); ++i) {
-                if (supportedCameras[i] == nullptr) {
-                    MEDIA_ERR_LOG("cameraDevice is null");
-                    continue;
-                }
-                napi_value cameraObj = CameraNapiObjCameraDevice(*supportedCameras[i]).GenerateNapiValue(env_);
-                napi_set_element(env_, camerasArray, i, cameraObj);
-            }
-            napi_create_int32(env_, 0, &jsErrCode);
-            napi_set_named_property(env_, errCode, "code", jsErrCode);
-        } else {
+
+        // 提前返回以减少嵌套
+        if (supportedCameras.empty()) {
             MEDIA_ERR_LOG("supportedCameras is empty");
-            napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &jsErrCode);
-            napi_set_named_property(env_, errCode, "code", jsErrCode);
+            napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errCode);
+            napi_set_named_property(env_, errCode, "code", errCode);
+            napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
+            return ExecuteCallbackData(env_, errCode, resultObj);
         }
+
+        for (size_t i = 0; i < supportedCameras.size(); ++i) {
+            if (supportedCameras[i] == nullptr) {
+                MEDIA_ERR_LOG("cameraDevice is null");
+                continue;
+            }
+            napi_value cameraObj = CameraNapiObjCameraDevice(*supportedCameras[i]).GenerateNapiValue(env_);
+            napi_set_element(env_, camerasArray, i, cameraObj);
+        }
+
+        napi_create_int32(env_, 0, &errCode);
+        napi_set_named_property(env_, errCode, "code", errCode);
         napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
         return ExecuteCallbackData(env_, errCode, resultObj);
     });
