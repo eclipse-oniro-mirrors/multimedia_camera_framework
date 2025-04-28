@@ -401,10 +401,11 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
         napi_create_array(env_, &camerasArray);
 
         const auto& supportedCameras = foldStatusInfo.supportedCameras;
+        napi_value jsErrCode;
         if (supportedCameras.empty()) {
             MEDIA_ERR_LOG("supportedCameras is empty");
-            napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errCode);
-            napi_set_named_property(env_, errCode, "code", errCode);
+            napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &jsErrCode);
+            napi_set_named_property(env_, errCode, "code", jsErrCode);
             napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
             return ExecuteCallbackData(env_, errCode, resultObj);
         }
@@ -418,8 +419,8 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
             napi_set_element(env_, camerasArray, i, cameraObj);
         }
 
-        napi_create_int32(env_, 0, &errCode);
-        napi_set_named_property(env_, errCode, "code", errCode);
+        napi_create_int32(env_, 0, &jsErrCode);
+        napi_set_named_property(env_, errCode, "code", jsErrCode);
         napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
         return ExecuteCallbackData(env_, errCode, resultObj);
     });
