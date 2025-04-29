@@ -18,6 +18,8 @@
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
+#include "metadata_common_utils.h"
+
 namespace OHOS {
 namespace CameraStandard {
 LightPaintingSession::~LightPaintingSession()
@@ -73,18 +75,8 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
     CHECK_ERROR_RETURN_RET_LOG(itr == fwkLightPaintingTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "LightPaintingSession::SetLightPainting unknown type of LightPainting.");
     lightPainting = itr->second;
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting: %{public}d", type);
-    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE");
-        status = changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting success to find OHOS_CONTROL_LIGHT_PAINTING_TYPE");
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, 1);
     CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::SetLightPainting Failed to set LightPainting type");
         currentLightPaintingType_ = type;
@@ -100,19 +92,8 @@ int32_t LightPaintingSession::TriggerLighting()
         "LightPaintingSession::TriggerLighting Need to call LockForControl() before setting camera properties.");
     CHECK_ERROR_RETURN_RET(currentLightPaintingType_ != LightPaintingType::LIGHT, CameraErrorCode::INVALID_ARGUMENT);
     uint8_t enableTrigger = 1;
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting once.");
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_FLASH, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
-        status = changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("LightPaintingSession::TriggerLighting success to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, 1);
     CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
         "LightPaintingSession::TriggerLighting Failed to trigger lighting");
     return CameraErrorCode::SUCCESS;

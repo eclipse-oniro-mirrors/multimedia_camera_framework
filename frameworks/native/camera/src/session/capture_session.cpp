@@ -1564,16 +1564,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     } else {
         exposure = itr->second;
     }
-
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXPOSURE_MODE, &exposure, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_EXPOSURE_MODE), [weakThis, exposureMode]() {
         auto sharedThis = weakThis.promote();
@@ -1625,24 +1616,13 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
 {
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetMeteringPoint Session is not Commited");
-
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetExposurePoint Need to call LockForControl() "
-        "before setting camera properties");
+        "CaptureSession::SetExposurePoint Need to call LockForControl() before setting camera properties");
     Point exposureVerifyPoint = VerifyFocusCorrectness(exposurePoint);
     Point unifyExposurePoint = CoordinateTransform(exposureVerifyPoint);
-    bool status = false;
-    float exposureArea[2] = { unifyExposurePoint.x, unifyExposurePoint.y };
-    camera_metadata_item_t item;
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_REGIONS, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(
-            OHOS_CONTROL_AE_REGIONS, exposureArea, sizeof(exposureArea) / sizeof(exposureArea[0]));
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(
-            OHOS_CONTROL_AE_REGIONS, exposureArea, sizeof(exposureArea) / sizeof(exposureArea[0]));
-    }
+    std::vector<float> exposureArea = { unifyExposurePoint.x, unifyExposurePoint.y };
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_AE_REGIONS, exposureArea.data(), exposureArea.size());
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_REGIONS), [weakThis, exposurePoint]() {
         auto sharedThis = weakThis.promote();
@@ -1714,13 +1694,9 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetExposureBias Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetExposureValue Need to call LockForControl() "
-        "before setting camera properties");
-    bool status = false;
+        "CaptureSession::SetExposureBias Need to call LockForControl() before setting camera properties");
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}f", exposureValue);
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED,
@@ -1742,13 +1718,8 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
     }
 
     int32_t exposureCompensation = CalculateExposureValue(exposureValue);
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
-    }
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION),
         [weakThis, exposureValue]() {
@@ -1920,19 +1891,8 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     } else {
         focus = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusMode Focus mode: %{public}d", focusMode);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_MODE, &focus, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_FOCUS_MODE), [weakThis, focusMode]() {
         auto sharedThis = weakThis.promote();
@@ -1988,18 +1948,8 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         "The current mode does not support setting the focus point.");
     Point focusVerifyPoint = VerifyFocusCorrectness(focusPoint);
     Point unifyFocusPoint = CoordinateTransform(focusVerifyPoint);
-    bool status = false;
-    float FocusArea[2] = { unifyFocusPoint.x, unifyFocusPoint.y };
-    camera_metadata_item_t item;
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AF_REGIONS, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status =
-            changedMetadata_->addEntry(OHOS_CONTROL_AF_REGIONS, FocusArea, sizeof(FocusArea) / sizeof(FocusArea[0]));
-    } else if (ret == CAM_META_SUCCESS) {
-        status =
-            changedMetadata_->updateEntry(OHOS_CONTROL_AF_REGIONS, FocusArea, sizeof(FocusArea) / sizeof(FocusArea[0]));
-    }
+    std::vector<float> focusArea = { unifyFocusPoint.x, unifyFocusPoint.y };
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AF_REGIONS, focusArea.data(), focusArea.size());
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_AF_REGIONS), [weakThis, focusPoint]() {
         auto sharedThis = weakThis.promote();
@@ -2330,19 +2280,8 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     // LCOV_EXCL_START
     if (GetMode() == SceneMode::LIGHT_PAINTING && flashMode == FlashMode::FLASH_MODE_OPEN) {
         uint8_t enableTrigger = 1;
-        bool status = false;
-        int32_t ret;
-        uint32_t count = 1;
-        camera_metadata_item_t item;
         MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting once.");
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_FLASH, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
-            status = changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("CaptureSession::TriggerLighting success to find OHOS_CONTROL_LIGHT_PAINTING_FLASH");
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, count);
-        }
+        bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LIGHT_PAINTING_FLASH, &enableTrigger, 1);
         CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SERVICE_FATL_ERROR,
             "CaptureSession::TriggerLighting Failed to trigger lighting");
         return CameraErrorCode::SUCCESS;
@@ -2355,17 +2294,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     } else {
         flash = itr->second;
     }
-
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FLASH_MODE, &flash, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFlashMode Failed to set flash mode");
     wptr<CaptureSession> weakThis(this);
     AddFunctionToMap(std::to_string(OHOS_CONTROL_FLASH_MODE), [weakThis, flashMode]() {
@@ -2543,11 +2472,8 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         "CaptureSession::SetZoomRatio Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetZoomRatio Need to call LockForControl() before setting camera properties");
-    bool status = false;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f", zoomRatio);
     std::vector<float> zoomRange = GetZoomRatioRange();
     CHECK_ERROR_RETURN_RET_LOG(zoomRange.empty(), CameraErrorCode::SUCCESS,
@@ -2563,14 +2489,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     }
     CHECK_ERROR_RETURN_RET_LOG(zoomRatio == 0, CameraErrorCode::SUCCESS,
         "CaptureSession::SetZoomRatio Invalid zoom ratio");
-
-    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, 1);
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Failed to set zoom mode");
     } else {
@@ -2602,17 +2521,8 @@ int32_t CaptureSession::PrepareZoom()
         "CaptureSession::PrepareZoom Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::PrepareZoom Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
     uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetSmoothZoom CaptureSession::PrepareZoom Failed to prepare zoom");
     return CameraErrorCode::SUCCESS;
 }
@@ -2627,19 +2537,8 @@ int32_t CaptureSession::UnPrepareZoom()
         "CaptureSession::UnPrepareZoom Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::UnPrepareZoom Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
     uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE;
-    camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::UnPrepareZoom Failed to unPrepare zoom");
     return CameraErrorCode::SUCCESS;
 }
@@ -2985,20 +2884,8 @@ void CaptureSession::SetFilter(FilterType filterType)
             break;
         }
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("CaptureSession::setFilter: %{public}d", filterType);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FILTER_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FILTER_TYPE, &filter, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FILTER_TYPE, &filter, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FILTER_TYPE, &filter, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::setFilter Failed to set filter");
     return;
     // LCOV_EXCL_STOP
@@ -3079,12 +2966,7 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
 
 bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
 {
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     camera_device_metadata_tag_t metadata;
-
     auto metaItr = fwkBeautyControlMap_.find(beautyType);
     if (metaItr != fwkBeautyControlMap_.end()) {
         metadata = metaItr->second;
@@ -3097,6 +2979,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
         levelVec = GetSupportedBeautyRange(beautyType);
     }
 
+    bool status = false;
     CameraPosition usedAsCameraPosition = GetUsedAsPosition();
     MEDIA_INFO_LOG("CaptureSession::SetBeautyValue usedAsCameraPosition %{public}d", usedAsCameraPosition);
     if (CAMERA_POSITION_UNSPECIFIED == usedAsCameraPosition) {
@@ -3107,20 +2990,10 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
     // LCOV_EXCL_START
     if (beautyType == BeautyType::SKIN_TONE) {
         int32_t skinToneVal = beautyLevel;
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), metadata, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(metadata, &skinToneVal, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(metadata, &skinToneVal, count);
-        }
+        status = AddOrUpdateMetadata(changedMetadata_, metadata, &skinToneVal, 1);
     } else {
         uint8_t beautyVal = static_cast<uint8_t>(beautyLevel);
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), metadata, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(metadata, &beautyVal, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(metadata, &beautyVal, count);
-        }
+        status = AddOrUpdateMetadata(changedMetadata_, metadata, &beautyVal, 1);
     }
     CHECK_ERROR_RETURN_RET_LOG(!status, status, "CaptureSession::SetBeautyValue Failed to set beauty");
     beautyTypeAndLevels_[beautyType] = beautyLevel;
@@ -3157,17 +3030,9 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
     }
     // LCOV_EXCL_START
     MEDIA_ERR_LOG("SetBeauty beautyType %{public}d", beautyType);
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_OFF;
-    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
     if ((beautyType == AUTO_TYPE) && (value == 0)) {
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
-        }
+        bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_BEAUTY_TYPE, &beauty, 1);
         status = SetBeautyValue(beautyType, value);
         CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetBeauty AUTO_TYPE Failed to set beauty value");
         return;
@@ -3178,11 +3043,7 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
         beauty = static_cast<uint8_t>(itrType->second);
     }
 
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_BEAUTY_TYPE, &beauty, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetBeauty Failed to set beautyType control");
 
     status = SetBeautyValue(beautyType, value);
@@ -3422,11 +3283,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFocusDistance Need to call LockForControl before setting camera properties");
-    bool status = false;
-    uint32_t count = 1;
-    int32_t ret;
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusDistance app set focusDistance = %{public}f", focusDistance);
-    camera_metadata_item_t item;
     if (focusDistance < 0) {
         focusDistance = 0.0;
     } else if (focusDistance > 1) {
@@ -3435,12 +3292,7 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     float value = (1 - focusDistance) * GetMinimumFocusDistance();
     focusDistance_ = focusDistance;
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusDistance meta set focusDistance = %{public}f", value);
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LENS_FOCUS_DISTANCE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_LENS_FOCUS_DISTANCE, &value, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_LENS_FOCUS_DISTANCE, &value, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LENS_FOCUS_DISTANCE, &value, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_LENS_FOCUS_DISTANCE),
         [weakThis, focusDistance]() {
@@ -3752,21 +3604,9 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
     auto itr = g_fwkColorEffectMap_.find(colorEffect);
     CHECK_ERROR_RETURN_LOG(itr == g_fwkColorEffectMap_.end(), "CaptureSession::SetColorEffect unknown is color effect");
-        colorEffectTemp = itr->second;
-
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
+    colorEffectTemp = itr->second;
     MEDIA_DEBUG_LOG("CaptureSession::SetColorEffect: %{public}d", colorEffect);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_SUPPORTED_COLOR_MODES),
         [weakThis, colorEffect]() {
@@ -3934,16 +3774,8 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
         "CaptureSession Failed EnableMacro!, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::EnableMacro Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAMERA_MACRO, &item);
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MACRO_ENABLE : OHOS_CAMERA_MACRO_DISABLE);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::EnableMacro Failed to enable macro");
     } else {
@@ -4030,16 +3862,8 @@ int32_t CaptureSession::EnableDepthFusion(bool isEnable)
         "CaptureSession Failed EnableDepthFusion!, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::EnableDepthFusion Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &item);
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAPTURE_MACRO_DEPTH_FUSION, &enableValue, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableDepthFusion Failed to enable depth fusion");
     isDepthFusionEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
@@ -4088,18 +3912,8 @@ int32_t CaptureSession::EnableMoonCaptureBoost(bool isEnable)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed EnableMoonCaptureBoost!, session not commited");
     // LCOV_EXCL_START
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MOON_CAPTURE_BOOST, &item);
-
-    uint8_t enableValue =
-        static_cast<uint8_t>(isEnable ? 1 : 0);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_MOON_CAPTURE_BOOST, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_MOON_CAPTURE_BOOST, &enableValue, 1);
-    }
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MOON_CAPTURE_BOOST, &enableValue, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMoonCaptureBoost failed to enable moon capture boost");
     isSetMoonCaptureBoostEnable_ = isEnable;
     return CameraErrorCode::SUCCESS;
@@ -4247,16 +4061,8 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     CHECK_ERROR_RETURN_RET_LOG(!(IsSessionConfiged() || IsSessionCommited()), CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession Failed EnableMovingPhoto!, session not configed");
     // LCOV_EXCL_START
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MOVING_PHOTO, &item);
     uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MOVING_PHOTO_ON : OHOS_CAMERA_MOVING_PHOTO_OFF);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_MOVING_PHOTO), [weakThis, isEnable]() {
         auto sharedThis = weakThis.promote();
@@ -4518,9 +4324,6 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
     CHECK_ERROR_RETURN_LOG(IsSessionCommited(), "CaptureSession::EnableDeferredType session has committed!");
     this->LockForControl();
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr, "CaptureSession::EnableDeferredType changedMetadata_ is NULL");
-
-    bool status = false;
-    camera_metadata_item_t item;
     isImageDeferred_ = false;
     uint8_t deferredType;
     switch (type) {
@@ -4541,12 +4344,7 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isE
             break;
         // LCOV_EXCL_STOP
     }
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::enableDeferredType Failed to set type!");
     int32_t errCode = this->UnlockForControl();
     if (errCode != CameraErrorCode::SUCCESS) {
@@ -4562,16 +4360,8 @@ void CaptureSession::EnableAutoDeferredVideoEnhancement(bool isEnableByUser)
     CHECK_ERROR_RETURN_LOG(IsSessionCommited(), "EnableAutoDeferredVideoEnhancement session has committed!");
     this->LockForControl();
     CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr, "EnableAutoDeferredVideoEnhancement changedMetadata_ is NULL");
-
-    bool status = false;
-    camera_metadata_item_t item;
     isVideoDeferred_ = isEnableByUser;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AUTO_DEFERRED_VIDEO_ENHANCE, &isEnableByUser, 1);
     CHECK_ERROR_PRINT_LOG(!status, "EnableAutoDeferredVideoEnhancement Failed to set type!");
     int32_t errCode = this->UnlockForControl();
     if (errCode != CameraErrorCode::SUCCESS) {
@@ -4589,15 +4379,7 @@ void CaptureSession::SetUserId()
     int32_t uid = IPCSkeleton::GetCallingUid();
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
     MEDIA_INFO_LOG("CaptureSession get uid:%{public}d userId:%{public}d", uid, userId);
-
-    bool status = false;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CAMERA_USER_ID, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CAMERA_USER_ID, &userId, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CAMERA_USER_ID, &userId, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CAMERA_USER_ID, &userId, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetUserId Failed!");
     int32_t errCode = this->UnlockForControl();
     CHECK_ERROR_PRINT_LOG(errCode != CameraErrorCode::SUCCESS, "CaptureSession::SetUserId Failed");
@@ -4611,15 +4393,8 @@ void CaptureSession::EnableOfflinePhoto()
     if (photoOutput_ && ((sptr<PhotoOutput> &)photoOutput_)->IsHasSwitchOfflinePhoto()) {
         this->LockForControl();
         uint8_t enableOffline = 1;
-        camera_metadata_item_t item;
-        bool status = false;
-        int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
-            OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
-        }
+        bool status = AddOrUpdateMetadata(
+            changedMetadata_, OHOS_CONTROL_CHANGETO_OFFLINE_STREAM_OPEATOR, &enableOffline, 1);
         MEDIA_INFO_LOG("CaptureSession::Start() enableOffline is %{public}d", enableOffline);
         CHECK_ERROR_PRINT_LOG(!status,
             "CaptureSession::CommitConfig Failed to add/update offline stream operator");
@@ -4637,15 +4412,8 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
         "CaptureSession::EnableAutoHighQualityPhoto changedMetadata_ is NULL");
 
     int32_t res = CameraErrorCode::SUCCESS;
-    bool status = false;
-    camera_metadata_item_t item;
     uint8_t hightQualityEnable = static_cast<uint8_t>(enabled);
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_HIGH_QUALITY_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &hightQualityEnable, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &hightQualityEnable, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_HIGH_QUALITY_MODE, &hightQualityEnable, 1);
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed to set type!");
         res = INVALID_ARGUMENT;
@@ -4671,15 +4439,9 @@ int32_t CaptureSession::EnableAutoCloudImageEnhancement(bool enabled)
         "CaptureSession::EnableAutoCloudImageEnhancement changedMetadata_ is NULL");
 
     int32_t res = CameraErrorCode::SUCCESS;
-    bool status = false;
-    camera_metadata_item_t item;
-    uint8_t enableAutoCloudImageEnhance = static_cast<uint8_t>(enabled);
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
-    }
+    uint8_t enableAutoCloudImageEnhance = static_cast<uint8_t>(enabled); // 三目表达式处理，不使用强转
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enableAutoCloudImageEnhance, 1);
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::EnableAutoCloudImageEnhancement Failed to set type!");
         res = INVALID_ARGUMENT;
@@ -4729,20 +4491,9 @@ int32_t CaptureSession::SetARMode(bool isEnable)
         "CaptureSession::SetARMode Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetARMode Need to call LockForControl() before setting camera properties");
-
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     uint8_t value = isEnable ? 1 : 0;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), HAL_CUSTOM_AR_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(HAL_CUSTOM_AR_MODE, &value, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(HAL_CUSTOM_AR_MODE, &value, count);
-    }
-
-    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetARMode Failed to set ar mode");
+    bool status = AddOrUpdateMetadata(changedMetadata_, HAL_CUSTOM_AR_MODE, &value, 1);
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS, "CaptureSession::SetARMode Failed to set ar mode");
     return CameraErrorCode::SUCCESS;
 }
 
@@ -4780,20 +4531,11 @@ int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
     // LCOV_EXCL_START
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetSensorSensitivity Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::SetSensorSensitivity sensitivity: %{public}d", sensitivity);
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::SetSensorSensitivity camera device is null");
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetSensorSensitivity Failed to set sensitivity");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -4844,17 +4586,9 @@ int32_t CaptureSession::EnableEffectSuggestion(bool isEnable)
         "EnableEffectSuggestion IsEffectSuggestionSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed EnableEffectSuggestion!, session not commited");
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &item);
     uint8_t enableValue = static_cast<uint8_t>(isEnable);
     MEDIA_DEBUG_LOG("EnableEffectSuggestion enableValue:%{public}d", enableValue);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableEffectSuggestion Failed to enable effectSuggestion");
     return CameraErrorCode::SUCCESS;
 }
@@ -4923,11 +4657,6 @@ int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionSt
         "SetEffectSuggestionStatus IsEffectSuggestionSupported is false");
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession Failed SetEffectSuggestionStatus!, session not commited");
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &item);
-
     std::vector<uint8_t> vec = {};
     for (auto effectSuggestionStatus : effectSuggestionStatusList) {
         // LCOV_EXCL_START
@@ -4944,11 +4673,8 @@ int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionSt
             type, static_cast<uint8_t>(effectSuggestionStatus.status));
         // LCOV_EXCL_STOP
     }
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
-    }
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetEffectSuggestionStatus Failed to Set effectSuggestionStatus");
     return CameraErrorCode::SUCCESS;
 }
@@ -4964,19 +4690,10 @@ int32_t CaptureSession::UpdateEffectSuggestion(EffectSuggestionType effectSugges
     auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionType);
     CHECK_ERROR_RETURN_RET_LOG(itr == fwkEffectSuggestionTypeMap_.end(), CameraErrorCode::INVALID_ARGUMENT,
         "CaptureSession::UpdateEffectSuggestion Unknown effectSuggestionType");
-        type = itr->second;
-
-    bool status = false;
+    type = itr->second;
     std::vector<uint8_t> vec = {type, isEnable};
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::UpdateEffectSuggestion type:%{public}u,isEnable:%{public}u", type, isEnable);
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
     CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS,
         "CaptureSession::UpdateEffectSuggestion Failed to set effectSuggestionType");
     return CameraErrorCode::SUCCESS;
@@ -5324,21 +5041,11 @@ int32_t CaptureSession::SetVirtualAperture(const float virtualAperture)
     GetSupportedVirtualApertures(supportedVirtualApertures);
     auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
         [&virtualAperture](const float item) { return FloatIsEqual(virtualAperture, item); });
-    CHECK_ERROR_RETURN_RET_LOG(res == supportedVirtualApertures.end(), CameraErrorCode::SUCCESS,
-        "current virtualAperture is not supported");
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_RET_LOG(
+        res == supportedVirtualApertures.end(), CameraErrorCode::SUCCESS, "current virtualAperture is not supported");
     MEDIA_DEBUG_LOG("SetVirtualAperture virtualAperture: %{public}f", virtualAperture);
-
-    int32_t ret =
-        Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
-    }
-
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, 1);
     CHECK_ERROR_PRINT_LOG(!status, "SetVirtualAperture Failed to set virtualAperture");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -5428,11 +5135,9 @@ bool CaptureSession::IsLcdFlashSupported()
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice, false,
         "IsLcdFlashSupported camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false,
-        "IsLcdFlashSupported camera deviceInfo is null");
+    CHECK_ERROR_RETURN_RET_LOG(!inputDeviceInfo, false, "IsLcdFlashSupported camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false,
-        "IsLcdFlashSupported camera metadata is null");
+    CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, false, "IsLcdFlashSupported camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LCD_FLASH, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
@@ -5830,21 +5535,9 @@ int32_t CaptureSession::SetQualityPrioritization(QualityPrioritization qualityPr
     CHECK_ERROR_RETURN_RET_LOG(itr == g_fwkQualityPrioritizationMap_.end(), CameraErrorCode::PARAMETER_ERROR,
         "CaptureSession::SetColorSpace() map failed, %{public}d", static_cast<int32_t>(qualityPrioritization));
     quality = itr->second;
-
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG(
         "CaptureSession::SetQualityPrioritization quality prioritization: %{public}d", qualityPrioritization);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_QUALITY_PRIORITIZATION, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_QUALITY_PRIORITIZATION, &quality, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetQualityPrioritization Failed to set quality prioritization");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -5963,17 +5656,7 @@ int32_t CaptureSession::SetFocusRange(FocusRangeType focusRangeType)
     }
 
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusRange Focus range type: %{public}d", focusRangeType);
-
-    int32_t ret = 0;
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_RANGE_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_RANGE_TYPE, &metaFocusRangeType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusRange Failed to set focus range type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -6067,17 +5750,7 @@ int32_t CaptureSession::SetFocusDriven(FocusDrivenType focusDrivenType)
     }
 
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusDriven focus driven type: %{public}d", focusDrivenType);
-
-    int32_t ret = 0;
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_DRIVEN_TYPE, &metaFocusDrivenType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetFocusDriven Failed to set focus driven type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
@@ -6171,17 +5844,8 @@ int32_t CaptureSession::SetColorReservation(ColorReservationType colorReservatio
     }
 
     MEDIA_DEBUG_LOG("CaptureSession::SetColorReservation color reservation type: %{public}d", colorReservationType);
-
-    int32_t ret = 0;
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_COLOR_RESERVATION_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, count);
-    }
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_COLOR_RESERVATION_TYPE, &metaColorReservationType, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetColorReservation Failed to set color reservation type");
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP

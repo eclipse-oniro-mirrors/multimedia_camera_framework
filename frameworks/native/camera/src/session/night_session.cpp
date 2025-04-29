@@ -15,6 +15,7 @@
 
 #include "session/night_session.h"
 #include "camera_log.h"
+#include "metadata_common_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -52,9 +53,6 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
         "NightSession::SetExposure Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "NightSession::SetExposure Need to call LockForControl() before setting camera properties");
-    bool status = false;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("NightSession::SetExposure exposure compensation: %{public}d", exposureValue);
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
@@ -68,12 +66,7 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     CHECK_ERROR_RETURN_RET_LOG(result && exposureValue != autoLongExposure, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "NightSession::SetExposure value(%{public}d)is not supported!", exposureValue);
     uint32_t exposureCompensation = exposureValue;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, 1);
     CHECK_ERROR_PRINT_LOG(!status, "NightSession::SetExposure Failed to set exposure compensation");
     return CameraErrorCode::SUCCESS;
 }

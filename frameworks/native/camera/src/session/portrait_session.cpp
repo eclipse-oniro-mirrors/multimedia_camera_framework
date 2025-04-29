@@ -16,6 +16,7 @@
 #include "session/portrait_session.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "metadata_common_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -97,20 +98,8 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     if (itr2 != fwToMetaPortraitEffect_.end()) {
         effect = static_cast<uint8_t>(itr2->second);
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("CaptureSession::SetPortraitEffect: %{public}d", portraitEffect);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, 1);
     CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::SetPortraitEffect Failed to set effect");
     return;
 }

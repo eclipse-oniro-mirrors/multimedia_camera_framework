@@ -130,20 +130,8 @@ int32_t ProfessionSession::SetMeteringMode(MeteringMode mode)
     } else {
         meteringMode = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("ProfessionSession::SetMeteringMode metering mode: %{public}d", meteringMode);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_METER_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_METER_MODE, &meteringMode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_METER_MODE, &meteringMode, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_METER_MODE, &meteringMode, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetMeteringMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -220,10 +208,6 @@ int32_t ProfessionSession::SetISO(int32_t iso)
         "ProfessionSession::SetISO Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetISO Need to call LockForControl() before setting camera properties");
-
-    bool status = false;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetISO iso value: %{public}d", iso);
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
@@ -236,12 +220,7 @@ int32_t ProfessionSession::SetISO(int32_t iso)
     const int32_t autoIsoValue = 0;
     CHECK_ERROR_RETURN_RET(iso != autoIsoValue && std::find(isoRange.begin(), isoRange.end(), iso) == isoRange.end(),
         CameraErrorCode::INVALID_ARGUMENT);
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ISO_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_ISO_VALUE, &iso, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_ISO_VALUE, &iso, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetISO Failed to set exposure compensation");
     isoValue_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
@@ -357,20 +336,8 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
     } else {
         focus = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("ProfessionSession::SetFocusMode Focus mode: %{public}d", focusMode);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_MODE, &focus, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFocusMode Failed to set focus mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -438,18 +405,8 @@ int32_t ProfessionSession::SetExposureHintMode(ExposureHintMode mode)
     } else {
         exposureHintMode = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetExposureHintMode ExposureHint mode: %{public}d", exposureHintMode);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXPOSURE_HINT_MODE, &exposureHintMode, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetExposureHintMode Failed to set ExposureHint mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -535,18 +492,8 @@ int32_t ProfessionSession::SetFocusAssistFlashMode(FocusAssistFlashMode mode)
     } else {
         value = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetFocusAssistFlashMode FocusAssistFlash mode: %{public}d", value);
-    ret = Camera::FindCameraMetadataItem(
-        changedMetadata_->get(), OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &value, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &value, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &value, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetFocusAssistFlashMode Failed to set FocusAssistFlash mode");
     return CameraErrorCode::SUCCESS;
 }
@@ -745,18 +692,7 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
         colorEffectTemp = itr->second;
     }
     MEDIA_DEBUG_LOG("ProfessionSession::SetColorEffect: %{public}d", colorEffect);
-
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
-    }
-
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ProfessionSession::SetColorEffect Failed to set color effect");
     return CameraErrorCode::SUCCESS;
 }
