@@ -57,6 +57,7 @@ ohos_shared_library("camera_utils") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_timer.cpp",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/src/utils/dp_utils.cpp",
     "utils/camera_dynamic_loader.cpp",
+    "utils/camera_simple_timer.cpp",
     "utils/camera_xcollie.cpp",
     "utils/photo_asset_proxy.cpp",
     "utils/picture_proxy.cpp",

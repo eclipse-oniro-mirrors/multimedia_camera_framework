@@ -25,6 +25,8 @@ using namespace std;
 const std::string MEDIA_LIB_SO = "libcamera_dynamic_medialibrary.z.so";
 const std::string PICTURE_SO = "libcamera_dynamic_picture.z.so";
 
+constexpr uint32_t LIB_DELAYED_UNLOAD_TIME = 30000; // 30 second
+
 class Dynamiclib {
 public:
     explicit Dynamiclib(const std::string& libName);
@@ -41,13 +43,15 @@ class CameraDynamicLoader {
 public:
     static std::shared_ptr<Dynamiclib> GetDynamiclib(const std::string& libName);
     static void LoadDynamiclibAsync(const std::string& libName);
-    static void FreeDynamiclib(const std::string& libName);
+    static void FreeDynamicLibDelayed(const std::string& libName, uint32_t delayMs = LIB_DELAYED_UNLOAD_TIME);
 
 private:
     explicit CameraDynamicLoader() = delete;
     CameraDynamicLoader(const CameraDynamicLoader&) = delete;
     CameraDynamicLoader& operator=(const CameraDynamicLoader&) = delete;
 
+    static void FreeDynamiclibNoLock(const std::string& libName);
+    static void CancelFreeDynamicLibDelayedNoLock(const std::string& libName);
     static std::shared_ptr<Dynamiclib> GetDynamiclibNoLock(const std::string& libName);
 };
 
