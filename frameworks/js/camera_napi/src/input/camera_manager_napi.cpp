@@ -388,42 +388,42 @@ void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &fo
 void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnFoldStatusChangedCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    CHECK_ERROR_RETURN_LOG(scope == nullptr, "scope is null");
-    napi_value result[ARGS_TWO];
-    napi_value retVal = nullptr;
-    napi_value propValue = nullptr;
-    napi_value errCode;
+    ExecuteCallbackScopeSafe("foldStatusChange", [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_create_object(env_, &errCode);
+        napi_value resultObj;
+        napi_create_object(env_, &resultObj);
 
-    napi_create_object(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_create_int32(env_, foldStatusInfo.foldStatus, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "foldStatus", propValue);
-    CHECK_ERROR_RETURN_LOG(napi_create_array(env_, &propValue) != napi_ok,
-        "Failed to create array napi wrapper object");
-    auto supportedCameras = foldStatusInfo.supportedCameras;
-    if (!supportedCameras.empty()) {
-        napi_create_int32(env_, 0, &errCode);
-        napi_set_named_property(env_, result[PARAM0], "code", errCode);
-        for (size_t i = 0; i < supportedCameras.size(); i++) {
+        napi_value foldStatusVal;
+        napi_create_int32(env_, foldStatusInfo.foldStatus, &foldStatusVal);
+        napi_set_named_property(env_, resultObj, "foldStatus", foldStatusVal);
+        napi_value camerasArray;
+        napi_create_array(env_, &camerasArray);
+
+        const auto& supportedCameras = foldStatusInfo.supportedCameras;
+        napi_value jsErrCode;
+        if (supportedCameras.empty()) {
+            MEDIA_ERR_LOG("supportedCameras is empty");
+            napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &jsErrCode);
+            napi_set_named_property(env_, errCode, "code", jsErrCode);
+            napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
+            return ExecuteCallbackData(env_, errCode, resultObj);
+        }
+
+        for (size_t i = 0; i < supportedCameras.size(); ++i) {
             if (supportedCameras[i] == nullptr) {
                 MEDIA_ERR_LOG("cameraDevice is null");
                 continue;
             }
-            napi_value camera = CameraNapiObjCameraDevice(*supportedCameras[i]).GenerateNapiValue(env_);
-            CHECK_ERROR_RETURN_LOG(napi_set_element(env_, propValue, i, camera) != napi_ok,
-                "Failed to create profile napi wrapper object");
+            napi_value cameraObj = CameraNapiObjCameraDevice(*supportedCameras[i]).GenerateNapiValue(env_);
+            napi_set_element(env_, camerasArray, i, cameraObj);
         }
-    } else {
-        MEDIA_ERR_LOG("supportedCameras is empty");
-        napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errCode);
-        napi_set_named_property(env_, result[PARAM0], "code", errCode);
-    }
-    napi_set_named_property(env_, result[PARAM1], "supportedCameras", propValue);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("foldStatusChange", callbackNapiPara);
-    napi_close_handle_scope(env_, scope);
+
+        napi_create_int32(env_, 0, &jsErrCode);
+        napi_set_named_property(env_, errCode, "code", jsErrCode);
+        napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
+        return ExecuteCallbackData(env_, errCode, resultObj);
+    });
 }
 
 void FoldListenerNapi::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
@@ -1212,6 +1212,11 @@ sptr<CameraDevice> CameraManagerNapi::GetSupportedOutputCapabilityGetCameraInfo(
         }
     } else {
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Args size error");
+        return nullptr;
+    }
+    if (cameraManagerNapi == nullptr) {
+        MEDIA_ERR_LOG("cameraManagerNapi is null");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "cameraManagerNapi is null");
         return nullptr;
     }
     return cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);

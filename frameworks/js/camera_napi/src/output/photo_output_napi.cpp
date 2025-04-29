@@ -539,6 +539,7 @@ sptr<CameraPhotoProxy> CreateCameraPhotoProxy(sptr<SurfaceBuffer> surfaceBuffer)
     sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
         nullptr, deferredImageFormat, photoWidth, photoHeight, isHighQuality, captureId, burstSeqId);
     std::string imageIdStr = std::to_string(imageId);
+    CHECK_ERROR_RETURN_RET_LOG(photoProxy == nullptr, nullptr, "photoProxy is null!");
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     photoProxy->SetCloudImageEnhanceFlag(cloudImageEnhanceFlag);
     return photoProxy;
@@ -1645,6 +1646,7 @@ void ThumbnailListener::ExecuteDeepCopySurfaceBuffer()
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");
     UpdateJSCallbackAsync(captureId, timestamp, std::move(pixelMap));
     auto photoProxy = CreateCameraPhotoProxy(surfaceBuffer);
+    CHECK_ERROR_RETURN_LOG(photoProxy == nullptr, "photoProxy is nullptr");
     if (photoOutput->IsYuvOrHeifPhoto()) {
         constexpr int32_t yuvFormat = 3;
         photoProxy->format_ = yuvFormat;
