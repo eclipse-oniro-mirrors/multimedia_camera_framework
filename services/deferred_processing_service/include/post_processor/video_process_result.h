@@ -27,6 +27,7 @@ namespace DeferredProcessing {
 struct VideoMetadataKeys {
     static constexpr auto SCALING_FACTOR = "scalingFactor";
     static constexpr auto INTERPOLATION_FRAME_PTS = "interpFramePts";
+    static constexpr auto STAGE_VID = "stageVid";
 };
 
 class VideoProcessResult {
