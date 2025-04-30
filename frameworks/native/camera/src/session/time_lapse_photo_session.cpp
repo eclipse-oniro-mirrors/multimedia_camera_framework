@@ -69,6 +69,7 @@ void TimeLapsePhotoSessionMetadataResultProcessor::ProcessCallbacks(
 {
     auto session = session_.promote();
     CHECK_ERROR_RETURN_LOG(session == nullptr, "ProcessCallbacks session is nullptr");
+    session->ProcessAutoFocusUpdates(result);
     session->ProcessIsoInfoChange(result);
     session->ProcessExposureChange(result);
     session->ProcessLuminationChange(result);
