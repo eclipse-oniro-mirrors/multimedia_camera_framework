@@ -61,22 +61,13 @@ PhotoCaptureSetting::QualityLevel PhotoCaptureSetting::GetQuality()
 
 void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLevel)
 {
-    bool status = false;
-    camera_metadata_item_t item;
     uint8_t quality = OHOS_CAMERA_JPEG_LEVEL_LOW;
-
     if (qualityLevel == QUALITY_LEVEL_HIGH) {
         quality = OHOS_CAMERA_JPEG_LEVEL_HIGH;
     } else if (qualityLevel == QUALITY_LEVEL_MEDIUM) {
         quality = OHOS_CAMERA_JPEG_LEVEL_MIDDLE;
     }
-    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(OHOS_JPEG_QUALITY, &quality, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(OHOS_JPEG_QUALITY, &quality, 1);
-    }
-
+    bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_JPEG_QUALITY, &quality, 1);
     CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetQuality Failed to set Quality");
 }
 
@@ -95,17 +86,8 @@ PhotoCaptureSetting::RotationConfig PhotoCaptureSetting::GetRotation()
 
 void PhotoCaptureSetting::SetRotation(PhotoCaptureSetting::RotationConfig rotationValue)
 {
-    bool status = false;
-    camera_metadata_item_t item;
     int32_t rotation = rotationValue;
-
-    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
-    }
-
+    bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_JPEG_ORIENTATION, &rotation, 1);
     CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetRotation Failed to set Rotation");
     return;
 }
@@ -124,21 +106,11 @@ void PhotoCaptureSetting::SetLocation(std::shared_ptr<Location>& location)
     CHECK_ERROR_RETURN(location == nullptr);
     std::lock_guard<std::mutex> lock(locationMutex_);
     location_ = location;
-    double gpsCoordinates[3] = {location->latitude, location->longitude, location->altitude};
-    bool status = false;
-    camera_metadata_item_t item;
-
+    std::vector<double> gpsCoordinates = {location->latitude, location->longitude, location->altitude};
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{private}f, long=%{private}f and alt=%{private}f",
         location_->latitude, location_->longitude, location_->altitude);
-    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_GPS_COORDINATES, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(
-            OHOS_JPEG_GPS_COORDINATES, gpsCoordinates, sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
-    } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(
-            OHOS_JPEG_GPS_COORDINATES, gpsCoordinates, sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
-    }
-
+    bool status = AddOrUpdateMetadata(
+        captureMetadataSetting_, OHOS_JPEG_GPS_COORDINATES, gpsCoordinates.data(), gpsCoordinates.size());
     CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetLocation Failed to set GPS co-ordinates");
 }
 
@@ -153,18 +125,9 @@ void PhotoCaptureSetting::GetLocation(std::shared_ptr<Location>& location)
 
 void PhotoCaptureSetting::SetMirror(bool enable)
 {
-    bool status = false;
-    camera_metadata_item_t item;
     uint8_t mirror = enable;
-
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetMirror value=%{public}d", enable);
-    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
-    }
-
+    bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
     CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
     return;
 }
@@ -190,14 +153,7 @@ void PhotoCaptureSetting::SetBurstCaptureState(uint8_t burstState)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("SetBurstCaptureState");
-    bool status = false;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_BURST_CAPTURE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
-    }
+    bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
     CHECK_ERROR_PRINT_LOG(!status, "PhotoCaptureSetting::SetBurstCaptureState Failed");
     return;
 }

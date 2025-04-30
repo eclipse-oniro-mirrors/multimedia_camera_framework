@@ -16,7 +16,8 @@
 #include "session/slow_motion_session.h"
 #include "camera_log.h"
 #include "camera_error_code.h"
- 
+#include "metadata_common_utils.h"
+
 namespace OHOS {
 namespace CameraStandard {
 
@@ -96,18 +97,10 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",
         rect.topLeftX, rect.topLeftY, rect.width, rect.height);
     NormalizeRect(rect);
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
     std::vector<float> rectVec = {static_cast<float>(rect.topLeftX), static_cast<float>(rect.topLeftY),
         static_cast<float>(rect.width), static_cast<float>(rect.height)};
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA, &item);
-    if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA,
-            rectVec.data(), rectVec.size());
-    } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA, rectVec.data(), rectVec.size());
-    }
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_MOTION_DETECTION_CHECK_AREA, rectVec.data(), rectVec.size());
     this->UnlockForControl();
     CHECK_ERROR_PRINT_LOG(!status, "SetSlowMotionDetectionArea failed to set motion rect");
     return;
@@ -161,17 +154,9 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
     MEDIA_DEBUG_LOG("Enter EnableMotionDetection, isEnable:%{public}d", isEnable);
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "EnableMotionDetection session not commited");
-    bool status = false;
-    int32_t ret;
-    camera_metadata_item_t item;
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MOTION_DETECTION, &item);
     uint8_t enableValue = static_cast<uint8_t>(isEnable ?
         OHOS_CAMERA_MOTION_DETECTION_ENABLE : OHOS_CAMERA_MOTION_DETECTION_DISABLE);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_MOTION_DETECTION, &enableValue, 1);
     CHECK_ERROR_PRINT_LOG(!status, "EnableMotionDetection Failed to enable motion detection");
     return CameraErrorCode::SUCCESS;
 }

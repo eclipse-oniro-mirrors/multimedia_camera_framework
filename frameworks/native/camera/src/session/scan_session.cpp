@@ -88,16 +88,7 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
 {
     this->LockForControl();
     MEDIA_DEBUG_LOG("ScanSession::SetBrightnessStatusReport set brightness status report");
-    bool status = false;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(
-        changedMetadata_->get(), OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, count);
-    }
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_FLASH_SUGGESTION_SWITCH, &state, 1);
     CHECK_ERROR_PRINT_LOG(!status, "ScanSession::SetBrightnessStatusReport Failed to set brightness status report!");
     this->UnlockForControl();
 }
