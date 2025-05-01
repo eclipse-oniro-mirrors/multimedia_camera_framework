@@ -1068,6 +1068,24 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
     return CAMERA_OK;
 }
 
+std::string HCaptureSession::GetConcurrentCameraIds(pid_t pid)
+{
+    std::string concurrencyString = "Concurrency cameras:[";
+    std::list<sptr<HCaptureSession>> sessionList = HCameraSessionManager::GetInstance().GetGroupSessions(pid);
+    for (auto entry : sessionList) {
+        if (!entry->isSessionStarted_) {
+            continue;
+        }
+        auto device = entry->GetCameraDevice();
+        if (device == nullptr) {
+            continue;
+        }
+        concurrencyString.append(device->GetCameraId() + "    ");
+    }
+    concurrencyString.append("]");
+    return concurrencyString;
+}
+
 int32_t HCaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
@@ -1105,14 +1123,7 @@ int32_t HCaptureSession::Start()
         stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success, sessionID: %{public}d", GetSessionId());
-    std::string concurrencyString = "Concurrency cameras:[";
-    std::list<sptr<HCaptureSession>> sessionList = HCameraSessionManager::GetInstance().GetGroupSessions(pid_);
-    for (auto entry : sessionList) {
-        if (entry->isSessionStarted_) {
-            concurrencyString.append(entry->GetCameraDevice()->GetCameraId() + "    ");
-        }
-    }
-    concurrencyString.append("]");
+    MEDIA_INFO_LOG("%{public}s", GetConcurrentCameraIds(pid_).c_str());
     return errorCode;
 }
 
