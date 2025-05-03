@@ -1,0 +1,102 @@
+
+From e62fcea4582b717927d38c788bf4d28938c59546 Mon Sep 17 00:00:00 2001
+From: s00888898 <s00888898@notesmail.huawei.com/>
+Date: Thu, 1 May 2025 10:40:46 +0800
+Subject: [PATCH] TicketNo: Description: Team: Feature or Bugfix: Binary
+ Source: PrivateCode(Yes/No):
+
+Change-Id: I8bf69bae0d9a5468d4788444c122c29332c05dde
+---
+ .../camera_napi/src/output/photo_output_napi.cpp |  2 +-
+ .../src/avcodec/avcodec_task_manager.cpp         | 16 ++++++++--------
+ .../src/media_manager/muxer.cpp                  |  2 +-
+ 3 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+index 578524205..473b024b4 100644
+--- a/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/photo_output_napi.cpp
+@@ -1778,7 +1778,7 @@ unique_ptr<Media::PixelMap> ThumbnailListener::CreatePixelMapFromSurfaceBuffer(s
+     colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
+     std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
+     void* nativeBuffer = surfaceBuffer.GetRefPtr();
+-    RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);
++    sptr<RefBase> ref = reinterpret_cast<RefBase *>(nativeBuffer);
+     ref->IncStrongRef(ref);
+     if (isHdr) {
+         pixelMap->SetHdrType(OHOS::Media::ImageHdrType::HDR_VIVID_SINGLE);
+diff --git a/services/camera_service/src/avcodec/avcodec_task_manager.cpp b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+index 1aa412353..ef3da8fdb 100644
+--- a/services/camera_service/src/avcodec/avcodec_task_manager.cpp
++++ b/services/camera_service/src/avcodec/avcodec_task_manager.cpp
+@@ -127,7 +127,7 @@ void AvcodecTaskManager::SubmitTask(function<void()> task)
+ void AvcodecTaskManager::SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId)
+ {
+     lock_guard<mutex> lock(videoFdMutex_);
+-    MEDIA_INFO_LOG("Set timestamp: %{public}" PRId64 ", captureId: %{public}d", timestamp, captureId);
++    MEDIA_INFO_LOG("Set timestamp: %{public}" PRIu64 ", captureId: %{public}d", timestamp, captureId);
+     videoFdMap_.insert(std::make_pair(captureId, std::make_pair(timestamp, photoAssetProxy)));
+     MEDIA_DEBUG_LOG("video map size:%{public}zu", videoFdMap_.size());
+     cvEmpty_.notify_all();
+@@ -230,7 +230,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
+                 std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
+                 CHECK_WARNING_CONTINUE_LOG(buffer == nullptr, "video encodedBuffer is null");
+                 buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+-                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRId64, choosedBuffer[index]->GetTimeStamp());
++                MEDIA_DEBUG_LOG("choosed buffer pts:%{public}" PRIu64, choosedBuffer[index]->GetTimeStamp());
+                 ret = muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
+             }
+             sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
+@@ -264,16 +264,16 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
+     int64_t clearVideoStartTime = shutterTime - preBufferDuration_;
+     if (mPStartTimeMap_.count(captureId) && mPStartTimeMap_[captureId] <= shutterTime
+         && mPStartTimeMap_[captureId] > clearVideoStartTime) {
+-        MEDIA_INFO_LOG("set deblur start time is %{public}" PRId64, mPStartTimeMap_[captureId]);
++        MEDIA_INFO_LOG("set deblur start time is %{public}" PRIu64, mPStartTimeMap_[captureId]);
+         clearVideoStartTime = mPStartTimeMap_[captureId];
+-        MEDIA_INFO_LOG("clearVideoEndTime is %{public}" PRId64, NanosecToMicrosec(clearVideoEndTime));
++        MEDIA_INFO_LOG("clearVideoEndTime is %{public}" PRIu64, NanosecToMicrosec(clearVideoEndTime));
+         int64_t absoluteValue = abs(clearVideoEndTime - clearVideoStartTime);
+         int64_t deblurThreshold = 264000000L;
+         isDeblurStartTime = absoluteValue < deblurThreshold;
+     }
+     mPStartTimeMap_.erase(captureId);
+     startTimeLock.unlock();
+-    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRId64,
++    MEDIA_INFO_LOG("FindIdrFrameIndex captureId : %{public}d, clearVideoStartTime : %{public}" PRIu64,
+         captureId, clearVideoStartTime);
+     size_t idrIndex = frameRecords.size();
+     if (isDeblurStartTime) {
+@@ -323,13 +323,13 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
+     int64_t clearVideoEndTime = shutterTime + postBufferDuration_;
+     if (mPEndTimeMap_.count(captureId) && mPEndTimeMap_[captureId] >= shutterTime
+         && mPEndTimeMap_[captureId] < clearVideoEndTime) {
+-        MEDIA_INFO_LOG("set deblur end time is %{public}" PRId64, mPEndTimeMap_[captureId]);
++        MEDIA_INFO_LOG("set deblur end time is %{public}" PRIu64, mPEndTimeMap_[captureId]);
+         clearVideoEndTime = mPEndTimeMap_[captureId];
+     }
+     mPEndTimeMap_.erase(captureId);
+     endTimeLock.unlock();
+-    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRId64 ", "
+-        "clearVideoEndTime : %{public}" PRId64, captureId, shutterTime, clearVideoEndTime);
++    MEDIA_INFO_LOG("ChooseVideoBuffer captureId : %{public}d, shutterTime : %{public}" PRIu64 ", "
++        "clearVideoEndTime : %{public}" PRIu64, captureId, shutterTime, clearVideoEndTime);
+     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
+     size_t frameCount = 0;
+     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
+diff --git a/services/deferred_processing_service/src/media_manager/muxer.cpp b/services/deferred_processing_service/src/media_manager/muxer.cpp
+index 00b6909de..fac0186de 100644
+--- a/services/deferred_processing_service/src/media_manager/muxer.cpp
++++ b/services/deferred_processing_service/src/media_manager/muxer.cpp
+@@ -133,7 +133,7 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
+     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
+         "Add param failed, ret: %{public}d", ret);
+     
+-    if (mediaInfo->livePhotoCovertime > 0) {
++    if (mediaInfo->livePhotoCovertime >= 0) {
+         auto userMeta = std::make_shared<Meta>();
+         userMeta->SetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
+         ret = muxer_->SetUserMeta(userMeta);
+-- 
+2.45.2.huawei.8
+
