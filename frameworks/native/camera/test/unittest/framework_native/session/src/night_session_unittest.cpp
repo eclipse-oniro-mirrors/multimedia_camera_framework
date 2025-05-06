@@ -204,11 +204,8 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     uint32_t exposureValue = 0;
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
-    if (nightSession->IsSupportSpecSearch()) {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
-    } else {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
-    }
+
+    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(nightSession->GetExposure(exposureValue), CameraErrorCode::INVALID_ARGUMENT);
 
     nightSession->Release();
@@ -331,11 +328,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     std::vector<uint32_t> exposureRange = {};
     uint32_t exposureValue = 0;
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
-    if (nightSession->IsSupportSpecSearch()) {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
-    } else {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
-    }
+    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
 
     nightSession->Release();
@@ -400,23 +393,14 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     int32_t count = 1;
     nightSession->LockForControl();
     OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME);
-    if (nightSession->IsSupportSpecSearch()) {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::SUCCESS);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
 
-        OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
-        nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::SUCCESS);
-    } else {
-        EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
-        OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
-        nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
-        EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
-    }
+    OHOS::Camera::DeleteCameraMetadataItem(info->GetMetadata()->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
+    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    nightSession->changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureValue, count);
+    EXPECT_EQ(nightSession->SetExposure(exposureValue), CameraErrorCode::OPERATION_NOT_ALLOWED);
     nightSession->UnlockForControl();
 
     nightSession->Release();
