@@ -55,6 +55,7 @@ ohos_unittest("camera_ndk_test") {
     "camera_ndk_output_test/src/camera_preview_output_unittest.cpp",
     "camera_ndk_output_test/src/camera_video_output_unittest.cpp",
     "camera_ndk_photo_native_test/src/camera_photo_native_unittest.cpp",
+    "camera_ndk_photo_native_test/src/photo_listener_impl_unittest.cpp",
   ]
 
   deps = [
