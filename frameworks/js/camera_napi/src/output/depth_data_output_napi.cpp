@@ -583,6 +583,10 @@ void DepthDataOutputNapi::RegisterDepthDataAvailableCallbackListener(
         CHECK_ERROR_PRINT_LOG(ret != SURFACE_ERROR_OK, "register surface consumer listener failed!");
         depthDataListener_ = depthDataListener;
     }
+    if (depthDataListener_ == nullptr) {
+        MEDIA_ERR_LOG("depthDataListener_ is null!");
+        return;
+    }
     depthDataListener_->SetDepthProfile(depthProfile_);
     depthDataListener_->SaveCallback(CONST_DEPTH_DATA_AVAILABLE, callback);
 }

@@ -1664,7 +1664,7 @@ void HCameraService::DumpCameraZoom(common_metadata_header_t* metadataEntry, Cam
         infoDumper.Msg("OHOS_ABILITY_SCENE_ZOOM_CAP data size:" + to_string(item.count));
         string zoomAbilityString = "Available Zoom Modes:[ ";
         int reduce = 100;
-        int size = 3;
+        uint32_t size = 3;
         float range;
         int32_t val;
         for (uint32_t i = 0; i < item.count; i++) {

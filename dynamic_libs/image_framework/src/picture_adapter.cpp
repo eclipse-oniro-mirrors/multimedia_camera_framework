@@ -115,7 +115,7 @@ int32_t PictureAdapter::SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer)
     int32_t retCode = -1;
     std::shared_ptr<Media::Picture> picture = GetPicture();
     CHECK_ERROR_RETURN_RET_LOG(!picture, retCode, "PictureAdapter::SetExifMetadata picture is nullptr");
-    retCode = picture->SetExifMetadata(surfaceBuffer);
+    retCode = static_cast<int32_t>(picture->SetExifMetadata(surfaceBuffer));
     return retCode;
 }
 
