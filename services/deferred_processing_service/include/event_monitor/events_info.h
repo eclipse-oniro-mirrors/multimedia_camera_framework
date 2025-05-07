@@ -32,14 +32,18 @@ public:
     ChargingStatus GetChargingState();
     BatteryLevel GetBatteryLevel();
     ThermalLevel GetThermalLevel();
+    void SetCameraState(CameraSessionStatus state);
+    bool IsCameraOpen();
 
 private:
+    std::mutex mutex_;
     ScreenStatus screenState_ {SCREEN_OFF};
     BatteryStatus batteryState_ {BATTERY_LOW};
     ChargingStatus chargingState_ {DISCHARGING};
     BatteryLevel batteryLevel_ {BATTERY_LEVEL_LOW};
     SystemPressureLevel photoThermalLevel_ {SEVERE};
     ThermalLevel thermalLevel_ {LEVEL_2};
+    CameraSessionStatus cameraState_ {SYSTEM_CAMERA_OPEN};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

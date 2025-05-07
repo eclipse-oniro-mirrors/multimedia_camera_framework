@@ -93,6 +93,7 @@ void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
             CameraSessionStatus::SYSTEM_CAMERA_CLOSED :
             CameraSessionStatus::NORMAL_CAMERA_CLOSED;
     }
+    EventsInfo::GetInstance().SetCameraState(cameraSessionStatus);
     NotifyObserversUnlocked(userId, EventType::CAMERA_SESSION_STATUS_EVENT, cameraSessionStatus);
     auto level = EventsInfo::GetInstance().GetThermalLevel();
     DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));

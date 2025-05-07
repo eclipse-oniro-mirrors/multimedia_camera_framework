@@ -52,8 +52,7 @@ private:
     {
         DP_CHECK_RETURN_RET(metadata == nullptr, false);
         auto ret = metadata->Get(key, value);
-        DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, false,
-            "GetMetaTag: %{public}s, ret: %{public}d", key.c_str(), ret);
+        DP_CHECK_RETURN_RET_LOG(ret != DP_OK, false, "GetMetaTag: %{public}s, ret: %{public}d", key.c_str(), ret);
         return true;
     }
 };
