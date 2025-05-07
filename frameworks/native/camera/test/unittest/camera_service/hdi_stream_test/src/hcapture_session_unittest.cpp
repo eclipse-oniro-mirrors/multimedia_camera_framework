@@ -46,6 +46,7 @@ constexpr static int32_t DEFAULT_HEIGHT = 960;
 constexpr static int32_t INVALID_WIDTH = 0;
 constexpr static int32_t INVALID_HEIGHT = 0;
 constexpr static int32_t DEFAULT_FORMAT = 4;
+constexpr static uint32_t CAMERA_CAPTURE_SESSION_ON_DEFAULT = 1;
 
 void HCaptureSessionUnitTest::SetUpTestCase(void)
 {
@@ -1986,5 +1987,29 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_042, TestSize.Level
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
 }
+
+
+/*
+ * Feature: Framework
+ * Function: Test HCaptureSessionCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of default case
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_043, TestSize.Level1)
+{
+    MockHCaptureSessionCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    
+    uint32_t code = CAMERA_CAPTURE_SESSION_ON_DEFAULT;
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

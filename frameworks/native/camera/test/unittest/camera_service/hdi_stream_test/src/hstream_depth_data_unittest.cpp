@@ -30,6 +30,9 @@ using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
+
+constexpr static uint32_t CAMERA_STREAM_DEPTH_ON_DEFAULT = 1;
+
 void HStreamDepthDataUnitTest::SetUpTestCase(void) {}
 
 void HStreamDepthDataUnitTest::TearDownTestCase(void) {}
@@ -248,5 +251,27 @@ HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_007, TestSize.Lev
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of default case
+ */
+HWTEST_F(HStreamDepthDataUnitTest, hstream_depth_data_unittest_008, TestSize.Level1)
+{
+    MockHStreamDepthDataCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CAMERA_STREAM_DEPTH_ON_DEFAULT;
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
+}
+
 } // CameraStandard
 } // OHOS

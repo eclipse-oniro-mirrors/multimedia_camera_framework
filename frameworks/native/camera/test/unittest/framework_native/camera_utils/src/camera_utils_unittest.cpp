@@ -23,6 +23,8 @@
 #include "utils/camera_security_utils.h"
 #include "utils/dps_metadata_info.h"
 #include "utils/metadata_common_utils.h"
+#include "metadata_common_utils.h"
+#include "session/capture_session.h"
 
 using namespace testing::ext;
 
@@ -34,6 +36,7 @@ static constexpr double TEST_DOUBLE_VALUE = 10.0;
 static constexpr char TEST_STRING_VALUE[] = "testValue";
 static constexpr int32_t BUFFER_HANDLE_RESERVE_MAX_SIZE = 1024;
 static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
+static constexpr bool TEST_BOOL_VALUE = false;
 
 void CameraUtilsUnitTest::SetUpTestCase(void)
 {
@@ -407,6 +410,102 @@ HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_015, TestSize.Level1)
     }
     int32_t ret = CameraFreeBufferHandle(handle);
     EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFreeBufferHandle when when handle->fd >= 0.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFreeBufferHandle when when handle->fd >= 0.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_016, TestSize.Level1)
+{
+    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_016");
+    size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(handleSize));
+    handle->fd = 0;
+    handle->reserveFds = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    handle->reserveInts = BUFFER_HANDLE_RESERVE_TEST_SIZE;
+    for (uint32_t i = 0; i < BUFFER_HANDLE_RESERVE_TEST_SIZE * 2; i++) {
+        handle->reserve[i] = -1;
+    }
+    int32_t ret = CameraFreeBufferHandle(handle);
+    EXPECT_EQ(ret, 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test CameraCloneBufferHandle when fd is not -1.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraCloneBufferHandle when fd is not -1.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_017, TestSize.Level1)
+{
+    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_017");
+    BufferHandle *handle = static_cast<BufferHandle *>(malloc(sizeof(BufferHandle)));
+    handle->fd = 0;
+    BufferHandle *testBufferHandle = CameraCloneBufferHandle(handle);
+    EXPECT_EQ(testBufferHandle, nullptr);
+    free(handle);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the WriteToParcel function of DpsMetadata class with bool.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the WriteToParcel function of DpsMetadata class with bool.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_019, TestSize.Level1)
+{
+    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_019");
+    DpsMetadata metadata;
+    std::string int32Key = "int32_t";
+    std::string int64Key = "int64_t";
+    std::string doubleKey = "double";
+    std::string stringKey = "string";
+    std::string boolKey = "bool";
+    metadata.Set(int32Key, TEST_INT32_VALUE);
+    metadata.Set(int64Key, TEST_INT64_VALUE);
+    metadata.Set(doubleKey, TEST_DOUBLE_VALUE);
+    metadata.Set(stringKey, TEST_STRING_VALUE);
+    metadata.Set(boolKey, TEST_BOOL_VALUE);
+    
+    MessageParcel parcel;
+    DpsMetadataError ret = metadata.WriteToParcel(parcel);
+    EXPECT_EQ(ret, DPS_METADATA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test the WriteToParcel function of DpsMetadata class with nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the WriteToParcel function of DpsMetadata class with nullptr.
+ */
+HWTEST_F(CameraUtilsUnitTest, camera_utils_unittest_020, TestSize.Level1)
+{
+    MEDIA_INFO_LOG("CameraUtilsUnitTest - camera_utils_unittest_020");
+    DpsMetadata metadata;
+    std::string int32Key = "int32_t";
+    std::string int64Key = "int64_t";
+    std::string doubleKey = "double";
+    std::string stringKey = "string";
+
+    metadata.Set(int32Key, "");
+    metadata.Set(int64Key, "");
+    metadata.Set(doubleKey, "");
+    metadata.Set(stringKey, "");
+    
+    MessageParcel parcel;
+    DpsMetadataError ret = metadata.WriteToParcel(parcel);
+    EXPECT_EQ(ret, DPS_METADATA_OK);
 }
 
 } // CameraStandard
