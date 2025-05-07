@@ -2035,6 +2035,7 @@ void PhotoOutputNapi::CreateMultiChannelPictureLisenter(napi_env env)
     if (pictureListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
         sptr<PictureListener> pictureListener = new (std::nothrow) PictureListener();
+        CHECK_ERROR_RETURN_LOG(pictureListener == nullptr, "pictureListener is null!");
         pictureListener->InitPictureListeners(env, photoOutput_);
         if (photoListener_ == nullptr) {
             sptr<PhotoListener> photoListener = new (std::nothrow)

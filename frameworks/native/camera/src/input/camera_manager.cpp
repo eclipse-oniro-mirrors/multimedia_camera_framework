@@ -1797,6 +1797,8 @@ void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OH
     std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
     if (supportedModes.empty()) {
         auto capability = ParseSupportedOutputCapability(cameraObj, 0, metadata);
+        CHECK_ERROR_RETURN_LOG(
+            cameraObj == nullptr, "CameraManager::SetProfile cameraObj is null");
         cameraObj->SetProfile(capability);
     } else {
         supportedModes.emplace_back(NORMAL);
