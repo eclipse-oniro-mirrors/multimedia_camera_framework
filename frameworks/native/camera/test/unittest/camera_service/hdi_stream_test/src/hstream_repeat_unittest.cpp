@@ -32,6 +32,7 @@ using ::testing::Return;
 using ::testing::_;
 namespace OHOS {
 namespace CameraStandard {
+constexpr static uint32_t CAMERA_STREAM_REPEAT_ON_DEFAULT = 1;
 const uint32_t CONST_0 = 0;
 const uint32_t PHOTO_MODE = 1;
 const uint32_t METADATA_ITEM_SIZE = 20;
@@ -1148,5 +1149,96 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_043, TestSize.Level1)
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, ERR_NONE);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_UPDATE_SKETCH_RATIO
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_044, TestSize.Level1)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO;
+    EXPECT_CALL(stub, UpdateSketchRatio(_))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_GET_STREAM_MIRROR
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_046, TestSize.Level1)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_GET_STREAM_MIRROR;
+    EXPECT_CALL(stub, GetMirror(_))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_ENABLE_AUTO_FRAME_RATE
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_047, TestSize.Level1)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = StreamRepeatInterfaceCode::CAMERA_ENABLE_AUTO_FRAME_RATE;
+    EXPECT_CALL(stub, ToggleAutoVideoFrameRate(_))
+        .WillOnce(Return(ERR_NONE));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeatStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of default
+ */
+HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_048, TestSize.Level1)
+{
+    MockHStreamRepeatStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CAMERA_STREAM_REPEAT_ON_DEFAULT;
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, ERR_NONE);
+}
+
 }
 }

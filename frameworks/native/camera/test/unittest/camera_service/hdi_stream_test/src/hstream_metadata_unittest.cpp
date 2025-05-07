@@ -27,6 +27,7 @@ using ::testing::_;
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr static uint32_t CAMERA_STREAM_METADATA_ON_DEFAULT = 1;
 const uint32_t METADATA_ITEM_SIZE = 20;
 const uint32_t METADATA_DATA_SIZE = 200;
 void HStreamMetadataUnit::SetUpTestCase(void) {}
@@ -147,5 +148,27 @@ HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_029, TestSize.Level1)
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadataCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of default
+ */
+HWTEST_F(HStreamMetadataUnit, camera_fwcoverage_unittest_030, TestSize.Level1)
+{
+    MockHStreamMetadataCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    uint32_t code = CAMERA_STREAM_METADATA_ON_DEFAULT;
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
+}
+
 }
 }

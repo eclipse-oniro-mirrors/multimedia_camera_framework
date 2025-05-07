@@ -1545,6 +1545,127 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_032, TestSize.Level1
 
 /*
  * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_033, TestSize.Level1)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+ 
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED;
+    EXPECT_CALL(stub, OnCaptureStarted(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_034, TestSize.Level1)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+ 
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER;
+    EXPECT_CALL(stub, OnFrameShutter(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_035, TestSize.Level1)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+ 
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END;
+    EXPECT_CALL(stub, OnFrameShutterEnd(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_036, TestSize.Level1)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+ 
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY;
+    EXPECT_CALL(stub, OnCaptureReady(_, _))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCaptureCallbackStub with OnRemoteRequest
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnRemoteRequest for switch of CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED
+ */
+HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_unittest_037, TestSize.Level1)
+{
+    MockHStreamCaptureCallbackStub stub;
+    MessageParcel data;
+    data.WriteInterfaceToken(stub.GetDescriptor());
+    data.RewindRead(0);
+    MessageParcel reply;
+    MessageOption option;
+    
+    uint32_t code = StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_OFFLINE_DELIVERY_FINISHED;
+    EXPECT_CALL(stub, OnOfflineDeliveryFinished(_))
+        .WillOnce(Return(0));
+    int errCode = stub.OnRemoteRequest(code, data, reply, option);
+    EXPECT_EQ(errCode, 0);
+}
+
+
+/*
+ * Feature: Framework
  * Function: Test HStreamCapture
  * SubFunction: NA
  * FunctionPoints: NA
