@@ -274,7 +274,8 @@ size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameReco
     if (idrIndex == frameRecords.size()) {
         for (size_t index = 0; index < frameRecords.size(); ++index) {
             auto frame = frameRecords[index];
-            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime && frame->GetTimeStamp() < shutterTime) {
+            if (frame->IsIDRFrame() && frame->GetTimeStamp() >= clearVideoStartTime &&
+                frame->GetTimeStamp() < shutterTime) {
                 MEDIA_INFO_LOG("FindIdrFrameIndex after start time");
                 idrIndex = index;
                 break;

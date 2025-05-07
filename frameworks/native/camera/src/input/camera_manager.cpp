@@ -847,7 +847,7 @@ std::string CameraManager::GetBundleName()
     auto ret = bms->GetBundleInfoForSelf(0, bundleInfo);
     CHECK_ERROR_RETURN_RET_LOG(ret != ERR_OK, bundleName, "GetBundleInfoForSelf failed.");
     bundleName = bundleInfo.name.c_str();
-    MEDIA_INFO_LOG("bundleName: [%{public}s]", bundleName);
+    MEDIA_INFO_LOG("bundleName: [%{private}s]", bundleName);
     return bundleName;
 }
 

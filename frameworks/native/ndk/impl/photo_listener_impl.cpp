@@ -34,9 +34,8 @@ static std::mutex g_photoImageMutex;
 PhotoListener::PhotoListener(Camera_PhotoOutput* photoOutput, sptr<Surface> surface)
     : photoOutput_(photoOutput), photoSurface_(surface)
 {
-    if (bufferProcessor_ == nullptr && surface != nullptr) {
-        bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(surface);
-    }
+    CHECK_ERROR_RETURN(bufferProcessor_ != nullptr || surface == nullptr);
+    bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(surface);
 }
 
 PhotoListener::~PhotoListener()
@@ -139,7 +138,6 @@ void PhotoListener::SetPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable call
     if (callback != nullptr) {
         photoCallback_ = callback;
     }
-    return;
 }
 
 void PhotoListener::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailable callback)
@@ -150,7 +148,6 @@ void PhotoListener::UnregisterPhotoAvailableCallback(OH_PhotoOutput_PhotoAvailab
     if (photoCallback_ != nullptr && callback != nullptr) {
         photoCallback_ = nullptr;
     }
-    return;
 }
 
 void PhotoListener::SetPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
@@ -161,7 +158,6 @@ void PhotoListener::SetPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvai
     if (callback != nullptr) {
         photoAssetCallback_ = callback;
     }
-    return;
 }
 
 void PhotoListener::UnregisterPhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
@@ -180,14 +176,11 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t time
     std::shared_ptr<Media::NativeImage> nativeImage = std::make_shared<Media::NativeImage>(surfaceBuffer,
         bufferProcessor_, timestamp);
     CHECK_ERROR_RETURN_LOG(nativeImage == nullptr, "Create native image failed");
+    CHECK_ERROR_RETURN(photoCallback_ == nullptr || photoOutput_ == nullptr);
+    OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, true);
+    CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
 
-    if (photoCallback_ != nullptr && photoOutput_ != nullptr) {
-        OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, true);
-        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
-
-        photoCallback_(photoOutput_, photoNative);
-    }
-    return;
+    photoCallback_(photoOutput_, photoNative);
 }
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraBufferExtraData extraData,
@@ -214,7 +207,6 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, CameraB
     if (photoAssetCallback_ != nullptr && photoOutput_ != nullptr) {
         photoAssetCallback_(photoOutput_, mediaAsset);
     }
-    return;
 }
 
 void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer)
@@ -273,9 +265,8 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
 RawPhotoListener::RawPhotoListener(Camera_PhotoOutput* photoOutput, const sptr<Surface> rawPhotoSurface)
     : photoOutput_(photoOutput), rawPhotoSurface_(rawPhotoSurface)
 {
-    if (bufferProcessor_ == nullptr && rawPhotoSurface != nullptr) {
-        bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(rawPhotoSurface);
-    }
+    CHECK_ERROR_RETURN(bufferProcessor_ != nullptr || rawPhotoSurface == nullptr);
+    bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(rawPhotoSurface);
 }
 
 RawPhotoListener::~RawPhotoListener()
@@ -310,14 +301,11 @@ void RawPhotoListener::ExecuteRawPhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_
     std::shared_ptr<Media::NativeImage> nativeImage = std::make_shared<Media::NativeImage>(surfaceBuffer,
         bufferProcessor_, timestamp);
     CHECK_ERROR_RETURN_LOG(nativeImage == nullptr, "Create native image failed");
+    CHECK_ERROR_RETURN(callback_ == nullptr || photoOutput_ == nullptr);
+    OH_PhotoNative* photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, false);
+    CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
 
-    if (callback_ != nullptr && photoOutput_ != nullptr) {
-        OH_PhotoNative *photoNative = photoOutput_->CreateCameraPhotoNative(nativeImage, false);
-        CHECK_ERROR_RETURN_LOG(photoNative == nullptr, "Create photo native failed");
-
-        callback_(photoOutput_, photoNative);
-    }
-    return;
+    callback_(photoOutput_, photoNative);
 }
 
 void RawPhotoListener::SetCallback(OH_PhotoOutput_PhotoAvailable callback)

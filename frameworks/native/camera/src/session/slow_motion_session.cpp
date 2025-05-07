@@ -37,6 +37,7 @@ void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbac
     CHECK_ERROR_RETURN_LOG(session == nullptr,
         "SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
+    session->ProcessAutoFocusUpdates(result);
     session->OnSlowMotionStateChange(result);
 }
 
