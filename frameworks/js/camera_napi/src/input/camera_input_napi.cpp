@@ -129,6 +129,7 @@ void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const ui
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback("cameraOcclusionDetect", callbackNapiPara);
+    ExecuteCallback("cameraOcclusionDetection", callbackNapiPara);
 }
 
 void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
@@ -526,7 +527,10 @@ const CameraInputNapi::EmitterFunctions& CameraInputNapi::GetEmitterFunctions()
             &CameraInputNapi::UnregisterErrorCallbackListener } },
         { "cameraOcclusionDetect", {
             &CameraInputNapi::RegisterOcclusionDetectCallbackListener,
-            &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } } };
+            &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } },
+        { "cameraOcclusionDetection ", {
+            &CameraInputNapi::RegisterOcclusionDetectCallbackListener,
+            &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } }  };
     return funMap;
 }
 
