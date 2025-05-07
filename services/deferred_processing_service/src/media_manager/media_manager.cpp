@@ -80,7 +80,8 @@ MediaManagerError MediaManager::Pause()
     if (curIFramePts_ == -1) {
         curIFramePts_ = pausePts_;
     }
-    DP_CHECK_ERROR_RETURN_RET_LOG(curIFramePts_ < pausePts_, PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(curIFramePts_ < pausePts_ || curIFramePts_ == -1,
+        PAUSE_ABNORMAL, "Pause abnormal, will reprocess recover.");
     
     std::string lastPts = TEMP_PTS_TAG + std::to_string(curIFramePts_);
     DP_INFO_LOG("pausePts: %{public}s", lastPts.c_str());

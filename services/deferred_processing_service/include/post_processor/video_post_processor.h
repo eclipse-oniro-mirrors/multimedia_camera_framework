@@ -60,7 +60,7 @@ private:
 
     void ConnectService();
     void DisconnectService();
-    bool PrepareStreams(const std::string& videoId, const int inputFd);
+    DpsError PrepareStreams(const std::string& videoId, const int inputFd);
     bool ProcessStream(const StreamDescription& stream);
     void ReleaseStreams();
     void SetStreamInfo(const StreamDescription& stream, sptr<BufferProducerSequenceable>& producer);

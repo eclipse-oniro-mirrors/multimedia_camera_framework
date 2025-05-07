@@ -21,6 +21,7 @@
 #include "dp_log.h"
 #include "dp_timer.h"
 #include "dps.h"
+#include "events_info.h"
 #include "events_monitor.h"
 #include "hdf_device_class.h"
 #include "iproxy_broker.h"
@@ -245,9 +246,14 @@ void VideoPostProcessor::ProcessRequest(const DeferredVideoWorkPtr& work)
     }
 
     auto inFd = work->GetDeferredVideoJob()->GetInputFd();
-    bool result = StartMpeg(videoId, inFd) && PrepareStreams(videoId, inFd->GetFd());
-    if (!result) {
+    if (!StartMpeg(videoId, inFd)) {
         DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, DPS_ERROR_VIDEO_PROC_FAILED));
+        return;
+    }
+
+    auto error = PrepareStreams(videoId, inFd->GetFd());
+    if (error != DPS_NO_ERROR) {
+        DP_CHECK_EXECUTE(processResult_, processResult_->OnError(videoId, error));
         return;
     }
 
@@ -277,10 +283,10 @@ void VideoPostProcessor::PauseRequest(const std::string& videoId, const Schedule
     DP_INFO_LOG("DPS_VIDEO: Interrupt video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }
 
-bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int inputFd)
+DpsError VideoPostProcessor::PrepareStreams(const std::string& videoId, const int inputFd)
 {
     auto session = GetVideoSession();
-    DP_CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false, "video session is nullptr.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(session == nullptr, DPS_ERROR_VIDEO_PROC_FAILED, "video session is nullptr.");
     // LCOV_EXCL_START
 
     allStreamInfo_.clear();
@@ -290,21 +296,22 @@ bool VideoPostProcessor::PrepareStreams(const std::string& videoId, const int in
         videoId.c_str(), streamDescs.size(), ret);
 
     for (const auto& stream : streamDescs) {
-        DP_LOOP_ERROR_RETURN_RET_LOG(!ProcessStream(stream), false,
+        DP_LOOP_ERROR_RETURN_RET_LOG(!ProcessStream(stream), DPS_ERROR_VIDEO_PROC_FAILED,
             "ProcessStream failed streamType: %{public}d", stream.type);
     }
+    DP_CHECK_ERROR_RETURN_RET_LOG(allStreamInfo_.empty(), DPS_ERROR_VIDEO_PROC_FAILED, "allStreamInfo is null.");
 
-    DP_DEBUG_LOG("DPS_VIDEO: Prepare videoId: %{public}s, create stream size: %{public}zu", videoId.c_str(),
-        allStreamInfo_.size());
-    DP_CHECK_ERROR_RETURN_RET_LOG(allStreamInfo_.empty(), false, "allStreamInfo is null.");
-
+    if (EventsInfo::GetInstance().IsCameraOpen()) {
+        allStreamInfo_.clear();
+        return DPS_ERROR_VIDEO_PROC_INTERRUPTED;
+    }
     ret = session->CreateStreams(allStreamInfo_);
     DP_INFO_LOG("DPS_VIDEO: CreateStreams videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 
     std::vector<uint8_t> modeSetting;
     ret = session->CommitStreams(modeSetting);
     DP_INFO_LOG("DPS_VIDEO: CommitStreams videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
-    return true;
+    return DPS_NO_ERROR;
     // LCOV_EXCL_STOP
 }
 

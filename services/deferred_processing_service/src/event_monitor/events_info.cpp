@@ -126,6 +126,20 @@ ThermalLevel EventsInfo::GetThermalLevel()
 #endif
     return thermalLevel_;
 }
+
+void EventsInfo::SetCameraState(CameraSessionStatus state)
+{
+    std::lock_guard lock(mutex_);
+    cameraState_ = state;
+}
+
+bool EventsInfo::IsCameraOpen()
+{
+    std::lock_guard lock(mutex_);
+    DP_INFO_LOG("IsCameraOpen: %{public}d", cameraState_);
+    return cameraState_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
+        || cameraState_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
