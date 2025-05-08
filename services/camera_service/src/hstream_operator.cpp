@@ -196,7 +196,6 @@ int32_t HStreamOperator::AddOutputStream(sptr<HStreamCommon> stream)
     if (stream->GetStreamType() == StreamType::CAPTURE) {
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
-        CameraDynamicLoader::LoadDynamiclibAsync(MEDIA_LIB_SO); // cache dynamiclib
     }
     MEDIA_INFO_LOG("HCaptureSession::AddOutputStream stream colorSpace:%{public}d", currColorSpace_);
     stream->SetColorSpace(currColorSpace_);
@@ -1513,6 +1512,7 @@ int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<i
             CameraReportUtils::GetInstance().SetOpenCamPerfEndInfo();
             CameraReportUtils::GetInstance().SetModeChangePerfEndInfo();
             CameraReportUtils::GetInstance().SetSwitchCamPerfEndInfo();
+            CameraDynamicLoader::LoadDynamiclibAsync(MEDIA_LIB_SO); // cache dynamiclib
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId);
         }

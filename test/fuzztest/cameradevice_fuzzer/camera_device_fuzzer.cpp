@@ -320,7 +320,7 @@ void TestDynamicLoader(uint8_t *rawData, size_t size)
     string libName = data.ReadString();
     CameraDynamicLoader::GetDynamiclib(libName);
     CameraDynamicLoader::LoadDynamiclibAsync(libName);
-    CameraDynamicLoader::FreeDynamiclib(libName);
+    CameraDynamicLoader::FreeDynamicLibDelayed(libName);
 }
 
 void TestCameraDeviceServiceCallback(uint8_t *rawData, size_t size)
