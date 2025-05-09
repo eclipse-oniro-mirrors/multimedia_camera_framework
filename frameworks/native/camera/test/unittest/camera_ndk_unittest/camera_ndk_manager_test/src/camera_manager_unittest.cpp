@@ -1170,7 +1170,7 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_033, TestSize.Level0)
     uint32_t size;
     Camera_ErrorCode ret = OH_CameraManager_GetSupportedCameras(cameraManager, &cameras, &size);
     if (size == 0) {
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(ret, CAMERA_OK);
     char* name = nullptr;

@@ -198,7 +198,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_001, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {
         camInput->GetCameraDevice()->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
@@ -253,7 +253,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_002, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {
         camInput->GetCameraDevice()->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
@@ -311,7 +311,7 @@ HWTEST_F(CameraScanSessionUnitTest, scan_session_unittest_003, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedScanmode_) {
         camInput->GetCameraDevice()->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 

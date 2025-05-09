@@ -181,7 +181,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_001, TestSize.Level1)
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     ASSERT_NE(photo, nullptr);
@@ -241,13 +241,13 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_002, TestSize.Level1)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -306,7 +306,7 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_003, TestSize.Level1)
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!preIsSupportedNighitmode_ || !phoIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     ASSERT_NE(photo, nullptr);
@@ -364,13 +364,13 @@ HWTEST_F(CameraNightSessionUnit, night_session_unittest_004, TestSize.Level0)
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedNighitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);

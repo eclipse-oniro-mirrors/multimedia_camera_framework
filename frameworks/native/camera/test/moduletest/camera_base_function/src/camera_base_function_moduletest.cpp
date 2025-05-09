@@ -447,7 +447,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
 
     if (cameraDevices_.size() <= 1) {
         MEDIA_ERR_LOG("The current device only has a camera and cannot switch cameras");
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->RemoveInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -513,7 +513,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
 
     if (cameraDevices_.size() <= 1) {
         MEDIA_ERR_LOG("The current device only has a camera and cannot switch cameras");
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->RemoveInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -1419,7 +1419,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     EXPECT_EQ(captureSession_->GetZoomRatioRange(ranges), SUCCESS);
     if (ranges.empty()) {
         MEDIA_ERR_LOG("moduletest get zoom ratio ranage is empty");
-        return;
+        GTEST_SKIP();
     }
 
     EXPECT_EQ(captureSession_->PrepareZoom(), SUCCESS);
@@ -1478,7 +1478,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     std::vector<FilterType> filterTypes = captureSession_->GetSupportedFilters();
     if (filterTypes.empty()) {
         MEDIA_ERR_LOG("moduletest get supported filters is empty");
-        return;
+        GTEST_SKIP();
     }
 
     captureSession_->LockForControl();
@@ -1513,13 +1513,13 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     std::vector<BeautyType> beautyTypes = captureSession_->GetSupportedBeautyTypes();
     if (beautyTypes.empty()) {
         MEDIA_ERR_LOG("moduletest get supported beauty types is empty");
-        return;
+        GTEST_SKIP();
     }
 
     std::vector<int32_t> ranges = captureSession_->GetSupportedBeautyRange(BeautyType::FACE_SLENDER);
     if (ranges.empty()) {
         MEDIA_ERR_LOG("moduletest get supported beauty range is empty");
-        return;
+        GTEST_SKIP();
     }
 
     captureSession_->LockForControl();
@@ -1554,7 +1554,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     std::vector<ColorSpace> colorSpaces = captureSession_->GetSupportedColorSpaces();
     if (colorSpaces.empty()) {
         MEDIA_ERR_LOG("moduletest get supported color spaces is empty");
-        return;
+        GTEST_SKIP();
     }
     bool isSupportSet = false;
     if (std::find(colorSpaces.begin(), colorSpaces.end(), ColorSpace::COLOR_SPACE_UNKNOWN) !=
@@ -1597,7 +1597,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
     std::vector<ColorEffect> colorEffects = captureSession_->GetSupportedColorEffects();
     if (colorEffects.empty()) {
         MEDIA_ERR_LOG("moduletest get supported color effects is empty");
-        return;
+        GTEST_SKIP();
     }
 
     captureSession_->LockForControl();
@@ -1677,7 +1677,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     if (!captureSession_->IsMacroSupported()) {
         MEDIA_ERR_LOG("moduletest macro is not supported");
-        return;
+        GTEST_SKIP();
     }
 
     std::shared_ptr<TestMacroStatusCallback>callback = std::make_shared<TestMacroStatusCallback>();
@@ -1710,7 +1710,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     if (!captureSession_->IsDepthFusionSupported()) {
         MEDIA_ERR_LOG("moduletest depth fusion is not supported");
-        return;
+        GTEST_SKIP();
     }
 
     std::vector<float> thresholds = captureSession_->GetDepthFusionThreshold();
@@ -1742,7 +1742,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     if (!captureSession_->IsMoonCaptureBoostSupported()) {
         MEDIA_ERR_LOG("moduletest moon capture boost is not supported");
-        return;
+        GTEST_SKIP();
     }
 
     auto callback = std::make_shared<TestMoonCaptureBoostStatusCallback>();
@@ -1775,7 +1775,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     if (!captureSession_->IsLowLightBoostSupported()) {
         MEDIA_ERR_LOG("mooduletest low light boost is not supported");
-        return;
+        GTEST_SKIP();
     }
 
     captureSession_->LockForControl();
@@ -1888,7 +1888,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_015, Test
 
     if (!captureSession_->IsEffectSuggestionSupported()) {
         MEDIA_ERR_LOG("mooduletest effect suggestion is not supported");
-        return;
+        GTEST_SKIP();
     }
 
     std::vector<EffectSuggestionType> supportedTypeList = captureSession_->GetSupportedEffectSuggestionType();
@@ -3157,7 +3157,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_076, Test
 
     videoStabilizationModes = captureSession_->GetSupportedStabilizationMode();
     if (videoStabilizationModes.empty()) {
-        return;
+        GTEST_SKIP();
     }
     stabilizationMode = videoStabilizationModes.back();
     if (captureSession_->IsVideoStabilizationModeSupported(stabilizationMode)) {
@@ -3817,7 +3817,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_093, Test
     cameraInput_ = nullptr;
     WAIT(DURATION_AFTER_DEVICE_CLOSE);
     if (!(cameraManager_->IsTorchSupported())) {
-        return;
+        GTEST_SKIP();
     }
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
@@ -3864,7 +3864,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_094, Test
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
     if (metadataObjectTypes.size() == 0) {
-        return;
+        GTEST_SKIP();
     }
 
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
@@ -3904,7 +3904,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_095, Test
     sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
     if (metadataObjectTypes.size() == 0) {
-        return;
+        GTEST_SKIP();
     }
 
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {});
@@ -4093,7 +4093,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_100, Test
 
     if (cameraDevices_.size() <= 1) {
         MEDIA_ERR_LOG("The current device only has a camera and cannot switch cameras");
-        return;
+        GTEST_SKIP();
     }
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
     EXPECT_EQ(captureSession_->RemoveInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);

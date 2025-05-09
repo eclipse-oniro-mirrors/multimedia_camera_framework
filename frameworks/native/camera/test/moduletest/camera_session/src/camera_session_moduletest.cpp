@@ -71,7 +71,6 @@ void AppCallback::OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo
             EXPECT_TRUE(false);
         }
     }
-    return;
 }
 
 void AppCallback::OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const
@@ -100,7 +99,6 @@ void AppCallback::OnFlashlightStatusChanged(const std::string& cameraID, const F
             EXPECT_TRUE(false);
         }
     }
-    return;
 }
 
 void AppCallback::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
@@ -108,7 +106,6 @@ void AppCallback::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) co
     MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
         torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
     g_torchInfo = torchStatusInfo;
-    return;
 }
 
 void AppCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
@@ -118,7 +115,6 @@ void AppCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
     if (errorType == CAMERA_DEVICE_PREEMPTED) {
         g_sessionclosed = true;
     }
-    return;
 }
 
 void AppCallback::OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) const
@@ -150,14 +146,12 @@ void AppCallback::OnCaptureStarted(const int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const
@@ -165,7 +159,6 @@ void AppCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCou
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
                     captureId, frameCount);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
@@ -173,7 +166,6 @@ void AppCallback::OnFrameShutter(const int32_t captureId, const uint64_t timesta
     MEDIA_DEBUG_LOG(
         "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const
@@ -181,7 +173,6 @@ void AppCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t time
     MEDIA_DEBUG_LOG(
         "AppCallback::OnFrameShutterEnd captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER_END)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
@@ -189,14 +180,12 @@ void AppCallback::OnCaptureReady(const int32_t captureId, const uint64_t timesta
     MEDIA_DEBUG_LOG(
         "AppCallback::OnCaptureReady captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_READY)] = 1;
-    return;
 }
 
 void AppCallback::OnEstimatedCaptureDuration(const int32_t duration) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnEstimatedCaptureDuration duration: %{public}d", duration);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_ESTIMATED_CAPTURE_DURATION)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
@@ -204,33 +193,28 @@ void AppCallback::OnCaptureError(const int32_t captureId, const int32_t errorCod
     MEDIA_DEBUG_LOG(
         "AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d", captureId, errorCode);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameStarted() const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
-    return;
 }
 void AppCallback::OnFrameEnded(const int32_t frameCount) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
-    return;
 }
 void AppCallback::OnError(const int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
-    return;
 }
 
 void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnOfflineDeliveryFinished captureId: %{public}d", captureId);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_OFFLINE_PHOTOOUTPUT)] = 1;
-    return;
 }
 
 void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
@@ -238,7 +222,6 @@ void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) 
     MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
     g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
-    return;
 }
 void AppCallback::OnMacroStatusChanged(MacroStatus status)
 {
@@ -250,7 +233,6 @@ void AppCallback::OnMacroStatusChanged(MacroStatus status)
         g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
         g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
     }
-    return;
 }
 
 void AppCallback::OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status)
@@ -290,7 +272,6 @@ void AppCallback::OnSlowMotionState(const SlowMotionState state)
 void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
-    return;
 }
 void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
 {
@@ -301,24 +282,20 @@ void AppVideoCallback::OnFrameStarted() const
 {
     MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
     g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)] = 1;
-    return;
 }
 void AppVideoCallback::OnFrameEnded(const int32_t frameCount) const
 {
     MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameEnded frameCount: %{public}d", frameCount);
     g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)] = 1;
-    return;
 }
 void AppVideoCallback::OnError(const int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("AppVideoCallback::OnError errorCode: %{public}d", errorCode);
     g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
-    return;
 }
 void AppVideoCallback::OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const
 {
     MEDIA_DEBUG_LOG("AppVideoCallback::OnDeferredVideoEnhancementInfo");
-    return;
 }
 
 void AppMetadataCallback::OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
@@ -333,7 +310,6 @@ void AppMetadataCallback::OnError(int32_t errorCode) const
 void AppSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
-    return;
 }
 
 sptr<CaptureOutput> CameraSessionModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
@@ -654,7 +630,6 @@ void CameraSessionModuleTest::GetSupportedOutputCapability()
 
     videoProfiles_ = outputcapability->GetVideoProfiles();
     ASSERT_TRUE(!videoProfiles_.empty());
-    return;
 }
 
 Profile CameraSessionModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
@@ -965,7 +940,7 @@ void CameraSessionModuleTest::ProcessSize()
 HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::APERTURE_VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::APERTURE_VIDEO);
@@ -1011,7 +986,7 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_001, TestSiz
 HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::APERTURE_VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::APERTURE_VIDEO);
@@ -1070,7 +1045,7 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSiz
 HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::FLUORESCENCE_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::FLUORESCENCE_PHOTO);
@@ -1127,7 +1102,7 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_001, Tes
 HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::FLUORESCENCE_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::FLUORESCENCE_PHOTO);
@@ -1169,7 +1144,7 @@ HWTEST_F(CameraSessionModuleTest, fluorescence_photo_session_moduletest_002, Tes
 HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::HIGH_RES_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::HIGH_RES_PHOTO);
@@ -1226,7 +1201,7 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_001, TestSiz
 HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::HIGH_RES_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::HIGH_RES_PHOTO);
@@ -1272,7 +1247,7 @@ HWTEST_F(CameraSessionModuleTest, high_res_photo_session_moduletest_002, TestSiz
 HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::LIGHT_PAINTING);
@@ -1329,7 +1304,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_001, TestSiz
 HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::LIGHT_PAINTING);
@@ -1375,7 +1350,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_002, TestSiz
 HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::LIGHT_PAINTING);
@@ -1442,7 +1417,7 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_003, TestSiz
 HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::LIGHT_PAINTING)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::LIGHT_PAINTING);
@@ -1520,13 +1495,13 @@ HWTEST_F(CameraSessionModuleTest, light_painting_session_moduletest_004, TestSiz
 HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE_MACRO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     SelectProfiles selectProfiles;
     selectProfiles.preview.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
@@ -1565,7 +1540,7 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.L
 
     bool isSketchSupported = ((sptr<PreviewOutput>&)previewOutput)->IsSketchSupported();
     if (!isSketchSupported) {
-        return;
+        GTEST_SKIP();
     }
     res = ((sptr<PreviewOutput>&)previewOutput)->EnableSketch(true);
     EXPECT_EQ(res, 0);
@@ -1601,13 +1576,13 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_001, TestSize.L
 HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE_MACRO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     SelectProfiles selectProfiles;
     selectProfiles.preview.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
@@ -1668,13 +1643,13 @@ HWTEST_F(CameraSessionModuleTest, macro_photo_session_moduletest_003, TestSize.L
 HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO_MACRO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     SelectProfiles selectProfiles;
     selectProfiles.preview.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
@@ -1713,7 +1688,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.L
 
     bool isSketchSupported = ((sptr<PreviewOutput>&)previewOutput)->IsSketchSupported();
     if (!isSketchSupported) {
-        return;
+        GTEST_SKIP();
     }
     res = ((sptr<PreviewOutput>&)previewOutput)->EnableSketch(true);
     EXPECT_EQ(res, 0);
@@ -1749,13 +1724,13 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_001, TestSize.L
 HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO_MACRO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     SelectProfiles selectProfiles;
     selectProfiles.preview.size_ = {SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT};
@@ -1790,7 +1765,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_002, TestSize.L
 
     bool isSketchSupported = ((sptr<PreviewOutput>&)previewOutput)->IsSketchSupported();
     if (!isSketchSupported) {
-        return;
+        GTEST_SKIP();
     }
     res = ((sptr<PreviewOutput>&)previewOutput)->EnableSketch(true);
     EXPECT_EQ(res, 0);
@@ -1846,7 +1821,7 @@ HWTEST_F(CameraSessionModuleTest, macro_video_session_moduletest_003, TestSize.L
 HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PANORAMA_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PANORAMA_PHOTO);
@@ -1892,7 +1867,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_001, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PANORAMA_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PANORAMA_PHOTO);
@@ -1938,7 +1913,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_002, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_003, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PANORAMA_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PANORAMA_PHOTO);
@@ -1985,7 +1960,7 @@ HWTEST_F(CameraSessionModuleTest, panorama_session_moduletest_003, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2042,7 +2017,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_001, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2088,7 +2063,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_002, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_003, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2151,7 +2126,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_003, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_004, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2217,7 +2192,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_004, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_005, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2280,7 +2255,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_005, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_006, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PORTRAIT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PORTRAIT);
@@ -2347,7 +2322,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_007, TestSize.Leve
 {
     SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSceneModeSupported(portraitMode)) {
-        return;
+        GTEST_SKIP();
     }
 
     sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
@@ -2488,7 +2463,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_010, TestSize.Leve
 HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::QUICK_SHOT_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::QUICK_SHOT_PHOTO);
@@ -2545,7 +2520,7 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestS
 HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::QUICK_SHOT_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::QUICK_SHOT_PHOTO);
@@ -2591,7 +2566,7 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_002, TestS
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SCAN)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SCAN);
@@ -2637,7 +2612,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_001, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SCAN)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SCAN);
@@ -2683,7 +2658,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_002, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_003, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SCAN)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SCAN);
@@ -2730,7 +2705,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_003, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_004, TestSize.Level1)
 {
     if (!IsSupportNow()) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
@@ -2780,7 +2755,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_004, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_005, TestSize.Level1)
 {
     if (!IsSupportNow()) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
@@ -2815,7 +2790,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_005, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_006, TestSize.Level1)
 {
     if (!IsSupportNow()) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
@@ -2852,7 +2827,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_006, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_007, TestSize.Level1)
 {
     if (!IsSupportNow()) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
@@ -2909,7 +2884,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_008, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SECURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SECURE);
@@ -2955,7 +2930,7 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_001, TestSize
 HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SECURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SECURE);
@@ -3001,7 +2976,7 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_002, TestSize
 HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_003, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SECURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SECURE);
@@ -3050,7 +3025,7 @@ HWTEST_F(CameraSessionModuleTest, secure_camera_session_moduletest_003, TestSize
 HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SLOW_MOTION)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SLOW_MOTION);
@@ -3096,7 +3071,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_001, TestSize.L
 HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SLOW_MOTION)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SLOW_MOTION);
@@ -3155,7 +3130,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.L
 HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_003, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::SLOW_MOTION)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SLOW_MOTION);
@@ -3248,7 +3223,7 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_004, TestSize.L
 HWTEST_F(CameraSessionModuleTest, night_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::NIGHT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::NIGHT);
@@ -3305,7 +3280,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_001, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, night_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::NIGHT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::NIGHT);
@@ -3351,7 +3326,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_002, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, night_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::NIGHT)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::NIGHT);
@@ -3470,7 +3445,7 @@ HWTEST_F(CameraSessionModuleTest, night_session_moduletest_005, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3527,7 +3502,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_001, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3586,7 +3561,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_002, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3665,7 +3640,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_003, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3742,7 +3717,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_004, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3822,7 +3797,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_005, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3897,7 +3872,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_006, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -3977,7 +3952,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_007, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -4062,7 +4037,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_008, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -4137,7 +4112,7 @@ HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_009, TestSize.Le
 HWTEST_F(CameraSessionModuleTest, profession_session_moduletest_010, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::PROFESSIONAL)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::PROFESSIONAL);
@@ -4218,7 +4193,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_001, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4289,7 +4264,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_002, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4378,7 +4353,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_003, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4467,7 +4442,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_004, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4552,7 +4527,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_005, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
@@ -4665,7 +4640,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_006, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4754,7 +4729,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_007, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4837,7 +4812,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestS
 {
     SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -4921,7 +4896,7 @@ HWTEST_F(CameraSessionModuleTest, profession_video_session_moduletest_008, TestS
 HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::TIMELAPSE_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::TIMELAPSE_PHOTO);
@@ -4978,7 +4953,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_001, TestS
 HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::TIMELAPSE_PHOTO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::TIMELAPSE_PHOTO);
@@ -5025,7 +5000,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_003, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5158,7 +5133,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_004, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5291,7 +5266,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_005, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5437,7 +5412,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_006, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5594,7 +5569,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_007, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5745,7 +5720,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_008, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -5896,7 +5871,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestS
 {
     SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
     if (!IsSceneModeSupported(sceneMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         session_->Release();
@@ -6041,7 +6016,7 @@ HWTEST_F(CameraSessionModuleTest, time_lapse_photo_session_moduletest_009, TestS
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::CAPTURE);
@@ -6098,7 +6073,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_001, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::CAPTURE);
@@ -6144,7 +6119,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_002, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::CAPTURE);
@@ -6214,7 +6189,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_003, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_004, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6276,7 +6251,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_004, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_005, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6338,7 +6313,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_005, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_006, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6400,7 +6375,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_006, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_007, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6462,7 +6437,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_007, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_008, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6524,7 +6499,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_008, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_009, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6586,7 +6561,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_009, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_010, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6648,7 +6623,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_010, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_011, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6710,7 +6685,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_011, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_012, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6772,7 +6747,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_012, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_013, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6834,7 +6809,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_013, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_014, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6896,7 +6871,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_014, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_015, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -6958,7 +6933,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_015, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_016, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -7020,7 +6995,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_016, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_017, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -7082,7 +7057,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_017, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_018, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -7144,7 +7119,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_018, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_019, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::CAPTURE)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
@@ -7207,7 +7182,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_020, TestSize.Level0)
 {
     SceneMode photoMode = SceneMode::CAPTURE;
     if (!IsSceneModeSupported(photoMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
     ASSERT_NE(cameraMgr, nullptr);
@@ -7310,7 +7285,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_021, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_022, TestSize.Level1)
 {
     if (!IsSupportNow()) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
     ASSERT_NE(captureSession, nullptr);
@@ -7333,7 +7308,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_023, TestSize.Level0)
 {
     SceneMode captureMode = SceneMode::CAPTURE;
     if (!IsSceneModeSupported(captureMode)) {
-        return;
+        GTEST_SKIP();
     }
     if (session_) {
         MEDIA_INFO_LOG("old session exist, need release");
@@ -7451,7 +7426,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_024, TestSize.Level1)
         EXPECT_EQ(intResult, 0);
         if (!falg) {
             MEDIA_ERR_LOG("current session not supported colorSpace SRGB");
-            return;
+            GTEST_SKIP();
         }
         EXPECT_EQ(ColorSpace::SRGB, colorSpace);
     }
@@ -7678,7 +7653,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_029, TestSize.Level1)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
@@ -7696,7 +7671,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_029, TestSize.Level1)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     bool isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
-        return;
+        GTEST_SKIP();
     }
 
     int sketchEnableRatio = previewOutput->GetSketchRatio();
@@ -7733,7 +7708,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_030, TestSize.Level0)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
@@ -7751,7 +7726,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_030, TestSize.Level0)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     bool isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
-        return;
+        GTEST_SKIP();
     }
 
     previewOutput->SetCallback(std::make_shared<AppCallback>());
@@ -7815,7 +7790,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_031, TestSize.Level1)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
@@ -7837,7 +7812,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_031, TestSize.Level1)
 
     isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
-        return;
+        GTEST_SKIP();
     }
 
     session_->SetMode(SceneMode::PORTRAIT);
@@ -7890,7 +7865,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
@@ -7909,7 +7884,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
     previewOutput->SetCallback(std::make_shared<AppCallback>());
     bool isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
-        return;
+        GTEST_SKIP();
     }
 
     int sketchEnableRatio = previewOutput->GetSketchRatio();
@@ -7990,7 +7965,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
@@ -8008,7 +7983,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     bool isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
-        return;
+        GTEST_SKIP();
     }
 
     previewOutput->SetCallback(std::make_shared<AppCallback>());
@@ -8072,7 +8047,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_034, TestSize.Level1)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
@@ -8272,7 +8247,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_037, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_001, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::VIDEO);
@@ -8329,7 +8304,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_001, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::VIDEO);
@@ -8390,7 +8365,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_002, TestSize.Level1)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::VIDEO);
@@ -8472,7 +8447,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_003, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8546,7 +8521,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_004, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8620,7 +8595,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_005, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8694,7 +8669,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_006, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8768,7 +8743,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_007, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8842,7 +8817,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_008, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8916,7 +8891,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_009, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -8990,7 +8965,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_010, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9064,7 +9039,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_011, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9138,7 +9113,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_012, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9212,7 +9187,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_013, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9286,7 +9261,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_014, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9360,7 +9335,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_015, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9434,7 +9409,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_016, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9508,7 +9483,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_017, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9582,7 +9557,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_018, TestSize.Level0)
 HWTEST_F(CameraSessionModuleTest, video_session_moduletest_019, TestSize.Level0)
 {
     if (!IsSceneModeSupported(SceneMode::VIDEO)) {
-        return;
+        GTEST_SKIP();
     }
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
@@ -9657,7 +9632,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_020, TestSize.Level1)
 {
     SceneMode videoMode = SceneMode::VIDEO;
     if (!IsSceneModeSupported(videoMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
     ASSERT_NE(cameraMgr, nullptr);
@@ -9735,7 +9710,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_022, TestSize.Level0)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
@@ -9754,7 +9729,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_022, TestSize.Level0)
 
     bool isSketchSupported = previewOutput->IsSketchSupported();
     if (!isSketchSupported) {
-        return;
+        GTEST_SKIP();
     }
 
     previewOutput->EnableSketch(true);
@@ -9765,7 +9740,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_022, TestSize.Level0)
 
     bool isMacroSupported = session_->IsMacroSupported();
     if (!isMacroSupported) {
-        return;
+        GTEST_SKIP();
     }
 
     intResult = session_->Start();
@@ -9821,7 +9796,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_023, TestSize.Level1)
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
         EXPECT_EQ(previewProfile.get(), nullptr);
-        return;
+        GTEST_SKIP();
     }
     auto output = CreatePreviewOutput(*previewProfile);
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
@@ -9929,7 +9904,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_025, TestSize.Level0)
 {
     SceneMode videoMode = SceneMode::VIDEO;
     if (!IsSceneModeSupported(videoMode)) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
@@ -9961,7 +9936,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_025, TestSize.Level0)
     auto previewProfileOpt = GetPreviewProfileByFormat(modeAbility, width, height, previewFormat);
     if (!previewProfileOpt) {
         std::cout << "previewProfile not support" << std::endl;
-        return;
+        GTEST_SKIP();
     }
     Profile previewProfile = previewProfileOpt.value();
     EXPECT_EQ(previewProfile.GetCameraFormat(), CAMERA_FORMAT_YCRCB_P010);
@@ -9970,7 +9945,7 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_025, TestSize.Level0)
     auto videoProfileOpt = GetVideoProfileByFormat(modeAbility, width, height, videoFormat, maxFps);
     if (!videoProfileOpt) {
         std::cout << "videoProfile not support" << std::endl;
-        return;
+        GTEST_SKIP();
     }
     VideoProfile videoProfile = videoProfileOpt.value();
     EXPECT_EQ(videoProfile.GetCameraFormat(), CAMERA_FORMAT_YCRCB_P010);

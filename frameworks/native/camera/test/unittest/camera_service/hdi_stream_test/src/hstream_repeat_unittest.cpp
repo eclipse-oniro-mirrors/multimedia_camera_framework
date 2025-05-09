@@ -370,7 +370,7 @@ HWTEST_F(HStreamRepeatUnit, hstream_repeat_unittest_010, TestSize.Level1)
     streamRepeat->cameraUsedAsPosition_ = OHOS_CAMERA_POSITION_FRONT;
     int disPlayRotation = -1;
     streamRepeat->SetStreamTransform(disPlayRotation);
-    EXPECT_EQ(streamRepeat->cameraUsedAsPosition_, OHOS_CAMERA_POSITION_FRONT);
+    EXPECT_TRUE(streamRepeat->cameraUsedAsPosition_ == OHOS_CAMERA_POSITION_FRONT);
 }
 
 /*

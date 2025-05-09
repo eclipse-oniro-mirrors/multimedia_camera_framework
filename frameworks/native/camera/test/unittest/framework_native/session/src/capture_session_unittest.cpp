@@ -3821,7 +3821,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_043, TestSize.Level1)
 
     if (preview == nullptr) {
         MEDIA_WARNING_LOG("Format YCRCB_P010 is not supported!");
-        return;
+        GTEST_SKIP();
     }
     
     ColorSpace colorSpace = BT2020_HLG;
@@ -3872,7 +3872,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_044, TestSize.Level1)
     }
     if (preview == nullptr) {
         MEDIA_WARNING_LOG("Format YCRCB_P010 is not supported!");
-        return;
+        GTEST_SKIP();
     }
 
     ColorSpace colorSpace = BT2020_HLG;

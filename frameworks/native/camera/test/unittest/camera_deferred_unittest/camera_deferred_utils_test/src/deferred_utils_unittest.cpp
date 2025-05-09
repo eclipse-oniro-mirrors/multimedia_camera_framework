@@ -67,7 +67,7 @@ HWTEST_F(DeferredUtilsUnitTest, deferred_utils_unittest_002, TestSize.Level1)
 
     EXPECT_EQ(DpsTimer::GetInstance().StartTimer([]() -> void {}, 0), 0);
     DpsTimer::GetInstance().StopTimer(testTimeId);
-    EXPECT_EQ(testTimeId, 1);
+    EXPECT_TRUE(testTimeId == 1);
     DpsTimer::GetInstance().StopTimer(invalidTimeId);
 }
 

@@ -143,7 +143,7 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_001, TestSize
             sptr<CaptureOutput> preview = CreatePreviewOutput();
             if (!preIsSupportedSecuremode_) {
                 input->Close();
-                return;
+                GTEST_SKIP();
             }
             ASSERT_NE(preview, nullptr);
             sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SECURE);
@@ -197,13 +197,13 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_002, TestSize
             sptr<CaptureOutput> preview1 = CreatePreviewOutput();
             if (!preIsSupportedSecuremode_) {
                 input->Close();
-                return;
+                GTEST_SKIP();
             }
             ASSERT_NE(preview1, nullptr);
             sptr<CaptureOutput> preview2 = CreatePreviewOutput();
             if (!preIsSupportedSecuremode_) {
                 input->Close();
-                return;
+                GTEST_SKIP();
             }
             ASSERT_NE(preview2, nullptr);
             sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SECURE);
@@ -254,12 +254,12 @@ HWTEST_F(SecureCameraSessionUnitTest, camera_securecamera_unittest_003, TestSize
             EXPECT_EQ(intResult, CAMERA_OK);
             sptr<CaptureOutput> preview1 = CreatePreviewOutput();
             if (!preIsSupportedSecuremode_) {
-                return;
+                GTEST_SKIP();
             }
             ASSERT_NE(preview1, nullptr);
             sptr<CaptureOutput> preview2 = CreatePreviewOutput();
             if (!preIsSupportedSecuremode_) {
-                return;
+                GTEST_SKIP();
             }
             ASSERT_NE(preview2, nullptr);
             sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::SECURE);

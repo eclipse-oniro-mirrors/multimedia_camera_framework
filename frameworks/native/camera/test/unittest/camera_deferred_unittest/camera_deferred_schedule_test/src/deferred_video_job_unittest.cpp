@@ -80,7 +80,6 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Lev
 
     bool createTimeResult = videoJobA->createTime_ < videoJobB->createTime_;
     EXPECT_EQ(videoJobA->curStatus_, videoJobB->curStatus_);
-    EXPECT_TRUE(*videoJobA == *videoJobA);
     EXPECT_FALSE(*videoJobA == *videoJobB);
     EXPECT_EQ(*videoJobA > *videoJobB, createTimeResult);
     EXPECT_EQ(*videoJobB > *videoJobA, !createTimeResult);

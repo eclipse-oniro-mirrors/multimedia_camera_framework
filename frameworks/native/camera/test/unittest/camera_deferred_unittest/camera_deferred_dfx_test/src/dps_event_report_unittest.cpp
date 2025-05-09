@@ -106,7 +106,7 @@ HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult001, TestSize.Level1)
     eventInfo.emplace(imageId, dpsEventInfo);
     DPSEventReport::GetInstance().userIdToImageIdEventInfo.emplace(userId, eventInfo);
     DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId, endTime);
-    EXPECT_EQ(dpsEventInfo.imageDoneTimeEndTime, 0);
+    EXPECT_TRUE(dpsEventInfo.imageDoneTimeEndTime == 0);
 }
 
 /*
@@ -130,7 +130,7 @@ HWTEST_F(DpsEventReportUnittest, ReportImageProcessResult002, TestSize.Level1)
     eventInfo.emplace(imageId, dpsEventInfo);
     DPSEventReport::GetInstance().userIdToImageIdEventInfo.emplace(userId, eventInfo);
     DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId, endTime);
-    EXPECT_EQ(dpsEventInfo.imageDoneTimeEndTime, 0);
+    EXPECT_TRUE(dpsEventInfo.imageDoneTimeEndTime == 0);
 }
 
 /*
@@ -501,8 +501,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateSynchronizeTime002, TestSize.Level1)
     dpsEventInfoSrc.synchronizeTimeEndTime = 0;
     dpsEventInfoSrc.synchronizeTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateSynchronizeTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.synchronizeTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.synchronizeTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.synchronizeTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.synchronizeTimeBeginTime == 0);
 }
 
 /*
@@ -553,8 +553,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateDispatchTime002, TestSize.Level1)
     dpsEventInfoSrc.dispatchTimeEndTime = 0;
     dpsEventInfoSrc.dispatchTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateDispatchTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.dispatchTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.dispatchTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.dispatchTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.dispatchTimeBeginTime == 0);
 }
 
 /*
@@ -605,8 +605,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateProcessTime002, TestSize.Level1)
     dpsEventInfoSrc.processTimeEndTime = 0;
     dpsEventInfoSrc.processTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateProcessTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.processTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.processTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.processTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.processTimeBeginTime == 0);
 }
 
 /*
@@ -657,8 +657,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateImageDoneTime002, TestSize.Level1)
     dpsEventInfoSrc.imageDoneTimeEndTime = 0;
     dpsEventInfoSrc.imageDoneTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateImageDoneTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.imageDoneTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.imageDoneTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.imageDoneTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.imageDoneTimeBeginTime == 0);
 }
 
 /*
@@ -709,8 +709,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateRestoreTime002, TestSize.Level1)
     dpsEventInfoSrc.restoreTimeEndTime = 0;
     dpsEventInfoSrc.restoreTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateRestoreTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.restoreTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.restoreTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.restoreTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.restoreTimeBeginTime == 0);
 }
 
 /*
@@ -761,8 +761,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateRemoveTime002, TestSize.Level1)
     dpsEventInfoSrc.removeTimeEndTime = 0;
     dpsEventInfoSrc.removeTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateRemoveTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.removeTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.removeTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.removeTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.removeTimeBeginTime == 0);
 }
 
 /*
@@ -860,8 +860,8 @@ HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime002, TestSize.Level1)
     dpsEventInfoSrc.trailingTimeEndTime = 0;
     dpsEventInfoSrc.trailingTimeBeginTime = 0;
     DPSEventReport::GetInstance().UpdateTrailingTime(dpsEventInfo, dpsEventInfoSrc);
-    EXPECT_EQ(dpsEventInfo.trailingTimeEndTime, 0);
-    EXPECT_EQ(dpsEventInfo.trailingTimeBeginTime, 0);
+    EXPECT_TRUE(dpsEventInfo.trailingTimeEndTime == 0);
+    EXPECT_TRUE(dpsEventInfo.trailingTimeBeginTime == 0);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

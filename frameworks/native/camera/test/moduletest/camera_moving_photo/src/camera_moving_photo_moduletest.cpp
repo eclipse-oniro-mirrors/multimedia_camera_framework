@@ -708,7 +708,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_007, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(true), SUCCESS);
@@ -722,7 +722,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_007, TestSi
 
     if (!mediaAsset_) {
         MEDIA_ERR_LOG("Midia asset is null after register photo asset available callback");
-        return;
+        GTEST_SKIP();
     }
 
     MediaLibrary_MediaSubType mediaSubType = MEDIA_LIBRARY_DEFAULT;
@@ -752,7 +752,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_008, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(true), SUCCESS);
@@ -767,7 +767,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_008, TestSi
 
     if (!mediaAsset_) {
         MEDIA_ERR_LOG("Midia asset is null after register photo asset available callback");
-        return;
+        GTEST_SKIP();
     }
 
     MediaLibrary_MediaSubType mediaSubType = MEDIA_LIBRARY_DEFAULT;
@@ -797,7 +797,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_009, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(true), SUCCESS);
@@ -834,7 +834,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_010, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(true), SUCCESS);
@@ -848,7 +848,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_010, TestSi
 
     if (!mediaAsset_) {
         MEDIA_ERR_LOG("Midia asset is null after register photo asset available callback");
-        return;
+        GTEST_SKIP();
     }
 
     OH_MediaLibrary_OnMovingPhotoDataPrepared movingPhotoCallback = nullptr;
@@ -880,7 +880,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_011, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(false), SUCCESS);
@@ -894,7 +894,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_011, TestSi
 
     if (!mediaAsset_) {
         MEDIA_ERR_LOG("Midia asset is null after register photo asset available callback");
-        return;
+        GTEST_SKIP();
     }
 
     MediaLibrary_MediaSubType mediaSubType = MEDIA_LIBRARY_DEFAULT;
@@ -924,7 +924,7 @@ HWTEST_F(CameraMovingPhotoModuleTest, camera_moving_photo_moduletest_012, TestSi
 
     if (!session_->IsMovingPhotoSupported()) {
         MEDIA_ERR_LOG("Camera device not support moving photo");
-        return;
+        GTEST_SKIP();
     }
     session_->LockForControl();
     EXPECT_EQ(session_->EnableMovingPhoto(true), SUCCESS);
