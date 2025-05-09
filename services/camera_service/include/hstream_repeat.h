@@ -100,12 +100,13 @@ private:
     void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void ProcessCameraSetRotation(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
-    void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, uint8_t mirror = 0);
     void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateFrameMuteSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> &dynamicSetting);
     void SyncTransformToSketch();
     void UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateHalRoateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 #ifdef NOTIFICATION_ENABLE
     void UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void CancelNotification();

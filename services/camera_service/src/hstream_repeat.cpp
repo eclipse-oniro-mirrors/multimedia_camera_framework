@@ -33,7 +33,9 @@
 #include "metadata_utils.h"
 #include "camera_report_uitls.h"
 #include "parameters.h"
-
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -67,6 +69,17 @@ int32_t HStreamRepeat::LinkInput(wptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
         "HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
     CHECK_EXECUTE(repeatStreamType_ != RepeatStreamType::VIDEO, SetStreamTransform());
+    if (repeatStreamType_ != RepeatStreamType::VIDEO) {
+        UpdateHalRoateSettings(cameraAbility);
+        SetStreamTransform();
+    } else {
+#ifdef HOOK_CAMERA_OPERATOR
+        if (!CameraRotatePlugin::GetInstance()->
+            HookCreateVideoOutput(GetBasicInfo(), GetStreamProducer())) {
+            MEDIA_ERR_LOG("HCameraService::CreateVideoOutput HookCreateVideoOutput is failed");
+        }
+#endif
+     }
     return CAMERA_OK;
 }
 
@@ -224,15 +237,23 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     // open video dfx switch for hal, no need close
     if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
         OpenVideoDfxSwitch(dynamicSetting);
+        UpdateHalRoateSettings(dynamicSetting);
     }
     if (repeatStreamType_ == RepeatStreamType::VIDEO || repeatStreamType_ == RepeatStreamType::LIVEPHOTO) {
-        UpdateVideoSettings(dynamicSetting);
+        UpdateVideoSettings(dynamicSetting, enableMirror_);
     }
     if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateFrameRateSettings(dynamicSetting);
     }
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {
         UpdateAutoFrameRateSettings(dynamicSetting);
+#ifdef HOOK_CAMERA_OPERATOR
+        bool mirror = 0;
+        if (CameraRotatePlugin::GetInstance()->
+            HookVideoStreamStart(GetBasicInfo(), GetStreamProducer(), mirror)) {
+            UpdateVideoSettings(dynamicSetting, mirror);
+        }
+#endif
     }
     if (settings != nullptr) {
         UpdateFrameMuteSettings(settings, dynamicSetting);
@@ -773,6 +794,14 @@ void HStreamRepeat::ProcessCameraSetRotation(int32_t& sensorOrientation, camera_
 void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
+#ifdef HOOK_CAMERA_OPERATOR
+    int32_t cameraPositionTemp = static_cast<int32_t>(cameraPosition);
+    if (!CameraRotatePlugin::GetInstance()->HookPreviewTransform(GetBasicInfo(), producer_,
+        sensorOrientation, cameraPositionTemp)) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessVerticalCameraPosition  HookPreviewTransform is failed");
+    }
+    cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
+#endif
     int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         switch (streamRotation) {
@@ -829,6 +858,14 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
 void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
+#ifdef HOOK_CAMERA_OPERATOR
+    int32_t cameraPositionTemp = static_cast<int32_t>(cameraPosition);
+    if (!CameraRotatePlugin::GetInstance()->HookPreviewTransform(GetBasicInfo(), producer_,
+        streamRotation, cameraPositionTemp)) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraPosition HookPreviewTransform is failed");
+    }
+    cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
+#endif
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         switch (streamRotation) {
             case STREAM_ROTATE_0: {
@@ -917,13 +954,11 @@ int32_t HStreamRepeat::EnableSecure(bool isEnabled)
     return CAMERA_OK;
 }
 
-void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, uint8_t mirror)
 {
     CHECK_ERROR_RETURN_LOG(settings == nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
     bool status = false;
     camera_metadata_item_t item;
-
-    uint8_t mirror = enableMirror_;
     MEDIA_DEBUG_LOG("HStreamRepeat::UpdateVideoSettings set Mirror %{public}d", mirror);
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -1068,6 +1103,31 @@ void HStreamRepeat::UpdateAutoFrameRateSettings(std::shared_ptr<OHOS::Camera::Ca
 std::vector<int32_t> HStreamRepeat::GetFrameRateRange()
 {
     return streamFrameRateRange_;
+}
+
+void HStreamRepeat::UpdateHalRoateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+#ifdef HOOK_CAMERA_OPERATOR
+    int32_t rotateAngle = -1;
+    if (CameraRotatePlugin::GetInstance()->
+        HookPreviewStreamStart(GetBasicInfo(), GetStreamProducer(), rotateAngle) && rotateAngle >= 0) {
+        CHECK_ERROR_PRINT_LOG(settings == nullptr, "HStreamRepeat::UpdateHalRoateSettings settings is nullptr");
+        bool status = false;
+        camera_metadata_item_t item;
+
+        MEDIA_DEBUG_LOG("HStreamRepeat::UpdateHalRoateSettings rotateAngle is %{public}d", rotateAngle);
+        int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_ROTATE_ANGLE, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateAngle, 1);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = settings->updateEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateAngle, 1);
+        }
+        CHECK_ERROR_PRINT_LOG(!status, "UpdateHalRoateSettings Failed");
+        if (rotateAngle & 0x1FFF) {  // Bit0~12 for angle and mirror
+            enableCameraRotation_ = true;
+        }
+    }
+#endif
 }
 } // namespace CameraStandard
 } // namespace OHOS

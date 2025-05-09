@@ -28,6 +28,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include "rotate_plugin/camera_rotate_plugin.h"
+#include "camera_fwk_metadata_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -276,6 +278,11 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
             deviceInfo->ability = ability;
         }
     }
+#ifdef HOOK_CAMERA_OPERATOR
+    if (!CameraRotatePlugin::GetInstance()->HookCameraAbility(cameraId, ability)) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::HookCameraAbility failed ");
+    }
+#endif
     return CAMERA_OK;
 }
 

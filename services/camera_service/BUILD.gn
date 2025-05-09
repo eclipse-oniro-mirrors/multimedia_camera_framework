@@ -306,6 +306,12 @@ ohos_shared_library("camera_service") {
     }
   }
 
+  if (camera_framework_feature_camera_rotate_plugin) {
+    defines += [ "HOOK_CAMERA_OPERATOR"]
+    sources += [  "src/rotate_plugin/camera_rotate_plugin.cpp"]
+    include_dirs += ["${multimedia_camera_framework_path}/services/camera_service/include/rotate_plugin"]
+  }
+
   cflags_cc = cflags
 
   part_name = "camera_framework"

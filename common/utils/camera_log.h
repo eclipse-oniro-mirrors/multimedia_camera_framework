@@ -60,6 +60,14 @@
         }                                                \
     } while (0)
 
+#define CHECK_DEBUG_RETURN_RET_LOG(cond, ret, fmt, ...)  \
+    do {                                                 \
+        if (cond) {                                      \
+            MEDIA_DEBUG_LOG(fmt, ##__VA_ARGS__);           \
+            return ret;                                  \
+        }                                                \
+    } while (0)
+
 #define CHECK_ERROR_RETURN(cond)                      \
     do {                                              \
         if (cond) {                                   \

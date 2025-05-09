@@ -51,6 +51,9 @@
 #include "parameters.h"
 #include "res_type.h"
 #include "res_sched_client.h"
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -183,6 +186,24 @@ int32_t HCameraDevice::GetCameraType()
     return OTHER;
 }
 
+int32_t HCameraDevice::GetCameraConnectType()
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = GetDeviceAbility();
+    CHECK_ERROR_RETURN_RET(ability == nullptr, 0);
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    uint32_t connectionType = 0;
+    if (ret == CAM_META_SUCCESS) {
+        connectionType = static_cast<uint32_t>(item.data.u8[0]);
+    }
+    return connectionType;
+}
+
+std::string HCameraDevice::GetClientName()
+{
+    return clientName_;
+}
+
 int32_t HCameraDevice::GetCameraPosition()
 {
     camera_metadata_item_t item;
@@ -190,7 +211,17 @@ int32_t HCameraDevice::GetCameraPosition()
         "HCameraDevice::GetCameraPosition deviceAbility_ is nullptr");
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetCameraPosition failed");
-    return static_cast<camera_position_enum_t>(item.data.u8[0]);
+    return static_cast<int32_t>(item.data.u8[0]);
+}
+
+int32_t HCameraDevice::GetSensorOrientation()
+{
+    camera_metadata_item_t item;
+    CHECK_ERROR_RETURN_RET_LOG(deviceAbility_ == nullptr, 0,
+        "HCameraDevice::GetSensorOrientation deviceAbility_ is nullptr");
+    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    return item.data.i32[0];
 }
 
 bool HCameraDevice::IsOpenedCameraDevice()
@@ -457,6 +488,11 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
     NotifyCameraSessionStatus(true);
     NotifyCameraStatus(CAMERA_OPEN);
+#ifdef HOOK_CAMERA_OPERATOR
+    if (!CameraRotatePlugin::GetInstance()->HookOpenDeviceForRotate(clientName_, GetDeviceAbility(), cameraID_)) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice HookOpenDevice is failed");
+    }
+#endif
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice end cameraId: %{public}s", cameraID_.c_str());
     return errorCode;
 }
@@ -770,6 +806,11 @@ int32_t HCameraDevice::CloseDevice()
     RequireMemory(Memory::CAMERA_END);
 #endif
     UnRegisterSensorCallback();
+#ifdef HOOK_CAMERA_OPERATOR
+    if (!CameraRotatePlugin::GetInstance()->HookCloseDeviceForRotate(clientName_, deviceAbility_, cameraID_)) {
+        MEDIA_ERR_LOG("HCameraDevice::CloseDevice HookCloseDevice is failed");
+    }
+#endif
     return CAMERA_OK;
 }
 

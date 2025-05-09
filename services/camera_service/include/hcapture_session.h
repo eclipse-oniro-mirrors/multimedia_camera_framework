@@ -185,10 +185,16 @@ public:
     void BeforeDeviceClose() override;
 
     void OnSessionPreempt();
+    void UpdateHookBasicInfo(std::map<int32_t, std::string> ParameterMap);
 
 private:
     void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
+    void UpdateBasicInfoForStream(std::map<int32_t, std::string> ParameterMap,
+        sptr<OHOS::IBufferProducer> previewProducer, sptr<OHOS::IBufferProducer> videoProducer,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void DealPluginCode(std::map<int32_t, std::string> ParameterMap,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> settings, int32_t code, int32_t value);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
@@ -263,6 +269,7 @@ private:
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     bool isHasFitedRotation_ = false;
     std::string bundleName_ = "";
+     std::mutex cameraRotateUpdateBasicInfo_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

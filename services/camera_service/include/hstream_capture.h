@@ -129,6 +129,8 @@ private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     void FillingPictureExtendStreamInfos(StreamInfo_V1_1 &streamInfo, int32_t format);
     void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_1 &streamInfo);
+    void UpdateJpegBasicInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting,
+        int32_t& rotation);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     int32_t rawDeliverySwitch_;

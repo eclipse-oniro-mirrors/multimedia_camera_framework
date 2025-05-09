@@ -265,6 +265,7 @@ private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
     void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
+    void SetBasicInfo(sptr<HStreamCommon> stream);
     string lastDisplayName_ = "";
     string lastBurstPrefix_ = "";
     int32_t saveIndex = 0;
