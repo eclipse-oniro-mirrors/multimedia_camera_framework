@@ -528,7 +528,7 @@ const CameraInputNapi::EmitterFunctions& CameraInputNapi::GetEmitterFunctions()
         { "cameraOcclusionDetect", {
             &CameraInputNapi::RegisterOcclusionDetectCallbackListener,
             &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } },
-        { "cameraOcclusionDetection ", {
+        { "cameraOcclusionDetection", {
             &CameraInputNapi::RegisterOcclusionDetectCallbackListener,
             &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } }  };
     return funMap;
