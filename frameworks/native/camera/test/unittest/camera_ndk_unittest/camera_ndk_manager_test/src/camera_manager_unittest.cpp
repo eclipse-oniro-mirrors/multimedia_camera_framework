@@ -1259,5 +1259,83 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_register_callback_unittest_001, T
     EXPECT_EQ(statusListenerManager->GetListenerCount(), 0);
     statusListenerManager->ClearListeners();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraDevice
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameradevice_001, TestSize.Level0)
+{
+    Camera_Device* cameranow = nullptr;
+    Camera_ErrorCode ret = cameraManager->GetCameraDevice(
+        Camera_Position::CAMERA_POSITION_BACK, Camera_Type::CAMERA_TYPE_DEFAULT, cameranow);
+    EXPECT_EQ(ret, CAMERA_OK);
+    delete cameranow;
+    cameranow = nullptr;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraConcurrentInfos with Camera_Device = nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraConcurrentInfos with Camera_Device = nullptr
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_001, TestSize.Level0)
+{
+    Camera_Device* cameranow = nullptr;
+    Camera_ConcurrentInfo *CameraConcurrentInfo = nullptr;
+    uint32_t infoSize = 0;
+    uint32_t deviceSize = 0;
+    Camera_ErrorCode ret = cameraManager->GetCameraConcurrentInfos(
+        cameranow, deviceSize, &CameraConcurrentInfo, &infoSize);
+    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraConcurrentInfos
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraConcurrentInfos
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_002, TestSize.Level0)
+{
+    Camera_Device* cameraArray;
+    uint32_t sizeofCameras;
+    Camera_ErrorCode ret = cameraManager->GetSupportedCameras(&cameraArray, &sizeofCameras);
+    EXPECT_EQ(ret, CAMERA_OK);
+    uint32_t deviceSize = 2;
+    if (sizeofCameras < deviceSize) {
+        MEDIA_INFO_LOG("The device does not support two camera");
+        return;
+    }
+    uint32_t infoSize = 0;
+    Camera_ConcurrentInfo* cameraConcurrentInfo;
+    ret = cameraManager->GetCameraDevice(
+        Camera_Position::CAMERA_POSITION_BACK, Camera_Type::CAMERA_TYPE_DEFAULT, &cameraArray[0]);
+    if (ret != CAMERA_OK) {
+        MEDIA_INFO_LOG("The device does not support CAMERA_POSITION_BACK");
+        return;
+    }
+    ret = cameraManager->GetCameraDevice(
+        Camera_Position::CAMERA_POSITION_FRONT, Camera_Type::CAMERA_TYPE_DEFAULT, &cameraArray[1]);
+    if (ret != CAMERA_OK) {
+        MEDIA_INFO_LOG("The device does not support CAMERA_POSITION_FRONT");
+        return;
+    }
+    ret = cameraManager->GetCameraConcurrentInfos(cameraArray, deviceSize, &cameraConcurrentInfo, &infoSize);
+    if (ret != CAMERA_OK) {
+        MEDIA_INFO_LOG("The device does not support CameraConcurrent");
+        return;
+    }
+    EXPECT_EQ(ret, CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS
