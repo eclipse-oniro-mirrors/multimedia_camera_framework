@@ -1243,6 +1243,7 @@ void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
             if (callback == nullptr) {
                 MEDIA_INFO_LOG("PhotoOutput::NotifyOfflinePhotoOutput callback is nullptr");
                 Release();
+                return;
             }
             callback->OnOfflineDeliveryFinished(captureId);
         }
