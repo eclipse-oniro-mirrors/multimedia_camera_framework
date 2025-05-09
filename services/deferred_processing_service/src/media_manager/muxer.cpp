@@ -134,7 +134,7 @@ MediaManagerError Muxer::AddMediaInfo(const std::shared_ptr<MediaInfo>& mediaInf
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,
         "Add param failed, ret: %{public}d", ret);
     
-    if (mediaInfo->livePhotoCovertime > 0) {
+    if (mediaInfo->livePhotoCovertime >= 0) {
         auto userMeta = std::make_shared<Meta>();
         userMeta->SetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);
         ret = muxer_->SetUserMeta(userMeta);

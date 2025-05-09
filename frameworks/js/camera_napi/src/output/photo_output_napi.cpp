@@ -1708,7 +1708,7 @@ unique_ptr<Media::PixelMap> ThumbnailListener::CreatePixelMapFromSurfaceBuffer(s
     colorLength = isHdr ? colorLength : colorLength / HDR_PIXEL_SIZE;
     std::unique_ptr<Media::PixelMap> pixelMap = Media::PixelMap::Create(options);
     void* nativeBuffer = surfaceBuffer.GetRefPtr();
-    RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);
+    sptr<RefBase> ref = reinterpret_cast<RefBase *>(nativeBuffer);
     ref->IncStrongRef(ref);
     if (isHdr) {
         pixelMap->SetHdrType(OHOS::Media::ImageHdrType::HDR_VIVID_SINGLE);
