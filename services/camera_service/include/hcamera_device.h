@@ -85,6 +85,12 @@ public:
     std::string GetCameraId();
     int32_t GetCameraType();
     int32_t GetCameraPosition();
+    std::string GetClientName();
+
+    int32_t GetCameraConnectType();
+
+    int32_t GetSensorOrientation();
+
     bool IsOpenedCameraDevice();
     int32_t GetCallerToken();
 

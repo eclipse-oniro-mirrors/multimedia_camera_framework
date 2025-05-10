@@ -15,6 +15,7 @@
 #include "camera_util.h"
 #include <cstdint>
 #include <fstream>
+#include <regex>
 #include <securec.h>
 #include <sys/stat.h>
 #include <exception>
@@ -586,6 +587,34 @@ bool CheckPathExist(const char *path)
     std::ifstream profileStream(canonicalPath);
     free(canonicalPath);
     return profileStream.good();
+}
+
+bool isIntegerRegex(const std::string& input)
+{
+    size_t start = 0;
+    if (input.empty()) {
+        return false;
+    }
+    if (input[0] == '-' && input.size() > 1) {
+        start = 1; // deal negative sign
+    }
+    for (size_t i = start; i < input.size(); ++i) {
+        if (!std::isdigit(input[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string GetValidCameraId(std::string& cameraId)
+{
+    std::string cameraIdTemp = cameraId;
+    size_t pos = cameraId.find('/');
+    if (pos == std::string::npos) {
+        return cameraId;
+    }
+    cameraIdTemp = cameraId.substr(pos + 1);
+    return cameraIdTemp;
 }
 } // namespace CameraStandard
 } // namespace OHOS

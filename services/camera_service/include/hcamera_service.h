@@ -132,7 +132,6 @@ public:
     int32_t PreSwitchCamera(const std::string cameraId) override;
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
-//    std::string GetClientBundle(int uid);
     int32_t IsTorchSupported(bool &isTorchSupported) override;
     int32_t IsCameraMuteSupported(bool& isCameraMuteSupported) override;
     int32_t IsCameraMuted(bool& muteMode) override;

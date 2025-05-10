@@ -55,6 +55,9 @@
 #include "mem_mgr_constant.h"
 #endif
 #include "camera_rotate_param_manager.h"
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -537,7 +540,12 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     captureSession->SetCameraRotateStrategyInfos(CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
+    
     captureSessionsManager_.EnsureInsert(pid, captureSession);
+    std::string clientName_ = GetClientBundle(IPCSkeleton::GetCallingUid());
+#ifdef HOOK_CAMERA_OPERATOR
+    CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName_, captureSession);
+#endif
     return rc;
 }
 
@@ -636,6 +644,12 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
             "HCameraService::CreatePreviewOutput", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
+#ifdef HOOK_CAMERA_OPERATOR
+    if (!CameraRotatePlugin::GetInstance()->
+        HookCreatePreviewFormat(GetClientBundle(IPCSkeleton::GetCallingUid()), format)) {
+        MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HookCreatePreviewFormat is failed");
+    }
+#endif
     streamRepeatPreview = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
     if (streamRepeatPreview == nullptr) {
         rc = CAMERA_ALLOC_ERROR;

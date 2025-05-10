@@ -27,6 +27,7 @@
 #include <new>
 #include <sched.h>
 #include <string>
+#include <map>
 #include <sync_fence.h>
 #include <utility>
 #include <vector>
@@ -80,6 +81,9 @@
 #include "res_type.h"
 #include "res_sched_client.h"
 #include "camera_device_ability_items.h"
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -448,6 +452,7 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     std::vector<StreamInfo_V1_1> allStreamInfos;
     auto allStream = streamContainer_.GetAllStreams();
     for (auto& stream : allStream) {
+        SetBasicInfo(stream);
         rc = stream->LinkInput(streamOperator_, settings);
         if (rc == CAMERA_OK) {
             CHECK_EXECUTE(stream->GetHdiStreamId() == STREAM_ID_UNSET,
@@ -466,6 +471,25 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);
     MEDIA_INFO_LOG("HStreamOperator::LinkInputAndOutputs execute success");
     return rc;
+}
+
+void HStreamOperator::SetBasicInfo(sptr<HStreamCommon> stream)
+{
+#ifdef HOOK_CAMERA_OPERATOR
+    if (cameraDevice_ == nullptr) {
+        MEDIA_DEBUG_LOG("HStreamOperator::SetBasicInfo() cameraDevice is null");
+        return;
+    }
+    std::map<int32_t, std::string> basicParam;
+    basicParam[PLUGIN_BUNDLE_NAME] = cameraDevice_->GetClientName();
+    basicParam[PLUGIN_CAMERA_ID] = cameraDevice_->GetCameraId();
+    basicParam[PLUGIN_CAMERA_CONNECTION_TYPE] = to_string(cameraDevice_->GetCameraConnectType());
+    basicParam[PLUGIN_CAMERA_POSITION] = to_string(cameraDevice_->GetCameraPosition());
+    basicParam[PLUGIN_SENSOR_ORIENTATION] = to_string(cameraDevice_->GetSensorOrientation());
+    MEDIA_INFO_LOG("HStreamOperator::SetBasicInfo cameraDevice_ is %{public}s ",
+        basicParam[PLUGIN_CAMERA_ID].c_str());
+    stream->SetBasicInfo(basicParam);
+#endif
 }
 
 int32_t HStreamOperator::UnlinkInputAndOutputs()

@@ -13,7 +13,9 @@
         "name": "camera_framework",
         "subsystem": "multimedia",
         "syscap": ["SystemCapability.Multimedia.Camera.Core"],
-        "features": [],
+        "features": [
+          "camera_framework_feature_camera_rotate_plugin"
+        ],
         "adapted_system_type": [ "standard" ],
         "rom": "",
         "ram": "",

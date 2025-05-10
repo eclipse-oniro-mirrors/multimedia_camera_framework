@@ -36,6 +36,9 @@
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -699,6 +702,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         }
         MEDIA_INFO_LOG("set rotation camera real rotation %{public}d", rotation);
     }
+    UpdateJpegBasicInfo(captureMetadataSetting_, rotation);
     bool status = false;
     if (result == CAM_META_ITEM_NOT_FOUND) {
         status = captureMetadataSetting_->addEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
@@ -710,6 +714,28 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     CHECK_ERROR_PRINT_LOG(result != CAM_META_SUCCESS, "set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     CHECK_ERROR_PRINT_LOG(!status, "set rotation Failed to set Rotation");
     // LCOV_EXCL_STOP
+}
+
+void HStreamCapture::UpdateJpegBasicInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting,
+    int32_t& rotation)
+{
+#ifdef HOOK_CAMERA_OPERATOR
+    bool isMirror = false;
+    if (!CameraRotatePlugin::GetInstance()->HookCaptureStreamStart(GetBasicInfo(), rotation, isMirror)) {
+        MEDIA_ERR_LOG("HStreamRepeat::HookCaptureStreamStart is failed %{public}d", isMirror);
+        return;
+    }
+    bool status = false;
+    camera_metadata_item_t item;
+    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting->get(),
+        OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (result == CAM_META_ITEM_NOT_FOUND) {
+        status = captureMetadataSetting->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &isMirror, 1);
+    } else if (result == CAM_META_SUCCESS) {
+        status = captureMetadataSetting->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &isMirror, 1);
+    }
+    CHECK_ERROR_PRINT_LOG(!status, "HStreamCapture::UpdateJpegBasicInfo Failed to set mirror");
+#endif
 }
 
 int32_t HStreamCapture::CancelCapture()

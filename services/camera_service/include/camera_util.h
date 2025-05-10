@@ -245,6 +245,9 @@ std::vector<std::string> SplitStringWithPattern(const std::string &str, const ch
 void TrimString(std::string &inputStr);
 bool RemoveFile(const std::string& path);
 bool CheckPathExist(const char *path);
+
+bool isIntegerRegex(const std::string& input);
+std::string GetValidCameraId(std::string& cameraId);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

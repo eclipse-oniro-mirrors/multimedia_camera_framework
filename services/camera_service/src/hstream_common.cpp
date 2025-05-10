@@ -27,6 +27,8 @@
 #include "display/composer/v1_1/display_composer_type.h"
 #include "ipc_skeleton.h"
 #include "camera_report_uitls.h"
+#include "rotate_plugin/camera_rotate_plugin.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -306,6 +308,12 @@ void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::Cam
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
             std::to_string(item.data.i32[0]), caller);
     }
+}
+
+void HStreamCommon::SetBasicInfo(std::map<int32_t, std::string> basicParam)
+{
+    std::lock_guard<std::mutex> lock(basicInfoLock_);
+    param = basicParam;
 }
 } // namespace CameraStandard
 } // namespace OHOS

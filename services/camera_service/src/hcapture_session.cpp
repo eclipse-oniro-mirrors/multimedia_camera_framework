@@ -73,6 +73,9 @@
 #include "surface_buffer.h"
 #include "v1_0/types.h"
 #include "hstream_operator_manager.h"
+#ifdef HOOK_CAMERA_OPERATOR
+#include "camera_rotate_plugin.h"
+#endif
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1513,5 +1516,105 @@ std::vector<CameraRotateStrategyInfo> HCaptureSession::GetCameraRotateStrategyIn
     std::lock_guard<std::mutex> lock(cameraRotateStrategyInfosLock_);
     return cameraRotateStrategyInfos_;
 }
+
+#ifdef HOOK_CAMERA_OPERATOR
+void HCaptureSession::UpdateHookBasicInfo(ParameterMap parameterMap)
+{
+    std::lock_guard<std::mutex> lock(cameraRotateUpdateBasicInfo_);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_ERROR_RETURN_LOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
+    MEDIA_INFO_LOG("UpdateHookBasicInfo size %{public}zu", parameterMap.size());
+    auto streams = hStreamOperatorSptr->GetAllStreams();
+    for (auto& stream : streams) {
+        if (stream->GetStreamType() != StreamType::REPEAT) {
+            continue;
+        }
+        sptr<OHOS::IBufferProducer> previewProducer = nullptr;
+        sptr<OHOS::IBufferProducer> videoProducer = nullptr;
+        auto curStreamRepeat = CastStream<HStreamRepeat>(stream);
+        if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            previewProducer = curStreamRepeat->GetStreamProducer();
+        }
+        if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::VIDEO) {
+            videoProducer = curStreamRepeat->GetStreamProducer();
+        }
+        UpdateBasicInfoForStream(parameterMap, previewProducer, videoProducer, settings);
+        continue;
+    }
+    auto cameraDevive = GetCameraDevice();
+    CHECK_ERROR_RETURN_LOG(cameraDevive == nullptr, "cameraDevive is null.");
+    cameraDevive->UpdateSettingOnce(settings);
+}
+
+void HCaptureSession::UpdateBasicInfoForStream(ParameterMap ParameterMap, sptr<OHOS::IBufferProducer> previewProducer,
+    sptr<OHOS::IBufferProducer> videoProducer, std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    for (const auto& pair : ParameterMap) {
+        int32_t code = pair.first;
+        MEDIA_DEBUG_LOG("UpdateBasicInfoForStream code is %{public}d, value is %{public}s",
+            code, (pair.second).c_str());
+        if (code != PLUGIN_SURFACE_APP_FWK_TYPE && !isIntegerRegex(pair.second)) {
+            continue;
+        }
+        switch (code) {
+            case PLUGIN_PREVIEW_FORMAT: {
+                CHECK_EXECUTE(previewProducer != nullptr,
+                    previewProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(std::stoi(pair.second))));
+                break;
+            }
+            case PLUGIN_SURFACE_FRAME_GRAVITY: {
+                CHECK_EXECUTE(previewProducer != nullptr,
+                    previewProducer->SetFrameGravity(std::stoi(pair.second)));
+                break;
+            }
+            case PLUGIN_SURFACE_FIXED_ROTATION:{
+                CHECK_EXECUTE(previewProducer != nullptr,
+                    previewProducer->SetFixedRotation(std::stoi(pair.second)));
+                break;
+            }
+            case PLUGIN_SURFACE_APP_FWK_TYPE: {
+                CHECK_EXECUTE(videoProducer != nullptr, videoProducer->SetSurfaceAppFrameworkType(pair.second));
+                break;
+            }
+            case PLUGIN_VIDEO_SURFACE_TRANSFORM: {
+                CHECK_EXECUTE(videoProducer != nullptr,
+                    videoProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(std::stoi(pair.second))));
+                break;
+            }
+            default: {
+                DealPluginCode(ParameterMap, settings, code, std::stoi(pair.second));
+                break;
+            }
+        }
+    }
+}
+
+void HCaptureSession::DealPluginCode(ParameterMap ParameterMap, std::shared_ptr<OHOS::Camera::CameraMetadata> settings,
+    int32_t code, int32_t value)
+{
+    switch (code) {
+        case PLUGIN_CAMERA_HAL_ROTATE_ANGLE: {
+            int32_t rotateAngle = value;
+            CHECK_EXECUTE(rotateAngle >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateAngle, 1));
+            break;
+        }
+        case PLUGIN_CAPTURE_MIRROR:
+        case PLUGIN_VIDEO_MIRROR: {
+            uint8_t mirror = static_cast<uint8_t>(value);
+            CHECK_EXECUTE((mirror == 0 || mirror == 1), settings->addEntry(OHOS_CONTROL_CAPTURE_MIRROR,
+                &mirror, 1));
+            break;
+        }
+        case PLUGIN_JPEG_ORIENTATION: {
+            int32_t jpegOrientation = value;
+            CHECK_EXECUTE(jpegOrientation >= 0, settings->addEntry(OHOS_JPEG_ORIENTATION, &jpegOrientation, 1));
+            break;
+        }
+        default:
+            break;
+    }
+}
+#endif
 }  // namespace CameraStandard
 }  // namespace OHOS

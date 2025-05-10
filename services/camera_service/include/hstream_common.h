@@ -39,7 +39,6 @@ using OHOS::HDI::Camera::V1_0::IStreamOperator;
 using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
 constexpr int32_t CAPTURE_ID_UNSET = 0;
 constexpr int32_t STREAM_ID_UNSET = 0;
-
 class HStreamCommon : virtual public RefBase {
 public:
     explicit HStreamCommon(
@@ -58,6 +57,7 @@ public:
     virtual int32_t GetPreparedCaptureId() final;
 
     void PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
+    void SetBasicInfo(std::map<int32_t, std::string> basicParam);
 
     inline int32_t GetFwkStreamId()
     {
@@ -73,6 +73,18 @@ public:
     {
         hdiStreamId_ = hdiStreamId;
     }
+    
+    inline std::map<int32_t, std::string> GetBasicInfo()
+    {
+        std::lock_guard<std::mutex> lock(basicInfoLock_);
+        return param;
+    }
+
+    inline sptr<OHOS::IBufferProducer> GetStreamProducer()
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        return producer_;
+    }
 
     inline int32_t GetHdiStreamId()
     {
@@ -83,6 +95,7 @@ public:
     int32_t width_;
     int32_t height_;
     int32_t dataSpace_ = 0;
+    std::map<int32_t, std::string> param;
     sptr<OHOS::IBufferProducer> producer_;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_ = nullptr;
@@ -124,6 +137,7 @@ private:
     int32_t fwkStreamId_ = STREAM_ID_UNSET;
     int32_t hdiStreamId_ = STREAM_ID_UNSET;
     int32_t curCaptureID_ = CAPTURE_ID_UNSET;
+    std::mutex basicInfoLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
