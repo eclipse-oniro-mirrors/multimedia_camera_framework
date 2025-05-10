@@ -87,6 +87,16 @@ HWTEST_F(IcameraUtilUnit, icamera_util_unittest_001, TestSize.Level1)
     err = CameraErrorCode::OPERATION_NOT_ALLOWED;
     result = ServiceToCameraError(ret);
     EXPECT_EQ(result, err);
+
+    ret = CAMERA_DEVICE_SWITCH_FREQUENT;
+    err = CameraErrorCode::DEVICE_SWITCH_FREQUENT;
+    result = ServiceToCameraError(ret);
+    EXPECT_EQ(result, err);
+
+    ret = CAMERA_DEVICE_LENS_RETRACTED;
+    err = CameraErrorCode::CAMERA_LENS_RETRACTED;
+    result = ServiceToCameraError(ret);
+    EXPECT_EQ(result, err);
 }
 }
 }

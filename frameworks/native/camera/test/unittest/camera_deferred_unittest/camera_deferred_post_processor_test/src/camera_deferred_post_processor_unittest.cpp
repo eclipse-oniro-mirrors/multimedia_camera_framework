@@ -400,20 +400,20 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_010, Te
 {
     std::string imageId = "testImageId";
     auto successCommand = CreateShared<PhotoProcessSuccessCommand>(userId_, imageId, nullptr);
-    EXPECT_EQ(successCommand->Executing(), DP_ERR);
+    EXPECT_EQ(successCommand->Executing(), DP_NULL_POINTER);
     auto successExtCommand = CreateShared<PhotoProcessSuccessExtCommand>(userId_, imageId, nullptr);
-    EXPECT_EQ(successExtCommand->Executing(), DP_ERR);
+    EXPECT_EQ(successExtCommand->Executing(), DP_NULL_POINTER);
     DpsError errorCode = DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT;
     auto failedCommand = CreateShared<PhotoProcessFailedCommand>(userId_, imageId, errorCode);
-    EXPECT_EQ(failedCommand->Executing(), DP_ERR);
+    EXPECT_EQ(failedCommand->Executing(), DP_NULL_POINTER);
     auto photoDiedCommand = CreateShared<PhotoDiedCommand>(userId_);
     EXPECT_EQ(photoDiedCommand->Executing(), DP_NULL_POINTER);
     auto videoDiedCommand = CreateShared<VideoDiedCommand>(userId_);
     EXPECT_EQ(videoDiedCommand->Executing(), DP_NULL_POINTER);
     auto videoProcessSuccessCommand = CreateShared<VideoProcessSuccessCommand>(userId_, imageId);
-    EXPECT_EQ(videoProcessSuccessCommand->Executing(), DP_ERR);
+    EXPECT_EQ(videoProcessSuccessCommand->Executing(), DP_NULL_POINTER);
     auto videoProcessFailedCommand = CreateShared<VideoProcessFailedCommand>(userId_, imageId, errorCode);
-    EXPECT_EQ(videoProcessFailedCommand->Executing(), DP_ERR);
+    EXPECT_EQ(videoProcessFailedCommand->Executing(), DP_NULL_POINTER);
 }
 } // CameraStandard
 } // OHOS

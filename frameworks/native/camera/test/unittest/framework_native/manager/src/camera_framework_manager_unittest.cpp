@@ -50,7 +50,6 @@ void TorchListenerImpl::OnTorchStatusChange(const TorchStatusInfo &torchStatusIn
 {
     MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
         torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
-    return;
 }
 
 void CameraFrameWorkManagerUnit::SetUpTestCase(void) {}
@@ -750,22 +749,20 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_028, Test
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
     ASSERT_NE(static_cast<int>(cameras.size()), 0);
-    auto judgeDeviceType = [&cameras] () -> bool {
-        bool isOk = false;
-        uint16_t deviceType = cameras[0]->GetDeviceType();
-        switch (deviceType) {
-            case UNKNOWN:
-            case PHONE:
-            case TABLET:
-                isOk = true;
-                break;
-            default:
-                isOk = false;
-                break;
-        }
-        return isOk;
-    };
-    ASSERT_NE(judgeDeviceType(), false);
+
+    bool isOk = false;
+    uint16_t deviceType = cameras[0]->GetDeviceType();
+    switch (deviceType) {
+        case UNKNOWN:
+        case PHONE:
+        case TABLET:
+            isOk = true;
+            break;
+        default:
+            isOk = false;
+            break;
+    }
+    EXPECT_TRUE(isOk);
 }
 
 /*

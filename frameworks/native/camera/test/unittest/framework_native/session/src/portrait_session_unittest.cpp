@@ -315,7 +315,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
     if (!preIsSupportedPortraitmode_) {
         portraitSession->Release();
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
@@ -323,7 +323,7 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_001, TestSize.
     if (!phoIsSupportedPortraitmode_) {
         portraitSession->Release();
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
 
@@ -383,14 +383,14 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_002, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
 
@@ -456,14 +456,14 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_003, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
 
@@ -529,14 +529,14 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_004, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
 
@@ -603,14 +603,14 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_005, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
 
@@ -675,13 +675,13 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_006, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -754,13 +754,13 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_007, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);
@@ -831,13 +831,13 @@ HWTEST_F(CameraPortraitSessionUnitTest, portrait_session_unittest_008, TestSize.
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     if (!preIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(preview, nullptr);
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     if (!phoIsSupportedPortraitmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(photo, nullptr);
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(mode);

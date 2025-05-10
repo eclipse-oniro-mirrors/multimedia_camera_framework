@@ -184,5 +184,190 @@ HWTEST_F(FrameRecordtUnit, frame_record_unittest_006, TestSize.Level1)
     frameRecord->DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
     EXPECT_EQ(newSurfaceBuffer->GetWidth(), surfaceBuffer->GetWidth());
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseSurfaceBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseSurfaceBuffer when videoBuffer_ is null and status is Convert.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_007, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = nullptr;
+    frameRecord->videoBuffer_ = nullptr;
+    frameRecord->status = FrameRecord::STATUS_READY_CONVERT;
+    frameRecord->ReleaseSurfaceBuffer(surfaceWrapper);
+    ASSERT_EQ(frameRecord->videoBuffer_, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseSurfaceBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseSurfaceBuffer when videoBuffer_ is not null and status is Convert.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_008, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = nullptr;
+    frameRecord->status = FrameRecord::STATUS_READY_CONVERT;
+    frameRecord->ReleaseSurfaceBuffer(surfaceWrapper);
+    ASSERT_NE(frameRecord->videoBuffer_, nullptr);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseSurfaceBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseSurfaceBuffer with a valid wrapper when status is Convert.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_009, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    int32_t width = 1;
+    int32_t height = 1;
+    sptr<MovingPhotoSurfaceWrapper> moving = MovingPhotoSurfaceWrapper::CreateMovingPhotoSurfaceWrapper(width, height);
+    ASSERT_NE(moving, nullptr);
+    sptr<MovingPhotoSurfaceWrapper> surfaceWrapper = moving;
+    frameRecord->status = FrameRecord::STATUS_READY_CONVERT;
+    frameRecord->ReleaseSurfaceBuffer(surfaceWrapper);
+    ASSERT_NE(frameRecord->videoBuffer_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyBufferRelease
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyBufferRelease normal branch.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_010, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+
+    const int32_t status = FrameRecord::STATUS_FINISH_ENCODE;
+    frameRecord->NotifyBufferRelease();
+    EXPECT_EQ(frameRecord->status, status);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseMetaBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseMetaBuffer when status is convert and metaBuffer_ is null.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_011, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->status = FrameRecord::STATUS_READY_CONVERT;
+    frameRecord->metaBuffer_ = nullptr;
+    sptr<IConsumerSurface> consumerSurface = IConsumerSurface::Create();
+    ASSERT_NE(consumerSurface, nullptr);
+    sptr<IBufferProducer> producer = consumerSurface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+    sptr<Surface> surface = Surface::CreateSurfaceAsProducer(producer);
+    bool reuse = false;
+    frameRecord->ReleaseMetaBuffer(surface, reuse);
+    ASSERT_EQ(frameRecord->metaBuffer_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseMetaBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseMetaBuffer when status is none and metaBuffer_ is not null.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_012, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->status = FrameRecord::STATUS_NONE;
+    frameRecord->metaBuffer_ = videoBuffer;
+    sptr<IConsumerSurface> consumerSurface = IConsumerSurface::Create();
+    ASSERT_NE(consumerSurface, nullptr);
+    sptr<IBufferProducer> producer = consumerSurface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+    sptr<Surface> surface = Surface::CreateSurfaceAsProducer(producer);
+    bool reuse = false;
+    frameRecord->ReleaseMetaBuffer(surface, reuse);
+    ASSERT_EQ(frameRecord->metaBuffer_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ReleaseMetaBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReleaseMetaBuffer when status is convert and metaBuffer_ is not null.
+ */
+HWTEST_F(FrameRecordtUnit, frame_record_unittest_013, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
+    ASSERT_NE(videoBuffer, nullptr);
+    int64_t timestamp = VIDEO_FRAMERATE;
+    GraphicTransformType type = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord =
+        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type);
+    ASSERT_NE(frameRecord, nullptr);
+    frameRecord->status = FrameRecord::STATUS_READY_CONVERT;
+    frameRecord->metaBuffer_ = videoBuffer;
+    sptr<IConsumerSurface> consumerSurface = IConsumerSurface::Create();
+    ASSERT_NE(consumerSurface, nullptr);
+    sptr<IBufferProducer> producer = consumerSurface->GetProducer();
+    ASSERT_NE(producer, nullptr);
+    sptr<Surface> surface = Surface::CreateSurfaceAsProducer(producer);
+    bool reuse = false;
+    frameRecord->ReleaseMetaBuffer(surface, reuse);
+    ASSERT_NE(frameRecord->metaBuffer_, nullptr);
+}
+
+} // CameraStandard
+} // OHOS

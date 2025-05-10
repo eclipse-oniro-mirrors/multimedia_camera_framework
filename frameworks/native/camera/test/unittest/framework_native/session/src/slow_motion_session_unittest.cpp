@@ -214,14 +214,14 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, IsSlowMotionDetectionSupported_002, Te
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
     if (!vidIsSupportedSlowmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(videoOutput, nullptr);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     if (!preIsSupportedSlowmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(previewOutput, nullptr);
 
@@ -278,14 +278,14 @@ HWTEST_F(CameraSlowMotionSessionUnitTest, slow_motion_session_unittest_003, Test
     sptr<CaptureOutput> videoOutput = CreateVideoOutput();
     if (!vidIsSupportedSlowmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(videoOutput, nullptr);
 
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     if (!preIsSupportedSlowmode_) {
         input->Close();
-        return;
+        GTEST_SKIP();
     }
     ASSERT_NE(previewOutput, nullptr);
 

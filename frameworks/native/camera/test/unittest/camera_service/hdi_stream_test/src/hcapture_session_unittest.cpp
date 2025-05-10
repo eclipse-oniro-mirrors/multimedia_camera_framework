@@ -339,7 +339,7 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_005, TestSize.Level
         int32_t retCode = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_MODES, &item);
         if (retCode == CAM_META_ITEM_NOT_FOUND) {
             MEDIA_INFO_LOG("Not support tag OHOS_ABILITY_CAMERA_MODES, test case end");
-            return;
+            GTEST_SKIP();
         }
         ASSERT_EQ(retCode, CAM_META_SUCCESS);
         ASSERT_NE(item.count, 0);

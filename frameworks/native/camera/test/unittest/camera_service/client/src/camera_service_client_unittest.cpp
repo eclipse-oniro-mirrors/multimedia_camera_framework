@@ -78,7 +78,6 @@ void AppCallback::OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo
             EXPECT_TRUE(false);
         }
     }
-    return;
 }
 
 void AppCallback::OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const
@@ -107,7 +106,6 @@ void AppCallback::OnFlashlightStatusChanged(const std::string& cameraID, const F
             EXPECT_TRUE(false);
         }
     }
-    return;
 }
 
 void AppCallback::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
@@ -115,7 +113,6 @@ void AppCallback::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) co
     MEDIA_DEBUG_LOG("TorchListener::OnTorchStatusChange called %{public}d %{public}d %{public}f",
         torchStatusInfo.isTorchAvailable, torchStatusInfo.isTorchActive, torchStatusInfo.torchLevel);
     g_torchInfo = torchStatusInfo;
-    return;
 }
 
 void AppCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
@@ -125,7 +122,6 @@ void AppCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
     if (errorType == CAMERA_DEVICE_PREEMPTED) {
         g_sessionclosed = true;
     }
-    return;
 }
 
 void AppCallback::OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) const
@@ -157,14 +153,12 @@ void AppCallback::OnCaptureStarted(const int32_t captureId) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const
@@ -172,7 +166,6 @@ void AppCallback::OnCaptureEnded(const int32_t captureId, const int32_t frameCou
     MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
                     captureId, frameCount);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
@@ -180,7 +173,6 @@ void AppCallback::OnFrameShutter(const int32_t captureId, const uint64_t timesta
     MEDIA_DEBUG_LOG(
         "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const
@@ -188,7 +180,6 @@ void AppCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t time
     MEDIA_DEBUG_LOG(
         "AppCallback::OnFrameShutterEnd captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER_END)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
@@ -196,14 +187,12 @@ void AppCallback::OnCaptureReady(const int32_t captureId, const uint64_t timesta
     MEDIA_DEBUG_LOG(
         "AppCallback::OnCaptureReady captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_READY)] = 1;
-    return;
 }
 
 void AppCallback::OnEstimatedCaptureDuration(const int32_t duration) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnEstimatedCaptureDuration duration: %{public}d", duration);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_ESTIMATED_CAPTURE_DURATION)] = 1;
-    return;
 }
 
 void AppCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
@@ -211,33 +200,28 @@ void AppCallback::OnCaptureError(const int32_t captureId, const int32_t errorCod
     MEDIA_DEBUG_LOG(
         "AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d", captureId, errorCode);
     g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
-    return;
 }
 
 void AppCallback::OnFrameStarted() const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
-    return;
 }
 void AppCallback::OnFrameEnded(const int32_t frameCount) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
-    return;
 }
 void AppCallback::OnError(const int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
-    return;
 }
 void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
 {
     MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
     g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
-    return;
 }
 void AppCallback::OnMacroStatusChanged(MacroStatus status)
 {
@@ -249,7 +233,6 @@ void AppCallback::OnMacroStatusChanged(MacroStatus status)
         g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
         g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
     }
-    return;
 }
 
 void AppCallback::OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status)
@@ -288,8 +271,7 @@ void AppCallback::OnSlowMotionState(const SlowMotionState state)
 }
 void AppCallback::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
 {
-    MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged");
-    return;
+    MEDIA_DEBUG_LOG("AppCallback::OnFoldStatusChanged"); 
 }
 
 void AppCallback::OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo)
@@ -470,7 +452,7 @@ void CameraServiceClientUnit::SetUp()
     ProcessPreviewProfiles(outputcapability);
     if (previewFormats_.empty() || previewSizes_.empty()) {
         g_isSupportedDeviceStatus = true;
-        return;
+        GTEST_SKIP();
     }
 
     if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP) != previewFormats_.end()) {
@@ -527,7 +509,7 @@ void CameraServiceClientUnit::TearDown()
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
@@ -560,7 +542,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_001, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -612,7 +594,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.Level0)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     int32_t format = 0;
     int32_t width = 0;
@@ -688,7 +670,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -737,7 +719,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_004, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -778,7 +760,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_005, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -833,7 +815,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_006, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -875,7 +857,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_007, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -918,7 +900,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_008, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -947,7 +929,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_009, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -999,7 +981,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_010, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1032,7 +1014,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_011, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
@@ -1083,7 +1065,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_012, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<Surface> pSurface = nullptr;
     sptr<IBufferProducer> surfaceProducer = nullptr;
@@ -1131,7 +1113,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_013, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
@@ -1164,7 +1146,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_014, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1203,7 +1185,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_015, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1233,7 +1215,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_016, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1264,7 +1246,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_017, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1292,7 +1274,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_018, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1321,7 +1303,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_019, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1347,7 +1329,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_020, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1369,7 +1351,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_021, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1404,7 +1386,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_022, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1435,7 +1417,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_023, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1464,7 +1446,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_024, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -1490,7 +1472,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_025, TestSize.L
 HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_026, TestSize.Level1)
 {
     if (g_isSupportedDeviceStatus) {
-        return;
+        GTEST_SKIP();
     }
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

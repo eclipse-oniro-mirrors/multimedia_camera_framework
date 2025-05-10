@@ -39,6 +39,16 @@ void CameraRotateParamManagerUnitTest::SetUpTestCase(void)
 void CameraRotateParamManagerUnitTest::TearDownTestCase(void)
 {
     MEDIA_DEBUG_LOG("CameraRotateParamManagerUnitTest::TearDownTestCase started!");
+    std::set<std::string> fileName = {
+        "version.txt", "version_copy.txt", "camera_rotate_strategy.xml"};
+    for (auto& file : fileName) {
+        if (CheckPathExist((CAMERA_SERVICE_ABS_PATH + file).c_str())) {
+            if (!RemoveFile(CAMERA_SERVICE_ABS_PATH + file)) {
+                MEDIA_DEBUG_LOG("remove path failed!");
+                return;
+            }
+        }
+    }
 }
 
 void CameraRotateParamManagerUnitTest::SetUp()
@@ -70,24 +80,25 @@ HWTEST_F(CameraRotateParamManagerUnitTest, camera_rotate_param_manager_unittest_
     manager->InitParam();
     manager->SubscriberEvent();
     const std::string CONFIG_ACTION = "usual.event.DUE_SA_CFG_UPDATED";
+    const std::string EVENT_INFO_TYPE = "type";
     const std::string CONFIG_TYPE = "camera";
     const std::string CONFIG_INVALID = "invalid";
     OHOS::AAFwk::Want want1;
     want1.SetAction(CONFIG_ACTION);
-    want1.SetType(CONFIG_INVALID);
+    want1.SetParam(EVENT_INFO_TYPE, CONFIG_INVALID);
     manager->OnReceiveEvent(want1);
     manager->HandleParamUpdate(want1);
     OHOS::AAFwk::Want want2;
     want2.SetAction(CONFIG_INVALID);
-    want2.SetType(CONFIG_TYPE);
+    want2.SetParam(EVENT_INFO_TYPE, CONFIG_TYPE);
     manager->HandleParamUpdate(want2);
     OHOS::AAFwk::Want want3;
     want3.SetAction(CONFIG_INVALID);
-    want3.SetType(CONFIG_INVALID);
+    want3.SetParam(EVENT_INFO_TYPE, CONFIG_INVALID);
     manager->HandleParamUpdate(want3);
     OHOS::AAFwk::Want want4;
     want4.SetAction(CONFIG_ACTION);
-    want4.SetType(CONFIG_TYPE);
+    want4.SetParam(EVENT_INFO_TYPE, CONFIG_TYPE);
     manager->HandleParamUpdate(want4);
     manager->ReloadParam();
     version = manager->LoadVersion();
@@ -148,16 +159,6 @@ HWTEST_F(CameraRotateParamManagerUnitTest, camera_rotate_param_manager_unittest_
     EXPECT_EQ(res, true);
     res = manager->DoCopy(srcPath, srcPath);
     EXPECT_EQ(res, false);
-    std::set<std::string> fileName = {
-        "version.txt", "version_copy.txt"};
-    for (auto& file : fileName) {
-        if (CheckPathExist((CAMERA_SERVICE_ABS_PATH + file).c_str())) {
-            if (!RemoveFile(CAMERA_SERVICE_ABS_PATH + file)) {
-                MEDIA_DEBUG_LOG("remove path failed!");
-                return;
-            }
-        }
-    }
 }
 
 /*
@@ -175,6 +176,38 @@ HWTEST_F(CameraRotateParamManagerUnitTest, camera_rotate_param_manager_unittest_
     bool ret = manager->LoadConfiguration(CAMERA_SERVICE_ABS_PATH + "test.xml");
     EXPECT_EQ(ret, false);
     manager->Destroy();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LoadConfiguration normal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LoadConfiguration normal branches.
+ */
+HWTEST_F(CameraRotateParamManagerUnitTest, camera_rotate_param_manager_unittest_005, TestSize.Level1)
+{
+    const std::string STRATEGY_VALUE = R"(<?xml version="1.0" encoding="utf-8"?>
+        <cameraRotateStrategy xmlns:xi="http://www.w3.org/2001/XInclude" version="1.0">
+          <strategy bundleName="com.icbc.harmonyclient" wideValue="" rotateDegree="90" fps=""/>
+          <strategy bundleName="com.cmbchina.harmony" wideValue="" rotateDegree="90" fps=""/>
+          <strategy bundleName="com.bankcomm.mobshos" wideValue="" rotateDegree="90" fps=""/>
+          <strategy bundleName="cn.com.cmbc.ohmbank" wideValue="" rotateDegree="90" fps=""/>
+          <strategy bundleName="com.cgbchina.xpt.hm" wideValue="" rotateDegree="90" fps=""/>
+        </cameraRotateStrategy>)";
+    auto manager = std::make_shared<CameraRoateParamManager>();
+    std::string strategyPath = CAMERA_SERVICE_ABS_PATH + "camera_rotate_strategy.xml";
+    std::ofstream strategyFile(strategyPath);
+    if (!strategyFile.is_open()) {
+        MEDIA_DEBUG_LOG("can't create camera_rotate_strategy.xml file");
+        return;
+    }
+    strategyFile << STRATEGY_VALUE;
+    strategyFile.close();
+
+    bool ret = manager->LoadConfiguration(strategyPath);
+    EXPECT_EQ(ret, true);
 }
 
 } // CameraStandard
