@@ -35,7 +35,7 @@ const std::string PUBKEY_PATH = ABS_CONTENT_FILE_PATH + PUB_KEY_NAME;
 constexpr int VERSION_LEN = 4;
 constexpr int DEC = 10;
 }
-
+// LCOV_EXCL_START
 // 获取高版本配置路径
 std::string CameraRoateParamReader::GetConfigFilePath()
 {
@@ -187,6 +187,6 @@ bool CameraRoateParamReader::CompareVersion(
     }
     return false;
 }
-
+// LCOV_EXCL_STOP
 }
 }

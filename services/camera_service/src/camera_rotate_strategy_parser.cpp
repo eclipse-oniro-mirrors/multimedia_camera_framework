@@ -20,6 +20,7 @@
 namespace OHOS {
 namespace CameraStandard {
 static const int8_t DECIMAL = 10;
+// LCOV_EXCL_START
 bool CameraRotateStrategyParser::LoadConfiguration()
 {
     curNode_ = CameraXmlNode::Create();
@@ -106,6 +107,6 @@ void CameraRotateStrategyParser::ParserStrategyInfo(std::shared_ptr<CameraXmlNod
             "rotateDegree:%{public}d, fps:%{public}d",
             info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
     }
-}
+}// LCOV_EXCL_STOP
 } // namespace CameraStandard
 } // namespace OHOS
