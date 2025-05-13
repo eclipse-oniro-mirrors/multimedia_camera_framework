@@ -16,6 +16,7 @@
 #ifndef DEFERREDPROCESSING_FUZZER_H
 #define DEFERREDPROCESSING_FUZZER_H
 #include <iostream>
+#include <fuzzer/FuzzedDataProvider.h>
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_video_processing_session_stub.h"
@@ -57,7 +58,7 @@ public:
 class DeferredVideoProcessingSessionStubFuzzer {
 public:
 static std::shared_ptr<DeferredVideoProcessingSessionStubFuzz> fuzz_;
-static void OnRemoteRequest(int32_t code);
+static void OnRemoteRequest(FuzzedDataProvider& fdp, int32_t code);
 };
 } //CameraStandard
 } //OHOS
