@@ -957,6 +957,14 @@ void CameraManager::CameraServerDied(pid_t pid)
 int32_t CameraManager::AddServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
+    auto serviceProxy = GetServiceProxy();
+    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CameraManager::AddServiceProxyDeathRecipient serviceProxy is null");
+    auto remoteObj = serviceProxy->AsObject();
+    if (deathRecipient_ != nullptr) {
+        MEDIA_INFO_LOG("CameraManager::AddServiceProxyDeathRecipient remove last deathRecipient");
+        remoteObj->RemoveDeathRecipient(deathRecipient_);
+    }
     pid_t pid = 0;
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_ERROR_RETURN_RET_LOG(deathRecipient_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
@@ -964,12 +972,12 @@ int32_t CameraManager::AddServiceProxyDeathRecipient()
     auto thisPtr = wptr<CameraManager>(this);
     deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
         auto cameraManagerPtr = thisPtr.promote();
-        CHECK_EXECUTE(cameraManagerPtr != nullptr, cameraManagerPtr->CameraServerDied(pid));
+        if (cameraManagerPtr != nullptr) {
+            cameraManagerPtr->CameraServerDied(pid);
+        }
     });
-    auto serviceProxy = GetServiceProxy();
-    CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CameraManager::AddServiceProxyDeathRecipient serviceProxy is null");
-    bool result = serviceProxy->AsObject()->AddDeathRecipient(deathRecipient_);
+
+    bool result = remoteObj->AddDeathRecipient(deathRecipient_);
     CHECK_ERROR_RETURN_RET_LOG(!result, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::AddServiceProxyDeathRecipient failed to add deathRecipient");
     return CameraErrorCode::SUCCESS;

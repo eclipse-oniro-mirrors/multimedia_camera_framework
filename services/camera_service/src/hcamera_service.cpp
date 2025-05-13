@@ -539,9 +539,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     }
     captureSession->SetCameraRotateStrategyInfos(CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
     session = captureSession;
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    
-    captureSessionsManager_.EnsureInsert(pid, captureSession);
+
     std::string clientName_ = GetClientBundle(IPCSkeleton::GetCallingUid());
 #ifdef HOOK_CAMERA_OPERATOR
     CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName_, captureSession);
@@ -1407,11 +1405,10 @@ int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos
         MEDIA_INFO_LOG("CameraHostInfo::SetPrelaunchConfig for cameraId %{public}s", (cameraId).c_str());
         sptr<HCaptureSession> captureSession_ = nullptr;
         pid_t pid = IPCSkeleton::GetCallingPid();
-        captureSessionsManager_.Find(pid, captureSession_);
+        auto &sessionManager = HCameraSessionManager::GetInstance();
+        captureSession_ = sessionManager.GetGroupDefaultSession(pid);
         SaveCurrentParamForRestore(cameraId, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
             effectParam, captureSession_);
-        captureSessionsManager_.Clear();
-        captureSessionsManager_.EnsureInsert(pid, captureSession_);
     } else {
         MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
         ret = CAMERA_INVALID_ARG;
@@ -2209,7 +2206,8 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
 int32_t HCameraService::GetCameraOutputStatus(int32_t pid, int32_t &status)
 {
     sptr<HCaptureSession> captureSession = nullptr;
-    captureSessionsManager_.Find(pid,  captureSession);
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    captureSession = sessionManager.GetGroupDefaultSession(pid);
     if (captureSession) {
         captureSession->GetOutputStatus(status);
     } else {
