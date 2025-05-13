@@ -42,14 +42,22 @@ const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
     { "video", PickerMediaType::VIDEO },
 };
 constexpr char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
-const char* const PICKER_MEDIA_TYPE[] = { "PHOTO", "VIDEO" };
-const std::vector<std::string> PICKER_MEDIA_TYPE_VALUE = { "photo", "video" };
 } // namespace
 
 using namespace std;
 thread_local napi_ref CameraPickerNapi::sConstructor_ = nullptr;
 thread_local napi_ref CameraPickerNapi::mediaTypeRef_ = nullptr;
 thread_local uint32_t CameraPickerNapi::cameraPickerTaskId = CAMERA_PICKER_TASKID;
+
+void __attribute__((constructor)) Onload()
+{
+    MEDIA_INFO_LOG("CameraPickerNapi::OnLoad");
+}
+
+void __attribute__((destructor)) OnUnload()
+{
+    MEDIA_INFO_LOG("CameraPickerNapi::OnUnload");
+}
 
 static std::shared_ptr<PickerContextProxy> GetAbilityContext(napi_env env, napi_value value)
 {
@@ -377,15 +385,17 @@ napi_value CameraPickerNapi::CreatePickerProfile(napi_env env)
 napi_value CameraPickerNapi::CreatePickerMediaType(napi_env env)
 {
     MEDIA_DEBUG_LOG("CreatePickerMediaType is called");
+    const char* pickerMediaType[] = { "PHOTO", "VIDEO" };
+    const std::vector<std::string> pickerMediaTypeValue = { "photo", "video" };
+
     napi_value result = nullptr;
     napi_status status;
     if (mediaTypeRef_ != nullptr) {
         status = napi_get_reference_value(env, mediaTypeRef_, &result);
         CHECK_ERROR_RETURN_RET(status == napi_ok, result);
     }
-    status = CameraNapiUtils::CreateObjectWithPropNameAndValues(env, &result,
-        sizeof(PICKER_MEDIA_TYPE) / sizeof(PICKER_MEDIA_TYPE[0]), const_cast<const char**>(PICKER_MEDIA_TYPE),
-        PICKER_MEDIA_TYPE_VALUE);
+    status = CameraNapiUtils::CreateObjectWithPropNameAndValues(env, &result, 2, pickerMediaType,
+        pickerMediaTypeValue);
     if (status != napi_ok) {
         MEDIA_DEBUG_LOG("CreatePickerMediaType call end!");
         napi_get_undefined(env, &result);
