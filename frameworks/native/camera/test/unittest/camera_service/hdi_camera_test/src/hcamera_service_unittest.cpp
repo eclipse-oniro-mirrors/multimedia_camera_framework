@@ -32,6 +32,7 @@
 #include "os_account_manager.h"
 #include "hcamera_service_callback_stub.h"
 #include "camera_service_ipc_interface_code.h"
+#include "hcamera_session_manager.h"
 
 using namespace testing::ext;
 using ::testing::Return;
@@ -1496,13 +1497,13 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_041, TestSize.Level0)
     pid_t pid = IPCSkeleton::GetCallingPid();
     int32_t status = 1;
     sptr<HCaptureSession> captureSession = nullptr;
-    cameraService_->captureSessionsManager_.EnsureInsert(pid, captureSession);
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    sessionManager.AddSession(captureSession);
     EXPECT_EQ(cameraService_->GetCameraOutputStatus(pid, status), 0);
 
     uint32_t callerToken = IPCSkeleton::GetCallingPid();
     captureSession = new HCaptureSession(callerToken, SceneMode::NORMAL);
-    cameraService_->captureSessionsManager_.Clear();
-    cameraService_->captureSessionsManager_.EnsureInsert(pid, captureSession);
+    sessionManager.AddSession(captureSession);
     EXPECT_EQ(cameraService_->GetCameraOutputStatus(pid, status), 0);
 
     if (captureSession != nullptr) {

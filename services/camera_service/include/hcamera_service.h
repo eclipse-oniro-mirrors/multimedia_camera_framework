@@ -302,7 +302,6 @@ private:
     bool isFoldRegister = false;
     sptr<IFoldServiceCallback> innerFoldCallback_;
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
-    SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
     std::map<uint32_t, std::function<void()>> delayCbtaskMap;
