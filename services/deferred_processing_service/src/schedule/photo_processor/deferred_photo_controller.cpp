@@ -258,7 +258,8 @@ void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
     if (workAvailable || photoJobRepository_->GetRunningJobCounts() > 0) {
         scheduleState = DpsStatus::DPS_SESSION_STATE_RUNNING;
     } else {
-        if (photoJobRepository_->GetOfflineIdleJobSize() == 0) {
+        if (photoJobRepository_->GetOfflineIdleJobSize() == 0 &&
+            photoJobRepository_->GetBackgroundIdleJobSize() == 0) {
             scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
         } else {
             if (backgroundStrategy_->GetHdiStatus() != HdiStatus::HDI_READY) {
