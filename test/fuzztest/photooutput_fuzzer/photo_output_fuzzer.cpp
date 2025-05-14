@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-#include "photo_output_fuzzer.h"
+#include <cstdint>
+#include <memory>
+
+#include "accesstoken_kit.h"
 #include "camera_device.h"
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "capture_scene_const.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
-#include <cstdint>
-#include <memory>
-#include "token_setproc.h"
 #include "nativetoken_kit.h"
-#include "accesstoken_kit.h"
+#include "photo_output_fuzzer.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace PhotoOutputFuzzer {
-const int32_t LIMITSIZE = 4;
-const int32_t NUM_TWO = 2;
-bool g_isCameraDevicePermission = false;
+const int32_t LIMITSIZE = 128;
+const int32_t CONST_2 = 2;
+const int32_t CONST_1 = 1;
 
 void GetPermission()
 {
@@ -56,22 +57,23 @@ void GetPermission()
 
 void Test(uint8_t *rawData, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    if (size < LIMITSIZE) {
+        return;
+    }
     GetPermission();
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "PhotoOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
-    CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "PhotoOutputFuzzer: GetSupportedCameras Error");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    auto camera = cameras[data.ReadUint32() % cameras.size()];
+    CHECK_ERROR_RETURN_LOG(cameras.size() < CONST_2, "PhotoOutputFuzzer: GetSupportedCameras Error");
+
+    auto camera = cameras[fdp.ConsumeIntegral<uint8_t>() % cameras.size()];
     CHECK_ERROR_RETURN_LOG(!camera, "PhotoOutputFuzzer: camera is null");
-    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_TWO);
+    int32_t mode = fdp.ConsumeIntegral<uint8_t>() % (SceneMode::APERTURE_VIDEO + CONST_2);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
     CHECK_ERROR_RETURN_LOG(!capability, "PhotoOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
     CHECK_ERROR_RETURN_LOG(profiles.empty(), "PhotoOutputFuzzer: GetPhotoProfiles empty");
-    Profile profile = profiles[data.ReadUint32() % profiles.size()];
+    Profile profile = profiles[fdp.ConsumeIntegral<uint8_t>() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
@@ -80,22 +82,18 @@ void Test(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_LOG(!output, "PhotoOutputFuzzer: CreatePhotoOutput Error");
     std::shared_ptr<PhotoCaptureSetting> setting = std::make_shared<PhotoCaptureSetting>();
     sptr<HStreamCaptureCallbackImpl> callback = new (std::nothrow) HStreamCaptureCallbackImpl(output);
-    TestOutput1(output, rawData, size);
-    TestOutput2(output, rawData, size);
-    CaptureSetting(setting, rawData, size);
-    CaptureCallback(callback, rawData, size);
+    TestOutput1(output, fdp);
+    TestOutput2(output, fdp);
+    CaptureSetting(setting, fdp);
+    CaptureCallback(callback, fdp);
 }
 
-void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
-{
+void TestOutput1(sptr<PhotoOutput> output, FuzzedDataProvider &fdp) {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
     output->SetCallback(make_shared<PhotoStateCallbackMock>());
     sptr<IBufferConsumerListener> listener = new IBufferConsumerListenerMock();
     output->SetThumbnailListener(listener);
-    data.RewindRead(0);
-    output->SetThumbnail(data.ReadBool());
+    output->SetThumbnail(fdp.ConsumeBool());
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "PhotoOutputFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
@@ -110,119 +108,100 @@ void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->GetApplicationCallback();
     output->IsMirrorSupported();
     output->IsQuickThumbnailSupported();
-    data.RewindRead(0);
-    int32_t type = data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + 1 + 1);
+    int32_t type = fdp.ConsumeIntegral<uint8_t>() % (DeferredDeliveryImageType::DELIVERY_VIDEO + CONST_2);
     output->DeferImageDeliveryFor(static_cast<DeferredDeliveryImageType>(type));
     output->IsDeferredImageDeliverySupported(static_cast<DeferredDeliveryImageType>(type));
     output->IsDeferredImageDeliveryEnabled(static_cast<DeferredDeliveryImageType>(type));
-    data.RewindRead(0);
-    output->SetCallbackFlag(data.ReadUint8());
-    data.RewindRead(0);
-    output->SetNativeSurface(data.ReadBool());
-    data.RewindRead(0);
-    output->ProcessSnapshotDurationUpdates(data.ReadInt32());
+    output->SetCallbackFlag(fdp.ConsumeIntegral<uint8_t>());
+    output->SetNativeSurface(fdp.ConsumeIntegral<uint8_t>());
+    output->ProcessSnapshotDurationUpdates(fdp.ConsumeIntegral<int32_t>());
     int32_t isAutoHighQualityPhotoSupported;
     output->IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
-    data.RewindRead(0);
-    output->EnableAutoHighQualityPhoto(data.ReadBool());
+    output->EnableAutoHighQualityPhoto(fdp.ConsumeIntegral<uint8_t>());
     output->IsEnableDeferred();
     output->GetDefaultCaptureSetting();
     bool isAutoAigcPhotoSupported;
     output->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
-    data.RewindRead(0);
-    output->EnableAutoHighQualityPhoto(data.ReadBool());
+    output->EnableAutoHighQualityPhoto(fdp.ConsumeBool());
     output->Release();
 }
 
-void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
-{
+void TestOutput2(sptr<PhotoOutput> output, FuzzedDataProvider &fdp) __attribute__((no_sanitize("cfi"))) {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
     output->SetCallback(make_shared<PhotoStateCallbackMock>());
-    data.RewindRead(0);
     output->IsYuvOrHeifPhoto();
-    output->SetAuxiliaryPhotoHandle(data.ReadInt32());
+    output->SetAuxiliaryPhotoHandle(fdp.ConsumeIntegral<int32_t>());
     output->GetAuxiliaryPhotoHandle();
-    data.RewindRead(0);
-    output->SetMovingPhotoVideoCodecType(data.ReadInt32());
+
+    output->SetMovingPhotoVideoCodecType(fdp.ConsumeIntegral<int32_t>());
     output->IsDepthDataDeliverySupported();
-    data.RewindRead(0);
-    output->EnableMovingPhoto(data.ReadBool());
-    data.RewindRead(0);
-    output->EnableDepthDataDelivery(data.ReadBool());
+
+    output->EnableMovingPhoto(fdp.ConsumeBool());
+
+    output->EnableDepthDataDelivery(fdp.ConsumeBool());
     output->CreateMultiChannel();
-    data.RewindRead(0);
-    output->AcquireBufferToPrepareProxy(data.ReadInt32());
-    data.RewindRead(0);
-    output->EnableRawDelivery(data.ReadBool());
-    data.RewindRead(0);
-    output->EnableMirror(data.ReadBool());
-    bool isEnable = static_cast<bool>(rawData);
+
+    output->AcquireBufferToPrepareProxy(fdp.ConsumeIntegral<int32_t>());
+
+    output->EnableRawDelivery(fdp.ConsumeBool());
+
+    output->EnableMirror(fdp.ConsumeBool());
+    bool isEnable;
     output->IsRawDeliverySupported(isEnable);
-    bool isAutoCloudImageEnhancementSupported = static_cast<bool>(rawData);
+    bool isAutoCloudImageEnhancementSupported;
     output->IsAutoCloudImageEnhancementSupported(isAutoCloudImageEnhancementSupported);
-    bool isAutoAigcPhotoSupported = static_cast<bool>(rawData);
+    bool isAutoAigcPhotoSupported;
     output->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
-    data.RewindRead(0);
-    output->EnableAutoCloudImageEnhancement(data.ReadBool());
-    data.RewindRead(0);
-    output->GetPhotoRotation(data.ReadInt32());
-    data.RewindRead(0);
-    output->EnableAutoAigcPhoto(data.ReadBool());
-    pid_t pid = *reinterpret_cast<const pid_t*>(rawData);
+
+    output->EnableAutoCloudImageEnhancement(fdp.ConsumeBool());
+
+    output->GetPhotoRotation(fdp.ConsumeIntegral<int32_t>());
+
+    output->EnableAutoAigcPhoto(fdp.ConsumeBool());
+    pid_t pid = fdp.ConsumeIntegral<pid_t>();
     output->CameraServerDied(pid);
     output->Release();
 }
 
-void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, uint8_t *rawData, size_t size)
-{
+void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, FuzzedDataProvider &fdp) {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
+    PhotoCaptureSetting::QualityLevel quality = static_cast<PhotoCaptureSetting::QualityLevel>(
+        fdp.ConsumeIntegral<uint8_t>() % (PhotoCaptureSetting::QUALITY_LEVEL_HIGH + CONST_2));
     setting->SetQuality(quality);
     setting->GetQuality();
-    data.RewindRead(0);
-    setting->SetBurstCaptureState(data.ReadInt8());
-    PhotoCaptureSetting::RotationConfig rotationValue = PhotoCaptureSetting::RotationConfig::Rotation_0;
+
+    setting->SetBurstCaptureState(fdp.ConsumeIntegral<uint8_t>());
+    std::vector<PhotoCaptureSetting::RotationConfig> vRotationConfig = {PhotoCaptureSetting::Rotation_0,
+        PhotoCaptureSetting::Rotation_90, PhotoCaptureSetting::Rotation_180, PhotoCaptureSetting::Rotation_270,
+        static_cast<PhotoCaptureSetting::RotationConfig>(PhotoCaptureSetting::Rotation_270 + CONST_1)};
+    PhotoCaptureSetting::RotationConfig rotationValue =
+        vRotationConfig[fdp.ConsumeIntegral<uint8_t>() % vRotationConfig.size()];
     setting->SetRotation(rotationValue);
     setting->GetRotation();
-    data.RewindRead(0);
-    setting->SetGpsLocation(data.ReadDouble(), data.ReadDouble());
-    data.RewindRead(0);
-    setting->SetMirror(data.ReadBool());
+
+    setting->SetGpsLocation(fdp.ConsumeFloatingPoint<double>(), fdp.ConsumeFloatingPoint<double>());
+
+    setting->SetMirror(fdp.ConsumeBool());
     setting->GetMirror();
 }
 
-void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData, size_t size)
-{
+void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, FuzzedDataProvider &fdp) {
     MEDIA_INFO_LOG("PhotoOutputFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    callback->OnCaptureStarted(data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnCaptureStarted(data.ReadInt32(), data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnCaptureEnded(data.ReadInt32(), data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnCaptureError(data.ReadInt32(), data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnFrameShutter(data.ReadInt32(), data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnFrameShutterEnd(data.ReadInt32(), data.ReadInt32());
-    data.RewindRead(0);
-    callback->OnCaptureReady(data.ReadInt32(), data.ReadInt32());
+    callback->OnCaptureStarted(fdp.ConsumeIntegral<int32_t>());
+    callback->OnCaptureStarted(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback->OnCaptureEnded(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback->OnCaptureError(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback->OnFrameShutter(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback->OnFrameShutterEnd(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback->OnCaptureReady(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
 }
 
-} // namespace StreamRepeatStubFuzzer
+} // namespace PhotoOutputFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
-{
+extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
     /* Run your code on data */
     OHOS::CameraStandard::PhotoOutputFuzzer::Test(data, size);
     return 0;

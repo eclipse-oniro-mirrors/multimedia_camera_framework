@@ -16,6 +16,7 @@
 #ifndef PHOTO_OUTPUT_FUZZER_H
 #define PHOTO_OUTPUT_FUZZER_H
 
+#include <fuzzer/FuzzedDataProvider.h>
 #include "output/photo_output.h"
 
 namespace OHOS {
@@ -41,10 +42,10 @@ public:
 };
 
 void Test(uint8_t *rawData, size_t size);
-void TestOutput1(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
-void TestOutput2(sptr<PhotoOutput> output, uint8_t *rawData, size_t size);
-void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, uint8_t *rawData, size_t size);
-void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawData, size_t size);
+void TestOutput1(sptr<PhotoOutput> output, FuzzedDataProvider& fdp);
+void TestOutput2(sptr<PhotoOutput> output, FuzzedDataProvider& fdp);
+void CaptureSetting(std::shared_ptr<PhotoCaptureSetting> setting, FuzzedDataProvider& fdp);
+void CaptureCallback(sptr<HStreamCaptureCallbackImpl> callback, uint8_t *rawDataProvider& fdp);
 
 }
 } //CameraStandard

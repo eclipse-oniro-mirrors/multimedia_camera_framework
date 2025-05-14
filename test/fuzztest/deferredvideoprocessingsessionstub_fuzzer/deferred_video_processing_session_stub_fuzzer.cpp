@@ -13,61 +13,27 @@
  * limitations under the License.
  */
 
-#include "deferred_video_processing_session_stub_fuzzer.h"
 #include "buffer_info.h"
 #include "deferred_processing_service.h"
+#include "deferred_video_processing_session_stub_fuzzer.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
-#include "metadata_utils.h"
 #include "ipc_skeleton.h"
+#include "metadata_utils.h"
 #include "securec.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MAX_CODE_LEN = 512;
+static const size_t MAX_BUFFER_SIZE = 32;
 static constexpr int32_t NUM_4 = 4;
 static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+const size_t THRESHOLD = (MAX_BUFFER_SIZE + 8) * 6;
 
-std::shared_ptr<DeferredVideoProcessingSessionStubFuzz>
-    DeferredVideoProcessingSessionStubFuzzer::fuzz_{nullptr};
+std::shared_ptr<DeferredVideoProcessingSessionStubFuzz> DeferredVideoProcessingSessionStubFuzzer::fuzz_ { nullptr };
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void DeferredVideoProcessingSessionStubFuzzer::OnRemoteRequest(FuzzedDataProvider& fdp, int32_t code)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void DeferredVideoProcessingSessionStubFuzzer::OnRemoteRequest(int32_t code)
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
 
@@ -75,47 +41,27 @@ void DeferredVideoProcessingSessionStubFuzzer::OnRemoteRequest(int32_t code)
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     MessageParcel dataMessageParcel;
     dataMessageParcel.WriteInterfaceToken(DeferredVideoProcessingSessionStubFuzz::GetDescriptor());
-    dataMessageParcel.WriteBuffer(RAW_DATA + sizeof(uint32_t), g_dataSize - sizeof(uint32_t));
+
+    size_t bufferSize = fdp.ConsumeIntegralInRange<size_t>(0, MAX_BUFFER_SIZE);
+    std::vector<uint8_t> buffer = fdp.ConsumeBytes<uint8_t>(bufferSize);
+    dataMessageParcel.WriteBuffer(buffer.data(), buffer.size());
     dataMessageParcel.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
     fuzz_->OnRemoteRequest(code, dataMessageParcel, reply, option);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto deferredVideoProcessingSessionStub = std::make_unique<DeferredVideoProcessingSessionStubFuzzer>();
     if (deferredVideoProcessingSessionStub == nullptr) {
         MEDIA_INFO_LOG("deferredVideoProcessingSessionStub is null");
         return;
     }
+    FuzzedDataProvider fdp(data, size);
     for (uint32_t i = 0; i <= MIN_TRANSACTION_ID + NUM_4; i++) {
-        deferredVideoProcessingSessionStub->OnRemoteRequest(i);
+        deferredVideoProcessingSessionStub->OnRemoteRequest(fdp, i);
     }
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -127,6 +73,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }
