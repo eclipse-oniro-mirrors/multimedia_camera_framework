@@ -1802,11 +1802,11 @@ void CameraManager::GetDetailInfofordouble(double *originInfo, uint32_t start, u
 
 void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
+    CHECK_ERROR_RETURN_LOG(
+        cameraObj == nullptr, "CameraManager::SetProfile cameraObj is null");
     std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
     if (supportedModes.empty()) {
         auto capability = ParseSupportedOutputCapability(cameraObj, 0, metadata);
-        CHECK_ERROR_RETURN_LOG(
-            cameraObj == nullptr, "CameraManager::SetProfile cameraObj is null");
         cameraObj->SetProfile(capability);
     } else {
         supportedModes.emplace_back(NORMAL);

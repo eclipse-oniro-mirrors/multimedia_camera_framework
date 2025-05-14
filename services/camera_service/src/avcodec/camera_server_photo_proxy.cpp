@@ -49,6 +49,7 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     burstKey_ = "";
     isCoverPhoto_ = false;
     imageFormat_ = 0;
+    stageVideoTaskStatus_ = 0;
     cloudImageEnhanceFlag_ = 0;
 }
 

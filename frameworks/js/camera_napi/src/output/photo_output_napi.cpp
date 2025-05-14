@@ -2823,6 +2823,7 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
     } else {
         CreateSingleChannelPhotoLisenter(env);
     }
+    CHECK_ERROR_RETURN_LOG(photoListener_ == nullptr, "photoListener_ is null!");
     photoListener_->SaveCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
 }
 
