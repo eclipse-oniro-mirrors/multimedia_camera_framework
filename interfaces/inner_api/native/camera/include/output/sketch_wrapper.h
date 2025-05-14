@@ -34,7 +34,7 @@ public:
     static float GetSketchEnableRatio(const SceneFeaturesMode& sceneFeaturesMode);
     static void UpdateSketchStaticInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
 
-    explicit SketchWrapper(wptr<IStreamCommon> hostStream, const Size size);
+    explicit SketchWrapper(wptr<IStreamCommon> hostStream, const Size size, bool isDynamicNotify = false);
     virtual ~SketchWrapper();
     int32_t Init(
         std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, const SceneFeaturesMode& sceneFeaturesMode);
@@ -63,6 +63,8 @@ private:
     sptr<Surface> sketchSurface_ = nullptr;
     sptr<IStreamRepeat> sketchStream_;
     std::mutex sketchStatusChangeMutex_;
+    bool isDynamicNotify_;
+    float sketchDynamicReferenceRatio_ = -1.0f;
 
     wptr<PreviewOutputListenerManager> previewOutputCallbackManager_;
 
@@ -88,6 +90,7 @@ private:
         const camera_metadata_item_t& metadataItem);
     int32_t OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode& sceneFeaturesMode,
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataChangedSketchDynamicNotify(const camera_metadata_item_t& metadataItem);
 
     void AutoStream();
 };

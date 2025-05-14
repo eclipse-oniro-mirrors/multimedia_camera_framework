@@ -224,9 +224,40 @@ int32_t PreviewOutput::Stop()
     return ServiceToCameraError(errCode);
 }
 
+bool PreviewOutput::IsDynamicSketchNotifySupported()
+{
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET(session == nullptr, false);
+    auto metadata = GetDeviceMetadata();
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
+
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SKETCH_INFO_NOTIFICATION, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, false,
+        "PreviewOutput::IsDynamicSketchNotifySupported Failed with return code %{public}d", ret);
+    std::vector<int32_t> supportedModes = {};
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto opMode = static_cast<OHOS::HDI::Camera::V1_4::OperationMode>(item.data.i32[i]);
+        auto it = g_metaToFwSupportedMode_.find(opMode);
+        if (it == g_metaToFwSupportedMode_.end()) {
+            continue;
+        }
+        if (session->GetMode() == it->second) {
+            return true;
+        }
+        supportedModes.emplace_back(item.data.i32[i]);
+    }
+    MEDIA_DEBUG_LOG("PreviewOutput::IsDynamicSketchNotifySupported modes:%{public}s",
+        Container2String(supportedModes.begin(), supportedModes.end()).c_str());
+    return false;
+}
+
 bool PreviewOutput::IsSketchSupported()
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::IsSketchSupported");
+    if (IsDynamicSketchNotifySupported()) {
+        return true;
+    }
 
     auto sketchSize = FindSketchSize();
     CHECK_ERROR_RETURN_RET(sketchSize == nullptr, false);
@@ -275,7 +306,7 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
     auto session = GetSession();
     CHECK_ERROR_RETURN_RET_LOG(
         session == nullptr, ServiceToCameraError(CAMERA_INVALID_STATE), "EnableSketch session null");
-    auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize);
+    auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize, IsDynamicSketchNotifySupported());
     sketchWrapper_ = wrapper;
     wrapper->SetPreviewOutputCallbackManager(previewOutputListenerManager_);
     auto metadata = GetDeviceMetadata();
@@ -547,6 +578,12 @@ const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverControlT
 {
     const static std::set<camera_device_metadata_tag_t> tags = { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO,
         OHOS_CONTROL_MOON_CAPTURE_BOOST, OHOS_CONTROL_SMOOTH_ZOOM_RATIOS };
+    return tags;
+}
+
+const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverResultTags()
+{
+    const static std::set<camera_device_metadata_tag_t> tags = { OHOS_STATUS_SKETCH_STREAM_INFO };
     return tags;
 }
 

@@ -134,6 +134,8 @@ public:
      */
     bool IsSketchSupported();
 
+    bool IsDynamicSketchNotifySupported();
+
     /**
      * @brief Get the scaling ratio threshold for sketch callback data.
      *
@@ -215,6 +217,14 @@ public:
      * @return Observed tags
      */
     virtual const std::set<camera_device_metadata_tag_t>& GetObserverControlTags() override;
+
+    /**
+     * @brief Get Observed matadata tags
+     *        Register tags into capture session. If the tags data changes,{@link OnResultMetadataChanged} will be
+     *        called.
+     * @return Observed tags
+     */
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverResultTags() override;
 
     /**
      * @brief Callback of request metadata change.
