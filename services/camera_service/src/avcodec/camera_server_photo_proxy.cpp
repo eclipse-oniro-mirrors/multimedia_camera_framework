@@ -129,7 +129,6 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     captureId_ = parcel.ReadInt32();
     burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
-    stageVideoTaskStatus_ = parcel.ReadUint32();
     cloudImageEnhanceFlag_ = parcel.ReadUint32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
