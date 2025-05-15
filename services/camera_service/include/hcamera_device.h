@@ -225,7 +225,7 @@ private:
     int32_t lastDeviceProtectionStatus_ = -1;
     std::mutex deviceProtectionStatusMutex_;
     int64_t lastDeviceEjectTime_ = 0;
-    std::atomic<uint32_t> deviceEjectTimes_ = 1;
+    std::atomic<uint32_t> deviceEjectTimes_ = 0;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
