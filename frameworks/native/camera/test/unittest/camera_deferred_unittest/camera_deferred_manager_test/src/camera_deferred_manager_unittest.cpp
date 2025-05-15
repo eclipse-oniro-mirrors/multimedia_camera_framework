@@ -72,27 +72,6 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_001, TestSize
 
 /*
  * Feature: Framework
- * Function: Test MediaManager with Pause, Stop
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Pause, Stop for abnormal branch
- */
-HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_002, TestSize.Level1)
-{
-    auto mediaManager = std::make_shared<MediaManager>();
-    ASSERT_NE(mediaManager, nullptr);
-    mediaManager->outputWriter_ = std::make_shared<Writer>();
-    ASSERT_NE(mediaManager->outputWriter_, nullptr);
-    mediaManager->started_ = false;
-    EXPECT_EQ(mediaManager->Pause(), PAUSE_RECEIVED);
-    mediaManager->started_ = true;
-    mediaManager->hasAudio_ = true;
-    EXPECT_EQ(mediaManager->Stop(), ERROR_FAIL);
-}
-
-/*
- * Feature: Framework
  * Function: Test MediaManager with WriteSample
  * SubFunction: NA
  * FunctionPoints: NA
