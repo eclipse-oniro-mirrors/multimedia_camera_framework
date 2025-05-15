@@ -30,6 +30,9 @@ sptr<IRemoteObject> CameraMockSessionManagerProxy::GetSessionManagerService()
         data, reply, option);
     CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, nullptr,
         "RegisterWindowManagerAgent failed, error: %{public}d", error);
+    ErrCode errCode = reply.ReadInt32();
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_OK, nullptr,
+        "Read result failed, error: %{public}d", error);
     sptr<IRemoteObject> remoteObject = reply.ReadRemoteObject();
     return remoteObject;
 }
