@@ -93,6 +93,21 @@ protected:
     std::vector<Profile> photoProfile_ = {};
     std::vector<VideoProfile> videoProfile_ = {};
 };
+
+class MockCaptureOutput : public OHOS::CameraStandard::CaptureOutput {
+public:
+    MockCaptureOutput(CaptureOutputType type, StreamType streamType, sptr<IBufferProducer> bufferProducer,
+    sptr<IStreamCommon> stream)
+        : OHOS::CameraStandard::CaptureOutput(type, streamType, bufferProducer, stream) {}
+    
+    int32_t Release() {
+        return 0;
+    }
+    void CameraServerDied(pid_t pid) {}
+    int32_t CreateStream() {
+        return 0;
+    }
+};
 }
 }
 #endif
