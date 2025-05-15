@@ -57,7 +57,8 @@ AddVideoCommand::AddVideoCommand(const int32_t userId, const std::string& videoI
 
 int32_t AddVideoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -74,7 +75,8 @@ RemoveVideoCommand::RemoveVideoCommand(const int32_t userId, const std::string& 
 
 int32_t RemoveVideoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     
@@ -84,7 +86,8 @@ int32_t RemoveVideoCommand::Executing()
 
 int32_t RestoreVideoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 

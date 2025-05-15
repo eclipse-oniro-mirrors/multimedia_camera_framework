@@ -34,6 +34,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "os_account_manager.h"
+#include "picture_proxy.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -1184,6 +1185,464 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_028, TestSize.Level1)
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
     phtOutput->stream_ = nullptr;
     EXPECT_EQ(phtOutput->EnableMovingPhoto(enabled), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsOfflineSupported_ShouldReturnFalse_WhenSessionIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when session is nullptr then IsOfflineSupported returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    EXPECT_EQ(phtOutput->IsOfflineSupported(), false);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsOfflineSupported_ShouldReturnFalse_WhenInputDeviceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when inputDevice is nullptr then IsOfflineSupported returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_002, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(phtOutput->IsOfflineSupported(), false);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsOfflineSupported_ShouldReturnFalse_WhenOfflineSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when offline is supported then IsOfflineSupported returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    bool isOfflineSupported = phtOutput->IsOfflineSupported();
+    if(!isOfflineSupported){
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR);
+    int8_t value = 1;
+    metadata->addEntry(OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &value, sizeof(int8_t));
+    }
+    EXPECT_EQ(phtOutput->IsOfflineSupported(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableOfflinePhoto_ShouldReturnError_WhenSessionIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when session is nullptr then EnableOfflinePhoto returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::SESSION_NOT_RUNNING);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableOfflinePhoto_ShouldReturnError_WhenInputDeviceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when inputDevice is null then EnableOfflinePhoto returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_002, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::SESSION_NOT_RUNNING);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableOfflinePhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when OfflineSupported is false then EnableOfflinePhoto returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    bool isOfflineSupported = phtOutput->IsOfflineSupported();
+    if(isOfflineSupported){
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR);
+    int8_t value = 0;
+    metadata->addEntry(OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &value, sizeof(int8_t));
+    }
+    EXPECT_EQ(phtOutput->IsOfflineSupported(), false);
+    EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::OPERATION_NOT_ALLOWED);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableOfflinePhoto_ShouldReturnTrue_WhenOfflineSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when OfflineSupported is true then EnableOfflinePhoto returns ture
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    bool isOfflineSupported = phtOutput->IsOfflineSupported();
+    if(!isOfflineSupported){
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR);
+    int8_t value = 1;
+    metadata->addEntry(OHOS_ABILITY_CHANGETO_OFFLINE_STREAM_OPEATOR, &value, sizeof(int8_t));
+    }
+    EXPECT_EQ(phtOutput->IsOfflineSupported(), true);
+    EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: GetPhotoSurface_ShouldReturnNull_WhenPhotoSurfaceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when photoSurface_ is nullptr then GetPhotoSurface returns nullptr
+ */
+HWTEST_F(CameraPhotoOutputUnit, GetPhotoSurface_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    sptr<Surface> result = phtOutput->GetPhotoSurface();
+    EXPECT_EQ(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: SetSwitchOfflinePhotoOutput_ShouldSet_WhenTrue
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetSwitchOfflinePhotoOutput method when input is true
+ */
+HWTEST_F(CameraPhotoOutputUnit, SetSwitchOfflinePhotoOutput_ShouldSet_WhenTrue, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    phtOutput->SetSwitchOfflinePhotoOutput(true);
+    EXPECT_TRUE(phtOutput->IsHasSwitchOfflinePhoto());
+}
+
+/*
+ * Feature: Framework
+ * Function: SetSwitchOfflinePhotoOutput_ShouldSet_WhenFalse
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetSwitchOfflinePhotoOutput method when input is false
+ */
+HWTEST_F(CameraPhotoOutputUnit, SetSwitchOfflinePhotoOutput_ShouldSet_WhenFalse, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    phtOutput->SetSwitchOfflinePhotoOutput(false);
+    EXPECT_FALSE(phtOutput->IsHasSwitchOfflinePhoto());
+}
+
+/*
+ * Feature: Framework
+ * Function: CreateMediaLibrary_Use_CameraPhotoProxy
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMediaLibrary method use CameraPhotoProxy
+ */
+HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    int32_t format = 0;
+    int32_t photoWidth = 0;
+    int32_t photoHeight = 0;
+    bool isHighQuality = false;
+    int32_t captureId = 0;
+    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
+        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
+    std::string uri = "";
+    int32_t cameraShotType = 1;
+    std::string burstKey = "";
+    int64_t timestamp = 0;
+    phtOutput->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: CreateMediaLibrary_Use_PictureIntf
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMediaLibrary method use PictureIntf
+ */
+HWTEST_F(CameraPhotoOutputUnit, CreateMediaLibrary_002, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput> &)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    int32_t format = 0;
+    int32_t photoWidth = 0;
+    int32_t photoHeight = 0;
+    bool isHighQuality = false;
+    int32_t captureId = 0;
+    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
+    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy(
+        nullptr, format, photoWidth, photoHeight, isHighQuality, captureId);
+    std::string uri = "";
+    int32_t cameraShotType = 1;
+    std::string burstKey = "";
+    int64_t timestamp = 0;
+    phtOutput->CreateMediaLibrary(picture, photoProxy, uri, cameraShotType, burstKey, timestamp);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsAutoAigcPhotoSupported_ShouldReturnFalse_WhenSessionIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when session is nullptr then IsAutoAigcPhotoSupported returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    bool isAutoAigcPhotoSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsAutoAigcPhotoSupported_ShouldReturnError_WhenInputDeviceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when inputDevice is null then IsAutoAigcPhotoSupported returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_002, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    bool isAutoAigcPhotoSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: IsAutoAigcPhotoSupported_ShouldReturnError_WhenInputDeviceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when inputDevice is null then IsAutoAigcPhotoSupported returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    bool isAutoAigcPhotoSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_AIGC_PHOTO);
+    EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenSessionIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when session is nullptr then EnableAutoAigcPhoto returns false
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_001, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput, nullptr);
+    bool enabled = true;
+    EXPECT_EQ(phtOutput->EnableAutoAigcPhoto(enabled), CameraErrorCode::SESSION_NOT_RUNNING);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenInputDeviceIsNull
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when inputDevice is null then EnableAutoAigcPhoto returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_002, TestSize.Level0)
+{
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    bool enabled = true;
+    EXPECT_EQ(phtOutput->EnableAutoAigcPhoto(enabled), CameraErrorCode::SESSION_NOT_RUNNING);
+}
+
+/*
+ * Feature: Framework
+ * Function: EnableAutoAigcPhoto_ShouldReturnError_WhenOfflineNotSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test when OfflineSupported is false then EnableAutoAigcPhoto returns error
+ */
+HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+    bool isAutoAigcPhotoSupported = false;
+    phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported);
+    if(isAutoAigcPhotoSupported){
+        bool enabled = true;
+        EXPECT_EQ(phtOutput->EnableAutoAigcPhoto(enabled), CAMERA_OK);
+    }
 }
 }
 }

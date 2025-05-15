@@ -54,7 +54,8 @@ AddPhotoCommand::AddPhotoCommand(const int32_t userId, const std::string& photoI
 
 int32_t AddPhotoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -70,7 +71,8 @@ RemovePhotoCommand::RemovePhotoCommand(const int32_t userId, const std::string& 
 
 int32_t RemovePhotoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     
@@ -80,7 +82,8 @@ int32_t RemovePhotoCommand::Executing()
 
 int32_t RestorePhotoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -96,7 +99,8 @@ ProcessPhotoCommand::ProcessPhotoCommand(const int32_t userId, const std::string
 
 int32_t ProcessPhotoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -106,7 +110,8 @@ int32_t ProcessPhotoCommand::Executing()
 
 int32_t CancelProcessPhotoCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 

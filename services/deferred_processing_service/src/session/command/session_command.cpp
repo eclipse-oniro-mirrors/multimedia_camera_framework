@@ -51,7 +51,8 @@ AddPhotoSessionCommand::AddPhotoSessionCommand(const sptr<PhotoSessionInfo>& inf
 
 int32_t AddPhotoSessionCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     
@@ -74,7 +75,8 @@ DeletePhotoSessionCommand::DeletePhotoSessionCommand(const sptr<PhotoSessionInfo
 
 int32_t DeletePhotoSessionCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     
@@ -93,7 +95,8 @@ AddVideoSessionCommand::AddVideoSessionCommand(const sptr<VideoSessionInfo>& inf
 
 int32_t AddVideoSessionCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     
@@ -114,7 +117,8 @@ DeleteVideoSessionCommand::DeleteVideoSessionCommand(const sptr<VideoSessionInfo
 
 int32_t DeleteVideoSessionCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
     

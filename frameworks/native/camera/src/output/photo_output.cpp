@@ -1253,6 +1253,7 @@ void PhotoOutput::NotifyOfflinePhotoOutput(int32_t captureId)
 void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
     std::string &burstKey, int64_t timestamp)
 {
+    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
@@ -1263,11 +1264,13 @@ void PhotoOutput::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::str
     } else {
         MEDIA_ERR_LOG("PhotoOutput::CreateMediaLibrary streamCapturePtr is nullptr");
     }
+    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary X");
 }
 
 void PhotoOutput::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraPhotoProxy> photoProxy,
     std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
+    MEDIA_INFO_LOG("PhotoOutput::CreateMediaLibrary E");
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
