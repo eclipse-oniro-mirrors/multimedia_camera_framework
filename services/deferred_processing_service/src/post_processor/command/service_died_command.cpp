@@ -38,7 +38,8 @@ int32_t ServiceDiedCommand::Initialize()
 
 int32_t PhotoDiedCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -50,7 +51,8 @@ int32_t PhotoDiedCommand::Executing()
 
 int32_t VideoDiedCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 

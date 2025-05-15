@@ -40,7 +40,8 @@ int32_t VideoProcessCommand::Initialize()
 
 int32_t VideoProcessSuccessCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -50,7 +51,8 @@ int32_t VideoProcessSuccessCommand::Executing()
 
 int32_t VideoProcessFailedCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 

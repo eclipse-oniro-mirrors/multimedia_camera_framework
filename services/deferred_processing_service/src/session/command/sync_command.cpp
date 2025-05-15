@@ -53,7 +53,8 @@ PhotoSyncCommand::PhotoSyncCommand(const int32_t userId,
 
 int32_t PhotoSyncCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -102,7 +103,8 @@ VideoSyncCommand::VideoSyncCommand(const int32_t userId,
 
 int32_t VideoSyncCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 

@@ -55,7 +55,8 @@ PhotoProcessSuccessCommand::PhotoProcessSuccessCommand(const int32_t userId, con
 
 int32_t PhotoProcessSuccessCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -72,7 +73,8 @@ PhotoProcessSuccessExtCommand::PhotoProcessSuccessExtCommand(const int32_t userI
 
 int32_t PhotoProcessSuccessExtCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
@@ -89,7 +91,8 @@ PhotoProcessFailedCommand::PhotoProcessFailedCommand(const int32_t userId,
 
 int32_t PhotoProcessFailedCommand::Executing()
 {
-    if (int32_t ret = Initialize() != DP_OK) {
+    int32_t ret = Initialize();
+    if (ret != DP_OK) {
         return ret;
     }
 
