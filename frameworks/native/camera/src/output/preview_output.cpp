@@ -23,6 +23,7 @@
 #include <utility>
 #include <variant>
 
+#include "camera/v1_3/types.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -237,7 +238,7 @@ bool PreviewOutput::IsDynamicSketchNotifySupported()
         "PreviewOutput::IsDynamicSketchNotifySupported Failed with return code %{public}d", ret);
     std::vector<int32_t> supportedModes = {};
     for (uint32_t i = 0; i < item.count; i++) {
-        auto opMode = static_cast<OHOS::HDI::Camera::V1_4::OperationMode>(item.data.i32[i]);
+        auto opMode = static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(item.data.i32[i]);
         auto it = g_metaToFwSupportedMode_.find(opMode);
         if (it == g_metaToFwSupportedMode_.end()) {
             continue;
