@@ -24,53 +24,21 @@
 #include "accesstoken_kit.h"
 #include "securec.h"
 #include "ipc_skeleton.h"
+#include "photo_output.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 
 sptr<PhotoSession> fuzz_ = nullptr;
 sptr<CameraManager> cameraManager_ = nullptr;
 sptr<CaptureOutput> photoOutput_ = nullptr;
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void PhotoSessionFuzzer::PhotoSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void PhotoSessionFuzzer::PhotoSessionFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     cameraManager_ = CameraManager::GetInstance();
@@ -82,9 +50,12 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest()
     fuzz_->CanAddOutput(photoOutput_);
     sptr<FluorescencePhotoSession> fluorescencePhotoSession =
         static_cast<FluorescencePhotoSession*>(captureSession.GetRefPtr());
-    sptr<CaptureOutput> output = nullptr;
+
+    sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
+    sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
+    sptr<CaptureOutput> output = new PhotoOutput(bufferProducer);
     fluorescencePhotoSession->CanAddOutput(output);
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::vector<PreconfigType> preconfigTypeVec = {
         PRECONFIG_720P,
         PRECONFIG_1080P,
@@ -101,51 +72,46 @@ void PhotoSessionFuzzer::PhotoSessionFuzzTest()
     };
     uint8_t underNumSec = randomNum % profileSizeRatioVec.size();
     ProfileSizeRatio profileSizeRatio = profileSizeRatioVec[underNumSec];
+    std::vector<CameraFormat> cameraFormat = {
+        CAMERA_FORMAT_INVALID,
+        CAMERA_FORMAT_YCBCR_420_888,
+        CAMERA_FORMAT_RGBA_8888,
+        CAMERA_FORMAT_DNG,
+        CAMERA_FORMAT_DNG_XDRAW,
+        CAMERA_FORMAT_YUV_420_SP,
+        CAMERA_FORMAT_NV12,
+        CAMERA_FORMAT_YUV_422_YUYV,
+        CAMERA_FORMAT_JPEG,
+        CAMERA_FORMAT_YCBCR_P010,
+        CAMERA_FORMAT_YCRCB_P010,
+        CAMERA_FORMAT_HEIC,
+        CAMERA_FORMAT_DEPTH_16,
+        CAMERA_FORMAT_DEPTH_32,
+    };
+    uint8_t underFormat = randomNum % cameraFormat.size();
+    CameraFormat format = cameraFormat[underFormat];
     fuzz_->GeneratePreconfigProfiles(preconfigType, profileSizeRatio);
-    auto configs = fuzz_->GeneratePreconfigProfiles(PRECONFIG_720P, RATIO_1_1);
+    auto configs = fuzz_->GeneratePreconfigProfiles(preconfigType, profileSizeRatio);
     fuzz_->IsPreconfigProfilesLegal(configs);
     fuzz_->CanPreconfig(preconfigType, profileSizeRatio);
     fuzz_->Preconfig(preconfigType, profileSizeRatio);
     auto cameras = cameraManager_->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "PhotoSessionFuzzer: GetSupportedCameras Error");
-    Profile photo(CameraFormat::CAMERA_FORMAT_JPEG, {640, 480});
+    Profile photo(format, {640, 480});
     fuzz_->IsPhotoProfileLegal(cameras[0], photo);
-    Profile preview(CameraFormat::CAMERA_FORMAT_YUV_420_SP, {640, 480});
+    Profile preview(format, {640, 480});
     fuzz_->IsPreviewProfileLegal(cameras[0], preview);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto photoSession = std::make_unique<PhotoSessionFuzzer>();
     if (photoSession == nullptr) {
         MEDIA_INFO_LOG("photoSession is null");
         return;
     }
-    photoSession->PhotoSessionFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    FuzzedDataProvider fdp(data, size);
+    photoSession->PhotoSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -157,6 +123,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

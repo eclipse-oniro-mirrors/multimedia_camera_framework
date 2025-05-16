@@ -18,6 +18,8 @@
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
+#include <fuzzer/FuzzedDataProvider.h>
+#include "v1_3/types.h"
 
 using namespace std;
 
@@ -26,57 +28,23 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static constexpr int NUM_1 = 1;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 60;
+constexpr int VIDEO_REQUEST_FD_ID = 1;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
+void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& fdp)
 {
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
     processor_->SetExecutionMode(selectedExecutionMode);
     processor_->SetDefaultExecutionMode();
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    auto srcFd = NUM_1;
-    auto dstFd = NUM_1;
+    auto srcFd = fdp.ConsumeIntegral<uint8_t>();
+    auto dstFd = fdp.ConsumeIntegral<uint8_t>();
     processor_->copyFileByFd(srcFd, dstFd);
-    auto isAutoSuspend = GetData<bool>();
+    auto isAutoSuspend = fdp.ConsumeBool();
     std::string videoId1(testStrings[randomNum % testStrings.size()]);
     sptr<IPCFileDescriptor> srcFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
     sptr<IPCFileDescriptor> dstFd1 = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
@@ -88,15 +56,15 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     processor_->ProcessRequest(work);
     processor_->RemoveRequest(videoId);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
-    ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % executionModeCount2);
+    ScheduleType selectedScheduleType = static_cast<ScheduleType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
-    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % executionModeCount3);
+    DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);
     constexpr int32_t executionModeCount4 = static_cast<int32_t>(MediaResult::PAUSE) + 2;
-    MediaResult selectedMediaResult = static_cast<MediaResult>(GetData<uint8_t>() % executionModeCount4);
+    MediaResult selectedMediaResult = static_cast<MediaResult>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount4);
     constexpr int32_t executionModeCount5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
-    HdiStatus selectedHdiStatus = static_cast<HdiStatus>(GetData<uint8_t>() % executionModeCount5);
+    HdiStatus selectedHdiStatus = static_cast<HdiStatus>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount5);
     processor_->PauseRequest(videoId, selectedScheduleType);
-    sptr<IPCFileDescriptor> inputFd = nullptr;
+    sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
     processor_->StartMpeg(videoId, inputFd);
     processor_->StopMpeg(selectedMediaResult, work);
     processor_->OnSessionDied();
@@ -106,62 +74,40 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     processor_->OnTimerOut(videoId);
 }
 
-void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2()
+void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2(FuzzedDataProvider& fdp)
 {
     std::vector<std::string> pendingVideos;
     processor_->GetPendingVideos(pendingVideos);
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    auto inputFd = GetData<int>();
+    auto inputFd = fdp.ConsumeIntegral<int>();
     processor_->PrepareStreams(videoId, inputFd);
     StreamDescription stream;
+    stream.type = HDI::Camera::V1_3::MEDIA_STREAM_TYPE_VIDEO;
     sptr<BufferProducerSequenceable> producer;
     processor_->SetStreamInfo(stream, producer);
     processor_->GetRunningWork(videoId);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto videoPostProcessor = std::make_unique<VideoPostProcessorFuzzer>();
     if (videoPostProcessor == nullptr) {
         MEDIA_INFO_LOG("videoPostProcessor is null");
         return;
     }
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+         return;
     }
-    int32_t userId = GetData<int32_t>();
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
     VideoPostProcessorFuzzer::processor_ = std::make_shared<VideoPostProcessor>(userId);
     if (VideoPostProcessorFuzzer::processor_ == nullptr) {
         return;
     }
-    videoPostProcessor->VideoPostProcessorFuzzTest1();
-    videoPostProcessor->VideoPostProcessorFuzzTest2();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    videoPostProcessor->VideoPostProcessorFuzzTest1(fdp);
+    videoPostProcessor->VideoPostProcessorFuzzTest2(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -173,6 +119,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

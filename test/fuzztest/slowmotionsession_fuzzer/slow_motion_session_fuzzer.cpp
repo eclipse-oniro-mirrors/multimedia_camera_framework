@@ -29,14 +29,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 50;
 const size_t THRESHOLD = 10;
 const int32_t DEFAULT_ITEMS = 10;
 const int32_t DEFAULT_DATA_LENGTH = 100;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 sptr<CameraManager> manager;
 std::vector<Profile> previewProfile_ = {};
 std::vector<VideoProfile> videoProfile_;
@@ -92,39 +88,9 @@ sptr<CaptureOutput> CreateVideoOutput()
     return manager->CreateVideoOutput(videoProfile_[0], surface);
 }
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     GetPermission();
@@ -152,56 +118,34 @@ void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest()
         return;
     }
     fuzz_->IsSlowMotionDetectionSupported();
-    Rect rect = {0, 0, 0, 0};
+    Rect rect = {fdp.ConsumeFloatingPointInRange<double>(0, 100), fdp.ConsumeFloatingPointInRange<double>(0, 100),
+        fdp.ConsumeFloatingPointInRange<double>(0, 100), fdp.ConsumeFloatingPointInRange<double>(0, 100)};
     fuzz_->NormalizeRect(rect);
     fuzz_->SetSlowMotionDetectionArea(rect);
     std::shared_ptr<OHOS::Camera::CameraMetadata> result =
         std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     SlowMotionSession::SlowMotionSessionMetadataResultProcessor processor(fuzz_);
-    uint64_t timestamp = 1;
+    uint64_t timestamp = fdp.ConsumeIntegralInRange<uint64_t>(0, 10);
     auto metadata = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     processor.ProcessCallbacks(timestamp, metadata);
     std::shared_ptr<SlowMotionStateCallback> callback = std::make_shared<TestSlowMotionStateCallback>();
     fuzz_->SetCallback(callback);
     fuzz_->OnSlowMotionStateChange(metadata);
     fuzz_->GetApplicationCallback();
-    bool isEnable = GetData<bool>();
+    bool isEnable = fdp.ConsumeBool();
     fuzz_->LockForControl();
     fuzz_->EnableMotionDetection(isEnable);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
     if (slowMotionSession == nullptr) {
         MEDIA_INFO_LOG("slowMotionSession is null");
         return;
     }
-    slowMotionSession->SlowMotionSessionFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    slowMotionSession->SlowMotionSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -213,6 +157,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

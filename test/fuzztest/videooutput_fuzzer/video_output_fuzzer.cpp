@@ -22,6 +22,7 @@
 #include "input/camera_manager.h"
 #include "message_parcel.h"
 #include <cstdint>
+#include <fuzzer/FuzzedDataProvider.h>
 #include <memory>
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
@@ -32,46 +33,12 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 50;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void VideoOutputFuzzer::VideoOutputFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void VideoOutputFuzzer::VideoOutputFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     auto manager = CameraManager::GetInstance();
@@ -93,65 +60,42 @@ void VideoOutputFuzzer::VideoOutputFuzzTest()
     output->Release();
     output->GetApplicationCallback();
     output->GetFrameRateRange();
-    int32_t minFrameRate = GetData<int32_t>();
-    int32_t maxFrameRate = GetData<int32_t>();
+    int32_t minFrameRate = fdp.ConsumeIntegral<int32_t>();
+    int32_t maxFrameRate = fdp.ConsumeIntegral<int32_t>();
     output->SetFrameRateRange(minFrameRate, maxFrameRate);
-    output->SetOutputFormat(GetData<int32_t>());
+    output->SetOutputFormat(fdp.ConsumeIntegral<int32_t>());
     output->SetFrameRate(minFrameRate, maxFrameRate);
     output->GetSupportedFrameRates();
-    bool enabled = GetData<bool>();
-    output->enableMirror(enabled);
+    output->enableMirror(fdp.ConsumeBool());
     output->IsMirrorSupported();
     output->GetSupportedVideoMetaTypes();
     output->AttachMetaSurface(surface, VIDEO_META_MAKER_INFO);
-    int pid = GetData<int>();
+    int pid = fdp.ConsumeIntegral<int>();
     output->CameraServerDied(pid);
     output->canSetFrameRateRange(minFrameRate, maxFrameRate);
-    output->GetVideoRotation(GetData<int32_t>());
+    output->GetVideoRotation(fdp.ConsumeIntegral<int32_t>());
     output->IsAutoDeferredVideoEnhancementSupported();
     output->IsAutoDeferredVideoEnhancementEnabled();
-    output->EnableAutoDeferredVideoEnhancement(enabled);
+    output->EnableAutoDeferredVideoEnhancement(fdp.ConsumeBool());
     output->IsVideoStarted();
-    output->IsRotationSupported(enabled);
-    output->SetRotation(GetData<int32_t>());
+    bool boolean = fdp.ConsumeBool();
+    output->IsRotationSupported(boolean);
+    output->SetRotation(fdp.ConsumeIntegral<int32_t>());
     output->IsAutoVideoFrameRateSupported();
-    output->EnableAutoVideoFrameRate(enabled);
+    output->EnableAutoVideoFrameRate(fdp.ConsumeBool());
     std::vector<int32_t> supportedRotations;
     output->GetSupportedRotations(supportedRotations);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto videoOutput = std::make_unique<VideoOutputFuzzer>();
     if (videoOutput == nullptr) {
         MEDIA_INFO_LOG("videoPostProcessor is null");
         return;
     }
-    videoOutput->VideoOutputFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    videoOutput->VideoOutputFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -163,6 +107,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

@@ -17,13 +17,14 @@
 #define PREVIEW_OUTPUT_FUZZER_H
 
 #include "output/preview_output.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace PreviewOutputFuzzer {
 
-void Test(uint8_t *rawData, size_t size);
-void TestOutput(sptr<PreviewOutput> output, uint8_t *rawData, size_t size);
+void Test(uint8_t *data, size_t size);
+void TestOutput(sptr<PreviewOutput> output, FuzzedDataProvider& fdp);
 
 }
 } //CameraStandard

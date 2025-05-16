@@ -22,6 +22,7 @@
 #include "accesstoken_kit.h"
 #include "camera_metadata_info.h"
 #include "metadata_utils.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace {
 
@@ -34,6 +35,7 @@ namespace CameraStandard {
 
 bool SmoothZoomFuzzer::hasPermission = false;
 std::shared_ptr<SmoothZoom> SmoothZoomFuzzer::fuzz_{nullptr};
+static constexpr int32_t MIN_SIZE_NUM = 4;
 
 void SmoothZoomFuzzer::CheckPermission()
 {
@@ -53,7 +55,8 @@ void SmoothZoomFuzzer::CheckPermission()
 
 void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    FuzzedDataProvider fdp(rawData, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     CheckPermission();
@@ -63,7 +66,7 @@ void SmoothZoomFuzzer::Test(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
 
-    SmoothZoomType mode = SmoothZoomType::NORMAL;
+    SmoothZoomType mode = static_cast<SmoothZoomType>(fdp.ConsumeBool());
     auto alg = fuzz_->GetZoomAlgorithm(mode);
 
     data.RewindRead(0);

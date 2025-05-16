@@ -20,60 +20,43 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 10;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+
 std::shared_ptr<VideoEncoder> VideoEncoderFuzzer::fuzz_{nullptr};
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void VideoEncoderFuzzer::VideoEncoderFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void VideoEncoderFuzzer::VideoEncoderFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     fuzz_ = std::make_shared<VideoEncoder>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
-    uint8_t randomNum = GetData<uint8_t>();
+    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string codecMime(testStrings[randomNum % testStrings.size()]);
     fuzz_->Create(codecMime);
     fuzz_->Config();
     fuzz_->Start();
     fuzz_->GetSurface();
-    int64_t timestamp = GetData<int64_t>();
-    GraphicTransformType type_ = GRAPHIC_ROTATE_90;
+    int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+    std::vector<GraphicTransformType> graphicType = {
+        GRAPHIC_ROTATE_NONE,
+        GRAPHIC_ROTATE_90,
+        GRAPHIC_ROTATE_180,
+        GRAPHIC_ROTATE_270,
+        GRAPHIC_FLIP_H,
+        GRAPHIC_FLIP_V,
+        GRAPHIC_FLIP_H_ROT90,
+        GRAPHIC_FLIP_V_ROT90,
+        GRAPHIC_FLIP_H_ROT180,
+        GRAPHIC_FLIP_V_ROT180,
+        GRAPHIC_FLIP_H_ROT270,
+        GRAPHIC_FLIP_V_ROT270,
+        GRAPHIC_ROTATE_BUTT,
+    };
+
+    GraphicTransformType type_ = graphicType[fdp.ConsumeIntegral<uint16_t>() % graphicType.size()];
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     sptr<FrameRecord> frameRecord =
         new(std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
@@ -84,38 +67,15 @@ void VideoEncoderFuzzer::VideoEncoderFuzzTest()
     fuzz_->Stop();
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto videoEncoder = std::make_unique<VideoEncoderFuzzer>();
     if (videoEncoder == nullptr) {
         MEDIA_INFO_LOG("videoEncoder is null");
         return;
     }
-    videoEncoder->VideoEncoderFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    FuzzedDataProvider fdp(data, size);
+    videoEncoder->VideoEncoderFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -127,6 +87,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

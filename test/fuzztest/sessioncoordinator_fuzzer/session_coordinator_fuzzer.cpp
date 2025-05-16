@@ -23,68 +23,39 @@
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "securec.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t NUM_TRI = 13;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 20;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+constexpr int VIDEO_REQUEST_FD_ID = 1;
 
 std::shared_ptr<DeferredProcessing::SessionCoordinator> SessionCoordinatorFuzzer::fuzz_{nullptr};
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     fuzz_ = std::make_shared<DeferredProcessing::SessionCoordinator>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
-    int32_t userId = GetData<int32_t>();
-    uint8_t randomNum = GetData<uint8_t>();
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    uint8_t randomNum = fdp.ConsumeIntegral<int32_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string imageId(testStrings[randomNum % testStrings.size()]);
-    std::shared_ptr<DeferredProcessing::BufferInfo> bufferInfo;
+    std::shared_ptr<DeferredProcessing::BufferInfo> bufferInfo =
+        std::make_shared<DeferredProcessing::BufferInfo>(nullptr, 0, true, true);
     fuzz_->imageProcCallbacks_->OnProcessDone(userId, imageId, bufferInfo);
-    std::shared_ptr<DeferredProcessing::BufferInfoExt> bufferInfoExt;
+    std::shared_ptr<DeferredProcessing::BufferInfoExt> bufferInfoExt =
+        std::make_shared<DeferredProcessing::BufferInfoExt>(nullptr, 0, true, true);
     fuzz_->imageProcCallbacks_->OnProcessDoneExt(userId, imageId, bufferInfoExt);
-    DeferredProcessing::DpsError dpsError = static_cast<DeferredProcessing::DpsError>(GetData<int32_t>() % NUM_TRI);
+    DeferredProcessing::DpsError dpsError =
+        static_cast<DeferredProcessing::DpsError>(fdp.ConsumeIntegral<int32_t>() % NUM_TRI);
     fuzz_->imageProcCallbacks_->OnError(userId, imageId, dpsError);
-    sptr<IPCFileDescriptor> ipcFd;
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
     fuzz_->videoProcCallbacks_->OnProcessDone(userId, imageId, ipcFd);
     fuzz_->videoProcCallbacks_->OnError(userId, imageId, dpsError);
     std::vector<DeferredProcessing::DpsStatus> dpsStatusVec = {
@@ -102,8 +73,8 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest()
     fuzz_->OnVideoStateChanged(userId, dpsStatus);
     fuzz_->GetImageProcCallbacks();
     fuzz_->GetVideoProcCallbacks();
-    fuzz_->OnProcessDone(userId, imageId, ipcFd, userId, GetData<bool>());
-    fuzz_->OnProcessDoneExt(userId, imageId, nullptr, GetData<bool>());
+    fuzz_->OnProcessDone(userId, imageId, ipcFd, userId, fdp.ConsumeBool());
+    fuzz_->OnProcessDoneExt(userId, imageId, nullptr, fdp.ConsumeBool());
     fuzz_->OnError(userId, imageId, dpsError);
     fuzz_->OnVideoProcessDone(userId, imageId, ipcFd);
     fuzz_->OnVideoError(userId, imageId, dpsError);
@@ -114,38 +85,15 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest()
     fuzz_->Stop();
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto sessionCoordinatorFuzz = std::make_unique<SessionCoordinatorFuzzer>();
     if (sessionCoordinatorFuzz == nullptr) {
         MEDIA_INFO_LOG("sessionCoordinatorFuzz is null");
         return;
     }
-    sessionCoordinatorFuzz->SessionCoordinatorFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    sessionCoordinatorFuzz->SessionCoordinatorFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -157,6 +105,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

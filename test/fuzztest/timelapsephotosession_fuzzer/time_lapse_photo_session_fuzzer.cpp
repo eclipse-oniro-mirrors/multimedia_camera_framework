@@ -22,12 +22,13 @@
 #include "token_setproc.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace TimeLapsePhotoSessionFuzzer {
-const int32_t LIMITSIZE = 4;
 const int32_t NUM_TWO = 2;
+static constexpr int32_t MIN_SIZE_NUM = 320;
 void GetPermission()
 {
     uint64_t tokenId;
@@ -72,14 +73,14 @@ auto AddOutput()
     session->AddOutput(photoOutput);
 }
 
-auto TestProcessor(uint8_t *rawData, size_t size)
+auto TestProcessor(FuzzedDataProvider& fdp)
 {
     class ExposureInfoCallbackMock : public ExposureInfoCallback {
     public:
         void OnExposureInfoChanged(ExposureInfo info) override {}
     };
     session->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
-    camera_rational_t r = {1, 1000000};
+    camera_rational_t r = {fdp.ConsumeIntegral<uint32_t>(), fdp.ConsumeIntegral<uint32_t>()};
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
     meta->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &r, 1);
     session->ProcessExposureChange(meta);
@@ -90,12 +91,12 @@ auto TestProcessor(uint8_t *rawData, size_t size)
         void OnIsoInfoChanged(IsoInfo info) override {}
     };
     session->SetIsoInfoCallback(make_shared<IsoInfoCallbackMock>());
-    uint32_t iso = 1;
+    uint32_t iso = fdp.ConsumeIntegralInRange(0, 10000);
     meta->addEntry(OHOS_STATUS_ISO_VALUE, &iso, 1);
     session->ProcessIsoInfoChange(meta);
     iso++;
     meta->updateEntry(OHOS_STATUS_ISO_VALUE, &iso, 1);
-    static const uint32_t lumination = 256;
+    static const uint32_t lumination = fdp.ConsumeIntegralInRange(0, 300);
     class LuminationInfoCallbackMock : public LuminationInfoCallback {
     public:
         void OnLuminationInfoChanged(LuminationInfo info) override {}
@@ -103,7 +104,7 @@ auto TestProcessor(uint8_t *rawData, size_t size)
     session->SetLuminationInfoCallback(make_shared<LuminationInfoCallbackMock>());
     meta->addEntry(OHOS_STATUS_ALGO_MEAN_Y, &lumination, 1);
  
-    static const int32_t value = 1;
+    static const int32_t value = fdp.ConsumeIntegral<int32_t>();
     class TryAEInfoCallbackMock : public TryAEInfoCallback {
     public:
         void OnTryAEInfoChanged(TryAEInfo info) override {}
@@ -117,12 +118,14 @@ auto TestProcessor(uint8_t *rawData, size_t size)
     meta->addEntry(OHOS_STATUS_PREVIEW_PHYSICAL_CAMERA_ID, &value, 1);
 
     MessageParcel data;
-    data.WriteRawData(rawData, size);
+    int32_t dataSize = fdp.ConsumeIntegralInRange(0, 100);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     TimeLapsePhotoSessionMetadataResultProcessor processor(session);
     processor.ProcessCallbacks(data.ReadUint64(), meta);
 }
 
-auto TestTimeLapsePhoto()
+auto TestTimeLapsePhoto(FuzzedDataProvider& fdp)
 {
     bool isTryAENeeded;
     session->IsTryAENeeded(isTryAENeeded);
@@ -136,7 +139,8 @@ auto TestTimeLapsePhoto()
     vector<int32_t> intervalRange;
     session->GetSupportedTimeLapseIntervalRange(intervalRange);
     if (!intervalRange.empty()) {
-        int32_t interval = intervalRange[intervalRange.size() - 1];
+        int32_t interval = intervalRange[intervalRange.size() -
+            fdp.ConsumeIntegralInRange<int32_t>(1, intervalRange.size())];
         session->LockForControl();
         session->SetTimeLapseInterval(interval);
         session->UnlockForControl();
@@ -145,25 +149,30 @@ auto TestTimeLapsePhoto()
         session->GetTimeLapseInterval(interval);
     }
     session->LockForControl();
-    session->SetTimeLapseRecordState(TimeLapseRecordState::RECORDING);
+
+    session->SetTimeLapseRecordState(static_cast<TimeLapseRecordState>(fdp.ConsumeIntegral<uint8_t>() %
+        (static_cast<int32_t>(TimeLapseRecordState::RECORDING) + NUM_TWO)));
     session->UnlockForControl();
     session->LockForControl();
-    session->SetTimeLapsePreviewType(TimeLapsePreviewType::DARK);
+    session->SetTimeLapsePreviewType(static_cast<TimeLapsePreviewType>(fdp.ConsumeIntegral<uint8_t>() %
+        (static_cast<int32_t>(TimeLapsePreviewType::LIGHT) + NUM_TWO)));
     session->UnlockForControl();
     session->LockForControl();
-    session->SetExposureHintMode(ExposureHintMode::EXPOSURE_HINT_MODE_OFF);
-    session->SetExposureHintMode(static_cast<ExposureHintMode>(ExposureHintMode::EXPOSURE_HINT_UNSUPPORTED + 1));
+    session->SetExposureHintMode(static_cast<ExposureHintMode>(fdp.ConsumeIntegral<uint8_t>() %
+        (static_cast<int32_t>(ExposureHintMode::EXPOSURE_HINT_UNSUPPORTED) + NUM_TWO)));
     session->UnlockForControl();
 }
 
-auto TestManualExposure(uint8_t *rawData, size_t size)
+auto TestManualExposure(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
-    data.WriteRawData(rawData, size);
+    int32_t dataSize = fdp.ConsumeIntegralInRange(1, 100);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     auto meta = session->GetMetadata();
     const camera_rational_t rs[] = {
-        {3, 1000000},
-        {9, 1000000},
+        {fdp.ConsumeIntegralInRange(0, 10), fdp.ConsumeIntegralInRange(900000, 1000000)},
+        {fdp.ConsumeIntegralInRange(0, 30), fdp.ConsumeIntegralInRange(900000, 1000000)},
     };
     uint32_t dataCount = sizeof(rs) / sizeof(rs[0]);
     AddOrUpdateMetadata(meta, OHOS_ABILITY_SENSOR_EXPOSURE_TIME_RANGE, rs, dataCount);
@@ -173,12 +182,13 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
     session->LockForControl();
     session->SetExposure(0);
     session->SetExposure(1);
-    const uint32_t MAX_UINT = 0xFFFFFFFF;
+    const uint32_t MAX_UINT = fdp.ConsumeIntegral<uint32_t>();
     session->SetExposure(MAX_UINT);
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
     uint32_t exposure = data.ReadUint32();
-    camera_rational_t expT = {.numerator = 1, .denominator = 1000000};
+    camera_rational_t expT = {.numerator = fdp.ConsumeIntegralInRange(0, 10),
+        .denominator = fdp.ConsumeIntegralInRange(900000, 1000000)};
     AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &expT, 1);
     session->GetExposure(exposure);
     vector<MeteringMode> modes;
@@ -188,14 +198,14 @@ auto TestManualExposure(uint8_t *rawData, size_t size)
     session->IsExposureMeteringModeSupported(
         static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1), supported);
     session->LockForControl();
-    session->SetExposureMeteringMode(MeteringMode::METERING_MODE_CENTER_WEIGHTED);
-    session->SetExposureMeteringMode(static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1));
+    session->SetExposureMeteringMode(static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % 5));
+    session->SetExposureMeteringMode(static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % 5));
     session->UnlockForControl();
     MeteringMode mode = MeteringMode::METERING_MODE_OVERALL;
-    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, fdp.ConsumeIntegralInRange(0, 3));
     session->GetExposureMeteringMode(mode);
     mode = static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1);
-    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, fdp.ConsumeIntegralInRange(0, 3));
     session->GetExposureMeteringMode(mode);
 }
 
@@ -472,7 +482,10 @@ void TestMetadataResultProcessor()
 
 void Test(uint8_t *rawData, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    FuzzedDataProvider fdp(rawData, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+         return;
+    }
     GetPermission();
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(sceneMode);
@@ -488,9 +501,9 @@ void Test(uint8_t *rawData, size_t size)
     session->AddInput(input);
     AddOutput();
     session->CommitConfig();
-    TestProcessor(rawData, size);
-    TestTimeLapsePhoto();
-    TestManualExposure(rawData, size);
+    TestProcessor(fdp);
+    TestTimeLapsePhoto(fdp);
+    TestManualExposure(fdp);
     TestManualIso();
     TestWhiteBalance();
     TestGetMetadata();

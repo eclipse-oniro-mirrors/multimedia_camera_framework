@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "time_broker.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ using namespace DeferredProcessing;
 class TimeBrokerFuzzer {
 public:
 static std::shared_ptr<TimeBroker> fuzz_;
-static void TimeBrokerFuzzTest();
+static void TimeBrokerFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

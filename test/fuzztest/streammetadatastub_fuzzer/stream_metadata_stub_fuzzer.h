@@ -17,13 +17,14 @@
 #define STREAM_METADATA_STUB_FUZZER_H
 
 #include "hstream_metadata_stub.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace StreamMetadataStubFuzzer {
 
-void Test(uint8_t *rawData, size_t size);
-void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
+void Test(uint8_t *data, size_t size);
+void Test_OnRemoteRequest(FuzzedDataProvider& fdp);
 
 void CheckPermission();
 
