@@ -24,6 +24,7 @@
 #include "camera_util.h"
 #include "surface.h"
 #include "hcapture_session.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -256,7 +257,8 @@ bool CameraRotatePlugin::Init()
         ParameterMap updateParameter;
         return GetParameterResult(updateParameter, "Init", updateParameter);
     }
-    if (access(CAMERA_PLUGIN_SO_PATH.c_str(), R_OK) != 0) {
+    if (system::GetParameter("const.camera.multicamera.enable", "false") != "true" || 
+        access(CAMERA_PLUGIN_SO_PATH.c_str(), R_OK) != 0) {
         MEDIA_ERR_LOG("so file not exist.");
         return false;
     }
