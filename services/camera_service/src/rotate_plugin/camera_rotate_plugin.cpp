@@ -58,9 +58,7 @@ CameraRotatePlugin::CameraRotatePlugin()
 CameraRotatePlugin::~CameraRotatePlugin()
 {
     if (handle_) {
-#ifndef TEST_COVERAGE
         dlclose(handle_);
-#endif
         handle_ = nullptr;
     }
 }
