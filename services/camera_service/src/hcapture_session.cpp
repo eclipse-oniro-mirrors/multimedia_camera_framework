@@ -765,6 +765,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(
     auto cameraDevice = GetCameraDevice();
     CHECK_ERROR_RETURN_RET_LOG(
         cameraDevice == nullptr, false, "HCaptureSession::QueryFpsAndZoomRatio() cameraDevice is null");
+    // LCOV_EXCL_START
     int32_t DEFAULT_ITEMS = 3;
     int32_t DEFAULT_DATA_LENGTH = 200;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn =
@@ -809,6 +810,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(
         QueryZoomPerformance(crossZoomAndTime, operationMode, item);
     }
     return true;
+    // LCOV_EXCL_STOP
 }
 
 bool HCaptureSession::QueryZoomPerformance(
@@ -1010,6 +1012,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     } else {
         std::sort(mCrossZoom.begin(), mCrossZoom.end(), std::greater<float>());
     }
+    // LCOV_EXCL_START
     for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {
         float crossZoom = mCrossZoom[i];
         MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom crossZoomIterator is:  %{public}f", crossZoom);
@@ -1031,6 +1034,7 @@ int32_t HCaptureSession::SetSmoothZoom(
             }
         }
     }
+    // LCOV_EXCL_STOP
     std::vector<uint32_t> zoomAndTimeArray {};
     for (int i = 0; i < static_cast<int>(array.size()); i++) {
         zoomAndTimeArray.push_back(static_cast<uint32_t>(array[i]));

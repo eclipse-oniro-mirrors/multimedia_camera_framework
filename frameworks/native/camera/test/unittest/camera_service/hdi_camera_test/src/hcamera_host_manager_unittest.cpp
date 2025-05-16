@@ -292,5 +292,50 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_006, TestSize.Lev
     cameraHostManager_->DeInit();
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRestoreParam.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateRestoreParam normal branches.
+ */
+HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_007, TestSize.Level1)
+{
+    const std::string clientName1 = "testClientName1";
+    const std::string clientName2 = "testClientName2";
+    const std::string clientName3 = "testClientName3";
+    const std::string cameraId1 = "123";
+    const std::string cameraId2 = "456";
+    const std::string cameraId3 = "789";
+    sptr<HCameraRestoreParam> cameraRestoreParam1 = cameraHostManager_->GetRestoreParam(clientName1, cameraId1);
+    cameraRestoreParam1->SetCloseCameraTime({0, 0});
+    sptr<HCameraRestoreParam> cameraRestoreParam2 = cameraHostManager_->GetRestoreParam(clientName2, cameraId2);
+    timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    cameraRestoreParam2->SetCloseCameraTime(closeTime);
+    
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam1);
+    cameraHostManager_->persistentParamMap_.emplace(clientName1,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId1, cameraRestoreParam1}});
+    cameraHostManager_->persistentParamMap_.emplace(clientName2,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId1, cameraRestoreParam2}});
+    EXPECT_EQ(cameraHostManager_->persistentParamMap_.size(), 2);
+
+    cameraHostManager_->DeleteRestoreParam(clientName3, cameraId3);
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam1);
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
+
+    cameraHostManager_->persistentParamMap_.erase(clientName2);
+    cameraHostManager_->persistentParamMap_.emplace(clientName2,
+        std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId2, cameraRestoreParam2}});
+    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
+
+    cameraRestoreParam1->mRestoreParamType = PERSISTENT_DEFAULT_PARAM_OHOS;
+    cameraHostManager_->SaveRestoreParam(cameraRestoreParam1);
+    EXPECT_EQ(cameraHostManager_->persistentParamMap_.size(), 2);
+}
+
 }
 }
