@@ -47,6 +47,10 @@ constexpr static int32_t INVALID_WIDTH = 0;
 constexpr static int32_t INVALID_HEIGHT = 0;
 constexpr static int32_t DEFAULT_FORMAT = 4;
 constexpr static uint32_t CAMERA_CAPTURE_SESSION_ON_DEFAULT = 1;
+constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
+constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
+constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
+constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
 
 void HCaptureSessionUnitTest::SetUpTestCase(void)
 {
@@ -2009,6 +2013,350 @@ HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_043, TestSize.Level
     uint32_t code = CAMERA_CAPTURE_SESSION_ON_DEFAULT;
     int errCode = stub.OnRemoteRequest(code, data, reply, option);
     EXPECT_EQ(errCode, IPC_STUB_UNKNOW_TRANS_ERR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test QueryZoomPerformance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test QueryZoomPerformance normal branch
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_044, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    EXPECT_EQ(camSession->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(camSession->AddInput(device), CAMERA_OK);
+
+    std::vector<float> crossZoomAndTime = {0, 0};
+    int32_t operationMode = 10;
+    camera_metadata_item_t zoomItem;
+    zoomItem.count = 1;
+    std::vector<uint32_t> elements = {10, 2, 3, 4, 5, 6, 7};
+    zoomItem.data.ui32 = new uint32_t[elements.size()];
+    for (size_t i = 0; i < elements.size(); ++i) {
+        zoomItem.data.ui32[i] = elements[i];
+    }
+    EXPECT_EQ(camSession->QueryZoomPerformance(crossZoomAndTime, operationMode, zoomItem), true);
+
+    operationMode = 1;
+    camera_metadata_item_t zoomItem1;
+    zoomItem1.count = 1;
+    std::vector<uint32_t> elements1 = {10, 2, 3, 4, 5, 6, 7};
+    zoomItem1.data.ui32 = new uint32_t[elements1.size()];
+    for (size_t i = 0; i < elements1.size(); ++i) {
+        zoomItem1.data.ui32[i] = elements1[i];
+    }
+    EXPECT_EQ(camSession->QueryZoomPerformance(crossZoomAndTime, operationMode, zoomItem1), true);
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(camSession->Release(), CAMERA_OK);
+    delete[] zoomItem.data.ui32;
+    delete[] zoomItem1.data.ui32;
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetRangeId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetRangeId normal branch
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_045, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    float zoomRatio = 0.5;
+    std::vector<float> crossZoom = {1.0, 2.0, 3.0};
+    int32_t actualId = camSession->GetRangeId(zoomRatio, crossZoom);
+    EXPECT_EQ(actualId, 0);
+
+    zoomRatio = 4.0;
+    actualId = camSession->GetRangeId(zoomRatio, crossZoom);
+    EXPECT_EQ(actualId, 3);
+
+    zoomRatio = 2.0;
+    actualId = camSession->GetRangeId(zoomRatio, crossZoom);
+    EXPECT_EQ(actualId, 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test isEqual
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test isEqual normal branch
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_046, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    float zoomPointA = 1.0f;
+    float zoomPointB = 1.0f;
+    bool result = camSession->isEqual(zoomPointA, zoomPointB);
+    EXPECT_TRUE(result);
+
+    zoomPointB = 1.1f;
+    result = camSession->isEqual(zoomPointA, zoomPointB);
+    EXPECT_FALSE(result);
+
+    zoomPointB = 1.000001f;
+    result = camSession->isEqual(zoomPointA, zoomPointB);
+    EXPECT_TRUE(result);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCrossZoomAndTime
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCrossZoomAndTime normal branch
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_047, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    std::vector<float> crossZoomAndTime = {1.0, 2.0, 3.0, 0.0, 5.0, 6.0};
+    std::vector<float> crossZoom;
+    std::vector<std::vector<float>> crossTime(2, std::vector<float>(2, 0.0));
+    camSession->GetCrossZoomAndTime(crossZoomAndTime, crossZoom, crossTime);
+
+    EXPECT_EQ(crossZoom.size(), 1);
+    EXPECT_EQ(crossZoom[0], 1.0);
+    EXPECT_EQ(crossTime[0][0], 2.0);
+    EXPECT_EQ(crossTime[0][1], 3.0);
+    EXPECT_EQ(crossTime[1][0], 5.0);
+    EXPECT_EQ(crossTime[1][1], 6.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCrossZoomAndTime
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is WIDE_CAMERA_ZOOM_RANGE
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_048, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    std::vector<std::vector<float>> crossTime = {
+        {100.0, 199.0, 370.0},
+        {200.0, 299.0, 470.0},
+        {300.0, 399.0, 570.0},
+        {400.0, 499.0, 670.0}
+    };
+
+    int32_t currentRangeId = WIDE_CAMERA_ZOOM_RANGE;
+    int32_t targetRangeId = TELE_CAMERA_ZOOM_RANGE;
+    float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 400.0);
+
+    targetRangeId = WIDE_CAMERA_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 100.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCrossZoomAndTime
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is MAIN_CAMERA_ZOOM_RANGE
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_049, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    std::vector<std::vector<float>> crossTime = {
+        {100.0, 199.0, 370.0},
+        {200.0, 299.0, 470.0},
+        {300.0, 399.0, 570.0},
+        {400.0, 499.0, 670.0}
+    };
+
+    int32_t currentRangeId = MAIN_CAMERA_ZOOM_RANGE;
+    int32_t targetRangeId = TELE_CAMERA_ZOOM_RANGE;
+    float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 200.0);
+
+    targetRangeId = WIDE_CAMERA_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 199.0);
+
+    targetRangeId = MAIN_CAMERA_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 0.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCrossZoomAndTime
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is TWO_X_EXIT_TELE_ZOOM_RANGE
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_050, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    std::vector<std::vector<float>> crossTime = {
+        {100.0, 199.0, 370.0},
+        {200.0, 299.0, 470.0},
+        {300.0, 399.0, 570.0},
+        {400.0, 499.0, 670.0}
+    };
+
+    int32_t currentRangeId = TWO_X_EXIT_TELE_ZOOM_RANGE;
+    int32_t targetRangeId = TELE_CAMERA_ZOOM_RANGE;
+    float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 300.0);
+
+    targetRangeId = WIDE_CAMERA_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 199.0);
+
+    targetRangeId = TWO_X_EXIT_TELE_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 0.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCrossZoomAndTime
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCrossZoomAndTime when currentRangeId is TELE_CAMERA_ZOOM_RANGE
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_051, TestSize.Level1)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    SceneMode mode = PORTRAIT;
+    InitSessionAndOperator(callerToken, mode, camSession, hStreamOperator);
+    ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    std::vector<std::vector<float>> crossTime = {
+        {100.0, 199.0, 370.0},
+        {200.0, 299.0, 470.0},
+        {300.0, 399.0, 570.0},
+        {400.0, 499.0, 670.0}
+    };
+
+    int32_t currentRangeId = TELE_CAMERA_ZOOM_RANGE;
+    int32_t targetRangeId = WIDE_CAMERA_ZOOM_RANGE;
+    float actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 499.0);
+
+    targetRangeId = TWO_X_EXIT_TELE_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 399.0);
+
+    targetRangeId = TELE_CAMERA_ZOOM_RANGE;
+    actualWaitTime = camSession->GetCrossWaitTime(crossTime, targetRangeId, currentRangeId);
+    EXPECT_EQ(actualWaitTime, 299.0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSmoothZoom
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetSmoothZoom when cameraDevice is not nullptr
+ */
+HWTEST_F(HCaptureSessionUnitTest, hcapture_session_unit_test_052, TestSize.Level1)
+{
+    std::vector<string> cameraIds;
+    cameraService_->GetCameraIds(cameraIds);
+    ASSERT_NE(cameraIds.size(), 0);
+    cameraService_->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    sptr<ICameraDeviceService> device = nullptr;
+    cameraService_->CreateCameraDevice(cameraIds[0], device);
+    ASSERT_NE(device, nullptr);
+    device->Open();
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> session = nullptr;
+    sptr<HStreamOperator> hStreamOperator = nullptr;
+    int32_t opMode = SceneMode::NORMAL;
+    InitSessionAndOperator(callerToken, opMode, session, hStreamOperator);
+    ASSERT_NE(session, nullptr);
+    ASSERT_NE(hStreamOperator, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(device), CAMERA_OK);
+
+    int32_t operationMode = 1;
+    int32_t smoothZoomType = 0;
+    float targetZoomRatio = 30.0f;
+    float duration = 0;
+    EXPECT_EQ(session->SetSmoothZoom(smoothZoomType, operationMode,
+        targetZoomRatio, duration), CAMERA_OK);
+
+    EXPECT_EQ(device->Close(), CAMERA_OK);
+    EXPECT_EQ(session->Release(), CAMERA_OK);
 }
 
 } // namespace CameraStandard
