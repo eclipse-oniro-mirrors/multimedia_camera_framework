@@ -17,6 +17,7 @@
 #define MEDIA_MANAGER_FUZZER_H
 
 #include "media_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -41,11 +42,11 @@ public:
     }
 };
 
-static void MediaManagerFuzzTest();
-static void WriterFuzzTest();
-static void TrackFuzzTest();
-static void ReaderFuzzTest();
-static void MuxerFuzzTest();
+static void MediaManagerFuzzTest(FuzzedDataProvider& fdp);
+static void WriterFuzzTest(FuzzedDataProvider& fdp);
+static void TrackFuzzTest(FuzzedDataProvider& fdp);
+static void ReaderFuzzTest(FuzzedDataProvider& fdp);
+static void MuxerFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

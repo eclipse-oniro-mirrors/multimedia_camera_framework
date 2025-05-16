@@ -17,6 +17,7 @@
 #define MPEG_MANAGER_FUZZER_H
 
 #include "mpeg_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,7 +25,7 @@ using namespace DeferredProcessing;
 class MpegManagerFuzzer {
 public:
 static std::shared_ptr<MpegManager> fuzz_;
-static void MpegManagerFuzzTest();
+static void MpegManagerFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

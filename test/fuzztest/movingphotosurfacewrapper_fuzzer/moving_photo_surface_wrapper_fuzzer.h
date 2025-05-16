@@ -17,6 +17,7 @@
 #define MOVING_PHOTO_SURFACE_WRAPPER_FUZZER_H
 
 #include "moving_photo_surface_wrapper.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ class MovingPhotoSurfaceWrapperFuzzer {
 public:
 static std::shared_ptr<MovingPhotoSurfaceWrapper> fuzz_;
 static std::shared_ptr<MovingPhotoSurfaceWrapper::BufferConsumerListener> listener_;
-static void MovingPhotoSurfaceWrapperFuzzTest();
+static void MovingPhotoSurfaceWrapperFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

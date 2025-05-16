@@ -17,13 +17,14 @@
 #define CAMERA_DEVICE_MANAGER_FUZZER_H
 
 #include "hcamera_device_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 
 class HCameraDeviceManagerFuzzer {
 public:
-    static void HCameraDeviceManagerFuzzTest1();
+    static void HCameraDeviceManagerFuzzTest1(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

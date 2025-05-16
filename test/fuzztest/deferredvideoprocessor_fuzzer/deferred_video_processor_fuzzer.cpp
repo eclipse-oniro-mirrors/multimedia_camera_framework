@@ -14,7 +14,10 @@
  */
 
 #include "deferred_video_processor_fuzzer.h"
-#include "camera_log.h"
+
+#include <fcntl.h>
+
+#include "dp_log.h"
 #include "message_parcel.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
@@ -22,58 +25,24 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MAX_CODE_LEN = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static constexpr int NUM_TWO = 2;
-static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
-
+const size_t MAX_LENGTH_STRING = 64;
+const char* TEST_FILE_PATH_1 = "/data/test/DeferredVideoProcessorFuzzTest_test_file1.mp4";
+const char* TEST_FILE_PATH_2 = "/data/test/DeferredVideoProcessorFuzzTest_test_file2.mp4";
 std::shared_ptr<DeferredVideoProcessor> DeferredVideoProcessorFuzzer::fuzz_{nullptr};
 std::shared_ptr<VideoStrategyCenter> DeferredVideoProcessorFuzzer::center_{nullptr};
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
-    int32_t userId = GetData<int32_t>();
-    uint8_t randomNum = GetData<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string videoId(testStrings[randomNum % testStrings.size()]);
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     std::shared_ptr<VideoJobRepository> repository = std::make_shared<VideoJobRepository>(userId);
-    CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
+    DP_CHECK_ERROR_RETURN_LOG(!repository, "Create repository Error");
     repository->SetJobPending(videoId);
     repository->SetJobRunning(videoId);
     repository->SetJobCompleted(videoId);
@@ -81,70 +50,55 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest()
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
     center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
-    CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
+    DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
     fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>());
+    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    fdsan_exchange_owner_tag(sfd, 0, LOG_DOMAIN);
+    fdsan_exchange_owner_tag(dfd, 0, LOG_DOMAIN);
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(sfd);
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dfd);
     std::shared_ptr<DeferredVideoJob> jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
-    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(GetData<uint8_t>() % executionModeCount1);
+    ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
     std::shared_ptr<DeferredVideoWork> work =
-        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, dstFd);
+        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, fdp.ConsumeIntegral<bool>());
     fuzz_->Initialize();
     fuzz_->PostProcess(work);
     constexpr int32_t executionModeCount2 =
         static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + NUM_TWO;
-    ScheduleType selectedScheduleType = static_cast<ScheduleType>(GetData<uint8_t>() % executionModeCount2);
+    ScheduleType selectedScheduleType = static_cast<ScheduleType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 =
         static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + NUM_TWO;
-    DpsError selectedDpsError = static_cast<DpsError>(GetData<uint8_t>() % executionModeCount3);
+    DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);
     constexpr int32_t executionModeCount4 =
         static_cast<int32_t>(DpsStatus::DPS_SESSION_STATE_SUSPENDED) + NUM_TWO;
-    DpsStatus selectedDpsStatus = static_cast<DpsStatus>(GetData<uint8_t>() % executionModeCount4);
+    DpsStatus selectedDpsStatus = static_cast<DpsStatus>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount4);
     fuzz_->PauseRequest(selectedScheduleType);
     fuzz_->SetDefaultExecutionMode();
     fuzz_->IsFatalError(selectedDpsError);
     fuzz_->OnStateChanged(userId, selectedDpsStatus);
     fuzz_->OnError(userId, videoId, selectedDpsError);
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(GetData<int>()*NUM_TWO);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>()*NUM_TWO);
     fuzz_->OnProcessDone(userId, videoId, ipcFd);
+
+    remove(TEST_FILE_PATH_1);
+    remove(TEST_FILE_PATH_2);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto deferredVideoProcessor = std::make_unique<DeferredVideoProcessorFuzzer>();
     if (deferredVideoProcessor == nullptr) {
-        MEDIA_INFO_LOG("deferredVideoProcessor is null");
+        DP_INFO_LOG("deferredVideoProcessor is null");
         return;
     }
-    deferredVideoProcessor->DeferredVideoProcessorFuzzTest();
+    deferredVideoProcessor->DeferredVideoProcessorFuzzTest(fdp);
 }
 
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
-}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -155,6 +109,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

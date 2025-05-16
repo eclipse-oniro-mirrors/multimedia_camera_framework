@@ -17,6 +17,7 @@
 #define HCAPTURE_SEESION_FUZZER_H
 
 #include "hcapture_session.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,10 +25,10 @@ namespace CameraStandard {
 class HCaptureSessionFuzzer {
 public:
 static std::shared_ptr<HCaptureSession> fuzz_;
-static void HCaptureSessionFuzzTest1();
-static void HCaptureSessionFuzzTest2();
-static void HCaptureSessionFuzzTest3();
-static void HCaptureSessionFuzzTest4();
+static void HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp);
+static void HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp);
+static void HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp);
+static void HCaptureSessionFuzzTest4(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

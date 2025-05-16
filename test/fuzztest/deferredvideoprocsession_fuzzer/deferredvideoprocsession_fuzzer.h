@@ -21,6 +21,7 @@
 #include "token_setproc.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -70,7 +71,7 @@ public:
 
 class DeferredVideoProcSessionFuzzer {
 public:
-static void DeferredVideoProcSessionFuzzTest();
+static void DeferredVideoProcSessionFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS
