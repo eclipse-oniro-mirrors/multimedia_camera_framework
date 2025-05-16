@@ -1,0 +1,98 @@
+/*
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PREVIEW_OUTPUT_TAIHE_H
+#define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PREVIEW_OUTPUT_TAIHE_H
+
+
+#include "ohos.multimedia.camera.proj.hpp"
+#include "ohos.multimedia.camera.impl.hpp"
+#include "taihe/runtime.hpp"
+#include "camera_output_taihe.h"
+#include "camera_worker_queue_keeper_taihe.h"
+#include "camera_event_emitter_taihe.h"
+#include "camera_event_listener_taihe.h"
+
+#include "camera_output_capability.h"
+#include "capture_output.h"
+#include "preview_output.h"
+
+namespace Ani {
+namespace Camera {
+using namespace taihe;
+using namespace ohos::multimedia::camera;
+
+class PreviewOutputCallbackAni : public OHOS::CameraStandard::PreviewStateCallback,
+                                 public ListenerBase,
+                                 public std::enable_shared_from_this<PreviewOutputCallbackAni> {
+public:
+    explicit PreviewOutputCallbackAni(ani_env* env);
+    ~PreviewOutputCallbackAni() = default;
+
+    void OnFrameStarted() const override;
+    void OnFrameEnded(const int32_t frameCount) const override;
+    void OnError(const int32_t errorCode) const override;
+    void OnSketchStatusDataChanged(const OHOS::CameraStandard::SketchStatusData& sketchStatusData) const override;
+private:
+    void OnFrameStartedCallback() const;
+    void OnFrameEndedCallback(const int32_t frameCount) const;
+    void OnErrorCallback(const int32_t errorCode) const;
+    void OnSketchStatusDataChangedCallback(const OHOS::CameraStandard::SketchStatusData& sketchStatusData) const;
+};
+
+class PreviewOutputImpl : public CameraOutputImpl,
+                          public CameraAniEventEmitter<PreviewOutputImpl>,
+                          public CameraAniEventListener<PreviewOutputCallbackAni> {
+public:
+    PreviewOutputImpl(OHOS::sptr<OHOS::CameraStandard::CaptureOutput> output);
+    ~PreviewOutputImpl() = default;
+
+    void ReleaseSync() override;
+    void OnError(callback_view<void(uintptr_t)> callback);
+    void OffError(optional_view<callback<void(uintptr_t)>> callback);
+    void OnFrameStart(callback_view<void(uintptr_t, uintptr_t)> callback);
+    void OffFrameStart(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
+    void OnFrameEnd(callback_view<void(uintptr_t, uintptr_t)> callback);
+    void OffFrameEnd(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
+    void OnSketchStatusChanged(callback_view<void(uintptr_t, SketchStatusData const&)> callback);
+    void OffSketchStatusChanged(optional_view<callback<void(uintptr_t, SketchStatusData const&)>> callback);
+
+    static uint32_t previewOutputTaskId_;
+private:
+    void RegisterErrorCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void RegisterFrameStartCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void RegisterFrameEndCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void UnregisterCommonCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    void RegisterSketchStatusChangedCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce);
+    void UnregisterSketchStatusChangedCallbackListener(
+        const std::string& eventName, std::shared_ptr<uintptr_t> callback);
+    virtual const EmitterFunctions& GetEmitterFunctions() override;
+    OHOS::sptr<OHOS::CameraStandard::PreviewOutput> previewOutput_ = nullptr;
+};
+
+struct PreviewOutputTaiheAsyncContext : public TaiheAsyncContext {
+    PreviewOutputTaiheAsyncContext(std::string funcName, int32_t taskId) : TaiheAsyncContext(funcName, taskId) {};
+    ~PreviewOutputTaiheAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
+    std::shared_ptr<PreviewOutputImpl> objectInfo = nullptr;
+};
+} // namespace Camera
+} // namespace Ani
+#endif // FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PREVIEW_OUTPUT_TAIHE_H
