@@ -29,7 +29,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 64;
 const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 
@@ -51,7 +51,7 @@ void DeferredVideoProcessingSessionProxyFuzzer::DeferredVideoProcessingSessionPr
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     fuzz_->AddVideo(videoId, srcFd, dstFd);
-    fuzz_->RemoveVideo(videoId, fdp.ConsumeIntegral<bool>());
+    fuzz_->RemoveVideo(videoId, fdp.ConsumeBool());
     fuzz_->RestoreVideo(videoId);
 }
 

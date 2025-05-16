@@ -102,7 +102,7 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
     sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     deferredVideoProcSession_->AddVideo(videoId, srcFd, dstFd);
-    bool restorable = fdp.ConsumeIntegral<bool>();
+    bool restorable = fdp.ConsumeBool();
     deferredVideoProcSession_->RemoveVideo(videoId, restorable);
     deferredVideoProcSession_->RestoreVideo(videoId);
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;

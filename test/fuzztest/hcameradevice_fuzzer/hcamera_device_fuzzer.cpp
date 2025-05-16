@@ -156,7 +156,7 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
     fuzz_->SetMovingPhotoEndTimeCallback(callback);
     fuzz_->GetMovingPhotoStartAndEndTime(cameraResult);
     fuzz_->GetCallerToken();
-    bool running = fdp.ConsumeIntegral<bool>();
+    bool running = fdp.ConsumeBool();
     fuzz_->NotifyCameraSessionStatus(running);
     fuzz_->RemoveResourceWhenHostDied();
     int32_t state = fdp.ConsumeIntegral<int32_t>();

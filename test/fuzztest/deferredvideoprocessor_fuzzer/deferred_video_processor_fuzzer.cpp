@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int NUM_TWO = 2;
 const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
@@ -64,7 +64,7 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode = static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
     std::shared_ptr<DeferredVideoWork> work =
-        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, fdp.ConsumeIntegral<bool>());
+        std::make_shared<DeferredVideoWork>(jobPtr, selectedExecutionMode, fdp.ConsumeBool());
     fuzz_->Initialize();
     fuzz_->PostProcess(work);
     constexpr int32_t executionModeCount2 =
