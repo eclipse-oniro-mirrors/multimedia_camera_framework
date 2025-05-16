@@ -16,7 +16,6 @@
 #include "hcamera_service_stub.h"
 
 #include <cinttypes>
-
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
@@ -30,6 +29,43 @@
 
 namespace OHOS {
 namespace CameraStandard {
+HCameraRgmProxy::HCameraRgmProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<ICameraBroker>(impl) { }
+
+int32_t HCameraRgmProxy::NotifyCloseCamera(std::string cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    option.SetFlags(option.TF_SYNC);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
+    MEDIA_DEBUG_LOG("HCameraServiceProxy notifyCloseCamera");
+
+    return error;
+}
+
+int32_t HCameraRgmProxy::NotifyMuteCamera(bool muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(muteMode);
+    option.SetFlags(option.TF_SYNC);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_MUTE_CAMERA), data, reply, option);
+    CHECK_ERROR_PRINT_LOG(error != ERR_NONE, "HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
+    MEDIA_DEBUG_LOG("HCameraServiceProxy NotifyMuteCamera");
+
+    return error;
+}
+
 HCameraServiceStub::HCameraServiceStub()
 {
     MEDIA_DEBUG_LOG("0x%{public}06" PRIXPTR " Instances create", (POINTER_MASK & reinterpret_cast<uintptr_t>(this)));
