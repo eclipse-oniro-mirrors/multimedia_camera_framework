@@ -255,7 +255,7 @@ bool CameraRotatePlugin::Init()
         ParameterMap updateParameter;
         return GetParameterResult(updateParameter, "Init", updateParameter);
     }
-    if (system::GetParameter("const.camera.multicamera.enable", "false") != "true" || 
+    if (system::GetParameter("const.camera.compatible_policy_camera.enable", "false") != "true" ||
         access(CAMERA_PLUGIN_SO_PATH.c_str(), R_OK) != 0) {
         MEDIA_ERR_LOG("so file not exist.");
         return false;
