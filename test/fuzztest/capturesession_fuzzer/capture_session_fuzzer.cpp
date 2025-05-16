@@ -38,7 +38,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CaptureSessionFuzzer {
-const int32_t LIMITSIZE = 4;
+const int32_t LIMITSIZE = 309;
 const int32_t NUM_TWO = 2;
 const int32_t NUM_20 = 20;
 const int32_t NUM_40 = 40;
