@@ -25,6 +25,17 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class HCameraRgmProxy : public IRemoteProxy<ICameraBroker> {
+public:
+    explicit HCameraRgmProxy(const sptr<IRemoteObject> &impl);
+    ~HCameraRgmProxy() = default;
+
+    int32_t NotifyCloseCamera(std::string cameraId) override;
+    int32_t NotifyMuteCamera(bool muteMode) override;
+private:
+    static inline BrokerDelegator<HCameraRgmProxy> delegator_;
+};
+
 class EXPORT_API HCameraServiceStub : public IRemoteStub<ICameraService> {
 public:
     HCameraServiceStub();
