@@ -29,7 +29,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 64;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 
