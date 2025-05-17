@@ -48,8 +48,8 @@ void DeferredVideoProcessingSessionProxyFuzzer::DeferredVideoProcessingSessionPr
     fuzz_->BeginSynchronize();
     fuzz_->EndSynchronize();
     std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int32_t>());
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int32_t>());
     fuzz_->AddVideo(videoId, srcFd, dstFd);
     fuzz_->RemoveVideo(videoId, fdp.ConsumeBool());
     fuzz_->RestoreVideo(videoId);
