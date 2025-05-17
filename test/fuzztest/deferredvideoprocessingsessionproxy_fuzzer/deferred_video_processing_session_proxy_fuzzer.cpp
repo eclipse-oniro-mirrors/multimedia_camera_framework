@@ -30,7 +30,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 128;
-const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 
 std::shared_ptr<DeferredVideoProcessingSessionProxy>
@@ -72,10 +71,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }
