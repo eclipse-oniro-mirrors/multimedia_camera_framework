@@ -27,7 +27,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 const size_t THRESHOLD = 10;
 int g_userId = 0;
 const size_t MAX_LENGTH_STRING = 64;

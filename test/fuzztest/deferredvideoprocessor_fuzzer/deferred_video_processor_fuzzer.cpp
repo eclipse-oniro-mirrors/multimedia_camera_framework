@@ -25,9 +25,8 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 64;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 static constexpr int NUM_TWO = 2;
-const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 const char* TEST_FILE_PATH_1 = "/data/test/DeferredVideoProcessorFuzzTest_test_file1.mp4";
 const char* TEST_FILE_PATH_2 = "/data/test/DeferredVideoProcessorFuzzTest_test_file2.mp4";
@@ -81,7 +80,7 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     fuzz_->IsFatalError(selectedDpsError);
     fuzz_->OnStateChanged(userId, selectedDpsStatus);
     fuzz_->OnError(userId, videoId, selectedDpsError);
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>()*NUM_TWO);
+    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     fuzz_->OnProcessDone(userId, videoId, ipcFd);
 
     remove(TEST_FILE_PATH_1);
@@ -105,10 +104,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }
