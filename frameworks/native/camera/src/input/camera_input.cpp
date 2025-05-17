@@ -169,6 +169,10 @@ void CameraInput::InputRemoveDeathRecipient()
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        deviceObj->UnSetCallback();
+    }
     UnregisterTime();
     CameraTimer::GetInstance()->DecreaseUserCount();
     std::lock_guard<std::mutex> lock(interfaceMutex_);
@@ -299,6 +303,7 @@ int CameraInput::Close()
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
+        deviceObj->UnSetCallback();
         retCode = deviceObj->Close();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close Camera Input, retCode: %{public}d", retCode);
     } else {
@@ -325,6 +330,7 @@ int CameraInput::closeDelayed(int32_t delayTime)
         deviceObj->UpdateSetting(metadata);
     }
     if (deviceObj) {
+        deviceObj->UnSetCallback();
         MEDIA_INFO_LOG("CameraInput::closeDelayed() deviceObj is true");
         retCode = deviceObj->closeDelayed();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to close closeDelayed Input, retCode: %{public}d", retCode);
@@ -365,6 +371,7 @@ int CameraInput::Release()
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto deviceObj = GetCameraDevice();
     if (deviceObj) {
+        deviceObj->UnSetCallback();
         retCode = deviceObj->Release();
         CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK, "Failed to release Camera Input, retCode: %{public}d", retCode);
     } else {
