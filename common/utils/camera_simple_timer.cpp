@@ -33,6 +33,8 @@ SimpleTimer::~SimpleTimer()
         timerStatus_ = CANCEL;
         timerCv_.notify_all();
         timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
+    } else if(timerStatus_ == CANCEL) {
+        timerCv_.wait(lock, [this]() { return timerStatus_ == DONE; });
     }
 }
 
