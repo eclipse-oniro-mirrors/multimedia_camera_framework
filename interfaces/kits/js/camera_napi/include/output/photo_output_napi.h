@@ -163,6 +163,7 @@ private:
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
         std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
     void AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId);
+    void ProcessAuxiliaryPhoto(int64_t timestamp, sptr<PhotoOutput> photoOutput, int32_t captureId);
     int32_t GetAuxiliaryPhotoCount(sptr<SurfaceBuffer> surfaceBuffer);
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;

@@ -236,6 +236,36 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
     return true;
 }
 
+bool VideoEncoder::ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord)
+{
+    MEDIA_DEBUG_LOG("enter VideoEncoder::ProcessFrameRecord");
+    if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        // first return IDR frame
+        std::shared_ptr<Media::AVBuffer> IDRBuffer = bufferInfo->GetCopyAVBuffer();
+        frameRecord->CacheBuffer(IDRBuffer);
+        frameRecord->SetIDRProperty(true);
+        successFrame_ = false;
+        return true;
+    } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
+        // then return I frame
+        std::shared_ptr<Media::AVBuffer> tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
+        if (tempBuffer != nullptr) {
+            frameRecord->encodedBuffer = tempBuffer;
+        }
+        successFrame_ = true;
+        return true;
+    } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_NONE) {
+        // return P frame
+        std::shared_ptr<Media::AVBuffer> PBuffer = bufferInfo->GetCopyAVBuffer();
+        frameRecord->CacheBuffer(PBuffer);
+        frameRecord->SetIDRProperty(false);
+        successFrame_ = true;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 {
     if (frameRecord->GetTimeStamp() - preFrameTimestamp_ > NANOSEC_RANGE) {
@@ -266,26 +296,8 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         contextLock.unlock();
         std::lock_guard<std::mutex> encodeLock(encoderMutex_);
         CHECK_ERROR_RETURN_RET_LOG(!isStarted_ || encoder_ == nullptr, false, "EncodeSurfaceBuffer when encoder stop!");
-        if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
-            // first return IDR frame
-            std::shared_ptr<Media::AVBuffer> IDRBuffer = bufferInfo->GetCopyAVBuffer();
-            frameRecord->CacheBuffer(IDRBuffer);
-            frameRecord->SetIDRProperty(true);
-            successFrame_ = false;
-        } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
-            // then return I frame
-            std::shared_ptr<Media::AVBuffer> tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
-            if (tempBuffer != nullptr) {
-                frameRecord->encodedBuffer = tempBuffer;
-            }
-            successFrame_ = true;
-        } else if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_NONE) {
-            // return P frame
-            std::shared_ptr<Media::AVBuffer> PBuffer = bufferInfo->GetCopyAVBuffer();
-            frameRecord->CacheBuffer(PBuffer);
-            frameRecord->SetIDRProperty(false);
-            successFrame_ = true;
-        } else {
+        condRet = ProcessFrameRecord(bufferInfo, frameRecord);
+        if (condRet == false) {
             MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->buffer->flag_);
             int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
             CHECK_WARNING_BREAK_LOG(ret != 0, "FreeOutputData failed");

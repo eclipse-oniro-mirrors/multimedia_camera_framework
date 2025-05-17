@@ -259,6 +259,7 @@ private:
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
+    int32_t CameraHostMgrOpenCamera(bool isEnableSecCam);
     void GetMovingPhotoStartAndEndTime(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     bool isMovingPhotoEnabled_ = false;
     std::mutex movingPhotoStartTimeCallbackLock_;

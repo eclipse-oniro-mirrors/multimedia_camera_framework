@@ -63,6 +63,7 @@ private:
     int32_t Configure();
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
     bool EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrameInterval);
+    bool ProcessFrameRecord(sptr<VideoCodecAVBufferInfo> bufferInfo, sptr<FrameRecord> frameRecord);
     std::atomic<bool> isStarted_ { false };
     std::mutex encoderMutex_;
     shared_ptr<AVCodecVideoEncoder> encoder_ = nullptr;

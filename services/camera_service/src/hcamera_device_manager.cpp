@@ -379,6 +379,21 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
     return true;
 }
 
+void HCameraDeviceManager::DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
+    sptr<CameraProcessPriority> requestPriority)
+{
+    sptr<CameraProcessPriority> highestPriority = requestPriority;
+    for (const auto &x : activeCameras_) {
+        sptr<CameraProcessPriority> curPriority = x->GetPriority();
+        if (*curPriority > *highestPriority) {
+            highestPriority = curPriority;
+            highestPriorityOwner = x->GetPid();
+        }
+    }
+    // Switch back owner if the incoming client has the highest priority, as it is MRU
+    highestPriorityOwner = (*highestPriority == *requestPriority) ? owner : highestPriorityOwner;
+}
+
 std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen)
 {
     std::vector<sptr<HCameraDeviceHolder>> evictList;
@@ -394,16 +409,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
 
     // Determine the MRU of the owners tied for having the highest priority
     int32_t highestPriorityOwner = owner;
-    sptr<CameraProcessPriority> highestPriority = requestPriority;
-    for (const auto &x : activeCameras_) {
-        sptr<CameraProcessPriority> curPriority = x->GetPriority();
-        if (*curPriority > *highestPriority) {
-            highestPriority = curPriority;
-            highestPriorityOwner = x->GetPid();
-        }
-    }
-    // Switch back owner if the incoming client has the highest priority, as it is MRU
-    highestPriorityOwner = (*highestPriority == *requestPriority) ? owner : highestPriorityOwner;
+    DetermineHighestPriorityOwner(highestPriorityOwner, owner, requestPriority);
 
     // Build eviction list of clients to remove
     for (const auto &x : activeCameras_) {

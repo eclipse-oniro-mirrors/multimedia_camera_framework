@@ -332,6 +332,8 @@ private:
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
+    void DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
+        sptr<CameraProcessPriority> requestPriority);
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);

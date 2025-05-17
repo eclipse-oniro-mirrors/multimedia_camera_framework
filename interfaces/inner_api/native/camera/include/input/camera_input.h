@@ -409,6 +409,7 @@ private:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+    int32_t CameraDevicePhysicOpen(sptr<ICameraDeviceService> cameraDevicePhysic, int32_t cameraConcurrentType);
     void InputRemoveDeathRecipient();
     std::map<CameraPosition, camera_position_enum> positionMapping;
 };
