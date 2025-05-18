@@ -1049,6 +1049,7 @@ bool HStreamRepeat::IsNeedBeautyNotification()
     bool ret = false;
     int uid = IPCSkeleton::GetCallingUid();
     std::string bundleName = GetClientBundle(uid);
+
     if (streamFrameRateRange_.size() == 0) {
         return ret;
     }
@@ -1056,12 +1057,19 @@ bool HStreamRepeat::IsNeedBeautyNotification()
     if (notificationInfo.empty()) {
         return ret;
     }
-    std::vector<std::string> result = SplitString(notificationInfo, '|');
-    std::string configBundleName = result[0];
-    int32_t configMinFPS = std::atoi(result[1].c_str());
-    int32_t configMAXFPS = std::atoi(result[2].c_str());
-    return configBundleName == bundleName && configMinFPS == streamFrameRateRange_[0] &&
-        configMAXFPS == streamFrameRateRange_[1];
+    std::vector<std::string> configInfos = SplitString(notificationInfo, '#');
+    for (int i = 0; i < configInfos.size(); ++i) {
+        std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
+        std::string configBundleName = configInfo[0];
+        int32_t configMinFPS = std::atoi(configInfo[1].c_str());
+        int32_t configMAXFPS = std::atoi(configInfo[2].c_str());
+        if (configBundleName == bundleName && configMinFPS == streamFrameRateRange_[0] &&
+            configMAXFPS == streamFrameRateRange_[1]) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
 }
 #endif
 
