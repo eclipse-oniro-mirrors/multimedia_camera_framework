@@ -606,8 +606,10 @@ bool HCameraDevice::ShowDeviceProtectionDialog(DeviceProtectionStatus status)
         int64_t timestamp = GetTimestamp();
         if (timestamp - lastDeviceEjectTime_ < DEVICE_EJECT_INTERVAL) {
             deviceEjectTimes_.operator++();
+        } else {
+            deviceEjectTimes_.store(0);
         }
-        if (deviceEjectTimes_ > static_cast<int32_t>(DEVICE_EJECT_LIMIT)) {
+        if (deviceEjectTimes_ >= static_cast<int32_t>(DEVICE_EJECT_LIMIT)) {
             status = OHOS_DEVICE_EXTERNAL_PRESS;
             deviceEjectTimes_.store(0);
         }
