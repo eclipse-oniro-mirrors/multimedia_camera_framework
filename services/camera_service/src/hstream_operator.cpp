@@ -1028,15 +1028,14 @@ int32_t HStreamOperator::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetHDIStreamOperator();
-    if (streamOperator != nullptr && !releaseStreamIds.empty()) {
-        MEDIA_INFO_LOG("HStreamOperator::ReleaseStreams %{public}s",
-            Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
-        int32_t rc = streamOperator->ReleaseStreams(releaseStreamIds);
-        if (rc != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
-            CameraReportUtils::ReportCameraError(
-                "HCameraDevice::ReleaseStreams", rc, true, CameraReportUtils::GetCallerInfo());
-        }
+    CHECK_ERROR_RETURN_RET(streamOperator == nullptr || releaseStreamIds.empty(), CAMERA_OK);
+    MEDIA_INFO_LOG("HStreamOperator::ReleaseStreams %{public}s",
+        Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
+    int32_t rc = streamOperator->ReleaseStreams(releaseStreamIds);
+    if (rc != HDI::Camera::V1_0::NO_ERROR) {
+        MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HCameraDevice::ReleaseStreams", rc, true, CameraReportUtils::GetCallerInfo());
     }
     return CAMERA_OK;
 }

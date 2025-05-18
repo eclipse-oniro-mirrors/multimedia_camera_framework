@@ -173,11 +173,9 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
             FillingPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
         }
-        if (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_P3_FULL; // HDR photo need P3 for captureStream
-        } else if (dataSpace_ == CM_BT709_LIMIT) {
-            streamInfo.v1_0.dataspace_ = CM_SRGB_FULL; // video session need SRGB for captureStream
-        }
+        streamInfo.v1_0.dataspace_ = (dataSpace_ == CM_BT2020_HLG_FULL || dataSpace_ == CM_BT2020_HLG_LIMIT)
+                                         ? CM_P3_FULL /*HDR photo need P3 for captureStream*/
+                                         : CM_SRGB_FULL /*video session need SRGB for captureStream*/;
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
