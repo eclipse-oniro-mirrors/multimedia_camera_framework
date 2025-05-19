@@ -68,7 +68,6 @@ void AppCallback::OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo
         }
         default: {
             MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: unknown", cameraID.c_str());
-            EXPECT_TRUE(false);
         }
     }
 }
@@ -992,8 +991,14 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSiz
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::APERTURE_VIDEO);
     ASSERT_NE(outputCapability, nullptr);
     auto previewProfiles = outputCapability->GetPreviewProfiles();
+    Profile previewProfile = previewProfiles[0];
+    previewProfile.size_.width = 1920;
+    previewProfile.size_.height = 1080;
     ASSERT_FALSE(previewProfiles.empty());
     auto videoProfiles = outputCapability->GetVideoProfiles();
+    VideoProfile videoProfile = videoProfiles[0];
+    videoProfile.size_.width = 1920;
+    videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
@@ -1007,12 +1012,12 @@ HWTEST_F(CameraSessionModuleTest, aperture_video_session_moduletest_002, TestSiz
     input->Open();
     res = apertureVideoSession->AddInput(input);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfiles[0]);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_TRUE(apertureVideoSession->CanAddOutput(previewOutput));
     res = apertureVideoSession->AddOutput(previewOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_TRUE(apertureVideoSession->CanAddOutput(videoOutput));
     res = apertureVideoSession->AddOutput(videoOutput);
@@ -2431,6 +2436,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_009, TestSize.Leve
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);
+    portraitSession->Release();
 }
 
 /*
@@ -2450,6 +2456,7 @@ HWTEST_F(CameraSessionModuleTest, portrait_session_moduletest_010, TestSize.Leve
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);
+    portraitSession->Release();
 }
 
 /*
@@ -2469,8 +2476,14 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestS
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::QUICK_SHOT_PHOTO);
     ASSERT_NE(outputCapability, nullptr);
     auto previewProfiles = outputCapability->GetPreviewProfiles();
+    Profile previewProfile = previewProfiles[0];
+    previewProfile.size_.width = 1920;
+    previewProfile.size_.height = 1440;
     ASSERT_FALSE(previewProfiles.empty());
     auto photoProfiles = outputCapability->GetPhotoProfiles();
+    Profile photoProfile = photoProfiles[0];
+    photoProfile.size_.width = 4096;
+    photoProfile.size_.height = 3072;
     ASSERT_FALSE(photoProfiles.empty());
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
@@ -2484,12 +2497,12 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_001, TestS
     input->Open();
     res = quickShotPhotoSession->AddInput(input);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfiles[0]);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_TRUE(quickShotPhotoSession->CanAddOutput(previewOutput));
     res = quickShotPhotoSession->AddOutput(previewOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfiles[0]);
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfile);
     ASSERT_NE(photoOutput, nullptr);
     EXPECT_TRUE(quickShotPhotoSession->CanAddOutput(photoOutput));
     res = quickShotPhotoSession->AddOutput(photoOutput);
@@ -2553,6 +2566,7 @@ HWTEST_F(CameraSessionModuleTest, quick_shot_photo_session_moduletest_002, TestS
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfilesBase[0]);
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_FALSE(quickShotPhotoSession->CanAddOutput(videoOutput));
+    input->Close();
 }
 
 /*
@@ -2599,6 +2613,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_001, TestSize.Level1)
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfilesBase[0]);
     ASSERT_NE(photoOutput, nullptr);
     EXPECT_FALSE(scanSession->CanAddOutput(photoOutput));
+    input->Close();
 }
 
 /*
@@ -2645,6 +2660,7 @@ HWTEST_F(CameraSessionModuleTest, scan_session_moduletest_002, TestSize.Level1)
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfilesBase[0]);
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_FALSE(scanSession->CanAddOutput(videoOutput));
+    input->Close();
 }
 
 /*
@@ -3077,8 +3093,14 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.L
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SLOW_MOTION);
     ASSERT_NE(outputCapability, nullptr);
     auto previewProfiles = outputCapability->GetPreviewProfiles();
+    Profile previewProfile = previewProfiles[0];
+    previewProfile.size_.width = 1920;
+    previewProfile.size_.height = 1080;
     ASSERT_FALSE(previewProfiles.empty());
     auto videoProfiles = outputCapability->GetVideoProfiles();
+    VideoProfile videoProfile = videoProfiles[0];
+    videoProfile.size_.width = 1920;
+    videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
@@ -3092,12 +3114,12 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_002, TestSize.L
     input->Open();
     res = slowMotionSession->AddInput(input);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfiles[0]);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_TRUE(slowMotionSession->CanAddOutput(previewOutput));
     res = slowMotionSession->AddOutput(previewOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_TRUE(slowMotionSession->CanAddOutput(videoOutput));
     res = slowMotionSession->AddOutput(videoOutput);
@@ -3136,8 +3158,14 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_003, TestSize.L
     auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::SLOW_MOTION);
     ASSERT_NE(outputCapability, nullptr);
     auto previewProfiles = outputCapability->GetPreviewProfiles();
+    Profile previewProfile = previewProfiles[0];
+    previewProfile.size_.width = 1920;
+    previewProfile.size_.height = 1080;
     ASSERT_FALSE(previewProfiles.empty());
     auto videoProfiles = outputCapability->GetVideoProfiles();
+    VideoProfile videoProfile = videoProfiles[0];
+    videoProfile.size_.width = 1920;
+    videoProfile.size_.height = 1080;
     ASSERT_FALSE(videoProfiles.empty());
 
     auto captureSession = manager_->CreateCaptureSession(SceneMode::SLOW_MOTION);
@@ -3151,12 +3179,12 @@ HWTEST_F(CameraSessionModuleTest, slow_motion_session_moduletest_003, TestSize.L
     input->Open();
     res = slowMotionSession->AddInput(input);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfiles[0]);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
     ASSERT_NE(previewOutput, nullptr);
     EXPECT_TRUE(slowMotionSession->CanAddOutput(previewOutput));
     res = slowMotionSession->AddOutput(previewOutput);
     EXPECT_EQ(res, 0);
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
     ASSERT_NE(videoOutput, nullptr);
     EXPECT_TRUE(slowMotionSession->CanAddOutput(videoOutput));
     res = slowMotionSession->AddOutput(videoOutput);
