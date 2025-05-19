@@ -41,7 +41,7 @@ std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_ {nullptr};
 * tips: only support basic type
 */
 
-void BmsAdapterFuzzer::Initialize()
+void BmsAdapterFuzzer::Initialize(FuzzedDataProvider& fdp)
 {
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
@@ -80,7 +80,6 @@ void BmsSaListenerFuzzer::BmsSaListenerFuzzTest(FuzzedDataProvider& fdp)
         bmsfuzz_ = std::make_shared<BmsSaListener>(removeCallback);
     }
     int32_t systemAbilityId = fdp.ConsumeIntegral<int32_t>();
-    uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
     std::string deviceId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     bmsfuzz_->OnAddSystemAbility(systemAbilityId, deviceId);
     bmsfuzz_->OnRemoveSystemAbility(systemAbilityId, deviceId);
