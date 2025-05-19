@@ -40,9 +40,6 @@ sptr<HCameraDevice> HCameraDeviceFuzzer::fuzz_{nullptr};
 
 void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_->GetDeviceMuteMode();
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
@@ -78,9 +75,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest1(FuzzedDataProvider& fdp)
 
 void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_->Close();
     fuzz_->CheckPermissionBeforeOpenDevice();
     fuzz_->HandlePrivacyBeforeOpenDevice();
@@ -97,9 +91,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
 
 void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_->GetCameraId();
     fuzz_->GetCameraType();
     fuzz_->IsOpenedCameraDevice();
@@ -146,9 +137,6 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
 
 void HCameraDeviceFuzzer::HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
@@ -173,6 +161,9 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("dcameraDevice is null");
         return;
     }
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
     std::string cameraId;
     uint32_t callingTokenId = fdp.ConsumeIntegral<uint32_t>();
@@ -191,10 +182,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }

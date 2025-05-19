@@ -52,9 +52,6 @@ sptr<IBufferProducer> producer;
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     bool isEnabled = fdp.ConsumeBool();
     bool enabled = fdp.ConsumeIntegral<bool>();
@@ -91,9 +88,6 @@ void HStreamCaptureFuzzer::HStreamCaptureFuzzTest1(FuzzedDataProvider& fdp)
 
 void HStreamCaptureFuzzer::HStreamCaptureFuzzTest2(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     auto captureId = fdp.ConsumeIntegral<int32_t>();
     auto interfaceCode = fdp.ConsumeIntegral<int32_t>();
     auto timestamp = fdp.ConsumeIntegral<uint64_t>();
@@ -142,6 +136,9 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("hstreamCapture is null");
         return;
     }
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     sptr<Surface> photoSurface;
     photoSurface = Surface::CreateSurfaceAsConsumer("hstreamcapture");
     producer = photoSurface->GetProducer();
@@ -163,10 +160,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }

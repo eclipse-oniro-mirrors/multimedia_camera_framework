@@ -21,15 +21,12 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 64;
+static constexpr int32_t MIN_SIZE_NUM = 256;
 const size_t THRESHOLD = 10;
 std::shared_ptr<MediaManager> MediaManagerFuzzer::fuzz_{nullptr};
 
 void MediaManagerFuzzer::MediaManagerFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_ = std::make_shared<MediaManager>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::vector<uint8_t> memoryFlags = {
@@ -148,6 +145,9 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("mediaManager is null");
         return;
     }
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     mediaManager->MediaManagerFuzzTest(fdp);
     mediaManager->WriterFuzzTest(fdp);
     mediaManager->TrackFuzzTest(fdp);
@@ -161,10 +161,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }

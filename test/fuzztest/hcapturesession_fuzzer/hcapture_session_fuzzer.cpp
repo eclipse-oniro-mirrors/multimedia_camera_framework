@@ -46,9 +46,6 @@ std::shared_ptr<HCaptureSession> HCaptureSessionFuzzer::fuzz_{nullptr};
 
 void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
@@ -85,9 +82,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp)
 
 void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
@@ -122,9 +116,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp)
 
 void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
@@ -169,9 +160,6 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp)
 
 void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
@@ -199,6 +187,9 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("hcaptureSession is null");
         return;
     }
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     hcaptureSession->HCaptureSessionFuzzTest1(fdp);
     hcaptureSession->HCaptureSessionFuzzTest2(fdp);
     hcaptureSession->HCaptureSessionFuzzTest3(fdp);
@@ -211,10 +202,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }
