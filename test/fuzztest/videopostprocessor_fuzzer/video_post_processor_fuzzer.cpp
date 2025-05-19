@@ -93,13 +93,13 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2(FuzzedDataProvider& f
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+         return;
+    }
     auto videoPostProcessor = std::make_unique<VideoPostProcessorFuzzer>();
     if (videoPostProcessor == nullptr) {
         MEDIA_INFO_LOG("videoPostProcessor is null");
         return;
-    }
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-         return;
     }
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
     VideoPostProcessorFuzzer::processor_ = std::make_shared<VideoPostProcessor>(userId);
@@ -115,10 +115,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }
