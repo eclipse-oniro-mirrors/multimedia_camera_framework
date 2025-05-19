@@ -38,6 +38,195 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 };
+
+class MockCodecSurface : public Surface {
+public:
+    bool IsConsumer() const override
+    {
+        return false;
+    }
+    sptr<IBufferProducer> GetProducer() const override
+    {
+        return nullptr;
+    }
+    GSError AttachBuffer(sptr<SurfaceBuffer> &buffer) override
+    {
+        (void)buffer;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError DetachBuffer(sptr<SurfaceBuffer> &buffer) override
+    {
+        (void)buffer;
+        return GSERROR_NOT_SUPPORT;
+    }
+    uint32_t GetQueueSize() override
+    {
+        return 0;
+    }
+    GSError SetQueueSize(uint32_t queueSize) override
+    {
+        (void)queueSize;
+        return GSERROR_NOT_SUPPORT;
+    }
+    int32_t GetDefaultWidth() override
+    {
+        return 0;
+    }
+    int32_t GetDefaultHeight() override
+    {
+        return 0;
+    }
+    GSError SetDefaultUsage(uint64_t usage) override
+    {
+        (void)usage;
+        return GSERROR_NOT_SUPPORT;
+    }
+    uint64_t GetDefaultUsage() override
+    {
+        return 0;
+    }
+    GSError SetUserData(const std::string &key, const std::string &val) override
+    {
+        (void)key;
+        (void)val;
+        return GSERROR_NOT_SUPPORT;
+    }
+    std::string GetUserData(const std::string &key) override
+    {
+        (void)key;
+        return std::string("");
+    }
+    const std::string &GetName() override
+    {
+        return name_;
+    }
+    uint64_t GetUniqueId() const override
+    {
+        return 0;
+    }
+    GSError GoBackground() override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError SetTransform(GraphicTransformType transform) override
+    {
+        (void)transform;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GraphicTransformType GetTransform() const override
+    {
+        return GRAPHIC_ROTATE_NONE;
+    }
+    GSError SetScalingMode(uint32_t sequence, ScalingMode scalingMode) override
+    {
+        (void)sequence;
+        (void)scalingMode;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError SetMetaData(uint32_t sequence, const std::vector<GraphicHDRMetaData> &metaData) override
+    {
+        (void)sequence;
+        (void)metaData;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError SetMetaDataSet(uint32_t sequence, GraphicHDRMetadataKey key, const std::vector<uint8_t> &metaData) override
+    {
+        (void)sequence;
+        (void)key;
+        (void)metaData;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError SetTunnelHandle(const GraphicExtDataHandle *handle) override
+    {
+        (void)handle;
+        return GSERROR_NOT_SUPPORT;
+    }
+    void Dump(std::string &result) const override
+    {
+        (void)result;
+    }
+    GSError AttachBuffer(sptr<SurfaceBuffer> &buffer, int32_t timeOut) override
+    {
+        (void)buffer;
+        (void)timeOut;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError RegisterSurfaceDelegator(sptr<IRemoteObject> client) override
+    {
+        (void)client;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError RegisterReleaseListener(OnReleaseFuncWithFence func) override
+    {
+        (void)func;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError RegisterUserDataChangeListener(const std::string &funcName, OnUserDataChangeFunc func) override
+    {
+        (void)funcName;
+        (void)func;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError UnRegisterUserDataChangeListener(const std::string &funcName) override
+    {
+        (void)funcName;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError ClearUserDataChangeListener() override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError AttachBufferToQueue(sptr<SurfaceBuffer> buffer) override
+    {
+        (void)buffer;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError DetachBufferFromQueue(sptr<SurfaceBuffer> buffer, bool isReserveSlot = false) override
+    {
+        (void)buffer;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GraphicTransformType GetTransformHint() const override
+    {
+        return GRAPHIC_ROTATE_NONE;
+    }
+    GSError SetTransformHint(GraphicTransformType transformHint) override
+    {
+        (void)transformHint;
+        return GSERROR_NOT_SUPPORT;
+    }
+    void SetBufferHold(bool hold) override
+    {
+        (void)hold;
+    }
+    GSError SetScalingMode(ScalingMode scalingMode) override
+    {
+        (void)scalingMode;
+        return GSERROR_NOT_SUPPORT;
+    }
+    GSError SetSurfaceSourceType(OHSurfaceSource sourceType) override
+    {
+        (void)sourceType;
+        return GSERROR_NOT_SUPPORT;
+    }
+    OHSurfaceSource GetSurfaceSourceType() const override
+    {
+        return OH_SURFACE_SOURCE_DEFAULT;
+    }
+    GSError SetSurfaceAppFrameworkType(std::string appFrameworkType) override
+    {
+        (void)appFrameworkType;
+        return GSERROR_NOT_SUPPORT;
+    }
+    std::string GetSurfaceAppFrameworkType() const override
+    {
+        return std::string("");
+    }
+
+private:
+    const std::string name_ = "";
+};
+
 } // CameraStandard
 } // OHOS
 #endif // VIDEO_ENCODER_UNITTEST_H
