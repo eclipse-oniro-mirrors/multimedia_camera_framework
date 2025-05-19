@@ -93,7 +93,7 @@ void MovingPhotoSurfaceWrapper::OnBufferArrival()
         return;
     }
 
-    err = videoSurface_->DetachBufferFromQueue(buffer);
+    err = videoSurface_->DetachBufferFromQueue(buffer, true);
     CHECK_ERROR_RETURN_LOG(err != GSERROR_OK,
         "MovingPhotoSurfaceWrapper::OnBufferArrival detach buffer fail. %{public}d", err);
     MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival buffer %{public}d x %{public}d, stride is %{public}d",
