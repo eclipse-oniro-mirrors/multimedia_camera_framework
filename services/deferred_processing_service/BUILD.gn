@@ -190,6 +190,7 @@ ohos_shared_library("deferred_processing_service") {
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
+    "graphic_surface:sync_fence",
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
