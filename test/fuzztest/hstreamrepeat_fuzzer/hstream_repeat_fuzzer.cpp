@@ -35,7 +35,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MIN_SIZE_NUM = 72;
+static constexpr int32_t MIN_SIZE_NUM = 256;
 const size_t THRESHOLD = 10;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;

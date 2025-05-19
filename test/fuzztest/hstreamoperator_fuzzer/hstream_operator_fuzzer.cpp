@@ -31,7 +31,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 36;
+static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t NUM_1 = 1;
 const size_t THRESHOLD = 10;
 

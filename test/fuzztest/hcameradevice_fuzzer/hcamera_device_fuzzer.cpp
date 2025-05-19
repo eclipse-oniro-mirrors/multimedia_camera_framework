@@ -28,11 +28,12 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 256;
 static constexpr int32_t NUM_1 = 1;
 const size_t THRESHOLD = 10;
 const int NUM_10 = 10;
 const int NUM_100 = 100;
+const size_t MAX_LENGTH_STRING = 64;
 
 sptr<HCameraDevice> HCameraDeviceFuzzer::fuzz_{nullptr};
 
@@ -89,7 +90,8 @@ void HCameraDeviceFuzzer::HCameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
     settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     fuzz_->ReportMetadataDebugLog(settings);
     int32_t operationMode = fdp.ConsumeIntegral<int32_t>();
-    std::set<std::string> conflicting = {"fuzz1", "fuzz2"};
+    std::set<std::string> conflicting = {fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING),
+        fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING)};
     fuzz_->GetCameraResourceCost(operationMode, conflicting);
 }
 

@@ -34,7 +34,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 16;
 const size_t THRESHOLD = 10;
 
 std::shared_ptr<MovingPhotoSurfaceWrapper> MovingPhotoSurfaceWrapperFuzzer::fuzz_{nullptr};

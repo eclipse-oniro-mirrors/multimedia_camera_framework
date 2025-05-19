@@ -30,7 +30,7 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 const size_t THRESHOLD = 10;
 const size_t MAX_LENGTH_STRING = 64;
 

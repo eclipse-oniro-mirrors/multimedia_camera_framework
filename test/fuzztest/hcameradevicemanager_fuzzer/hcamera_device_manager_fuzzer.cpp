@@ -29,7 +29,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 64;
 const size_t THRESHOLD = 10;
 sptr<HCameraDevice> g_HCameraDevice = nullptr;
 std::string g_cameraID;

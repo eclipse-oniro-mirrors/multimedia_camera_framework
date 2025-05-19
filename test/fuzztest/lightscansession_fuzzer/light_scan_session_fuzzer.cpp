@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 8;
 const size_t THRESHOLD = 10;
 sptr<LightPaintingSession> LightScanSessionFuzzer::fuzzLight_{nullptr};
 sptr<ScanSession> LightScanSessionFuzzer::fuzzScan_{nullptr};
