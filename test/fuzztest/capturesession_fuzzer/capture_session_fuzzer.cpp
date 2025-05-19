@@ -259,7 +259,7 @@ void TestCallback(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
     session->SetSmoothZoomCallback(make_shared<SmoothZoomCallbackMock>());
     session->SetMacroStatusCallback(make_shared<MacroStatusCallbackMock>());
     session->SetMoonCaptureBoostStatusCallback(make_shared<MoonCaptureBoostStatusCallbackMock>());
-    auto fdsCallback = make_shared<FeatureDetectionStatusCallbackMock>(fdp.ConsumeIntegral<int32_t>() % 1);
+    auto fdsCallback = make_shared<FeatureDetectionStatusCallbackMock>(fdp.ConsumeBool();
     session->SetFeatureDetectionStatusCallback(fdsCallback);
     session->SetEffectSuggestionCallback(make_shared<EffectSuggestionCallbackMock>());
     session->SetARCallback(make_shared<ARCallbackMock>());
