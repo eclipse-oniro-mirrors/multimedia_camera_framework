@@ -18,15 +18,14 @@
 
 #include "sketch_wrapper.h"
 #include <memory>
-#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class SketchWrapperFuzzer {
 public:
 static std::shared_ptr<SketchWrapper> fuzz_;
-static void SketchWrapperFuzzTest1(FuzzedDataProvider& fdp);
-static void SketchWrapperFuzzTest2(FuzzedDataProvider& fdp);
+static void SketchWrapperFuzzTest1();
+static void SketchWrapperFuzzTest2();
 };
 } //CameraStandard
 } //OHOS
