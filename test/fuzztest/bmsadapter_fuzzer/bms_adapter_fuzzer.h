@@ -17,6 +17,7 @@
 #define BMS_ADAPTER_FUZZER_H
 
 #include "bms_adapter.h"
+#include "<fuzzer/FuzzedDataProvider.h>"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,7 +25,7 @@ namespace CameraStandard {
 class BmsSaListenerFuzzer {
 public:
 static std::shared_ptr<BmsSaListener> bmsfuzz_;
-static void BmsSaListenerFuzzTest();
+static void BmsSaListenerFuzzTest(FuzzedDataProvider& fdp);
 };
 
 class BmsAdapterFuzzer {
