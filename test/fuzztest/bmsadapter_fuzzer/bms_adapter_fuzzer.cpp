@@ -106,7 +106,6 @@ void Test(uint8_t* data, size_t size)
     bmsSaListener->BmsSaListenerFuzzTest(fdp);
     bmsAdapterFuzzer->Initialize();
 }
-
 } // namespace CameraStandard
 } // namespace OHOS
 
