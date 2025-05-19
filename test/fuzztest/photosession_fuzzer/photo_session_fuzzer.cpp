@@ -38,9 +38,6 @@ sptr<CaptureOutput> photoOutput_ = nullptr;
 
 void PhotoSessionFuzzer::PhotoSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     cameraManager_ = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = cameraManager_->CreateCaptureSession(SceneMode::CAPTURE);
     fuzz_ = static_cast<PhotoSession*>(captureSession.GetRefPtr());
@@ -111,6 +108,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     photoSession->PhotoSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard

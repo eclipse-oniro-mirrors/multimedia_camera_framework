@@ -30,10 +30,6 @@ std::shared_ptr<TimeBroker> TimeBrokerFuzzer::fuzz_{nullptr};
 
 void TimeBrokerFuzzer::TimeBrokerFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
-
     fuzz_ = TimeBroker::Create("camera_deferred_base");
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
@@ -56,6 +52,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     timeBroker->TimeBrokerFuzzTest(fdp);
 }
 } // namespace CameraStandard

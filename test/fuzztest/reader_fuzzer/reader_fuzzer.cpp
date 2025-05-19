@@ -31,9 +31,6 @@ std::shared_ptr<Reader> ReaderFuzzer::fuzz_{nullptr};
 
 void ReaderFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_ = std::make_shared<Reader>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     int32_t inputFd = GetData<int32_t>();
@@ -59,6 +56,9 @@ void ReaderFuzzer::ReaderFuzzTest(FuzzedDataProvider& fdp)
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     auto reader = std::make_unique<ReaderFuzzer>();
     if (reader == nullptr) {
         MEDIA_INFO_LOG("mpegManager is null");

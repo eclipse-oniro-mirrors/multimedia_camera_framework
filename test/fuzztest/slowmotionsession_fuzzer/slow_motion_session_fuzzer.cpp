@@ -90,9 +90,6 @@ sptr<CaptureOutput> CreateVideoOutput()
 
 void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     GetPermission();
     manager = CameraManager::GetInstance();
     sptr<CaptureSession> captureSession = manager->CreateCaptureSession(SceneMode::SLOW_MOTION);
@@ -140,6 +137,9 @@ void SlowMotionSessionFuzzer::SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp)
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     auto slowMotionSession = std::make_unique<SlowMotionSessionFuzzer>();
     if (slowMotionSession == nullptr) {
         MEDIA_INFO_LOG("slowMotionSession is null");

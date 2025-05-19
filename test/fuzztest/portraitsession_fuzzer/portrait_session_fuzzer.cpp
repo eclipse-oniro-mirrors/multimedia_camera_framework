@@ -147,9 +147,6 @@ void NativeAuthorization()
 
 void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
@@ -193,6 +190,9 @@ void Test(uint8_t* data, size_t size)
     }
     // std::cout << "aning PortraitSessionFuzzTest" << std::endl;
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     portraitSession->PortraitSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard

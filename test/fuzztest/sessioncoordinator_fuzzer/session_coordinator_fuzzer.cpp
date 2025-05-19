@@ -36,9 +36,6 @@ std::shared_ptr<DeferredProcessing::SessionCoordinator> SessionCoordinatorFuzzer
 
 void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_ = std::make_shared<DeferredProcessing::SessionCoordinator>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->Initialize();
@@ -88,6 +85,9 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     auto sessionCoordinatorFuzz = std::make_unique<SessionCoordinatorFuzzer>();
     if (sessionCoordinatorFuzz == nullptr) {
         MEDIA_INFO_LOG("sessionCoordinatorFuzz is null");
