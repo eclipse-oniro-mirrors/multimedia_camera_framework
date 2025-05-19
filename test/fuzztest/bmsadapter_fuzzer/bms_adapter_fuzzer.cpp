@@ -33,6 +33,9 @@ const size_t THRESHOLD = MAX_LENGTH_STRING + 24;
 static const int32_t MIN_SIZE_NUM = 64 + 4 + 1;
 static const uint8_t* RAW_DATA = nullptr;
 
+std::shared_ptr<BmsAdapter> BmsAdapterFuzzer::fuzz_ {nullptr};
+std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_ {nullptr};
+
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
 * tips: only support basic type
