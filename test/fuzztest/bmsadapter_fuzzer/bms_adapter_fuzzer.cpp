@@ -98,6 +98,7 @@ void Test(uint8_t* data, size_t size)
         MEDIA_INFO_LOG("bmsAdapterFuzzer is null");
         return;
     }
+    
     FuzzedDataProvider fdp(data,size);
     if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
