@@ -37,6 +37,7 @@ namespace CameraStandard {
 const std::string HCameraHostManager::LOCAL_SERVICE_NAME = "camera_service";
 const std::string HCameraHostManager::DISTRIBUTED_SERVICE_NAME = "distributed_camera_provider_service";
 constexpr uint32_t MILLISEC_TIME = 1000;
+constexpr int32_t MAX_SYS_UID = 10000;
 
 using namespace OHOS::HDI::Camera::V1_0;
 struct HCameraHostManager::CameraDeviceInfo {
@@ -795,15 +796,25 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice start");
-    std::lock_guard<std::mutex> lock(deviceMutex_);
-    auto it = cameraDevices_.find(cameraId);
-    if (it != cameraDevices_.end()) {
-        it->second = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(deviceMutex_);
+        auto it = cameraDevices_.find(cameraId);
+        if (it != cameraDevices_.end()) {
+            it->second = nullptr;
+        }
+        cameraDevices_.erase(cameraId);
+        auto statusCallback = statusCallback_.lock();
+        CHECK_EXECUTE(statusCallback,
+            statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION));
+
     }
-    cameraDevices_.erase(cameraId);
-    auto statusCallback = statusCallback_.lock();
-    CHECK_EXECUTE(statusCallback,
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION));
+    {
+        std::lock_guard<std::mutex> lock(openPrelaunchMutex_);
+        if (cameraDevices_.size() == 0) {
+            isHasOpenCamera_ = false;
+        }
+        isHasPrelaunch_ = false;
+    }
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice end");
 }
 
@@ -897,7 +908,15 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
         "HCameraHostManager::OpenCameraDevice failed with invalid device info.");
-    return cameraHostInfo->OpenCamera(cameraId, callback, pDevice, isEnableSecCam);
+    {
+        std::lock_guard<std::mutex> lock(openPrelaunchMutex_);
+        int32_t uid = IPCSkeleton::GetCallingUid();
+        CHECK_ERROR_RETURN_RET_LOG((isHasPrelaunch_ && uid < MAX_SYS_UID), CAMERA_INVALID_ARG,
+            "HCameraHostManager::OpenCameraDevice sys is not allowed after prelaunch.");
+        int32_t ret =  cameraHostInfo->OpenCamera(cameraId, callback, pDevice, isEnableSecCam);
+        CHECK_EXECUTE(ret == 0, isHasOpenCamera_ = true);
+        return ret;
+    }
 }
 
 int32_t HCameraHostManager::SetTorchLevel(float level)
@@ -934,10 +953,16 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
         return 0;
     }
-    int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
-    if (res == 0 && cameraRestoreParam->GetRestoreParamType() ==
-        RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
-        return CAMERA_OK;
+    {
+        std::lock_guard<std::mutex> lock(openPrelaunchMutex_);
+        CHECK_ERROR_RETURN_RET_LOG(isHasOpenCamera_, CAMERA_INVALID_ARG,
+            "HCameraHostManager::Prelaunch failed that has been running");
+        int32_t ret = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
+        CHECK_EXECUTE(ret == 0, isHasPrelaunch_ = true);
+        if (ret == 0 && cameraRestoreParam->GetRestoreParamType() ==
+            RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
+            return CAMERA_OK;
+        }
     }
     // 使用后删除存储的动态数据
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
