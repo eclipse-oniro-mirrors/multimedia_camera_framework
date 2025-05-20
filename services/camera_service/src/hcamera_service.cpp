@@ -746,6 +746,19 @@ bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
     return true;
 }
 
+void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid)
+{
+    auto thisPtr = sptr<HCameraService>(this);
+    CHECK_ERROR_RETURN(!(status == CAMERA_STATUS_APPEAR || status == CAMERA_STATUS_DISAPPEAR));
+    auto task = [cameraId, status, pid, thisPtr]() {
+        auto itr = thisPtr->cameraServiceCallbacks_.find(pid);
+        CHECK_ERROR_RETURN(itr == thisPtr->cameraServiceCallbacks_.end() || !itr->second);
+        MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
+        itr->second->OnCameraStatusChanged(cameraId, status);
+    };
+    delayCbtaskMap_[pid][cameraId] = task;
+}
+
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status, CallbackInvoker invoker)
 {
     lock_guard<mutex> lock(cameraCbMutex_);
@@ -763,6 +776,7 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
         }
         uint32_t pid = it.first;
         if (ShouldSkipStatusUpdates(pid)) {
+            CreateAndSaveTask(cameraId, status, pid);
             continue;
         }
         it.second->OnCameraStatusChanged(cameraId, status, bundleName);
@@ -2152,13 +2166,14 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
 
     {
         std::lock_guard<std::mutex> lock(cameraCbMutex_);
-        for (auto pid : pidList) {
-            auto it = delayCbtaskMap.find(pid);
-            if (it != delayCbtaskMap.end()) {
-                it->second();
-                delayCbtaskMap.erase(it);
+        std::for_each(pidList.begin(), pidList.end(), [this](auto pid) {
+            auto pidIt = delayCbtaskMap_.find(pid);
+            CHECK_ERROR_RETURN(pidIt == delayCbtaskMap_.end());
+            for (const auto &[cameraId, taskCallback] : pidIt->second) {
+                CHECK_EXECUTE(taskCallback, taskCallback());
             }
-        }
+            delayCbtaskMap_.erase(pidIt);
+        });
     }
     return CAMERA_OK;
 }

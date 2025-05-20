@@ -91,6 +91,7 @@ public:
 
     explicit HCameraService(int32_t systemAbilityId, bool runOnCreate = true);
     ~HCameraService() override;
+    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid);
     int32_t GetCameras(vector<string>& cameraIds,
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
     int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
@@ -308,7 +309,7 @@ private:
     std::vector<CameraRotateStrategyInfo> cameraRotateStrategyInfos_;
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
-    std::map<uint32_t, std::function<void()>> delayCbtaskMap;
+    std::map<uint32_t, std::map<string, std::function<void()>>> delayCbtaskMap_;
     std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
 };
 } // namespace CameraStandard
