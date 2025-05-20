@@ -193,9 +193,9 @@ auto TestManualExposure(FuzzedDataProvider& fdp)
     vector<MeteringMode> modes;
     session->GetSupportedMeteringModes(modes);
     bool supported;
-    session->IsExposureMeteringModeSupported(METERING_MODE_CENTER_WEIGHTED, supported);
     session->IsExposureMeteringModeSupported(
-        static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1), supported);
+        static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % (MeteringMode::METERING_MODE_OVERALL + 1)),
+        supported);
     session->LockForControl();
     session->SetExposureMeteringMode(static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % 5));
     session->SetExposureMeteringMode(static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % 5));
