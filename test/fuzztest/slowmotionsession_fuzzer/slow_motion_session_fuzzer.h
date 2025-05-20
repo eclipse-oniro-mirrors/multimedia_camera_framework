@@ -17,6 +17,7 @@
 #define SLOW_MOTION_SESSION_FUZZER_H
 
 #include "slow_motion_session.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,7 +28,7 @@ public:
 
 class SlowMotionSessionFuzzer {
 public:
-static void SlowMotionSessionFuzzTest();
+static void SlowMotionSessionFuzzTest(FuzzedDataProvider& fdp);
 }; //SlowMotionSessionFuzzer
 } //CameraStandard
 } //OHOS

@@ -26,16 +26,18 @@
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
 #include "securec.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace PreviewOutputFuzzer {
-const int32_t LIMITSIZE = 4;
+static constexpr int32_t MAX_CODE_LEN  = 512;
+static constexpr int32_t MIN_SIZE_NUM = 550;
 const int32_t NUM_TWO = 2;
-static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+static const int32_t MINFORMAT = 30;
+static const int32_t MEDIAFORMAT = 60;
+static const int32_t MAXFORMAT = 120;
 
 void GetPermission()
 {
@@ -58,28 +60,12 @@ void GetPermission()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-template<class T>
-T GetData()
+void TestOutput(sptr<PreviewOutput> output, FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-void TestOutput(sptr<PreviewOutput> output, uint8_t *rawData, size_t size)
-{
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
     MEDIA_INFO_LOG("PreviewOutputFuzzer: ENTER");
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!previewSurface, "previewOutputFuzzer: Create previewSurface Error");
     sptr<IBufferProducer> producer = previewSurface->GetProducer();
@@ -89,12 +75,12 @@ void TestOutput(sptr<PreviewOutput> output, uint8_t *rawData, size_t size)
     output->Start();
     output->IsSketchSupported();
     output->GetSketchRatio();
-    bool isEnable = GetData<bool>();
+    bool isEnable = fdp.ConsumeBool();
     output->EnableSketch(isEnable);
     output->CreateStream();
     output->GetFrameRateRange();
-    int32_t minFrameRate = GetData<int32_t>();
-    int32_t maxFrameRate = GetData<int32_t>();
+    int32_t minFrameRate = fdp.ConsumeIntegralInRange<int32_t>(MINFORMAT, MEDIAFORMAT);
+    int32_t maxFrameRate = fdp.ConsumeIntegralInRange<int32_t>(MEDIAFORMAT, MAXFORMAT);
     output->SetFrameRateRange(minFrameRate, maxFrameRate);
     output->SetOutputFormat(minFrameRate);
     output->SetFrameRate(minFrameRate, maxFrameRate);
@@ -112,24 +98,29 @@ void TestOutput(sptr<PreviewOutput> output, uint8_t *rawData, size_t size)
     output->Stop();
 }
 
-void Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *data, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     GetPermission();
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "previewOutputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.size() < NUM_TWO, "previewOutputFuzzer: GetSupportedCameras Error");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    auto camera = cameras[data.ReadUint32() % cameras.size()];
+    MessageParcel dataMessageParcel;
+    size_t bufferSize = fdp.ConsumeIntegralInRange(0, MAX_CODE_LEN);
+    std::vector<uint8_t> buffer = fdp.ConsumeBytes<uint8_t>(bufferSize);
+    dataMessageParcel.WriteRawData(buffer.data(), buffer.size());
+    auto camera = cameras[dataMessageParcel.ReadUint32() % cameras.size()];
     CHECK_ERROR_RETURN_LOG(!camera, "previewOutputFuzzer: camera is null");
-    int32_t mode = data.ReadInt32() % (SceneMode::NORMAL + NUM_TWO);
+    int32_t mode = dataMessageParcel.ReadInt32() % (SceneMode::NORMAL + NUM_TWO);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
     CHECK_ERROR_RETURN_LOG(!capability, "previewOutputFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPreviewProfiles();
     CHECK_ERROR_RETURN_LOG(profiles.empty(), "previewOutputFuzzer: GetPreviewProfiles empty");
-    Profile profile = profiles[data.ReadUint32() % profiles.size()];
+    Profile profile = profiles[dataMessageParcel.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!previewSurface, "previewOutputFuzzer: create previewSurface Error");
     sptr<IBufferProducer> producer = previewSurface->GetProducer();
@@ -138,7 +129,7 @@ void Test(uint8_t *rawData, size_t size)
     CHECK_ERROR_RETURN_LOG(!pSurface, "previewOutputFuzzer: GetProducer Error");
     auto output = manager->CreatePreviewOutput(profile, pSurface);
     CHECK_ERROR_RETURN_LOG(!output, "previewOutputFuzzer: CreatePhotoOutput Error");
-    TestOutput(output, rawData, size);
+    TestOutput(output, fdp);
 }
 
 } // namespace StreamRepeatStubFuzzer

@@ -17,21 +17,22 @@
 #define STREAM_CAPTURE_STUB_FUZZER_H
 
 #include "hstream_capture_stub.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace StreamCaptureStubFuzzer {
 
-void Test(uint8_t *rawData, size_t size);
-void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
-void Test_HandleCapture(uint8_t *rawData, size_t size);
-void Test_HandleSetThumbnail(uint8_t *rawData, size_t size);
-void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size);
-void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size);
-void Test_HandleSetCallback(uint8_t *rawData, size_t size);
+void Test(uint8_t *data, size_t size);
+void Test_OnRemoteRequest(FuzzedDataProvider& fdp);
+void Test_HandleCapture(FuzzedDataProvider& fdp);
+void Test_HandleSetThumbnail(FuzzedDataProvider& fdp);
+void Test_HandleSetBufferProducerInfo(FuzzedDataProvider& fdp);
+void Test_HandleEnableDeferredType(FuzzedDataProvider& fdp);
+void Test_HandleSetCallback(FuzzedDataProvider& fdp);
 
 void CheckPermission();
-std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size);
+std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(FuzzedDataProvider& fdp);
 
 } //StreamCaptureStubFuzzer
 } //CameraStandard

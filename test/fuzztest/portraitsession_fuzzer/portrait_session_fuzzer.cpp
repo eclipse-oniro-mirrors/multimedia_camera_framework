@@ -31,50 +31,17 @@
 #include "metadata_utils.h"
 #include "surface.h"
 #include "os_account_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
 static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+static constexpr int32_t PORTRAIT_SIZE = 6;
 sptr<CameraManager> cameraManager_ = nullptr;
 std::vector<Profile> previewProfile_ = {};
 std::vector<Profile> photoProfile_ = {};
 bool g_preIsSupportedPortraitmode = false;
 bool g_phoIsSupportedPortraitmode = false;
-
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
 
 sptr<CaptureOutput> CreatePreviewOutput()
 {
@@ -177,11 +144,8 @@ void NativeAuthorization()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-void PortraitSessionFuzzer::PortraitSessionFuzzTest()
+void PortraitSessionFuzzer::PortraitSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     NativeAuthorization();
     cameraManager_ = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
@@ -208,14 +172,15 @@ void PortraitSessionFuzzer::PortraitSessionFuzzTest()
     portraitSession->LockForControl();
     auto portraitEffect = portraitSession->GetSupportedPortraitEffects();
     portraitSession->GetPortraitEffect();
+    uint8_t portraitEnum = fdp.ConsumeIntegral<uint8_t>() % PORTRAIT_SIZE;
     if (!portraitEffect.empty()) {
-        portraitSession->SetPortraitEffect(portraitEffect[0]);
+        portraitSession->SetPortraitEffect(portraitEffect[portraitEnum]);
     }
     portraitSession->CanAddOutput(photo);
     portraitSession->UnlockForControl();
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto portraitSession = std::make_unique<PortraitSessionFuzzer>();
     if (portraitSession == nullptr) {
@@ -223,31 +188,11 @@ void Test()
         return;
     }
     // std::cout << "aning PortraitSessionFuzzTest" << std::endl;
-    portraitSession->PortraitSessionFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    portraitSession->PortraitSessionFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -255,10 +200,6 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

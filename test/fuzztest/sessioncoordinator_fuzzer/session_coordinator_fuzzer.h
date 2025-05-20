@@ -17,13 +17,14 @@
 #define SESSION_COORDINATOR_FUZZER_H
 
 #include "session_coordinator.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class SessionCoordinatorFuzzer {
 public:
 static std::shared_ptr<DeferredProcessing::SessionCoordinator> fuzz_;
-static void SessionCoordinatorFuzzTest();
+static void SessionCoordinatorFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

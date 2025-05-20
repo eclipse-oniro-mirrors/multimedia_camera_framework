@@ -18,12 +18,13 @@
 
 #include "fluorescence_photo_session.h"
 #include "photo_session.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class PhotoSessionFuzzer {
 public:
-static void PhotoSessionFuzzTest();
+static void PhotoSessionFuzzTest(FuzzedDataProvider& fdp);
 }; //PhotoSessionFuzzer
 } //CameraStandard
 } //OHOS

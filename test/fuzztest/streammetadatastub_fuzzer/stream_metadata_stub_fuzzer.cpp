@@ -27,23 +27,22 @@
 
 namespace {
 
-const int32_t LIMITSIZE = 2;
 const size_t LIMITCOUNT = 4;
 const int32_t PHOTO_FORMAT = 2000;
 const uint32_t INVALID_CODE = 9999;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
+static constexpr int32_t MIN_SIZE_NUM = 150;
 
-std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
+std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(FuzzedDataProvider& fdp)
 {
     int32_t itemCount = 10;
     int32_t dataSize = 100;
-    FuzzedDataProvider fdp(rawData, size);
 
-    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams.data(), streams.size() / LIMITCOUNT);
+    int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
     float focalLength = fdp.ConsumeFloatingPoint<float>();
@@ -55,7 +54,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, siz
     int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     return ability;
@@ -86,9 +85,10 @@ void CheckPermission()
     }
 }
 
-void Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *data, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     CheckPermission();
@@ -101,28 +101,38 @@ void Test(uint8_t *rawData, size_t size)
     fuzz_ = new HStreamMetadata(producer, PHOTO_FORMAT, type);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
-    Test_OnRemoteRequest(rawData, size);
+    Test_OnRemoteRequest(fdp);
 }
 
-void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
+void Test_OnRemoteRequest(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
     data.WriteInterfaceToken(fuzz_->GetDescriptor());
-    auto metadata = MakeMetadata(rawData, size);
+    auto metadata = MakeMetadata(fdp);
     CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data)),
         "StreamMetadataStubFuzzer: EncodeCameraMetadata Error");
     uint32_t code;
     MessageParcel reply;
     MessageOption option;
-    code  = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START);
+    std::vector<StreamMetadataInterfaceCode> streamMetadataInfo = {
+        CAMERA_STREAM_META_START,
+        CAMERA_STREAM_META_STOP,
+        CAMERA_STREAM_META_RELEASE,
+        CAMERA_STREAM_META_SET_CALLBACK,
+        CAMERA_STREAM_META_ENABLE_RESULTS,
+        CAMERA_STREAM_META_DISABLE_RESULTS,
+        CAMERA_STREAM_META_UNSET_CALLBACK,
+    };
+
+    code  = static_cast<uint32_t>(streamMetadataInfo[fdp.ConsumeIntegral<uint32_t>() % streamMetadataInfo.size()]);
     data.RewindRead(0);
     fuzz_->OnRemoteRequest(code, data, reply, option);
 
-    code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP);
+    code = static_cast<uint32_t>(streamMetadataInfo[fdp.ConsumeIntegral<uint32_t>() % streamMetadataInfo.size()]);
     data.RewindRead(0);
     fuzz_->OnRemoteRequest(code, data, reply, option);
 
-    code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE);
+    code = static_cast<uint32_t>(streamMetadataInfo[fdp.ConsumeIntegral<uint32_t>() % streamMetadataInfo.size()]);
     data.RewindRead(0);
     fuzz_->OnRemoteRequest(code, data, reply, option);
 

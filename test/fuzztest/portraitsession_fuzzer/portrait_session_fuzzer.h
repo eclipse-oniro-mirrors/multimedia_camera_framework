@@ -17,12 +17,13 @@
 #define PORTRAIT_SESSION_FUZZER_H
 
 #include "portrait_session.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class PortraitSessionFuzzer {
 public:
-static void PortraitSessionFuzzTest();
+static void PortraitSessionFuzzTest(FuzzedDataProvider& fdp);
 }; //PortraitSessionFuzzer
 } //CameraStandard
 } //OHOS

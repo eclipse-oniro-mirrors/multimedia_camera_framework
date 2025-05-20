@@ -31,30 +31,30 @@ namespace OHOS {
 namespace CameraStandard {
 namespace StreamCaptureStubFuzzer {
 
-const int32_t LIMITSIZE = 2;
 const size_t LIMITCOUNT = 4;
+static constexpr int32_t MIN_SIZE_NUM = 100;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const uint32_t INVALID_CODE = 9999;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
+const int32_t DATA_ZERO = 0;
 const int32_t ITEM_CAP = 10;
 const int32_t DATA_CAP = 100;
 
 bool g_hasPermission = false;
 std::shared_ptr<HStreamCaptureStub> fuzz_{nullptr};
 
-std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
+std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(FuzzedDataProvider& fdp)
 {
     int32_t itemCount = ITEM_CAP;
     int32_t dataSize = DATA_CAP;
-    FuzzedDataProvider fdp(rawData, size);
 
-    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams.data(), streams.size() / LIMITCOUNT);
+    int32_t compensationRange[2] = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
     float focalLength = fdp.ConsumeFloatingPoint<float>();
@@ -66,7 +66,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, siz
     int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    const camera_rational_t aeCompensationStep[] = {{fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     return ability;
@@ -88,25 +88,25 @@ void CheckPermission()
     }
 }
 
-void Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *data, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     CheckPermission();
-
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
-    Test_OnRemoteRequest(rawData, size);
-    Test_HandleCapture(rawData, size);
-    Test_HandleSetThumbnail(rawData, size);
-    Test_HandleSetBufferProducerInfo(rawData, size);
-    Test_HandleEnableDeferredType(rawData, size);
-    Test_HandleSetCallback(rawData, size);
+    Test_OnRemoteRequest(fdp);
+    Test_HandleCapture(fdp);
+    Test_HandleSetThumbnail(fdp);
+    Test_HandleSetBufferProducerInfo(fdp);
+    Test_HandleEnableDeferredType(fdp);
+    Test_HandleSetCallback(fdp);
     fuzz_->Release();
 }
 
@@ -117,12 +117,13 @@ void Request(MessageParcel &data, MessageParcel &reply, MessageOption &option, S
     fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
-void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
+void Test_OnRemoteRequest(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
-    data.RewindWrite(0);
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
+    data.RewindWrite(dataSize);
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    auto metadata = MakeMetadata(rawData, size);
+    auto metadata = MakeMetadata(fdp);
     CHECK_ERROR_RETURN_LOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data)),
         "StreamCaptureStubFuzzer: EncodeCameraMetadata Error");
     MessageParcel reply;
@@ -142,9 +143,10 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     fuzz_->OnRemoteRequest(code, data, reply, option);
 }
 
-void Test_HandleCapture(uint8_t *rawData, size_t size)
+void Test_HandleCapture(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
     // tagCount
     data.WriteUint32(1);
     // itemCapacity
@@ -160,51 +162,60 @@ void Test_HandleCapture(uint8_t *rawData, size_t size)
     // item.count
     data.WriteUint32(1);
     data.WriteInt32(1);
-    data.WriteRawData(rawData, size);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     data.RewindRead(0);
     fuzz_->HandleCapture(data);
 }
 
-void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
+void Test_HandleSetThumbnail(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
-    data.WriteRawData(rawData, size);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     data.RewindRead(0);
     fuzz_->HandleSetThumbnail(data);
 }
 
-void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size)
+void Test_HandleSetBufferProducerInfo(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_LOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
-    data.WriteRawData(rawData, size);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     data.RewindRead(0);
     fuzz_->HandleSetBufferProducerInfo(data);
 }
 
-void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
+void Test_HandleEnableDeferredType(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
-    data.WriteRawData(rawData, size);
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     data.RewindRead(0);
     fuzz_->HandleEnableDeferredType(data);
 }
 
-void Test_HandleSetCallback(uint8_t *rawData, size_t size)
+void Test_HandleSetCallback(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
+    int32_t dataSize = fdp.ConsumeIntegralInRange(DATA_ZERO, DATA_CAP);
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     static const int32_t AUDIO_POLICY_SERVICE_ID = 3009;
     auto object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
     data.WriteRemoteObject(object);
-    data.WriteRawData(rawData, size);
+    std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
+    data.WriteRawData(streams.data(), streams.size());
     data.RewindRead(0);
     fuzz_->HandleSetCallback(data);
 }
