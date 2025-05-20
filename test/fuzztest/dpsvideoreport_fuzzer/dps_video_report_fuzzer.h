@@ -18,6 +18,7 @@
 
 #include "dps_video_report.h"
 #include <memory>
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ using namespace DeferredProcessing;
 class DfxVideoReportFuzzer {
 public:
 static std::shared_ptr<DfxVideoReport> fuzz_;
-static void DfxVideoReportFuzzTest();
+static void DfxVideoReportFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

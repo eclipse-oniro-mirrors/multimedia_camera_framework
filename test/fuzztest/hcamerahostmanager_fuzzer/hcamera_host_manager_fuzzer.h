@@ -17,6 +17,7 @@
 #define HCAMERA_HOST_MANAGER_FUZZER_H
 
 #include "hcamera_host_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,7 +35,7 @@ class HCameraHostManagerFuzzer {
 public:
 static std::shared_ptr<HCameraHostManager> fuzz_;
 static std::shared_ptr<HCameraHostManager::CameraHostInfo> hostInfo;
-static void HCameraHostManagerFuzzTest1();
+static void HCameraHostManagerFuzzTest1(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

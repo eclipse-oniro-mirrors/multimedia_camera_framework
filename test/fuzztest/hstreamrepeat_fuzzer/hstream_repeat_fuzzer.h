@@ -20,6 +20,7 @@
 #include "hstream_repeat.h"
 #include "hcamera_device.h"
 #include "hstream_repeat_callback_stub.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -118,9 +119,9 @@ class HStreamRepeatFuzzer {
 public:
 static bool hasPermission;
 static std::shared_ptr<HStreamRepeat> fuzz_;
-static void HStreamRepeatFuzzTest1();
-static void HStreamRepeatFuzzTest2();
-static void HStreamRepeatFuzzTest3();
+static void HStreamRepeatFuzzTest1(FuzzedDataProvider& fdp);
+static void HStreamRepeatFuzzTest2(FuzzedDataProvider& fdp);
+static void HStreamRepeatFuzzTest3(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

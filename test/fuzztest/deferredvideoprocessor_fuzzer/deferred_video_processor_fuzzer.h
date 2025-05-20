@@ -21,6 +21,7 @@
 #include "video_strategy_center.h"
 #include "video_post_processor.h"
 #include <memory>
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,7 +39,7 @@ public:
 static std::shared_ptr<DeferredProcessing::DeferredVideoProcessor> fuzz_;
 static std::shared_ptr<DeferredProcessing::VideoStrategyCenter> center_;
 
-static void DeferredVideoProcessorFuzzTest();
+static void DeferredVideoProcessorFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

@@ -29,44 +29,10 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 64;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 sptr<HCameraDevice> g_HCameraDevice = nullptr;
 std::string g_cameraID;
-
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
 
 void InitCameraDevice()
 {
@@ -85,9 +51,9 @@ void InitCameraDevice()
     g_HCameraDevice = new HCameraDevice(cameraHostManager, g_cameraID, callingTokenId);
 }
 
-void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1()
+void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     auto hCameraDeviceManager = HCameraDeviceManager::GetInstance();
@@ -96,12 +62,12 @@ void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1()
         return;
     };
     InitCameraDevice();
-    pid_t pid = GetData<int32_t>();
+    pid_t pid = fdp.ConsumeIntegral<int32_t>();
     hCameraDeviceManager->GetCameraHolderByPid(pid);
     hCameraDeviceManager->GetCamerasByPid(pid);
     hCameraDeviceManager->GetActiveClient();
     hCameraDeviceManager->GetActiveCameraHolders();
-    int32_t state = GetData<int32_t>();
+    int32_t state = fdp.ConsumeIntegral<int32_t>();
     hCameraDeviceManager->SetStateOfACamera(g_cameraID, state);
     hCameraDeviceManager->GetCameraStateOfASide();
     sptr<ICameraBroker> callback = nullptr;
@@ -111,54 +77,28 @@ void HCameraDeviceManagerFuzzer::HCameraDeviceManagerFuzzTest1()
     int32_t type = 0;
     hCameraDeviceManager->GetConflictDevices(cameraNeedEvict, g_HCameraDevice, type);
     hCameraDeviceManager->RemoveDevice(g_cameraID);
-    int32_t processState = GetData<int32_t>();
-    hCameraDeviceManager->GenerateEachProcessCameraState(processState, GetData<uint32_t>());
+    int32_t processState = fdp.ConsumeIntegral<int32_t>();
+    hCameraDeviceManager->GenerateEachProcessCameraState(processState, fdp.ConsumeIntegral<uint32_t>());
     hCameraDeviceManager->IsMultiCameraActive(pid);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto hCameraDeviceManagerFuzzer = std::make_unique<HCameraDeviceManagerFuzzer>();
     if (hCameraDeviceManagerFuzzer == nullptr) {
         MEDIA_INFO_LOG("hCameraDeviceManagerFuzzer is null");
         return;
     }
-    hCameraDeviceManagerFuzzer->HCameraDeviceManagerFuzzTest1();
+    hCameraDeviceManagerFuzzer->HCameraDeviceManagerFuzzTest1(fdp);
 }
 
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
-}
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

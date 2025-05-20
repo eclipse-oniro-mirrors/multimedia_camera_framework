@@ -18,6 +18,7 @@
 
 #include "light_painting_session.h"
 #include "session/scan_session.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,8 +26,8 @@ class LightScanSessionFuzzer {
 public:
 static sptr<LightPaintingSession> fuzzLight_;
 static sptr<ScanSession> fuzzScan_;
-static void LightPaintingSessionFuzzTest();
-static void ScanSessionFuzzTest();
+static void LightPaintingSessionFuzzTest(FuzzedDataProvider& fdp);
+static void ScanSessionFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

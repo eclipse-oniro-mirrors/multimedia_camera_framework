@@ -27,13 +27,11 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
+static constexpr int32_t MIN_SIZE_NUM = 128;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 int g_userId = 0;
+const size_t MAX_LENGTH_STRING = 64;
+
 std::shared_ptr<DeferredVideoProcessingSessionCallback> callback_ =
     std::make_shared<DeferredVideoProcessingSessionCallback>();
 std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> sessionCallback_ =
@@ -41,35 +39,6 @@ std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> sessionCallback_ =
 std::shared_ptr<DeferredVideoProcSession> deferredVideoProcSession_ =
     std::make_shared<DeferredVideoProcSession>(g_userId, sessionCallback_);
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
 
 void GetPermission()
 {
@@ -114,35 +83,33 @@ auto createSession(int userId,
     return CameraErrorCode::SUCCESS;
 }
 
-void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest()
+void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
         return;
     }
     GetPermission();
 
-    uint8_t randomNum = GetData<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string videoId(testStrings[randomNum % testStrings.size()]);
+    std::string videoId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     sptr<IPCFileDescriptor> ipcFileDescriptor = nullptr;
     callback_->OnProcessVideoDone(videoId, ipcFileDescriptor);
     callback_->OnError(videoId, DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
-    int32_t status = GetData<int32_t>();
+    int32_t status = fdp.ConsumeIntegral<int32_t>();
     callback_->OnStateChanged(status);
 
     deferredVideoProcSession_->BeginSynchronize();
     deferredVideoProcSession_->EndSynchronize();
-    sptr<IPCFileDescriptor> srcFd = nullptr;
-    sptr<IPCFileDescriptor> dstFd = nullptr;
+    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
+    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
     deferredVideoProcSession_->AddVideo(videoId, srcFd, dstFd);
-    bool restorable = GetData<bool>();
+    bool restorable = fdp.ConsumeBool();
     deferredVideoProcSession_->RemoveVideo(videoId, restorable);
     deferredVideoProcSession_->RestoreVideo(videoId);
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> session = nullptr;
     createSession(g_userId, sessionCallback_, session);
     CHECK_ERROR_RETURN_LOG(session == nullptr, "session is null!");
     deferredVideoProcSession_->SetDeferredVideoSession(session);
-    int32_t pid = GetData<int32_t>();
+    int32_t pid = fdp.ConsumeIntegral<int32_t>();
     deferredVideoProcSession_->ReconnectDeferredProcessingSession();
     deferredVideoProcSession_->ConnectDeferredProcessingSession();
     deferredVideoProcSession_->GetCallback();
@@ -151,49 +118,23 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest()
     deferredVideoProcSession_->CameraServerDied(pid);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto deferredVideoProcSessionFuzz = std::make_unique<DeferredVideoProcSessionFuzzer>();
     if (deferredVideoProcSessionFuzz == nullptr) {
         MEDIA_INFO_LOG("deferredVideoProcSessionFuzz is null");
         return;
     }
-    deferredVideoProcSessionFuzz->DeferredVideoProcSessionFuzzTest();
+    FuzzedDataProvider fdp(data, size);
+    deferredVideoProcSessionFuzz->DeferredVideoProcSessionFuzzTest(fdp);
 }
 
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
-}
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

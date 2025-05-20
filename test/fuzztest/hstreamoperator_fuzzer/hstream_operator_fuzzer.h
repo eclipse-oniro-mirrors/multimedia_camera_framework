@@ -17,6 +17,7 @@
 #define HSTREAM_OPERATOR_FUZZER_H
 
 #include "hstream_operator.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,7 +25,7 @@ namespace CameraStandard {
 class HStreamOperatorFuzzer {
 public:
 static sptr<HStreamOperator> fuzz_;
-static void HStreamOperatorFuzzTest();
+static void HStreamOperatorFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

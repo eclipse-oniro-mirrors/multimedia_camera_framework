@@ -21,6 +21,7 @@
 #include "system_ability_definition.h"
 #include "deferred_processing_service.h"
 #include "camera_log.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -85,8 +86,8 @@ public:
 class MetadataOutputFuzzer {
 public:
 static std::shared_ptr<MetadataOutput> fuzz_;
-static void MetadataOutputFuzzTest();
-static void MetadataOutputFuzzTest1();
+static void MetadataOutputFuzzTest(FuzzedDataProvider& fdp);
+static void MetadataOutputFuzzTest1(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

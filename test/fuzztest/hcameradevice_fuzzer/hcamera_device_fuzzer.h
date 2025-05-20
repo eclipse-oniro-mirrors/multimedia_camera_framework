@@ -18,6 +18,7 @@
 
 #include "hcamera_device_stub.h"
 #include "hcamera_device.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -69,10 +70,10 @@ class HCameraDeviceFuzzer {
 public:
 static bool hasPermission;
 static sptr<HCameraDevice> fuzz_;
-static void HCameraDeviceFuzzTest1();
-static void HCameraDeviceFuzzTest2();
-static void HCameraDeviceFuzzTest3();
-static void HCameraDeviceFuzzTest4();
+static void HCameraDeviceFuzzTest1(FuzzedDataProvider& fdp);
+static void HCameraDeviceFuzzTest2(FuzzedDataProvider& fdp);
+static void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp);
+static void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

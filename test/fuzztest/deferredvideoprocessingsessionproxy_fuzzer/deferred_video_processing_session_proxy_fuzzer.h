@@ -20,6 +20,7 @@
 #include "deferred_video_processing_session.h"
 #include "ideferred_video_processing_session_callback.h"
 #include "deferred_video_processing_session_proxy.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,7 +28,7 @@ using namespace DeferredProcessing;
 class DeferredVideoProcessingSessionProxyFuzzer {
 public:
 static std::shared_ptr<DeferredVideoProcessingSessionProxy> fuzz_;
-static void DeferredVideoProcessingSessionProxyFuzzTest();
+static void DeferredVideoProcessingSessionProxyFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

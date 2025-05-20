@@ -27,7 +27,6 @@
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
 #include "buffer_extra_data_impl.h"
-#include "picture.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_photo_proxy.h"
 
@@ -37,55 +36,18 @@ static constexpr int32_t WIDE_CAMERA_ZOOM_RANGE = 0;
 static constexpr int32_t MAIN_CAMERA_ZOOM_RANGE = 1;
 static constexpr int32_t TWO_X_EXIT_TELE_ZOOM_RANGE = 2;
 static constexpr int32_t TELE_CAMERA_ZOOM_RANGE = 3;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 256;
 static constexpr int32_t NUM_1 = 1;
-static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 const int NUM_10 = 10;
 const int NUM_100 = 100;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 
 std::shared_ptr<HCaptureSession> HCaptureSessionFuzzer::fuzz_{nullptr};
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    int32_t opMode = GetData<int32_t>();
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
     sptr<HStreamOperator> hStreamOperator;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
@@ -95,21 +57,20 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->BeginConfig();
     fuzz_->CommitConfig();
-    int32_t featureMode = GetData<int32_t>();
+    int32_t featureMode = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetFeatureMode(featureMode);
-    int outFd = GetData<int32_t>();
+    int outFd =fdp.ConsumeIntegral<int32_t>();
     CameraInfoDumper infoDumper(outFd);
     fuzz_->DumpSessionInfo(infoDumper);
     fuzz_->DumpSessions(infoDumper);
     fuzz_->DumpCameraSessionSummary(infoDumper);
-    fuzz_->OperatePermissionCheck(GetData<uint32_t>());
-    fuzz_->EnableMovingPhotoMirror(GetData<bool>(), GetData<bool>());
+    fuzz_->OperatePermissionCheck(fdp.ConsumeIntegral<uint32_t>());
+    fuzz_->EnableMovingPhotoMirror(fdp.ConsumeBool(), fdp.ConsumeBool());
     ColorSpace getColorSpace;
     fuzz_->GetActiveColorSpace(getColorSpace);
     constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
-    ColorSpace colorSpace = static_cast<ColorSpace>(GetData<uint8_t>() % executionModeCount);
-    fuzz_->SetColorSpace(colorSpace, GetData<bool>());
-    fuzz_->GetPid();
+    ColorSpace colorSpace = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
+    fuzz_->SetColorSpace(colorSpace, fdp.ConsumeBool());
     fuzz_->GetopMode();
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->GetCurrentStreamInfos(streamInfos);
@@ -119,17 +80,15 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest1()
     fuzz_->SetPreviewRotation(deviceClass);
 }
 
-void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
+void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    int32_t opMode = GetData<int32_t>();
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
+    fuzz_->GetPid();
     StreamType streamType = StreamType::CAPTURE;
     fuzz_->AddOutput(streamType, nullptr);
     fuzz_->RemoveOutput(streamType, nullptr);
@@ -139,29 +98,26 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest2()
     fuzz_->ValidateSession();
     CaptureSessionState sessionState = CaptureSessionState::SESSION_STARTED;
     fuzz_->GetSessionState(sessionState);
-    float currentFps = GetData<float>();
-    float currentZoomRatio = GetData<float>();
+    float currentFps = fdp.ConsumeFloatingPoint<float>();
+    float currentZoomRatio = fdp.ConsumeFloatingPoint<float>();
     std::vector<float> crossZoomAndTime;
-    int32_t operationMode = GetData<int32_t>();
+    int32_t operationMode = fdp.ConsumeIntegral<int32_t>();;
     fuzz_->QueryFpsAndZoomRatio(currentFps, currentZoomRatio, crossZoomAndTime, operationMode);
     fuzz_->GetSensorOritation();
-    float zoomRatio = GetData<float>();
+    float zoomRatio = fdp.ConsumeFloatingPoint<float>();
     std::vector<float> crossZoom;
     fuzz_->GetRangeId(zoomRatio, crossZoom);
-    float zoomPointA = GetData<float>();
-    float zoomPointB = GetData<float>();
+    float zoomPointA = fdp.ConsumeFloatingPoint<float>();
+    float zoomPointB = fdp.ConsumeFloatingPoint<float>();
     fuzz_->isEqual(zoomPointA, zoomPointB);
     std::vector<std::vector<float>> crossTime_1;
     fuzz_->GetCrossZoomAndTime(crossZoomAndTime, crossZoom, crossTime_1);
 }
 
-void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
+void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    int32_t opMode = GetData<int32_t>();
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
@@ -190,10 +146,10 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
     fuzz_->GetCrossWaitTime(crossTime_2, targetRangeId, currentRangeId);
     targetRangeId = TWO_X_EXIT_TELE_ZOOM_RANGE;
     fuzz_->GetCrossWaitTime(crossTime_2, targetRangeId, currentRangeId);
-    int32_t smoothZoomType = GetData<int32_t>();
-    float targetZoomRatio = GetData<float>();
-    float duration = GetData<float>();
-    int32_t operationMode = GetData<int32_t>();
+    int32_t smoothZoomType = fdp.ConsumeIntegral<int32_t>();
+    float targetZoomRatio = fdp.ConsumeFloatingPoint<float>();
+    float duration = fdp.ConsumeFloatingPoint<float>();
+    int32_t operationMode = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetSmoothZoom(smoothZoomType, operationMode, targetZoomRatio, duration);
     fuzz_->Start();
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings;
@@ -202,13 +158,10 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest3()
     fuzz_->Stop();
 }
 
-void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
+void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    int32_t opMode = GetData<int32_t>();
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     sptr<HCaptureSession> session;
     fuzz_ = std::make_shared<HCaptureSession>(callerToken, opMode);
     fuzz_->NewInstance(0, 0, session);
@@ -218,60 +171,37 @@ void HCaptureSessionFuzzer::HCaptureSessionFuzzTest4()
     sptr<ICaptureSessionCallback> callback;
     fuzz_->SetCallback(callback);
     fuzz_->GetSessionState();
-    int32_t status = GetData<int32_t>();
+    int32_t status = fdp.ConsumeIntegral<int32_t>();
     fuzz_->GetOutputStatus(status);
-    int32_t imageSeqId = GetData<int32_t>();
-    int32_t seqId = GetData<int32_t>();
+    int32_t imageSeqId = fdp.ConsumeIntegral<int32_t>();
+    int32_t seqId = fdp.ConsumeIntegral<int32_t>();
     fuzz_->CreateBurstDisplayName(MAIN_CAMERA_ZOOM_RANGE, seqId);
     fuzz_->CreateBurstDisplayName(imageSeqId, seqId);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     auto hcaptureSession = std::make_unique<HCaptureSessionFuzzer>();
     if (hcaptureSession == nullptr) {
         MEDIA_INFO_LOG("hcaptureSession is null");
         return;
     }
-    hcaptureSession->HCaptureSessionFuzzTest1();
-    hcaptureSession->HCaptureSessionFuzzTest2();
-    hcaptureSession->HCaptureSessionFuzzTest3();
-    hcaptureSession->HCaptureSessionFuzzTest4();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    hcaptureSession->HCaptureSessionFuzzTest1(fdp);
+    hcaptureSession->HCaptureSessionFuzzTest2(fdp);
+    hcaptureSession->HCaptureSessionFuzzTest3(fdp);
+    hcaptureSession->HCaptureSessionFuzzTest4(fdp);
 }
+
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }
