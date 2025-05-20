@@ -105,7 +105,6 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
     "drivers_interface_display:libdisplay_buffer_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.2",
     "drivers_interface_display:libdisplay_composer_proxy_1.0",
-    "drivers_peripheral_display:hdi_gralloc_client",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hdf_core:libhdi",

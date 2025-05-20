@@ -100,7 +100,6 @@ ohos_unittest("camera_framework_native_unittest") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
-    "drivers_peripheral_display:hdi_gralloc_client",
     "googletest:gmock_main",
     "graphic_surface:surface",
     "hdf_core:libhdi",
