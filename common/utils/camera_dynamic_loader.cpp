@@ -22,9 +22,12 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 
 #include "camera_log.h"
+#include "common_timer_errors.h"
+#include "camera_simple_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,10 +35,11 @@ using namespace std;
 
 enum AsyncLoadingState : int32_t { NONE, PREPARE, LOADING };
 
-static const uint32_t HANDLE_MASK = 0xffffffff;
+static const uint32_t HANDLE_MASK = 0xff0000ff;
 static mutex g_libMutex;
 static map<const string, shared_ptr<Dynamiclib>> g_dynamiclibMap = {};
 static map<const string, weak_ptr<Dynamiclib>> g_weakDynamiclibMap = {};
+static map<const string, shared_ptr<SimpleTimer>> g_delayedCloseTimerMap = {};
 
 static mutex g_asyncLoadingMutex;
 static condition_variable g_asyncLiblockCondition;
@@ -125,6 +129,7 @@ void CameraDynamicLoader::LoadDynamiclibAsync(const std::string& libName)
     thread asyncThread = thread([libName]() {
         unique_lock<mutex> lock(g_libMutex);
         {
+            CancelFreeDynamicLibDelayedNoLock(libName);
             unique_lock<mutex> asyncLock(g_asyncLoadingMutex);
             g_isAsyncLoading = AsyncLoadingState::LOADING;
             g_asyncLiblockCondition.notify_all();
@@ -140,10 +145,9 @@ void CameraDynamicLoader::LoadDynamiclibAsync(const std::string& libName)
     g_asyncLiblockCondition.wait(asyncLock, []() { return g_isAsyncLoading != AsyncLoadingState::PREPARE; });
 }
 
-void CameraDynamicLoader::FreeDynamiclib(const string& libName)
+void CameraDynamicLoader::FreeDynamiclibNoLock(const string& libName)
 {
     CAMERA_SYNC_TRACE;
-    lock_guard<mutex> lock(g_libMutex);
     auto loadedIterator = g_dynamiclibMap.find(libName);
     CHECK_ERROR_RETURN(loadedIterator == g_dynamiclibMap.end());
     MEDIA_INFO_LOG("Dynamiclib::FreeDynamiclib %{public}s lib use count is:%{public}d", libName.c_str(),
@@ -152,6 +156,47 @@ void CameraDynamicLoader::FreeDynamiclib(const string& libName)
     weak_ptr<Dynamiclib> weaklib = loadedIterator->second;
     g_weakDynamiclibMap[libName] = weaklib;
     g_dynamiclibMap.erase(loadedIterator);
+}
+
+void CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock(const std::string& libName)
+{
+    auto it = g_delayedCloseTimerMap.find(libName);
+    if (it == g_delayedCloseTimerMap.end()) {
+        return;
+    }
+    auto timer = it->second;
+    bool isCancelSuccess = timer->CancelTask();
+    MEDIA_INFO_LOG("CameraDynamicLoader::CancelFreeDynamicLibDelayedNoLock %{public}s CancelTask success :%{public}d",
+        libName.c_str(), isCancelSuccess);
+    g_delayedCloseTimerMap.erase(it);
+}
+
+void CameraDynamicLoader::FreeDynamicLibDelayed(const std::string& libName, uint32_t delayMs)
+{
+    MEDIA_INFO_LOG(
+        "CameraDynamicLoader::FreeDynamicLibDelayed %{public}s  delayMs:%{public}d", libName.c_str(), delayMs);
+    lock_guard<mutex> lock(g_libMutex);
+    auto it = g_delayedCloseTimerMap.find(libName);
+    if (it != g_delayedCloseTimerMap.end()) {
+        // Cancel old task
+        bool isCancelSuccess = it->second->CancelTask();
+        MEDIA_INFO_LOG("CameraDynamicLoader::FreeDynamicLibDelayed %{public}s CancelTask success:%{public}d",
+            libName.c_str(), isCancelSuccess);
+        g_delayedCloseTimerMap.erase(it);
+    }
+    shared_ptr<SimpleTimer> closeTimer = make_shared<SimpleTimer>([&, libName]() {
+        lock_guard<mutex> lock(g_libMutex);
+        auto it = g_delayedCloseTimerMap.find(libName);
+        if (it == g_delayedCloseTimerMap.end()) {
+            return;
+        }
+        FreeDynamiclibNoLock(libName);
+    });
+    bool isStartSuccess = closeTimer->StartTask(delayMs);
+
+    g_delayedCloseTimerMap[libName] = closeTimer;
+    MEDIA_INFO_LOG("CameraDynamicLoader::FreeDynamicLibDelayed %{public}s StartTask success:%{public}d",
+        libName.c_str(), isStartSuccess);
 }
 } // namespace CameraStandard
 } // namespace OHOS

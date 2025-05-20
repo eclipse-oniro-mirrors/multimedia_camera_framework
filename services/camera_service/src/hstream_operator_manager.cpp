@@ -66,7 +66,7 @@ void HStreamOperatorManager::RemoveStreamOperator(int32_t& hStreamOperatorId)
     }
     streamOperatorManagerMap_.erase(hStreamOperatorId);
     if (streamOperatorManagerMap_.size() == 0) {
-        CameraDynamicLoader::FreeDynamiclib(MEDIA_LIB_SO);
+        CameraDynamicLoader::FreeDynamicLibDelayed(MEDIA_LIB_SO, LIB_DELAYED_UNLOAD_TIME);
     }
     MEDIA_INFO_LOG("HStreamOperatorManager::RemoveStreamOperator end");
     return;
