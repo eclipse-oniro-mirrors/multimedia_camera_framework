@@ -468,8 +468,8 @@ void TestOther2(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
 void TestSession(sptr<CaptureSession> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    sptr<CaptureInput> input = GetCameraInput(rawData, size);
-    sptr<CaptureOutput> output = GetCaptureOutput(rawData, size);
+    sptr<CaptureInput> input = GetCameraInput(fdp);
+    sptr<CaptureOutput> output = GetCaptureOutput(fdp);
     CHECK_ERROR_RETURN_LOG(!input || !output || !session, "CaptureSessionFuzzer: input/output/session is null");
     session->SetMode(g_sceneMode);
     session->GetMode();
