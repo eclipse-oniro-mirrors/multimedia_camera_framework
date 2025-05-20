@@ -79,13 +79,12 @@ void GetPermission()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-sptr<CaptureInput> GetCameraInput(uint8_t* data, size_t size)
+sptr<CaptureInput> GetCameraInput(FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_RET_LOG(cameras.size() < NUM_TWO, nullptr, "CaptureSessionFuzzer: GetSupportedCameras Error");
-    FuzzedDataProvider fdp(data, size);
     camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
     CHECK_ERROR_RETURN_RET_LOG(!camera, nullptr, "CaptureSessionFuzzer: Camera is null Error");
     return manager->CreateCameraInput(camera);
@@ -149,7 +148,7 @@ void Test(uint8_t* data, size_t size)
     session->Stop();
 }
 
-sptr<PhotoOutput> GetCaptureOutput(uint8_t* data, size_t size)
+sptr<PhotoOutput> GetCaptureOutput(FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
     auto manager = CameraManager::GetInstance();
@@ -159,7 +158,6 @@ sptr<PhotoOutput> GetCaptureOutput(uint8_t* data, size_t size)
     CHECK_ERROR_RETURN_RET_LOG(!capability, nullptr, "CaptureSessionFuzzer: GetSupportedOutputCapability Error");
     auto profiles = capability->GetPhotoProfiles();
     CHECK_ERROR_RETURN_RET_LOG(profiles.empty(), nullptr, "CaptureSessionFuzzer: GetPhotoProfiles empty");
-    FuzzedDataProvider fdp(data, size);
     profile = profiles[fdp.ConsumeIntegral<uint32_t>() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_ERROR_RETURN_RET_LOG(!photoSurface, nullptr, "CaptureSessionFuzzer: create photoSurface Error");
