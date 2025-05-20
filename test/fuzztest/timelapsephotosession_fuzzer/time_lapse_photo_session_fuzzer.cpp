@@ -139,8 +139,7 @@ auto TestTimeLapsePhoto(FuzzedDataProvider& fdp)
     vector<int32_t> intervalRange;
     session->GetSupportedTimeLapseIntervalRange(intervalRange);
     if (!intervalRange.empty()) {
-        int32_t interval = intervalRange[intervalRange.size() -
-            fdp.ConsumeIntegralInRange<int32_t>(1, intervalRange.size())];
+        int32_t interval = intervalRange[fdp.ConsumeIntegral<int32_t>() % intervalRange.size()];
         session->LockForControl();
         session->SetTimeLapseInterval(interval);
         session->UnlockForControl();
@@ -166,13 +165,13 @@ auto TestTimeLapsePhoto(FuzzedDataProvider& fdp)
 auto TestManualExposure(FuzzedDataProvider& fdp)
 {
     MessageParcel data;
-    int32_t dataSize = fdp.ConsumeIntegralInRange(1, 100);
+    int32_t dataSize = fdp.ConsumeIntegralInRange<int32_t>(1, 100);
     std::vector<uint8_t> streams = fdp.ConsumeBytes<uint8_t>(dataSize);
     data.WriteRawData(streams.data(), streams.size());
     auto meta = session->GetMetadata();
     const camera_rational_t rs[] = {
-        {fdp.ConsumeIntegralInRange(0, 10), fdp.ConsumeIntegralInRange(900000, 1000000)},
-        {fdp.ConsumeIntegralInRange(0, 30), fdp.ConsumeIntegralInRange(900000, 1000000)},
+        {fdp.ConsumeIntegralInRange<int32_t>(0, 10), fdp.ConsumeIntegralInRange<int32_t>(900000, 1000000)},
+        {fdp.ConsumeIntegralInRange<int32_t>(0, 30), fdp.ConsumeIntegralInRange<int32_t>(900000, 1000000)},
     };
     uint32_t dataCount = sizeof(rs) / sizeof(rs[0]);
     AddOrUpdateMetadata(meta, OHOS_ABILITY_SENSOR_EXPOSURE_TIME_RANGE, rs, dataCount);
@@ -187,8 +186,8 @@ auto TestManualExposure(FuzzedDataProvider& fdp)
     session->SetExposure(data.ReadUint32());
     session->UnlockForControl();
     uint32_t exposure = data.ReadUint32();
-    camera_rational_t expT = {.numerator = fdp.ConsumeIntegralInRange(0, 10),
-        .denominator = fdp.ConsumeIntegralInRange(900000, 1000000)};
+    camera_rational_t expT = {.numerator = fdp.ConsumeIntegralInRange<int32_t>(0, 10),
+        .denominator = fdp.ConsumeIntegralInRange<int32_t>(900000, 1000000)};
     AddOrUpdateMetadata(meta, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &expT, 1);
     session->GetExposure(exposure);
     vector<MeteringMode> modes;
@@ -202,10 +201,10 @@ auto TestManualExposure(FuzzedDataProvider& fdp)
     session->SetExposureMeteringMode(static_cast<MeteringMode>(fdp.ConsumeIntegral<uint32_t>() % 5));
     session->UnlockForControl();
     MeteringMode mode = MeteringMode::METERING_MODE_OVERALL;
-    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, fdp.ConsumeIntegralInRange(0, 3));
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
     session->GetExposureMeteringMode(mode);
     mode = static_cast<MeteringMode>(MeteringMode::METERING_MODE_OVERALL + 1);
-    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, fdp.ConsumeIntegralInRange(0, 3));
+    AddOrUpdateMetadata(meta, OHOS_CONTROL_METER_MODE, &mode, 1);
     session->GetExposureMeteringMode(mode);
 }
 

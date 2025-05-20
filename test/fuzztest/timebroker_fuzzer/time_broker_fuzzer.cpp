@@ -25,7 +25,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 10;
-const size_t THRESHOLD = 10;
 std::shared_ptr<TimeBroker> TimeBrokerFuzzer::fuzz_{nullptr};
 
 void TimeBrokerFuzzer::TimeBrokerFuzzTest(FuzzedDataProvider& fdp)

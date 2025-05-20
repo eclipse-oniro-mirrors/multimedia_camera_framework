@@ -37,7 +37,6 @@ namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static constexpr int32_t PORTRAIT_SIZE = 6;
-const size_t THRESHOLD = 10;
 sptr<CameraManager> cameraManager_ = nullptr;
 std::vector<Profile> previewProfile_ = {};
 std::vector<Profile> photoProfile_ = {};

@@ -24,15 +24,11 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MIN_SIZE_NUM = 10;
-const size_t THRESHOLD = 10;
+static constexpr int32_t MIN_SIZE_NUM = 20;
 std::shared_ptr<TimerCore> TimerCoreFuzzer::fuzz_{nullptr};
 
 void TimerCoreFuzzer::TimerCoreFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
 
     fuzz_ = std::make_shared<TimerCore>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
@@ -40,7 +36,7 @@ void TimerCoreFuzzer::TimerCoreFuzzTest(FuzzedDataProvider& fdp)
     uint64_t timestampMs = fdp.ConsumeIntegralInRange<uint64_t>(0, 1000);
     std::function<void()> timerCallback;
     const std::shared_ptr<Timer>& timer = Timer::Create("camera_deferred_base",
-        static_cast<TimerType>(fdp.ConsumeIntegralInRange(0, 1)), 0, timerCallback);
+        static_cast<TimerType>(fdp.ConsumeIntegralInRange<int32_t>(0, 1)), 0, timerCallback);
     fuzz_->GetInstance();
     fuzz_->RegisterTimer(timestampMs, timer);
     fuzz_->DeregisterTimer(timestampMs, timer);
@@ -54,6 +50,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     timercore->TimerCoreFuzzTest(fdp);
 }
 } // namespace CameraStandard

@@ -28,9 +28,8 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
-static constexpr int32_t MIN_SIZE_NUM = 60;
+static constexpr int32_t MIN_SIZE_NUM = 460;
 constexpr int VIDEO_REQUEST_FD_ID = 1;
-const size_t THRESHOLD = 10;
 
 void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& fdp)
 {
@@ -39,7 +38,7 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& f
     processor_->SetExecutionMode(selectedExecutionMode);
     processor_->SetDefaultExecutionMode();
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {fdp.ConsumeRandomLengthString(100), fdp.ConsumeRandomLengthString(100)};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto srcFd = fdp.ConsumeIntegral<uint8_t>();
     auto dstFd = fdp.ConsumeIntegral<uint8_t>();
@@ -79,7 +78,7 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2(FuzzedDataProvider& f
     std::vector<std::string> pendingVideos;
     processor_->GetPendingVideos(pendingVideos);
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {fdp.ConsumeRandomLengthString(100), fdp.ConsumeRandomLengthString(100)};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto inputFd = fdp.ConsumeIntegral<int>();
     processor_->PrepareStreams(videoId, inputFd);

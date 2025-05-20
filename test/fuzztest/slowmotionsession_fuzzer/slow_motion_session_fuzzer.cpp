@@ -30,7 +30,6 @@
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 50;
-const size_t THRESHOLD = 10;
 const int32_t DEFAULT_ITEMS = 10;
 const int32_t DEFAULT_DATA_LENGTH = 100;
 sptr<CameraManager> manager;

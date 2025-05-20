@@ -29,7 +29,6 @@ namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t NUM_TRI = 13;
 static constexpr int32_t MIN_SIZE_NUM = 20;
-const size_t THRESHOLD = 10;
 constexpr int VIDEO_REQUEST_FD_ID = 1;
 
 std::shared_ptr<DeferredProcessing::SessionCoordinator> SessionCoordinatorFuzzer::fuzz_{nullptr};
@@ -43,8 +42,12 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
     uint8_t randomNum = fdp.ConsumeIntegral<int32_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string imageId(testStrings[randomNum % testStrings.size()]);
+    int32_t dataSize = fdp.ConsumeIntegralInRange<int32_t>(1, 10);
+    std::shared_ptr<DeferredProcessing::SharedBuffer> sharedBuffer =
+        std::make_shared<DeferredProcessing::SharedBuffer>(dataSize);
+    sharedBuffer->Initialize();
     std::shared_ptr<DeferredProcessing::BufferInfo> bufferInfo =
-        std::make_shared<DeferredProcessing::BufferInfo>(nullptr, 0, true, true);
+        std::make_shared<DeferredProcessing::BufferInfo>(sharedBuffer, 0, true, true);
     fuzz_->imageProcCallbacks_->OnProcessDone(userId, imageId, bufferInfo);
     std::shared_ptr<DeferredProcessing::BufferInfoExt> bufferInfoExt =
         std::make_shared<DeferredProcessing::BufferInfoExt>(nullptr, 0, true, true);

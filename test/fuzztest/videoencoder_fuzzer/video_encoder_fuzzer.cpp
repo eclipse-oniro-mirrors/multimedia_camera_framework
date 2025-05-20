@@ -20,20 +20,16 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MIN_SIZE_NUM = 10;
-const size_t THRESHOLD = 10;
+static constexpr int32_t MIN_SIZE_NUM = 220;
 
 std::shared_ptr<VideoEncoder> VideoEncoderFuzzer::fuzz_{nullptr};
 
 void VideoEncoderFuzzer::VideoEncoderFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     fuzz_ = std::make_shared<VideoEncoder>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     uint8_t randomNum = fdp.ConsumeIntegral<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::vector<std::string> testStrings = {fdp.ConsumeRandomLengthString(100), fdp.ConsumeRandomLengthString(100)};
     std::string codecMime(testStrings[randomNum % testStrings.size()]);
     fuzz_->Create(codecMime);
     fuzz_->Config();
@@ -75,6 +71,9 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     videoEncoder->VideoEncoderFuzzTest(fdp);
 }
 } // namespace CameraStandard

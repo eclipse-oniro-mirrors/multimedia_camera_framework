@@ -34,13 +34,9 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 50;
-const size_t THRESHOLD = 10;
 
 void VideoOutputFuzzer::VideoOutputFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.empty(), "GetSupportedCameras Error");
@@ -90,6 +86,9 @@ void VideoOutputFuzzer::VideoOutputFuzzTest(FuzzedDataProvider& fdp)
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
+    }
     auto videoOutput = std::make_unique<VideoOutputFuzzer>();
     if (videoOutput == nullptr) {
         MEDIA_INFO_LOG("videoPostProcessor is null");

@@ -30,7 +30,6 @@
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 4;
-const size_t THRESHOLD = 10;
 
 sptr<PhotoSession> fuzz_ = nullptr;
 sptr<CameraManager> cameraManager_ = nullptr;
