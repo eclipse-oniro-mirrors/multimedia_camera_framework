@@ -91,6 +91,8 @@ ohos_shared_library("camera_dynamic_picture") {
     "image_framework:image_native",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
+    "graphic_surface:buffer_handle",
+    "graphic_surface:surface",
   ]
 
   cflags_cc = cflags

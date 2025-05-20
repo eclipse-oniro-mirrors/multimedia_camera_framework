@@ -38,6 +38,7 @@ public:
     virtual void Create(sptr<SurfaceBuffer> &surfaceBuffer);
     virtual void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type);
+    virtual void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer);
     virtual bool Marshalling(Parcel &data);
     virtual void Unmarshalling(Parcel &data);
     virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer);

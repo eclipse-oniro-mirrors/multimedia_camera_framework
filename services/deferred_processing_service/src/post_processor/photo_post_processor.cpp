@@ -295,65 +295,16 @@ BufferHandle *CloneBufferHandle(const BufferHandle *handle)
     return newHandle;
 }
 
-void DpCopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
-{
-    std::vector<uint32_t> keys = {};
-    DP_CHECK_ERROR_RETURN_LOG(inBuffer == nullptr, "DpCopyMetaData: inBuffer is nullptr");
-    auto ret = inBuffer->ListMetadataKeys(keys);
-    DP_CHECK_ERROR_RETURN_LOG(ret != GSError::GSERROR_OK, "DpCopyMetaData: ListMetadataKeys fail!");
-    for (uint32_t key : keys) {
-        std::vector<uint8_t> values;
-        ret = inBuffer->GetMetadata(key, values);
-        if (ret != 0) {
-            DP_INFO_LOG("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
-        ret = outBuffer->SetMetadata(key, values);
-        if (ret != 0) {
-            DP_INFO_LOG("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
-    }
-}
-
-sptr<SurfaceBuffer> DpCopyBuffer(sptr<SurfaceBuffer> surfaceBuffer)
-{
-    DP_DEBUG_LOG("DpCopyBuffer w=%{public}d, h=%{public}d, f=%{public}d",
-        surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
-    BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
-        .height = surfaceBuffer->GetHeight(),
-        .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .format = surfaceBuffer->GetFormat(),
-        .usage = surfaceBuffer->GetUsage(),
-        .timeout = 0,
-        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
-    };
-    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    DP_DEBUG_LOG("DpCopyBuffer SurfaceBuffer alloc ret: %{public}d", allocErrorCode);
-    if (allocErrorCode != GSError::GSERROR_OK) {
-        DP_ERR_LOG("DpCopyBuffer Alloc faled!, errCode:%{public}d", static_cast<int32_t>(allocErrorCode));
-        return nullptr;
-    }
-    errno_t errNo = memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize());
-    DP_CHECK_ERROR_RETURN_RET_LOG(errNo != EOK, nullptr, "DpCopyBuffer memcpy_s failed");
-    DpCopyMetaData(surfaceBuffer, newSurfaceBuffer);
-    DP_DEBUG_LOG("DpCopyBuffer memcpy end");
-    return newSurfaceBuffer;
-}
-
 sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(BufferHandle *bufferHandle)
 {
     DP_DEBUG_LOG("entered");
     DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
+    BufferHandle *newBufferHandle = CloneBufferHandle(bufferHandle);
     sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    surfaceBuffer->SetBufferHandle(CloneBufferHandle(bufferHandle));
+    surfaceBuffer->SetBufferHandle(newBufferHandle);
     DP_INFO_LOG("TransBufferHandleToSurfaceBuffer w=%{public}d, h=%{public}d, f=%{public}d",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetFormat());
-    return DpCopyBuffer(surfaceBuffer);
+    return surfaceBuffer;
 }
 
 void SetAuxiliaryPicture(std::shared_ptr<PictureIntf> picture, BufferHandle *bufferHandle,
@@ -407,8 +358,10 @@ std::shared_ptr<PictureIntf> PhotoPostProcessor::PhotoProcessListener::AssembleP
         buffer.isGainMapValid, buffer.isDepthMapValid, buffer.isUnrefocusImageValid,
         buffer.isHighBitDepthLinearImageValid, buffer.isExifValid, buffer.isMakerInfoValid);
     std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr,
+        "pictureProxy use count is not 1");
+    picture->CreateWithDeepCopySurfaceBuffer(imageBuffer);
     DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
-    picture->Create(imageBuffer);
     if (buffer.isExifValid) {
         auto exifBuffer = TransBufferHandleToSurfaceBuffer(buffer.exifHandle->GetBufferHandle());
         sptr<BufferExtraData> extraData = new BufferExtraDataImpl();

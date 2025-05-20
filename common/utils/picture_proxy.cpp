@@ -70,6 +70,17 @@ void PictureProxy::SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer, Camer
     pictureIntf->SetAuxiliaryPicture(surfaceBuffer, type);
 }
 
+void PictureProxy::CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer)
+{
+    MEDIA_INFO_LOG("PictureProxy::CreateWithDeepCopySurfaceBuffer enter");
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    if (!pictureIntf) {
+        MEDIA_ERR_LOG("PictureProxy::CreateWithDeepCopySurfaceBuffer pictureIntf_ is nullptr");
+        return;
+    }
+    pictureIntf->CreateWithDeepCopySurfaceBuffer(surfaceBuffer);
+}
+
 bool PictureProxy::Marshalling(Parcel &data)
 {
     MEDIA_INFO_LOG("PictureProxy::Marshalling enter");

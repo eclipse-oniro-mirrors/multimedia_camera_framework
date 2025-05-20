@@ -32,6 +32,7 @@ public:
     void Create(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
         CameraAuxiliaryPictureType type) override;
+    void CreateWithDeepCopySurfaceBuffer(sptr<SurfaceBuffer> &surfaceBuffer) override;
     bool Marshalling(Parcel &data) override;
     void Unmarshalling(Parcel &data) override;
     int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) override;
