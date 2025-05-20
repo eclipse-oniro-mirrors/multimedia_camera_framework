@@ -2359,6 +2359,20 @@ std::vector<float> CaptureSession::GetZoomRatioRange()
     return zoomRatioRange;
 }
 
+int32_t CaptureSession::DoSpecSearch(std::vector<float>& zoomRatioRange)
+{
+    CHECK_ERROR_PRINT_LOG(zoomRatioRange.empty(), "zoomRatioRange is empty.");
+    auto abilityContainer = GetCameraAbilityContainer();
+    if (abilityContainer) {
+        zoomRatioRange = abilityContainer->GetZoomRatioRange();
+        std::string rangeStr = Container2String(zoomRatioRange.begin(), zoomRatioRange.end());
+        MEDIA_INFO_LOG("spec search result: %{public}s", rangeStr.c_str());
+    } else {
+        MEDIA_ERR_LOG("spec search abilityContainer is null");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
 {
     MEDIA_INFO_LOG("CaptureSession::GetZoomRatioRange is Called");
@@ -2385,15 +2399,8 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
 
     if (supportSpecSearch_) {
         MEDIA_INFO_LOG("spec search enter");
-        auto abilityContainer = GetCameraAbilityContainer();
-        if (abilityContainer) {
-            zoomRatioRange = abilityContainer->GetZoomRatioRange();
-            std::string rangeStr = Container2String(zoomRatioRange.begin(), zoomRatioRange.end());
-            MEDIA_INFO_LOG("spec search result: %{public}s", rangeStr.c_str());
-        } else {
-            MEDIA_ERR_LOG("spec search abilityContainer is null");
-        }
-        return CameraErrorCode::SUCCESS;
+        int32_t retCode = DoSpecSearch(zoomRatioRange);
+        return retCode;
     }
     // LCOV_EXCL_START
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();

@@ -188,6 +188,7 @@ public:
     void UpdateHookBasicInfo(std::map<int32_t, std::string> ParameterMap);
 
 private:
+    int32_t CommitConfigWithValidation();
     void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     void UpdateBasicInfoForStream(std::map<int32_t, std::string> ParameterMap,

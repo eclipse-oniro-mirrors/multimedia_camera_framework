@@ -787,6 +787,9 @@ public:
         std::vector<VideoProfile> vidProfiles = {};
     };
 
+    void ProcessModeAndOutputCapability(std::vector<std::vector<SceneMode>> &modes,
+        std::vector<SceneMode> modeofThis, std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities,
+        std::vector<sptr<CameraOutputCapability>> outputCapabilitiesofThis);
     void GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
         std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);

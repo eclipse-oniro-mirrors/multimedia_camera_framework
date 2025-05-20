@@ -659,6 +659,34 @@ int32_t HCaptureSession::SetCommitConfigFlag(bool isNeedCommitting)
     return CAMERA_OK;
 }
 
+int32_t HCaptureSession::CommitConfigWithValidation()
+{
+    auto device = GetCameraDevice();
+    if (device == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. "
+                      "camera device is null, sessionID: %{public}d", GetSessionId());
+        return CAMERA_INVALID_STATE;
+    }
+    const int32_t secureMode = 15;
+    uint64_t secureSeqId = 0L;
+    device->GetSecureCameraSeq(&secureSeqId);
+    if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
+        MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d, "
+                      "sessionID: %{public}d.", GetopMode(), GetSessionId());
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    MEDIA_INFO_LOG("HCaptureSession::CommitConfig, sessionID: %{public}d, "
+                    "secureSeqId = %{public}" PRIu64 "", GetSessionId(), secureSeqId);
+    int ret = LinkInputAndOutputs();
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", ret);
+        return ret;
+    }
+
+    stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
+    return CAMERA_OK;
+}
+
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -681,28 +709,7 @@ int32_t HCaptureSession::CommitConfig()
             ExpandMovingPhotoRepeatStream(); // expand moving photo always
             ExpandSketchRepeatStream();
         }
-        auto device = GetCameraDevice();
-        if (device == nullptr) {
-            MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. "
-                          "camera device is null, sessionID: %{public}d", GetSessionId());
-            errorCode = CAMERA_INVALID_STATE;
-            return;
-        }
-        const int32_t secureMode = 15;
-        uint64_t secureSeqId = 0L;
-        device->GetSecureCameraSeq(&secureSeqId);
-        if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
-            MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d, "
-                          "sessionID: %{public}d.", GetopMode(), GetSessionId());
-            errorCode = CAMERA_OPERATION_NOT_ALLOWED;
-            return;
-        }
-        MEDIA_INFO_LOG("HCaptureSession::CommitConfig, sessionID: %{public}d, "
-                       "secureSeqId = %{public}" PRIu64 "", GetSessionId(), secureSeqId);
-        errorCode = LinkInputAndOutputs();
-        CHECK_ERROR_RETURN_LOG(errorCode != CAMERA_OK, "HCaptureSession::CommitConfig() Failed to commit "
-            "config. rc: %{public}d, sessionID: %{public}d", errorCode, GetSessionId());
-        stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
+        errorCode = CommitConfigWithValidation();
     });
     CHECK_EXECUTE(errorCode != CAMERA_OK, CameraReportUtils::ReportCameraError(
         "HCaptureSession::CommitConfig, sessionID: " + std::to_string(GetSessionId()),

@@ -1276,6 +1276,14 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
     return deviceInfoList;
 }
 
+void CameraManager::ProcessModeAndOutputCapability(std::vector<std::vector<SceneMode>> &modes,
+    std::vector<SceneMode> modeofThis, std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities,
+    std::vector<sptr<CameraOutputCapability>> outputCapabilitiesofThis)
+{
+    modes.push_back(modeofThis);
+    outputCapabilities.push_back(outputCapabilitiesofThis);
+}
+
 void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
     std::vector<bool> cameraConcurrentType, std::vector<std::vector<SceneMode>> &modes,
     std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities)
@@ -1293,8 +1301,7 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
         CameraPosition cameraPosition = cameraDev->GetPosition();
         auto iter = fwToMetaCameraPosition_.find(cameraPosition);
         if (iter == fwToMetaCameraPosition_.end()) {
-            modes.push_back(modeofThis);
-            outputCapabilities.push_back(outputCapabilitiesofThis);
+            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
             continue;
         }
         string idOfThis = {};
@@ -1304,8 +1311,7 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
         retCode = serviceProxy->GetConcurrentCameraAbility(idOfThis, cameraAbility);
         if (retCode != CAMERA_OK) {
-            modes.push_back(modeofThis);
-            outputCapabilities.push_back(outputCapabilitiesofThis);
+            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
             index++;
             continue;
         }
@@ -1317,8 +1323,7 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
             if (retCode == CAM_META_SUCCESS) {
                 GetMetadataInfos(item, modeofThis, outputCapabilitiesofThis, cameraAbility);
             }
-            modes.push_back(modeofThis);
-            outputCapabilities.push_back(outputCapabilitiesofThis);
+            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
         } else {
             retCode = Camera::FindCameraMetadataItem(cameraAbility->get(),
                 OHOS_ABILITY_CAMERA_LIMITED_CAPABILITIES, &item);
@@ -1328,8 +1333,7 @@ void CameraManager::GetCameraConcurrentInfos(std::vector<sptr<CameraDevice>> cam
             } else {
                 MEDIA_ERR_LOG("GetCameraConcurrentInfos error");
             }
-            modes.push_back(modeofThis);
-            outputCapabilities.push_back(outputCapabilitiesofThis);
+            ProcessModeAndOutputCapability(modes, modeofThis, outputCapabilities, outputCapabilitiesofThis);
         }
         index++;
     }

@@ -782,6 +782,58 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
     photoOutput->captureIdHandleMap_.erase(captureId);
 }
 
+void PhotoListener::ProcessAuxiliaryPhoto(int64_t timestamp, sptr<PhotoOutput> photoOutput, int32_t captureId)
+{
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto begin captureId %{public}d, burstSeqId %{public}d",
+         captureId, GetBurstSeqId(captureId));
+    auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
+    CHECK_EXECUTE(location && photoOutput->photoProxyMap_[captureId],
+        photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude));
+    std::shared_ptr<PictureIntf> picture = photoOutput->captureIdPictureMap_[captureId];
+    if (photoOutput->captureIdExifMap_[captureId] && picture) {
+        auto buffer = photoOutput->captureIdExifMap_[captureId];
+        LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
+        picture->SetExifMetadata(buffer);
+        photoOutput->captureIdExifMap_[captureId] = nullptr;
+    }
+    if (photoOutput->captureIdGainmapMap_[captureId] && picture) {
+        LoggingSurfaceBufferInfo(photoOutput->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
+        picture->SetAuxiliaryPicture(photoOutput->captureIdGainmapMap_[captureId],
+            CameraAuxiliaryPictureType::GAINMAP);
+        photoOutput->captureIdGainmapMap_[captureId] = nullptr;
+    }
+    sptr<SurfaceBuffer> depthBuffer = nullptr;
+    photoOutput->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
+    if (depthBuffer && picture) {
+        LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
+        picture->SetAuxiliaryPicture(depthBuffer,
+            CameraAuxiliaryPictureType::DEPTH_MAP);
+    }
+    if (photoOutput->captureIdDebugMap_[captureId] && picture) {
+        auto buffer = photoOutput->captureIdDebugMap_[captureId];
+        LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
+        picture->SetMaintenanceData(buffer);
+        photoOutput->captureIdDebugMap_[captureId] = nullptr;
+    }
+    MEDIA_INFO_LOG("AssembleAuxiliaryPhoto end captureId %{public}d, burstSeqId %{public}d",
+        captureId, GetBurstSeqId(captureId));
+    if (!picture) {
+        MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
+        return;
+    }
+    std::string uri;
+    int32_t cameraShotType;
+    std::string burstKey = "";
+    MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary E");
+    photoOutput->CreateMediaLibrary(picture, photoOutput->photoProxyMap_[captureId],
+        uri, cameraShotType, burstKey, timestamp);
+    MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
+    MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+    UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
+    photoOutput->NotifyOfflinePhotoOutput(captureId);
+    CleanAfterTransPicture(photoOutput, captureId);
+}
+
 void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
@@ -790,52 +842,7 @@ void PhotoListener::AssembleAuxiliaryPhoto(int64_t timestamp, int32_t captureId)
     std::lock_guard<std::mutex> lock(g_assembleImageMutex);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput) {
-        auto location = GetLocationBySettings(photoOutput->GetDefaultCaptureSetting());
-        CHECK_EXECUTE(location && photoOutput->photoProxyMap_[captureId],
-            photoOutput->photoProxyMap_[captureId]->SetLocation(location->latitude, location->longitude));
-        std::shared_ptr<PictureIntf> picture = photoOutput->captureIdPictureMap_[captureId];
-        if (photoOutput->captureIdExifMap_[captureId] && picture) {
-            auto buffer = photoOutput->captureIdExifMap_[captureId];
-            LoggingSurfaceBufferInfo(buffer, "exifSurfaceBuffer");
-            picture->SetExifMetadata(buffer);
-            photoOutput->captureIdExifMap_[captureId] = nullptr;
-        }
-        if (photoOutput->captureIdGainmapMap_[captureId] && picture) {
-            LoggingSurfaceBufferInfo(photoOutput->captureIdGainmapMap_[captureId], "gainmapSurfaceBuffer");
-            picture->SetAuxiliaryPicture(photoOutput->captureIdGainmapMap_[captureId],
-                CameraAuxiliaryPictureType::GAINMAP);
-            photoOutput->captureIdGainmapMap_[captureId] = nullptr;
-        }
-        sptr<SurfaceBuffer> depthBuffer = nullptr;
-        photoOutput->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);
-        if (depthBuffer && picture) {
-            LoggingSurfaceBufferInfo(depthBuffer, "deepSurfaceBuffer");
-            picture->SetAuxiliaryPicture(depthBuffer,
-                CameraAuxiliaryPictureType::DEPTH_MAP);
-        }
-        if (photoOutput->captureIdDebugMap_[captureId] && picture) {
-            auto buffer = photoOutput->captureIdDebugMap_[captureId];
-            LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
-            picture->SetMaintenanceData(buffer);
-            photoOutput->captureIdDebugMap_[captureId] = nullptr;
-        }
-        MEDIA_INFO_LOG("AssembleAuxiliaryPhoto end captureId %{public}d, burstSeqId %{public}d",
-            captureId, GetBurstSeqId(captureId));
-        if (!picture) {
-            MEDIA_ERR_LOG("CreateMediaLibrary picture is nullptr");
-            return;
-        }
-        std::string uri;
-        int32_t cameraShotType;
-        std::string burstKey = "";
-        MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary E");
-        photoOutput->CreateMediaLibrary(picture, photoOutput->photoProxyMap_[captureId],
-            uri, cameraShotType, burstKey, timestamp);
-        MEDIA_DEBUG_LOG("AssembleAuxiliaryPhoto CreateMediaLibrary X");
-        MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-        UpdatePictureJSCallback(captureId, uri, cameraShotType, burstKey);
-        photoOutput->NotifyOfflinePhotoOutput(captureId);
-        CleanAfterTransPicture(photoOutput, captureId);
+        ProcessAuxiliaryPhoto(timestamp, photoOutput, captureId);
     }
 }
 

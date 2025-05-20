@@ -435,6 +435,23 @@ void HCameraDevice::ConfigQosParam(const char *bundleName, int32_t qosLevel,
         strPid.c_str(), strTid.c_str(), strQos.c_str());
 }
 
+int32_t HCameraDevice::CameraHostMgrOpenCamera(bool isEnableSecCam)
+{
+    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
+    int32_t errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+        HandlePrivacyWhenOpenDeviceFail();
+        return CAMERA_UNKNOWN_ERROR;
+    } else {
+        isOpenedCameraDevice_.store(true);
+        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+        g_lastDeviceDropTime = 0;
+        RegisterSensorCallback();
+        return CAMERA_OK;
+    }
+}
+
 int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
     std::unordered_map<std::string, std::string> qosParamMap;
@@ -457,21 +474,7 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_START);
 #endif
-    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
-    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
-    if (errorCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
-#ifdef MEMMGR_OVERRID
-        RequireMemory(Memory::CAMERA_END);
-#endif
-        HandlePrivacyWhenOpenDeviceFail();
-        return CAMERA_UNKNOWN_ERROR;
-    } else {
-        isOpenedCameraDevice_.store(true);
-        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
-        g_lastDeviceDropTime = 0;
-        RegisterSensorCallback();
-    }
+    errorCode = CameraHostMgrOpenCamera(isEnableSecCam);
     CHECK_ERROR_RETURN_RET_LOG(errorCode != CAMERA_OK, errorCode,
         "HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
     std::lock_guard<std::mutex> lockSetting(opMutex_);

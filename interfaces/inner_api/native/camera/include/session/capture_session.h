@@ -2096,6 +2096,7 @@ private:
     bool StopVideoOutput();
     void CreateAndSetFoldServiceCallback();
     int32_t IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported);
+    int32_t DoSpecSearch(std::vector<float>& zoomRatioRange);
 };
 } // namespace CameraStandard
 } // namespace OHOS
