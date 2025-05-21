@@ -66,6 +66,10 @@ const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_iso_pr
     DECLARE_NAPI_FUNCTION("isManualISOSupported", ProfessionSessionNapi::IsManualIsoSupported),
     DECLARE_NAPI_FUNCTION("getISO", ProfessionSessionNapi::GetISO),
     DECLARE_NAPI_FUNCTION("setISO", ProfessionSessionNapi::SetISO),
+    DECLARE_NAPI_FUNCTION("getIsoRange", ProfessionSessionNapi::GetIsoRange),
+    DECLARE_NAPI_FUNCTION("isManualIsoSupported", ProfessionSessionNapi::IsManualIsoSupported),
+    DECLARE_NAPI_FUNCTION("getIso", ProfessionSessionNapi::GetISO),
+    DECLARE_NAPI_FUNCTION("setIso", ProfessionSessionNapi::SetISO),
 };
 
 const std::vector<napi_property_descriptor> ProfessionSessionNapi::pro_session_props = {
