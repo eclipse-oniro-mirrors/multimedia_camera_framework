@@ -1624,61 +1624,66 @@ void HStreamOperator::StartOnceRecord(uint64_t timestamp, int32_t rotation, int3
     MEDIA_INFO_LOG("StartOnceRecord end");
 }
 
-int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
+sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> HStreamOperator::GetStreamOperatorV1_1(
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator>& streamOperator)
 {
-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    uint32_t major;
-    uint32_t minor;
-    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
-    std::lock_guard<std::mutex> lock(opMutex_);
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = GetHDIStreamOperator();
-    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR,
-        "HStreamOperator::CreateStreams GetStreamOperator is null!");
-    // get higher streamOperator version
+    uint32_t major, minor;
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+
     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
-        streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
+        auto streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
         if (streamOperatorV1_1 == nullptr) {
             MEDIA_ERR_LOG("HStreamOperator::CreateStreams IStreamOperator cast to V1_1 error");
             streamOperatorV1_1 = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator*>(streamOperator.GetRefPtr());
         }
+        return streamOperatorV1_1;
     }
+    return nullptr;
+}
+
+int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos)
+{
+    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
+    CHECK_ERROR_RETURN_RET_LOG(streamInfos.empty(), CAMERA_OK, "HStreamOperator::CreateStreams streamInfos is empty!");
+    
+    std::lock_guard<std::mutex> lock(opMutex_);
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = GetHDIStreamOperator();
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_UNKNOWN_ERROR, "GetStreamOperator is null!");
+
+    auto streamOperatorV1_1 = GetStreamOperatorV1_1(streamOperator);
     if (streamOperatorV1_1 != nullptr) {
         MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1");
-        for (auto streamInfo : streamInfos) {
-            if (streamInfo.extendedStreamInfos.size() > 0) {
-                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamId:%{public}d width:%{public}d height:%{public}d"
-                    "format:%{public}d dataspace:%{public}d", streamInfo.v1_0.streamId_, streamInfo.v1_0.width_,
-                    streamInfo.v1_0.height_, streamInfo.v1_0.format_, streamInfo.v1_0.dataspace_);
-                MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_1 type %{public}d",
-                    streamInfo.extendedStreamInfos[0].type);
-            }
+        for (auto& streamInfo : streamInfos) {
+            MEDIA_INFO_LOG("streamId:%{public}d width:%{public}d height:%{public}d format:%{public}d",
+                           streamInfo.v1_0.streamId_, streamInfo.v1_0.width_, streamInfo.v1_0.height_,
+                           streamInfo.v1_0.format_);
         }
         hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
     } else {
         MEDIA_INFO_LOG("HStreamOperator::CreateStreams streamOperator V1_0");
         std::vector<StreamInfo> streamInfos_V1_0;
-        for (auto streamInfo : streamInfos) {
+        for (auto& streamInfo : streamInfos) {
             streamInfos_V1_0.emplace_back(streamInfo.v1_0);
         }
         hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
     }
+
     if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HStreamOperator::CreateStreams(), Failed to commit %{public}d", hdiRc);
-        CameraReportUtils::ReportCameraError(
-            "HStreamOperator::CreateStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
+        MEDIA_ERR_LOG("Failed to commit %{public}d", hdiRc);
+        CameraReportUtils::ReportCameraError("HStreamOperator::CreateStreams",
+            hdiRc, true, CameraReportUtils::GetCallerInfo());
         std::vector<int32_t> streamIds;
         for (auto& streamInfo : streamInfos) {
             streamIds.emplace_back(streamInfo.v1_0.streamId_);
         }
         CHECK_ERROR_PRINT_LOG(!streamIds.empty() &&
             streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR,
-            "HStreamOperator::CreateStreams(), Failed to release streams");
+            "Failed to release streams");
     }
+
     for (auto& info : streamInfos) {
-        MEDIA_INFO_LOG("HStreamOperator::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
+        MEDIA_INFO_LOG("stream id is:%{public}d", info.v1_0.streamId_);
     }
     return HdiToServiceError(hdiRc);
 }

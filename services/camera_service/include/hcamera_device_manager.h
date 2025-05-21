@@ -305,6 +305,8 @@ public:
     */
     bool GetConflictDevices(std::vector<sptr<HCameraDevice>> &cameraNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen,
                             int32_t concurrentTypeOfRequest);
+    void UpdateCameraHolders(const std::vector<pid_t>& pidOfActiveClients,
+                            sptr<HCameraDeviceHolder> requestHolder);
     /**
     * @brief handle active camera evictions in camera device manager.
     *

@@ -280,11 +280,10 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
     pid_t uidOfOpenRequest = IPCSkeleton::GetCallingUid();
     uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
-    int32_t firstTokenIdOfOpenRequest = IPCSkeleton::GetFirstTokenID();
+    uint32_t firstTokenIdOfOpenRequest = IPCSkeleton::GetFirstTokenID();
     for (auto pidItem : pidOfActiveClients) {
         MEDIA_INFO_LOG("GetConflictDevices get active: %{public}d, openRequestPid: %{public}d "
-            "openRequestUid: %{public}d",
-            pidItem, pidOfOpenRequest, uidOfOpenRequest);
+            "openRequestUid: %{public}d", pidItem, pidOfOpenRequest, uidOfOpenRequest);
     }
     // Protecting for mysterious call
     if (stateOfRgmCamera_.Size() != 0) {
@@ -302,18 +301,8 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
             firstTokenIdOfOpenRequest);
 
     // Update each cameraHolder.
-    for (auto pidOfEachClient : pidOfActiveClients) {
-        std::vector<sptr<HCameraDeviceHolder>> activeCameraHolders = GetCameraHolderByPid(pidOfEachClient);
-        if (activeCameraHolders.empty()) {
-            MEDIA_WARNING_LOG("HCameraDeviceManager::GetConflictDevices the current PID has an unknown behavior.");
-            continue;
-        }
-        for (auto holder : activeCameraHolders) {
-            // Device startup requests from different processes.
-            RefreshCameraDeviceHolderState(holder);
-            PrintClientInfo(holder, requestHolder);
-        }
-    }
+    UpdateCameraHolders(pidOfActiveClients, requestHolder);
+
     concurrentSelector_->SetRequestCameraId(requestHolder);
     // Active clients that have been sorted by priority. The same priority complies with the LRU rule.
     holderSortedByProprity_ = SortDeviceByPriority();
@@ -334,6 +323,24 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& 
         concurrentSelector_->GetCamerasRetainable().size());
     return concurrentSelector_->CanOpenCameraconcurrently(concurrentSelector_->GetCamerasRetainable(),
         concurrentSelector_->GetConcurrentCameraTable());
+}
+
+void HCameraDeviceManager::UpdateCameraHolders(const std::vector<pid_t>& pidOfActiveClients,
+                                               sptr<HCameraDeviceHolder> requestHolder)
+{
+    // Update each cameraHolder.
+    for (auto pidOfEachClient : pidOfActiveClients) {
+        std::vector<sptr<HCameraDeviceHolder>> activeCameraHolders = GetCameraHolderByPid(pidOfEachClient);
+        if (activeCameraHolders.empty()) {
+            MEDIA_WARNING_LOG("HCameraDeviceManager::GetConflictDevices the current PID has an unknown behavior.");
+            continue;
+        }
+        for (auto holder : activeCameraHolders) {
+            // Device startup requests from different processes.
+            RefreshCameraDeviceHolderState(holder);
+            PrintClientInfo(holder, requestHolder);
+        }
+    }
 }
 
 bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,

@@ -79,6 +79,9 @@ public:
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> PrepareDynamicSetting(
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility,
+        const std::vector<int32_t>& frameRateRange);
     int32_t SetMirror(bool isEnable) override;
     int32_t GetMirror(bool& isEnable) override;
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);
@@ -96,6 +99,8 @@ private:
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateSketchStatus(SketchStatus status);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
+    int32_t HandleCameraTransform(int32_t& sensorOrientation, bool isFrontCamera);
+    int ApplyRotationWithFlip(const sptr<OHOS::IBufferProducer>& producer, int32_t streamRotation, bool isFlip);
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);

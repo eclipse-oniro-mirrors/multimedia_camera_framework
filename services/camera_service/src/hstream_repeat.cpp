@@ -529,35 +529,13 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
 int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
-    std::vector<uint8_t> ability;
     std::vector<uint8_t> repeatSettings;
+    
     CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_DEVICE_DISCONNECT,
         "HStreamRepeat::SetFrameRate cameraAbility_ is null");
-    {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
-        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
-        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
-        if (dynamicSetting == nullptr) {
-            dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
-        }
-        CHECK_ERROR_RETURN_RET_LOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
-            "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
-        camera_metadata_item_t item;
-        int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
-        bool status = false;
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
-            status = dynamicSetting->addEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        } else if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-            status = dynamicSetting->updateEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
-        }
-        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
-    }
+
+    auto dynamicSetting = PrepareDynamicSetting(cameraAbility_, streamFrameRateRange_);
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     auto streamOperator = GetStreamOperator();
 
     CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;
@@ -579,6 +557,36 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
             "HStreamRepeat::SetFrameRate Failed with error Code:%{public}d", rc);
     }
     return rc;
+}
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> HStreamRepeat::PrepareDynamicSetting(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility,
+    const std::vector<int32_t>& frameRateRange)
+{
+    std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+    std::vector<uint8_t> ability;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility, ability);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> setting = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, setting);
+    if (setting == nullptr) {
+        setting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+    }
+
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(setting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    bool success = false;
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
+        success = setting->addEntry(OHOS_CONTROL_FPS_RANGES, frameRateRange.data(), frameRateRange.size());
+    } else if (ret == CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
+        success = setting->updateEntry(OHOS_CONTROL_FPS_RANGES, frameRateRange.data(), frameRateRange.size());
+    }
+
+    if (!success) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
+    }
+    return setting;
 }
 
 int32_t HStreamRepeat::SetMirror(bool isEnable)
@@ -802,57 +810,48 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
     }
     cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
 #endif
-    int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+        ret = HandleCameraTransform(sensorOrientation, true);
     } else {
-        streamRotation = STREAM_ROTATE_360 - sensorOrientation;
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
+        ret = HandleCameraTransform(sensorOrientation, false);
     }
     CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
         "HStreamRepeat::ProcessVerticalCameraPosition failed %{public}d", ret);
+}
+
+int32_t HStreamRepeat::HandleCameraTransform(int32_t& sensorOrientation, bool isFrontCamera)
+{
+    int32_t streamRotation = isFrontCamera ? sensorOrientation : STREAM_ROTATE_360 - sensorOrientation;
+    int32_t ret = SurfaceError::SURFACE_ERROR_OK;
+
+    switch (streamRotation) {
+        case STREAM_ROTATE_0: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
+            break;
+        }
+        case STREAM_ROTATE_90: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT90 : GRAPHIC_ROTATE_90);
+            break;
+        }
+        case STREAM_ROTATE_180: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT180 : GRAPHIC_ROTATE_180);
+            break;
+        }
+        case STREAM_ROTATE_270: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT270 : GRAPHIC_ROTATE_270);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    if (isFrontCamera) {
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+    } else {
+        MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
+    }
+
+    return ret;
 }
 
 void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
@@ -867,6 +866,20 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_positi
     cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
 #endif
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        ret = ApplyRotationWithFlip(producer_, streamRotation, true);
+    } else {
+        ret = ApplyRotationWithFlip(producer_, streamRotation, false);
+    }
+    CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
+        "HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
+}
+
+int HStreamRepeat::ApplyRotationWithFlip(const sptr<OHOS::IBufferProducer>& producer,
+                                        int32_t streamRotation, bool isFlip)
+{
+    int ret = SurfaceError::SURFACE_ERROR_OK;
+
+    if (isFlip) {
         switch (streamRotation) {
             case STREAM_ROTATE_0: {
                 ret = producer_->SetTransform(GRAPHIC_FLIP_H);
@@ -911,8 +924,7 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_positi
             }
         }
     }
-    CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
-        "HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
+    return ret;
 }
 
 int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
