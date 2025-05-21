@@ -429,6 +429,7 @@ int32_t PhotoPostProcessor::PhotoProcessListener::HandleImageProcessing(const st
     const BufferHandle* bufferHandle, int dataSize, int32_t isDegradedImage,
     int32_t deferredImageFormat, uint32_t cloudImageEnhanceFlag)
 {
+    auto processResult = processResult_.lock();
     if (deferredImageFormat == static_cast<int32_t>(Media::PhotoFormat::YUV)) {
         std::shared_ptr<PictureIntf> picture = AssemblePicture(buffer);
         DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, DPS_ERROR_IMAGE_PROC_FAILED,
@@ -436,7 +437,6 @@ int32_t PhotoPostProcessor::PhotoProcessListener::HandleImageProcessing(const st
 
         std::shared_ptr<BufferInfoExt> bufferInfo = std::make_shared<BufferInfoExt>(picture, dataSize,
             isDegradedImage == 0, cloudImageEnhanceFlag);
-        auto processResult = processResult_.lock();
         if (processResult) {
             processResult->OnProcessDoneExt(imageId, bufferInfo);
         }
@@ -452,7 +452,6 @@ int32_t PhotoPostProcessor::PhotoProcessListener::HandleImageProcessing(const st
             DP_INFO_LOG("DPS_PHOTO: bufferPtr fd: %{public}d, fd: %{public}d", bufferHandle->fd, bufferPtr->GetFd());
             std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(bufferPtr, dataSize,
                 isDegradedImage == 0, cloudImageEnhanceFlag);
-            auto processResult = processResult_.lock();
             if (processResult) {
                 processResult->OnProcessDone(imageId, bufferInfo);
             }
