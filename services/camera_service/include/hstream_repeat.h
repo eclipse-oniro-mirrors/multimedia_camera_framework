@@ -79,9 +79,6 @@ public:
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> PrepareDynamicSetting(
-        const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility,
-        const std::vector<int32_t>& frameRateRange);
     int32_t SetMirror(bool isEnable) override;
     int32_t GetMirror(bool& isEnable) override;
     bool SetMirrorForLivePhoto(bool isEnable, int32_t mode);

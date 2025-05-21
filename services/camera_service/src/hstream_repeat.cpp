@@ -529,13 +529,35 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
 int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
+    std::vector<uint8_t> ability;
     std::vector<uint8_t> repeatSettings;
-    
     CHECK_ERROR_RETURN_RET_LOG(cameraAbility_ == nullptr, CAMERA_DEVICE_DISCONNECT,
         "HStreamRepeat::SetFrameRate cameraAbility_ is null");
-
-    auto dynamicSetting = PrepareDynamicSetting(cameraAbility_, streamFrameRateRange_);
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
+        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+        if (dynamicSetting == nullptr) {
+            dynamicSetting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
+        }
+        CHECK_ERROR_RETURN_RET_LOG(dynamicSetting == nullptr, CAMERA_INVALID_ARG,
+            "HStreamRepeat::SetFrameRate dynamicSetting is nullptr.");
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+        bool status = false;
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
+            status = dynamicSetting->addEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
+        } else if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
+            status = dynamicSetting->updateEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
+        }
+        CHECK_ERROR_PRINT_LOG(!status, "HStreamRepeat::SetFrameRate Failed to set frame range");
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
+    }
     auto streamOperator = GetStreamOperator();
 
     CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;
@@ -557,36 +579,6 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
             "HStreamRepeat::SetFrameRate Failed with error Code:%{public}d", rc);
     }
     return rc;
-}
-
-std::shared_ptr<OHOS::Camera::CameraMetadata> HStreamRepeat::PrepareDynamicSetting(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility,
-    const std::vector<int32_t>& frameRateRange)
-{
-    std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-    std::vector<uint8_t> ability;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility, ability);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> setting = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, setting);
-    if (setting == nullptr) {
-        setting = std::make_shared<OHOS::Camera::CameraMetadata>(0, 0);
-    }
-
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(setting->get(), OHOS_CONTROL_FPS_RANGES, &item);
-    bool success = false;
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
-        success = setting->addEntry(OHOS_CONTROL_FPS_RANGES, frameRateRange.data(), frameRateRange.size());
-    } else if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
-        success = setting->updateEntry(OHOS_CONTROL_FPS_RANGES, frameRateRange.data(), frameRateRange.size());
-    }
-
-    if (!success) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
-    }
-    return setting;
 }
 
 int32_t HStreamRepeat::SetMirror(bool isEnable)
