@@ -20,7 +20,7 @@
 #include "token_setproc.h"
 
 #include "deferred_video_processor_stratety_unittest.h"
-#include "ischeduler_video_state.h"
+#include "istate.h"
 #include "video_camera_state.h"
 #include "video_charging_state.h"
 #include "video_hal_state.h"
@@ -78,11 +78,11 @@ void DeferredVideoProcessorStratetyUnittest::NativeAuthorization()
  * EnvConditions: NA
  * CaseDescription: Test after initialize videoStrategyCenter, eventsListener is not nullptr.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_001, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_001, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -97,17 +97,16 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the event schedule state value can be set by HandleEventChanged.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_002, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_002, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
-    strategyCenter->HandleEventChanged(THERMAL_LEVEL_STATUS_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
     strategyCenter->HandleEventChanged(CAMERA_SESSION_STATUS_EVENT, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
-    auto scheduleState = strategyCenter->GetScheduleState(ScheduleType::CAMERA_STATE);
+    auto scheduleState = strategyCenter->GetSchedulerState(SchedulerType::VIDEO_CAMERA_STATE);
     EXPECT_EQ(scheduleState->stateValue_, SYSTEM_PRESSURE_LEVEL_EVENT_VALUE);
 }
 
@@ -119,11 +118,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the default execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_003, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_003, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -139,11 +138,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while strategy center is ready, execution mode is LOAD_BALANCE.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_004, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -162,11 +161,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while charging status is DISCHARGING, execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_005, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -188,11 +187,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * CaseDescription: Test while charging status is DISCHARGING, strategy center and time is ready,
  *                  execution mode is LOAD_BALANCE.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_006, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -215,11 +214,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while charging status is DISCHARGING, but time is not ready, execution mode is DUMMY.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_007, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_007, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -243,11 +242,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test while execution mode is DUMMY, work is nullptr.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_008, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_008, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -279,11 +278,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the time ready status can be set by UpdateSingleTime.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_009, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_009, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -305,11 +304,11 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
  * EnvConditions: NA
  * CaseDescription: Test the available time status can be set by UpdateAvailableTime.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_010, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_010, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
@@ -328,252 +327,21 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
 
 /*
  * Feature: Deferred
- * Function: Test videoStrategyCenter GetScheduleInfo
+ * Function: Test videoStrategyCenter GetSchedulerInfo
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test while GetScheduleInfo type is not supported, default schedule info will be returned.
+ * CaseDescription: Test while GetSchedulerInfo type is not supported, default schedule info will be returned.
  */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_011, TestSize.Level1)
+HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_011, TestSize.Level0)
 {
     auto repository = std::make_shared<VideoJobRepository>(userId_);
     ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
+    auto strategyCenter = std::make_shared<VideoStrategyCenter>(repository);
     ASSERT_NE(strategyCenter, nullptr);
 
     strategyCenter->Initialize();
-    ScheduleInfo scheduleInfo = strategyCenter->GetScheduleInfo(ScheduleType::NORMAL_TIME_STATE);
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while camera schedule info isNeedStop is ture, and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_012, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({CAMERA_STATE,
-        std::make_shared<VideoCameraState>(CameraSessionStatus::SYSTEM_CAMERA_OPEN)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while hdi schedule info isNeedStop is ture, and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_013, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({HDI_STATE,
-        std::make_shared<VideoHalState>(HdiStatus::HDI_DISCONNECTED)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while media library schedule info isNeedStop is ture,
- *                  and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_014, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({MEDIA_LIBRARY_STATE,
-        std::make_shared<VideoMediaLibraryState>(MediaLibraryStatus::MEDIA_LIBRARY_DISCONNECTED)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while screen schedule info isNeedStop is ture, and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_015, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({SCREEN_STATE,
-        std::make_shared<VideoScreenState>(ScreenStatus::SCREEN_ON)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while thermal level schedule info isNeedStop is ture,
- *                  and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_016, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({THERMAL_LEVEL_STATE,
-        std::make_shared<VideoTemperatureState>(VideoThermalLevel::HOT)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while photo process schedule info isNeedStop is ture,
- *                  and charging schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default charging schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_017, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({PHOTO_PROCESS_STATE,
-        std::make_shared<VideoPhotoProcessState>(PhotoProcessStatus::BUSY)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while camera schedule info isNeedStop is false, hdi schedule info isNeedStop is false,
- *                  media library schedule info isNeedStop is false, screen schedule info isNeedStop is false,
- *                  thermal level schedule info isNeedStop is false, photo process schedule info isNeedStop is false,
- *                  charging schedule info does not exist, and battery schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default battery schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_018, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({CAMERA_STATE,
-        std::make_shared<VideoCameraState>(CameraSessionStatus::SYSTEM_CAMERA_CLOSED)});
-    strategyCenter->scheduleStateList_.insert({HDI_STATE,
-        std::make_shared<VideoHalState>(HdiStatus::HDI_READY)});
-    strategyCenter->scheduleStateList_.insert({MEDIA_LIBRARY_STATE,
-        std::make_shared<VideoMediaLibraryState>(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE)});
-    strategyCenter->scheduleStateList_.insert({SCREEN_STATE,
-        std::make_shared<VideoScreenState>(ScreenStatus::SCREEN_OFF)});
-    strategyCenter->scheduleStateList_.insert({THERMAL_LEVEL_STATE,
-        std::make_shared<VideoTemperatureState>(VideoThermalLevel::COOL)});
-    strategyCenter->scheduleStateList_.insert({PHOTO_PROCESS_STATE,
-        std::make_shared<VideoPhotoProcessState>(PhotoProcessStatus::IDLE)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
-    EXPECT_TRUE(scheduleInfo.isNeedStop);
-    EXPECT_FALSE(scheduleInfo.isCharging);
-}
-
-/*
- * Feature: Deferred
- * Function: Test videoStrategyCenter ReevaluateSchedulerInfo
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test while camera schedule info isNeedStop is false, hdi schedule info isNeedStop is false,
- *                  media library schedule info isNeedStop is false, screen schedule info isNeedStop is false,
- *                  thermal level schedule info isNeedStop is false, photo process schedule info isNeedStop is false,
- *                  charging schedule info isCharging is true, and battery level schedule info does not exist,
- *                  the ReevaluateSchedulerInfo will return default battery level schedule info as {ture, false}.
- */
-HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_stratety_unittest_019, TestSize.Level1)
-{
-    auto repository = std::make_shared<VideoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto strategyCenter = std::make_shared<VideoStrategyCenter>(userId_, repository);
-    ASSERT_NE(strategyCenter, nullptr);
-
-    strategyCenter->Initialize();
-    strategyCenter->scheduleStateList_.clear();
-    strategyCenter->scheduleStateList_.insert({CAMERA_STATE,
-        std::make_shared<VideoCameraState>(CameraSessionStatus::SYSTEM_CAMERA_CLOSED)});
-    strategyCenter->scheduleStateList_.insert({HDI_STATE,
-        std::make_shared<VideoHalState>(HdiStatus::HDI_READY)});
-    strategyCenter->scheduleStateList_.insert({MEDIA_LIBRARY_STATE,
-        std::make_shared<VideoMediaLibraryState>(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE)});
-    strategyCenter->scheduleStateList_.insert({SCREEN_STATE,
-        std::make_shared<VideoScreenState>(ScreenStatus::SCREEN_OFF)});
-    strategyCenter->scheduleStateList_.insert({THERMAL_LEVEL_STATE,
-        std::make_shared<VideoTemperatureState>(VideoThermalLevel::COOL)});
-    strategyCenter->scheduleStateList_.insert({PHOTO_PROCESS_STATE,
-        std::make_shared<VideoPhotoProcessState>(PhotoProcessStatus::IDLE)});
-    strategyCenter->scheduleStateList_.insert({CHARGING_STATE,
-        std::make_shared<VideoChargingState>(ChargingStatus::CHARGING)});
-    ScheduleInfo scheduleInfo = strategyCenter->ReevaluateSchedulerInfo();
+    SchedulerInfo scheduleInfo = strategyCenter->GetSchedulerInfo(SchedulerType::NORMAL_TIME_STATE);
     EXPECT_TRUE(scheduleInfo.isNeedStop);
     EXPECT_FALSE(scheduleInfo.isCharging);
 }

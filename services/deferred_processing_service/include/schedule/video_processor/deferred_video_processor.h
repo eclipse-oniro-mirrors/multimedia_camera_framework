@@ -39,7 +39,7 @@ public:
     void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
 
     void PostProcess(const DeferredVideoWorkPtr& work);
-    void PauseRequest(const ScheduleType& type);
+    void PauseRequest(const SchedulerType& type);
     void SetDefaultExecutionMode();
     bool GetPendingVideos(std::vector<std::string>& pendingVideos);
 

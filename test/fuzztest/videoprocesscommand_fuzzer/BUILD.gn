@@ -66,7 +66,7 @@ ohos_fuzztest("VideoProcessCommandFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/base",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor/impl",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/state",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/command",
   ]
 

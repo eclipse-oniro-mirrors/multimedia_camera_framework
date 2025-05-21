@@ -110,7 +110,7 @@ void DeferredProcUnitTest::NativeAuthorization()
 HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_001, TestSize.Level1)
 {
     sptr<DeferredPhotoProcSession> deferredProcSession = {nullptr};
-    deferredProcSession = deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
+    deferredProcSession = CameraManager::GetInstance()->CreateDeferredPhotoProcessingSession(
         userId_, std::make_shared<TestDeferredPhotoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
     ASSERT_NE(deferredProcSession->remoteSession_, nullptr);

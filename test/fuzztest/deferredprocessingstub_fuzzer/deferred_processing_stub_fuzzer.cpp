@@ -14,9 +14,9 @@
  */
 
 #include "deferred_processing_stub_fuzzer.h"
-#include "buffer_info.h"
 #include "deferred_processing_service.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
+#include "image_info.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "access_token.h"
@@ -24,6 +24,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
+#include <utility>
 using namespace std;
 
 namespace OHOS {
@@ -101,7 +102,7 @@ void TestBufferInfo(uint8_t *rawData, size_t size)
     data.WriteRawData(rawData, size);
     const int32_t MAX_BUFF_SIZE = 1024 * 1024;
     int32_t dataSize = (data.ReadInt32() % MAX_BUFF_SIZE) + 1;
-    auto sharedBuffer = make_shared<SharedBuffer>(dataSize);
+    auto sharedBuffer = make_unique<SharedBuffer>(dataSize);
     sharedBuffer->GetSize();
     sharedBuffer->GetFd();
     sharedBuffer->Initialize();
@@ -111,7 +112,8 @@ void TestBufferInfo(uint8_t *rawData, size_t size)
     sharedBuffer->Reset();
     bool isHighQuality = data.ReadBool();
     uint32_t cloudImageEnhanceFlag = 0;
-    BufferInfo info(sharedBuffer, dataSize, isHighQuality, cloudImageEnhanceFlag);
+    ImageInfo info(dataSize, isHighQuality, cloudImageEnhanceFlag);
+    info.SetBuffer(std::move(sharedBuffer));
     info.GetDataSize();
     info.IsHighQuality();
     info.GetIPCFileDescriptor();

@@ -18,9 +18,8 @@
 
 #include <functional>
 
-#include "basic_definitions.h"
-#include "ischeduler_video_state.h"
-#include "ivideo_state_change_listener.h"
+#include "istate.h"
+#include "istate_change_listener.h"
 #include "video_job_repository.h"
 
 namespace OHOS {
@@ -28,6 +27,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 constexpr uint32_t TIME_OK = 0b0;
 using EventCallback = std::function<void(const int32_t)>;
+using VideoStateListener = IStateChangeListener<SchedulerType, SchedulerInfo>;
 
 class VideoStrategyCenter : public std::enable_shared_from_this<VideoStrategyCenter> {
 public:
@@ -35,8 +35,7 @@ public:
 
     void Initialize();
     void InitHandleEvent();
-    void InitScheduleState();
-    void RegisterStateChangeListener(const std::weak_ptr<IVideoStateChangeListener>& listener);
+    void RegisterStateChangeListener(const std::weak_ptr<VideoStateListener>& listener);
     DeferredVideoWorkPtr GetWork();
     DeferredVideoJobPtr GetJob();
     ExecutionMode GetExecutionMode();
@@ -67,7 +66,7 @@ public:
     }
 
 protected:
-    VideoStrategyCenter(const int32_t userId, const std::shared_ptr<VideoJobRepository>& repository);
+    VideoStrategyCenter(const std::shared_ptr<VideoJobRepository>& repository);
 
 private:
     class EventsListener;
@@ -82,16 +81,10 @@ private:
     void HandleBatteryLevelEvent(int32_t value);
     void HandleTemperatureEvent(int32_t value);
     void HandlePhotoProcessEvent(int32_t value);
-    void UpdateValue(ScheduleType type, int32_t value);
-    ScheduleInfo ReevaluateSchedulerInfo();
-    ScheduleInfo GetScheduleInfo(ScheduleType type);
-    std::shared_ptr<ISchedulerVideoState> GetScheduleState(ScheduleType type);
-    
-    inline VideoThermalLevel ConvertThermalLevel(int32_t level)
-    {
-        DP_CHECK_RETURN_RET(level == ThermalLevel::LEVEL_0, VideoThermalLevel::COOL);
-        return VideoThermalLevel::HOT;
-    }
+    void UpdateValue(SchedulerType type, int32_t value);
+    SchedulerInfo ReevaluateSchedulerInfo();
+    SchedulerInfo GetSchedulerInfo(SchedulerType type);
+    std::shared_ptr<IState> GetSchedulerState(SchedulerType type);
 
     inline PhotoProcessStatus ConvertProcessState(int32_t size)
     {
@@ -99,16 +92,14 @@ private:
         return PhotoProcessStatus::IDLE;
     }
 
-    const int32_t userId_;
     bool isCharging_ {false};
     bool isNeedStop_ {true};
     uint32_t isTimeOk_ {0};
     int32_t availableTime_ {TOTAL_PROCESS_TIME};
     std::shared_ptr<EventsListener> eventsListener_ {nullptr};
-    std::shared_ptr<VideoJobRepository> videoJobRepository_ {nullptr};
-    std::weak_ptr<IVideoStateChangeListener> videoStateChangeListener_;
+    std::shared_ptr<VideoJobRepository> repository_ {nullptr};
+    std::weak_ptr<VideoStateListener> videoStateChangeListener_;
     std::unordered_map<EventType, EventCallback> eventHandlerList_ {};
-    std::unordered_map<ScheduleType, std::shared_ptr<ISchedulerVideoState>> scheduleStateList_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

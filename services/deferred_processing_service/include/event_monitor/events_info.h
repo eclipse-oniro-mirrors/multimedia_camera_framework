@@ -26,12 +26,12 @@ class EventsInfo : public Singleton<EventsInfo> {
     DECLARE_SINGLETON(EventsInfo);
     
 public:
-    void Initialize();
     ScreenStatus GetScreenState();
     BatteryStatus GetBatteryState();
     ChargingStatus GetChargingState();
     BatteryLevel GetBatteryLevel();
     ThermalLevel GetThermalLevel();
+    CameraSessionStatus GetCameraStatus();
     void SetCameraState(CameraSessionStatus state);
     bool IsCameraOpen();
 

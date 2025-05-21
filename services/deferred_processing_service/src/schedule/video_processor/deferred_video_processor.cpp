@@ -59,7 +59,7 @@ void DeferredVideoProcessor::RemoveVideo(const std::string& videoId, bool restor
         videoId.c_str(), isNeedStop, restorable);
     DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "VideoPostProcessor is nullptr.");
 
-    DP_CHECK_EXECUTE(isNeedStop, postProcessor_->PauseRequest(videoId, ScheduleType::REMOVE));
+    DP_CHECK_EXECUTE(isNeedStop, postProcessor_->PauseRequest(videoId, SchedulerType::REMOVE));
     DP_CHECK_EXECUTE(!restorable, postProcessor_->RemoveRequest(videoId));
 }
 
@@ -120,7 +120,7 @@ void DeferredVideoProcessor::PostProcess(const DeferredVideoWorkPtr& work)
     DfxVideoReport::GetInstance().ReportResumeVideoEvent(videoId);
 }
 
-void DeferredVideoProcessor::PauseRequest(const ScheduleType& type)
+void DeferredVideoProcessor::PauseRequest(const SchedulerType& type)
 {
     DP_DEBUG_LOG("entered.");
     DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");

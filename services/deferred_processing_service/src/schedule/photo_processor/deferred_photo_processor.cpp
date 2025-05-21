@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,236 +15,295 @@
 
 #include "deferred_photo_processor.h"
 
+#include "basic_definitions.h"
+#include "deferred_photo_result.h"
 #include "dp_log.h"
+#include "dp_timer.h"
 #include "dp_utils.h"
+#include "dps.h"
 #include "dps_event_report.h"
+#include "photo_process_command.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+namespace {
+    constexpr uint32_t MAX_PROC_TIME_MS = 11 * 1000;
+}
+
 DeferredPhotoProcessor::DeferredPhotoProcessor(const int32_t userId,
-    const std::shared_ptr<PhotoJobRepository>& repository, const std::shared_ptr<PhotoPostProcessor>& postProcessor,
-    const std::weak_ptr<IImageProcessCallbacks>& callback)
-    : userId_(userId), repository_(repository), postProcessor_(postProcessor), callback_(callback)
+    const std::shared_ptr<PhotoJobRepository>& repository, const std::shared_ptr<PhotoPostProcessor>& postProcessor)
+    : userId_(userId), repository_(repository), postProcessor_(postProcessor)
 {
     DP_DEBUG_LOG("entered.");
 }
 
 DeferredPhotoProcessor::~DeferredPhotoProcessor()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered, userId: %{public}d", userId_);
 }
 
-void DeferredPhotoProcessor::Initialize()
+int32_t DeferredPhotoProcessor::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
-    postProcessor_->Initialize();
-    postProcessor_->SetCallback(weak_from_this());
+    DP_CHECK_ERROR_RETURN_RET_LOG(repository_ == nullptr, DP_NULL_POINTER, "PhotoRepository is nullptr");
+    DP_CHECK_ERROR_RETURN_RET_LOG(postProcessor_ == nullptr, DP_NULL_POINTER, "PhotoPostProcessor is nullptr");
+    result_ = DeferredPhotoResult::Create();
+    DP_CHECK_ERROR_RETURN_RET_LOG(result_ == nullptr, DP_NULL_POINTER, "DeferredPhotoResult is nullptr");
+    initialized_ = true;
+    return DP_OK;
 }
 
 void DeferredPhotoProcessor::AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata)
 {
-    DP_DEBUG_LOG("entered.");
+    bool isProcess = ProcessCatchResults(imageId);
+    DP_CHECK_RETURN(isProcess);
     repository_->AddDeferredJob(imageId, discardable, metadata);
 }
 
 void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restorable)
 {
-    DP_DEBUG_LOG("entered.");
-    auto item = requestedImages_.find(imageId);
-    if (item != requestedImages_.end()) {
-        requestedImages_.erase(item);
-    }
-    DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "repository_ is nullptr");
-
-    if (restorable == false) {
-        if (repository_->GetJobStatus(imageId) == PhotoJobStatus::RUNNING) {
-            DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "postProcessor_ is nullptr, RemoveImage failed.");
-            postProcessor_->Interrupt();
-        }
-        DP_CHECK_ERROR_RETURN_LOG(postProcessor_ == nullptr, "postProcessor_ is nullptr, RemoveImage failed.");
-        postProcessor_->RemoveImage(imageId);
-    }
+    result_->DeRecordHigh(imageId);
     repository_->RemoveDeferredJob(imageId, restorable);
+    DP_CHECK_RETURN(restorable);
+    DP_CHECK_EXECUTE(repository_->IsRunningJob(imageId), postProcessor_->Interrupt());
+    postProcessor_->RemoveImage(imageId);
 }
 
 void DeferredPhotoProcessor::RestoreImage(const std::string& imageId)
 {
-    DP_DEBUG_LOG("entered.");
     repository_->RestoreJob(imageId);
 }
 
 void DeferredPhotoProcessor::ProcessImage(const std::string& appName, const std::string& imageId)
 {
-    DP_DEBUG_LOG("entered.");
-    if (!repository_->IsOfflineJob(imageId)) {
-        DP_INFO_LOG("DPS_PHOTO: imageId is not offlineJob %{public}s", imageId.c_str());
+    DP_CHECK_RETURN_LOG(repository_->IsBackgroundJob(imageId),
+        "DPS_PHOTO: imageId is backgroundJob %{public}s", imageId.c_str());
+    if (!repository_->RequestJob(imageId)) {
+        OnProcessError(userId_, imageId, DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
         return;
     }
-    requestedImages_.insert(imageId);
-    bool isImageIdValid = repository_->RequestJob(imageId);
-    if (!isImageIdValid) {
-        if (auto callback = callback_.lock()) {
-            callback->OnError(userId_, imageId, DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
-        }
-    } else {
-        if (repository_->GetJobPriority(postedImageId_) != PhotoJobPriority::HIGH) {
-            Interrupt();
-        }
-    }
+    result_->RecordHigh(imageId);
+    DP_CHECK_EXECUTE(repository_->IsNeedInterrupt(), postProcessor_->Interrupt());
 }
 
 void DeferredPhotoProcessor::CancelProcessImage(const std::string& imageId)
 {
-    DP_DEBUG_LOG("entered.");
-    requestedImages_.erase(imageId);
+    DP_CHECK_RETURN_LOG(repository_->IsBackgroundJob(imageId),
+        "DPS_PHOTO: imageId is backgroundJob %{public}s", imageId.c_str());
+    result_->DeRecordHigh(imageId);
     repository_->CancelJob(imageId);
 }
 
-void DeferredPhotoProcessor::OnProcessDone(const int32_t userId, const std::string& imageId,
-    const std::shared_ptr<BufferInfo>& bufferInfo)
+void DeferredPhotoProcessor::DoProcess(const DeferredPhotoJobPtr& job)
 {
-    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s.", userId, imageId.c_str());
-    //如果已经非高优先级，且任务结果不是全质量的图，那么不用返回给上层了，等下次出全质量图再返回
-    if (!(bufferInfo->IsHighQuality())) {
-        DP_INFO_LOG("not high quality photo");
-        if ((repository_->GetJobPriority(imageId) != PhotoJobPriority::HIGH)) {
-            DP_INFO_LOG("not high quality and not high priority, need retry");
-            repository_->SetJobPending(imageId);
-            return;
-        } else {
-            DP_INFO_LOG("not high quality, but high priority, and process as normal job before, need retry");
-            if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
-                repository_->SetJobPending(imageId);
-                return;
-            }
-        }
-    }
-    if (auto callback = callback_.lock()) {
-        callback->OnProcessDone(userId, imageId, bufferInfo);
-        repository_->SetJobCompleted(imageId);
-    }
+    auto executionMode = job->GetExecutionMode();
+    auto imageId = job->GetImageId();
+    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, executionMode: %{public}d", imageId.c_str(), executionMode);
+    uint32_t timerId = StartTimer(imageId);
+    job->Start(timerId);
+    result_->DeRecordHigh(imageId);
+    postProcessor_->SetExecutionMode(executionMode);
+    postProcessor_->ProcessImage(imageId);
+    DPSEventReport::GetInstance().UpdateExecutionMode(imageId, userId_, executionMode);
+    DPSEventReport::GetInstance().ReportImageModeChange(executionMode);
 }
 
-void DeferredPhotoProcessor::OnProcessDoneExt(const int32_t userId, const std::string& imageId,
-    const std::shared_ptr<BufferInfoExt>& bufferInfo)
+void DeferredPhotoProcessor::OnProcessSuccess(const int32_t userId, const std::string& imageId,
+    std::unique_ptr<ImageInfo> imageInfo)
 {
-    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s.", userId, imageId.c_str());
-    //如果已经非高优先级，且任务结果不是全质量的图，那么不用返回给上层了，等下次出全质量图再返回
-    if (!(bufferInfo->IsHighQuality())) {
-        DP_INFO_LOG("not high quality photo");
-        if ((repository_->GetJobPriority(imageId) != PhotoJobPriority::HIGH)) {
-            DP_INFO_LOG("not high quality and not high priority, need retry");
-            repository_->SetJobPending(imageId);
-            return;
-        } else {
-            DP_INFO_LOG("not high quality, but high priority, and process as normal job before, need retry");
-            if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
-                repository_->SetJobPending(imageId);
-                return;
-            }
-        }
-    }
-    if (auto callback = callback_.lock()) {
-        callback->OnProcessDoneExt(userId, imageId, bufferInfo);
-        repository_->SetJobCompleted(imageId);
-    }
+    DP_CHECK_ERROR_RETURN_LOG(!initialized_, "Not initialized.");
+    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s, bufferQuality: %{public}d",
+        userId, imageId.c_str(), imageInfo->IsHighQuality());
+    HandleSuccess(userId, imageId, std::move(imageInfo));
 }
 
-void DeferredPhotoProcessor::OnError(const int32_t userId, const std::string& imageId, DpsError errorCode)
+void DeferredPhotoProcessor::OnProcessError(const int32_t userId, const std::string& imageId, DpsError error)
 {
-    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s, error: %{public}d.",
-        userId, imageId.c_str(), errorCode);
-    if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED &&
-        repository_->GetJobPriority(imageId) == PhotoJobPriority::HIGH &&
-        requestedImages_.count(imageId) != 0) {
-        repository_->SetJobPending(imageId);
-        return;
-    }
-
-    if (!IsFatalError(errorCode)) {
-        if (repository_->GetJobPriority(imageId) == PhotoJobPriority::HIGH) {
-            if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
-                repository_->SetJobPending(imageId);
-                return;
-            }
-        } else {
-            repository_->SetJobFailed(imageId);
-            return;
-        }
-    }
-    if (auto callback = callback_.lock()) {
-        callback->OnError(userId, imageId, errorCode);
-        repository_->SetJobFailed(imageId);
-    }
-}
-
-void DeferredPhotoProcessor::OnStateChanged(const int32_t userId, DpsStatus statusCode)
-{
-    DP_DEBUG_LOG("DPS_PHOTO: userId: %{public}d, statusCode: %{public}d.", userId, statusCode);
+    DP_CHECK_ERROR_RETURN_LOG(!initialized_, "Not initialized.");
+    DP_ERR_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s, dps error: %{public}d.",
+        userId, imageId.c_str(), error);
+    bool isHighJob = repository_->IsHighJob(imageId);
+    HandleError(userId, imageId, error, isHighJob);
 }
 
 void DeferredPhotoProcessor::NotifyScheduleState(DpsStatus status)
 {
-    if (auto callback = callback_.lock()) {
-        callback->OnStateChanged(userId_, status);
+    auto statusCode = MapDpsStatus(status);
+    if (auto callback = GetCallback()) {
+        DP_INFO_LOG("DPS_OHOTO: statusCode: %{public}d", statusCode);
+        callback->OnStateChanged(statusCode);
     }
-}
-
-void DeferredPhotoProcessor::PostProcess(const DeferredPhotoWorkPtr& work)
-{
-    auto executionMode = work->GetExecutionMode();
-    postedImageId_ = work->GetDeferredPhotoJob()->GetImageId();
-    DP_INFO_LOG("DPS_PHOTO: imageId: %{public}s, executionMode: %{public}d", postedImageId_.c_str(), executionMode);
-    auto item = requestedImages_.find(postedImageId_);
-    if (item != requestedImages_.end()) {
-        requestedImages_.erase(item);
-    }
-    repository_->SetJobRunning(postedImageId_);
-    postProcessor_->SetExecutionMode(executionMode);
-    postProcessor_->ProcessImage(postedImageId_);
-    DPSEventReport::GetInstance().UpdateExecutionMode(postedImageId_, userId_, executionMode);
-    DPSEventReport::GetInstance().ReportImageModeChange(executionMode);
-}
-
-void DeferredPhotoProcessor::SetDefaultExecutionMode()
-{
-    DP_DEBUG_LOG("entered.");
-    postProcessor_->SetDefaultExecutionMode();
 }
 
 void DeferredPhotoProcessor::Interrupt()
 {
-    DP_DEBUG_LOG("entered.");
     postProcessor_->Interrupt();
 }
 
-int32_t DeferredPhotoProcessor::GetConcurrency(ExecutionMode mode)
+void DeferredPhotoProcessor::SetDefaultExecutionMode()
 {
-    DP_DEBUG_LOG("entered.");
-    return postProcessor_->GetConcurrency(mode);
+    postProcessor_->SetDefaultExecutionMode();
 }
 
 bool DeferredPhotoProcessor::GetPendingImages(std::vector<std::string>& pendingImages)
 {
-    DP_DEBUG_LOG("entered.");
-    bool isSuccess = postProcessor_->GetPendingImages(pendingImages);
-    if (isSuccess) {
-        return true;
-    }
-    return false;
+    return postProcessor_->GetPendingImages(pendingImages);
 }
 
-bool DeferredPhotoProcessor::IsFatalError(DpsError errorCode)
+bool DeferredPhotoProcessor::HasRunningJob()
 {
-    DP_DEBUG_LOG("entered, code: %{public}d", errorCode);
-    if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_FAILED ||
-        errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID ||
-        errorCode == DpsError::DPS_ERROR_IMAGE_PROC_HIGH_TEMPERATURE) {
-        return true;
-    } else {
-        return false;
+    return repository_->HasRunningJob();
+}
+
+bool DeferredPhotoProcessor::IsIdleState()
+{
+    DP_DEBUG_LOG("entered.");
+    return repository_->GetOfflineIdleJobSize() == DEFAULT_COUNT &&
+        repository_->GetBackgroundIdleJobSize() == DEFAULT_COUNT;
+}
+
+std::shared_ptr<PhotoJobRepository> DeferredPhotoProcessor::GetRepository()
+{
+    return repository_;
+}
+
+std::shared_ptr<PhotoPostProcessor> DeferredPhotoProcessor::GetPhotoPostProcessor()
+{
+    return postProcessor_;
+}
+
+void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::string& imageId,
+    std::unique_ptr<ImageInfo> imageInfo)
+{
+    StopTimer(imageId);
+    result_->OnSuccess(imageId);
+    auto jobPtr = repository_->GetJobUnLocked(imageId);
+    auto callback = GetCallback();
+    if (jobPtr == nullptr || callback == nullptr) {
+        return;
     }
+
+    jobPtr->Complete();
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
+    uint32_t cloudFlag = imageInfo->GetCloudFlag();
+    switch (imageInfo->GetType()) {
+        case CallbackType::IMAGE_PROCESS_DONE: {
+            int32_t dataSize = imageInfo->GetDataSize();
+            sptr<IPCFileDescriptor> ipcFd = imageInfo->GetIPCFileDescriptor();
+            callback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudFlag);
+            break;
+        }
+        case CallbackType::IMAGE_PROCESS_YUV_DONE: {
+            std::shared_ptr<PictureIntf> picture = imageInfo->GetPicture();
+            callback->OnProcessImageDone(imageId, picture, cloudFlag);
+            break;
+        }
+        default:
+            DP_ERR_LOG("Unexpected callback type: %{public}d for imageId: %{public}s",
+                static_cast<int>(imageInfo->GetType()), imageId.c_str());
+            break;
+    }
+}
+
+void DeferredPhotoProcessor::HandleError(const int32_t userId, const std::string& imageId,
+    DpsError error, bool isHighJob)
+{
+    StopTimer(imageId);
+    ErrorType ret = result_->OnError(imageId, error, isHighJob);
+    auto jobPtr = repository_->GetJobUnLocked(imageId);
+    auto callback = GetCallback();
+    if (jobPtr == nullptr || callback == nullptr) {
+        auto errors = std::make_unique<ImageInfo>();
+        errors->SetError(error);
+        result_->RecordResult(imageId, std::move(errors));
+        return;
+    }
+
+    bool needNotify = false;
+    switch (ret) {
+        case ErrorType::RETRY:
+            jobPtr->Prepare();
+            break;
+        case ErrorType::NORMAL_FAILED:
+            jobPtr->Fail();
+            break;
+        case ErrorType::FATAL_NOTIFY:
+            jobPtr->Error();
+            needNotify = true;
+            break;
+        case ErrorType::FAILED_NOTIFY:
+        case ErrorType::HIGH_FAILED:
+            jobPtr->Fail();
+            needNotify = true;
+            break;
+    }
+    DP_CHECK_RETURN(!needNotify);
+
+    auto errorCode = MapDpsErrorCode(error);
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, error: %{public}d",
+        userId, imageId.c_str(), errorCode);
+    callback->OnError(imageId, errorCode);
+}
+
+uint32_t DeferredPhotoProcessor::StartTimer(const std::string& imageId)
+{
+    auto thisPtr = weak_from_this();
+    uint32_t timerId = DpsTimer::GetInstance().StartTimer([thisPtr, imageId]() {
+        auto process = thisPtr.lock();
+        DP_CHECK_EXECUTE(process != nullptr, process->ProcessPhotoTimeout(imageId));
+    }, MAX_PROC_TIME_MS);
+    DP_INFO_LOG("DPS_TIMER: Start imageId: %{public}s, timerId: %{public}u", imageId.c_str(), timerId);
+    return timerId;
+}
+
+void DeferredPhotoProcessor::StopTimer(const std::string& imageId)
+{
+    uint32_t timerId = repository_->GetJobTimerId(imageId);
+    DP_INFO_LOG("DPS_TIMER: Stop imageId: %{public}s, timeId: %{public}u", imageId.c_str(), timerId);
+    DpsTimer::GetInstance().StopTimer(timerId);
+}
+
+void DeferredPhotoProcessor::ProcessPhotoTimeout(const std::string& imageId)
+{
+    DP_INFO_LOG("DPS_TIMER: Executed imageId: %{public}s", imageId.c_str());
+    DP_CHECK_EXECUTE(result_->IsNeedReset(), postProcessor_->Reset());
+    auto ret = DPS_SendCommand<PhotoProcessTimeOutCommand>(userId_, imageId, DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    DP_CHECK_ERROR_RETURN_LOG(ret != DP_OK,
+        "process photo timeout imageId: %{public}s failed. ret: %{public}d", imageId.c_str(), ret);
+}
+
+sptr<IDeferredPhotoProcessingSessionCallback> DeferredPhotoProcessor::GetCallback()
+{
+    if (auto session = DPS_GetSessionManager()) {
+        return session->GetCallback(userId_);
+    }
+    return nullptr;
+}
+
+bool DeferredPhotoProcessor::ProcessCatchResults(const std::string& imageId)
+{
+    auto result = result_->GetCacheResult(imageId);
+    DP_CHECK_RETURN_RET(result == nullptr, false);
+    auto callback = GetCallback();
+    DP_CHECK_RETURN_RET(callback == nullptr, false);
+
+    DP_INFO_LOG("DPS_PHOTO: ProcessCatchResults imageId: %{public}s", imageId.c_str());
+    switch (result->GetType()) {
+        case CallbackType::IMAGE_PROCESS_DONE:
+            callback->OnProcessImageDone(imageId, result->GetIPCFileDescriptor(),
+                result->GetDataSize(), result->GetCloudFlag());
+            break;
+        case CallbackType::IMAGE_PROCESS_YUV_DONE:
+            callback->OnProcessImageDone(imageId, result->GetPicture(), result->GetCloudFlag());
+            break;
+        case CallbackType::IMAGE_ERROR:
+            callback->OnError(imageId, MapDpsErrorCode(result->GetErrorCode()));
+            break;
+        default:
+            break;
+    }
+    result_->DeRecordResult(imageId);
+    return true;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

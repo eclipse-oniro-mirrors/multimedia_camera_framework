@@ -26,14 +26,13 @@ class EventStatusChangeCommand : public Command {
     DECLARE_CMD_CLASS(EventStatusChangeCommand);
 
 public:
-    EventStatusChangeCommand(const int32_t userId, const EventType event, const int value);
+    EventStatusChangeCommand(const EventType event, const int value);
     ~EventStatusChangeCommand() override;
 
 protected:
     int32_t Executing() override;
 
 private:
-    const int32_t userId_;
     const EventType eventId_;
     const int32_t value_;
 };

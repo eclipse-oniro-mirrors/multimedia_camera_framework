@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,11 +43,6 @@ EventsInfo::EventsInfo()
 EventsInfo::~EventsInfo()
 {
     DP_DEBUG_LOG("entered.");
-}
-
-void EventsInfo::Initialize()
-{
-    DP_DEBUG_LOG("Initialize enter.");
 }
 
 ScreenStatus EventsInfo::GetScreenState()
@@ -125,6 +120,12 @@ ThermalLevel EventsInfo::GetThermalLevel()
     DP_INFO_LOG("GetThermalLevel: %{public}d", thermalLevel_);
 #endif
     return thermalLevel_;
+}
+
+CameraSessionStatus EventsInfo::GetCameraStatus()
+{
+    std::lock_guard lock(mutex_);
+    return cameraState_;
 }
 
 void EventsInfo::SetCameraState(CameraSessionStatus state)

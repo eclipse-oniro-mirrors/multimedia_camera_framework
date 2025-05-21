@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,57 +13,63 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DPS_SCHEDULE_CONTROLLER_H
-#define OHOS_CAMERA_DPS_SCHEDULE_CONTROLLER_H
+#ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSOR_H
+#define OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSOR_H
 
-#include "set"
-
+#include "deferred_photo_result.h"
+#include "enable_shared_create.h"
+#include "ideferred_photo_processing_session_callback.h"
+#include "image_info.h"
 #include "photo_job_repository.h"
 #include "photo_post_processor.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class DeferredPhotoProcessor : public IImageProcessCallbacks,
-    public std::enable_shared_from_this<IImageProcessCallbacks> {
+class DeferredPhotoProcessor : public EnableSharedCreateInit<DeferredPhotoProcessor> {
 public:
     ~DeferredPhotoProcessor();
-    void Initialize();
 
+    int32_t Initialize() override;
     void AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata);
     void RemoveImage(const std::string& imageId, bool restorable);
     void RestoreImage(const std::string& imageId);
     void ProcessImage(const std::string& appName, const std::string& imageId);
     void CancelProcessImage(const std::string& imageId);
-    void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo>& bufferInfo) override;
-    void OnProcessDoneExt(int userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfoExt>& bufferInfo) override;
-    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override;
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
+    void DoProcess(const DeferredPhotoJobPtr& job);
+
+    void OnProcessSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);
+    void OnProcessError(const int32_t userId, const std::string& imageId, DpsError error);
     void NotifyScheduleState(DpsStatus status);
-    void PostProcess(const DeferredPhotoWorkPtr& work);
-    void SetDefaultExecutionMode();
+
     void Interrupt();
-    int32_t GetConcurrency(ExecutionMode mode);
+    void SetDefaultExecutionMode();
     bool GetPendingImages(std::vector<std::string>& pendingImages);
+    bool HasRunningJob();
+    bool IsIdleState();
+    std::shared_ptr<PhotoJobRepository> GetRepository();
+    std::shared_ptr<PhotoPostProcessor> GetPhotoPostProcessor();
 
 protected:
     DeferredPhotoProcessor(const int32_t userId, const std::shared_ptr<PhotoJobRepository>& repository,
-        const std::shared_ptr<PhotoPostProcessor>& postProcessor,
-        const std::weak_ptr<IImageProcessCallbacks>& callback);
+        const std::shared_ptr<PhotoPostProcessor>& postProcessor);
 
 private:
-    bool IsFatalError(DpsError errorCode);
+    void HandleSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);
+    void HandleError(const int32_t userId, const std::string& imageId, DpsError error, bool isHighJob);
+    uint32_t StartTimer(const std::string& imageId);
+    void StopTimer(const std::string& imageId);
+    void ProcessPhotoTimeout(const std::string& imageId);
+    bool ProcessCatchResults(const std::string& imageId);
+    sptr<IDeferredPhotoProcessingSessionCallback> GetCallback();
 
     const int32_t userId_;
+    bool initialized_ {false};
+    std::shared_ptr<DeferredPhotoResult> result_ {nullptr};
     std::shared_ptr<PhotoJobRepository> repository_;
     std::shared_ptr<PhotoPostProcessor> postProcessor_;
-    std::weak_ptr<IImageProcessCallbacks> callback_;
-    std::set<std::string> requestedImages_ {};
-    std::string postedImageId_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DPS_SCHEDULE_CONTROLLER_H
+#endif // OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSOR_H

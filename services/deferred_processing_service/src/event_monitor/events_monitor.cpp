@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,182 +33,114 @@ EventsMonitor::EventsMonitor()
 
 EventsMonitor::~EventsMonitor()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     UnSubscribeSystemAbility();
 }
 
 void EventsMonitor::Initialize()
 {
     DP_DEBUG_LOG("entered.");
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_CHECK_RETURN(initialized_.load());
     DP_CHECK_RETURN(SubscribeSystemAbility() != DP_OK);
-    initialized_ = true;
+    initialized_.store(true);
 }
 
-void EventsMonitor::RegisterEventsListener(const int32_t userId, const std::vector<EventType>& events,
+void EventsMonitor::RegisterEventsListener(const std::vector<EventType>& events,
     const std::weak_ptr<IEventsListener>& listener)
 {
     DP_INFO_LOG("RegisterEventsListener enter.");
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListeners_;
-    if (userIdToeventListeners_.count(userId) > 0) {
-        eventListeners_ = userIdToeventListeners_[userId];
+    std::lock_guard<std::mutex> lock(eventMutex_);
+    for (const auto& event : events) {
+        eventListenerList_[event].push_back(listener);
     }
-    for (const auto &event : events) {
-        eventListeners_[event].push_back(listener);
-    }
-    userIdToeventListeners_[userId] = eventListeners_;
 }
 
 void EventsMonitor::NotifyThermalLevel(int32_t level)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: ThermalLevel: %{public}d", level);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::THERMAL_LEVEL_STATUS_EVENT, level);
-    }
+    NotifyObserversUnlocked(EventType::THERMAL_LEVEL_STATUS_EVENT, level);
 }
 
-void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
-    const std::string& cameraId, bool running, bool isSystemCamera)
+void EventsMonitor::NotifyCameraSessionStatus(CameraSessionStatus status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: userId: %{public}d, cameraId: %{public}s, running: %{public}d, isSystemCamera: %{public}d",
-        userId, cameraId.c_str(), running, isSystemCamera);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    CameraSessionStatus cameraSessionStatus;
-    running ? numActiveSessions_++ : numActiveSessions_--;
-    DP_INFO_LOG("numActiveSessions: %{public}d", static_cast<int>(numActiveSessions_.load()));
-    bool currSessionRunning = running;
-    if (currSessionRunning) {
-        cameraSessionStatus = isSystemCamera ?
-            CameraSessionStatus::SYSTEM_CAMERA_OPEN :
-            CameraSessionStatus::NORMAL_CAMERA_OPEN;
-    } else {
-        cameraSessionStatus = isSystemCamera ?
-            CameraSessionStatus::SYSTEM_CAMERA_CLOSED :
-            CameraSessionStatus::NORMAL_CAMERA_CLOSED;
-    }
-    EventsInfo::GetInstance().SetCameraState(cameraSessionStatus);
-    NotifyObserversUnlocked(userId, EventType::CAMERA_SESSION_STATUS_EVENT, cameraSessionStatus);
+    NotifyObserversUnlocked(EventType::CAMERA_SESSION_STATUS_EVENT, status);
     auto level = EventsInfo::GetInstance().GetThermalLevel();
     DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
 }
 
 void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("DPS_EVENT: MediaLibraryStatus: %{public}d", available);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::MEDIA_LIBRARY_STATUS_EVENT, available);
-    }
+    NotifyObserversUnlocked(EventType::MEDIA_LIBRARY_STATUS_EVENT, available);
 }
 
 void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("DPS_EVENT: ImageEnhanceStatus: %{public}d", status);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::PHOTO_HDI_STATUS_EVENT, status);
-    }
+    NotifyObserversUnlocked(EventType::PHOTO_HDI_STATUS_EVENT, status);
 }
 
 void EventsMonitor::NotifyVideoEnhanceStatus(int32_t status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("DPS_EVENT: VideoEnhanceStatus: %{public}d", status);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::VIDEO_HDI_STATUS_EVENT, status);
-    }
+    NotifyObserversUnlocked(EventType::VIDEO_HDI_STATUS_EVENT, status);
 }
 
 void EventsMonitor::NotifyScreenStatus(int32_t status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("DPS_EVENT: ScreenStatus: %{public}d", status);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::SCREEN_STATUS_EVENT, status);
-    }
+    NotifyObserversUnlocked(EventType::SCREEN_STATUS_EVENT, status);
 }
 
 void EventsMonitor::NotifyChargingStatus(int32_t status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: ChargingStatus: %{public}d", status);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::CHARGING_STATUS_EVENT, status);
-    }
+    NotifyObserversUnlocked(EventType::CHARGING_STATUS_EVENT, status);
 }
 
 void EventsMonitor::NotifyBatteryStatus(int32_t status)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: BatteryStatus: %{public}d", status);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::BATTERY_STATUS_EVENT, status);
-    }
+    NotifyObserversUnlocked(EventType::BATTERY_STATUS_EVENT, status);
 }
 
 void EventsMonitor::NotifyBatteryLevel(int32_t level)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: BatteryLevel: %{public}d", level);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::BATTERY_LEVEL_STATUS_EVENT, level);
-    }
+    NotifyObserversUnlocked(EventType::BATTERY_LEVEL_STATUS_EVENT, level);
 }
 
 void EventsMonitor::NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("DPS_EVENT: PhotoProcessSize offline: %{public}d, background: %{public}d", offlineSize, backSize);
-    DP_CHECK_ERROR_RETURN_LOG(!initialized_.load(), "uninitialized events monitor!");
-
-    for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
-        NotifyObserversUnlocked(it->first, EventType::PHOTO_PROCESS_STATUS_EVENT, offlineSize + backSize);
-    }
+    DP_INFO_LOG("DPS_EVENT: offline: %{public}d, background: %{public}d", offlineSize, backSize);
+    NotifyObserversUnlocked(EventType::PHOTO_PROCESS_STATUS_EVENT, offlineSize + backSize);
 }
 
-void EventsMonitor::NotifyObserversUnlocked(const int32_t userId, EventType event, int32_t value)
+void EventsMonitor::NotifyTrailingStatus(int32_t status)
 {
-    int32_t ret = DPS_SendCommand<EventStatusChangeCommand>(userId, event, value);
+    DP_INFO_LOG("DPS_EVENT: TrailingStatus: %{public}d", status);
+    NotifyObserversUnlocked(EventType::TRAILING_STATUS_EVENT, status);
+}
+
+void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)
+{
+    int32_t ret = DPS_SendCommand<EventStatusChangeCommand>(event, value);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "send command fail, ret: %{public}d", ret);
 }
 
-void EventsMonitor::NotifyEventToObervers(const int32_t userId, EventType event, int32_t value)
+void EventsMonitor::NotifyEventToObervers(EventType event, int32_t value)
 {
-    DP_DEBUG_LOG("entered.");
-    auto eventListeners = userIdToeventListeners_.find(userId);
-    if (eventListeners != userIdToeventListeners_.end()) {
-        std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListenersVect;
-        eventListenersVect = userIdToeventListeners_[userId];
-        auto &observers = eventListenersVect[event];
-        for (auto it = observers.begin(); it != observers.end();) {
-            auto observer = it->lock();
-            if (observer) {
-                observer->OnEventChange(event, value);
-                ++it;
-            } else {
-                it = observers.erase(it);
-            }
+    DP_DEBUG_LOG("EventType: %{public}d, value: %{public}d", event, value);
+    auto iter = eventListenerList_.find(event);
+    if (iter == eventListenerList_.end()) {
+        DP_ERR_LOG("unexpect event: %{public}d", event);
+        return;
+    }
+
+    auto& observers = iter->second;
+    for (auto it = observers.begin(); it != observers.end();) {
+        auto observer = it->lock();
+        if (observer) {
+            observer->OnEventChange(event, value);
+            ++it;
+        } else {
+            it = observers.erase(it);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,8 +37,10 @@ void DeferredVideoJobUnitTest::TearDownTestCase(void) {}
 void DeferredVideoJobUnitTest::SetUp(void)
 {
     srcFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_SOURCE_FD));
+    fdsan_exchange_owner_tag(srcFd_->GetFd(), 0, LOG_DOMAIN);
     ASSERT_NE(srcFd_, nullptr);
     dstFd_ = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_DESTINATION_FD));
+    fdsan_exchange_owner_tag(dstFd_->GetFd(), 0, LOG_DOMAIN);
     ASSERT_NE(dstFd_, nullptr);
 }
 
@@ -49,16 +51,17 @@ void DeferredVideoJobUnitTest::TearDown(void)
 }
 
 DeferredVideoJobPtr DeferredVideoJobUnitTest::CreateTestDeferredVideoJobPtr(
-    const std::string& videoId, VideoJobStatus curStatus)
+    const std::string& videoId, VideoJobState curStatus)
 {
-    if (!srcFd_ || !dstFd_) {
-        return nullptr;
-    }
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd_, dstFd_);
+    auto srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_SOURCE_FD));
+    fdsan_exchange_owner_tag(srcFd->GetFd(), 0, LOG_DOMAIN);
+    auto dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_DESTINATION_FD));
+    fdsan_exchange_owner_tag(dstFd->GetFd(), 0, LOG_DOMAIN);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, srcFd, dstFd);
     if (!jobPtr) {
         return nullptr;
     }
-    jobPtr->SetJobStatus(curStatus);
+    jobPtr->SetJobState(curStatus);
     return jobPtr;
 }
 
@@ -75,8 +78,8 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Lev
     std::string videoId1 = "videoTest1";
     std::string videoId2 = "videoTest2";
 
-    std::shared_ptr<DeferredVideoJob> videoJobA = std::make_shared<DeferredVideoJob>(videoId1, srcFd_, dstFd_);
-    std::shared_ptr<DeferredVideoJob> videoJobB = std::make_shared<DeferredVideoJob>(videoId2, srcFd_, dstFd_);
+    std::shared_ptr<DeferredVideoJob> videoJobA = CreateTestDeferredVideoJobPtr(videoId1, VideoJobState::NONE);
+    std::shared_ptr<DeferredVideoJob> videoJobB = CreateTestDeferredVideoJobPtr(videoId2, VideoJobState::NONE);
 
     bool createTimeResult = videoJobA->createTime_ < videoJobB->createTime_;
     EXPECT_EQ(videoJobA->curStatus_, videoJobB->curStatus_);
@@ -84,14 +87,12 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_001, TestSize.Lev
     EXPECT_EQ(*videoJobA > *videoJobB, createTimeResult);
     EXPECT_EQ(*videoJobB > *videoJobA, !createTimeResult);
 
-    EXPECT_EQ(videoJobA->GetCurStatus(), VideoJobStatus::NONE);
-    EXPECT_FALSE(videoJobA->SetJobStatus(VideoJobStatus::NONE));
-    EXPECT_TRUE(videoJobA->SetJobStatus(VideoJobStatus::PENDING));
-    EXPECT_EQ(videoJobA->GetCurStatus(), VideoJobStatus::PENDING);
-    EXPECT_EQ(videoJobA->GetPreStatus(), VideoJobStatus::NONE);
+    EXPECT_EQ(videoJobA->GetCurStatus(), VideoJobState::NONE);
+    EXPECT_FALSE(videoJobA->SetJobState(VideoJobState::NONE));
+    EXPECT_TRUE(videoJobA->SetJobState(VideoJobState::PENDING));
+    EXPECT_EQ(videoJobA->GetCurStatus(), VideoJobState::PENDING);
+    EXPECT_EQ(videoJobA->GetPreStatus(), VideoJobState::NONE);
     EXPECT_EQ(videoJobA->GetVideoId(), videoId1);
-    EXPECT_EQ(videoJobA->GetInputFd()->GetFd(), VIDEO_SOURCE_FD);
-    EXPECT_EQ(videoJobA->GetOutputFd()->GetFd(), VIDEO_DESTINATION_FD);
 }
 
 /*
@@ -110,10 +111,10 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_002, TestSize.Lev
     bool isAutoSuspend = false;
     
     std::shared_ptr<DeferredVideoJob> videoJob = std::make_shared<DeferredVideoJob>(videoId, srcFd_, dstFd_);
-    EXPECT_TRUE(videoJob->SetJobStatus(VideoJobStatus::RUNNING));
+    EXPECT_TRUE(videoJob->SetJobState(VideoJobState::RUNNING));
     
     std::shared_ptr<DeferredVideoWork> dfVideoWork = std::make_shared<DeferredVideoWork>(videoJob, mode, isAutoSuspend);
-    EXPECT_EQ(dfVideoWork->GetDeferredVideoJob()->GetCurStatus(), VideoJobStatus::RUNNING);
+    EXPECT_EQ(dfVideoWork->GetDeferredVideoJob()->GetCurStatus(), VideoJobState::RUNNING);
     EXPECT_EQ(dfVideoWork->GetExecutionMode(), ExecutionMode::LOAD_BALANCE);
     dfVideoWork->GetExecutionTime();
     EXPECT_TRUE(dfVideoWork->IsSuspend());
@@ -165,10 +166,10 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_004, TestSize.Lev
     std::string videoId4 = "videoTest4";
     uint32_t invalidIndex = 5;
 
-    DeferredVideoJobPtr videoJbPtr1 = CreateTestDeferredVideoJobPtr(videoId1, VideoJobStatus::NONE);
-    DeferredVideoJobPtr videoJbPtr2 = CreateTestDeferredVideoJobPtr(videoId2, VideoJobStatus::PAUSE);
-    DeferredVideoJobPtr videoJbPtr3 = CreateTestDeferredVideoJobPtr(videoId3, VideoJobStatus::PENDING);
-    DeferredVideoJobPtr videoJbPtr4 = CreateTestDeferredVideoJobPtr(videoId4, VideoJobStatus::FAILED);
+    DeferredVideoJobPtr videoJbPtr1 = CreateTestDeferredVideoJobPtr(videoId1, VideoJobState::NONE);
+    DeferredVideoJobPtr videoJbPtr2 = CreateTestDeferredVideoJobPtr(videoId2, VideoJobState::PAUSE);
+    DeferredVideoJobPtr videoJbPtr3 = CreateTestDeferredVideoJobPtr(videoId3, VideoJobState::PENDING);
+    DeferredVideoJobPtr videoJbPtr4 = CreateTestDeferredVideoJobPtr(videoId4, VideoJobState::FAILED);
 
     VideoJobQueue::Comparator comp = [](DeferredVideoJobPtr videoJbPtr1, DeferredVideoJobPtr videoJbPtr2) {
         return *videoJbPtr1 > *videoJbPtr2;
@@ -184,10 +185,10 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_004, TestSize.Lev
     EXPECT_EQ(videoJbQuePtr->Peek()->GetVideoId(), videoId2);
     videoJbQuePtr->Push(videoJbPtr1);
     EXPECT_EQ(videoJbQuePtr->Peek()->GetVideoId(), videoId1);
-    videoJbPtr1->SetJobStatus(VideoJobStatus::PENDING);
-    videoJbPtr2->SetJobStatus(VideoJobStatus::FAILED);
-    videoJbPtr3->SetJobStatus(VideoJobStatus::PAUSE);
-    videoJbPtr4->SetJobStatus(VideoJobStatus::NONE);
+    videoJbPtr1->SetJobState(VideoJobState::PENDING);
+    videoJbPtr2->SetJobState(VideoJobState::FAILED);
+    videoJbPtr3->SetJobState(VideoJobState::PAUSE);
+    videoJbPtr4->SetJobState(VideoJobState::NONE);
 
     videoJbQuePtr->Update(videoJbPtr1);
     EXPECT_EQ(videoJbQuePtr->Peek()->GetVideoId(), videoId3);
@@ -275,40 +276,40 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_006, TestSize.Lev
     EXPECT_EQ(videoJR->GetJob()->GetVideoId(), videoId);
     videoJR->AddVideoJob(videoId, srcFd_, dstFd_);
     EXPECT_NE(videoJR->GetJobUnLocked(videoId), nullptr);
-    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobStatus::PENDING);
+    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::PENDING);
 
     EXPECT_FALSE(videoJR->RemoveVideoJob(videoId, true));
-    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobStatus::DELETED);
+    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::DELETED);
     videoJR->RestoreVideoJob(videoId);
-    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobStatus::PENDING);
+    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::PENDING);
     std::shared_ptr<TestVideoJobRepositoryListener> sharedListener = std::make_shared<TestVideoJobRepositoryListener>();
     ASSERT_NE(sharedListener, nullptr);
     videoJR->RegisterJobListener(sharedListener);
     videoJR->SetJobPending(videoId);
     sharedListener = nullptr;
     videoJR->RestoreVideoJob(videoId);
-    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobStatus::PENDING);
+    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::PENDING);
 
     videoJR->SetJobRunning(videoId);
     videoJR->SetJobRunning(videoId);
     EXPECT_EQ(videoJR->runningSet_.size(), 1);
     ASSERT_NE(videoJR->GetJobUnLocked(videoId), nullptr);
-    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobStatus::RUNNING);
+    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobState::RUNNING);
     videoJR->SetJobCompleted(videoId);
-    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetPreStatus(), VideoJobStatus::RUNNING);
+    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetPreStatus(), VideoJobState::RUNNING);
     EXPECT_EQ(videoJR->runningSet_.size(), 0);
 
     videoJR->SetJobCompleted(videoId);
-    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobStatus::COMPLETED);
+    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobState::COMPLETED);
     videoJR->SetJobFailed(videoId);
     ASSERT_NE(videoJR->jobQueue_->Peek(), nullptr);
-    EXPECT_EQ(videoJR->jobQueue_->Peek()->GetCurStatus(), VideoJobStatus::FAILED);
-    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobStatus::PENDING);
+    EXPECT_EQ(videoJR->jobQueue_->Peek()->GetCurStatus(), VideoJobState::FAILED);
+    EXPECT_EQ(videoJR->GetJob()->GetCurStatus(), VideoJobState::PENDING);
 
     videoJR->SetJobError(videoId);
-    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobStatus::ERROR);
+    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobState::ERROR);
     videoJR->SetJobPause(videoId);
-    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobStatus::PAUSE);
+    EXPECT_EQ(videoJR->GetJobUnLocked(videoId)->GetCurStatus(), VideoJobState::PAUSE);
     videoJR->ClearCatch();
     EXPECT_TRUE(videoJR->jobQueue_->heap_.empty());
 }

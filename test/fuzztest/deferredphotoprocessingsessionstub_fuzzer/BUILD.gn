@@ -47,7 +47,7 @@ ohos_fuzztest("DeferredPhotoProcessingSessionStubFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor/command",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/base",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/impl",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/state",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",

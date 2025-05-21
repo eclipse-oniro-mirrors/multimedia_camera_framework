@@ -15,10 +15,8 @@
 
 #include "photo_process_command.h"
 
-#include "basic_definitions.h"
 #include "dp_utils.h"
 #include "dps.h"
-#include <utility>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,17 +36,15 @@ int32_t PhotoProcessCommand::Initialize()
     DP_CHECK_RETURN_RET(initialized_.load(), DP_OK);
     auto schedulerManager = DPS_GetSchedulerManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(schedulerManager == nullptr, DP_NULL_POINTER, "SchedulerManager is nullptr.");
-
-    postProcessor_ = schedulerManager->GetPhotoPostProcessor(userId_);
-    DP_CHECK_ERROR_RETURN_RET_LOG(postProcessor_ == nullptr, DP_NULL_POINTER, "PhotoPostProcessor is nullptr.");
-    
+    photoProcessor_ = schedulerManager->GetPhotoProcessor(userId_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(photoProcessor_ == nullptr, DP_NULL_POINTER, "DeferredPhotoProcessor is nullptr.");
     initialized_.store(true);
     return DP_OK;
 }
 
 PhotoProcessSuccessCommand::PhotoProcessSuccessCommand(const int32_t userId, const std::string& imageId,
-    const std::shared_ptr<BufferInfo>& bufferInfo)
-    : PhotoProcessCommand(userId), imageId_(imageId), bufferInfo_(bufferInfo)
+    std::unique_ptr<ImageInfo> imageInfo)
+    : PhotoProcessCommand(userId), imageId_(imageId), imageInfo_(std::move(imageInfo))
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -60,25 +56,7 @@ int32_t PhotoProcessSuccessCommand::Executing()
         return ret;
     }
 
-    postProcessor_->OnProcessDone(imageId_, bufferInfo_);
-    return DP_OK;
-}
-
-PhotoProcessSuccessExtCommand::PhotoProcessSuccessExtCommand(const int32_t userId, const std::string& imageId,
-    const std::shared_ptr<BufferInfoExt>& bufferInfo)
-    : PhotoProcessCommand(userId), imageId_(imageId), bufferInfo_(bufferInfo)
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-int32_t PhotoProcessSuccessExtCommand::Executing()
-{
-    int32_t ret = Initialize();
-    if (ret != DP_OK) {
-        return ret;
-    }
-
-    postProcessor_->OnProcessDoneExt(imageId_, bufferInfo_);
+    photoProcessor_->OnProcessSuccess(userId_, imageId_, std::move(imageInfo_));
     return DP_OK;
 }
 
@@ -96,13 +74,17 @@ int32_t PhotoProcessFailedCommand::Executing()
         return ret;
     }
 
-    postProcessor_->OnError(imageId_, error_);
+    photoProcessor_->OnProcessError(userId_, imageId_, error_);
     return DP_OK;
 }
 
-int32_t PhotoStateChangedCommand::Executing()
+int32_t PhotoProcessTimeOutCommand::Executing()
 {
-    postProcessor_->OnStateChanged(status_);
+        if (int32_t ret = Initialize() != DP_OK) {
+        return ret;
+    }
+
+    photoProcessor_->OnProcessError(userId_, imageId_, error_);
     return DP_OK;
 }
 } // namespace DeferredProcessing

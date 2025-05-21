@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,499 +13,246 @@
  * limitations under the License.
  */
 
-#include "accesstoken_kit.h"
-#include "ipc_skeleton.h"
-#include "nativetoken_kit.h"
-#include "os_account_manager.h"
-#include "token_setproc.h"
-#include "dp_utils.h"
-#include "ievents_listener.h"
-#include "deferred_photo_controller.h"
-#include "deferred_photo_processor.h"
 #include "deferred_photo_processor_unittest.h"
-#include "dps_metadata_info.h"
-#include "basic_definitions.h"
+
+#include "deferred_photo_processing_session_callback_stub.h"
+#include "deferred_processing_service.h"
+#include "dps.h"
+#include "gmock/gmock.h"
 
 using namespace testing::ext;
-using namespace OHOS::CameraStandard::DeferredProcessing;
 
 namespace OHOS {
 namespace CameraStandard {
+namespace DeferredProcessing {
+namespace {
+    constexpr int32_t USER_ID = 100;
+    // constexpr int32_t OTHER_USER_ID = 101;
+    const std::string TEST_IMAGE_1 = "testImage1";
+    const std::string TEST_IMAGE_2 = "testImage2";
+}
 
-class DeferredPhotoProcessorCallbacks : public IImageProcessCallbacks {
+class PhotoProcessingSessionCallbackMock : public DeferredPhotoProcessingSessionCallbackStub {
 public:
-    explicit DeferredPhotoProcessorCallbacks() {}
-
-    ~DeferredPhotoProcessorCallbacks() override {}
-
-    void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo>& bufferInfo) override {}
-
-    void OnProcessDoneExt(int userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfoExt>& bufferInfo) override {}
-
-    void OnError(const int userId, const std::string& imageId, DpsError errorCode) override {}
-
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override {}
+    MOCK_METHOD3(OnProcessImageDone, int32_t(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        uint32_t cloudImageEnhanceFlag));
+    MOCK_METHOD2(OnDeliveryLowQualityImage, int32_t(const std::string &imageId, std::shared_ptr<PictureIntf> picture));
+    MOCK_METHOD4(OnProcessImageDone, int32_t(const std::string &imageId, sptr<IPCFileDescriptor> ipcFd, const long bytes,
+        uint32_t cloudImageEnhanceFlag));
+    MOCK_METHOD2(OnError, int32_t(const std::string &imageId, const ErrorCode errorCode));
+    MOCK_METHOD1(OnStateChanged, int32_t(const StatusCode status));
 };
 
-void DeferredPhotoProcessorUnittest::SetUpTestCase(void) {}
+void DeferredPhotoProcessorUnittest::SetUpTestCase(void)
+{
+    DeferredProcessingService::GetInstance().Initialize();
+}
 
 void DeferredPhotoProcessorUnittest::TearDownTestCase(void) {}
 
 void DeferredPhotoProcessorUnittest::SetUp()
 {
-    NativeAuthorization();
+    sptr<IDeferredPhotoProcessingSessionCallback> callback = new (std::nothrow) PhotoProcessingSessionCallbackMock();
+    DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(USER_ID, callback);
+    sleep(1);
+    auto schedule = DPS_GetSchedulerManager();
+    ASSERT_NE(schedule, nullptr);
+    process_ = schedule->GetPhotoProcessor(USER_ID);
+    ASSERT_NE(process_, nullptr);
 }
 
 void DeferredPhotoProcessorUnittest::TearDown() {}
 
-void DeferredPhotoProcessorUnittest::NativeAuthorization()
-{
-    const char *perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId_ = GetAccessTokenId(&infoInstance);
-    uid_ = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid_, userId_);
-    SetSelfTokenID(tokenId_);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-}
-
-/*
- * Feature: Deferred
- * Function: Test eventsListener OnEventChange
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test after initialize eventsListener, backgroundStrategy status can be set by OnEventChange.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    auto listener = reinterpret_cast<IEventsListener*>(controller->eventsListener_.get());
-    EXPECT_NE(listener, nullptr);
-    controller->backgroundStrategy_->NotifyPressureLevelChanged(FAIR);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, NORMAL_CAMERA_CLOSED);
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_AVAILABLE);
-    EXPECT_EQ(controller->backgroundStrategy_->systemPressureLevel_, FAIR);
-    listener->OnEventChange(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_OPEN);
-    listener->OnEventChange(EventType::HDI_STATUS_EVENT, HDI_DISCONNECTED);
-    listener->OnEventChange(EventType::MEDIA_LIBRARY_STATUS_EVENT, MEDIA_LIBRARY_DISCONNECTED);
-    listener->OnEventChange(EventType::SCREEN_STATUS_EVENT, SCREEN_ON);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, SYSTEM_CAMERA_OPEN);
-    EXPECT_EQ(controller->backgroundStrategy_->hdiStatus_, HDI_DISCONNECTED);
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_DISCONNECTED);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyMediaLibStatusChanged
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the backgroundStrategy mediaLibraryStatus can be set by NotifyMediaLibStatusChanged.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    auto manager = DPS_GetSessionManager();
+    manager->DeletePhotoSession(USER_ID);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_AVAILABLE);
-    controller->NotifyMediaLibStatusChanged(MEDIA_LIBRARY_DISCONNECTED);
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_DISCONNECTED);
-    controller->NotifyMediaLibStatusChanged(MEDIA_LIBRARY_AVAILABLE);
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MEDIA_LIBRARY_AVAILABLE);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyCameraStatusChanged
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the backgroundStrategy cameraSessionStatus can be set by NotifyCameraStatusChanged.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, NORMAL_CAMERA_CLOSED);
-    controller->NotifyCameraStatusChanged(SYSTEM_CAMERA_OPEN);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, SYSTEM_CAMERA_OPEN);
-    controller->NotifyCameraStatusChanged(NORMAL_CAMERA_OPEN);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, NORMAL_CAMERA_OPEN);
-    controller->NotifyCameraStatusChanged(SYSTEM_CAMERA_CLOSED);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, SYSTEM_CAMERA_CLOSED);
-    controller->NotifyCameraStatusChanged(NORMAL_CAMERA_CLOSED);
-    EXPECT_EQ(controller->backgroundStrategy_->cameraSessionStatus_, NORMAL_CAMERA_CLOSED);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    auto info = std::make_unique<ImageInfo>();
+    process_->result_->RecordResult(TEST_IMAGE_1, std::move(info));
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController OnPhotoJobChanged
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the deferredPhotoController isWaitForUser status can be set by OnPhotoJobChanged.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job = std::make_shared<DeferredPhotoJob>("PhotoJob_imageid_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job, nullptr);
-    job->prePriority_ = PhotoJobPriority::NONE;
-    job->preStatus_ = PhotoJobStatus::NONE;
-    controller->OnPhotoJobChanged(false, false, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    controller->OnPhotoJobChanged(false, true, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    controller->OnPhotoJobChanged(true, false, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    controller->OnPhotoJobChanged(true, true, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    job->prePriority_ = PhotoJobPriority::NONE;
-    job->preStatus_ = PhotoJobStatus::RUNNING;
-    controller->OnPhotoJobChanged(true, true, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    job->prePriority_ = PhotoJobPriority::HIGH;
-    job->preStatus_ = PhotoJobStatus::NONE;
-    controller->OnPhotoJobChanged(true, true, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
-    job->prePriority_ = PhotoJobPriority::HIGH;
-    job->preStatus_ = PhotoJobStatus::RUNNING;
-    controller->OnPhotoJobChanged(true, true, job);
-    sleep(SLEEP_TIME_FOR_WATCH_DOG);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->RemoveImage(TEST_IMAGE_1, true);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyScheduleState
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the deferredPhotoController scheduleState status can be set by NotifyScheduleState.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job = std::make_shared<DeferredPhotoJob>("PhotoJob_imageid_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job, nullptr);
-    controller->photoJobRepository_->offlineJobMap_.emplace("PhotoJob_imageid_" + std::to_string(userId_), job);
-    controller->backgroundStrategy_->NotifyHdiStatusChanged(HDI_DISCONNECTED);
-    controller->photoJobRepository_->runningNum_ = 0;
-    controller->photoJobRepository_->offlineJobMap_.clear();
-    controller->photoJobRepository_->offlineJobMap_.emplace("PhotoJob_imageid_" + std::to_string(userId_), job);
-    controller->backgroundStrategy_->NotifyHdiStatusChanged(HDI_READY);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->RemoveImage(TEST_IMAGE_1, false);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController TryDoSchedule
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test the deferredPhotoController scheduleState status can be set by TryDoSchedule.
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_006, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    controller->TryDoSchedule();
-    controller->photoJobRepository_->runningNum_ = 1;
-    controller->TryDoSchedule();
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job = std::make_shared<DeferredPhotoJob>("PhotoJob_imageid_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job, nullptr);
-    job->curStatus_ = PhotoJobStatus::PENDING;
-    controller->photoJobRepository_->jobQueue_.push_front(job);
-    controller->TryDoSchedule();
-    controller->photoJobRepository_->runningNum_ = 1;
-    controller->TryDoSchedule();
+    process_->RemoveImage(TEST_IMAGE_2, true);
+    process_->RemoveImage(TEST_IMAGE_2, false);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
 
-/*
- * Feature: Deferred
- * Function: Test DeferredPhotoProcessor IsFatalError
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test IsFatalError for different errorCode
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    DpsError errorCode = DpsError::DPS_ERROR_IMAGE_PROC_FAILED;
-    EXPECT_TRUE(processor->IsFatalError(errorCode));
-    errorCode = DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID;
-    EXPECT_TRUE(processor->IsFatalError(errorCode));
-    errorCode = DpsError::DPS_ERROR_SESSION_SYNC_NEEDED;
-    EXPECT_FALSE(processor->IsFatalError(errorCode));
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->RemoveImage(TEST_IMAGE_1, true);
+    process_->RestoreImage(TEST_IMAGE_1);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test NotifyMediaLibStatusChanged
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test NotifyMediaLibStatusChanged
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    controller->NotifyMediaLibStatusChanged(MediaLibraryStatus::MEDIA_LIBRARY_DISCONNECTED);
-    controller->NotifyMediaLibStatusChanged(MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
-    EXPECT_EQ(controller->userInitiatedStrategy_->mediaLibraryStatus_, MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
-    EXPECT_EQ(controller->backgroundStrategy_->mediaLibraryStatus_, MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->ProcessImage("testApp", TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->highImages_.size(), 1);
+    process_->CancelProcessImage(TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->highImages_.size(), 0);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test process image and cancel process image
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test process image and cancel process image
- */
 HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    processor->Initialize();
-    std::string imageId = "test1";
     DpsMetadata metadata;
-    bool discardable = true;
-    processor->AddImage(imageId, discardable, metadata);
-    std::string appName = "com.cameraFwk.ut";
-    processor->ProcessImage(appName, imageId);
-    processor->CancelProcessImage(imageId);
-    EXPECT_TRUE(processor->requestedImages_.empty());
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->ProcessImage("testApp", TEST_IMAGE_2);
+    EXPECT_EQ(process_->result_->highImages_.size(), 0);
+    process_->CancelProcessImage(TEST_IMAGE_2);
+    EXPECT_EQ(process_->result_->highImages_.size(), 0);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyScheduleState
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test NotifyScheduleState when backgroundJobMap is empty.
- */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_027, TestSize.Level1)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_010, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job = std::make_shared<DeferredPhotoJob>("TestImageid_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job, nullptr);
-    job->curStatus_ = PhotoJobStatus::DELETED;
-
-    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
-    controller->photoJobRepository_->offlineJobList_.push_back(job);
-    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid_" + std::to_string(userId_), job);
-    controller->photoJobRepository_->runningNum_ = 0;
-    controller->NotifyScheduleState(false);
-    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_IDLE);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->ProcessImage("testApp", TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->highImages_.size(), 0);
+    process_->CancelProcessImage(TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->highImages_.size(), 0);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyScheduleState
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test NotifyScheduleState when backgroundJob status is DELETED.
- */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_028, TestSize.Level1)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_011, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
-
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job1 = std::make_shared<DeferredPhotoJob>("TestImageid1_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job1, nullptr);
-    job1->curStatus_ = PhotoJobStatus::DELETED;
-
-    auto job2 = std::make_shared<DeferredPhotoJob>("TestImageid2_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job2, nullptr);
-    job2->curStatus_ = PhotoJobStatus::DELETED;
-
-    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
-    controller->photoJobRepository_->offlineJobList_.push_back(job1);
-    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid1_" + std::to_string(userId_), job1);
-    controller->photoJobRepository_->backgroundJobMap_.emplace("TestImageid2_" + std::to_string(userId_), job2);
-    controller->photoJobRepository_->runningNum_ = 0;
-    controller->NotifyScheduleState(false);
-    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_IDLE);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    auto job = process_->repository_->GetJob();
+    process_->DoProcess(job);
+    ASSERT_NE(job, nullptr);
+    sleep(1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
-/*
- * Feature: Deferred
- * Function: Test deferredPhotoController NotifyScheduleState
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test NotifyScheduleState when backgroundJob status is not DELETED.
- */
-HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_029, TestSize.Level1)
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_012, TestSize.Level1)
 {
-    auto repository = std::make_shared<PhotoJobRepository>(userId_);
-    ASSERT_NE(repository, nullptr);
-    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
-    ASSERT_NE(callback, nullptr);
-    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
-    ASSERT_NE(postProcessor, nullptr);
-    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
-    ASSERT_NE(processor, nullptr);
-    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
-    ASSERT_NE(controller, nullptr);
-    controller->Initialize();
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    auto info = std::make_unique<ImageInfo>();
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
 
-    auto metadata = std::make_shared<DpsMetadata>();
-    EXPECT_NE(metadata, nullptr);
-    auto job1 = std::make_shared<DeferredPhotoJob>("TestImageid1_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job1, nullptr);
-    job1->curStatus_ = PhotoJobStatus::DELETED;
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
 
-    auto job2 = std::make_shared<DeferredPhotoJob>("TestImageid2_" + std::to_string(userId_), true, *metadata);
-    EXPECT_NE(job2, nullptr);
-    job2->curStatus_ = PhotoJobStatus::PENDING;
+    info = std::make_unique<ImageInfo>();
+    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
 
-    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
-    controller->photoJobRepository_->offlineJobList_.push_back(job1);
-    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid1_" + std::to_string(userId_), job1);
-    controller->photoJobRepository_->backgroundJobMap_.emplace("TestImageid2_" + std::to_string(userId_), job2);
-    controller->photoJobRepository_->runningNum_ = 0;
-    controller->backgroundStrategy_->hdiStatus_ = HdiStatus::HDI_READY;
-    controller->NotifyScheduleState(false);
-    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_RUNNALBE);
-
-    controller->backgroundStrategy_->hdiStatus_ = HdiStatus::HDI_NOT_READY_PREEMPTED;
-    controller->NotifyScheduleState(false);
-    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_SUSPENDED);
+    info = std::make_unique<ImageInfo>();
+    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_2, std::move(info));
+    process_->RemoveImage(TEST_IMAGE_1, false);
 }
 
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_013, TestSize.Level1)
+{
+    process_->result_->cacheMap_.clear();
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_FAILED);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_TIMEOUT);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_INTERRUPTED);
+    EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
+
+    process_->OnProcessError(USER_ID, TEST_IMAGE_2, DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_2, DPS_ERROR_VIDEO_PROC_FAILED);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_2, DPS_ERROR_VIDEO_PROC_TIMEOUT);
+    process_->OnProcessError(USER_ID, TEST_IMAGE_2, DPS_ERROR_VIDEO_PROC_INTERRUPTED);
+    EXPECT_EQ(process_->result_->cacheMap_.size(), 1);
+    process_->RemoveImage(TEST_IMAGE_1, false);
+    process_->result_->cacheMap_.clear();
+}
+
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_014, TestSize.Level1)
+{
+    auto jepg = std::make_unique<ImageInfo>();
+    jepg->SetType(CallbackType::IMAGE_PROCESS_DONE);
+    process_->result_->cacheMap_.emplace(TEST_IMAGE_1, std::move(jepg));
+    process_->ProcessCatchResults(TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->cacheMap_.size(), 0);
+}
+
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_015, TestSize.Level1)
+{
+    auto yuv = std::make_unique<ImageInfo>();
+    yuv->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
+    process_->result_->cacheMap_.emplace(TEST_IMAGE_1, std::move(yuv));
+    process_->ProcessCatchResults(TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->cacheMap_.size(), 0);
+}
+
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_016, TestSize.Level1)
+{
+    auto error = std::make_unique<ImageInfo>();
+    error->SetType(CallbackType::IMAGE_ERROR);
+    process_->result_->cacheMap_.emplace(TEST_IMAGE_1, std::move(error));
+    process_->ProcessCatchResults(TEST_IMAGE_1);
+    EXPECT_EQ(process_->result_->cacheMap_.size(), 0);
+}
+
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_017, TestSize.Level1)
+{
+    auto callback = process_->GetCallback();
+    ASSERT_NE(callback, nullptr);
+}
+} // DeferredProcessing
 } // CameraStandard
 } // OHOS

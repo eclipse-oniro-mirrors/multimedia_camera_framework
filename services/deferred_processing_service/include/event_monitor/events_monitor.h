@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,8 +39,7 @@ class EventsMonitor : public Singleton<EventsMonitor> {
 
 public:
     void Initialize();
-    void NotifyCameraSessionStatus(const int32_t userId,
-        const std::string& cameraId, bool running, bool isSystemCamera);
+    void NotifyCameraSessionStatus(CameraSessionStatus status);
     void NotifyMediaLibraryStatus(bool available);
     void NotifyImageEnhanceStatus(int32_t status);
     void NotifyVideoEnhanceStatus(int32_t status);
@@ -50,19 +49,20 @@ public:
     void NotifyBatteryLevel(int32_t level);
     void NotifyThermalLevel(int32_t level);
     void NotifyPhotoProcessSize(int32_t offlineSize, int32_t backSize);
-    void NotifyEventToObervers(int32_t userId, EventType event, int value);
-    void RegisterEventsListener(int32_t userId, const std::vector<EventType>& events,
+    void NotifyTrailingStatus(int32_t status);
+    void NotifyEventToObervers(EventType event, int value);
+    void RegisterEventsListener(const std::vector<EventType>& events,
         const std::weak_ptr<IEventsListener>& listener);
 
 private:
-    void NotifyObserversUnlocked(int userId, EventType event, int value);
+    void NotifyObserversUnlocked(EventType event, int value);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
 
-    std::mutex mutex_;
+    std::mutex eventMutex_;
     std::atomic_bool initialized_ {false};
-    std::atomic<int> numActiveSessions_ {0};
-    std::map<int32_t, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_ {};
+    std::atomic_int numActiveSessions_ {0};
+    std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListenerList_ {};
     sptr<CommonEventListener> ceListener_ {nullptr};
 };
 } // namespace DeferredProcessing

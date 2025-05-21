@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,14 +16,9 @@
 #ifndef DEFERRED_PHOTO_JOB_UNITTEST_H
 #define DEFERRED_PHOTO_JOB_UNITTEST_H
 
-#include "deferred_photo_controller.h"
-#include "deferred_photo_job.h"
-#include "deferred_photo_processor.h"
 #include "dps_metadata_info.h"
 #include "gtest/gtest.h"
-#include "iimage_process_callbacks.h"
-#include "session_manager.h"
-#include "task_manager/task_manager.h"
+#include "photo_job_repository.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,13 +38,7 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    void TestRegisterJobListener(std::shared_ptr<PhotoJobRepository> photoJR, const int32_t userId);
-
-    std::shared_ptr<SessionManager> sessionManager_;
-    std::shared_ptr<IImageProcessCallbacks> callbacks_;
-    std::shared_ptr<PhotoPostProcessor> postProcessor_;
-    std::shared_ptr<DeferredPhotoProcessor> photoProcessor_;
-    std::shared_ptr<DeferredPhotoController> photoController_;
+    std::unique_ptr<PhotoJobQueue> jobQueue_ {nullptr};
 };
 
 class TestPhotoJob {

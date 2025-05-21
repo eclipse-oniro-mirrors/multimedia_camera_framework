@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 
 #include "battery_level_strategy.h"
 #include "battery_strategy.h"
+#include "camera_strategy.h"
 #include "common_event_subscribe_info.h"
 #include "common_event_subscriber.h"
 #include "common_event_support.h"
@@ -28,6 +29,10 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+namespace {
+    const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
+}
+
 const std::vector<std::string> EventSubscriber::events_ = {
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON,
@@ -37,6 +42,7 @@ const std::vector<std::string> EventSubscriber::events_ = {
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_OKAY,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_LOW,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED,
+    COMMON_EVENT_CAMERA_STATUS,
 };
 
 EventSubscriber::EventSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo& subscriberInfo)
@@ -85,6 +91,7 @@ void EventSubscriber::Initialize()
         = batteryState;
     eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED]
         = std::make_shared<BatteryLevelStrategy>();
+    eventStrategy_[COMMON_EVENT_CAMERA_STATUS] = std::make_shared<CameraStrategy>();
 }
 
 void EventSubscriber::Subcribe()
@@ -103,15 +110,13 @@ void EventSubscriber::UnSubscribe()
 
 void EventSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventData& data)
 {
-    AAFwk::Want want = data.GetWant();
-    auto action = want.GetAction();
+    auto action = data.GetWant().GetAction();
     DP_DEBUG_LOG("DPS_EVENT: %{public}s.", action.c_str());
-    auto entry = eventStrategy_.find(action);
-    if (entry != eventStrategy_.end()) {
-        auto strategy = entry->second;
-        if (strategy != nullptr) {
-            strategy->handleEvent(data);
-        }
+    auto iter = eventStrategy_.find(action);
+    DP_CHECK_ERROR_RETURN_LOG(iter == eventStrategy_.end(), "Not find strategy.");
+
+    if (auto strategy = iter->second) {
+        strategy->handleEvent(data);
     }
 }
 } // namespace DeferredProcessing

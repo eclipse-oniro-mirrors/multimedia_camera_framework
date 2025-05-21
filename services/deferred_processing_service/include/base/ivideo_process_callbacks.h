@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_DPS_I_VIDEO_PROCESS_CALLBACKS_H
 
 #include "basic_definitions.h"
-#include "buffer_info.h"
 #include "ipc_file_descriptor.h"
 
 namespace OHOS {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include "dp_log.h"
 #include "dps.h"
 #include "picture_interface.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -30,71 +31,56 @@ DeferredProcessingService::DeferredProcessingService()
 
 DeferredProcessingService::~DeferredProcessingService()
 {
-    DP_DEBUG_LOG("entered.");
-    DP_CHECK_RETURN(!initialized_.load());
-
+    DP_INFO_LOG("entered.");
     DPS_Destroy();
 }
 
 void DeferredProcessingService::Initialize()
 {
     DP_DEBUG_LOG("entered.");
-    DP_CHECK_RETURN(initialized_.load());
-
-    DPS_Initialize();
     EventsMonitor::GetInstance().Initialize();
-    EventsInfo::GetInstance().Initialize();
+    auto ret = DPS_Initialize();
+    DP_CHECK_ERROR_RETURN_LOG(ret != DP_OK, "DeferredProcessingService init failed, ret: %{public}d", ret);
     initialized_.store(true);
-}
-
-void DeferredProcessingService::Start()
-{
-    DP_DEBUG_LOG("entered.");
-}
-
-void DeferredProcessingService::Stop()
-{
-    DP_DEBUG_LOG("entered.");
 }
 
 void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
     std::shared_ptr<PictureIntf> picture)
 {
-    DP_INFO_LOG("entered.");
+    DP_CHECK_RETURN(!initialized_.load());
+
     auto sessionManager = DPS_GetSessionManager();
-    if (sessionManager != nullptr && sessionManager->GetCallback(userId) != nullptr) {
-        sessionManager->GetCallback(userId)->OnDeliveryLowQualityImage(imageId, picture);
-    } else {
-        DP_INFO_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityImage not set!, Discarding callback");
+    DP_CHECK_ERROR_RETURN_LOG(sessionManager == nullptr, "SessionManager is nullptr, userId: %{public}d", userId);
+
+    if (auto callback = sessionManager->GetCallback(userId)) {
+        callback->OnDeliveryLowQualityImage(imageId, picture);
+        return;
     }
+    DP_ERR_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityImage not set!, Discarding callback");
 }
 
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
-    const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks)
+    const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
-    DP_INFO_LOG("create photo session, userId: %{public}d", userId);
+    DP_CHECK_RETURN_RET(!initialized_.load(), nullptr);
+
+    DP_INFO_LOG("Create photo session for userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
-        "SessionManager is null, userId: %{public}d", userId);
-    return sessionManager->CreateDeferredPhotoProcessingSession(userId, callbacks);
+        "SessionManager is nullptr, userId: %{public}d", userId);
+    return sessionManager->CreateDeferredPhotoProcessingSession(userId, callback);
 }
 
 sptr<IDeferredVideoProcessingSession> DeferredProcessingService::CreateDeferredVideoProcessingSession(
     const int32_t userId, const sptr<IDeferredVideoProcessingSessionCallback>& callbacks)
 {
-    DP_INFO_LOG("create video session, userId: %{public}d", userId);
+    DP_CHECK_RETURN_RET(!initialized_.load(), nullptr);
+
+    DP_INFO_LOG("Create video session for userId: %{public}d", userId);
     auto sessionManager = DPS_GetSessionManager();
     DP_CHECK_ERROR_RETURN_RET_LOG(sessionManager == nullptr, nullptr,
         "SessionManager is null, userId: %{public}d", userId);
     return sessionManager->CreateDeferredVideoProcessingSession(userId, callbacks);
-}
-
-void DeferredProcessingService::NotifyCameraSessionStatus(const int32_t userId, const std::string& cameraId,
-    bool running, bool isSystemCamera)
-{
-    DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",
-        userId, cameraId.c_str(), running, isSystemCamera);
-    EventsMonitor::GetInstance().NotifyCameraSessionStatus(userId, cameraId, running, isSystemCamera);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
