@@ -657,6 +657,7 @@ void CameraInput::RecoveryOldDevice()
         std::shared_ptr<OHOS::Camera::CameraMetadata> result_meta = nullptr;
         result_meta = CameraManager::GetInstance()->GetOldMeta(virtualcameraID);
         sptr<CameraDevice> cameraObjnow = new (std::nothrow) CameraDevice(virtualcameraID, result_meta);
+        CHECK_ERROR_RETURN_LOG(cameraObjnow == nullptr, "RecoveryOldDevice cameraObjnow is nullptr");
         if (result_meta == nullptr) {
             MEDIA_ERR_LOG("CameraInput::SetOldDevice can not GetOldMeta");
             return;
