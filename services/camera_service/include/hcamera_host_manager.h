@@ -136,6 +136,7 @@ private:
     std::mutex mutex_;
     std::mutex deviceMutex_;
     std::mutex saveRestoreMutex_;
+    std::mutex openPrelaunchMutex_;
     std::weak_ptr<StatusCallback> statusCallback_;
     std::shared_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
     std::vector<sptr<CameraHostInfo>> cameraHostInfos_;
@@ -145,6 +146,8 @@ private:
     ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> registerServStatListener_;
     bool muteMode_;
     bool isHasSavedParam = false;
+    bool isHasPrelaunch_ = false;
+    bool isHasOpenCamera_ = false;
 };
 
 class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {

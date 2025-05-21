@@ -1600,5 +1600,41 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_066, Test
         }
     }
 }
+/*
+ * Feature: Framework
+ * Function: Test cameraManager CheckCameraStatusValid
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager CheckCameraStatusValid for abormal branch1
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_067, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceList_.clear();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    sptr<CameraDevice> cameraInfo = cameras[0];
+    auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
+    std::string foldScreenType = cameraManager_->GetFoldScreenType();
+    EXPECT_TRUE(listenerManager->CheckCameraStatusValid(cameraInfo));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameraManager CheckCameraStatusValid
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameraManager CheckCameraStatusValid for abormal branch2
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_068, TestSize.Level0)
+{
+    cameraManager_->cameraDeviceList_.clear();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    sptr<CameraDevice> cameraInfo = nullptr;
+    auto listenerManager = cameraManager_->GetCameraStatusListenerManager();
+    EXPECT_FALSE(listenerManager->CheckCameraStatusValid(cameraInfo));
+}
 }
 }

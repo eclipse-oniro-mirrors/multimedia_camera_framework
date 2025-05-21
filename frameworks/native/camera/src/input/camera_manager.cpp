@@ -195,11 +195,13 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         cameraManager->ClearCameraDeviceListCache();
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
-    cameraStatusInfo.cameraDevice = cameraManager->GetCameraDeviceFromId(cameraId);
+    sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
+    cameraStatusInfo.cameraDevice = cameraInfo;
     CHECK_EXECUTE(status == CAMERA_STATUS_DISAPPEAR, cameraManager->RemoveCameraDeviceFromCache(cameraId));
     cameraStatusInfo.cameraStatus = status;
     cameraStatusInfo.bundleName = bundleName;
 
+    CHECK_EXECUTE(!CheckCameraStatusValid(cameraInfo), return CAMERA_OK);
     if (cameraStatusInfo.cameraDevice) {
         auto listenerManager = cameraManager->GetCameraStatusListenerManager();
         MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
@@ -220,6 +222,31 @@ int32_t CameraStatusListenerManager::OnFlashlightStatusChanged(const std::string
     listenerManager->TriggerListener([&](auto listener) { listener->OnFlashlightStatusChanged(cameraId, status); });
     listenerManager->CacheFlashStatus(cameraId, status);
     return CAMERA_OK;
+}
+
+bool CameraStatusListenerManager::CheckCameraStatusValid(sptr<CameraDevice> cameraInfo)
+{
+    auto cameraManager = GetCameraManager();
+    CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr || cameraInfo == nullptr,
+        false, "CheckCameraStatusValid CameraManager is nullptr");
+    std::string foldScreenType = cameraManager->GetFoldScreenType();
+    if (!foldScreenType.empty() && foldScreenType[0] == '4' &&
+        cameraInfo->GetPosition() == CAMERA_POSITION_BACK) {
+        std::string bundleName_ = system::GetParameter("const.camera.folded_lens_change", "default");
+        FoldStatus curFoldStatus = cameraManager->GetFoldStatus();
+        auto supportedFoldStatus = cameraInfo->GetSupportedFoldStatus();
+        auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
+        CHECK_DEBUG_RETURN_RET_LOG(it == g_metaToFwCameraFoldStatus_.end(), false,
+            "No supported fold status is found");
+        CHECK_DEBUG_RETURN_RET_LOG(it->second != curFoldStatus, false,
+            "current foldstatus is inconsistency");
+        bool isSpecialScene = it->second == curFoldStatus && curFoldStatus == FoldStatus::FOLDED &&
+            bundleName_ != "default" && cameraManager->GetBundleName() != bundleName_;
+        MEDIA_DEBUG_LOG("curFoldStatus %{public}d it->second= %{public}d cameraid = %{public}s",
+            static_cast<int32_t>(curFoldStatus), it->second, cameraInfo->GetID().c_str());
+        CHECK_ERROR_RETURN_RET_LOG(isSpecialScene, false, "CameraStatusListenerManager not notify");
+    }
+    return true;
 }
 
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
