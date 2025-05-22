@@ -1,0 +1,1758 @@
+/*
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@!namespace("@ohos.multimedia.camera", "camera")
+
+@!sts_inject("""
+static { loadLibrary("camera_taihe.z"); }
+""")
+
+enum CameraFormat : i32 {
+  CAMERA_FORMAT_RGBA_8888 = 3,
+  CAMERA_FORMAT_DNG = 4,
+  CAMERA_FORMAT_DNG_XDRAW = 5,
+  CAMERA_FORMAT_YUV_420_SP = 1003,
+  CAMERA_FORMAT_JPEG = 2000,
+  CAMERA_FORMAT_YCBCR_P010,
+  CAMERA_FORMAT_YCRCB_P010,
+  CAMERA_FORMAT_HEIC = 2003,
+  CAMERA_FORMAT_DEPTH_16 = 3000,
+  CAMERA_FORMAT_DEPTH_32 = 3001
+}
+
+enum CameraConcurrentType : i32 {
+  CAMERA_LIMITED_CAPABILITY = 0,
+  CAMERA_FULL_CAPABILITY = 1,
+}
+
+enum CameraPosition : i32 {
+  CAMERA_POSITION_UNSPECIFIED = 0,
+  CAMERA_POSITION_BACK = 1,
+  CAMERA_POSITION_FRONT = 2,
+  CAMERA_POSITION_FOLD_INNER = 3
+}
+
+struct CameraDevice {
+  @readonly cameraId: String;
+  @readonly cameraPosition: CameraPosition;
+  @readonly cameraType: CameraType;
+  @readonly connectionType: ConnectionType;
+}
+
+struct CameraStatusInfo {
+  camera: CameraDevice;
+  status: CameraStatus;
+}
+
+struct PrelaunchConfig {
+  cameraDevice: CameraDevice;
+}
+
+enum CameraType : i32 {
+  CAMERA_TYPE_DEFAULT = 0,
+  CAMERA_TYPE_WIDE_ANGLE = 1,
+  CAMERA_TYPE_ULTRA_WIDE = 2,
+  CAMERA_TYPE_TELEPHOTO = 3,
+  CAMERA_TYPE_TRUE_DEPTH = 4
+}
+
+enum ConnectionType : i32 {
+  CAMERA_CONNECTION_BUILT_IN = 0,
+  CAMERA_CONNECTION_USB_PLUGIN = 1,
+  CAMERA_CONNECTION_REMOTE = 2
+}
+
+struct FrameRateRange {
+  @readonly min: i32;
+  @readonly max: i32;
+}
+
+struct Size {
+  height: i32;
+  width: i32;
+}
+
+struct Profile {
+  @readonly size: Size;
+  @readonly format: CameraFormat;
+}
+
+struct VideoProfile {
+  @extends base: Profile;
+  @readonly frameRateRange: FrameRateRange;
+}
+
+struct DepthProfile {
+  @readonly size: Size;
+  @readonly format: CameraFormat;
+  @readonly dataAccuracy: DepthDataAccuracy;
+}
+
+struct CameraOutputCapability {
+  @readonly previewProfiles: Array<Profile>;
+  @readonly photoProfiles: Array<Profile>;
+  @readonly videoProfiles: Array<VideoProfile>;
+}
+
+@class
+struct EffectSuggestionStatus {
+  status: bool;
+}
+
+enum TorchMode : i32 {
+  OFF = 0,
+  ON = 1,
+  AUTO = 2
+}
+
+enum SceneMode : i32 {
+  NORMAL_PHOTO = 1,
+  NORMAL_VIDEO = 2,
+  PORTRAIT_PHOTO = 3,
+  NIGHT_PHOTO = 4,
+  PROFESSIONAL_PHOTO = 5,
+  PROFESSIONAL_VIDEO = 6,
+  SLOW_MOTION_VIDEO = 7,
+  MACRO_PHOTO = 8,
+  MACRO_VIDEO = 9,
+  LIGHT_PAINTING_PHOTO = 10,
+  HIGH_RESOLUTION_PHOTO = 11,
+  SECURE_PHOTO = 12,
+  QUICK_SHOT_PHOTO = 13,
+  APERTURE_VIDEO = 14,
+  PANORAMA_PHOTO = 15,
+  TIME_LAPSE_PHOTO = 16,
+  FLUORESCENCE_PHOTO = 17
+}
+
+struct TorchStatusInfo {
+  @readonly isTorchAvailable: bool;
+  @readonly isTorchActive: bool;
+  @readonly torchLevel: f32;
+}
+
+enum CameraStatus : i32 {
+  CAMERA_STATUS_APPEAR = 0,
+  CAMERA_STATUS_DISAPPEAR = 1,
+  CAMERA_STATUS_AVAILABLE = 2,
+  CAMERA_STATUS_UNAVAILABLE = 3
+}
+
+enum FlashMode : i32 {
+  FLASH_MODE_CLOSE = 0,
+  FLASH_MODE_OPEN = 1,
+  FLASH_MODE_AUTO = 2,
+  FLASH_MODE_ALWAYS_OPEN = 3
+}
+
+enum FocusMode : i32 {
+  FOCUS_MODE_MANUAL = 0,
+  FOCUS_MODE_CONTINUOUS_AUTO = 1,
+  FOCUS_MODE_AUTO = 2,
+  FOCUS_MODE_LOCKED = 3
+}
+
+enum VideoStabilizationMode : i32 {
+  OFF = 0,
+  LOW = 1,
+  MIDDLE = 2,
+  HIGH = 3,
+  AUTO = 4
+}
+
+enum ImageRotation : i32 {
+  ROTATION_0 = 0,
+  ROTATION_90 = 90,
+  ROTATION_180 = 180,
+  ROTATION_270 = 270
+}
+
+enum QualityLevel : i32 {
+  QUALITY_LEVEL_HIGH = 0,
+  QUALITY_LEVEL_MEDIUM = 1,
+  QUALITY_LEVEL_LOW = 2
+}
+
+enum FoldStatus : i32 {
+  NON_FOLDABLE = 0,
+  EXPANDED = 1,
+  FOLDED = 2
+}
+
+struct FoldStatusInfo {
+  @readonly foldStatus: FoldStatus;
+}
+
+enum PortraitEffect : i32 {
+  OFF = 0,
+  CIRCLES = 1,
+  HEART = 2,
+  ROTATED = 3,
+  STUDIO = 4,
+  THEATER = 5
+}
+
+enum AuxiliaryStatus : i32 {
+  LOCKED = 0,
+  ON = 1,
+  OFF = 2
+}
+
+interface CameraOutput {
+  GetSpecificImplPtr(): i64;
+
+  @gen_async("release")
+  @gen_promise("release")
+  ReleaseSync(): void;
+}
+
+struct SketchStatusData {
+  status: i32;
+  sketchRatio: f32;
+}
+
+
+interface DeferredPhotoProxy {
+  @gen_promise("release")
+  ReleaseSync(): void;
+}
+
+interface PreviewOutput : CameraOutput {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type === "frameStart"){
+              this.OnFrameStart_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "frameEnd") {
+              this.OnFrameEnd_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "sketchStatusChanged") {
+              this.OnSketchStatusChanged_inner(callback as (err: BusinessError<void>, data: SketchStatusData)=> void);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "error") {
+              this.OffError_inner(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else if (type === "frameStart"){
+              this.OffFrameStart_inner(callback as (((err: BusinessError<void>, data: undefined)=> void) | undefined));
+            } else if (type === "frameEnd") {
+              this.OffFrameEnd_inner(callback as (((err: BusinessError<void>, data: undefined)=> void) | undefined));
+            } else if (type === "sketchStatusChanged") {
+              this.OffSketchStatusChanged_inner(callback as (((err: BusinessError<void>, data: SketchStatusData)=> void) | undefined));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+  OnFrameStart(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffFrameStart(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+  OnFrameEnd(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffFrameEnd(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+  OnSketchStatusChanged(callback:(err: @sts_type("BusinessError<void>") Opaque, data: SketchStatusData)=> void): void;
+  OffSketchStatusChanged(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SketchStatusData)=> void>): void;
+}
+
+struct CameraOcclusionDetectionResult {
+  @readonly isCameraOccluded: bool;
+  @readonly isCameraLensDirty: bool;
+}
+
+interface CameraInput {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, parm: CameraDevice, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, parm: CameraDevice, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @gen_async("open")
+  @gen_promise("open")
+  OpenSync(): void;
+  @gen_promise("open")
+  OpenByIsSecureEnabledSync(isSecureEnabled: bool): @bigint Array<u64>;
+
+  GetSpecificImplPtr(): i64;
+
+  @gen_async("close")
+  @gen_promise("close")
+  CloseSync(): void;
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "cameraOcclusionDetection") {
+        this.OnCameraOcclusionDetection_inner(callback as ((arg_0: BusinessError<void>, arg_1: CameraOcclusionDetectionResult) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "cameraOcclusionDetection") {
+        this.OffCameraOcclusionDetection_inner(callback as (((arg_0: BusinessError<void>, arg_1: CameraOcclusionDetectionResult) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    on(type: string, parm: object, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(parm as CameraDevice, callback as (err: BusinessError<void>) => void);
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, parm: object, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(parm as CameraDevice, callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(parm: CameraDevice, callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(parm: CameraDevice, callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnCameraOcclusionDetection(callback:(err: @sts_type("BusinessError<void>") Opaque, data: CameraOcclusionDetectionResult)=> void): void;
+  OffCameraOcclusionDetection(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraOcclusionDetectionResult)=> void>): void;
+}
+
+interface FlashQuery {
+  HasFlash(): bool;
+}
+
+interface ZoomQuery {
+  GetZoomRatioRange(): Array<f32>;
+}
+
+interface Session {
+  BeginConfig(): void;
+  
+  @gen_async("commitConfig")
+  @gen_promise("commitConfig")
+  CommitConfigSync(): void;
+
+  AddInput(cameraInput: CameraInput): void;
+  AddOutput(cameraOutput: CameraOutput): void;
+
+  @gen_async("start")
+  @gen_promise("start")
+  StartSync();
+
+  @gen_async("stop")
+  @gen_promise("stop")
+  StopSync();
+
+  @gen_async("release")
+  @gen_promise("release")
+  ReleaseSync();
+}
+
+struct LcdFlashStatus {
+  @readonly isLcdFlashNeeded: bool;
+  @readonly lcdCompensation: i32;
+}
+
+enum TimeLapsePreviewType: i32 {
+  DARK = 1,
+  LIGHT = 2,
+}
+
+struct TryAEInfo {
+  @readonly isTryAEDone: bool;
+
+  @readonly isTryAEHintNeeded: Optional<bool>;
+
+  @readonly previewType : Optional<TimeLapsePreviewType>;
+
+  @readonly captureInterval : Optional<i32>;
+}
+
+interface BeautyQuery {}
+
+interface Beauty : BeautyQuery {}
+
+interface ColorManagementQuery {}
+
+interface ColorManagement : ColorManagementQuery {}
+
+interface DepthFusionQuery {}
+
+interface DepthFusion : DepthFusionQuery {}
+
+struct AutoDeviceSwitchStatus {
+  @readonly isDeviceSwitched: bool;
+  @readonly isDeviceCapabilityChanged: bool;
+}
+
+enum SceneFeatureType: i32 {
+  MOON_CAPTURE_BOOST = 0,
+  TRIPOD_DETECTION = 1,
+  LOW_LIGHT_BOOST = 2
+}
+
+struct SceneFeatureDetectionResult {
+  @readonly featureType: SceneFeatureType;
+  @readonly detected: bool;
+}
+
+enum EffectSuggestionType: i32 {
+  EFFECT_SUGGESTION_NONE = 0,
+  EFFECT_SUGGESTION_PORTRAIT = 1,
+  EFFECT_SUGGESTION_FOOD = 2,
+  EFFECT_SUGGESTION_SKY = 3,
+  EFFECT_SUGGESTION_SUNRISE_SUNSET = 4
+}
+
+interface PhotoSession : Session, Flash, Zoom {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, featureType: SceneFeatureType, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type == "focusStateChange") {
+              this.OnFocusStateChange_inner(callback as ((err: BusinessError<void>, data: FocusState) => void));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OnSmoothZoomInfoAvailable_inner(callback as ((err: BusinessError<void>, data: SmoothZoomInfo) => void));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OnAutoDeviceSwitchStatusChange_inner(callback as ((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void));
+            } else if (type === "lcdFlashStatus") {
+              this.OnLcdFlashStatus_inner(callback as ((err: BusinessError<void>, data: LcdFlashStatus)=> void));
+            } else if (type === "macroStatusChanged") {
+              this.OnMacroStatusChanged_inner(callback as ((err: BusinessError<void>, data: boolean)=> void));
+            } else if (type === "effectSuggestionChange") {
+              this.OnEffectSuggestionChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+    @!sts_inject_into_class("""on(type: string, featureType: SceneFeatureType, callback: object): void {
+            if (type === "featureDetection") {
+              this.OnFeatureDetection_inner(featureType, callback as ((err: BusinessError<void>, data: SceneFeatureDetectionResult)=> void));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, featureType: SceneFeatureType, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "error") {
+              this.OffError_inner(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else if (type == "focusStateChange") {
+              this.OffFocusStateChange_inner(callback as (((err: BusinessError<void>, data: FocusState) => void) | undefined));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OffSmoothZoomInfoAvailable_inner(callback as (((err: BusinessError<void>, data: SmoothZoomInfo) => void) | undefined));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OffAutoDeviceSwitchStatusChange_inner(callback as (((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void) | undefined));
+            } else if (type === "lcdFlashStatus") {
+              this.OffLcdFlashStatus_inner(callback as (((err: BusinessError<void>, data: LcdFlashStatus)=> void) | undefined));
+            } else if (type === "macroStatusChanged") {
+              this.OffMacroStatusChanged_inner(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
+            } else if (type === "effectSuggestionChange") {
+              this.OffEffectSuggestionChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType)=> void) | undefined));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+    @!sts_inject_into_class("""off(type: string, featureType: SceneFeatureType, callback?: object): void {
+            if (type === "featureDetection") {
+              this.OffFeatureDetection_inner(featureType, callback as (((err: BusinessError<void>, data: SceneFeatureDetectionResult)=> void) | undefined));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnAutoDeviceSwitchStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: AutoDeviceSwitchStatus)=> void): void;
+  OffAutoDeviceSwitchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: AutoDeviceSwitchStatus)=> void>): void;
+
+  OnFeatureDetection(featureType: SceneFeatureType, callback: (err: @sts_type("BusinessError<void>") Opaque, data: SceneFeatureDetectionResult)=> void): void;
+  OffFeatureDetection(featureType: SceneFeatureType, callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SceneFeatureDetectionResult)=> void>): void;
+
+  OnLcdFlashStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void): void;
+  OffLcdFlashStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void>): void;
+
+  OnMacroStatusChanged(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
+  OffMacroStatusChanged(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+
+  OnEffectSuggestionChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void): void;
+  OffEffectSuggestionChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void>): void;
+}
+
+enum LightStatus: i32 {
+  NORMAL = 0,
+  INSUFFICIENT = 1
+}
+
+enum FocusTrackingMode: i32 {
+  AUTO = 0
+}
+
+struct FocusTrackingInfo {
+  trackingMode: FocusTrackingMode;
+  trackingRegion: Rect;
+}
+
+interface VideoSession : Session, Flash, Zoom {
+  @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type == "focusStateChange") {
+              this.OnFocusStateChange_inner(callback as ((err: BusinessError<void>, data: FocusState) => void));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OnSmoothZoomInfoAvailable_inner(callback as ((err: BusinessError<void>, data: SmoothZoomInfo) => void));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OnAutoDeviceSwitchStatusChange_inner(callback as ((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void));
+            } else if (type === "lcdFlashStatus") {
+              this.OnLcdFlashStatus_inner(callback as ((err: BusinessError<void>, data: LcdFlashStatus)=> void));
+            } else if (type === "macroStatusChanged") {
+              this.OnMacroStatusChanged_inner(callback as ((err: BusinessError<void>, data: boolean)=> void));
+            } else if (type === "lightStatusChange") {
+              this.OnLightStatusChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: LightStatus)=> void));
+            } else if (type === "focusTrackingInfoAvailable") {
+              this.OnFocusTrackingInfoAvailable_inner(callback as ((arg_1: FocusTrackingInfo)=> void));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+  @!sts_inject_into_interface("off(type: string, callback?: (data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "error") {
+              this.OffError_inner(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else if (type == "focusStateChange") {
+              this.OffFocusStateChange_inner(callback as (((err: BusinessError<void>, data: FocusState) => void) | undefined));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OffSmoothZoomInfoAvailable_inner(callback as (((err: BusinessError<void>, data: SmoothZoomInfo) => void) | undefined));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OffAutoDeviceSwitchStatusChange_inner(callback as (((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void) | undefined));
+            } else if (type === "lcdFlashStatus") {
+              this.OffLcdFlashStatus_inner(callback as (((err: BusinessError<void>, data: LcdFlashStatus)=> void) | undefined));
+            } else if (type === "macroStatusChanged") {
+              this.OffMacroStatusChanged_inner(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
+            } else if (type === "lightStatusChange") {
+              this.OffLightStatusChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: LightStatus)=> void) | undefined));
+            } else if (type === "focusTrackingInfoAvailable") {
+              this.OffFocusTrackingInfoAvailable_inner(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnAutoDeviceSwitchStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: AutoDeviceSwitchStatus)=> void): void;
+  OffAutoDeviceSwitchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: AutoDeviceSwitchStatus)=> void>): void;
+
+  OnLcdFlashStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void): void;
+  OffLcdFlashStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void>): void;
+
+  OnMacroStatusChanged(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
+  OffMacroStatusChanged(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+
+  OnLightStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LightStatus)=> void): void;
+  OffLightStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LightStatus)=> void>): void;
+
+  OnFocusTrackingInfoAvailable(callback: (data: FocusTrackingInfo)=> void): void;
+  OffFocusTrackingInfoAvailable(callback: Optional<(data: FocusTrackingInfo)=> void>): void;
+}
+
+interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, Aperture, ColorReservation {
+  @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type == "focusStateChange") {
+              this.OnFocusStateChange_inner(callback as ((err: BusinessError<void>, data: FocusState) => void));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OnSmoothZoomInfoAvailable_inner(callback as ((err: BusinessError<void>, data: SmoothZoomInfo) => void));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OnAutoDeviceSwitchStatusChange_inner(callback as ((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void));
+            } else if (type === "lcdFlashStatus") {
+              this.OnLcdFlashStatus_inner(callback as ((err: BusinessError<void>, data: LcdFlashStatus)=> void));
+            } else if (type === "macroStatusChanged") {
+              this.OnMacroStatusChanged_inner(callback as ((err: BusinessError<void>, data: boolean)=> void));
+            } else if (type === "lightStatusChange") {
+              this.OnLightStatusChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: LightStatus)=> void));
+            } else if (type === "focusTrackingInfoAvailable") {
+              this.OnFocusTrackingInfoAvailable_inner(callback as ((arg_1: FocusTrackingInfo)=> void));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+  @!sts_inject_into_interface("off(type: string, callback?: (data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "error") {
+              this.OffError_inner(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else if (type == "focusStateChange") {
+              this.OffFocusStateChange_inner(callback as (((err: BusinessError<void>, data: FocusState) => void) | undefined));
+            } else if (type == "smoothZoomInfoAvailable") {
+              this.OffSmoothZoomInfoAvailable_inner(callback as (((err: BusinessError<void>, data: SmoothZoomInfo) => void) | undefined));
+            } else if (type === "autoDeviceSwitchStatusChange"){
+              this.OffAutoDeviceSwitchStatusChange_inner(callback as (((err: BusinessError<void>, data: AutoDeviceSwitchStatus)=> void) | undefined));
+            } else if (type === "lcdFlashStatus") {
+              this.OffLcdFlashStatus_inner(callback as (((err: BusinessError<void>, data: LcdFlashStatus)=> void) | undefined));
+            } else if (type === "macroStatusChanged") {
+              this.OffMacroStatusChanged_inner(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
+            } else if (type === "lightStatusChange") {
+              this.OffLightStatusChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: LightStatus)=> void) | undefined));
+            } else if (type === "focusTrackingInfoAvailable") {
+              this.OffFocusTrackingInfoAvailable_inner(callback as ((arg_1: FocusTrackingInfo)=> void) | undefined);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+}
+
+interface Portrait : PortraitQuery {}
+interface PortraitQuery {}
+
+interface PortraitPhotoSession : Session, Flash, AutoExposure, Focus, Zoom, Beauty, ColorEffect, ColorManagement, Portrait, Aperture {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "lcdFlashStatus") {
+        return this.OnLcdFlashStatus_inner(callback as ((arg_0: BusinessError<void>, arg_1: LcdFlashStatus) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "lcdFlashStatus") {
+        return this.OffLcdFlashStatus_inner(callback as (((arg_0: BusinessError<void>, arg_1: LcdFlashStatus) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnLcdFlashStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void): void;
+  OffLcdFlashStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void>): void;
+}
+
+interface ApertureVideoSession : Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, Aperture {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+}
+
+interface NightPhotoSession : Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, Beauty, ColorManagement, ManualExposure {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "lcdFlashStatus") {
+        return this.OnLcdFlashStatus_inner(callback as ((arg_0: BusinessError<void>, arg_1: LcdFlashStatus) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "lcdFlashStatus") {
+        return this.OffLcdFlashStatus_inner(callback as (((arg_0: BusinessError<void>, arg_1: LcdFlashStatus) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnLcdFlashStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void): void;
+  OffLcdFlashStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LcdFlashStatus)=> void>): void;
+}
+
+interface SlowMotionVideoSession : Session, Flash, AutoExposure, Focus, Zoom, ColorEffect {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "slowMotionStatus") {
+        return this.OnSlowMotionStatus_inner(callback as ((arg_0: BusinessError<void>, arg_1: SlowMotionStatus) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "slowMotionStatus") {
+        return this.OffSlowMotionStatus_inner(callback as (((arg_0: BusinessError<void>, arg_1: SlowMotionStatus) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnSlowMotionStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SlowMotionStatus)=> void): void;  
+  OffSlowMotionStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SlowMotionStatus)=> void>): void; 
+}
+
+interface HighResolutionPhotoSession : Session, AutoExposure, Focus {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+}
+
+interface MacroPhotoSession : Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus, DepthFusion, ColorManagement {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """) 
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+}
+
+interface MacroVideoSession : Session, Flash, AutoExposure, Focus, Zoom, ColorEffect, ManualFocus, ColorManagement {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+}
+
+interface LightPaintingPhotoSession : Session, Flash, Focus, Zoom, ColorEffect {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+}
+
+interface EffectSuggestion {}
+
+interface QuickShotPhotoSession : Session, AutoExposure, ColorEffect, ColorManagement, EffectSuggestion, Flash, Focus, Zoom {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "effectSuggestionChange") {
+        return this.OnEffectSuggestionChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: EffectSuggestionType) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        return this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "effectSuggestionChange") {
+        return this.OffEffectSuggestionChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: EffectSuggestionType) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>): void;
+
+  OnEffectSuggestionChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void): void;
+  OffEffectSuggestionChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: EffectSuggestionType)=> void>): void;
+}
+
+interface PanoramaPhotoSession : Session {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+}
+
+interface FluorescencePhotoSession : Session, AutoExposure, Focus, Zoom {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        return this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        return this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+}
+
+interface TimeLapsePhotoSession : Session, Focus, ManualFocus, AutoExposure, ManualExposure, ManualIso, WhiteBalance, Zoom, ColorEffect {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(callback as (arg_0: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "isoInfoChange") {
+        this.OnIsoInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: IsoInfo) => void));
+      } else if (type == "exposureInfoChange") {
+        this.OnExposureInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void));
+      } else if (type == "tryAEInfoChange") {
+        this.OnTryAEInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: TryAEInfo) => void));
+      } else if (type == "luminationInfoChange") {
+        this.OnLuminationInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "isoInfoChange") {
+        this.OffIsoInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: IsoInfo) => void) | undefined));
+      } else if (type == "exposureInfoChange") {
+        this.OffExposureInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void) | undefined));
+      } else if (type == "tryAEInfoChange") {
+        this.OffTryAEInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: TryAEInfo) => void) | undefined));
+      } else if (type == "luminationInfoChange") {
+        this.OffLuminationInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+
+  OnIsoInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void): void;
+  OffIsoInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void>): void;
+
+  OnExposureInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void): void;
+  OffExposureInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void>): void;
+
+  OnTryAEInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: TryAEInfo)=> void): void;
+  OffTryAEInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TryAEInfo)=> void>): void;
+
+  OnLuminationInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void): void;
+  OffLuminationInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void>): void;
+}
+
+union SessionUnion {
+  photoSession : PhotoSession;
+  videoSession : VideoSession;
+  videoSessionForSys : VideoSessionForSys;
+  portraitPhotoSession : PortraitPhotoSession;
+  apertureVideoSession : ApertureVideoSession;
+  nightPhotoSession : NightPhotoSession;
+  professionalPhotoSession : ProfessionalPhotoSession;
+  professionalVideoSession : ProfessionalVideoSession;
+  slowMotionVideoSession : SlowMotionVideoSession;
+  highResolutionPhotoSession : HighResolutionPhotoSession;
+  macroPhotoSession : MacroPhotoSession;
+  macroVideoSession : MacroVideoSession;
+  secureSession : SecureSession;
+  lightPaintingPhotoSession : LightPaintingPhotoSession;
+  quickShotPhotoSession : QuickShotPhotoSession;
+  panoramaPhotoSession : PanoramaPhotoSession;
+  fluorescencePhotoSession : FluorescencePhotoSession;
+  timeLapsePhotoSession : TimeLapsePhotoSession;
+  session: Session;
+}
+
+interface CameraManager {
+  GetSupportedCameras(): Array<CameraDevice>;
+  GetSupportedSceneModes(camera: CameraDevice): Array<SceneMode>;
+  GetSupportedOutputCapability(camera: CameraDevice, mode: SceneMode): CameraOutputCapability;
+  Prelaunch(): void;
+  IsTorchSupported(): bool;
+  IsCameraMuted(): bool;
+  IsCameraMuteSupported(): bool;
+  GetTorchMode(): TorchMode;
+  SetTorchMode(mode: TorchMode): void;
+  CreateSession(mode: SceneMode): SessionUnion;
+  @overload("createCameraInput")
+  CreateCameraInputWithCameraDevice(camera: CameraDevice): CameraInput;
+  @overload("createCameraInput")
+  CreateCameraInputWithPosition(position: CameraPosition, type: CameraType): CameraInput;
+  @overload("createPreviewOutput")
+  CreatePreviewOutput(profile: Profile, surfaceId: String): PreviewOutput;
+  @overload("createPreviewOutput")
+  CreatePreviewOutputWithoutProfile(surfaceId: String): PreviewOutput;
+  CreatePhotoOutput(profile: Optional<Profile>): PhotoOutput;
+  @overload("createVideoOutput")
+  CreateVideoOutput(profile: VideoProfile, surfaceId: String): VideoOutput;
+  @overload("createVideoOutput")
+  CreateVideoOutputWithoutProfile(surfaceId: String): VideoOutput;
+  @overload("createMetadataOutput")
+  CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "cameraMute") {
+              this.OnCameraMute_inner(callback as (err: BusinessError<void>, data: boolean)=> void);
+            } else if (type === "cameraStatus"){
+              this.OnCameraStatus_inner(callback as (err: BusinessError<void>, data: CameraStatusInfo)=> void);
+            } else if (type === "foldStatusChange") {
+              this.OnFoldStatusChange_inner(callback as (err: BusinessError<void>, data: FoldStatusInfo)=> void);
+            } else if (type === "torchStatusChange") {
+              this.OnTorchStatusChange_inner(callback as (err: BusinessError<void>, data: TorchStatusInfo)=> void);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "cameraMute") {
+              this.OffCameraMute_inner(callback as (((err: BusinessError<void>, data: boolean)=> void) | undefined));
+            } else if (type === "cameraStatus"){
+              this.OffCameraStatus_inner(callback as (((err: BusinessError<void>, data: CameraStatusInfo)=> void) | undefined));
+            } else if (type === "foldStatusChange") {
+              this.OffFoldStatusChange_inner(callback as (((err: BusinessError<void>, data: FoldStatusInfo)=> void) | undefined));
+            } else if (type === "torchStatusChange") {
+              this.OffTorchStatusChange_inner(callback as (((err: BusinessError<void>, data: TorchStatusInfo)=> void) | undefined));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnCameraMute(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
+  OffCameraMute(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+  OnCameraStatus(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraStatusInfo)=> void): void;
+  OffCameraStatus(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraStatusInfo)=> void>): void;
+  OnFoldStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FoldStatusInfo)=> void): void;
+  OffFoldStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FoldStatusInfo)=> void>): void;
+  OnTorchStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void): void;
+  OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
+}
+
+struct DeferredVideoEnhancementInfo {
+  @readonly isDeferredVideoEnhancementAvailable: bool;
+  @readonly videoId: Optional<String>;
+}
+
+interface VideoOutput : CameraOutput {
+  @gen_async("start")
+  @gen_promise("start")
+  StartSync(): void;
+
+  @gen_async("stop")
+  @gen_promise("stop")
+  StopSync(): void;
+
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type === "deferredVideoEnhancementInfo") {
+              this.OnDeferredVideoEnhancementInfo_inner(callback as (err: BusinessError<void>, data: DeferredVideoEnhancementInfo)=> void);
+            } else if (type === "frameStart"){
+              this.OnFrameStart_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "frameEnd") {
+              this.OnFrameEnd_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "error") {
+              this.OffError_inner(callback as (err: BusinessError<void>)=> void);
+            } else if (type === "deferredVideoEnhancementInfo") {
+              this.OffDeferredVideoEnhancementInfo_inner(callback as (err: BusinessError<void>, data: DeferredVideoEnhancementInfo)=> void);
+            } else if (type === "frameStart"){
+              this.OffFrameStart_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "frameEnd") {
+              this.OffFrameEnd_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
+
+  OnDeferredVideoEnhancementInfo(callback: (err: @sts_type("BusinessError<void>") Opaque, data: DeferredVideoEnhancementInfo)=> void): void;
+  OffDeferredVideoEnhancementInfo(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: DeferredVideoEnhancementInfo)=> void>): void;
+  
+  OnFrameStart(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffFrameStart(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+
+  OnFrameEnd(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffFrameEnd(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+}
+
+function getCameraManager(context: @sts_type("Context") Opaque): CameraManager;
+
+struct Rect {
+  topLeftX: f64;
+  topLeftY: f64;
+  width: f64;
+  height: f64;
+}
+
+interface SecureSession : Session, Flash, AutoExposure, Focus, Zoom {
+  AddSecureOutput(previewOutput: PreviewOutput): void;
+
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>): void;
+}
+
+interface ProfessionalPhotoSession : Session, AutoExposure, ManualExposure, Focus, ManualFocus, WhiteBalance, ManualIso, Flash, Zoom, ColorEffect, Aperture {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(callback as (arg_0: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "isoInfoChange") {
+        this.OnIsoInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: IsoInfo) => void));
+      } else if (type == "exposureInfoChange") {
+        this.OnExposureInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void));
+      } else if (type == "apertureInfoChange") {
+        this.OnApertureInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: ApertureInfo) => void));
+      } else if (type == "luminationInfoChange") {
+        this.OnLuminationInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "isoInfoChange") {
+        this.OffIsoInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: IsoInfo) => void) | undefined));
+      } else if (type == "exposureInfoChange") {
+        this.OffExposureInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void) | undefined));
+      } else if (type == "apertureInfoChange") {
+        this.OffApertureInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: ApertureInfo) => void) | undefined));
+      } else if (type == "luminationInfoChange") {
+        this.OffLuminationInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>);
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>);
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>);
+
+  OnIsoInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void): void;
+  OffIsoInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void>);
+
+  OnExposureInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void): void;
+  OffExposureInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void>);
+
+  OnApertureInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ApertureInfo)=> void): void;
+  OffApertureInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ApertureInfo)=> void>);
+
+  OnLuminationInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void): void;
+  OffLuminationInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void>): void;
+}
+
+interface ProfessionalVideoSession : Session, AutoExposure, ManualExposure, Focus, ManualFocus, WhiteBalance, ManualIso, Flash, Zoom, ColorEffect, Aperture {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "focusStateChange") {
+        this.OnFocusStateChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: FocusState) => void));
+      } else if (type == "smoothZoomInfoAvailable") {
+        this.OnSmoothZoomInfoAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void));
+      } else if (type == "isoInfoChange") {
+        this.OnIsoInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: IsoInfo) => void));
+      } else if (type == "exposureInfoChange") {
+        this.OnExposureInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void));
+      } else if (type == "apertureInfoChange") {
+        this.OnApertureInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: ApertureInfo) => void));
+      } else if (type == "luminationInfoChange") {
+        this.OnLuminationInfoChange_inner(callback as ((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "focusStateChange") {
+        this.OffFocusStateChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: FocusState) => void) | undefined));
+      } else if (type == "smoothZoomInfoAvailable") {
+        this.OffSmoothZoomInfoAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: SmoothZoomInfo) => void) | undefined));
+      } else if (type == "isoInfoChange") {
+        this.OffIsoInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: IsoInfo) => void) | undefined));
+      } else if (type == "exposureInfoChange") {
+        this.OffExposureInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: ExposureInfo) => void) | undefined));
+      } else if (type == "apertureInfoChange") {
+        this.OffApertureInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: ApertureInfo) => void) | undefined));
+      } else if (type == "luminationInfoChange") {
+        this.OffLuminationInfoChange_inner(callback as (((arg_0: BusinessError<void>, arg_1: LuminationInfo) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>);
+
+  OnFocusStateChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void): void;
+  OffFocusStateChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FocusState)=> void>);
+
+  OnSmoothZoomInfoAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void): void;
+  OffSmoothZoomInfoAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: SmoothZoomInfo)=> void>);
+
+  OnIsoInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void): void;
+  OffIsoInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: IsoInfo)=> void>);
+
+  OnExposureInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void): void;
+  OffExposureInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ExposureInfo)=> void>);
+
+  OnApertureInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: ApertureInfo)=> void): void;
+  OffApertureInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: ApertureInfo)=> void>);
+
+  OnLuminationInfoChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void): void;
+  OffLuminationInfoChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: LuminationInfo)=> void>): void;
+}
+
+interface DepthDataOutput : CameraOutput {
+  @gen_promise("start")
+  StartSync(): void;
+
+  @gen_promise("stop")
+  StopSync(): void;
+
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+}
+
+enum DepthDataAccuracy: i32 {
+  DEPTH_DATA_ACCURACY_RELATIVE = 0,
+  DEPTH_DATA_ACCURACY_ABSOLUTE = 1,
+}
+
+enum FocusState: i32 {
+  FOCUS_STATE_SCAN = 0,
+  FOCUS_STATE_FOCUSED = 1,
+  FOCUS_STATE_UNFOCUSED = 2,
+}
+
+enum SlowMotionStatus: i32 {
+  DISABLE = 0,
+  READY = 1,
+  START = 2,
+  RECORDING = 3,
+  FINISH = 4,
+}
+
+struct SmoothZoomInfo {
+  duration: i32;
+}
+
+struct IsoInfo {
+  @readonly iso: Optional<i32>;
+}
+
+struct ExposureInfo {
+  @readonly exposureTime: Optional<i32>;
+}
+
+struct ApertureInfo {
+  @readonly aperture: Optional<f32>;
+}
+
+struct LuminationInfo {
+  @readonly lumination: Optional<f32>;
+}
+
+struct CaptureStartInfo {
+  captureId: i32;
+  time: i64;
+}
+
+struct CaptureEndInfo {
+  captureId: i32;
+  frameCount: i32;
+}
+
+struct FrameShutterInfo {
+  captureId: i32;
+  timestamp: i64;
+}
+
+struct FrameShutterEndInfo {
+  captureId: i32;
+}
+
+interface PhotoOutput : CameraOutput {
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""on(type: string, callback: object): void {
+            if (type === "captureStartWithInfo") {
+              this.OnCaptureStartWithInfo_inner(callback as (err: BusinessError<void>, data: CaptureStartInfo)=> void);
+            } else if (type === "captureEnd"){
+              this.OnCaptureEnd_inner(callback as (err: BusinessError<void>, data: CaptureEndInfo)=> void);
+            } else if (type === "captureReady") {
+              this.OnCaptureReady_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "frameShutter") {
+              this.OnFrameShutter_inner(callback as (err: BusinessError<void>, data: FrameShutterInfo)=> void);
+            } else if (type === "frameShutterEnd") {
+              this.OnFrameShutterEnd_inner(callback as (err: BusinessError<void>, data: FrameShutterEndInfo)=> void);
+            } else if (type === "estimatedCaptureDuration") {
+              this.OnEstimatedCaptureDuration_inner(callback as (err: BusinessError<void>, data: double)=> void);
+            } else if (type === "offlineDeliveryFinished") {
+              this.OnOfflineDeliveryFinished_inner(callback as ((err: BusinessError<void>, data: undefined)=> void));
+            } else if (type === "error") {
+              this.OnError_inner(callback as (err: BusinessError<void>)=> void);
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_class("""off(type: string, callback?: object): void {
+            if (type === "captureStartWithInfo") {
+              this.OffCaptureStartWithInfo_inner(callback as (((err: BusinessError<void>, data: CaptureStartInfo)=> void) | undefined));
+            } else if (type === "captureEnd"){
+              this.OffCaptureEnd_inner(callback as (((err: BusinessError<void>, data: CaptureEndInfo)=> void) | undefined));
+            } else if (type === "captureReady") {
+              this.OffCaptureReady_inner(callback as (err: BusinessError<void>, data: undefined)=> void);
+            } else if (type === "frameShutter") {
+              this.OffFrameShutter_inner(callback as (((err: BusinessError<void>, data: FrameShutterInfo)=> void) | undefined));
+            } else if (type === "frameShutterEnd") {
+              this.OffFrameShutterEnd_inner(callback as (((err: BusinessError<void>, data: FrameShutterEndInfo)=> void) | undefined));
+            } else if (type === "estimatedCaptureDuration") {
+              this.OffEstimatedCaptureDuration_inner(callback as (((err: BusinessError<void>, data: double)=> void) | undefined));
+            } else if (type === "offlineDeliveryFinished") {
+              this.OffOfflineDeliveryFinished_inner(callback as (((err: BusinessError<void>, data: undefined)=> void) | undefined));
+            } else if (type === "error") {
+              this.OffError_inner(callback as (((err: BusinessError<void>)=> void) | undefined));
+            } else {
+              throw new Error(`Unknown type: ${type}`);
+            }
+        }
+  """)
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+  OnCaptureStartWithInfo(callback:(err: @sts_type("BusinessError<void>") Opaque, data: CaptureStartInfo)=> void): void;
+  OffCaptureStartWithInfo(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CaptureStartInfo)=> void>): void;
+  OnCaptureEnd(callback:(err: @sts_type("BusinessError<void>") Opaque, data: CaptureEndInfo)=> void): void;
+  OffCaptureEnd(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CaptureEndInfo)=> void>): void;
+  OnCaptureReady(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffCaptureReady(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+  OnFrameShutter(callback:(err: @sts_type("BusinessError<void>") Opaque, data: FrameShutterInfo)=> void): void;
+  OffFrameShutter(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FrameShutterInfo)=> void>): void;
+  OnFrameShutterEnd(callback:(err: @sts_type("BusinessError<void>") Opaque, data: FrameShutterEndInfo)=> void): void;
+  OffFrameShutterEnd(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: FrameShutterEndInfo)=> void>): void;
+  OnEstimatedCaptureDuration(callback:(err: @sts_type("BusinessError<void>") Opaque, data: f64)=> void): void;
+  OffEstimatedCaptureDuration(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: f64)=> void>): void;
+  OnOfflineDeliveryFinished(callback:(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void): void;
+  OffOfflineDeliveryFinished(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: @sts_type("undefined") Opaque)=> void>): void;
+}
+
+interface Flash : FlashQuery {}
+
+interface AutoExposure {}
+
+interface Focus {}
+
+interface Zoom : ZoomQuery {}
+
+interface ManualExposure {}
+
+interface ManualFocus {}
+
+interface WhiteBalance {}
+
+interface ManualIso {}
+
+interface ColorEffect {}
+
+interface Aperture {}
+
+interface Macro {}
+
+interface ColorReservation {}
+
+enum MetadataObjectType: i32 {
+  FACE_DETECTION = 0,
+  HUMAN_BODY = 1,
+  CAT_FACE = 2,
+  CAT_BODY = 3,
+  DOG_FACE = 4,
+  DOG_BODY = 5,
+  SALIENT_DETECTION = 6,
+  BAR_CODE_DETECTION = 7
+}
+
+struct MetadataObject {
+  @readonly type: MetadataObjectType;
+  @readonly timestamp: i32;
+  @readonly boundingBox: Rect;
+  @readonly objectId: i32;
+  @readonly confidence: i32;
+}
+
+interface MetadataOutput : CameraOutput {
+  @gen_async("start")
+  @gen_promise("start")
+  StartSync(): void;
+
+  @gen_async("stop")
+  @gen_promise("stop")
+  StopSync(): void;
+
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>)=> void);")
+  @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
+  @!sts_inject_into_interface("off(type: string, callback?: (err: BusinessError<void>, data: object)=> void): void;")
+
+  @!sts_inject_into_class("""
+    on(type: string, callback: object): void {
+      if (type == "error") {
+        return this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "metadataObjectsAvailable") {
+        return this.OnMetadataObjectsAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: Array<MetadataObject>) => void));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+    off(type: string, callback?: object): void {
+      if (type == "error") {
+        return this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "metadataObjectsAvailable") {
+        return this.OffMetadataObjectsAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: Array<MetadataObject>) => void) | undefined));
+      } else {
+        throw new Error(`Unknown type: ${type}`);
+      }
+    }
+  """)
+
+  OnMetadataObjectsAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: Array<MetadataObject>)=> void): void;
+  OffMetadataObjectsAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: Array<MetadataObject>)=> void>): void;
+
+  OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
+  OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+}
