@@ -29,8 +29,7 @@ namespace OHOS {
 namespace CameraStandard {
 using RemoveCallback = std::function<void()>;
 const size_t MAX_LENGTH_STRING = 64;
-const size_t THRESHOLD = MAX_LENGTH_STRING + 24;
-static const int32_t MIN_SIZE_NUM = 64 + 4 + 1;
+static const int32_t MIN_SIZE_NUM = 68;
 
 std::shared_ptr<BmsAdapter> BmsAdapterFuzzer::fuzz_ {nullptr};
 std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_ {nullptr};
@@ -40,12 +39,8 @@ std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_ {nullptr};
 * tips: only support basic type
 */
 
-void BmsAdapterFuzzer::Initialize(FuzzedDataProvider& fdp)
+void BmsAdapterFuzzer::Initialize()
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
-
     fuzz_ = std::make_shared<BmsAdapter>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
@@ -64,10 +59,6 @@ void BmsAdapterFuzzer::Initialize(FuzzedDataProvider& fdp)
 
 void BmsSaListenerFuzzer::BmsSaListenerFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
-        return;
-    }
-
     if (bmsfuzz_ == nullptr) {
         auto bmsAdapterWptr = wptr<BmsAdapter>();
         auto removeCallback = [bmsAdapterWptr]() {
@@ -102,7 +93,7 @@ void Test(uint8_t* data, size_t size)
         return;
     }
     bmsSaListener->BmsSaListenerFuzzTest(fdp);
-    bmsAdapterFuzzer->Initialize(fdp);
+    bmsAdapterFuzzer->Initialize();
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -110,10 +101,6 @@ void Test(uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
     OHOS::CameraStandard::Test(data, size);
     return 0;
 }
