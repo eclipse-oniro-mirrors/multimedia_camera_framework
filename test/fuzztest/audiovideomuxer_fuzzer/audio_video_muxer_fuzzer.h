@@ -18,13 +18,14 @@
 
 #include "audio_video_muxer.h"
 #include <memory>
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 namespace CameraStandard {
 class AudioVideoMuxerFuzzer {
 public:
 static std::shared_ptr<AudioVideoMuxer> fuzz_;
-static void AudioVideoMuxerFuzzTest();
+static void AudioVideoMuxerFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

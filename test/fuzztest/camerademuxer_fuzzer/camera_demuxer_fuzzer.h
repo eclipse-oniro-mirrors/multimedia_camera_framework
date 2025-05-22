@@ -17,6 +17,7 @@
 #define CAMERA_DEMUXER_FUZZER_H
 
 #include "demuxer.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -41,7 +42,7 @@ public:
     }
 };
 
-static void CameraDemuxerFuzzTest();
+static void CameraDemuxerFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

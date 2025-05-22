@@ -21,7 +21,8 @@
 #include "accesstoken_kit.h"
 
 namespace {
-    const int32_t LIMITSIZE = 2;
+    const size_t MAX_DATA_SIZE = 18;
+    const int32_t LIMITSIZE = (MAX_DATA_SIZE + 1) * 9;
 }
 
 namespace OHOS {
@@ -39,7 +40,6 @@ void CameraListenerStubFuzzer::CheckPermission()
         NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
             .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
         };
-        
         tokenId = GetAccessTokenId(&infoInstance);
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
@@ -47,9 +47,10 @@ void CameraListenerStubFuzzer::CheckPermission()
     }
 }
 
-void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
+void CameraListenerStubFuzzer::Test(uint8_t* data, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
     CheckPermission();
@@ -57,38 +58,83 @@ void CameraListenerStubFuzzer::Test(uint8_t *rawData, size_t size)
     fuzz_ = std::make_shared<CameraListenerStub>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
     MessageParcel reply;
     uint32_t code = 0;
     MessageOption option;
 
-    data.RewindRead(0);
-    fuzz_->AddAuthInfo(data, reply, code);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->AddAuthInfo(dataMessageParcel, reply, code);
+    }
 
-    data.RewindRead(0);
-    fuzz_->InvokerDataBusThread(data, reply);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->InvokerDataBusThread(dataMessageParcel, reply);
+    }
 
-    data.RewindRead(0);
-    fuzz_->InvokerThread(code, data, reply, option);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->InvokerThread(code, dataMessageParcel, reply, option);
+    }
 
-    data.RewindRead(0);
-    fuzz_->Marshalling(data);
 
-    data.RewindRead(0);
-    fuzz_->NoticeServiceDie(data, reply, option);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->Marshalling(dataMessageParcel);
+    }
+ 
+    {
+       MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->NoticeServiceDie(dataMessageParcel, reply, option);
+    }
+ 
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->SendRequest(code, dataMessageParcel, reply, option);
+    }
+ 
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->ProcessProto(code, dataMessageParcel, reply, option);
+    }
 
-    data.RewindRead(0);
-    fuzz_->SendRequest(code, data, reply, option);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->OnRemoteDump(code, dataMessageParcel, reply, option);
+    }
+ 
 
-    data.RewindRead(0);
-    fuzz_->ProcessProto(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz_->OnRemoteDump(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz_->OnRemoteRequest(code, data, reply, option);
+    {
+        MessageParcel dataMessageParcel;
+        uint8_t dataSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_DATA_SIZE);
+        std::vector<uint8_t> values = fdp.ConsumeBytes<uint8_t>(dataSize);
+        dataMessageParcel.WriteRawData(values.data(), values.size());
+        fuzz_->OnRemoteRequest(code, dataMessageParcel, reply, option);
+    }
 }
 
 } // namespace CameraStandard

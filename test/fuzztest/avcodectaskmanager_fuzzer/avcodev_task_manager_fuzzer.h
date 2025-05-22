@@ -18,6 +18,7 @@
 
 #include "avcodec_task_manager.h"
 #include <memory>
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ using namespace DeferredProcessing;
 class AvcodecTaskManagerFuzzer {
 public:
 static std::shared_ptr<AvcodecTaskManager> fuzz_;
-static void AvcodecTaskManagerFuzzTest();
+static void AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

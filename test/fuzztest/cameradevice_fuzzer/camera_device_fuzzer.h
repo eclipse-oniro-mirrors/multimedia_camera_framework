@@ -19,6 +19,7 @@
 #include <iostream>
 #include "icamera_device_service_callback.h"
 #include "v1_3/icamera_device.h"
+#include "<fuzzer/FuzzedDataProvider.h>"
 namespace OHOS {
 namespace CameraStandard {
 
@@ -116,12 +117,12 @@ public:
     }
 };
 
-void CameraDeviceFuzzTest(uint8_t *rawData, size_t size);
+void CameraDeviceFuzzTest(FuzzedDataProvider& fdp);
 void CameraDeviceFuzzTestGetPermission();
-void CameraDeviceFuzzTest2(uint8_t *rawData, size_t size);
-void Test3(uint8_t *rawData, size_t size);
-void TestXCollie(uint8_t *rawData, size_t size);
-void TestDynamicLoader(uint8_t *rawData, size_t size);
+void CameraDeviceFuzzTest2(FuzzedDataProvider& fdp);
+void Test3(FuzzedDataProvider& fdp);
+void TestXCollie(FuzzedDataProvider& fdp);
+void TestDynamicLoader(FuzzedDataProvider& fdp);
 } //CameraStandard
 } //OHOS
 #endif //CAMERADEVICE_FUZZER_H

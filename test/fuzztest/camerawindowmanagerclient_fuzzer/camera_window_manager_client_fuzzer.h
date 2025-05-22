@@ -17,6 +17,7 @@
 #define CAMERA_WINDOW_FUZZER_H
 
 #include "camera_window_manager_client.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,7 +25,7 @@ class CameraWindowManagerClientFuzzer {
 public:
 static sptr<CameraWindowManagerClient> fuzz_;
 static std::shared_ptr<CameraWindowManagerClient::WMSSaStatusChangeCallback> callback_;
-static void CameraWindowManagerClientFuzzTest();
+static void CameraWindowManagerClientFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

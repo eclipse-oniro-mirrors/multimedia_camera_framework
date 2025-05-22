@@ -21,51 +21,16 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+static constexpr int32_t MIN_SIZE_NUM = 6;
 
-std::shared_ptr<Demuxer> CameraDemuxerFuzzer::fuzz_{nullptr};
+std::shared_ptr<Demuxer> CameraDemuxerFuzzer::fuzz_ {nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
 * tips: only support basic type
 */
-template<class T>
-T GetData()
+void CameraDemuxerFuzzer::CameraDemuxerFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void CameraDemuxerFuzzer::CameraDemuxerFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-
     fuzz_ = std::make_shared<Demuxer>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     std::shared_ptr<AVSourceTest> source = std::make_shared<AVSourceTest>();
@@ -78,11 +43,11 @@ void CameraDemuxerFuzzer::CameraDemuxerFuzzTest()
         static_cast<uint8_t>(MemoryFlag::MEMORY_READ_WRITE)
     };
 
-    uint8_t randomIndex = GetData<uint8_t>() % memoryFlags.size();
+    uint8_t randomIndex = fdp.ConsumeIntegral<uint8_t>() % memoryFlags.size();
     MemoryFlag selectedFlag = static_cast<MemoryFlag>(memoryFlags[randomIndex]);
     std::shared_ptr<AVAllocator> avAllocator =
         AVAllocatorFactory::CreateSharedAllocator(selectedFlag);
-    int32_t capacity = GetData<int32_t>();
+    int32_t capacity = fdp.ConsumeIntegral<int32_t>();
     if (capacity <= 0) {
         MEDIA_INFO_LOG("Invalid capacity: %d", capacity);
         return;
@@ -99,43 +64,21 @@ void CameraDemuxerFuzzer::CameraDemuxerFuzzTest()
         Media::Plugins::MediaType::TIMEDMETA
     };
 
-    uint8_t mediaTypeIndex = GetData<uint8_t>() % mediaTypes.size();
+    uint8_t mediaTypeIndex = fdp.ConsumeIntegral<uint8_t>() % mediaTypes.size();
     Media::Plugins::MediaType selectedMediaType = mediaTypes[mediaTypeIndex];
     fuzz_->ReadStream(selectedMediaType, buffer);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto cameraDemuxer = std::make_unique<CameraDemuxerFuzzer>();
     if (cameraDemuxer == nullptr) {
         MEDIA_INFO_LOG("cameraDemuxer is null");
         return;
     }
-    cameraDemuxer->CameraDemuxerFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    FuzzedDataProvider fdp(data, size);
+    
+    cameraDemuxer->CameraDemuxerFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -143,10 +86,6 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }
