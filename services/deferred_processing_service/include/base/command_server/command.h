@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_DPS_COMMAND_H
 
 #include <cstdint>
+#include <memory>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,6 +57,7 @@ protected:
      */
     virtual int32_t Executing() = 0;
 };
+using CmdSharedPtr = std::shared_ptr<Command>;
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

@@ -489,7 +489,6 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     }
     HandleFoldableDevice();
     POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
-    NotifyCameraSessionStatus(true);
     NotifyCameraStatus(CAMERA_OPEN);
 #ifdef HOOK_CAMERA_OPERATOR
     if (!CameraRotatePlugin::GetInstance()->HookOpenDeviceForRotate(clientName_, GetDeviceAbility(), cameraID_)) {
@@ -805,7 +804,6 @@ int32_t HCameraDevice::CloseDevice()
     }
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
-    NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);
@@ -1507,14 +1505,6 @@ int32_t HCameraDevice::OperatePermissionCheck(uint32_t interfaceCode)
     return CAMERA_OK;
 }
 
-void HCameraDevice::NotifyCameraSessionStatus(bool running)
-{
-    bool isSystemCamera = (clientName_ == SYSTEM_CAMERA);
-    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyCameraSessionStatus(clientUserId_, cameraID_,
-        running, isSystemCamera);
-    return;
-}
-
 void HCameraDevice::RemoveResourceWhenHostDied()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
@@ -1527,7 +1517,6 @@ void HCameraDevice::RemoveResourceWhenHostDied()
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
     }
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
-    NotifyCameraSessionStatus(false);
     NotifyCameraStatus(CAMERA_CLOSE);
 #ifdef MEMMGR_OVERRID
     RequireMemory(Memory::CAMERA_END);

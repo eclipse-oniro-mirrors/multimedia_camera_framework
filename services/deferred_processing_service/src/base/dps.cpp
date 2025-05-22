@@ -46,7 +46,6 @@ PROSS
     JUDEG(DP_NULL_POINTER, g_dpsInfo.session != nullptr);
     JUDEG(DP_NULL_POINTER, g_dpsInfo.scheduler != nullptr);
     EXEC(g_dpsInfo.server->Initialize());
-    EXEC(g_dpsInfo.scheduler->Initialize());
     g_dpsInfo.initialized_ = true;
     DP_INFO_LOG("DPS_Initialize success.");
     return DP_OK;

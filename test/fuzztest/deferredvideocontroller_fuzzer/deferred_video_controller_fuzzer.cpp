@@ -77,7 +77,7 @@ void DeferredVideoControllerFuzzer::DeferredVideoControllerFuzzTest()
     repository->SetJobFailed(videoId);
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
-    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
+    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
     CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor =
         std::make_shared<VideoPostProcessor>(userId);

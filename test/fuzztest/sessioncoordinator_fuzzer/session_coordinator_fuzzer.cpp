@@ -16,6 +16,7 @@
 #include "session_coordinator_fuzzer.h"
 #include "camera_log.h"
 #include "deferred_processing_service.h"
+#include "image_info.h"
 #include "message_parcel.h"
 #include <cstddef>
 #include <cstdint>
@@ -42,19 +43,8 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
     uint8_t randomNum = fdp.ConsumeIntegral<int32_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string imageId(testStrings[randomNum % testStrings.size()]);
-    int32_t dataSize = fdp.ConsumeIntegralInRange<int32_t>(1, 10);
-    std::shared_ptr<DeferredProcessing::SharedBuffer> sharedBuffer =
-        std::make_shared<DeferredProcessing::SharedBuffer>(dataSize);
-    sharedBuffer->Initialize();
-    std::shared_ptr<DeferredProcessing::BufferInfo> bufferInfo =
-        std::make_shared<DeferredProcessing::BufferInfo>(sharedBuffer, 0, true, true);
-    fuzz_->imageProcCallbacks_->OnProcessDone(userId, imageId, bufferInfo);
-    std::shared_ptr<DeferredProcessing::BufferInfoExt> bufferInfoExt =
-        std::make_shared<DeferredProcessing::BufferInfoExt>(nullptr, 0, true, true);
-    fuzz_->imageProcCallbacks_->OnProcessDoneExt(userId, imageId, bufferInfoExt);
     DeferredProcessing::DpsError dpsError =
         static_cast<DeferredProcessing::DpsError>(fdp.ConsumeIntegral<int32_t>() % NUM_TRI);
-    fuzz_->imageProcCallbacks_->OnError(userId, imageId, dpsError);
     sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
     fuzz_->videoProcCallbacks_->OnProcessDone(userId, imageId, ipcFd);
     fuzz_->videoProcCallbacks_->OnError(userId, imageId, dpsError);
@@ -66,22 +56,16 @@ void SessionCoordinatorFuzzer::SessionCoordinatorFuzzTest(FuzzedDataProvider& fd
     };
     uint8_t arrcodeNum = randomNum % dpsStatusVec.size();
     DeferredProcessing::DpsStatus dpsStatus = dpsStatusVec[arrcodeNum];
-    fuzz_->imageProcCallbacks_->OnStateChanged(userId, dpsStatus);
     fuzz_->videoProcCallbacks_->OnStateChanged(userId, dpsStatus);
     fuzz_->Start();
     fuzz_->OnStateChanged(userId, dpsStatus);
     fuzz_->OnVideoStateChanged(userId, dpsStatus);
-    fuzz_->GetImageProcCallbacks();
     fuzz_->GetVideoProcCallbacks();
-    fuzz_->OnProcessDone(userId, imageId, ipcFd, userId, fdp.ConsumeBool());
-    fuzz_->OnProcessDoneExt(userId, imageId, nullptr, fdp.ConsumeBool());
-    fuzz_->OnError(userId, imageId, dpsError);
     fuzz_->OnVideoProcessDone(userId, imageId, ipcFd);
     fuzz_->OnVideoError(userId, imageId, dpsError);
     auto videoCallback = fuzz_->GetRemoteVideoCallback(userId);
     fuzz_->ProcessVideoResults(videoCallback);
     fuzz_->DeleteVideoSession(userId);
-    fuzz_->DeletePhotoSession(userId);
     fuzz_->Stop();
 }
 

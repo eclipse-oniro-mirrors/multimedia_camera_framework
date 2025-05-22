@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,68 +16,79 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 #define OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 
-#include <deque>
-#include <list>
 #include <unordered_set>
 
 #include "deferred_photo_job.h"
-#include "iphoto_job_repository_listener.h"
+#include "dps_metadata_info.h"
 #include "deferred_processing_service_ipc_interface_code.h"
+#include "enable_shared_create.h"
+#include "istate_change_listener.h"
+#include "photo_job_queue.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-
-class PhotoJobRepository {
+class PhotoJobRepository;
+class PhotoJobStateListener : public IJobStateChangeListener {
 public:
-    PhotoJobRepository(const int32_t userId);
+    explicit PhotoJobStateListener(const std::weak_ptr<PhotoJobRepository>& repository);
+    ~PhotoJobStateListener() = default;
+
+    void UpdateRunningJob(const std::string& imageId, bool running) override;
+    void UpdatePriorityJob(JobPriority cur, JobPriority pre) override;
+    void UpdateJobSize() override;
+    void TryDoNextJob(const std::string& imageId, bool isTyrDo) override;
+
+private:
+    std::weak_ptr<PhotoJobRepository> repository_;
+};
+
+class PhotoJobRepository : public EnableSharedCreateInit<PhotoJobRepository> {
+public:
     ~PhotoJobRepository();
 
+    int32_t Initialize() override;
     void AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata);
     void RemoveDeferredJob(const std::string& imageId, bool restorable);
     bool RequestJob(const std::string& imageId);
     void CancelJob(const std::string& imageId);
     void RestoreJob(const std::string& imageId);
-    void SetJobPending(const std::string& imageId);
-    void SetJobRunning(const std::string& imageId);
-    void SetJobCompleted(const std::string& imageId);
-    void SetJobFailed(const std::string& imageId);
-    PhotoJobStatus GetJobStatus(const std::string& imageId);
-    DeferredPhotoJobPtr GetLowPriorityJob();
-    DeferredPhotoJobPtr GetNormalPriorityJob();
-    DeferredPhotoJobPtr GetHighPriorityJob();
-    int GetRunningJobCounts();
-    PhotoJobPriority GetJobPriority(std::string imageId);
-    PhotoJobPriority GetJobRunningPriority(std::string imageId);
-    void RegisterJobListener(std::weak_ptr<IPhotoJobRepositoryListener> listener);
-    int GetBackgroundJobSize();
+    DeferredPhotoJobPtr GetJob();
+    DeferredPhotoJobPtr GetJobUnLocked(const std::string& imageId);
+    JobState GetJobState(const std::string& imageId);
+    JobPriority GetJobPriority(const std::string& imageId);
+    JobPriority GetJobRunningPriority(const std::string& imageId);
+    uint32_t GetJobTimerId(const std::string& imageId);
+    int32_t GetBackgroundJobSize();
     int GetBackgroundIdleJobSize();
-    int GetOfflineJobSize();
-    int GetOfflineIdleJobSize();
-    bool IsOfflineJob(std::string imageId);
+    int32_t GetOfflineJobSize();
+    int32_t GetOfflineIdleJobSize();
+    bool IsBackgroundJob(const std::string& imageId);
     bool HasUnCompletedBackgroundJob();
-    bool CheckCacheBackgroundJob(const std::string& imageId);
+    bool IsNeedInterrupt();
+    bool IsHighJob(const std::string& imageId);
+    bool HasRunningJob();
+    bool IsRunningJob(const std::string& imageId);
+    void UpdateRunningJobUnLocked(const std::string& imageId, bool running);
+    void UpdatePriotyNumUnLocked(JobPriority cur, JobPriority pre);
+    void UpdateJobSizeUnLocked();
+    void NotifyJobChanged(const std::string& imageId, bool isTyrDo);
+
+protected:
+    explicit PhotoJobRepository(const int32_t userId);
 
 private:
-    void NotifyJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr);
-    void UpdateRunningCountUnLocked(bool statusChanged, DeferredPhotoJobPtr jobPtr);
-    void UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr jobPtr);
-    DeferredPhotoJobPtr GetJobUnLocked(const std::string& imageId);
-    void RecordPriotyNum(bool priorityChanged, const DeferredPhotoJobPtr& jobPtr);
-    void ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event);
+    void ReportEvent(const DeferredPhotoJobPtr& jobPtr, DeferredProcessingServiceInterfaceCode event);
 
     const int32_t userId_;
-    int32_t runningNum_ {0};
-    std::unordered_map<std::string, DeferredPhotoJobPtr> offlineJobMap_ {};
+    std::unique_ptr<PhotoJobQueue> offlineJobQueue_ {nullptr};
+    std::shared_ptr<PhotoJobStateListener> jobChangeListener_ {nullptr};
+    std::unordered_set<std::string> runningJob_ {};
     std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_ {};
-    std::unordered_set<std::string> backgroundCache_ {};
-    std::list<DeferredPhotoJobPtr> offlineJobList_ {};
-    std::deque<DeferredPhotoJobPtr> jobQueue_ {};
-    std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_ {};
-    std::unordered_map<PhotoJobPriority, int32_t> priotyToNum_ = {
-        {PhotoJobPriority::HIGH, 0},
-        {PhotoJobPriority::LOW, 0},
-        {PhotoJobPriority::NORMAL, 0},
+    std::unordered_map<JobPriority, int32_t> priotyToNum_ = {
+        {JobPriority::HIGH, 0},
+        {JobPriority::LOW, 0},
+        {JobPriority::NORMAL, 0},
     };
 };
 } // namespace DeferredProcessing

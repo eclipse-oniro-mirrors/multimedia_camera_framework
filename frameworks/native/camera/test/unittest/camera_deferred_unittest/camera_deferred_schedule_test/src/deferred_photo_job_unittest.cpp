@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,12 +13,11 @@
  * limitations under the License.
  */
 
-#include "deferred_photo_controller.h"
 #include "deferred_photo_job_unittest.h"
-#include "dp_utils.h"
-#include "iphoto_job_repository_listener.h"
-#include "photo_job_repository.h"
 
+#include "basic_definitions.h"
+#include "dp_utils.h"
+#include "gtest/gtest.h"
 
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
@@ -26,309 +25,1017 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+namespace {
+    constexpr int32_t USER_ID = 100;
+    const std::string TEST_IMAGE_1 = "testImage1";
+    const std::string TEST_IMAGE_2 = "testImage2";
+    const std::string TEST_IMAGE_3 = "testImage3";
+    const std::string TEST_IMAGE_4 = "testImage4";
+    constexpr int32_t WAIT_TIME_AFTER_CAPTURE = 10;
+}
 
-const int DEFAULT_PHOTO_JOB_TYPE = 0;
-const int TEST_PHOTO_JOB_TYPE = 1;
-const std::string TEST_IMAGE_ID = "testImageId";
-const int32_t USER_ID = 0;
 void DeferredPhotoJobUnitTest::SetUpTestCase(void) {}
 
 void DeferredPhotoJobUnitTest::TearDownTestCase(void) {}
 
-void DeferredPhotoJobUnitTest::SetUp(void) {}
-
-void DeferredPhotoJobUnitTest::TearDown(void)
+void DeferredPhotoJobUnitTest::SetUp(void)
 {
-    sessionManager_ = nullptr;
-    callbacks_ = nullptr;
-    postProcessor_ = nullptr;
-    photoProcessor_ = nullptr;
-    photoController_ = nullptr;
+    jobQueue_ = std::make_unique<PhotoJobQueue>(
+        [] (const DeferredPhotoJobPtr& a, const DeferredPhotoJobPtr& b) {return *a > *b;});
 }
 
-void DeferredPhotoJobUnitTest::TestRegisterJobListener(
-    std::shared_ptr<PhotoJobRepository> photoJR, const int32_t userId)
+void DeferredPhotoJobUnitTest::TearDown(void) {}
+
+void mssleep(unsigned long ms)
 {
-    sessionManager_ = SessionManager::Create();
-    ASSERT_NE(sessionManager_, nullptr);
-    callbacks_ = sessionManager_->GetImageProcCallbacks();
-    ASSERT_NE(callbacks_, nullptr);
-    postProcessor_ = CreateShared<PhotoPostProcessor>(userId);
-    ASSERT_NE(postProcessor_, nullptr);
-    photoProcessor_ = CreateShared<DeferredPhotoProcessor>(userId, photoJR, postProcessor_, callbacks_);
-    ASSERT_NE(photoProcessor_, nullptr);
-    photoController_ = CreateShared<DeferredPhotoController>(userId, photoJR, photoProcessor_);
-    ASSERT_NE(photoController_, nullptr);
-    photoController_->Initialize();
+	struct timespec ts = {
+		.tv_sec  = (long int) (ms / 1000),
+		.tv_nsec = (long int) (ms % 1000) * 1000000ul
+	};
+	nanosleep(&ts, 0);
 }
 
-/*
- * Feature: Framework
- * Function: Test functions in class DeferredPhotoJob.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate the functions in class DeferredPhotoJob with test data to ensure the correctness.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_001, TestSize.Level1)
-{
-    bool testDiscardable = false;
-    int32_t testSetDpsMetadataVal = 5;
-    int32_t testGetDpsMetadataVal = 0;
+class JobStateChangeListenerMock : public IJobStateChangeListener {
+public:
+    JobStateChangeListenerMock() = default;
+    ~JobStateChangeListenerMock() = default;
 
+    void UpdateRunningJob(const std::string& imageId, bool running)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+
+    void UpdatePriorityJob(JobPriority cur, JobPriority pre)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+
+    void UpdateJobSize()
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+
+    void TryDoNextJob(const std::string& imageId, bool isTyrDo)
+    {
+        DP_DEBUG_LOG("entered.");
+    }
+};
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_001, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    EXPECT_EQ(jobQueue_->GetSize(), 1);
+    jobQueue_->Push(job2);
+    EXPECT_EQ(jobQueue_->GetSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_002, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    EXPECT_EQ(jobQueue_->GetSize(), 1);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+    job = jobQueue_->Pop();
+    EXPECT_EQ(job, job1);
+    EXPECT_EQ(jobQueue_->IsEmpty(), true);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_003, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_004, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+    auto ret = jobQueue_->Contains(job2);
+    EXPECT_EQ(ret, true);
+    ret = jobQueue_->Contains(job4);
+    EXPECT_EQ(ret, false);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_005, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+
+    jobQueue_->Remove(job3);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+    jobQueue_->Remove(job1);
+    EXPECT_EQ(jobQueue_->GetSize(), 2);
+    jobQueue_->Remove(job4);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_006, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+
+    jobQueue_->Remove(job1);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+    EXPECT_EQ(jobQueue_->GetSize(), 3);
+    jobQueue_->Remove(job2);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job3);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_007, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_008, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+
+    job1->Complete();
+    jobQueue_->Update(job1);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_009, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    job2->SetJobPriority(JobPriority::HIGH);
+    jobQueue_->Update(job2);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    job4->SetJobPriority(JobPriority::HIGH);
+    jobQueue_->Update(job4);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job4);
+
+    job4->Complete();
+    jobQueue_->Update(job4);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job4);
+
+    jobQueue_->Remove(job4);
+    job4->Delete();
+    EXPECT_EQ(jobQueue_->GetSize(), 3);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_010, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    job2->SetJobPriority(JobPriority::HIGH);
+    jobQueue_->Update(job2);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+
+    job2->SetJobPriority(JobPriority::LOW);
+    jobQueue_->Update(job2);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_011, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    job4->Fail();
+    jobQueue_->Update(job4);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+
+    jobQueue_->Pop();
+    jobQueue_->Pop();
+    jobQueue_->Pop();
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job4);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_012, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    job1->Error();
+    jobQueue_->Update(job1);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+
+    jobQueue_->Pop();
+    jobQueue_->Pop();
+    jobQueue_->Pop();
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_013, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job1);
+    job->Start(1);
+    jobQueue_->Update(job);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+
+    jobQueue_->Pop();
+    jobQueue_->Pop();
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job4);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_014, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    job1->Start(1);
+    jobQueue_->Update(job1);
+    auto job = jobQueue_->Peek();
+    EXPECT_EQ(job, job2);
+
+    job2->Complete();
+    jobQueue_->Update(job2);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job3);
+
+    job1->Complete();
+    jobQueue_->Update(job1);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job3);
+
+    job4->Start(2);
+    jobQueue_->Update(job4);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job3);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_015, TestSize.Level0)
+{
+    auto listener = std::make_shared<JobStateChangeListenerMock>();
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job1);
+    job1->Prepare();
+    jobQueue_->Update(job1);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job2);
+    job2->Prepare();
+    jobQueue_->Update(job2);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job3);
+    job3->Prepare();
+    jobQueue_->Update(job3);
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    jobQueue_->Push(job4);
+    job4->Prepare();
+    jobQueue_->Update(job4);
+
+    auto job = jobQueue_->Peek();
+    job->Start(1);
+    jobQueue_->Update(job);
+    EXPECT_EQ(job, job1);
+
+    job = jobQueue_->Peek();
+    job->Complete();
+    jobQueue_->Update(job);
+    EXPECT_EQ(job, job2);
+
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job3);
+
+    job4->SetJobPriority(JobPriority::HIGH);
+    jobQueue_->Update(job4);
+    job = jobQueue_->Peek();
+    EXPECT_EQ(job, job4);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_001, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
     DpsMetadata metadata;
-    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, testSetDpsMetadataVal);
-    metadata.Get(DEFERRED_PROCESSING_TYPE_KEY, testGetDpsMetadataVal);
-    EXPECT_EQ(testGetDpsMetadataVal, testSetDpsMetadataVal);
-    std::shared_ptr<DeferredPhotoJob> derferredPhotoJob =
-        std::make_shared<DeferredPhotoJob>(TEST_IMAGE_ID, testDiscardable, metadata);
-
-    ASSERT_NE(derferredPhotoJob, nullptr);
-    EXPECT_EQ(derferredPhotoJob->GetDiscardable(), testDiscardable);
-    EXPECT_EQ(derferredPhotoJob->GetImageId(), TEST_IMAGE_ID);
-
-    EXPECT_EQ(derferredPhotoJob->GetCurPriority(), PhotoJobPriority::NONE);
-    EXPECT_EQ(derferredPhotoJob->GetRunningPriority(), PhotoJobPriority::NONE);
-    EXPECT_EQ(derferredPhotoJob->GetPrePriority(), PhotoJobPriority::NONE);
-
-    EXPECT_FALSE(derferredPhotoJob->SetJobPriority(PhotoJobPriority::NONE));
-    EXPECT_TRUE(derferredPhotoJob->SetJobPriority(PhotoJobPriority::LOW));
-    EXPECT_EQ(derferredPhotoJob->GetCurPriority(), PhotoJobPriority::LOW);
-    EXPECT_EQ(derferredPhotoJob->GetPrePriority(), PhotoJobPriority::NONE);
-    derferredPhotoJob->RecordJobRunningPriority();
-    EXPECT_EQ(derferredPhotoJob->GetRunningPriority(), PhotoJobPriority::LOW);
-
-    EXPECT_EQ(derferredPhotoJob->GetCurStatus(), PhotoJobStatus::NONE);
-    EXPECT_EQ(derferredPhotoJob->GetPreStatus(), PhotoJobStatus::NONE);
-
-    EXPECT_FALSE(derferredPhotoJob->SetJobStatus(PhotoJobStatus::NONE));
-    EXPECT_TRUE(derferredPhotoJob->SetJobStatus(PhotoJobStatus::RUNNING));
-    EXPECT_EQ(derferredPhotoJob->GetCurStatus(), PhotoJobStatus::RUNNING);
-    EXPECT_EQ(derferredPhotoJob->GetPreStatus(), PhotoJobStatus::NONE);
-
-    EXPECT_EQ(derferredPhotoJob->GetPhotoJobType(), DEFAULT_PHOTO_JOB_TYPE);
-    derferredPhotoJob->SetPhotoJobType(TEST_PHOTO_JOB_TYPE);
-    EXPECT_EQ(derferredPhotoJob->GetPhotoJobType(), TEST_PHOTO_JOB_TYPE);
-
-    EXPECT_EQ(derferredPhotoJob->GetDeferredProcType(), testSetDpsMetadataVal);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 1);
 }
 
-/*
- * Feature: Framework
- * Function: Test functions in class DeferredPhotoWork.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate the functions in class DeferredPhotoWork with test data to ensure the correctness.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_002, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_002, TestSize.Level0)
 {
-    bool testDiscardable = false;
-
-    std::shared_ptr<DpsMetadata> metadata = std::make_shared<DpsMetadata>();
-    ASSERT_NE(metadata, nullptr);
-    std::shared_ptr<DeferredPhotoJob> derferredPhotoJob =
-        std::make_shared<DeferredPhotoJob>(TEST_IMAGE_ID, testDiscardable, *metadata);
-    ASSERT_NE(derferredPhotoJob, nullptr);
-    derferredPhotoJob->SetPhotoJobType(TEST_PHOTO_JOB_TYPE);
-    EXPECT_EQ(derferredPhotoJob->GetPhotoJobType(), TEST_PHOTO_JOB_TYPE);
-
-    DeferredPhotoWorkPtr deferredPhotoWork =
-        std::make_shared<DeferredPhotoWork>(derferredPhotoJob, ExecutionMode::HIGH_PERFORMANCE);
-    ASSERT_NE(deferredPhotoWork, nullptr);
-
-    EXPECT_EQ(deferredPhotoWork->GetExecutionMode(), ExecutionMode::HIGH_PERFORMANCE);
-    EXPECT_EQ(deferredPhotoWork->GetDeferredPhotoJob()->GetPhotoJobType(), TEST_PHOTO_JOB_TYPE);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->backgroundJobMap_.size(), 1);
 }
 
-/*
- * Feature: Framework
- * Function: Test PhotoJobRepository::RegisterJobListener.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Register a listener to the job queue.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_003, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_003, TestSize.Level0)
 {
-    TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
-
-    std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
-    ASSERT_NE(photoJR, nullptr);
-    EXPECT_EQ(photoJR->GetRunningJobCounts(), 0);
-    EXPECT_EQ(photoJR->GetBackgroundJobSize(), 0);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 0);
-    EXPECT_FALSE(photoJR->IsOfflineJob(TEST_IMAGE_ID));
-    EXPECT_FALSE(photoJR->HasUnCompletedBackgroundJob());
-
-    TestRegisterJobListener(photoJR, USER_ID);
-    ASSERT_NE(photoJR, nullptr);
-    EXPECT_NE(photoJR->jobListeners_.size(), 0);
-
-    photoJR->AddDeferredJob(jobTest.imageId_, false, jobTest.metadata_);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 1);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 3);
 }
 
-/*
- * Feature: Framework
- * Function: Test functions in class PhotoJobRepository when there is no defeferred job.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test functions in class PhotoJobRepository in abnormal condition, no deferred job added.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_004, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_004, TestSize.Level0)
 {
-    std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
-    ASSERT_NE(photoJR, nullptr);
-
-    EXPECT_EQ(photoJR->GetJobUnLocked(TEST_IMAGE_ID), nullptr);
-    photoJR->RemoveDeferredJob(TEST_IMAGE_ID, true);
-    photoJR->RequestJob(TEST_IMAGE_ID);
-    photoJR->CancelJob(TEST_IMAGE_ID);
-    photoJR->RestoreJob(TEST_IMAGE_ID);
-    photoJR->SetJobPending(TEST_IMAGE_ID);
-    photoJR->SetJobRunning(TEST_IMAGE_ID);
-    photoJR->SetJobCompleted(TEST_IMAGE_ID);
-    photoJR->SetJobFailed(TEST_IMAGE_ID);
-    EXPECT_EQ(photoJR->GetJobStatus(TEST_IMAGE_ID), PhotoJobStatus::NONE);
-    EXPECT_EQ(photoJR->GetJobRunningPriority(TEST_IMAGE_ID), PhotoJobPriority::NONE);
-    EXPECT_EQ(photoJR->GetJobPriority(TEST_IMAGE_ID), PhotoJobPriority::NONE);
-    EXPECT_EQ(photoJR->GetJobUnLocked(TEST_IMAGE_ID), nullptr);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RequestJob(TEST_IMAGE_2);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::HIGH)->second, 1);
+    repository->CancelJob(TEST_IMAGE_2);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::HIGH)->second, 0);
 }
 
-/*
- * Feature: Framework
- * Function: Test AddDeferredJob and RemoveDeferredJob in class PhotoJobRepository.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate AddDeferredJob and RemoveDeferredJob with test data,
- *                  DeferredProcessingType is DPS_OFFLINE, to ensure the correctness.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_005, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_005, TestSize.Level0)
 {
-    TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
-    std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
-    ASSERT_NE(photoJR, nullptr);
-
-    photoJR->AddDeferredJob(jobTest.imageId_, false, jobTest.metadata_);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 1);
-    photoJR->AddDeferredJob(jobTest.imageId_, false, jobTest.metadata_);
-    EXPECT_NE(photoJR->GetJobUnLocked(jobTest.imageId_), nullptr);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 1);
-    EXPECT_TRUE(photoJR->IsOfflineJob(jobTest.imageId_));
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::NORMAL);
-
-    photoJR->RemoveDeferredJob(jobTest.imageId_, true);
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::LOW);
-    std::shared_ptr<DeferredPhotoJob> jobPtr;
-    jobPtr = photoJR->GetLowPriorityJob();
-    ASSERT_NE(jobPtr, nullptr);
-    EXPECT_EQ(photoJR->GetNormalPriorityJob(), nullptr);
-    EXPECT_EQ(jobPtr->GetCurStatus(), PhotoJobStatus::PENDING);
-    EXPECT_EQ(jobPtr->GetCurPriority(), PhotoJobPriority::LOW);
-    jobPtr->SetJobStatus(PhotoJobStatus::FAILED);
-    jobPtr = photoJR->GetLowPriorityJob();
-    ASSERT_NE(jobPtr, nullptr);
-    EXPECT_EQ(jobPtr->GetImageId(), jobTest.imageId_);
-    photoJR->SetJobCompleted(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobStatus(jobTest.imageId_), PhotoJobStatus::COMPLETED);
-    EXPECT_EQ(photoJR->GetLowPriorityJob(), nullptr);
-
-    photoJR->offlineJobList_.clear();
-    photoJR->RemoveDeferredJob(jobTest.imageId_, false);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 0);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RequestJob(TEST_IMAGE_1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::HIGH)->second, 1);
+    repository->CancelJob(TEST_IMAGE_2);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::HIGH)->second, 1);
 }
 
-/*
- * Feature: Framework
- * Function: Test RestoreJob, RequestJob and CancelJob in class PhotoJobRepository.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate RestoreJob, RequestJob and CancelJob with test data,
- *                  DeferredProcessingType is DPS_OFFLINE, to ensure the correctness.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_006, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_006, TestSize.Level0)
 {
-    TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_OFFLINE);
-    std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
-    ASSERT_NE(photoJR, nullptr);
-
-    photoJR->jobListeners_.push_back(std::weak_ptr<IPhotoJobRepositoryListener>());
-    photoJR->AddDeferredJob(jobTest.imageId_, false, jobTest.metadata_);
-    photoJR->RemoveDeferredJob(jobTest.imageId_, true);
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::LOW);
-
-    photoJR->RestoreJob(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::NORMAL);
-    photoJR->SetJobPending(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobStatus(jobTest.imageId_), PhotoJobStatus::PENDING);
-    std::shared_ptr<DeferredPhotoJob> jobPtr;
-    jobPtr = photoJR->GetNormalPriorityJob();
-    ASSERT_NE(jobPtr, nullptr);
-    EXPECT_EQ(jobPtr->GetImageId(), jobTest.imageId_);
-    photoJR->SetJobFailed(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobStatus(jobTest.imageId_), PhotoJobStatus::FAILED);
-    jobPtr = photoJR->GetNormalPriorityJob();
-    ASSERT_NE(jobPtr, nullptr);
-    EXPECT_EQ(jobPtr->GetImageId(), jobTest.imageId_);
-
-    EXPECT_EQ(photoJR->GetJobRunningPriority(jobTest.imageId_), PhotoJobPriority::NONE);
-    photoJR->SetJobRunning(jobTest.imageId_);
-    EXPECT_EQ(photoJR->runningNum_, 1);
-    photoJR->SetJobRunning(jobTest.imageId_);
-    EXPECT_EQ(photoJR->runningNum_, 1);
-    EXPECT_EQ(photoJR->GetJobRunningPriority(jobTest.imageId_), PhotoJobPriority::NORMAL);
-    EXPECT_EQ(photoJR->GetNormalPriorityJob(), nullptr);
-
-    photoJR->RequestJob(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::HIGH);
-    EXPECT_EQ(jobPtr = photoJR->GetHighPriorityJob(), nullptr);
-    photoJR->SetJobPending(jobTest.imageId_);
-    EXPECT_EQ(photoJR->runningNum_, 0);
-    photoJR->SetJobPending(jobTest.imageId_);
-    EXPECT_EQ(photoJR->runningNum_, 0);
-    jobPtr = photoJR->GetHighPriorityJob();
-    ASSERT_NE(jobPtr, nullptr);
-    EXPECT_EQ(jobPtr->GetImageId(), jobTest.imageId_);
-    photoJR->SetJobFailed(jobTest.imageId_);
-    photoJR->RequestJob(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobStatus(jobTest.imageId_), PhotoJobStatus::PENDING);
-    photoJR->RequestJob(jobTest.imageId_);
-    ASSERT_NE(photoJR->jobQueue_.front(), nullptr);
-    EXPECT_EQ(photoJR->jobQueue_.front()->GetImageId(), jobTest.imageId_);
-
-    photoJR->CancelJob(jobTest.imageId_);
-    EXPECT_EQ(photoJR->GetJobPriority(jobTest.imageId_), PhotoJobPriority::NORMAL);
-    photoJR->RemoveDeferredJob(jobTest.imageId_, false);
-    EXPECT_EQ(photoJR->GetOfflineJobSize(), 0);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RequestJob(TEST_IMAGE_3);
+    repository->CancelJob(TEST_IMAGE_3);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
 }
 
-/*
- * Feature: Framework
- * Function: Test AddDeferredJob and RemoveDeferredJob in class PhotoJobRepository.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Validate AddDeferredJob and RemoveDeferredJob with test data,
- *                  DeferredProcessingType is DPS_BACKGROUND, to ensure the correctness.
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_unittest_007, TestSize.Level1)
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_007, TestSize.Level0)
 {
-    TestPhotoJob jobTest("image_test", DeferredProcessingType::DPS_BACKGROUND);
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_1, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 1);
+}
 
-    std::shared_ptr<PhotoJobRepository> photoJR = std::make_shared<PhotoJobRepository>(USER_ID);
-    ASSERT_NE(photoJR, nullptr);
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_008, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_3, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+}
 
-    photoJR->AddDeferredJob(jobTest.imageId_, false, jobTest.metadata_);
-    EXPECT_EQ(photoJR->GetBackgroundJobSize(), 1);
-    EXPECT_FALSE(photoJR->IsOfflineJob(jobTest.imageId_));
-    
-    EXPECT_TRUE(photoJR->HasUnCompletedBackgroundJob());
-    photoJR->RemoveDeferredJob(jobTest.imageId_, false);
-    EXPECT_FALSE(photoJR->HasUnCompletedBackgroundJob());
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_009, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_1, false);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::HIGH)->second, 0);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_010, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_3, false);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_011, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_1, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 1);
+    repository->RemoveDeferredJob(TEST_IMAGE_1, false);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_012, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_3, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    repository->RemoveDeferredJob(TEST_IMAGE_3, false);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_013, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_1, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 1);
+    repository->RestoreJob(TEST_IMAGE_1);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_014, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 2);
+    repository->RemoveDeferredJob(TEST_IMAGE_3, true);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    repository->RestoreJob(TEST_IMAGE_3);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::LOW)->second, 0);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_015, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_016, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->priotyToNum_.find(JobPriority::NORMAL)->second, 1);
+    auto job = repository->GetJob();
+    ASSERT_NE(job, nullptr);
+    job->Start(1);
+    job = repository->GetJob();
+    ASSERT_EQ(job, nullptr);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_017, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
+    auto job1 = repository->GetJob();
+    ASSERT_NE(job1, nullptr);
+    job1->Start(1);
+    EXPECT_EQ(job1->GetCurStatus(), JobState::RUNNING);
+    auto job2 = repository->GetJob();
+    job2->Complete();
+    EXPECT_EQ(job2->GetCurStatus(), JobState::COMPLETED);
+    ASSERT_NE(job1, job2);
+    auto job3 = repository->GetJob();
+    EXPECT_EQ(job3->GetImageId(), TEST_IMAGE_3);
+    EXPECT_EQ(job3->GetCurPriority(), JobPriority::NORMAL);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_018, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_4, true, metadata);
+    repository->RequestJob(TEST_IMAGE_1);
+    auto job1 = repository->GetJob();
+    EXPECT_EQ(job1->GetImageId(), TEST_IMAGE_1);
+    job1->Fail();
+    EXPECT_EQ(job1->GetCurStatus(), JobState::FAILED);
+    auto job2 = repository->GetJob();
+    EXPECT_EQ(job2->GetImageId(), TEST_IMAGE_2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_019, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_4, true, metadata);
+    repository->RequestJob(TEST_IMAGE_2);
+    auto job1 = repository->GetJob();
+    EXPECT_EQ(job1->GetImageId(), TEST_IMAGE_2);
+
+    mssleep(WAIT_TIME_AFTER_CAPTURE);
+    repository->RequestJob(TEST_IMAGE_1);
+    auto job2 = repository->GetJob();
+    EXPECT_EQ(job2->GetImageId(), TEST_IMAGE_1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_020, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    auto job1 = repository->GetJob();
+    ASSERT_EQ(job1, nullptr);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_021, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    auto job1 = repository->GetJobUnLocked(TEST_IMAGE_1);
+    ASSERT_NE(job1, nullptr);
+
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    auto job2 = repository->GetJobUnLocked(TEST_IMAGE_2);
+    ASSERT_NE(job2, nullptr);
+
+    auto job3 = repository->GetJobUnLocked(TEST_IMAGE_3);
+    ASSERT_EQ(job3, nullptr);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_022, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+
+    auto state = repository->GetJobState(TEST_IMAGE_1);
+    EXPECT_EQ(state, JobState::PENDING);
+    state = repository->GetJobState(TEST_IMAGE_2);
+    EXPECT_EQ(state, JobState::PENDING);
+    state = repository->GetJobState(TEST_IMAGE_3);
+    EXPECT_EQ(state, JobState::NONE);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_023, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+
+    auto priority = repository->GetJobPriority(TEST_IMAGE_1);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobPriority(TEST_IMAGE_2);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobPriority(TEST_IMAGE_3);
+    EXPECT_EQ(priority, JobPriority::NONE);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_024, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+
+    auto priority = repository->GetJobPriority(TEST_IMAGE_1);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobPriority(TEST_IMAGE_2);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobPriority(TEST_IMAGE_3);
+    EXPECT_EQ(priority, JobPriority::NONE);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_025, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+
+    auto priority = repository->GetJobRunningPriority(TEST_IMAGE_1);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobRunningPriority(TEST_IMAGE_2);
+    EXPECT_EQ(priority, JobPriority::NORMAL);
+    priority = repository->GetJobRunningPriority(TEST_IMAGE_3);
+    EXPECT_EQ(priority, JobPriority::NONE);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_026, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    auto timeId = repository->GetJobTimerId(TEST_IMAGE_1);
+    EXPECT_EQ(timeId, 0);
+    auto job = repository->GetJob();
+    job->Start(1);
+    timeId = repository->GetJobTimerId(TEST_IMAGE_1);
+    EXPECT_EQ(timeId, 1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_027, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    auto size = repository->GetBackgroundJobSize();
+    EXPECT_EQ(size, 1);
+    size = repository->GetOfflineJobSize();
+    EXPECT_EQ(size, 1);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_028, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_3, true, metadata);
+    repository->AddDeferredJob(TEST_IMAGE_4, true, metadata);
+    auto job1 = repository->GetJobUnLocked(TEST_IMAGE_1);
+    job1->Complete();
+    auto job2 = repository->GetJobUnLocked(TEST_IMAGE_2);
+    job2->Delete();
+    EXPECT_EQ(repository->GetOfflineJobSize(), 4);
+    EXPECT_EQ(repository->GetOfflineIdleJobSize(), 2);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_029, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->IsBackgroundJob(TEST_IMAGE_1), false);
+    EXPECT_EQ(repository->IsBackgroundJob(TEST_IMAGE_2), true);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_030, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
+    repository->AddDeferredJob(TEST_IMAGE_2, true, metadata);
+    EXPECT_EQ(repository->HasUnCompletedBackgroundJob(), true);
+    auto job = repository->GetJobUnLocked(TEST_IMAGE_2);
+    job->Complete();
+    EXPECT_EQ(repository->HasUnCompletedBackgroundJob(), false);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_031, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    auto job = repository->GetJob();
+    job->Start(1);
+    EXPECT_EQ(repository->IsHighJob(TEST_IMAGE_1), false);
+    EXPECT_EQ(repository->IsNeedInterrupt(), true);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_032, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->RequestJob(TEST_IMAGE_1);
+    auto job = repository->GetJob();
+    job->Start(1);
+    EXPECT_EQ(repository->IsHighJob(TEST_IMAGE_1), true);
+    EXPECT_EQ(repository->IsNeedInterrupt(), false);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_033, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    EXPECT_EQ(repository->IsRunningJob(TEST_IMAGE_1), false);
+    auto job = repository->GetJob();
+    job->Start(1);
+    EXPECT_EQ(repository->IsRunningJob(TEST_IMAGE_1), true);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_034, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->UpdateRunningJobUnLocked(TEST_IMAGE_1, true);
+    EXPECT_EQ(repository->runningJob_.size(), 1);
+    repository->UpdateRunningJobUnLocked(TEST_IMAGE_1, false);
+    EXPECT_EQ(repository->runningJob_.size(), 0);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_035, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    repository->UpdatePriotyNumUnLocked(JobPriority::NORMAL, JobPriority::NONE);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::NORMAL], 1);
+    repository->UpdatePriotyNumUnLocked(JobPriority::HIGH, JobPriority::NORMAL);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::HIGH], 1);
+    repository->UpdatePriotyNumUnLocked(JobPriority::LOW, JobPriority::HIGH);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::LOW], 1);
+
+    repository->UpdatePriotyNumUnLocked(JobPriority::NONE, JobPriority::LOW);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::LOW], 0);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::HIGH], 0);
+    EXPECT_EQ(repository->priotyToNum_[JobPriority::NORMAL], 0);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_036, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    repository->UpdateJobSizeUnLocked();
+    repository->NotifyJobChanged(TEST_IMAGE_1, true);
+    repository->NotifyJobChanged(TEST_IMAGE_1, false);
+    EXPECT_EQ(repository->runningJob_.size(), 0);
+}
+
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_037, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata);
+    auto job = repository->GetJob();
+    repository->ReportEvent(nullptr, DPS_BEGIN_SYNCHRONIZE);
+    repository->ReportEvent(job, DPS_END_SYNCHRONIZE);
+    repository->ReportEvent(job, DPS_ADD_IMAGE);
+    repository->ReportEvent(job, DPS_REMOVE_IMAGE);
+    repository->ReportEvent(job, DPS_RESTORE_IMAGE);
+    repository->ReportEvent(job, DPS_PROCESS_IMAGE);
+    repository->ReportEvent(job, DPS_CANCEL_PROCESS_IMAGE);
+    EXPECT_EQ(repository->GetOfflineJobSize(), 1);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

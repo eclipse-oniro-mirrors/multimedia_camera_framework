@@ -39,10 +39,10 @@ private:
     class StateListener;
     class VideoJobRepositoryListener;
 
-    void OnSchedulerChanged(const ScheduleType& type, const ScheduleInfo& scheduleInfo);
+    void OnSchedulerChanged(const SchedulerType& type, const SchedulerInfo& scheduleInfo);
     void OnVideoJobChanged(const DeferredVideoJobPtr& jobPtr);
     void TryDoSchedule();
-    void PauseRequests(const ScheduleType& type);
+    void PauseRequests(const SchedulerType& type);
     void PostProcess(const DeferredVideoWorkPtr& work);
     void SetDefaultExecutionMode();
     void StartSuspendLock();
@@ -51,7 +51,7 @@ private:
     void OnTimerOut();
 
     const int32_t userId_;
-    uint32_t normalTimeId_ {INVALID_TIMEID};
+    uint32_t normalTimeId_ {INVALID_TIMERID};
     std::shared_ptr<DeferredVideoProcessor> videoProcessor_;
     std::shared_ptr<VideoJobRepository> repository_;
     std::shared_ptr<VideoStrategyCenter> videoStrategyCenter_ {nullptr};

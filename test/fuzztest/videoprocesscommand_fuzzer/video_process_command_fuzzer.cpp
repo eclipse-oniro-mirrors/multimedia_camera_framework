@@ -14,7 +14,6 @@
  */
 
 #include "video_process_command_fuzzer.h"
-#include "buffer_info.h"
 #include "securec.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 using namespace std;

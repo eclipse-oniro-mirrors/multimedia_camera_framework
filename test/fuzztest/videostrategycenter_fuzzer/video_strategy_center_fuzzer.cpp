@@ -39,7 +39,7 @@ void VideoStrategyCenterFuzzer::VideoStrategyCenterFuzzTest(FuzzedDataProvider& 
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
 
-    fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
+    fuzz_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetWork();
     fuzz_->GetJob();

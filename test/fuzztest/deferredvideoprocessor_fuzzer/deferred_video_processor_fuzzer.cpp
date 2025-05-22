@@ -48,8 +48,8 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     repository->SetJobFailed(videoId);
     repository->SetJobPause(videoId);
     repository->SetJobError(videoId);
-    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(userId, repository);
-    DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
+    center_ = std::make_shared<DeferredProcessing::VideoStrategyCenter>(repository);
+    CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor = std::make_shared<VideoPostProcessor>(userId);
     const std::shared_ptr<IVideoProcessCallbacksFuzz> callback = std::make_shared<IVideoProcessCallbacksFuzz>();
     fuzz_ = std::make_shared<DeferredVideoProcessor>(repository, postProcessor, callback);
@@ -67,8 +67,8 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     fuzz_->Initialize();
     fuzz_->PostProcess(work);
     constexpr int32_t executionModeCount2 =
-        static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + NUM_TWO;
-    ScheduleType selectedScheduleType = static_cast<ScheduleType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
+        static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + NUM_TWO;
+    ScheduleType selectedScheduleType = static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 =
         static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + NUM_TWO;
     DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);

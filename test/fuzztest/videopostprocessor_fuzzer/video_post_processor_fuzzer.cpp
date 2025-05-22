@@ -14,7 +14,6 @@
  */
 
 #include "video_post_processor_fuzzer.h"
-#include "buffer_info.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "ipc_file_descriptor.h"
 #include "securec.h"
@@ -54,15 +53,15 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1(FuzzedDataProvider& f
     processor_->StopTimer(work);
     processor_->ProcessRequest(work);
     processor_->RemoveRequest(videoId);
-    constexpr int32_t executionModeCount2 = static_cast<int32_t>(ScheduleType::NORMAL_TIME_STATE) + 2;
-    ScheduleType selectedScheduleType = static_cast<ScheduleType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
+    constexpr int32_t executionModeCount2 = static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + 2;
+    ScheduleType selectedSchedulerType = static_cast<SchedulerType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
     constexpr int32_t executionModeCount3 = static_cast<int32_t>(DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED) + 2;
     DpsError selectedDpsError = static_cast<DpsError>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount3);
     constexpr int32_t executionModeCount4 = static_cast<int32_t>(MediaResult::PAUSE) + 2;
     MediaResult selectedMediaResult = static_cast<MediaResult>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount4);
     constexpr int32_t executionModeCount5 = static_cast<int32_t>(HdiStatus::HDI_NOT_READY_TEMPORARILY) + 1;
     HdiStatus selectedHdiStatus = static_cast<HdiStatus>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount5);
-    processor_->PauseRequest(videoId, selectedScheduleType);
+    processor_->PauseRequest(videoId, selectedSchedulerType);
     sptr<IPCFileDescriptor> inputFd = sptr<IPCFileDescriptor>::MakeSptr(VIDEO_REQUEST_FD_ID);
     processor_->StartMpeg(videoId, inputFd);
     processor_->StopMpeg(selectedMediaResult, work);

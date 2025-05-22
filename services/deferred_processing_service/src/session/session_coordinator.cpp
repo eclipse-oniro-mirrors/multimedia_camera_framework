@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,139 +14,13 @@
  */
 
 #include "session_coordinator.h"
-#include <mutex>
 
 #include "dp_log.h"
-#include "buffer_info.h"
 #include "dps_event_report.h"
-#include "picture_interface.h"
-#include "steady_clock.h"
-#include "picture.h"
-#include "video_session_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-ErrorCode MapDpsErrorCode(DpsError errorCode)
-{
-    ErrorCode code = ErrorCode::ERROR_IMAGE_PROC_ABNORMAL;
-    switch (errorCode) {
-        case DpsError::DPS_ERROR_SESSION_SYNC_NEEDED:
-            code = ErrorCode::ERROR_SESSION_SYNC_NEEDED;
-            break;
-        case DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY:
-            code = ErrorCode::ERROR_SESSION_NOT_READY_TEMPORARILY;
-            break;
-        case DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID:
-            code = ErrorCode::ERROR_IMAGE_PROC_INVALID_PHOTO_ID;
-            break;
-        case DpsError::DPS_ERROR_IMAGE_PROC_FAILED:
-            code = ErrorCode::ERROR_IMAGE_PROC_FAILED;
-            break;
-        case DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT:
-            code = ErrorCode::ERROR_IMAGE_PROC_TIMEOUT;
-            break;
-        case DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL:
-            code = ErrorCode::ERROR_IMAGE_PROC_ABNORMAL;
-            break;
-        case DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED:
-            code = ErrorCode::ERROR_IMAGE_PROC_INTERRUPTED;
-            break;
-        case DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID:
-            code = ErrorCode::ERROR_VIDEO_PROC_INVALID_VIDEO_ID;
-            break;
-        case DpsError::DPS_ERROR_VIDEO_PROC_FAILED:
-            code = ErrorCode::ERROR_VIDEO_PROC_FAILED;
-            break;
-        case DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT:
-            code = ErrorCode::ERROR_VIDEO_PROC_TIMEOUT;
-            break;
-        case DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED:
-            code = ErrorCode::ERROR_VIDEO_PROC_INTERRUPTED;
-            break;
-        default:
-            DP_WARNING_LOG("unexpected error code: %{public}d", errorCode);
-            break;
-    }
-    return code;
-}
-
-StatusCode MapDpsStatus(DpsStatus statusCode)
-{
-    StatusCode code = StatusCode::SESSION_STATE_IDLE;
-    switch (statusCode) {
-        case DpsStatus::DPS_SESSION_STATE_IDLE:
-            code = StatusCode::SESSION_STATE_IDLE;
-            break;
-        case DpsStatus::DPS_SESSION_STATE_RUNNALBE:
-            code = StatusCode::SESSION_STATE_RUNNALBE;
-            break;
-        case DpsStatus::DPS_SESSION_STATE_RUNNING:
-            code = StatusCode::SESSION_STATE_RUNNING;
-            break;
-        case DpsStatus::DPS_SESSION_STATE_SUSPENDED:
-            code = StatusCode::SESSION_STATE_SUSPENDED;
-            break;
-        case DpsStatus::DPS_SESSION_STATE_PREEMPTED:
-            code = StatusCode::SESSION_STATE_PREEMPTED;
-            break;
-        default:
-            DP_WARNING_LOG("unexpected error code: %{public}d", statusCode);
-            break;
-    }
-    return code;
-}
-
-class SessionCoordinator::ImageProcCallbacks : public IImageProcessCallbacks {
-public:
-    explicit ImageProcCallbacks(const std::weak_ptr<SessionCoordinator>& coordinator) : coordinator_(coordinator)
-    {
-        DP_DEBUG_LOG("entered.");
-    }
-
-    ~ImageProcCallbacks() = default;
-
-    void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo>& bufferInfo) override
-    {
-        DP_CHECK_ERROR_RETURN_LOG(bufferInfo == nullptr, "bufferInfo is nullptr.");
-        sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
-        int32_t dataSize = bufferInfo->GetDataSize();
-        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
-        if (auto coordinator = coordinator_.lock()) {
-            coordinator->OnProcessDone(userId, imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
-        }
-    }
-
-    void OnProcessDoneExt(int userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfoExt>& bufferInfo) override
-    {
-        DP_CHECK_ERROR_RETURN_LOG(bufferInfo == nullptr, "bufferInfo is nullptr.");
-        uint32_t cloudImageEnhanceFlag = bufferInfo->GetCloudImageEnhanceFlag();
-        if (auto coordinator = coordinator_.lock()) {
-            coordinator->OnProcessDoneExt(userId, imageId,
-                bufferInfo->GetPicture(), cloudImageEnhanceFlag);
-        }
-    }
-
-    void OnError(const int userId, const std::string& imageId, DpsError errorCode) override
-    {
-        if (auto coordinator = coordinator_.lock()) {
-            coordinator->OnError(userId, imageId, errorCode);
-        }
-    }
-
-    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override
-    {
-        if (auto coordinator = coordinator_.lock()) {
-            coordinator->OnStateChanged(userId, statusCode);
-        }
-    }
-
-private:
-    std::weak_ptr<SessionCoordinator> coordinator_;
-};
-
 class SessionCoordinator::VideoProcCallbacks : public IVideoProcessCallbacks {
 public:
     explicit VideoProcCallbacks(const std::weak_ptr<SessionCoordinator>& coordinator) : coordinator_(coordinator)
@@ -189,16 +63,14 @@ SessionCoordinator::SessionCoordinator()
 SessionCoordinator::~SessionCoordinator()
 {
     DP_DEBUG_LOG("entered.");
-    photoCallbackMap_.clear();
-    pendingImageResults_.clear();
     videoCallbackMap_.clear();
     pendingRequestResults_.clear();
 }
 
-void SessionCoordinator::Initialize()
+int32_t SessionCoordinator::Initialize()
 {
-    imageProcCallbacks_ = std::make_shared<ImageProcCallbacks>(weak_from_this());
     videoProcCallbacks_ = std::make_shared<VideoProcCallbacks>(weak_from_this());
+    return DP_OK;
 }
 
 void SessionCoordinator::Start()
@@ -211,112 +83,14 @@ void SessionCoordinator::Stop()
     //dps_log
 }
 
-std::shared_ptr<IImageProcessCallbacks> SessionCoordinator::GetImageProcCallbacks()
-{
-    return imageProcCallbacks_;
-}
-
 std::shared_ptr<IVideoProcessCallbacks> SessionCoordinator::GetVideoProcCallbacks()
 {
     return videoProcCallbacks_;
 }
 
-void SessionCoordinator::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
-{
-    int32_t userId = sessionInfo->GetUserId();
-    DP_INFO_LOG("Add photo session userId: %{public}d", userId);
-    auto callback = sessionInfo->GetRemoteCallback();
-    if (callback != nullptr) {
-        photoCallbackMap_[userId] = callback;
-    }
-}
-
-void SessionCoordinator::DeletePhotoSession(const int32_t userId)
-{
-    if (photoCallbackMap_.find(userId) != photoCallbackMap_.end()) {
-        DP_INFO_LOG("Delete photo session userId: %{public}d", userId);
-        photoCallbackMap_.erase(userId);
-    }
-}
-
-void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
-    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag)
-{
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d,"
-        "cloudImageEnhanceFlag: %{public}u.", userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()),
-        cloudImageEnhanceFlag);
-    auto callback = GetRemoteImageCallback(userId);
-    if (callback != nullptr) {
-        callback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudImageEnhanceFlag);
-    } else {
-        DP_INFO_LOG("callback is null, cache request imageId: %{public}s.", imageId.c_str());
-        pendingImageResults_.push_back({ CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize,
-            DpsError::DPS_ERROR_SESSION_SYNC_NEEDED, DpsStatus::DPS_SESSION_STATE_IDLE, cloudImageEnhanceFlag });
-    }
-}
-
-void SessionCoordinator::OnProcessDoneExt(int userId, const std::string& imageId,
-    std::shared_ptr<PictureIntf> picture, uint32_t cloudImageEnhanceFlag)
-{
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d,"
-        "cloudImageEnhanceFlag: %{public}u.", userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()),
-        cloudImageEnhanceFlag);
-    auto callback = GetRemoteImageCallback(userId);
-    if (callback != nullptr) {
-        DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
-        callback->OnProcessImageDone(imageId, picture, cloudImageEnhanceFlag);
-    } else {
-        DP_INFO_LOG("callback is null, cache request imageId: %{public}s.", imageId.c_str());
-    }
-}
-
-void SessionCoordinator::OnError(const int userId, const std::string& imageId, DpsError errorCode)
-{
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, imageId: %{public}s, map size: %{public}d.",
-        userId, imageId.c_str(), static_cast<int32_t>(photoCallbackMap_.size()));
-    auto callback = GetRemoteImageCallback(userId);
-    if (callback != nullptr) {
-        callback->OnError(imageId, MapDpsErrorCode(errorCode));
-    } else {
-        DP_INFO_LOG("callback is null, cache request imageId: %{public}s, errorCode: %{public}d.",
-            imageId.c_str(), errorCode);
-        pendingImageResults_.push_back({ CallbackType::ON_ERROR, userId, imageId, nullptr, 0, errorCode });
-    }
-}
-
 void SessionCoordinator::OnStateChanged(const int32_t userId, DpsStatus statusCode)
 {
-    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, map size: %{public}d, statusCode: %{public}d.",
-        userId, static_cast<int32_t>(photoCallbackMap_.size()), statusCode);
-    sptr<IDeferredPhotoProcessingSessionCallback> spCallback = GetRemoteImageCallback(userId);
-    if (spCallback != nullptr) {
-        spCallback->OnStateChanged(MapDpsStatus(statusCode));
-    } else {
-        DP_INFO_LOG("callback is null, cache request statusCode: %{public}d.", statusCode);
-        pendingImageResults_.push_back({CallbackType::ON_STATE_CHANGED, userId, "", nullptr, 0,
-            DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL, statusCode});
-    }
-}
-
-void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback)
-{
-    DP_INFO_LOG("entered.");
-    while (!pendingImageResults_.empty()) {
-        auto result = pendingImageResults_.front();
-        if (result.callbackType == CallbackType::ON_PROCESS_DONE) {
-            callback->OnProcessImageDone(result.imageId, result.ipcFd, result.dataSize,
-                result.cloudImageEnhanceFlag);
-            uint64_t endTime = SteadyClock::GetTimestampMilli();
-            DPSEventReport::GetInstance().ReportImageProcessResult(result.imageId, result.userId, endTime);
-        }
-        if (result.callbackType == CallbackType::ON_ERROR) {
-            callback->OnError(result.imageId, MapDpsErrorCode(result.errorCode));
-        }
-        if (result.callbackType == CallbackType::ON_STATE_CHANGED) {
-            callback->OnStateChanged(MapDpsStatus(result.statusCode));
-        }
-        pendingImageResults_.pop_front();
-    }
+    DP_INFO_LOG("DPS_OHOTO: userId: %{public}d, statusCode: %{public}d", userId, statusCode);
 }
 
 void SessionCoordinator::AddVideoSession(const sptr<VideoSessionInfo>& sessionInfo)
@@ -339,8 +113,7 @@ void SessionCoordinator::DeleteVideoSession(const int32_t userId)
 void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::string& videoId,
     const sptr<IPCFileDescriptor> &ipcFd)
 {
-    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, userMap size: %{public}d",
-        userId, static_cast<int32_t>(videoCallbackMap_.size()));
+    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, userMap size: %{public}zu", userId, videoCallbackMap_.size());
     auto callback = GetRemoteVideoCallback(userId);
     if (callback != nullptr) {
         callback->OnProcessVideoDone(videoId, ipcFd);
@@ -351,8 +124,8 @@ void SessionCoordinator::OnVideoProcessDone(const int32_t userId, const std::str
 
 void SessionCoordinator::OnVideoError(const int32_t userId, const std::string& videoId, DpsError errorCode)
 {
-    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, userMap: %{public}d, videoId: %{public}s, error: %{public}d",
-        userId, static_cast<int32_t>(videoCallbackMap_.size()), videoId.c_str(), errorCode);
+    DP_INFO_LOG("DPS_VIDEO: userId: %{public}d, userMap: %{public}zu, videoId: %{public}s, error: %{public}d",
+        userId, videoCallbackMap_.size(), videoId.c_str(), errorCode);
     auto callback = GetRemoteVideoCallback(userId);
     if (callback != nullptr) {
         callback->OnError(videoId, MapDpsErrorCode(errorCode));

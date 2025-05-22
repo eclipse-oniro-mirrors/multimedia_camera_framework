@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,19 +29,14 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class EXPORT_API DeferredProcessingService : public RefBase, public Singleton<DeferredProcessingService> {
     DECLARE_SINGLETON(DeferredProcessingService)
-
 public:
     void Initialize();
-    void Start();
-    void Stop();
     void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
         std::shared_ptr<PictureIntf> picture);
     sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
-        const sptr<IDeferredPhotoProcessingSessionCallback>& callbacks);
+        const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,
         const sptr<IDeferredVideoProcessingSessionCallback>& callbacks);
-    void NotifyCameraSessionStatus(const int32_t userId,
-        const std::string& cameraId, bool running, bool isSystemCamera);
 
 private:
     std::atomic<bool> initialized_ {false};

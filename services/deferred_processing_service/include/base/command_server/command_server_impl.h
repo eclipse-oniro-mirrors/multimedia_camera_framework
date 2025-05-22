@@ -22,10 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-using CmdSharedPtr = std::shared_ptr<Command>;
-
-class CommandServerImpl
-    : public std::enable_shared_from_this<CommandServerImpl> {
+class CommandServerImpl : public std::enable_shared_from_this<CommandServerImpl> {
 public:
     explicit CommandServerImpl(const std::string& cmdServerName);
     ~CommandServerImpl();

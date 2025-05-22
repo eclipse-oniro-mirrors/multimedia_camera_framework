@@ -14,7 +14,6 @@
  */
 
 #include "deferred_video_processing_session_callback_stub_fuzzer.h"
-#include "buffer_info.h"
 #include "deferred_processing_service.h"
 #include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "metadata_utils.h"

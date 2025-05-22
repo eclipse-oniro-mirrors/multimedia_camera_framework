@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,15 +17,17 @@
 #define OHOS_CAMERA_DPS_BASIC_DEFINITIONS_H
 
 #include <cstdint>
-#include <string>
+
+#include "ideferred_photo_processing_session_callback.h"
+#include "v1_4/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 constexpr int32_t DEFAULT_COUNT = 0;
-constexpr uint32_t INVALID_TIMEID = 0;
 constexpr int64_t DEFAULT_OFFSET = 0;
-constexpr uint64_t DEFAULT_TRAILING_TIME = 0;
+constexpr uint32_t INVALID_TIMERID = 0;
+constexpr uint32_t DEFAULT_TRAILING_TIME = 0;
 constexpr int32_t TOTAL_PROCESS_TIME = 10 * 60 * 1000;
 constexpr int32_t ONCE_PROCESS_TIME = 5 * 60 * 1000;
 constexpr uint32_t DELAY_TIME = 1000;
@@ -45,6 +47,7 @@ enum EventType : int32_t {
     BATTERY_LEVEL_STATUS_EVENT,
     THERMAL_LEVEL_STATUS_EVENT,
     PHOTO_PROCESS_STATUS_EVENT,
+    TRAILING_STATUS_EVENT,
     USER_INITIATED_EVENT,
     AVAILABLE_CONCURRENT_EVENT,
 };
@@ -117,6 +120,12 @@ enum SystemPressureLevel : int32_t {
     SEVERE
 };
 
+enum TrailingStatus : int32_t {
+    CAMERA_ON_STOP_TRAILING = 0,
+    SYSTEM_CAMERA_OFF_START_TRAILING,
+    NORMAL_CAMERA_OFF_START_TRAILING
+};
+
 enum TrigerMode : int32_t {
     TRIGER_ACTIVE = 0,
     TRIGER_PASSIVE = 1,
@@ -172,7 +181,7 @@ enum DpsStatus : int32_t {
 
 enum SessionType : int32_t {
     PHOTO_SESSION = 0,
-    VDIIDEO_SESSION
+    VIDEO_SESSION
 };
 
 enum ExecutionMode {
@@ -182,17 +191,21 @@ enum ExecutionMode {
     DUMMY
 };
 
-enum ScheduleType : int32_t {
+enum SchedulerType : int32_t {
     REMOVE = -1,
-    TRAILING_STATE = 0,
-    CAMERA_STATE,
-    HDI_STATE,
-    MEDIA_LIBRARY_STATE,
+    PHOTO_TRAILING_STATE = 0,
+    PHOTO_CAMERA_STATE,
+    PHOTO_HAL_STATE,
+    PHOTO_MEDIA_LIBRARY_STATE,
+    PHOTO_THERMAL_LEVEL_STATE,
+    VIDEO_CAMERA_STATE,
+    VIDEO_HAL_STATE,
+    VIDEO_MEDIA_LIBRARY_STATE,
+    VIDEO_THERMAL_LEVEL_STATE,
     SCREEN_STATE,
     CHARGING_STATE,
     BATTERY_STATE,
     BATTERY_LEVEL_STATE,
-    THERMAL_LEVEL_STATE,
     PHOTO_PROCESS_STATE,
     NORMAL_TIME_STATE
 };
@@ -212,6 +225,45 @@ enum MediaResult : int32_t {
     SUCCESS = 0,
     PAUSE = 1
 };
+
+enum class CallbackType {
+    NONE = -1,
+    IMAGE_PROCESS_DONE = 0,
+    IMAGE_PROCESS_YUV_DONE,
+    IMAGE_ERROR,
+    ON_STATE_CHANGED,
+    VIDEO_PROCESS_DONE,
+    VIDEO_ERROR
+};
+
+enum class JobState {
+    PENDING = 0,
+    FAILED,
+    RUNNING,
+    COMPLETED,
+    ERROR,
+    NONE
+};
+
+enum class JobPriority {
+    LOW = 0,
+    NORMAL,
+    HIGH,
+    NONE
+};
+
+enum class PhotoJobType {
+    BACKGROUND = 0,
+    OFFLINE
+};
+
+ErrorCode MapDpsErrorCode(DpsError errorCode);
+StatusCode MapDpsStatus(DpsStatus statusCode);
+DpsError MapHdiError(HDI::Camera::V1_2::ErrorCode errorCode);
+HdiStatus MapHdiStatus(HDI::Camera::V1_2::SessionStatus statusCode);
+HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode executionMode);
+SystemPressureLevel ConvertPhotoThermalLevel(int32_t level);
+VideoThermalLevel ConvertVideoThermalLevel(int32_t level);
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

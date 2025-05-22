@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,11 +17,10 @@
 #define OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 
 #include <cstdint>
-#include <memory>
 
+#include "enable_shared_create.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "ideferred_video_processing_session_callback.h"
-#include "iimage_process_callbacks.h"
 #include "ipc_file_descriptor.h"
 #include "ivideo_process_callbacks.h"
 #include "photo_session_info.h"
@@ -31,22 +30,14 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class SessionCoordinator : public std::enable_shared_from_this<SessionCoordinator> {
+class SessionCoordinator : public EnableSharedCreateInit<SessionCoordinator> {
 public:
     ~SessionCoordinator();
 
-    void Initialize();
+    int32_t Initialize() override;
     void Start();
     void Stop();
-    void AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo);
-    void DeletePhotoSession(const int32_t userId);
-    void OnProcessDone(const int32_t userId, const std::string& imageId,
-        const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize, uint32_t cloudImageEnhanceFlag);
-    void OnProcessDoneExt(int userId, const std::string& imageId, std::shared_ptr<PictureIntf> picture,
-        uint32_t cloudImageEnhanceFlag);
-    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode);
     void OnStateChanged(const int32_t userId, DpsStatus statusCode);
-    std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
 
     void AddVideoSession(const sptr<VideoSessionInfo>& sessionInfo);
     void DeleteVideoSession(const int32_t userId);
@@ -55,58 +46,11 @@ public:
     void OnVideoStateChanged(const int32_t userId, DpsStatus statusCode);
     std::shared_ptr<IVideoProcessCallbacks> GetVideoProcCallbacks();
 
-protected:
-    SessionCoordinator();
-
-private:
-    class ImageProcCallbacks;
-    class VideoProcCallbacks;
-
-    enum struct CallbackType {
-        ON_PROCESS_DONE,
-        ON_ERROR,
-        ON_STATE_CHANGED
-    };
-
-    struct ImageResult {
-        CallbackType callbackType;
-        const int32_t userId;
-        std::string imageId;
-        sptr<IPCFileDescriptor> ipcFd;
-        long dataSize;
-        DpsError errorCode;
-        DpsStatus statusCode;
-        uint32_t cloudImageEnhanceFlag;
-    };
-
-    struct ImageResultExt {
-        CallbackType callbackType;
-        int userId;
-        std::string imageId;
-        std::shared_ptr<PictureIntf> picture;
-        long dataSize;
-        DpsError errorCode;
-        DpsStatus statusCode;
-    };
-
-    struct RequestResult {
-        CallbackType callbackType;
-        const int32_t userId;
-        const std::string requestId;
-        sptr<IPCFileDescriptor> ipcFd;
-        long dataSize;
-        DpsError errorCode;
-        DpsStatus statusCode;
-    };
-
-    void ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback);
-    void ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback);
-
-    inline sptr<IDeferredPhotoProcessingSessionCallback> GetRemoteImageCallback(int32_t userId)
+    inline sptr<PhotoSessionInfo> GetPhotoSessionInfo(int32_t userId)
     {
-        auto iter = photoCallbackMap_.find(userId);
-        if (iter != photoCallbackMap_.end()) {
-            return iter->second.promote();
+        auto iter = photoInfos_.find(userId);
+        if (iter != photoInfos_.end()) {
+            return iter->second;
         }
         return nullptr;
     }
@@ -120,9 +64,31 @@ private:
         return nullptr;
     }
 
-    std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_ {nullptr};
-    std::unordered_map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> photoCallbackMap_ {};
-    std::deque<ImageResult> pendingImageResults_ {};
+protected:
+    SessionCoordinator();
+
+private:
+    class VideoProcCallbacks;
+
+    enum struct CallbackType {
+        ON_PROCESS_DONE,
+        ON_ERROR,
+        ON_STATE_CHANGED
+    };
+
+    struct RequestResult {
+        CallbackType callbackType;
+        const int32_t userId;
+        const std::string requestId;
+        sptr<IPCFileDescriptor> ipcFd;
+        long dataSize;
+        DpsError errorCode;
+        DpsStatus statusCode;
+    };
+
+    void ProcessVideoResults(sptr<IDeferredVideoProcessingSessionCallback> callback);
+
+    std::unordered_map<int32_t, sptr<PhotoSessionInfo>> photoInfos_ {};
     std::shared_ptr<IVideoProcessCallbacks> videoProcCallbacks_ {nullptr};
     std::unordered_map<int32_t, wptr<IDeferredVideoProcessingSessionCallback>> videoCallbackMap_ {};
     std::deque<RequestResult> pendingRequestResults_ {};

@@ -182,11 +182,11 @@ MediaManagerError Reader::GetTrackMediaInfo(const TrackFormat& trackFormat,
 
     DP_INFO_LOG("TrackMediaInfo colorRange: %{public}d, pixelFormat: %{public}d, colorPrimary: %{public}d, "
         "transfer: %{public}d, profile: %{public}d, level: %{public}d, bitRate: %{public}" PRId64 ", "
-        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d",
+        "fps: %{public}d, rotation: %{public}d, mime: %{public}s, isHdrvivid: %{public}d, bitMode: %{public}d",
         mediaInfo->codecInfo.colorRange, mediaInfo->codecInfo.pixelFormat, mediaInfo->codecInfo.colorPrimary,
         mediaInfo->codecInfo.colorTransferCharacter, mediaInfo->codecInfo.profile, mediaInfo->codecInfo.level,
         mediaInfo->codecInfo.bitRate, mediaInfo->codecInfo.fps, mediaInfo->codecInfo.rotation,
-        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid);
+        mediaInfo->codecInfo.mimeType.c_str(), mediaInfo->codecInfo.isHdrvivid, mediaInfo->codecInfo.bitMode);
     return OK;
 }
 

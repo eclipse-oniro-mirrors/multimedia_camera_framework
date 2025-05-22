@@ -56,7 +56,7 @@ DeferredVideoJob::~DeferredVideoJob()
     }
 }
 
-bool DeferredVideoJob::SetJobStatus(VideoJobStatus status)
+bool DeferredVideoJob::SetJobState(VideoJobState status)
 {
     DP_DEBUG_LOG("videoId: %{public}s, current status: %{public}d, previous status: %{public}d, "
         "status to set: %{public}d", videoId_.c_str(), curStatus_, preStatus_, status);

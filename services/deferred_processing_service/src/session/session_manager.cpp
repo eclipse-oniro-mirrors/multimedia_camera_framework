@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,23 +18,11 @@
 #include "dp_log.h"
 #include "dps.h"
 #include "session_command.h"
-#include "session_coordinator.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-
-std::shared_ptr<SessionManager> SessionManager::Create()
-{
-    DP_DEBUG_LOG("entered.");
-    auto sessionManager = CreateShared<SessionManager>();
-    if (sessionManager) {
-        sessionManager->Initialize();
-    }
-    return sessionManager;
-}
-
-SessionManager::SessionManager() : coordinator_(CreateShared<SessionCoordinator>())
+SessionManager::SessionManager()
 {
     DP_DEBUG_LOG("entered.");
 }
@@ -46,20 +34,23 @@ SessionManager::~SessionManager()
     videoSessionInfos_.clear();
 }
 
-void SessionManager::Initialize()
+int32_t SessionManager::Initialize()
 {
-    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Initialize());
+    coordinator_ = SessionCoordinator::Create();
+    DP_CHECK_ERROR_RETURN_RET_LOG(coordinator_ == nullptr, DP_INIT_FAIL, "SessionCoordinator init failed.");
+
     initialized_.store(true);
+    return DP_OK;
 }
 
 void SessionManager::Start()
 {
-    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Start());
+    coordinator_->Start();
 }
 
 void SessionManager::Stop()
 {
-    DP_CHECK_EXECUTE(coordinator_ != nullptr, coordinator_->Stop());
+    coordinator_->Stop();
 }
 
 sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(const int32_t userId,
@@ -73,7 +64,6 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     if (sessionInfo == nullptr) {
         DP_INFO_LOG("Photo session creat susses");
         sessionInfo = sptr<PhotoSessionInfo>::MakeSptr(userId, callback);
-        photoSessionInfos_.emplace(userId, sessionInfo);
     } else {
         DP_DEBUG_LOG("Photo session already existed");
         sessionInfo->SetCallback(callback);
@@ -89,20 +79,27 @@ sptr<PhotoSessionInfo> SessionManager::GetPhotoInfo(const int32_t userId)
     auto it = photoSessionInfos_.find(userId);
     DP_CHECK_ERROR_RETURN_RET_LOG(it == photoSessionInfos_.end(), nullptr,
         "Not find PhotoSessionInfo for userId: %{public}d", userId);
-    
+    DP_INFO_LOG("DPS_PHOTO: Photo user count: %{public}zu", photoSessionInfos_.size());
     return it->second;
 }
 
-std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
+void SessionManager::AddPhotoSession(const sptr<PhotoSessionInfo>& sessionInfo)
 {
-    DP_INFO_LOG("SessionManager::GetImageProcCallbacks enter.");
-    return coordinator_->GetImageProcCallbacks();
+    int32_t userId = sessionInfo->GetUserId();
+    DP_INFO_LOG("Add photo session userId: %{public}d", userId);
+    photoSessionInfos_[userId] = sessionInfo;
+}
+
+void SessionManager::DeletePhotoSession(const int32_t userId)
+{
+    if (photoSessionInfos_.erase(userId) > 0) {
+        DP_INFO_LOG("Delete photo session userId: %{public}d", userId);
+    }
 }
 
 sptr<IDeferredPhotoProcessingSessionCallback> SessionManager::GetCallback(const int32_t userId)
 {
-    auto sessionInfo = GetPhotoInfo(userId);
-    if (sessionInfo) {
+    if (auto sessionInfo = GetPhotoInfo(userId)) {
         return sessionInfo->GetRemoteCallback();
     }
     return nullptr;

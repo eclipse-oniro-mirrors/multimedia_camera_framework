@@ -129,7 +129,6 @@ void HCameraService::OnStart()
         "HCameraService OnStart failed to init camera host manager.");
     // initialize deferred processing service.
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
-    DeferredProcessing::DeferredProcessingService::GetInstance().Start();
     cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
     AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
 #ifdef NOTIFICATION_ENABLE
@@ -155,7 +154,6 @@ void HCameraService::OnStop()
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
-    DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
 
 int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
