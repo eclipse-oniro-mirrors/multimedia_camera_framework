@@ -64,6 +64,7 @@ public:
 
     void OpenSync();
     array<uint64_t> OpenByIsSecureEnabledSync(bool isSecureEnabled);
+    void OpenByCameraConcurrentTypeSync(ohos::multimedia::camera::CameraConcurrentType type);
     void CloseSync();
 
     OHOS::sptr<OHOS::CameraStandard::CameraInput> GetCameraInput();

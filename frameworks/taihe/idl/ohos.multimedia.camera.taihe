@@ -291,6 +291,8 @@ interface CameraInput {
   OpenSync(): void;
   @gen_promise("open")
   OpenByIsSecureEnabledSync(isSecureEnabled: bool): @bigint Array<u64>;
+  @gen_promise("open")
+  OpenByCameraConcurrentTypeSync(type: CameraConcurrentType): void;
 
   GetSpecificImplPtr(): i64;
 
@@ -1225,6 +1227,7 @@ interface CameraManager {
   CreateVideoOutput(profile: VideoProfile, surfaceId: String): VideoOutput;
   @overload("createVideoOutput")
   CreateVideoOutputWithoutProfile(surfaceId: String): VideoOutput;
+  CreateDepthDataOutput(profile: DepthProfile): DepthDataOutput;
   @overload("createMetadataOutput")
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
@@ -1529,6 +1532,8 @@ interface DepthDataOutput : CameraOutput {
     on(type: string, callback: object): void {
       if (type == "error") {
         this.OnError_inner(callback as (err: BusinessError<void>) => void);
+      } else if (type == "depthDataAvailable") {
+        this.OnDepthDataAvailable_inner(callback as ((arg_0: BusinessError<void>, arg_1: DepthData) => void));
       } else {
         throw new Error(`Unknown type: ${type}`);
       }
@@ -1536,6 +1541,8 @@ interface DepthDataOutput : CameraOutput {
     off(type: string, callback?: object): void {
       if (type == "error") {
         this.OffError_inner(callback as (((arg_0: BusinessError<void>) => void) | undefined));
+      } else if (type == "depthDataAvailable") {
+        this.OffDepthDataAvailable_inner(callback as (((arg_0: BusinessError<void>, arg_1: DepthData) => void) | undefined));
       } else {
         throw new Error(`Unknown type: ${type}`);
       }
@@ -1544,6 +1551,25 @@ interface DepthDataOutput : CameraOutput {
 
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque )=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque )=> void>): void;
+
+  OnDepthDataAvailable(callback: (err: @sts_type("BusinessError<void>") Opaque, data: DepthData)=> void): void;
+  OffDepthDataAvailable(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: DepthData)=> void>): void;
+}
+
+interface DepthData {
+  @get GetFormat(): CameraFormat;
+
+  @get GetQualityLevel(): DepthDataQualityLevel;
+
+  @get GetDataAccuracy(): DepthDataAccuracy;
+
+  GetSpecificImplPtr(): i64;
+}
+
+enum DepthDataQualityLevel: i32 {
+  DEPTH_DATA_QUALITY_BAD = 0,
+  DEPTH_DATA_QUALITY_FAIR = 1,
+  DEPTH_DATA_QUALITY_GOOD = 2,
 }
 
 enum DepthDataAccuracy: i32 {

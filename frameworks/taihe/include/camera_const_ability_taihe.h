@@ -170,6 +170,19 @@ const std::unordered_map<OHOS::CameraStandard::FocusCallback::FocusState, FocusS
     {OHOS::CameraStandard::FocusCallback::UNFOCUSED, FocusState::key_t::FOCUS_STATE_UNFOCUSED},
 };
 
+const std::unordered_map<int32_t, DepthDataQualityLevel> g_nativeToAniDepthDataQualityLevel = {
+    {0, DepthDataQualityLevel::key_t::DEPTH_DATA_QUALITY_BAD},
+    {1, DepthDataQualityLevel::key_t::DEPTH_DATA_QUALITY_FAIR},
+    {2, DepthDataQualityLevel::key_t::DEPTH_DATA_QUALITY_GOOD},
+};
+
+const std::unordered_map<OHOS::CameraStandard::DepthDataAccuracy, DepthDataAccuracy> g_nativeToAniDepthDataAccuracy = {
+    {OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_RELATIVE,
+        DepthDataAccuracy::key_t::DEPTH_DATA_ACCURACY_RELATIVE},
+    {OHOS::CameraStandard::DepthDataAccuracy::DEPTH_DATA_ACCURACY_ABSOLUTE,
+        DepthDataAccuracy::key_t::DEPTH_DATA_ACCURACY_ABSOLUTE},
+};
+
 const std::unordered_map<OHOS::CameraStandard::MetadataObjectType,
                          MetadataObjectType> g_nativeToAniMetadataObjectType = {
     {OHOS::CameraStandard::MetadataObjectType::BASE_FACE_DETECTION, MetadataObjectType::key_t::FACE_DETECTION},

@@ -41,6 +41,8 @@ public:
     static CameraDevice ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
     static ConnectionType ToTaiheConnectionType(OHOS::CameraStandard::ConnectionType type);
     static CameraFormat ToTaiheCameraFormat(OHOS::CameraStandard::CameraFormat format);
+    static DepthDataQualityLevel ToTaiheDepthDataQualityLevel(int32_t level);
+    static DepthDataAccuracy ToTaiheDepthDataAccuracy(OHOS::CameraStandard::DepthDataAccuracy dataAccuracy);
     static FocusState ToTaiheFocusState(OHOS::CameraStandard::FocusCallback::FocusState format);
     static MetadataObjectType ToTaiheMetadataObjectType(OHOS::CameraStandard::MetadataObjectType format);
     static array<MetadataObject> ToTaiheMetadataObjectsAvailableData(

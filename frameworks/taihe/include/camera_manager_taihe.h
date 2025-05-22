@@ -109,6 +109,7 @@ public:
     VideoOutput CreateVideoOutputWithoutProfile(string_view surfaceId);
     CameraInput CreateCameraInputWithCameraDevice(CameraDevice const& camera);
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
+    DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);
     void RegisterCameraMuteCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
