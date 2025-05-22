@@ -31,7 +31,7 @@ static void BmsSaListenerFuzzTest(FuzzedDataProvider& fdp);
 class BmsAdapterFuzzer {
 public:
 static std::shared_ptr<BmsAdapter> fuzz_;
-static void Initialize(FuzzedDataProvider& fdp);
+static void Initialize();
 };
 } //CameraStandard
 } //OHOS
