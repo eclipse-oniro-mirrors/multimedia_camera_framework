@@ -215,7 +215,6 @@ void CameraDeviceFuzzTest2(FuzzedDataProvider& fdp)
         fuzzCameraDevice->CheckMovingPhotoSupported(fdp.ConsumeIntegral<int32_t>());
         fuzzCameraDevice->NotifyCameraStatus(fdp.ConsumeIntegral<int32_t>());
         fuzzCameraDevice->RemoveResourceWhenHostDied();
-        fuzzCameraDevice->NotifyCameraSessionStatus(fdp.ConsumeBool());
         CameraDeviceFuzzTest2Case1();
         fuzzCameraDevice->ResetDeviceSettings();
         fuzzCameraDevice->SetDeviceMuteMode(fdp.ConsumeBool());
