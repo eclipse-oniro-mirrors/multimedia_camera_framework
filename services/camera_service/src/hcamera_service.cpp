@@ -216,6 +216,12 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         MEDIA_DEBUG_LOG("on receive usual.event.SCREEN_UNLOCKED.");
         CameraCommonEventManager::GetInstance()->SetScreenLocked(false);
     }
+    if (action == COMMON_EVENT_RSS_MULTI_WINDOW_TYPE) {
+        MEDIA_DEBUG_LOG("on receive common.event.ressched.window.state.");
+        int32_t rssMultiWindowStatus = data.GetCode();
+        MEDIA_DEBUG_LOG("HCameraService::OnReceiveEvent rssMultiWindowStatus is %{public}d", rssMultiWindowStatus);
+        cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::RSS_MULTI_WINDOW_TYPE, rssMultiWindowStatus);
+    }
 }
 
 #ifdef NOTIFICATION_ENABLE
@@ -296,6 +302,8 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_LOCKED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_SCREEN_UNLOCKED,
+                std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(COMMON_EVENT_RSS_MULTI_WINDOW_TYPE,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
             break;
 

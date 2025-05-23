@@ -63,6 +63,7 @@ static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS
 static const std::string COMMON_EVENT_DATA_SHARE_READY = "usual.event.DATA_SHARE_READY";
 static const std::string COMMON_EVENT_SCREEN_LOCKED = "usual.event.SCREEN_LOCKED";
 static const std::string COMMON_EVENT_SCREEN_UNLOCKED = "usual.event.SCREEN_UNLOCKED";
+static const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
 #ifdef NOTIFICATION_ENABLE
 // beauty notification
 static const std::string EVENT_CAMERA_BEAUTY_NOTIFICATION = "CAMERA_BEAUTY_NOTIFICATION";
@@ -120,7 +121,8 @@ enum ClientPriorityLevels {
 
 enum DeviceType {
     FALLING_TYPE = 1,
-    FOLD_TYPE
+    FOLD_TYPE,
+    RSS_MULTI_WINDOW_TYPE
 };
 
 enum FallingState {
