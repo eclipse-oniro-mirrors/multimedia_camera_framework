@@ -18,6 +18,7 @@
 
 #include "hstream_repeat_stub.h"
 #include "input/camera_input.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -40,8 +41,8 @@ public:
     void OnError(const int32_t errorType, const int32_t errorMsg) const override {}
 };
 
-void Test(uint8_t *rawData, size_t size);
-void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size);
+void Test(uint8_t* data, size_t size);
+void TestInput(sptr<CameraInput> input, FuzzedDataProvider& fdp);
 
 } //CameraInputFuzzer
 } //CameraStandard

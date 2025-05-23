@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include "camera_report_dfx_uitls.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,7 +27,7 @@ class CameraReportDfxUtilsFuzzer {
 public:
 static std::shared_ptr<CameraReportDfxUtils> fuzz_;
 
-static void CameraReportDfxUtilsFuzzTest();
+static void CameraReportDfxUtilsFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

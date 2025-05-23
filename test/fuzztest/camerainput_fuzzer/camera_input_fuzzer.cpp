@@ -29,10 +29,11 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraInputFuzzer {
-const int32_t LIMITSIZE = 4;
+const int32_t LIMITSIZE = 169;
 const int32_t CAM_NUM = 2;
 bool g_isCameraDevicePermission = false;
 static pid_t g_pid = 0;
+size_t max_length = 64;
 
 void GetPermission()
 {
@@ -55,17 +56,18 @@ void GetPermission()
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 }
 
-void Test(uint8_t *rawData, size_t size)
+void Test(uint8_t* data, size_t size)
 {
-    CHECK_ERROR_RETURN(rawData == nullptr || size < LIMITSIZE);
+    FuzzedDataProvider fdp(data, size);
++   if (fdp.remaining_bytes() < LIMITSIZE) {
+        return;
+    }
     GetPermission();
     auto manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "CameraInputFuzzer: Get CameraManager instance Error");
     auto cameras = manager->GetSupportedCameras();
     CHECK_ERROR_RETURN_LOG(cameras.size() < CAM_NUM, "CameraInputFuzzer: GetSupportedCameras Error");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    auto camera = cameras[data.ReadUint32() % cameras.size()];
+    auto camera = cameras[fdp.ConsumeIntegral<uint32_t>() % cameras.size()];
     CHECK_ERROR_RETURN_LOG(!camera, "CameraInputFuzzer: Camera is null Error");
     auto input = manager->CreateCameraInput(camera);
     CHECK_ERROR_RETURN_LOG(!input, "CameraInputFuzzer: CreateCameraInput Error");
@@ -91,14 +93,12 @@ void Test(uint8_t *rawData, size_t size)
     metadata->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count);
     metadata->addEntry(OHOS_STATUS_CAMERA_LENS_DIRTY_DETECTION, &isLensDirtyDetected, count);
     cameraDeviceServiceCallback->OnResult(timestamp, metadata);
-    TestInput(input, rawData, size);
+    TestInput(input, fdp);
 }
 
-void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
+void TestInput(sptr<CameraInput> input, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CameraInputFuzzer: ENTER");
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
     input->Open();
     input->SetErrorCallback(make_shared<ErrorCallbackMock>());
     input->SetResultCallback(make_shared<ResultCallbackMock>());
@@ -107,25 +107,21 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->GetErrorCallback();
     input->GetResultCallback();
     shared_ptr<OHOS::Camera::CameraMetadata> result;
-    data.RewindRead(0);
-    input->ProcessCallbackUpdates(data.ReadUint64(), result);
+    input->ProcessCallbackUpdates(fdp.ConsumeIntegral<uint64_t>(), result);
     input->GetCameraSettings();
-    data.RewindRead(0);
-    input->SetCameraSettings(data.ReadString());
-    data.RewindRead(0);
-    input->GetMetaSetting(data.ReadUint32());
+    input->SetCameraSettings(fdp.ConsumeRandomLengthString(max_length));
+    input->GetMetaSetting(fdp.ConsumeIntegral<uint32_t>());
     std::vector<vendorTag_t> infos;
     input->GetCameraAllVendorTags(infos);
     input->Release();
     input->Close();
     uint64_t secureSeqId;
-    data.RewindRead(0);
-    input->Open(data.ReadBool(), &secureSeqId);
+    input->Open(fdp.ConsumeBool(), &secureSeqId);
     input->Release();
     CameraDeviceServiceCallback callback;
     auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 100);
-    callback.OnError(data.ReadInt32(), data.ReadInt32());
-    callback.OnResult(data.ReadUint64(), meta);
+    callback.OnError(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>());
+    callback.OnResult(fdp.ConsumeIntegral<uint64_t>(), meta);
     input->SetInputUsedAsPosition(CAMERA_POSITION_UNSPECIFIED);
     class CameraOcclusionDetectCallbackMock : public CameraOcclusionDetectCallback {
     public:
@@ -136,7 +132,7 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->GetOcclusionDetectCallback();
     input->UpdateSetting(meta);
     input->MergeMetadata(meta, meta);
-    input->closeDelayed(data.ReadInt32());
+    input->closeDelayed(fdp.ConsumeIntegral<int32_t>());
     input->CameraServerDied(g_pid);
 }
 
@@ -145,7 +141,7 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::CameraInputFuzzer::Test(data, size);

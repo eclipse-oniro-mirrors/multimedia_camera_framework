@@ -25,7 +25,7 @@
 
 namespace {
 
-const int32_t LIMITSIZE = 20;
+const int32_t LIMITSIZE = 24;
 
 }
 
@@ -51,9 +51,9 @@ void CameraRestoreParamFuzzer::CheckPermission()
     }
 }
 
-void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
+void CameraRestoreParamFuzzer::Test(uint8_t* data, size_t size)
 {
-    if (rawData == nullptr || size < LIMITSIZE) {
+    if (fdp.remaining_bytes() < LIMITSIZE) {
         return;
     }
     CheckPermission();
@@ -62,27 +62,20 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
     std::string cameraId;
     fuzz_ = std::make_shared<HCameraRestoreParam>(clientName, cameraId);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
-    
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
 
-    data.RewindRead(0);
-    int32_t opMode = data.ReadInt32();
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetCameraOpMode(opMode);
 
-    data.RewindRead(0);
-    int foldStaus = data.ReadInt32();
+    int foldStaus = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetFoldStatus(foldStaus);
 
-    data.RewindRead(0);
     timeval closeCameraTime = {
-        data.ReadUint32(),
-        data.ReadUint32(),
+        fdp.ConsumeIntegral<uint32_t>(),
+        fdp.ConsumeIntegral<uint32_t>(),
     };
     fuzz_->SetCloseCameraTime(closeCameraTime);
 
-    data.RewindRead(0);
-    int activeTime = data.ReadInt32();
+    int activeTime = fdp.ConsumeIntegral<int32_t>();
     fuzz_->SetStartActiveTime(activeTime);
 
     RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
@@ -94,8 +87,7 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
     std::vector<StreamInfo_V1_1> streamInfos;
     fuzz_->SetStreamInfo(streamInfos);
     
-    data.RewindRead(0);
-    auto obj = std::make_unique<int32_t>(data.ReadInt32());
+    auto obj = std::make_unique<int32_t>(fdp.ConsumeIntegral<int32_t>());
     const void *objectId = obj.get();
     fuzz_->IncStrongRef(objectId);
     fuzz_->IncWeakRef(objectId);
@@ -110,7 +102,7 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::CameraRestoreParamFuzzer::Test(data, size);

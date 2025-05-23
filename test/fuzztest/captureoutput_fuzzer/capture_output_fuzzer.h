@@ -17,6 +17,7 @@
 #define CAPTURE_OUTPUT_FUZZER_H
 
 #include "capture_output.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -45,7 +46,7 @@ class CaptureOutputFuzzer {
 public:
 static std::shared_ptr<CaptureOutput> fuzz_;
 static CaptureOutputTest captureOutputTest;
-static void CaptureOutputFuzzTest();
+static void CaptureOutputFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

@@ -21,72 +21,42 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace DeferredProcessing;
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+static constexpr int32_t MIN_SIZE_NUM = 35;
+const int32_t CONST_2 = 2;
 std::shared_ptr<AvcodecTaskManager> AvcodecTaskManagerFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
 * tips: only support basic type
 */
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
 
-template<class T>
-uint32_t GetArrLength(T& arr)
+void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fdp)
 {
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
-    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
-    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
-    fuzz_ = std::make_shared<AvcodecTaskManager>(session, type, colorSpace);
+    VideoCodecType mode = static_cast<VideoCodecType>(fdp.ConsumeIntegral<uint8_t>() 
+        % (VideoCodecType::VIDEO_ENCODE_TYPE_HEVC + CONST_2));
+    ColorSpace color = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % (ColorSpace::H_LOG + CONST_2));
+    fuzz_ = std::make_shared<AvcodecTaskManager>(session, mode, color);
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetTaskManager();
     fuzz_->GetEncoderManager();
-    int64_t timestamp = GetData<int64_t>();
-    GraphicTransformType type_ = GRAPHIC_ROTATE_90;
+    int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+    GraphicTransformType formType = static_cast<GraphicTransformType>(fdp.ConsumeIntegral<uint8_t>() 
+        % (GraphicTransformType::GRAPHIC_ROTATE_BUTT + CONST_2));
     sptr<SurfaceBuffer> videoBuffer = SurfaceBuffer::Create();
     sptr<FrameRecord> frameRecord =
-        new(std::nothrow) FrameRecord(videoBuffer, timestamp, type_);
+    new(std::nothrow) FrameRecord(videoBuffer, timestamp, formType);
     function<void()> task = []() {};
     fuzz_->SubmitTask(task);
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy = nullptr;
-    int32_t captureId = GetData<int32_t>();
-    int32_t captureRotation = GetData<int32_t>();
-    uint64_t taskName = GetData<uint64_t>();
+    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
+    int32_t captureRotation = fdp.ConsumeIntegral<int32_t>();
+    int64_t taskName = fdp.ConsumeIntegral<int64_t>();
     fuzz_->SetVideoFd(timestamp, photoAssetProxy, captureId);
     vector<sptr<FrameRecord>> frameRecords;
     fuzz_->DoMuxerVideo(frameRecords, taskName, captureRotation, captureId);
     vector<sptr<FrameRecord>> choosedBuffer;
-    int64_t shutterTime = GetData<int64_t>();
+    int64_t shutterTime = fdp.ConsumeIntegral<int64_t>();
     fuzz_->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId);
     vector<sptr<AudioRecord>> audioRecordVec;
     sptr<AudioVideoMuxer> muxer;
@@ -96,38 +66,18 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest()
     fuzz_->Stop();
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto avcodecTaskManager = std::make_unique<AvcodecTaskManagerFuzzer>();
     if (avcodecTaskManager == nullptr) {
         MEDIA_INFO_LOG("avcodecTaskManager is null");
         return;
     }
-    avcodecTaskManager->AvcodecTaskManagerFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    avcodecTaskManager->AvcodecTaskManagerFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -135,10 +85,6 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

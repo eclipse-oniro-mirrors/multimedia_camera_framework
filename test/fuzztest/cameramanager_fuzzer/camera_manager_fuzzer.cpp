@@ -29,15 +29,11 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 24;
 const size_t THRESHOLD = 10;
 sptr<CameraManager> manager = nullptr;
 const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
-static const uint8_t* RAW_DATA = nullptr;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 std::shared_ptr<IDeferredPhotoProcSessionCallbackFuzz> photoSessionCallback_ =
     std::make_shared<IDeferredPhotoProcSessionCallbackFuzz>();
 std::shared_ptr<IDeferredVideoProcSessionCallbackFuzz> videoSessionCallback_ =
@@ -47,42 +43,13 @@ std::shared_ptr<CameraMuteListenerFuzz> muteListenerCallback_ = std::make_shared
 std::shared_ptr<FoldListenerFuzz> foldListenerCallback_ = std::make_shared<FoldListenerFuzz>();
 std::shared_ptr<TorchListenerFuzz> torchListenerCallback_ = std::make_shared<TorchListenerFuzz>();
 
-template<class T>
-T GetData()
+void CameraManagerFuzzer::CameraManagerFuzzTest1(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void CameraManagerFuzzer::CameraManagerFuzzTest1()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     auto session = manager->CreateCaptureSession();
     manager->CreateCaptureSession(&session);
-    int userId = GetData<int>();
+    int userId = fdp.ConsumeIntegral<int>();
     auto deferedPhotoSession = manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback_);
     manager->CreateDeferredPhotoProcessingSession(userId, photoSessionCallback_, &deferedPhotoSession);
     auto deferedVideoSession = manager->CreateDeferredVideoProcessingSession(userId, videoSessionCallback_);
@@ -98,9 +65,9 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1()
     manager->CreatePreviewOutputStream(streamPtr, profile, bufferProducer);
     sptr<IStreamCapture> capture;
     manager->ValidCreateOutputStream(profile, bufferProducer);
-    manager->CreatePreviewOutput(bufferProducer,  GetData<int32_t>());
-    int32_t width = GetData<int32_t>();
-    int32_t height = GetData<int32_t>();
+    manager->CreatePreviewOutput(bufferProducer,  fdp.ConsumeIntegral<int32_t>());
+    int32_t width = fdp.ConsumeIntegral<int32_t>();
+    int32_t height = fdp.ConsumeIntegral<int32_t>();
     manager->CreateCustomPreviewOutput(surface, width, height);
     sptr<MetadataOutput> metadataOutput;
     std::vector<MetadataObjectType> metadataObjectTypes;
@@ -120,18 +87,15 @@ void CameraManagerFuzzer::CameraManagerFuzzTest1()
     manager->RegisterFoldListener(foldListenerCallback_);
 }
 
-void CameraManagerFuzzer::CameraManagerFuzzTest2()
+void CameraManagerFuzzer::CameraManagerFuzzTest2(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     std::string cameraId;
     manager->GetCameraDeviceFromId(cameraId);
     manager->GetCameras();
-    int32_t testPid = GetData<int32_t>();
-    int32_t status = GetData<int32_t>();
+    int32_t testPid = fdp.ConsumeIntegral<int32_t>();
+    int32_t status =  fdp.ConsumeIntegral<int32_t>();
     manager->GetCameraOutputStatus(testPid, status);
     manager->foldScreenType_ = "test_type";
     manager->GetSupportedCameras();
@@ -157,11 +121,8 @@ void CameraManagerFuzzer::CameraManagerFuzzTest2()
     manager->GetCameraMetadataFormat(cameraFormat);
 }
 
-void CameraManagerFuzzer::CameraManagerFuzzTest3()
+void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     manager = CameraManager::GetInstance();
     CHECK_ERROR_RETURN_LOG(!manager, "GetInstance Error");
     ITorchServiceCallbackFuzz torchServiceCallback;
@@ -175,7 +136,7 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3()
     sptr<IFoldServiceCallback> serviceCallback = new IFoldServiceCallbackFuzz();
     manager->SetFoldServiceCallback(serviceCallback);
     ICameraMuteServiceCallbackFuzz cameraMuteServiceCallback;
-    cameraMuteServiceCallback.OnCameraMute(GetData<bool>());
+    cameraMuteServiceCallback.OnCameraMute(fdp.ConsumeBool());
     manager->IsCameraMuteSupported();
     manager->IsCameraMuted();
     manager->PrelaunchCamera();
@@ -191,40 +152,20 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3()
     manager->SetCameraManagerNull();
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto cameraManager = std::make_unique<CameraManagerFuzzer>();
     if (cameraManager == nullptr) {
         MEDIA_INFO_LOG("cameraManager is null");
         return;
     }
-    cameraManager->CameraManagerFuzzTest1();
-    cameraManager->CameraManagerFuzzTest2();
-    cameraManager->CameraManagerFuzzTest3();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    cameraManager->CameraManagerFuzzTest1(fdp);
+    cameraManager->CameraManagerFuzzTest2(fdp);
+    cameraManager->CameraManagerFuzzTest3(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -236,6 +177,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }

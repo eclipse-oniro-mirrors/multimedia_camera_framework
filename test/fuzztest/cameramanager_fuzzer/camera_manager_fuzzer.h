@@ -18,14 +18,15 @@
 
 #include "input/camera_manager.h"
 #include <memory>
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
 class CameraManagerFuzzer {
 public:
-static void CameraManagerFuzzTest1();
-static void CameraManagerFuzzTest2();
-static void CameraManagerFuzzTest3();
+static void CameraManagerFuzzTest1(FuzzedDataProvider& fdp);
+static void CameraManagerFuzzTest2(FuzzedDataProvider& fdp);
+static void CameraManagerFuzzTest3(FuzzedDataProvider& fdp);
 };
 
 class IDeferredPhotoProcSessionCallbackFuzz : public IDeferredPhotoProcSessionCallback {

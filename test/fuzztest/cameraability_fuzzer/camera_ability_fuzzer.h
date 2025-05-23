@@ -17,6 +17,7 @@
 #define CAMERA_ABILITY_FUZZER_H
 
 #include "ability/camera_ability.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,7 +26,7 @@ class CameraAbilityFuzzer {
 public:
 static std::shared_ptr<CameraAbility> fuzz_;
 
-static void CameraAbilityFuzzTest();
+static void CameraAbilityFuzzTest(FuzzedDataProvider& fdp);
 };
 
 } //CameraStandard

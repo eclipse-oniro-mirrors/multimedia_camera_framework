@@ -20,101 +20,48 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t MAX_CODE_LEN  = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
+static constexpr int32_t MIN_SIZE_NUM = 10;
 static constexpr int32_t BUFFER_HANDLE_RESERVE_TEST_SIZE = 16;
-static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
 std::shared_ptr<CameraServerPhotoProxy> CameraServerPhotoProxyFuzzer::fuzz_{nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
 * tips: only support basic type
 */
-template<class T>
-T GetData()
+void CameraServerPhotoProxyFuzzer::CameraServerPhotoProxyFuzzTest(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
-
-void CameraServerPhotoProxyFuzzer::CameraServerPhotoProxyFuzzTest()
-{
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
     fuzz_ = std::make_shared<CameraServerPhotoProxy>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
     size_t handleSize = sizeof(BufferHandle) + (sizeof(int32_t) * (BUFFER_HANDLE_RESERVE_TEST_SIZE * 2));
     fuzz_->bufferHandle_ = static_cast<BufferHandle *>(malloc(handleSize));
-    fuzz_->imageFormat_ = GetData<int32_t>();
-    fuzz_->isMmaped_ = GetData<bool>();
+    fuzz_->imageFormat_ = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->isMmaped_ = fdp.ConsumeBool();
     fuzz_->GetFileDataAddr();
     fuzz_->GetFormat();
     fuzz_->deferredProcType_ = 0;
     fuzz_->GetDeferredProcType();
     fuzz_->deferredProcType_ = 1;
     fuzz_->GetDeferredProcType();
-    fuzz_->mode_ = GetData<int32_t>();
-    fuzz_->isMmaped_ = GetData<bool>();
+    fuzz_->mode_ = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->isMmaped_ = fdp.ConsumeBool();
     fuzz_->GetShootingMode();
     free(fuzz_->bufferHandle_);
     fuzz_->bufferHandle_ = nullptr;
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto cameraServerPhotoProxy = std::make_unique<CameraServerPhotoProxyFuzzer>();
     if (cameraServerPhotoProxy == nullptr) {
         MEDIA_INFO_LOG("cameraServerPhotoProxy is null");
         return;
     }
-    cameraServerPhotoProxy->CameraServerPhotoProxyFuzzTest();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    FuzzedDataProvider fdp(data, size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    cameraServerPhotoProxy->CameraServerPhotoProxyFuzzTest(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -126,6 +73,6 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
         return 0;
     }
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }
