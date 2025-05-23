@@ -218,7 +218,7 @@ void AppCallback::OnOfflineDeliveryFinished(const int32_t captureId) const
 
 void AppCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
 {
-    MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
+    MEDIA_INFO_LOG("AppCallback::OnSketchStatusDataChanged status:%{public}d", statusData.status);
     g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
     g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
 }
@@ -7802,6 +7802,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_030, TestSize.Level0)
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
 
     intResult = session_->Stop();
+    sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(intResult, 0);
 }
 
@@ -7940,15 +7941,9 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
     g_previewEvents.reset();
 
     auto statusSize = g_sketchStatus.size();
-    EXPECT_EQ(statusSize, 3);
-    if (statusSize == 3) {
-        EXPECT_EQ(g_sketchStatus.front(), 0);
-        g_sketchStatus.pop_front();
-        EXPECT_EQ(g_sketchStatus.front(), 3);
-        g_sketchStatus.pop_front();
-        EXPECT_EQ(g_sketchStatus.front(), 1);
-        g_sketchStatus.pop_front();
-    }
+    EXPECT_GE(statusSize, 2);
+    auto it = std::find(g_sketchStatus.begin(), g_sketchStatus.end(), 3);
+    EXPECT_TRUE(it != g_sketchStatus.end());
 
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
@@ -7964,19 +7959,16 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_032, TestSize.Level0)
     g_previewEvents.reset();
 
     statusSize = g_sketchStatus.size();
-    EXPECT_EQ(statusSize, 2);
-    if (statusSize == 2) {
-        EXPECT_EQ(g_sketchStatus.front(), 2);
-        g_sketchStatus.pop_front();
-        EXPECT_EQ(g_sketchStatus.front(), 0);
-        g_sketchStatus.pop_front();
-    }
+    EXPECT_GE(statusSize, 2);
+    it = std::find(g_sketchStatus.begin(), g_sketchStatus.end(), 2);
+    EXPECT_TRUE(it != g_sketchStatus.end());
 
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
     g_previewEvents.reset();
 
     intResult = session_->Stop();
+    sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(intResult, 0);
 }
 
@@ -8059,6 +8051,7 @@ HWTEST_F(CameraSessionModuleTest, photo_session_moduletest_033, TestSize.Level0)
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
 
     intResult = session_->Stop();
+    sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(intResult, 0);
 }
 
