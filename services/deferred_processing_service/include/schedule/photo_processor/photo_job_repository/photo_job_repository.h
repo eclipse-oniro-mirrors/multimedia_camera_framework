@@ -50,6 +50,7 @@ public:
     PhotoJobPriority GetJobRunningPriority(std::string imageId);
     void RegisterJobListener(std::weak_ptr<IPhotoJobRepositoryListener> listener);
     int GetBackgroundJobSize();
+    int GetBackgroundIdleJobSize();
     int GetOfflineJobSize();
     int GetOfflineIdleJobSize();
     bool IsOfflineJob(std::string imageId);

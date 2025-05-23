@@ -385,5 +385,128 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, 
     EXPECT_TRUE(processor->requestedImages_.empty());
 }
 
+/*
+ * Feature: Deferred
+ * Function: Test deferredPhotoController NotifyScheduleState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyScheduleState when backgroundJobMap is empty.
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_027, TestSize.Level1)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
+    ASSERT_NE(controller, nullptr);
+    controller->Initialize();
+
+    auto metadata = std::make_shared<DpsMetadata>();
+    EXPECT_NE(metadata, nullptr);
+    auto job = std::make_shared<DeferredPhotoJob>("TestImageid_" + std::to_string(userId_), true, *metadata);
+    EXPECT_NE(job, nullptr);
+    job->curStatus_ = PhotoJobStatus::DELETED;
+
+    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+    controller->photoJobRepository_->offlineJobList_.push_back(job);
+    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid_" + std::to_string(userId_), job);
+    controller->photoJobRepository_->runningNum_ = 0;
+    controller->NotifyScheduleState(false);
+    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_IDLE);
+}
+
+/*
+ * Feature: Deferred
+ * Function: Test deferredPhotoController NotifyScheduleState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyScheduleState when backgroundJob status is DELETED.
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_028, TestSize.Level1)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
+    ASSERT_NE(controller, nullptr);
+    controller->Initialize();
+
+    auto metadata = std::make_shared<DpsMetadata>();
+    EXPECT_NE(metadata, nullptr);
+    auto job1 = std::make_shared<DeferredPhotoJob>("TestImageid1_" + std::to_string(userId_), true, *metadata);
+    EXPECT_NE(job1, nullptr);
+    job1->curStatus_ = PhotoJobStatus::DELETED;
+
+    auto job2 = std::make_shared<DeferredPhotoJob>("TestImageid2_" + std::to_string(userId_), true, *metadata);
+    EXPECT_NE(job2, nullptr);
+    job2->curStatus_ = PhotoJobStatus::DELETED;
+
+    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+    controller->photoJobRepository_->offlineJobList_.push_back(job1);
+    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid1_" + std::to_string(userId_), job1);
+    controller->photoJobRepository_->backgroundJobMap_.emplace("TestImageid2_" + std::to_string(userId_), job2);
+    controller->photoJobRepository_->runningNum_ = 0;
+    controller->NotifyScheduleState(false);
+    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_IDLE);
+}
+
+/*
+ * Feature: Deferred
+ * Function: Test deferredPhotoController NotifyScheduleState
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyScheduleState when backgroundJob status is not DELETED.
+ */
+HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_029, TestSize.Level1)
+{
+    auto repository = std::make_shared<PhotoJobRepository>(userId_);
+    ASSERT_NE(repository, nullptr);
+    auto callback = std::make_shared<DeferredPhotoProcessorCallbacks>();
+    ASSERT_NE(callback, nullptr);
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    auto processor = CreateShared<DeferredPhotoProcessor>(userId_, repository, postProcessor, callback);
+    ASSERT_NE(processor, nullptr);
+    auto controller = CreateShared<DeferredPhotoController>(userId_, repository, processor);
+    ASSERT_NE(controller, nullptr);
+    controller->Initialize();
+
+    auto metadata = std::make_shared<DpsMetadata>();
+    EXPECT_NE(metadata, nullptr);
+    auto job1 = std::make_shared<DeferredPhotoJob>("TestImageid1_" + std::to_string(userId_), true, *metadata);
+    EXPECT_NE(job1, nullptr);
+    job1->curStatus_ = PhotoJobStatus::DELETED;
+
+    auto job2 = std::make_shared<DeferredPhotoJob>("TestImageid2_" + std::to_string(userId_), true, *metadata);
+    EXPECT_NE(job2, nullptr);
+    job2->curStatus_ = PhotoJobStatus::PENDING;
+
+    controller->scheduleState_ = DpsStatus::DPS_SESSION_STATE_PREEMPTED;
+    controller->photoJobRepository_->offlineJobList_.push_back(job1);
+    controller->photoJobRepository_->offlineJobMap_.emplace("TestImageid1_" + std::to_string(userId_), job1);
+    controller->photoJobRepository_->backgroundJobMap_.emplace("TestImageid2_" + std::to_string(userId_), job2);
+    controller->photoJobRepository_->runningNum_ = 0;
+    controller->backgroundStrategy_->hdiStatus_ = HdiStatus::HDI_READY;
+    controller->NotifyScheduleState(false);
+    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_RUNNALBE);
+
+    controller->backgroundStrategy_->hdiStatus_ = HdiStatus::HDI_NOT_READY_PREEMPTED;
+    controller->NotifyScheduleState(false);
+    EXPECT_EQ(controller->scheduleState_, DpsStatus::DPS_SESSION_STATE_SUSPENDED);
+}
+
 } // CameraStandard
 } // OHOS
