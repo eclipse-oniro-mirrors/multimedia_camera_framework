@@ -28,52 +28,19 @@
 namespace OHOS {
 namespace CameraStandard {
 using RemoveCallback = std::function<void()>;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
+const size_t MAX_LENGTH_STRING = 64;
+static const int32_t MIN_SIZE_NUM = 68;
 
-std::shared_ptr<BmsAdapter> BmsAdapterFuzzer::fuzz_{nullptr};
-std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_{nullptr};
+std::shared_ptr<BmsAdapter> BmsAdapterFuzzer::fuzz_ {nullptr};
+std::shared_ptr<BmsSaListener> BmsSaListenerFuzzer::bmsfuzz_ {nullptr};
 
 /*
 * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
 * tips: only support basic type
 */
-template<class T>
-T GetData()
-{
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
-}
-
-template<class T>
-uint32_t GetArrLength(T& arr)
-{
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
-}
 
 void BmsAdapterFuzzer::Initialize()
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-
     fuzz_ = std::make_shared<BmsAdapter>();
     CHECK_ERROR_RETURN_LOG(!fuzz_, "Create fuzz_ Error");
 
@@ -90,12 +57,8 @@ void BmsAdapterFuzzer::Initialize()
     fuzz_->SetBms(bms);
 }
 
-void BmsSaListenerFuzzer::BmsSaListenerFuzzTest()
+void BmsSaListenerFuzzer::BmsSaListenerFuzzTest(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-
     if (bmsfuzz_ == nullptr) {
         auto bmsAdapterWptr = wptr<BmsAdapter>();
         auto removeCallback = [bmsAdapterWptr]() {
@@ -106,15 +69,13 @@ void BmsSaListenerFuzzer::BmsSaListenerFuzzTest()
         };
         bmsfuzz_ = std::make_shared<BmsSaListener>(removeCallback);
     }
-    int32_t systemAbilityId = GetData<int32_t>();
-    uint8_t randomNum = GetData<uint8_t>();
-    std::vector<std::string> testStrings = {"test1", "test2"};
-    std::string deviceId(testStrings[randomNum % testStrings.size()]);
+    int32_t systemAbilityId = fdp.ConsumeIntegral<int32_t>();
+    std::string deviceId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
     bmsfuzz_->OnAddSystemAbility(systemAbilityId, deviceId);
     bmsfuzz_->OnRemoveSystemAbility(systemAbilityId, deviceId);
 }
 
-void Test()
+void Test(uint8_t* data, size_t size)
 {
     auto bmsSaListener = std::make_unique<BmsSaListenerFuzzer>();
     auto bmsAdapterFuzzer = std::make_unique<BmsAdapterFuzzer>();
@@ -126,32 +87,13 @@ void Test()
         MEDIA_INFO_LOG("bmsAdapterFuzzer is null");
         return;
     }
-    bmsSaListener->BmsSaListenerFuzzTest();
-    bmsAdapterFuzzer->Initialize();
-}
-
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
-{
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
+    
+    FuzzedDataProvider fdp(data,size);
+    if (fdp.remaining_bytes() < MIN_SIZE_NUM) {
+        return;
     }
-
-    return true;
+    bmsSaListener->BmsSaListenerFuzzTest(fdp);
+    bmsAdapterFuzzer->Initialize();
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -159,10 +101,6 @@ bool FuzzTest(const uint8_t* rawData, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
-
-    OHOS::CameraStandard::FuzzTest(data, size);
+    OHOS::CameraStandard::Test(data, size);
     return 0;
 }
