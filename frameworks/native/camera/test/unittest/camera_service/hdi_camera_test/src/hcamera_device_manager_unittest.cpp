@@ -26,6 +26,8 @@ using namespace testing::ext;
 namespace OHOS {
 namespace CameraStandard {
 
+sptr<HCameraHostManager> HCameraDeviceManagerUnitTest::cameraHostManager_ = nullptr;
+
 void HCameraDeviceManagerUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("HCameraDeviceManagerUnitTest::SetUpTestCase started!");
@@ -94,6 +96,176 @@ HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_002, Test
     HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
     ret = HCameraDeviceManager::GetInstance()->GetACameraId();
     ASSERT_NE(ret, "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCameraHolderByPid.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCameraHolderByPid.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_008, TestSize.Level0)
+{
+    OHOS::Security::AccessToken::AccessTokenID pidRequest = IPCSkeleton::GetCallingTokenID();
+    std::vector<sptr<HCameraDeviceHolder>> res = HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(pidRequest);
+    EXPECT_EQ(res.size(), 0);
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, pidRequest);
+    ASSERT_NE(camDevice, nullptr);
+    HCameraDeviceManager::GetInstance()->AddDevice(pidRequest, camDevice);
+    res = HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(pidRequest);
+    ASSERT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetCamerasByPid.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetCamerasByPid.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_009, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    pid_t pidRequest = 241228;
+    std::string cameraId = cameras[0]->GetID();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, pidRequest);
+    ASSERT_NE(camDevice, nullptr);
+
+    HCameraDeviceManager::GetInstance()->AddDevice(pidRequest, camDevice);
+    std::vector<sptr<HCameraDevice>>res = HCameraDeviceManager::GetInstance()->GetCamerasByPid(pidRequest);
+    ASSERT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetActiveClient.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveClient.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_010, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    vector<pid_t>res = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    ASSERT_NE(res.size(), 0);
+
+    for (auto x:cameras) {
+        HCameraDeviceManager::GetInstance()->RemoveDevice(x->GetID());
+    }
+    HCameraDeviceManager::GetInstance()->pidToCameras_.clear();
+    res = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    EXPECT_EQ(res.size(), 0);
+
+    pid_t pidRequest = 241228;
+    std::string cameraId = cameras[0]->GetID();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, pidRequest);
+    ASSERT_NE(camDevice, nullptr);
+
+    HCameraDeviceManager::GetInstance()->AddDevice(pidRequest, camDevice);
+    res = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    ASSERT_NE(res.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetStateOfACamera.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetStateOfACamera.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_011, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, 1);
+    SafeMap<std::string, int32_t> res = HCameraDeviceManager::GetInstance()->GetCameraStateOfASide();
+    EXPECT_EQ(res.Size(), 0);
+
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, 0);
+    res = HCameraDeviceManager::GetInstance()->GetCameraStateOfASide();
+    ASSERT_NE(res.Size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RefreshCameraDeviceHolderState.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RefreshCameraDeviceHolderState.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_012, TestSize.Level0)
+{
+    cameraManager_ = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    pid_t pidRequest = 241228;
+    std::string cameraId = cameras[0]->GetID();
+    cameraHostManager_ = new HCameraHostManager(nullptr);
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, pidRequest);
+    ASSERT_NE(camDevice, nullptr);
+    
+    HCameraDeviceManager::GetInstance()->AddDevice(pidRequest, camDevice);
+    std::vector<sptr<HCameraDeviceHolder>> res = HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(pidRequest);
+    if (res.size() == 0) {
+        return;
+    }
+    HCameraDeviceManager::GetInstance()->RefreshCameraDeviceHolderState(res[0]);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetACameraId with stateOfRgmCamera_ Size is zero.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetACameraId with stateOfRgmCamera_ Size is zero.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_013, TestSize.Level0)
+{
+    std::string cameraId = "device/0";
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, 1);
+    EXPECT_EQ(HCameraDeviceManager::GetInstance()->GetACameraId(), "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsMultiCameraActive with pid in activeCamera_.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsMultiCameraActive with pid in activeCamera_.
+ */
+HWTEST_F(HCameraDeviceManagerUnitTest, hcamera_device_manager_unittest_015, TestSize.Level0)
+{
+    int32_t pid = 9;
+    int32_t uid = 1;
+    int32_t state = 1;
+    int32_t focusState = 1;
+    sptr<HCameraDevice> device = nullptr;
+    uint32_t accessTokenId = 1;
+    int32_t cost = 1;
+    std::set<std::string> conflicting;
+    uint32_t firstTokenId = 1;
+    sptr<HCameraDeviceHolder> testCamera = new HCameraDeviceHolder(pid, uid, state, focusState,
+        device, accessTokenId, cost, conflicting, firstTokenId);
+    HCameraDeviceManager::GetInstance()->activeCameras_.push_back(testCamera);
+    EXPECT_EQ(HCameraDeviceManager::GetInstance()->IsMultiCameraActive(pid), true);
 }
 } // CameraStandard
 } // OHOS
