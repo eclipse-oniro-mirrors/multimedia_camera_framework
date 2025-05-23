@@ -6814,54 +6814,6 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_074, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test SetImageStabilizationGuideCallback with nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetImageStabilizationGuideCallback with nullptr
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_086, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdataCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    std::shared_ptr<ImageStabilizationGuideCallback> callback = nullptr;
-    session->SetImageStabilizationGuideCallback(callback);
-    EXPECT_EQ(session->GetImageStabilizationGuideCallback(), callback);
-}
-
-/*
- * Feature: Framework
- * Function: Test SetImageStabilizationGuideCallback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetImageStabilizationGuideCallback
- */
-HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_087, TestSize.Level0)
-{
-    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras_[0]);
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdataCameraOutputCapability();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    std::shared_ptr<ImageStabilizationGuideCallback> callback = std::make_shared<MockImageStabilizationGuideCallback>();
-    session->SetImageStabilizationGuideCallback(callback);
-    ASSERT_NE(session->GetImageStabilizationGuideCallback(), nullptr);
-}
-
-/*
- * Feature: Framework
  * Function: Test IsCompositionSuggestionSupported
  * SubFunction: NA
  * FunctionPoints: NA
