@@ -108,22 +108,6 @@ public:
         return 0;
     }
 };
-
-class MockCompositionBeginCallback : public OHOS::CameraStandard::CompositionBeginCallback {
-    void OnCompositionBeginAvailable() const override {}
-};
-
-class MockCompositionEndCallback : public OHOS::CameraStandard::CompositionEndCallback {
-    void OnCompositionEndAvailable(CompositionEndState state) const override {}
-};
-
-class MockCompositionPositionMatchCallback : public OHOS::CameraStandard::CompositionPositionMatchCallback {
-    void OnCompositionPositionMatchAvailable(std::vector<float> zoomRatios) const override {}
-};
-
-class MockImageStabilizationGuideCallback : public OHOS::CameraStandard::ImageStabilizationGuideCallback {
-    void OnImageStabilizationGuideChange(std::vector<Point> lineSegments) override {}
-};
 }
 }
 #endif
