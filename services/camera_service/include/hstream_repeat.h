@@ -97,7 +97,7 @@ private:
     void UpdateSketchStatus(SketchStatus status);
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     int32_t HandleCameraTransform(int32_t& sensorOrientation, bool isFrontCamera);
-    int ApplyRotationWithFlip(const sptr<OHOS::IBufferProducer>& producer, int32_t streamRotation, bool isFlip);
+    void ApplyTransformBasedOnRotation(int32_t streamRotation, const sptr<OHOS::IBufferProducer>& producer, bool isFrontCamera);
     void ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessFixedDiffDeviceTransform(camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
