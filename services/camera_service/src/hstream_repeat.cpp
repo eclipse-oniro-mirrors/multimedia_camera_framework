@@ -863,7 +863,9 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_positi
         "HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
 }
 
-void HStreamRepeat::ApplyTransformBasedOnRotation(int32_t streamRotation, const sptr<OHOS::IBufferProducer>& producer, bool isFrontCamera) {
+void HStreamRepeat::ApplyTransformBasedOnRotation(int32_t streamRotation, const sptr<OHOS::IBufferProducer>& producer,
+    bool isFrontCamera)
+{
     switch (streamRotation) {
         case STREAM_ROTATE_0: {
             producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
