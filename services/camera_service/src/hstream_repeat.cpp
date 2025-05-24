@@ -1057,14 +1057,24 @@ bool HStreamRepeat::IsNeedBeautyNotification()
     if (notificationInfo.empty()) {
         return ret;
     }
+    const int32_t CONFIG_SIZE = 3;
+    const int32_t INT32_ZERO = 0;
+    const int32_t INT32_ONE = 1;
+    const int32_t INT32_TWO = 2;
     std::vector<std::string> configInfos = SplitString(notificationInfo, '#');
     for (int i = 0; i < configInfos.size(); ++i) {
         std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
-        std::string configBundleName = configInfo[0];
-        int32_t configMinFPS = std::atoi(configInfo[1].c_str());
-        int32_t configMAXFPS = std::atoi(configInfo[2].c_str());
-        if (configBundleName == bundleName && configMinFPS == streamFrameRateRange_[0] &&
-            configMAXFPS == streamFrameRateRange_[1]) {
+        if (configInfo.size() < CONFIG_SIZE) {
+            continue;
+        }
+        if (!isIntegerRegex(configInfo[INT32_ONE]) || !isIntegerRegex(configInfo[INT32_TWO])) {
+            continue;
+        }
+        std::string configBundleName = configInfo[INT32_ZERO];
+        int32_t configMinFPS = std::atoi(configInfo[INT32_ONE].c_str());
+        int32_t configMAXFPS = std::atoi(configInfo[INT32_TWO].c_str());
+        if (configBundleName == bundleName && configMinFPS == streamFrameRateRange_[INT32_ZERO] &&
+            configMAXFPS == streamFrameRateRange_[INT32_ONE]) {
             ret = true;
             break;
         }
