@@ -130,6 +130,8 @@ public:
     bool QueryZoomBezierValue(std::vector<float>& zoomBezierValue);
     int32_t SetSmoothZoom(
         int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
+    float CalculateWaitTime(const std::vector<float>& mCrossZoom, float currentZoomRatio,
+        float targetZoomRatio, float waitMs, float frameIntervalMs, const std::vector<float>& array);
     void AddZoomAndTimeArray(
         std::vector<uint32_t> &zoomAndTimeArray, std::vector<float> array, float frameIntervalMs, float waitTime);
     int32_t EnableMovingPhoto(bool isEnable) override;

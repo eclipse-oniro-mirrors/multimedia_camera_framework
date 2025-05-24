@@ -189,6 +189,8 @@ public:
         camera_position_enum_t cameraPosition);
 
     int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> GetStreamOperatorV1_1(
+        sptr<OHOS::HDI::Camera::V1_0::IStreamOperator>& streamOperator);
     int32_t CommitStreams(const std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
     int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
     int32_t GetStreamsSize();

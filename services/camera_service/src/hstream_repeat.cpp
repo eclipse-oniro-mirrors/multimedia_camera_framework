@@ -802,57 +802,48 @@ void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, ca
     }
     cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
 #endif
-    int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+        ret = HandleCameraTransform(sensorOrientation, true);
     } else {
-        streamRotation = STREAM_ROTATE_360 - sensorOrientation;
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
+        ret = HandleCameraTransform(sensorOrientation, false);
     }
     CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
         "HStreamRepeat::ProcessVerticalCameraPosition failed %{public}d", ret);
+}
+
+int32_t HStreamRepeat::HandleCameraTransform(int32_t& sensorOrientation, bool isFrontCamera)
+{
+    int32_t streamRotation = isFrontCamera ? sensorOrientation : STREAM_ROTATE_360 - sensorOrientation;
+    int32_t ret = SurfaceError::SURFACE_ERROR_OK;
+
+    switch (streamRotation) {
+        case STREAM_ROTATE_0: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
+            break;
+        }
+        case STREAM_ROTATE_90: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT90 : GRAPHIC_ROTATE_90);
+            break;
+        }
+        case STREAM_ROTATE_180: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT180 : GRAPHIC_ROTATE_180);
+            break;
+        }
+        case STREAM_ROTATE_270: {
+            ret = producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT270 : GRAPHIC_ROTATE_270);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    if (isFrontCamera) {
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+    } else {
+        MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
+    }
+
+    return ret;
 }
 
 void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
@@ -866,53 +857,36 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_positi
     }
     cameraPosition = static_cast<camera_position_enum_t>(cameraPositionTemp);
 #endif
-    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    } else {
-        switch (streamRotation) {
-            case STREAM_ROTATE_0: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-                break;
-            }
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
-                break;
-            }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
-                break;
-            }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    }
+    ApplyTransformBasedOnRotation(streamRotation, producer_, cameraPosition == OHOS_CAMERA_POSITION_FRONT);
+
     CHECK_ERROR_PRINT_LOG(ret != SurfaceError::SURFACE_ERROR_OK,
         "HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
+}
+
+void HStreamRepeat::ApplyTransformBasedOnRotation(int32_t streamRotation, const sptr<OHOS::IBufferProducer>& producer,
+    bool isFrontCamera)
+{
+    switch (streamRotation) {
+        case STREAM_ROTATE_0: {
+            producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H : GRAPHIC_ROTATE_NONE);
+            break;
+        }
+        case STREAM_ROTATE_90: {
+            producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT90 : GRAPHIC_ROTATE_90);
+            break;
+        }
+        case STREAM_ROTATE_180: {
+            producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT180 : GRAPHIC_ROTATE_180);
+            break;
+        }
+        case STREAM_ROTATE_270: {
+            producer_->SetTransform(isFrontCamera ? GRAPHIC_FLIP_H_ROT270 : GRAPHIC_ROTATE_270);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 }
 
 int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)

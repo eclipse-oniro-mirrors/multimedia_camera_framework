@@ -1001,7 +1001,6 @@ int32_t HCaptureSession::SetSmoothZoom(
     int32_t zoomInOutCount = 2;
     std::vector<std::vector<float>> crossTime(waitCount, std::vector<float>(zoomInOutCount, 0.0f)); // 生成4x2二维数组
     GetCrossZoomAndTime(crossZoomAndTime, mCrossZoom, crossTime);
-    float waitTime = 0.0;
     float frameIntervalMs = 1000.0 / currentFps;
     targetZoomRatio = targetZoomRatio * ZOOM_RATIO_MULTIPLE;
     targetRangeId = GetRangeId(targetZoomRatio, mCrossZoom);
@@ -1019,29 +1018,8 @@ int32_t HCaptureSession::SetSmoothZoom(
     } else {
         std::sort(mCrossZoom.begin(), mCrossZoom.end(), std::greater<float>());
     }
-    // LCOV_EXCL_START
-    for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {
-        float crossZoom = mCrossZoom[i];
-        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom crossZoomIterator is:  %{public}f", crossZoom);
-        if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0 || isEqual(crossZoom, 199.0f)) {
-            MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom skip zoomCross is:  %{public}f", crossZoom);
-            continue;
-        }
-        if (std::fabs(currentZoomRatio - crossZoom) <= std::numeric_limits<float>::epsilon() &&
-            currentZoomRatio > targetZoomRatio) {
-            waitTime = waitMs;
-        }
-        for (int j = 0; j < static_cast<int>(array.size()); j++) {
-            if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) <= 0) {
-                waitTime = waitMs - frameIntervalMs * j;
-                waitTime = waitTime >= 0 ? waitTime : 0;
-                MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom crossZoom is: %{public}f, waitTime is: %{public}f",
-                    crossZoom, waitTime);
-                break;
-            }
-        }
-    }
-    // LCOV_EXCL_STOP
+    float waitTime = 0.0f;
+    waitTime = CalculateWaitTime(mCrossZoom, currentZoomRatio, targetZoomRatio, waitMs, frameIntervalMs, array);
     std::vector<uint32_t> zoomAndTimeArray {};
     for (int i = 0; i < static_cast<int>(array.size()); i++) {
         zoomAndTimeArray.push_back(static_cast<uint32_t>(array[i]));
@@ -1054,6 +1032,36 @@ int32_t HCaptureSession::SetSmoothZoom(
                     "sessionID: %{public}d", duration, GetSessionId());
     ProcessMetaZoomArray(zoomAndTimeArray, cameraDevice);
     return CAMERA_OK;
+}
+
+float HCaptureSession::CalculateWaitTime(const std::vector<float>& mCrossZoom,
+                                         float currentZoomRatio, float targetZoomRatio,
+                                         float waitMs, float frameIntervalMs,
+                                         const std::vector<float>& array)
+{
+    float waitTime = 0.0f;
+    for (int i = 0; i < static_cast<int>(mCrossZoom.size()); i++) {
+        float crossZoom = mCrossZoom[i];
+        MEDIA_DEBUG_LOG("HCaptureSession::CalculateWaitTime crossZoomIterator is:  %{public}f.", crossZoom);
+        if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0 || isEqual(crossZoom, 199.0f)) {
+            MEDIA_DEBUG_LOG("HCaptureSession::CalculateWaitTime skip zoomCross is:  %{public}f.", crossZoom);
+            continue;
+        }
+        if (std::fabs(currentZoomRatio - crossZoom) <= std::numeric_limits<float>::epsilon() &&
+            currentZoomRatio > targetZoomRatio) {
+            waitTime = waitMs;
+        }
+        for (int j = 0; j < static_cast<int>(array.size()); j++) {
+            if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) <= 0) {
+                waitTime = waitMs - frameIntervalMs * j;
+                waitTime = waitTime >= 0 ? waitTime : 0;
+                MEDIA_DEBUG_LOG("HCaptureSession::CalculateWaitTime crossZoom is: %{public}f, waitTime is: %{public}f",
+                    crossZoom, waitTime);
+                break;
+            }
+        }
+    }
+    return waitTime;
 }
 
 void HCaptureSession::ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice)
